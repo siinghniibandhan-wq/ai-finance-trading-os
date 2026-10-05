@@ -124,6 +124,62 @@ const [transactionAccountFilter, setTransactionAccountFilter] = useState("all");
 // -----------------------------------------------------
 const [transactionToDelete, setTransactionToDelete] = useState(null);
 const [transactionDeleting, setTransactionDeleting] = useState(false);
+
+// =====================================================
+// CATEGORIES STATE
+// FINANCE CATEGORY DATA
+// =====================================================
+
+const [categories, setCategories] = useState([]);
+const [categoriesLoading, setCategoriesLoading] = useState(false);
+const [categoriesError, setCategoriesError] = useState("");
+
+
+// =====================================================
+// LOAD CATEGORIES FROM BACKEND
+// =====================================================
+
+async function loadCategories() {
+  setCategoriesLoading(true);
+  setCategoriesError("");
+
+  try {
+    const response = await fetch(
+      "https://ai-finance-trading-os-api.onrender.com/api/categories/"
+    );
+
+    if (!response.ok) {
+      throw new Error("Unable to load categories.");
+    }
+
+    const data = await response.json();
+
+    setCategories(Array.isArray(data) ? data : []);
+  } catch (error) {
+    setCategoriesError(
+      error?.message || "Unable to load categories."
+    );
+  } finally {
+    setCategoriesLoading(false);
+  }
+}
+
+
+// =====================================================
+// LOAD CATEGORIES WHEN CATEGORIES OR TRANSACTIONS OPENS
+// =====================================================
+
+useEffect(
+  function () {
+    if (
+      active === "Categories" ||
+      active === "Transactions"
+    ) {
+      loadCategories();
+    }
+  },
+  [active]
+);
   // =====================================================
   // NAVIGATION STRUCTURE
   // IMPORTANT:

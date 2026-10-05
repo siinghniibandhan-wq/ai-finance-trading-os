@@ -367,22 +367,24 @@ async function deleteCategory(categoryId) {
   }
 }
 
-
 // =====================================================
-// LOAD CATEGORIES WHEN CATEGORIES OR TRANSACTIONS OPENS
+// LOAD CATEGORIES WHEN CATEGORIES, TRANSACTIONS OR
+// CASH FLOW OPENS
 // =====================================================
 
 useEffect(
   function () {
     if (
       active === "Categories" ||
-      active === "Transactions"
+      active === "Transactions" ||
+      active === "Cash Flow"
     ) {
       loadCategories();
     }
   },
   [active]
 );
+   
   // =====================================================
   // NAVIGATION STRUCTURE
   // IMPORTANT:

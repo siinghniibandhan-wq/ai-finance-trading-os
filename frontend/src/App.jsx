@@ -905,7 +905,8 @@ useEffect(
   active === "Categories" ||
   active === "Transactions" ||
   active === "Cash Flow" ||
-  active === "Budget"
+  active === "Budget" ||
+  active === "Bills & Subscriptions"
 ) {
       loadCategories();
     }

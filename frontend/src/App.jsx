@@ -3328,11 +3328,7 @@ function renderCategories() {
         "button",
         {
           type: "button",
-          onClick: function () {
-            alert(
-              "Category creation will be enabled in the next step."
-            );
-          },
+          onClick: openAddCategoryForm,
           style: {
             border: "none",
             borderRadius: "12px",

@@ -1176,11 +1176,12 @@ useEffect(
 useEffect(
   function () {
     if (
-      active === "Accounts" ||
-      active === "Transactions" ||
-      active === "Cash Flow" ||
-      active === "Budget"
-    ) {
+  active === "Accounts" ||
+  active === "Transactions" ||
+  active === "Cash Flow" ||
+  active === "Budget" ||
+  active === "Bills & Subscriptions"
+) {
       loadAccounts();
     }
   },

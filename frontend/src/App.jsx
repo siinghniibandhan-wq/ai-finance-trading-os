@@ -159,6 +159,35 @@ const [budgetForm, setBudgetForm] = useState({
 });
 
 // =====================================================
+// BILLS & SUBSCRIPTIONS STATE
+// =====================================================
+
+const [bills, setBills] = useState([]);
+const [billsLoading, setBillsLoading] = useState(false);
+const [billsError, setBillsError] = useState("");
+
+// =====================================================
+// BILL FORM STATE
+// =====================================================
+
+const [showBillForm, setShowBillForm] = useState(false);
+const [editingBill, setEditingBill] = useState(null);
+const [billSaving, setBillSaving] = useState(false);
+const [billDeleting, setBillDeleting] = useState(false);
+const [billToDelete, setBillToDelete] = useState(null);
+
+const [billForm, setBillForm] = useState({
+  name: "",
+  category_id: "",
+  account_id: "",
+  amount: "",
+  frequency: "monthly",
+  next_due_date: new Date().toISOString().slice(0, 10),
+  status: "active",
+  notes: ""
+});   
+   
+// =====================================================
 // LOAD CATEGORIES FROM BACKEND
 // =====================================================
 

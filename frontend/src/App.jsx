@@ -693,6 +693,59 @@ async function saveBill() {
   }
 }
 // =====================================================
+// DELETE BILL
+// DELETE BILL / SUBSCRIPTION FROM DATABASE
+// =====================================================
+
+async function deleteBill(billId) {
+  if (!billId) {
+    return;
+  }
+
+  setBillDeleting(true);
+  setBillsError("");
+
+  try {
+    const response = await fetch(
+      `https://ai-finance-trading-os-api.onrender.com/api/bills/${billId}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to delete bill."
+      );
+    }
+
+    // -------------------------------------------------
+    // SUCCESS
+    // -------------------------------------------------
+
+    setBillToDelete(null);
+
+    // Reload directly from database
+    await loadBills();
+
+  } catch (error) {
+    setBillsError(
+      error?.message ||
+      "Unable to delete bill."
+    );
+
+  } finally {
+    setBillDeleting(false);
+  }
+}
+
+// =====================================================
 // CATEGORY CRUD STATE
 // =====================================================
 

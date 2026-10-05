@@ -639,21 +639,23 @@ useEffect(
     }
   }
 
-  // =====================================================
-  // LOAD ACCOUNTS WHEN ACCOUNTS PAGE OPENS
-  // =====================================================
+// =====================================================
+// LOAD ACCOUNTS WHEN ACCOUNTS, TRANSACTIONS OR
+// CASH FLOW OPENS
+// =====================================================
 
-  useEffect(
-    function () {
-      if (
-        active === "Accounts" ||
-        active === "Transactions"
-      ) {
-        loadAccounts();
-      }
-    },
-    [active]
-  );
+useEffect(
+  function () {
+    if (
+      active === "Accounts" ||
+      active === "Transactions" ||
+      active === "Cash Flow"
+    ) {
+      loadAccounts();
+    }
+  },
+  [active]
+);
 
   // =====================================================
   // ADD ACCOUNT — FORM FIELD HANDLER

@@ -504,6 +504,156 @@ async function loadBills() {
 }
 
 // =====================================================
+// STATEMENTS / IMPORT API
+// =====================================================
+
+// -----------------------------------------------------
+// LOAD STATEMENT IMPORTS
+// -----------------------------------------------------
+
+async function loadStatements() {
+  setStatementsLoading(true);
+  setStatementsError("");
+
+  try {
+    const response = await fetch(
+      "https://ai-finance-trading-os-api.onrender.com/api/statements/"
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to load statement imports."
+      );
+    }
+
+    setStatements(
+      Array.isArray(data)
+        ? data
+        : []
+    );
+
+  } catch (error) {
+    setStatementsError(
+      error?.message ||
+      "Unable to load statement imports."
+    );
+
+  } finally {
+    setStatementsLoading(false);
+  }
+}
+
+
+// -----------------------------------------------------
+// IMPORT CSV STATEMENT
+// -----------------------------------------------------
+
+async function importStatement() {
+  if (!statementFile) {
+    setStatementsError(
+      "Please select a CSV statement file."
+    );
+    return;
+  }
+
+  setStatementImporting(true);
+  setStatementsError("");
+
+  try {
+    const formData = new FormData();
+
+    formData.append(
+      "file",
+      statementFile
+    );
+
+    const response = await fetch(
+      "https://ai-finance-trading-os-api.onrender.com/api/statements/import",
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to import statement."
+      );
+    }
+
+    // -------------------------------------------------
+    // SUCCESS
+    // -------------------------------------------------
+
+    setStatementFile(null);
+
+    await loadStatements();
+
+  } catch (error) {
+    setStatementsError(
+      error?.message ||
+      "Unable to import statement."
+    );
+
+  } finally {
+    setStatementImporting(false);
+  }
+}
+
+
+// -----------------------------------------------------
+// DELETE STATEMENT IMPORT
+// -----------------------------------------------------
+
+async function deleteStatement(statementId) {
+  if (!statementId) {
+    return;
+  }
+
+  setStatementsError("");
+
+  try {
+    const response = await fetch(
+      `https://ai-finance-trading-os-api.onrender.com/api/statements/${statementId}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to delete statement."
+      );
+    }
+
+    await loadStatements();
+
+  } catch (error) {
+    setStatementsError(
+      error?.message ||
+      "Unable to delete statement."
+    );
+  }
+}
+// =====================================================
 // BILL FORM HELPERS
 // =====================================================
 

@@ -19,6 +19,11 @@ from backend.routes.dashboard import router as dashboard_router
 
 from backend import budgets
 
+# =====================================================
+# BILLS & SUBSCRIPTIONS ROUTES
+# =====================================================
+
+from backend import bills
 
 app = FastAPI(
     title="AI Finance Trading OS",
@@ -63,6 +68,12 @@ app.include_router(dashboard_router)
 # =====================================================
 
 app.include_router(budgets.router)
+
+# =====================================================
+# BILLS & SUBSCRIPTIONS ROUTES
+# =====================================================
+
+app.include_router(bills.router)
 
 # ============================================================
 # BASIC ROUTES

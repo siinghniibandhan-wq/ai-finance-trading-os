@@ -3029,6 +3029,379 @@ function transactionTypeLabel(type) {
     );
   }
 
+   // =====================================================
+// CATEGORIES PAGE
+// FINANCE CATEGORY MANAGEMENT
+// =====================================================
+
+function renderCategories() {
+  return React.createElement(
+    React.Fragment,
+    null,
+
+    // ---------------------------------------------------
+    // PAGE HEADER
+    // ---------------------------------------------------
+    React.createElement(
+      "div",
+      {
+        className: "page-heading",
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "16px",
+          flexWrap: "wrap"
+        }
+      },
+
+      React.createElement(
+        "div",
+        null,
+
+        React.createElement(
+          "h2",
+          null,
+          "Categories"
+        ),
+
+        React.createElement(
+          "p",
+          null,
+          "Organize your income and expense categories."
+        )
+      ),
+
+      React.createElement(
+        "button",
+        {
+          type: "button",
+          onClick: function () {
+            alert(
+              "Category creation will be enabled in the next step."
+            );
+          },
+          style: {
+            border: "none",
+            borderRadius: "12px",
+            padding: "11px 18px",
+            background: "#6d4aff",
+            color: "#ffffff",
+            fontWeight: "700",
+            cursor: "pointer"
+          }
+        },
+        "+ Add Category"
+      )
+    ),
+
+    // ---------------------------------------------------
+    // SUMMARY CARDS
+    // ---------------------------------------------------
+    React.createElement(
+      "div",
+      {
+        style: {
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: "14px",
+          marginBottom: "18px"
+        }
+      },
+
+      React.createElement(
+        "div",
+        {
+          className: "module-card",
+          style: {
+            margin: 0
+          }
+        },
+        React.createElement(
+          "strong",
+          null,
+          "Total Categories"
+        ),
+        React.createElement(
+          "div",
+          {
+            style: {
+              fontSize: "25px",
+              fontWeight: "800",
+              marginTop: "8px"
+            }
+          },
+          categories.length
+        )
+      ),
+
+      React.createElement(
+        "div",
+        {
+          className: "module-card",
+          style: {
+            margin: 0
+          }
+        },
+        React.createElement(
+          "strong",
+          null,
+          "Income Categories"
+        ),
+        React.createElement(
+          "div",
+          {
+            style: {
+              fontSize: "25px",
+              fontWeight: "800",
+              marginTop: "8px"
+            }
+          },
+          categories.filter(function (category) {
+            return (
+              String(category.category_type || "")
+                .toLowerCase() === "income"
+            );
+          }).length
+        )
+      ),
+
+      React.createElement(
+        "div",
+        {
+          className: "module-card",
+          style: {
+            margin: 0
+          }
+        },
+        React.createElement(
+          "strong",
+          null,
+          "Expense Categories"
+        ),
+        React.createElement(
+          "div",
+          {
+            style: {
+              fontSize: "25px",
+              fontWeight: "800",
+              marginTop: "8px"
+            }
+          },
+          categories.filter(function (category) {
+            return (
+              String(category.category_type || "")
+                .toLowerCase() === "expense"
+            );
+          }).length
+        )
+      )
+    ),
+
+    // ---------------------------------------------------
+    // ERROR MESSAGE
+    // ---------------------------------------------------
+    categoriesError
+      ? React.createElement(
+          "div",
+          {
+            style: {
+              background: "#fff1f1",
+              color: "#b42318",
+              border: "1px solid #ffd0d0",
+              borderRadius: "12px",
+              padding: "12px 14px",
+              marginBottom: "16px"
+            }
+          },
+          categoriesError
+        )
+      : null,
+
+    // ---------------------------------------------------
+    // CATEGORY LIST
+    // ---------------------------------------------------
+    React.createElement(
+      "div",
+      {
+        className: "module-card"
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "15px"
+          }
+        },
+
+        React.createElement(
+          "h3",
+          {
+            style: {
+              margin: 0
+            }
+          },
+          "All Categories"
+        ),
+
+        categoriesLoading
+          ? React.createElement(
+              "span",
+              {
+                style: {
+                  fontSize: "13px",
+                  color: "#777"
+                }
+              },
+              "Loading..."
+            )
+          : null
+      ),
+
+      categories.length === 0 && !categoriesLoading
+        ? React.createElement(
+            "div",
+            {
+              style: {
+                textAlign: "center",
+                padding: "35px 15px",
+                color: "#777"
+              }
+            },
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  fontSize: "42px",
+                  marginBottom: "10px"
+                }
+              },
+              "📂"
+            ),
+
+            React.createElement(
+              "h3",
+              {
+                style: {
+                  margin: "0 0 8px"
+                }
+              },
+              "No categories yet"
+            ),
+
+            React.createElement(
+              "p",
+              {
+                style: {
+                  margin: 0
+                }
+              },
+              "Create your first income or expense category."
+            )
+          )
+        : React.createElement(
+            "div",
+            {
+              style: {
+                display: "grid",
+                gap: "10px"
+              }
+            },
+
+            categories.map(function (category) {
+              const type = String(
+                category.category_type || "other"
+              ).toLowerCase();
+
+              const typeLabel =
+                type === "income"
+                  ? "Income"
+                  : type === "expense"
+                  ? "Expense"
+                  : "Other";
+
+              return React.createElement(
+                "div",
+                {
+                  key: category.id,
+                  style: {
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "15px",
+                    border: "1px solid #ece8f5",
+                    borderRadius: "14px",
+                    background: "#ffffff",
+                    flexWrap: "wrap"
+                  }
+                },
+
+                React.createElement(
+                  "div",
+                  null,
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        fontWeight: "700",
+                        marginBottom: "5px"
+                      }
+                    },
+                    category.name || "Unnamed Category"
+                  ),
+
+                  category.description
+                    ? React.createElement(
+                        "div",
+                        {
+                          style: {
+                            fontSize: "13px",
+                            color: "#777"
+                          }
+                        },
+                        category.description
+                      )
+                    : null
+                ),
+
+                React.createElement(
+                  "span",
+                  {
+                    style: {
+                      padding: "6px 10px",
+                      borderRadius: "999px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      background:
+                        type === "income"
+                          ? "#eaf8ef"
+                          : type === "expense"
+                          ? "#fff0f0"
+                          : "#f1eff8",
+                      color:
+                        type === "income"
+                          ? "#16803c"
+                          : type === "expense"
+                          ? "#c62828"
+                          : "#625b7a"
+                    }
+                  },
+                  typeLabel
+                )
+              );
+            })
+          )
+    )
+  );
+}
   // =====================================================
   // GENERIC MODULE PAGE
   // =====================================================

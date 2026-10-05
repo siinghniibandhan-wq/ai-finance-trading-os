@@ -25,6 +25,12 @@ from backend import budgets
 
 from backend import bills
 
+# =====================================================
+# STATEMENTS / IMPORT ROUTES
+# =====================================================
+
+from backend import statements
+
 app = FastAPI(
     title="AI Finance Trading OS",
     description="AI-powered personal finance, wealth management, investment and trading platform.",
@@ -74,6 +80,12 @@ app.include_router(budgets.router)
 # =====================================================
 
 app.include_router(bills.router)
+
+# =====================================================
+# STATEMENTS / IMPORT ROUTES
+# =====================================================
+
+app.include_router(statements.router)
 
 # ============================================================
 # BASIC ROUTES

@@ -4981,6 +4981,1033 @@ function renderCategories() {
         : null
     );
   }
+// =====================================================
+// CASH FLOW PAGE
+// =====================================================
+// Uses the existing Transactions, Accounts and Categories
+// data. No new database table is required.
+// =====================================================
+
+function renderCashFlow() {
+
+  // -----------------------------------------------------
+  // TRANSACTION TYPE GROUPS
+  // -----------------------------------------------------
+
+  const incomeTypes = [
+    "income",
+    "refund",
+    "interest",
+    "dividend"
+  ];
+
+  const expenseTypes = [
+    "expense",
+    "withdrawal",
+    "tax",
+    "loan_repayment"
+  ];
+
+  // -----------------------------------------------------
+  // MONEY FORMATTER
+  // -----------------------------------------------------
+
+  function cashFlowMoney(value) {
+    const amount = Number(value || 0);
+
+    return `INR ${amount.toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  }
+
+  // -----------------------------------------------------
+  // CLASSIFY TRANSACTIONS
+  // -----------------------------------------------------
+
+  const incomeTransactions = transactions.filter(function (transaction) {
+    return incomeTypes.includes(
+      String(transaction.transaction_type || "").toLowerCase()
+    );
+  });
+
+  const expenseTransactions = transactions.filter(function (transaction) {
+    return expenseTypes.includes(
+      String(transaction.transaction_type || "").toLowerCase()
+    );
+  });
+
+  // -----------------------------------------------------
+  // TOTALS
+  // -----------------------------------------------------
+
+  const totalIncome = incomeTransactions.reduce(
+    function (total, transaction) {
+      return total + Number(transaction.amount || 0);
+    },
+    0
+  );
+
+  const totalExpenses = expenseTransactions.reduce(
+    function (total, transaction) {
+      return total + Number(transaction.amount || 0);
+    },
+    0
+  );
+
+  const netCashFlow = totalIncome - totalExpenses;
+
+  // -----------------------------------------------------
+  // MONTHLY CASH FLOW
+  // LAST 6 MONTHS
+  // -----------------------------------------------------
+
+  const monthlyMap = {};
+
+  const now = new Date();
+
+  for (let i = 5; i >= 0; i--) {
+
+    const date = new Date(
+      now.getFullYear(),
+      now.getMonth() - i,
+      1
+    );
+
+    const key =
+      `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`;
+
+    monthlyMap[key] = {
+      key: key,
+      label: date.toLocaleString("en-IN", {
+        month: "short",
+        year: "numeric"
+      }),
+      income: 0,
+      expenses: 0,
+      net: 0
+    };
+  }
+
+  transactions.forEach(function (transaction) {
+
+    if (!transaction.transaction_date) {
+      return;
+    }
+
+    const date = new Date(
+      String(transaction.transaction_date).slice(0, 10)
+    );
+
+    if (Number.isNaN(date.getTime())) {
+      return;
+    }
+
+    const key =
+      `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`;
+
+    if (!monthlyMap[key]) {
+      return;
+    }
+
+    const type = String(
+      transaction.transaction_type || ""
+    ).toLowerCase();
+
+    const amount = Number(
+      transaction.amount || 0
+    );
+
+    if (incomeTypes.includes(type)) {
+      monthlyMap[key].income += amount;
+    }
+
+    if (expenseTypes.includes(type)) {
+      monthlyMap[key].expenses += amount;
+    }
+  });
+
+  Object.keys(monthlyMap).forEach(function (key) {
+    monthlyMap[key].net =
+      monthlyMap[key].income -
+      monthlyMap[key].expenses;
+  });
+
+  const monthlyCashFlow = Object.values(monthlyMap);
+
+  // -----------------------------------------------------
+  // CATEGORY EXPENSE BREAKDOWN
+  // -----------------------------------------------------
+
+  const categoryMap = {};
+
+  expenseTransactions.forEach(function (transaction) {
+
+    const category = categories.find(function (item) {
+      return Number(item.id) ===
+        Number(transaction.category_id);
+    });
+
+    const categoryName = category
+      ? category.name
+      : "Uncategorized";
+
+    if (!categoryMap[categoryName]) {
+      categoryMap[categoryName] = 0;
+    }
+
+    categoryMap[categoryName] += Number(
+      transaction.amount || 0
+    );
+  });
+
+  const categoryExpenses = Object.keys(categoryMap)
+    .map(function (name) {
+      return {
+        name: name,
+        amount: categoryMap[name]
+      };
+    })
+    .sort(function (a, b) {
+      return b.amount - a.amount;
+    });
+
+  // -----------------------------------------------------
+  // ACCOUNT CASH FLOW BREAKDOWN
+  // -----------------------------------------------------
+
+  const accountMap = {};
+
+  transactions.forEach(function (transaction) {
+
+    const account = accounts.find(function (item) {
+      return Number(item.id) ===
+        Number(transaction.account_id);
+    });
+
+    const accountName = account
+      ? account.name
+      : "Unknown Account";
+
+    if (!accountMap[accountName]) {
+      accountMap[accountName] = {
+        income: 0,
+        expenses: 0,
+        net: 0
+      };
+    }
+
+    const type = String(
+      transaction.transaction_type || ""
+    ).toLowerCase();
+
+    const amount = Number(
+      transaction.amount || 0
+    );
+
+    if (incomeTypes.includes(type)) {
+      accountMap[accountName].income += amount;
+    }
+
+    if (expenseTypes.includes(type)) {
+      accountMap[accountName].expenses += amount;
+    }
+  });
+
+  Object.keys(accountMap).forEach(function (name) {
+    accountMap[name].net =
+      accountMap[name].income -
+      accountMap[name].expenses;
+  });
+
+  const accountCashFlow = Object.keys(accountMap)
+    .map(function (name) {
+      return {
+        name: name,
+        income: accountMap[name].income,
+        expenses: accountMap[name].expenses,
+        net: accountMap[name].net
+      };
+    })
+    .sort(function (a, b) {
+      return b.net - a.net;
+    });
+
+  // -----------------------------------------------------
+  // RECENT TRANSACTIONS
+  // -----------------------------------------------------
+
+  const recentTransactions = transactions
+    .slice()
+    .sort(function (a, b) {
+
+      const dateA = new Date(
+        String(a.transaction_date || "")
+      ).getTime();
+
+      const dateB = new Date(
+        String(b.transaction_date || "")
+      ).getTime();
+
+      return dateB - dateA;
+    })
+    .slice(0, 10);
+
+  // -----------------------------------------------------
+  // MAX MONTHLY VALUE
+  // Used for simple visual bars.
+  // -----------------------------------------------------
+
+  const maxMonthlyValue = Math.max(
+    1,
+    ...monthlyCashFlow.map(function (item) {
+      return Math.max(
+        item.income,
+        item.expenses
+      );
+    })
+  );
+
+  // -----------------------------------------------------
+  // CARD HELPER
+  // -----------------------------------------------------
+
+  function summaryCard(
+    title,
+    value,
+    subtitle,
+    valueColor
+  ) {
+    return React.createElement(
+      "div",
+      {
+        style: {
+          background: "#ffffff",
+          border: "1px solid #ece8f5",
+          borderRadius: "16px",
+          padding: "20px",
+          minHeight: "125px",
+          boxSizing: "border-box"
+        }
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "13px",
+            color: "#777",
+            marginBottom: "10px"
+          }
+        },
+        title
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "25px",
+            fontWeight: "800",
+            color: valueColor || "#222"
+          }
+        },
+        value
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "12px",
+            color: "#999",
+            marginTop: "7px"
+          }
+        },
+        subtitle
+      )
+    );
+  }
+
+  // -----------------------------------------------------
+  // PAGE
+  // -----------------------------------------------------
+
+  return React.createElement(
+    React.Fragment,
+    null,
+
+    // ===================================================
+    // PAGE HEADER
+    // ===================================================
+
+    React.createElement(
+      "div",
+      {
+        className: "page-heading"
+      },
+
+      React.createElement(
+        "h2",
+        null,
+        "Cash Flow"
+      ),
+
+      React.createElement(
+        "p",
+        null,
+        "Understand money coming in and going out."
+      )
+    ),
+
+    // ===================================================
+    // SUMMARY CARDS
+    // ===================================================
+
+    React.createElement(
+      "div",
+      {
+        style: {
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(210px, 1fr))",
+          gap: "14px",
+          marginBottom: "18px"
+        }
+      },
+
+      summaryCard(
+        "Total Income",
+        cashFlowMoney(totalIncome),
+        `${incomeTransactions.length} income transactions`,
+        "#16803c"
+      ),
+
+      summaryCard(
+        "Total Expenses",
+        cashFlowMoney(totalExpenses),
+        `${expenseTransactions.length} expense transactions`,
+        "#c62828"
+      ),
+
+      summaryCard(
+        "Net Cash Flow",
+        cashFlowMoney(netCashFlow),
+        netCashFlow >= 0
+          ? "Positive cash flow"
+          : "Negative cash flow",
+        netCashFlow >= 0
+          ? "#16803c"
+          : "#c62828"
+      ),
+
+      summaryCard(
+        "Transactions",
+        String(transactions.length),
+        "Recorded transactions",
+        "#625b7a"
+      )
+    ),
+
+    // ===================================================
+    // MONTHLY CASH FLOW
+    // ===================================================
+
+    React.createElement(
+      "div",
+      {
+        className: "module-card",
+        style: {
+          marginBottom: "18px"
+        }
+      },
+
+      React.createElement(
+        "h3",
+        {
+          style: {
+            marginTop: 0,
+            marginBottom: "5px"
+          }
+        },
+        "Monthly Cash Flow"
+      ),
+
+      React.createElement(
+        "p",
+        {
+          style: {
+            color: "#777",
+            marginTop: 0
+          }
+        },
+        "Income and expenses for the last six months."
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "grid",
+            gap: "14px",
+            marginTop: "20px"
+          }
+        },
+
+        monthlyCashFlow.map(function (month) {
+
+          const incomeWidth =
+            Math.max(
+              2,
+              (month.income / maxMonthlyValue) * 100
+            );
+
+          const expenseWidth =
+            Math.max(
+              2,
+              (month.expenses / maxMonthlyValue) * 100
+            );
+
+          return React.createElement(
+            "div",
+            {
+              key: month.key,
+              style: {
+                display: "grid",
+                gap: "7px"
+              }
+            },
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: "10px",
+                  fontSize: "13px",
+                  fontWeight: "700"
+                }
+              },
+
+              React.createElement(
+                "span",
+                null,
+                month.label
+              ),
+
+              React.createElement(
+                "span",
+                {
+                  style: {
+                    color:
+                      month.net >= 0
+                        ? "#16803c"
+                        : "#c62828"
+                  }
+                },
+                cashFlowMoney(month.net)
+              )
+            ),
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  height: "10px",
+                  background: "#f0edf6",
+                  borderRadius: "999px",
+                  overflow: "hidden"
+                }
+              },
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    width: `${incomeWidth}%`,
+                    height: "100%",
+                    background: "#16803c",
+                    borderRadius: "999px"
+                  }
+                }
+              )
+            ),
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  height: "10px",
+                  background: "#f0edf6",
+                  borderRadius: "999px",
+                  overflow: "hidden"
+                }
+              },
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    width: `${expenseWidth}%`,
+                    height: "100%",
+                    background: "#c62828",
+                    borderRadius: "999px"
+                  }
+                }
+              )
+            ),
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  gap: "15px",
+                  fontSize: "11px",
+                  color: "#777"
+                }
+              },
+
+              React.createElement(
+                "span",
+                null,
+                `Income: ${cashFlowMoney(month.income)}`
+              ),
+
+              React.createElement(
+                "span",
+                null,
+                `Expenses: ${cashFlowMoney(month.expenses)}`
+              )
+            )
+          );
+        })
+      )
+    ),
+
+    // ===================================================
+    // CATEGORY + ACCOUNT SECTIONS
+    // ===================================================
+
+    React.createElement(
+      "div",
+      {
+        style: {
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: "18px",
+          marginBottom: "18px"
+        }
+      },
+
+      // -------------------------------------------------
+      // EXPENSE BY CATEGORY
+      // -------------------------------------------------
+
+      React.createElement(
+        "div",
+        {
+          className: "module-card"
+        },
+
+        React.createElement(
+          "h3",
+          {
+            style: {
+              marginTop: 0
+            }
+          },
+          "Expenses by Category"
+        ),
+
+        categoryExpenses.length === 0
+          ? React.createElement(
+              "p",
+              {
+                style: {
+                  color: "#777"
+                }
+              },
+              "No expense data available."
+            )
+          : categoryExpenses.map(function (item) {
+
+              const percentage =
+                totalExpenses > 0
+                  ? (item.amount / totalExpenses) * 100
+                  : 0;
+
+              return React.createElement(
+                "div",
+                {
+                  key: item.name,
+                  style: {
+                    marginBottom: "15px"
+                  }
+                },
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: "10px",
+                      fontSize: "13px",
+                      marginBottom: "6px"
+                    }
+                  },
+
+                  React.createElement(
+                    "span",
+                    {
+                      style: {
+                        fontWeight: "700"
+                      }
+                    },
+                    item.name
+                  ),
+
+                  React.createElement(
+                    "span",
+                    null,
+                    cashFlowMoney(item.amount)
+                  )
+                ),
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      height: "8px",
+                      background: "#f0edf6",
+                      borderRadius: "999px",
+                      overflow: "hidden"
+                    }
+                  },
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        width: `${percentage}%`,
+                        height: "100%",
+                        background: "#c62828",
+                        borderRadius: "999px"
+                      }
+                    }
+                  )
+                )
+              );
+            })
+      ),
+
+      // -------------------------------------------------
+      // ACCOUNT CASH FLOW
+      // -------------------------------------------------
+
+      React.createElement(
+        "div",
+        {
+          className: "module-card"
+        },
+
+        React.createElement(
+          "h3",
+          {
+            style: {
+              marginTop: 0
+            }
+          },
+          "Cash Flow by Account"
+        ),
+
+        accountCashFlow.length === 0
+          ? React.createElement(
+              "p",
+              {
+                style: {
+                  color: "#777"
+                }
+              },
+              "No account cash flow data available."
+            )
+          : accountCashFlow.map(function (item) {
+
+              return React.createElement(
+                "div",
+                {
+                  key: item.name,
+                  style: {
+                    padding: "13px 0",
+                    borderBottom: "1px solid #f0edf6"
+                  }
+                },
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      fontWeight: "800",
+                      marginBottom: "8px"
+                    }
+                  },
+                  item.name
+                ),
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(3, 1fr)",
+                      gap: "8px",
+                      fontSize: "12px"
+                    }
+                  },
+
+                  React.createElement(
+                    "div",
+                    null,
+                    React.createElement(
+                      "div",
+                      {
+                        style: {
+                          color: "#777"
+                        }
+                      },
+                      "Income"
+                    ),
+                    React.createElement(
+                      "strong",
+                      {
+                        style: {
+                          color: "#16803c"
+                        }
+                      },
+                      cashFlowMoney(item.income)
+                    )
+                  ),
+
+                  React.createElement(
+                    "div",
+                    null,
+                    React.createElement(
+                      "div",
+                      {
+                        style: {
+                          color: "#777"
+                        }
+                      },
+                      "Expenses"
+                    ),
+                    React.createElement(
+                      "strong",
+                      {
+                        style: {
+                          color: "#c62828"
+                        }
+                      },
+                      cashFlowMoney(item.expenses)
+                    )
+                  ),
+
+                  React.createElement(
+                    "div",
+                    null,
+                    React.createElement(
+                      "div",
+                      {
+                        style: {
+                          color: "#777"
+                        }
+                      },
+                      "Net"
+                    ),
+                    React.createElement(
+                      "strong",
+                      {
+                        style: {
+                          color:
+                            item.net >= 0
+                              ? "#16803c"
+                              : "#c62828"
+                        }
+                      },
+                      cashFlowMoney(item.net)
+                    )
+                  )
+                )
+              );
+            })
+      )
+    ),
+
+    // ===================================================
+    // RECENT CASH FLOW TRANSACTIONS
+    // ===================================================
+
+    React.createElement(
+      "div",
+      {
+        className: "module-card"
+      },
+
+      React.createElement(
+        "h3",
+        {
+          style: {
+            marginTop: 0
+          }
+        },
+        "Recent Cash Flow"
+      ),
+
+      recentTransactions.length === 0
+        ? React.createElement(
+            "p",
+            {
+              style: {
+                color: "#777"
+              }
+            },
+            "No transactions available."
+          )
+        : React.createElement(
+            "div",
+            {
+              style: {
+                display: "grid",
+                gap: "10px"
+              }
+            },
+
+            recentTransactions.map(function (transaction) {
+
+              const type = String(
+                transaction.transaction_type || ""
+              ).toLowerCase();
+
+              const isIncome =
+                incomeTypes.includes(type);
+
+              const account = accounts.find(
+                function (item) {
+                  return Number(item.id) ===
+                    Number(transaction.account_id);
+                }
+              );
+
+              const category = categories.find(
+                function (item) {
+                  return Number(item.id) ===
+                    Number(transaction.category_id);
+                }
+              );
+
+              return React.createElement(
+                "div",
+                {
+                  key: transaction.id,
+                  style: {
+                    display: "grid",
+                    gridTemplateColumns:
+                      "100px minmax(150px, 1fr) minmax(100px, 1fr) auto",
+                    gap: "12px",
+                    alignItems: "center",
+                    padding: "12px",
+                    border: "1px solid #ece8f5",
+                    borderRadius: "12px"
+                  }
+                },
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      fontSize: "12px",
+                      color: "#777"
+                    }
+                  },
+                  transaction.transaction_date
+                    ? String(
+                        transaction.transaction_date
+                      ).slice(0, 10)
+                    : "—"
+                ),
+
+                React.createElement(
+                  "div",
+                  null,
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        fontWeight: "700"
+                      }
+                    },
+                    transaction.description ||
+                      transaction.merchant ||
+                      "Untitled transaction"
+                  ),
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        fontSize: "11px",
+                        color: "#999",
+                        marginTop: "3px"
+                      }
+                    },
+                    category
+                      ? category.name
+                      : "Uncategorized"
+                  )
+                ),
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      fontSize: "12px",
+                      color: "#777"
+                    }
+                  },
+                  account
+                    ? account.name
+                    : "Unknown account"
+                ),
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      fontWeight: "800",
+                      color: isIncome
+                        ? "#16803c"
+                        : "#c62828"
+                    }
+                  },
+                  `${isIncome ? "+" : "-"}${cashFlowMoney(
+                    transaction.amount
+                  )}`
+                )
+              );
+            })
+          )
+    )
+  );
+}
+
 
   // =====================================================
   // GENERIC MODULE PAGE

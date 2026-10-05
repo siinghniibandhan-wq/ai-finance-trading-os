@@ -186,7 +186,23 @@ const [billForm, setBillForm] = useState({
   status: "active",
   notes: ""
 });   
-   
+
+// =====================================================
+// STATEMENTS / IMPORT STATE
+// =====================================================
+
+// -----------------------------------------------------
+// STATEMENT LIST
+// -----------------------------------------------------
+const [statements, setStatements] = useState([]);
+const [statementsLoading, setStatementsLoading] = useState(false);
+const [statementsError, setStatementsError] = useState("");
+
+// -----------------------------------------------------
+// STATEMENT IMPORT FORM
+// -----------------------------------------------------
+const [statementFile, setStatementFile] = useState(null);
+const [statementImporting, setStatementImporting] = useState(false);   
 // =====================================================
 // LOAD CATEGORIES FROM BACKEND
 // =====================================================

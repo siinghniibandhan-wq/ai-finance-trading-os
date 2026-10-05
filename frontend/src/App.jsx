@@ -4054,6 +4054,210 @@ function renderCategories() {
                   width: "100%",
                   padding: "12px",
                   border: "1px solid #ddd7eb",
+                  marginBottom: "20px",
+                  fontSize: "15px",
+                  resize: "vertical"
+          }
+        }
+      ),
+
+      // -----------------------------------------
+      // MODAL ERROR
+      // -----------------------------------------
+
+      categoriesError
+        ? React.createElement(
+            "div",
+            {
+              style: {
+                background: "#fff1f1",
+                color: "#b42318",
+                border: "1px solid #ffd0d0",
+                borderRadius: "10px",
+                padding: "10px 12px",
+                marginBottom: "16px"
+              }
+            },
+            categoriesError
+          )
+        : null,
+
+      // -----------------------------------------
+      // ACTION BUTTONS
+      // -----------------------------------------
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "10px",
+            flexWrap: "wrap"
+          }
+        },
+
+        React.createElement(
+          "button",
+          {
+            type: "button",
+            onClick: closeCategoryForm,
+            disabled: categorySaving,
+            style: {
+              border: "1px solid #ddd7eb",
+              background: "#ffffff",
+              borderRadius: "10px",
+              padding: "11px 18px",
+              cursor: "pointer",
+              fontWeight: "700"
+            }
+          },
+          "Cancel"
+        ),
+
+        React.createElement(
+          "button",
+          {
+            type: "button",
+            onClick: saveCategory,
+            disabled: categorySaving,
+            style: {
+              border: "none",
+              background: "#6d4aff",
+              color: "#ffffff",
+              borderRadius: "10px",
+              padding: "11px 20px",
+              cursor: "pointer",
+              fontWeight: "700"
+            }
+          },
+
+          categorySaving
+            ? "Saving..."
+            : editingCategory
+            ? "Update Category"
+            : "Create Category"
+        )
+      )
+    )
+  : null,
+
+  // ===================================================
+  // DELETE CONFIRMATION MODAL
+  // ===================================================
+
+  categoryToDelete
+    ? React.createElement(
+        "div",
+        {
+          style: {
+            position: "fixed",
+            inset: 0,
+            background: "rgba(20, 16, 40, 0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            zIndex: 10000
+          }
+        },
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              width: "100%",
+              maxWidth: "420px",
+              background: "#ffffff",
+              borderRadius: "18px",
+              padding: "22px",
+              boxShadow:
+                "0 20px 60px rgba(0,0,0,0.18)"
+            }
+          },
+
+          React.createElement(
+            "h3",
+            {
+              style: {
+                marginTop: 0
+              }
+            },
+            "Delete Category?"
+          ),
+
+          React.createElement(
+            "p",
+            {
+              style: {
+                color: "#666",
+                lineHeight: "1.5"
+              }
+            },
+            `Are you sure you want to delete "${categoryToDelete.name}"?`
+          ),
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+                flexWrap: "wrap"
+              }
+            },
+
+            React.createElement(
+              "button",
+              {
+                type: "button",
+                onClick: function () {
+                  if (!categoryDeleting) {
+                    setCategoryToDelete(null);
+                  }
+                },
+                disabled: categoryDeleting,
+                style: {
+                  border: "1px solid #ddd7eb",
+                  background: "#ffffff",
+                  borderRadius: "10px",
+                  padding: "11px 18px",
+                  cursor: "pointer",
+                  fontWeight: "700"
+                }
+              },
+              "Cancel"
+            ),
+
+            React.createElement(
+              "button",
+              {
+                type: "button",
+                onClick: function () {
+                  deleteCategory(categoryToDelete.id);
+                },
+                disabled: categoryDeleting,
+                style: {
+                  border: "none",
+                  background: "#d92d20",
+                  color: "#ffffff",
+                  borderRadius: "10px",
+                  padding: "11px 18px",
+                  cursor: "pointer",
+                  fontWeight: "700"
+                }
+              },
+              categoryDeleting
+                ? "Deleting..."
+                : "Delete Category"
+            )
+          )
+        )
+      )
+    : null
+  );
+}
           
               
 

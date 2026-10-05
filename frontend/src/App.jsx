@@ -8907,6 +8907,299 @@ const deleteBillModal = billToDelete
   );
 }
 
+// =====================================================
+// STATEMENTS / IMPORT PAGE
+// =====================================================
+
+function renderStatements() {
+  // ---------------------------------------------------
+  // PAGE HEADER
+  // ---------------------------------------------------
+
+  const pageHeader = React.createElement(
+    "div",
+    { className: "page-heading" },
+
+    React.createElement(
+      "h2",
+      null,
+      "Statements / Import"
+    ),
+
+    React.createElement(
+      "p",
+      null,
+      "Import bank and financial statements for review and reconciliation."
+    )
+  );
+
+  // ---------------------------------------------------
+  // IMPORT CARD
+  // ---------------------------------------------------
+
+  const importCard = React.createElement(
+    "div",
+    {
+      className: "module-card",
+      style: {
+        marginBottom: "20px"
+      }
+    },
+
+    React.createElement(
+      "h3",
+      null,
+      "Import Statement"
+    ),
+
+    React.createElement(
+      "p",
+      null,
+      "Upload a CSV statement. Imported rows remain separate from Transactions until they are reviewed."
+    ),
+
+    React.createElement(
+      "input",
+      {
+        type: "file",
+        accept: ".csv,text/csv",
+        onChange: function (event) {
+          const file =
+            event.target.files &&
+            event.target.files[0]
+              ? event.target.files[0]
+              : null;
+
+          setStatementFile(file);
+          setStatementsError("");
+        },
+        style: {
+          display: "block",
+          width: "100%",
+          marginTop: "15px",
+          marginBottom: "15px"
+        }
+      }
+    ),
+
+    statementFile
+      ? React.createElement(
+          "div",
+          {
+            style: {
+              marginBottom: "15px",
+              fontSize: "14px"
+            }
+          },
+          "Selected: ",
+          statementFile.name
+        )
+      : null,
+
+    React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: importStatement,
+        disabled: statementImporting || !statementFile,
+        style: {
+          border: 0,
+          borderRadius: "10px",
+          padding: "11px 18px",
+          background:
+            statementImporting || !statementFile
+              ? "#aaa"
+              : "#6c2bd9",
+          color: "#ffffff",
+          fontWeight: "700",
+          cursor:
+            statementImporting || !statementFile
+              ? "not-allowed"
+              : "pointer"
+        }
+      },
+      statementImporting
+        ? "Importing..."
+        : "Import Statement"
+    )
+  );
+
+  // ---------------------------------------------------
+  // ERROR MESSAGE
+  // ---------------------------------------------------
+
+  const errorMessage = statementsError
+    ? React.createElement(
+        "div",
+        {
+          style: {
+            marginBottom: "20px",
+            padding: "12px 14px",
+            borderRadius: "10px",
+            background: "#ffebee",
+            color: "#c62828",
+            fontWeight: "600"
+          }
+        },
+        statementsError
+      )
+    : null;
+
+  // ---------------------------------------------------
+  // LOADING MESSAGE
+  // ---------------------------------------------------
+
+  if (statementsLoading) {
+    return React.createElement(
+      React.Fragment,
+      null,
+      pageHeader,
+      importCard,
+      errorMessage,
+
+      React.createElement(
+        "div",
+        {
+          className: "module-card"
+        },
+        "Loading statement imports..."
+      )
+    );
+  }
+
+  // ---------------------------------------------------
+  // STATEMENT LIST
+  // ---------------------------------------------------
+
+  const statementList =
+    statements.length > 0
+      ? statements.map(function (statement) {
+          return React.createElement(
+            "div",
+            {
+              key: statement.id,
+              className: "module-card",
+              style: {
+                marginBottom: "12px"
+              }
+            },
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: "15px",
+                  flexWrap: "wrap"
+                }
+              },
+
+              React.createElement(
+                "div",
+                null,
+
+                React.createElement(
+                  "h3",
+                  {
+                    style: {
+                      margin: "0 0 8px 0"
+                    }
+                  },
+                  statement.file_name ||
+                    "Statement"
+                ),
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      fontSize: "14px",
+                      lineHeight: "1.7"
+                    }
+                  },
+
+                  "Status: ",
+                  statement.status || "—",
+                  React.createElement("br"),
+
+                  "Rows: ",
+                  statement.total_rows ?? 0,
+                  React.createElement("br"),
+
+                  "Imported: ",
+                  statement.imported_rows ?? 0,
+                  React.createElement("br"),
+
+                  "Duplicates: ",
+                  statement.duplicate_rows ?? 0,
+                  React.createElement("br"),
+
+                  "Errors: ",
+                  statement.error_rows ?? 0
+                )
+              ),
+
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  onClick: function () {
+                    deleteStatement(statement.id);
+                  },
+                  style: {
+                    border: 0,
+                    borderRadius: "10px",
+                    padding: "10px 14px",
+                    background: "#d32f2f",
+                    color: "#ffffff",
+                    fontWeight: "700",
+                    cursor: "pointer"
+                  }
+                },
+                "Delete"
+              )
+            )
+          );
+        })
+      : React.createElement(
+          "div",
+          {
+            className: "module-card"
+          },
+
+          React.createElement(
+            "h3",
+            null,
+            "No Statements Imported"
+          ),
+
+          React.createElement(
+            "p",
+            null,
+            "Upload a CSV statement above to begin."
+          )
+        );
+
+  // ---------------------------------------------------
+  // FINAL STATEMENTS PAGE
+  // ---------------------------------------------------
+
+  return React.createElement(
+    React.Fragment,
+    null,
+
+    pageHeader,
+
+    importCard,
+
+    errorMessage,
+
+    statementList
+  );
+}
+
   // =====================================================
   // GENERIC MODULE PAGE
   // =====================================================

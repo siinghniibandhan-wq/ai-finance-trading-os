@@ -390,10 +390,11 @@ async function deleteCategory(categoryId) {
 useEffect(
   function () {
     if (
-      active === "Categories" ||
-      active === "Transactions" ||
-      active === "Cash Flow"
-    ) {
+  active === "Categories" ||
+  active === "Transactions" ||
+  active === "Cash Flow" ||
+  active === "Budget"
+) {
       loadCategories();
     }
   },
@@ -812,9 +813,10 @@ async function loadTransactions() {
 useEffect(
   function () {
     if (
-      active === "Transactions" ||
-      active === "Cash Flow"
-    ) {
+  active === "Transactions" ||
+  active === "Cash Flow" ||
+  active === "Budget"
+) {
       loadTransactions();
     }
   },

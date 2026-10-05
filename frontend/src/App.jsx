@@ -7570,6 +7570,926 @@ function renderBudget() {
       )
   );
 }
+// =====================================================
+// BILLS & SUBSCRIPTIONS PAGE
+// FINANCE RECURRING PAYMENT MANAGEMENT
+// =====================================================
+
+function renderBills() {
+
+  // ===================================================
+  // BILL FORM FIELD COMPONENT
+  // ===================================================
+
+  function billField(label, field, type, placeholder) {
+    return React.createElement(
+      "div",
+      {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: "7px"
+        }
+      },
+
+      React.createElement(
+        "label",
+        {
+          style: {
+            fontSize: "13px",
+            fontWeight: "700",
+            color: "#4f4966"
+          }
+        },
+        label
+      ),
+
+      React.createElement("input", {
+        type: type || "text",
+        value: billForm[field] || "",
+
+        placeholder: placeholder || "",
+
+        onChange: function (event) {
+          handleBillChange(field, event.target.value);
+        },
+
+        style: {
+          width: "100%",
+          minHeight: "44px",
+          padding: "10px 12px",
+          border: "1px solid #ddd7eb",
+          borderRadius: "10px",
+          background: "#ffffff",
+          color: "#18152b",
+          outline: "none",
+          fontSize: "14px",
+          boxSizing: "border-box"
+        }
+      })
+    );
+  }
+
+
+  // ===================================================
+  // PAGE HEADER
+  // ===================================================
+
+  const pageHeader = React.createElement(
+    "div",
+    {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: "15px",
+        flexWrap: "wrap",
+        marginBottom: "22px"
+      }
+    },
+
+    React.createElement(
+      "div",
+      null,
+
+      React.createElement(
+        "h2",
+        {
+          style: {
+            margin: 0,
+            fontSize: "26px",
+            fontWeight: "800"
+          }
+        },
+        "Bills & Subscriptions"
+      ),
+
+      React.createElement(
+        "p",
+        {
+          style: {
+            margin: "7px 0 0",
+            color: "#77718d",
+            lineHeight: "1.5"
+          }
+        },
+        "Track recurring bills, subscriptions and upcoming payments."
+      )
+    ),
+
+    React.createElement(
+      "button",
+      {
+        onClick: openAddBillForm,
+
+        style: {
+          border: "0",
+          borderRadius: "10px",
+          padding: "11px 17px",
+          background: "#7048ff",
+          color: "#ffffff",
+          fontWeight: "700",
+          cursor: "pointer",
+          minHeight: "44px"
+        }
+      },
+      "+ Add Bill"
+    )
+  );
+
+
+  // ===================================================
+  // SUMMARY VALUES
+  // ===================================================
+
+  const activeBills = bills.filter(function (bill) {
+    return String(bill.status || "active").toLowerCase() === "active";
+  });
+
+  const totalMonthlyAmount = activeBills.reduce(
+    function (total, bill) {
+      const amount = Number(bill.amount || 0);
+
+      if (
+        String(bill.frequency || "").toLowerCase() ===
+        "monthly"
+      ) {
+        return total + amount;
+      }
+
+      return total;
+    },
+    0
+  );
+
+  const upcomingCount = activeBills.filter(function (bill) {
+    return Boolean(bill.next_due_date);
+  }).length;
+
+
+  // ===================================================
+  // SUMMARY CARDS
+  // ===================================================
+
+  const summaryCards = React.createElement(
+    "div",
+    {
+      style: {
+        display: "grid",
+        gridTemplateColumns:
+          "repeat(auto-fit, minmax(180px, 1fr))",
+        gap: "12px",
+        marginBottom: "20px"
+      }
+    },
+
+    React.createElement(
+      "div",
+      {
+        style: {
+          background: "#ffffff",
+          border: "1px solid #ece8f5",
+          borderRadius: "14px",
+          padding: "17px"
+        }
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "12px",
+            color: "#77718d",
+            marginBottom: "6px"
+          }
+        },
+        "Total Bills"
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "25px",
+            fontWeight: "800"
+          }
+        },
+        bills.length
+      )
+    ),
+
+    React.createElement(
+      "div",
+      {
+        style: {
+          background: "#ffffff",
+          border: "1px solid #ece8f5",
+          borderRadius: "14px",
+          padding: "17px"
+        }
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "12px",
+            color: "#77718d",
+            marginBottom: "6px"
+          }
+        },
+        "Active Bills"
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "25px",
+            fontWeight: "800"
+          }
+        },
+        activeBills.length
+      )
+    ),
+
+    React.createElement(
+      "div",
+      {
+        style: {
+          background: "#ffffff",
+          border: "1px solid #ece8f5",
+          borderRadius: "14px",
+          padding: "17px"
+        }
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "12px",
+            color: "#77718d",
+            marginBottom: "6px"
+          }
+        },
+        "Monthly Bills"
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "22px",
+            fontWeight: "800"
+          }
+        },
+        formatMoney(totalMonthlyAmount, "INR")
+      )
+    ),
+
+    React.createElement(
+      "div",
+      {
+        style: {
+          background: "#ffffff",
+          border: "1px solid #ece8f5",
+          borderRadius: "14px",
+          padding: "17px"
+        }
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "12px",
+            color: "#77718d",
+            marginBottom: "6px"
+          }
+        },
+        "Upcoming"
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "25px",
+            fontWeight: "800"
+          }
+        },
+        upcomingCount
+      )
+    )
+  );
+
+
+  // ===================================================
+  // ERROR MESSAGE
+  // ===================================================
+
+  const errorMessage = billsError
+    ? React.createElement(
+        "div",
+        {
+          style: {
+            marginBottom: "15px",
+            padding: "12px 14px",
+            borderRadius: "10px",
+            background: "#fff0f0",
+            color: "#c62828",
+            border: "1px solid #ffd5d5",
+            fontSize: "14px",
+            fontWeight: "600"
+          }
+        },
+        billsError
+      )
+    : null;
+
+
+  // ===================================================
+  // BILL LIST
+  // ===================================================
+
+  const billList = React.createElement(
+    "div",
+    {
+      style: {
+        display: "grid",
+        gap: "12px"
+      }
+    },
+
+    billsLoading
+
+      ? React.createElement(
+          "div",
+          {
+            style: {
+              background: "#ffffff",
+              border: "1px solid #ece8f5",
+              borderRadius: "14px",
+              padding: "25px",
+              textAlign: "center",
+              color: "#77718d"
+            }
+          },
+          "Loading bills..."
+        )
+
+      : bills.length === 0
+
+      ? React.createElement(
+          "div",
+          {
+            style: {
+              background: "#ffffff",
+              border: "1px solid #ece8f5",
+              borderRadius: "14px",
+              padding: "35px 20px",
+              textAlign: "center"
+            }
+          },
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                fontSize: "38px",
+                marginBottom: "10px"
+              }
+            },
+            "🧾"
+          ),
+
+          React.createElement(
+            "strong",
+            {
+              style: {
+                fontSize: "16px"
+              }
+            },
+            "No bills added yet."
+          ),
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                marginTop: "7px",
+                color: "#77718d",
+                fontSize: "14px"
+              }
+            },
+            "Add your first recurring bill or subscription."
+          )
+        )
+
+      : bills.map(function (bill) {
+
+          const category = categories.find(function (item) {
+            return Number(item.id) === Number(bill.category_id);
+          });
+
+          const account = accounts.find(function (item) {
+            return Number(item.id) === Number(bill.account_id);
+          });
+
+          const status = String(
+            bill.status || "active"
+          ).toLowerCase();
+
+          return React.createElement(
+            "div",
+            {
+              key: bill.id,
+
+              style: {
+                background: "#ffffff",
+                border: "1px solid #ece8f5",
+                borderRadius: "14px",
+                padding: "16px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "15px",
+                flexWrap: "wrap"
+              }
+            },
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  flex: "1 1 220px",
+                  minWidth: 0
+                }
+              },
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    fontWeight: "800",
+                    fontSize: "16px",
+                    marginBottom: "5px"
+                  }
+                },
+                bill.name || "Unnamed Bill"
+              ),
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    color: "#77718d",
+                    fontSize: "13px",
+                    lineHeight: "1.6"
+                  }
+                },
+
+                category
+                  ? `Category: ${category.name}`
+                  : "Category: —",
+
+                React.createElement("br"),
+
+                account
+                  ? `Account: ${account.name}`
+                  : "Account: —",
+
+                React.createElement("br"),
+
+                `Frequency: ${bill.frequency || "—"}`,
+
+                React.createElement("br"),
+
+                `Next due: ${bill.next_due_date || "—"}`
+              )
+            ),
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  textAlign: "right"
+                }
+              },
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    fontSize: "18px",
+                    fontWeight: "800",
+                    marginBottom: "7px"
+                  }
+                },
+                formatMoney(bill.amount, "INR")
+              ),
+
+              React.createElement(
+                "span",
+                {
+                  style: {
+                    display: "inline-block",
+                    padding: "5px 9px",
+                    borderRadius: "999px",
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    background:
+                      status === "active"
+                        ? "#eaf8ef"
+                        : "#f1eff8",
+                    color:
+                      status === "active"
+                        ? "#16803c"
+                        : "#625b7a"
+                  }
+                },
+                bill.status || "active"
+              )
+            ),
+
+            React.createElement(
+              "button",
+              {
+                onClick: function () {
+                  openEditBillForm(bill);
+                },
+
+                style: {
+                  border: "1px solid #ddd7eb",
+                  borderRadius: "9px",
+                  background: "#ffffff",
+                  color: "#5942b8",
+                  padding: "9px 13px",
+                  fontWeight: "700",
+                  cursor: "pointer"
+                }
+              },
+              "Edit"
+            )
+          );
+        })
+  );
+
+
+  // ===================================================
+  // BILL FORM MODAL
+  // ===================================================
+
+  const billModal = showBillForm
+    ? React.createElement(
+        "div",
+        {
+          style: {
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "rgba(20, 15, 40, 0.48)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "15px",
+            overflowY: "auto"
+          }
+        },
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              width: "min(680px, 100%)",
+              maxHeight: "92vh",
+              overflowY: "auto",
+              background: "#ffffff",
+              borderRadius: "18px",
+              padding: "20px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)"
+            }
+          },
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "10px",
+                marginBottom: "18px"
+              }
+            },
+
+            React.createElement(
+              "h3",
+              {
+                style: {
+                  margin: 0,
+                  fontSize: "20px"
+                }
+              },
+              editingBill
+                ? "Edit Bill"
+                : "Add Bill"
+            ),
+
+            React.createElement(
+              "button",
+              {
+                onClick: function () {
+                  if (!billSaving) {
+                    setShowBillForm(false);
+                    resetBillForm();
+                  }
+                },
+
+                style: {
+                  border: 0,
+                  background: "#f1eff8",
+                  borderRadius: "50%",
+                  width: "34px",
+                  height: "34px",
+                  cursor: "pointer",
+                  fontSize: "18px"
+                }
+              },
+              "×"
+            )
+          ),
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: "14px"
+              }
+            },
+
+            billField(
+              "Bill / Subscription Name",
+              "name",
+              "text",
+              "e.g. Netflix"
+            ),
+
+            billField(
+              "Amount",
+              "amount",
+              "number",
+              "0.00"
+            ),
+
+            billField(
+              "Frequency",
+              "frequency",
+              "text",
+              "e.g. monthly"
+            ),
+
+            billField(
+              "Next Due Date",
+              "next_due_date",
+              "date",
+              ""
+            ),
+
+            billField(
+              "Status",
+              "status",
+              "text",
+              "e.g. active"
+            ),
+
+            billField(
+              "Notes",
+              "notes",
+              "text",
+              "Optional notes"
+            ),
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "7px"
+                }
+              },
+
+              React.createElement(
+                "label",
+                {
+                  style: {
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    color: "#4f4966"
+                  }
+                },
+                "Category"
+              ),
+
+              React.createElement(
+                "select",
+                {
+                  value: billForm.category_id || "",
+
+                  onChange: function (event) {
+                    handleBillChange(
+                      "category_id",
+                      event.target.value
+                    );
+                  },
+
+                  style: {
+                    width: "100%",
+                    minHeight: "44px",
+                    padding: "10px 12px",
+                    border: "1px solid #ddd7eb",
+                    borderRadius: "10px",
+                    background: "#ffffff",
+                    fontSize: "14px"
+                  }
+                },
+
+                React.createElement(
+                  "option",
+                  { value: "" },
+                  "No category"
+                ),
+
+                categories.map(function (category) {
+                  return React.createElement(
+                    "option",
+                    {
+                      key: category.id,
+                      value: String(category.id)
+                    },
+                    category.name
+                  );
+                })
+              )
+            ),
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "7px"
+                }
+              },
+
+              React.createElement(
+                "label",
+                {
+                  style: {
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    color: "#4f4966"
+                  }
+                },
+                "Payment Account"
+              ),
+
+              React.createElement(
+                "select",
+                {
+                  value: billForm.account_id || "",
+
+                  onChange: function (event) {
+                    handleBillChange(
+                      "account_id",
+                      event.target.value
+                    );
+                  },
+
+                  style: {
+                    width: "100%",
+                    minHeight: "44px",
+                    padding: "10px 12px",
+                    border: "1px solid #ddd7eb",
+                    borderRadius: "10px",
+                    background: "#ffffff",
+                    fontSize: "14px"
+                  }
+                },
+
+                React.createElement(
+                  "option",
+                  { value: "" },
+                  "No account"
+                ),
+
+                accounts.map(function (account) {
+                  return React.createElement(
+                    "option",
+                    {
+                      key: account.id,
+                      value: String(account.id)
+                    },
+                    account.name
+                  );
+                })
+              )
+            )
+          ),
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+                marginTop: "20px",
+                flexWrap: "wrap"
+              }
+            },
+
+            React.createElement(
+              "button",
+              {
+                onClick: function () {
+                  if (!billSaving) {
+                    setShowBillForm(false);
+                    resetBillForm();
+                  }
+                },
+
+                style: {
+                  border: "1px solid #ddd7eb",
+                  borderRadius: "10px",
+                  padding: "11px 16px",
+                  background: "#ffffff",
+                  color: "#4f4966",
+                  fontWeight: "700",
+                  cursor: "pointer"
+                }
+              },
+              "Cancel"
+            ),
+
+            React.createElement(
+              "button",
+              {
+                onClick: saveBill,
+                disabled: billSaving,
+
+                style: {
+                  border: 0,
+                  borderRadius: "10px",
+                  padding: "11px 18px",
+                  background: billSaving
+                    ? "#aaa"
+                    : "#7048ff",
+                  color: "#ffffff",
+                  fontWeight: "700",
+                  cursor: billSaving
+                    ? "not-allowed"
+                    : "pointer"
+                }
+              },
+
+              billSaving
+                ? "Saving..."
+                : editingBill
+                ? "Update Bill"
+                : "Save Bill"
+            )
+          )
+        )
+      )
+    : null;
+
+
+  // ===================================================
+  // FINAL BILLS PAGE
+  // ===================================================
+
+  return React.createElement(
+    React.Fragment,
+    null,
+
+    pageHeader,
+
+    summaryCards,
+
+    errorMessage,
+
+    billList,
+
+    billModal
+  );
+}
 
   // =====================================================
   // GENERIC MODULE PAGE

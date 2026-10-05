@@ -221,6 +221,201 @@ async function loadBudgets() {
     setBudgetsLoading(false);
   }
 }
+
+// =====================================================
+// BUDGET FORM HELPERS
+// =====================================================
+
+function resetBudgetForm() {
+  setBudgetForm({
+    month: new Date().toISOString().slice(0, 7),
+    category_id: "",
+    amount: ""
+  });
+
+  setEditingBudget(null);
+}
+
+
+// =====================================================
+// OPEN ADD BUDGET FORM
+// =====================================================
+
+function openAddBudgetForm() {
+  resetBudgetForm();
+  setBudgetsError("");
+  setShowBudgetForm(true);
+}
+
+
+// =====================================================
+// OPEN EDIT BUDGET FORM
+// =====================================================
+
+function openEditBudgetForm(budget) {
+  if (!budget) {
+    return;
+  }
+
+  setEditingBudget(budget);
+
+  setBudgetForm({
+    month: budget.month || new Date().toISOString().slice(0, 7),
+    category_id:
+      budget.category_id !== null &&
+      budget.category_id !== undefined
+        ? String(budget.category_id)
+        : "",
+    amount:
+      budget.amount !== null &&
+      budget.amount !== undefined
+        ? String(budget.amount)
+        : ""
+  });
+
+  setBudgetsError("");
+  setShowBudgetForm(true);
+}
+
+
+// =====================================================
+// BUDGET FORM FIELD HANDLER
+// =====================================================
+
+function updateBudgetForm(field, value) {
+  setBudgetForm(function (current) {
+    return {
+      ...current,
+      [field]: value
+    };
+  });
+}
+
+
+// =====================================================
+// SAVE BUDGET
+// CREATE + UPDATE
+// =====================================================
+
+async function saveBudget() {
+  setBudgetsError("");
+
+  // ---------------------------------------------------
+  // BASIC VALIDATION
+  // ---------------------------------------------------
+
+  if (!budgetForm.month) {
+    setBudgetsError("Please select a month.");
+    return;
+  }
+
+  if (!budgetForm.category_id) {
+    setBudgetsError("Please select a category.");
+    return;
+  }
+
+  const amount = Number(budgetForm.amount);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    setBudgetsError("Please enter a valid budget amount.");
+    return;
+  }
+
+  setBudgetSaving(true);
+
+  try {
+    const payload = {
+      month: budgetForm.month,
+      category_id: Number(budgetForm.category_id),
+      amount: amount
+    };
+
+    const url = editingBudget
+      ? "https://ai-finance-trading-os-api.onrender.com/api/budgets/" +
+        editingBudget.id
+      : "https://ai-finance-trading-os-api.onrender.com/api/budgets/";
+
+    const method = editingBudget ? "PUT" : "POST";
+
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to save budget."
+      );
+    }
+
+    setShowBudgetForm(false);
+    resetBudgetForm();
+
+    await loadBudgets();
+  } catch (error) {
+    setBudgetsError(
+      error?.message || "Unable to save budget."
+    );
+  } finally {
+    setBudgetSaving(false);
+  }
+}
+
+
+// =====================================================
+// DELETE BUDGET
+// =====================================================
+
+async function deleteBudget() {
+  if (!budgetToDelete) {
+    return;
+  }
+
+  setBudgetDeleting(true);
+  setBudgetsError("");
+
+  try {
+    const response = await fetch(
+      "https://ai-finance-trading-os-api.onrender.com/api/budgets/" +
+        budgetToDelete.id,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to delete budget."
+      );
+    }
+
+    setBudgetToDelete(null);
+
+    await loadBudgets();
+  } catch (error) {
+    setBudgetsError(
+      error?.message || "Unable to delete budget."
+    );
+  } finally {
+    setBudgetDeleting(false);
+  }
+}
+
 // =====================================================
 // CATEGORY CRUD STATE
 // =====================================================

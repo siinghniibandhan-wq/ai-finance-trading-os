@@ -3533,14 +3533,27 @@ function renderCategories() {
       return renderSectionOverview(active);
     }
 
-    // Existing Accounts page
-    if (active === "Accounts") {
-      return renderAccounts();
-    }
+// =====================================================
+// EXISTING ACCOUNTS PAGE
+// =====================================================
 
-    // Everything else for now
-    return renderModulePage();
-  }
+if (active === "Accounts") {
+  return renderAccounts();
+}
+
+// =====================================================
+// CATEGORIES PAGE
+// =====================================================
+
+if (active === "Categories") {
+  return renderCategories();
+}
+
+// =====================================================
+// EVERYTHING ELSE FOR NOW
+// =====================================================
+
+return renderModulePage(); 
 
   // =====================================================
   // MOBILE QUICK NAVIGATION

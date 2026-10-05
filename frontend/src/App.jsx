@@ -665,7 +665,8 @@ useEffect(
     if (
       active === "Accounts" ||
       active === "Transactions" ||
-      active === "Cash Flow"
+      active === "Cash Flow" ||
+      active === "Budget"
     ) {
       loadAccounts();
     }

@@ -6164,7 +6164,13 @@ if (active === "Categories") {
 if (active === "Transactions") {
   return renderTransactions();
 }
+// =====================================================
+// CASH FLOW PAGE
+// =====================================================
 
+if (active === "Cash Flow") {
+  return renderCashFlow();
+}
 // =====================================================
 // EVERYTHING ELSE FOR NOW
 // =====================================================

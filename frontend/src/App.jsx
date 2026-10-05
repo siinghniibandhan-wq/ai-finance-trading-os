@@ -446,6 +446,253 @@ async function deleteBudget() {
 }
 
 // =====================================================
+// LOAD BILLS & SUBSCRIPTIONS FROM BACKEND
+// =====================================================
+
+async function loadBills() {
+  setBillsLoading(true);
+  setBillsError("");
+
+  try {
+    const response = await fetch(
+      "https://ai-finance-trading-os-api.onrender.com/api/bills/"
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to load bills."
+      );
+    }
+
+    setBills(
+      Array.isArray(data)
+        ? data
+        : []
+    );
+
+  } catch (error) {
+    setBillsError(
+      error?.message ||
+      "Unable to load bills."
+    );
+
+  } finally {
+    setBillsLoading(false);
+  }
+}
+
+// =====================================================
+// BILL FORM HELPERS
+// =====================================================
+
+function resetBillForm() {
+  setBillForm({
+    name: "",
+    category_id: "",
+    account_id: "",
+    amount: "",
+    frequency: "monthly",
+    next_due_date: new Date().toISOString().slice(0, 10),
+    status: "active",
+    notes: ""
+  });
+
+  setEditingBill(null);
+}
+
+// =====================================================
+// OPEN ADD BILL FORM
+// =====================================================
+
+function openAddBillForm() {
+  resetBillForm();
+  setBillsError("");
+  setShowBillForm(true);
+}
+
+// =====================================================
+// OPEN EDIT BILL FORM
+// =====================================================
+
+function openEditBillForm(bill) {
+  if (!bill) {
+    return;
+  }
+
+  setEditingBill(bill);
+
+  setBillForm({
+    name: bill.name || "",
+    category_id:
+      bill.category_id !== null &&
+      bill.category_id !== undefined
+        ? String(bill.category_id)
+        : "",
+    account_id:
+      bill.account_id !== null &&
+      bill.account_id !== undefined
+        ? String(bill.account_id)
+        : "",
+    amount:
+      bill.amount !== null &&
+      bill.amount !== undefined
+        ? String(bill.amount)
+        : "",
+    frequency: bill.frequency || "monthly",
+    next_due_date:
+      bill.next_due_date ||
+      new Date().toISOString().slice(0, 10),
+    status: bill.status || "active",
+    notes: bill.notes || ""
+  });
+
+  setBillsError("");
+  setShowBillForm(true);
+}   
+
+// =====================================================
+// BILL FIELD HANDLER
+// =====================================================
+
+function handleBillChange(field, value) {
+  setBillForm(function (previous) {
+    return {
+      ...previous,
+      [field]: value
+    };
+  });
+}
+
+
+// =====================================================
+// SAVE BILL
+// CREATE NEW BILL OR UPDATE EXISTING BILL
+// =====================================================
+
+async function saveBill() {
+  // ---------------------------------------------------
+  // BASIC VALIDATION
+  // ---------------------------------------------------
+
+  if (!billForm.name.trim()) {
+    setBillsError("Bill name is required.");
+    return;
+  }
+
+  if (!billForm.amount || Number(billForm.amount) <= 0) {
+    setBillsError("Bill amount must be greater than 0.");
+    return;
+  }
+
+  if (!billForm.frequency) {
+    setBillsError("Bill frequency is required.");
+    return;
+  }
+
+  if (!billForm.next_due_date) {
+    setBillsError("Next due date is required.");
+    return;
+  }
+
+  // ---------------------------------------------------
+  // START SAVING
+  // ---------------------------------------------------
+
+  setBillSaving(true);
+  setBillsError("");
+
+  try {
+    // -------------------------------------------------
+    // EXACT BACKEND PAYLOAD
+    // -------------------------------------------------
+
+    const payload = {
+      name: billForm.name.trim(),
+
+      category_id:
+        billForm.category_id !== ""
+          ? Number(billForm.category_id)
+          : null,
+
+      account_id:
+        billForm.account_id !== ""
+          ? Number(billForm.account_id)
+          : null,
+
+      amount: Number(billForm.amount),
+
+      frequency: billForm.frequency,
+
+      next_due_date: billForm.next_due_date,
+
+      status: billForm.status || "active",
+
+      notes:
+        billForm.notes.trim() || null
+    };
+
+    // -------------------------------------------------
+    // CREATE OR UPDATE
+    // -------------------------------------------------
+
+    const url = editingBill
+      ? `https://ai-finance-trading-os-api.onrender.com/api/bills/${editingBill.id}`
+      : "https://ai-finance-trading-os-api.onrender.com/api/bills/";
+
+    const response = await fetch(url, {
+      method: editingBill ? "PUT" : "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify(payload)
+    });
+
+    // -------------------------------------------------
+    // READ RESPONSE
+    // -------------------------------------------------
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to save bill."
+      );
+    }
+
+    // -------------------------------------------------
+    // SUCCESS
+    // -------------------------------------------------
+
+    resetBillForm();
+
+    setShowBillForm(false);
+
+    // Reload directly from database
+    await loadBills();
+
+  } catch (error) {
+    setBillsError(
+      error?.message ||
+      "Unable to save bill."
+    );
+
+  } finally {
+    setBillSaving(false);
+  }
+}
+// =====================================================
 // CATEGORY CRUD STATE
 // =====================================================
 

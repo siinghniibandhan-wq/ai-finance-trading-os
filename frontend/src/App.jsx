@@ -1137,6 +1137,14 @@ useEffect(
     if (active === "Bills & Subscriptions") {
       loadBills();
     }
+// =====================================================
+// STATEMENTS / IMPORT
+// Load statements whenever the page is opened
+// =====================================================
+
+if (active === "Statements / Import") {
+  loadStatements();
+}
   },
   [active]
 );

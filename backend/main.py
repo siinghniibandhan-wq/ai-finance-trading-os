@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database.database import Base, engine
 from database import models
+from backend.routes.accounts import router as accounts_router
 
 
 app = FastAPI(
@@ -33,6 +34,13 @@ app.add_middleware(
 
 if engine is not None:
     Base.metadata.create_all(bind=engine)
+
+
+# ============================================================
+# API ROUTES
+# ============================================================
+
+app.include_router(accounts_router)
 
 
 # ============================================================

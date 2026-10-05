@@ -70,13 +70,13 @@ function App() {
   const navigation = [
     {
       name: "Overview",
-      icon: "🏠",
+      icon: "ðŸ ",
       type: "single"
     },
 
     {
       name: "Finance",
-      icon: "💰",
+      icon: "ðŸ’°",
       type: "section",
       children: [
         "Accounts",
@@ -91,7 +91,7 @@ function App() {
 
     {
       name: "Wealth",
-      icon: "💎",
+      icon: "ðŸ’Ž",
       type: "section",
       children: [
         "Assets",
@@ -106,7 +106,7 @@ function App() {
 
     {
       name: "Investments",
-      icon: "📊",
+      icon: "ðŸ“Š",
       type: "section",
       children: [
         "Portfolio",
@@ -121,7 +121,7 @@ function App() {
 
     {
       name: "Trading",
-      icon: "📈",
+      icon: "ðŸ“ˆ",
       type: "section",
       children: [
         "Markets",
@@ -141,7 +141,7 @@ function App() {
 
     {
       name: "AI",
-      icon: "🤖",
+      icon: "ðŸ¤–",
       type: "section",
       children: [
         "AI Chat",
@@ -154,13 +154,13 @@ function App() {
 
     {
       name: "Reports",
-      icon: "📑",
+      icon: "ðŸ“‘",
       type: "single"
     },
 
     {
       name: "Settings",
-      icon: "⚙️",
+      icon: "âš™ï¸",
       type: "single"
     }
   ];
@@ -170,10 +170,10 @@ function App() {
   // =====================================================
 
   const overviewCards = [
-    ["Net Worth", "₹0", "Assets − liabilities"],
-    ["Total Assets", "₹0", "Current asset value"],
-    ["Liabilities", "₹0", "Outstanding amount"],
-    ["Investments", "₹0", "Portfolio value"]
+    ["Net Worth", "â‚¹0", "Assets âˆ’ liabilities"],
+    ["Total Assets", "â‚¹0", "Current asset value"],
+    ["Liabilities", "â‚¹0", "Outstanding amount"],
+    ["Investments", "â‚¹0", "Portfolio value"]
   ];
 
   // =====================================================
@@ -1418,8 +1418,8 @@ function App() {
             },
 
             expandedSection === item.name
-              ? "▲"
-              : "▼"
+              ? "â–²"
+              : "â–¼"
           )
         ),
 
@@ -1565,8 +1565,8 @@ function App() {
             },
 
             expandedSection === item.name
-              ? "▲"
-              : "▼"
+              ? "â–²"
+              : "â–¼"
           )
         ),
 
@@ -1814,11 +1814,11 @@ function App() {
 
   function renderSectionOverview(sectionName) {
     const iconMap = {
-      Finance: "💰",
-      Wealth: "💎",
-      Investments: "📊",
-      Trading: "📈",
-      AI: "🤖"
+      Finance: "ðŸ’°",
+      Wealth: "ðŸ’Ž",
+      Investments: "ðŸ“Š",
+      Trading: "ðŸ“ˆ",
+      AI: "ðŸ¤–"
     };
 
     return React.createElement(
@@ -2035,13 +2035,13 @@ function App() {
 
                   account.institution
                     ? `Institution: ${account.institution}`
-                    : "Institution: —",
+                    : "Institution: â€”",
 
                   React.createElement("br"),
 
                   account.account_number
                     ? `Account: ${account.account_number}`
-                    : "Account: —"
+                    : "Account: â€”"
                 )
               );
             })
@@ -2054,7 +2054,7 @@ function App() {
   // =====================================================
 
   function renderModulePage() {
-    let icon = "📁";
+    let icon = "ðŸ“";
 
     if (
       active === "Transactions" ||
@@ -2063,7 +2063,7 @@ function App() {
       active === "Cash Flow" ||
       active === "Categories"
     ) {
-      icon = "💰";
+      icon = "ðŸ’°";
     }
 
     if (
@@ -2073,7 +2073,7 @@ function App() {
       active === "Insurance" ||
       active === "Real Estate"
     ) {
-      icon = "💎";
+      icon = "ðŸ’Ž";
     }
 
     if (
@@ -2085,7 +2085,7 @@ function App() {
       active === "Gold" ||
       active === "Crypto"
     ) {
-      icon = "📊";
+      icon = "ðŸ“Š";
     }
 
     if (
@@ -2100,7 +2100,7 @@ function App() {
       active === "Positions" ||
       active === "Orders"
     ) {
-      icon = "📈";
+      icon = "ðŸ“ˆ";
     }
 
     if (
@@ -2110,7 +2110,7 @@ function App() {
       active === "AI Predictions" ||
       active === "AI Reports"
     ) {
-      icon = "🤖";
+      icon = "ðŸ¤–";
     }
 
     return React.createElement(
@@ -2194,11 +2194,11 @@ function App() {
   // =====================================================
 
   const mobileShortcuts = [
-    ["Overview", "🏠"],
-    ["Finance", "💰"],
-    ["Investments", "📊"],
-    ["Trading", "📈"],
-    ["AI", "🤖"]
+    ["Overview", "ðŸ "],
+    ["Finance", "ðŸ’°"],
+    ["Investments", "ðŸ“Š"],
+    ["Trading", "ðŸ“ˆ"],
+    ["AI", "ðŸ¤–"]
   ];
 
   // =====================================================
@@ -2270,7 +2270,7 @@ function App() {
                   setMenuOpen(false);
                 }
               },
-              "×"
+              "Ã—"
             )
           ),
 
@@ -2339,7 +2339,7 @@ function App() {
                   setMenuOpen(true);
                 }
               },
-              "☰"
+              "â˜°"
             ),
 
             React.createElement(

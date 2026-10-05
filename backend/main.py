@@ -8,6 +8,7 @@ from database import models
 
 from backend.routes.accounts import router as accounts_router
 from backend.routes.categories import router as categories_router
+from backend.routes.transactions import router as transactions_router
 
 
 app = FastAPI(
@@ -44,6 +45,7 @@ if engine is not None:
 
 app.include_router(accounts_router)
 app.include_router(categories_router)
+app.include_router(transactions_router)
 
 
 # ============================================================

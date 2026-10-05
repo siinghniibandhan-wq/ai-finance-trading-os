@@ -6262,6 +6262,1038 @@ function renderCashFlow() {
   );
 }
 
+// =====================================================
+// BUDGET PAGE
+// =====================================================
+
+function renderBudget() {
+  // ---------------------------------------------------
+  // CURRENT MONTH
+  // ---------------------------------------------------
+
+  const currentMonth = new Date()
+    .toISOString()
+    .slice(0, 7);
+
+  // ---------------------------------------------------
+  // FILTER BUDGETS FOR CURRENT MONTH
+  // ---------------------------------------------------
+
+  const monthBudgets = budgets.filter(function (budget) {
+    return budget.month === currentMonth;
+  });
+
+  // ---------------------------------------------------
+  // CATEGORY NAME HELPER
+  // ---------------------------------------------------
+
+  function getBudgetCategoryName(categoryId) {
+    const category = categories.find(function (item) {
+      return Number(item.id) === Number(categoryId);
+    });
+
+    return category
+      ? category.name
+      : "Unknown category";
+  }
+
+  // ---------------------------------------------------
+  // ACTUAL SPENDING BY CATEGORY
+  // ---------------------------------------------------
+
+  function getActualSpending(categoryId, month) {
+    return transactions
+      .filter(function (transaction) {
+        const transactionMonth = transaction.transaction_date
+          ? String(transaction.transaction_date).slice(0, 7)
+          : "";
+
+        return (
+          transactionMonth === month &&
+          Number(transaction.category_id) === Number(categoryId) &&
+          (
+            transaction.transaction_type === "expense" ||
+            transaction.transaction_type === "withdrawal" ||
+            transaction.transaction_type === "tax" ||
+            transaction.transaction_type === "loan_repayment"
+          )
+        );
+      })
+      .reduce(function (total, transaction) {
+        return total + Number(transaction.amount || 0);
+      }, 0);
+  }
+
+  // ---------------------------------------------------
+  // TOTALS
+  // ---------------------------------------------------
+
+  const totalBudget = monthBudgets.reduce(function (
+    total,
+    budget
+  ) {
+    return total + Number(budget.amount || 0);
+  }, 0);
+
+  const totalActual = monthBudgets.reduce(function (
+    total,
+    budget
+  ) {
+    return (
+      total +
+      getActualSpending(
+        budget.category_id,
+        budget.month
+      )
+    );
+  }, 0);
+
+  const totalRemaining =
+    totalBudget - totalActual;
+
+  // ---------------------------------------------------
+  // MONEY FORMATTER
+  // ---------------------------------------------------
+
+  function budgetMoney(value) {
+    return "₹" + Number(value || 0).toLocaleString(
+      "en-IN",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    );
+  }
+
+  // ---------------------------------------------------
+  // PAGE
+  // ---------------------------------------------------
+
+  return React.createElement(
+    React.Fragment,
+    null,
+
+    // =================================================
+    // PAGE HEADER
+    // =================================================
+
+    React.createElement(
+      "div",
+      {
+        className: "page-heading",
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "16px",
+          flexWrap: "wrap"
+        }
+      },
+
+      React.createElement(
+        "div",
+        null,
+
+        React.createElement(
+          "h2",
+          null,
+          "Budget"
+        ),
+
+        React.createElement(
+          "p",
+          null,
+          "Plan your monthly spending and compare it with actual expenses."
+        )
+      ),
+
+      React.createElement(
+        "button",
+        {
+          onClick: openAddBudgetForm,
+          style: {
+            border: "none",
+            borderRadius: "12px",
+            padding: "12px 18px",
+            background:
+              "linear-gradient(135deg,#7048ff,#f45b69)",
+            color: "#fff",
+            fontWeight: "700",
+            cursor: "pointer"
+          }
+        },
+        "+ Add Budget"
+      )
+    ),
+
+    // =================================================
+    // ERROR
+    // =================================================
+
+    budgetsError &&
+      React.createElement(
+        "div",
+        {
+          style: {
+            marginBottom: "16px",
+            padding: "12px 14px",
+            borderRadius: "10px",
+            background: "#fff0f0",
+            color: "#c62828",
+            border: "1px solid #ffcdd2"
+          }
+        },
+        budgetsError
+      ),
+
+    // =================================================
+    // SUMMARY CARDS
+    // =================================================
+
+    React.createElement(
+      "div",
+      {
+        style: {
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(180px,1fr))",
+          gap: "14px",
+          marginBottom: "20px"
+        }
+      },
+
+      React.createElement(
+        "div",
+        { className: "stat-card" },
+
+        React.createElement(
+          "span",
+          null,
+          "Monthly Budget"
+        ),
+
+        React.createElement(
+          "strong",
+          null,
+          budgetMoney(totalBudget)
+        )
+      ),
+
+      React.createElement(
+        "div",
+        { className: "stat-card" },
+
+        React.createElement(
+          "span",
+          null,
+          "Actual Spending"
+        ),
+
+        React.createElement(
+          "strong",
+          null,
+          budgetMoney(totalActual)
+        )
+      ),
+
+      React.createElement(
+        "div",
+        { className: "stat-card" },
+
+        React.createElement(
+          "span",
+          null,
+          "Remaining"
+        ),
+
+        React.createElement(
+          "strong",
+          {
+            style: {
+              color:
+                totalRemaining < 0
+                  ? "#c62828"
+                  : "#16803c"
+            }
+          },
+          budgetMoney(totalRemaining)
+        )
+      ),
+
+      React.createElement(
+        "div",
+        { className: "stat-card" },
+
+        React.createElement(
+          "span",
+          null,
+          "Budget Categories"
+        ),
+
+        React.createElement(
+          "strong",
+          null,
+          String(monthBudgets.length)
+        )
+      )
+    ),
+
+    // =================================================
+    // LOADING
+    // =================================================
+
+    budgetsLoading
+      ? React.createElement(
+          "div",
+          {
+            className: "module-card",
+            style: {
+              textAlign: "center",
+              padding: "40px"
+            }
+          },
+          "Loading budgets..."
+        )
+
+      : monthBudgets.length === 0
+
+      ? React.createElement(
+          "div",
+          {
+            className: "module-card",
+            style: {
+              textAlign: "center",
+              padding: "40px"
+            }
+          },
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                fontSize: "42px",
+                marginBottom: "12px"
+              }
+            },
+            "💰"
+          ),
+
+          React.createElement(
+            "h3",
+            null,
+            "No budget created for this month"
+          ),
+
+          React.createElement(
+            "p",
+            {
+              style: {
+                color: "#777"
+              }
+            },
+            "Create your first category budget to start tracking your spending."
+          ),
+
+          React.createElement(
+            "button",
+            {
+              onClick: openAddBudgetForm,
+              style: {
+                border: "none",
+                borderRadius: "10px",
+                padding: "11px 16px",
+                background: "#7048ff",
+                color: "#fff",
+                fontWeight: "700",
+                cursor: "pointer"
+              }
+            },
+            "+ Create Budget"
+          )
+        )
+
+      : React.createElement(
+          "div",
+          {
+            style: {
+              display: "grid",
+              gap: "14px"
+            }
+          },
+
+          monthBudgets.map(function (budget) {
+            const planned =
+              Number(budget.amount || 0);
+
+            const actual =
+              getActualSpending(
+                budget.category_id,
+                budget.month
+              );
+
+            const remaining =
+              planned - actual;
+
+            const percentage =
+              planned > 0
+                ? Math.min(
+                    (actual / planned) * 100,
+                    100
+                  )
+                : 0;
+
+            const overBudget =
+              actual > planned;
+
+            return React.createElement(
+              "div",
+              {
+                key: budget.id,
+                className: "module-card",
+                style: {
+                  padding: "18px"
+                }
+              },
+
+              // ---------------------------------------
+              // TOP ROW
+              // ---------------------------------------
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    display: "flex",
+                    justifyContent:
+                      "space-between",
+                    alignItems: "center",
+                    gap: "12px",
+                    flexWrap: "wrap"
+                  }
+                },
+
+                React.createElement(
+                  "div",
+                  null,
+
+                  React.createElement(
+                    "h3",
+                    {
+                      style: {
+                        margin: 0
+                      }
+                    },
+                    getBudgetCategoryName(
+                      budget.category_id
+                    )
+                  ),
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        fontSize: "12px",
+                        color: "#888",
+                        marginTop: "4px"
+                      }
+                    },
+                    budget.month
+                  )
+                ),
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      gap: "8px"
+                    }
+                  },
+
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: function () {
+                        openEditBudgetForm(
+                          budget
+                        );
+                      },
+                      style: {
+                        border:
+                          "1px solid #ddd",
+                        borderRadius: "8px",
+                        padding:
+                          "7px 10px",
+                        background: "#fff",
+                        cursor: "pointer"
+                      }
+                    },
+                    "Edit"
+                  ),
+
+                  React.createElement(
+                    "button",
+                    {
+                      onClick: function () {
+                        setBudgetToDelete(
+                          budget
+                        );
+                      },
+                      style: {
+                        border:
+                          "1px solid #ffcdd2",
+                        borderRadius: "8px",
+                        padding:
+                          "7px 10px",
+                        background:
+                          "#fff5f5",
+                        color: "#c62828",
+                        cursor: "pointer"
+                      }
+                    },
+                    "Delete"
+                  )
+                )
+              ),
+
+              // ---------------------------------------
+              // AMOUNTS
+              // ---------------------------------------
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(3,minmax(0,1fr))",
+                    gap: "12px",
+                    marginTop: "18px"
+                  }
+                },
+
+                React.createElement(
+                  "div",
+                  null,
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        fontSize: "11px",
+                        color: "#888"
+                      }
+                    },
+                    "Budget"
+                  ),
+
+                  React.createElement(
+                    "strong",
+                    null,
+                    budgetMoney(planned)
+                  )
+                ),
+
+                React.createElement(
+                  "div",
+                  null,
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        fontSize: "11px",
+                        color: "#888"
+                      }
+                    },
+                    "Actual"
+                  ),
+
+                  React.createElement(
+                    "strong",
+                    null,
+                    budgetMoney(actual)
+                  )
+                ),
+
+                React.createElement(
+                  "div",
+                  null,
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        fontSize: "11px",
+                        color: "#888"
+                      }
+                    },
+                    overBudget
+                      ? "Overspent"
+                      : "Remaining"
+                  ),
+
+                  React.createElement(
+                    "strong",
+                    {
+                      style: {
+                        color:
+                          overBudget
+                            ? "#c62828"
+                            : "#16803c"
+                      }
+                    },
+                    budgetMoney(
+                      Math.abs(remaining)
+                    )
+                  )
+                )
+              ),
+
+              // ---------------------------------------
+              // PROGRESS BAR
+              // ---------------------------------------
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    marginTop: "18px"
+                  }
+                },
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      height: "9px",
+                      borderRadius: "20px",
+                      background: "#eee",
+                      overflow: "hidden"
+                    }
+                  },
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        width:
+                          percentage + "%",
+                        height: "100%",
+                        background:
+                          overBudget
+                            ? "#e53935"
+                            : "#7048ff",
+                        borderRadius: "20px"
+                      }
+                    }
+                  )
+                ),
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                      marginTop: "6px",
+                      fontSize: "11px",
+                      color: "#888"
+                    }
+                  },
+
+                  React.createElement(
+                    "span",
+                    null,
+                    Math.round(
+                      (actual /
+                        (planned || 1)) *
+                        100
+                    ) + "% used"
+                  ),
+
+                  React.createElement(
+                    "span",
+                    null,
+                    overBudget
+                      ? "Over budget"
+                      : "On track"
+                  )
+                )
+              )
+            );
+          })
+        ),
+
+    // =================================================
+    // ADD / EDIT BUDGET MODAL
+    // =================================================
+
+    showBudgetForm &&
+      React.createElement(
+        "div",
+        {
+          style: {
+            position: "fixed",
+            inset: 0,
+            background:
+              "rgba(0,0,0,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            zIndex: 1000
+          }
+        },
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              width: "100%",
+              maxWidth: "480px",
+              background: "#fff",
+              borderRadius: "18px",
+              padding: "22px",
+              boxShadow:
+                "0 20px 60px rgba(0,0,0,0.2)"
+            }
+          },
+
+          React.createElement(
+            "h3",
+            null,
+            editingBudget
+              ? "Edit Budget"
+              : "Add Budget"
+          ),
+
+          // ---------------------------------------
+          // MONTH
+          // ---------------------------------------
+
+          React.createElement(
+            "label",
+            {
+              style: {
+                display: "block",
+                marginTop: "16px",
+                fontWeight: "600"
+              }
+            },
+            "Month"
+          ),
+
+          React.createElement(
+            "input",
+            {
+              type: "month",
+              value: budgetForm.month,
+              onChange: function (event) {
+                updateBudgetForm(
+                  "month",
+                  event.target.value
+                );
+              },
+              style: {
+                width: "100%",
+                marginTop: "7px",
+                padding: "11px",
+                border:
+                  "1px solid #ddd",
+                borderRadius: "9px",
+                boxSizing: "border-box"
+              }
+            }
+          ),
+
+          // ---------------------------------------
+          // CATEGORY
+          // ---------------------------------------
+
+          React.createElement(
+            "label",
+            {
+              style: {
+                display: "block",
+                marginTop: "16px",
+                fontWeight: "600"
+              }
+            },
+            "Category"
+          ),
+
+          React.createElement(
+            "select",
+            {
+              value:
+                budgetForm.category_id,
+              onChange: function (event) {
+                updateBudgetForm(
+                  "category_id",
+                  event.target.value
+                );
+              },
+              style: {
+                width: "100%",
+                marginTop: "7px",
+                padding: "11px",
+                border:
+                  "1px solid #ddd",
+                borderRadius: "9px",
+                boxSizing: "border-box",
+                background: "#fff"
+              }
+            },
+
+            React.createElement(
+              "option",
+              { value: "" },
+              "Select category"
+            ),
+
+            categories
+              .filter(function (category) {
+                return (
+                  category.category_type ===
+                  "expense"
+                );
+              })
+              .map(function (category) {
+                return React.createElement(
+                  "option",
+                  {
+                    key: category.id,
+                    value: category.id
+                  },
+                  category.name
+                );
+              })
+          ),
+
+          // ---------------------------------------
+          // AMOUNT
+          // ---------------------------------------
+
+          React.createElement(
+            "label",
+            {
+              style: {
+                display: "block",
+                marginTop: "16px",
+                fontWeight: "600"
+              }
+            },
+            "Monthly Budget Amount"
+          ),
+
+          React.createElement(
+            "input",
+            {
+              type: "number",
+              min: "0",
+              step: "0.01",
+              placeholder: "₹ 0.00",
+              value: budgetForm.amount,
+              onChange: function (event) {
+                updateBudgetForm(
+                  "amount",
+                  event.target.value
+                );
+              },
+              style: {
+                width: "100%",
+                marginTop: "7px",
+                padding: "11px",
+                border:
+                  "1px solid #ddd",
+                borderRadius: "9px",
+                boxSizing: "border-box"
+              }
+            }
+          ),
+
+          // ---------------------------------------
+          // FORM ERROR
+          // ---------------------------------------
+
+          budgetsError &&
+            React.createElement(
+              "div",
+              {
+                style: {
+                  marginTop: "12px",
+                  color: "#c62828",
+                  fontSize: "13px"
+                }
+              },
+              budgetsError
+            ),
+
+          // ---------------------------------------
+          // ACTIONS
+          // ---------------------------------------
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "flex",
+                justifyContent:
+                  "flex-end",
+                gap: "10px",
+                marginTop: "20px"
+              }
+            },
+
+            React.createElement(
+              "button",
+              {
+                onClick: function () {
+                  setShowBudgetForm(false);
+                  resetBudgetForm();
+                },
+                disabled: budgetSaving,
+                style: {
+                  padding: "10px 16px",
+                  border:
+                    "1px solid #ddd",
+                  borderRadius: "9px",
+                  background: "#fff",
+                  cursor: "pointer"
+                }
+              },
+              "Cancel"
+            ),
+
+            React.createElement(
+              "button",
+              {
+                onClick: saveBudget,
+                disabled: budgetSaving,
+                style: {
+                  padding: "10px 18px",
+                  border: "none",
+                  borderRadius: "9px",
+                  background: "#7048ff",
+                  color: "#fff",
+                  fontWeight: "700",
+                  cursor: "pointer"
+                }
+              },
+              budgetSaving
+                ? "Saving..."
+                : editingBudget
+                ? "Update Budget"
+                : "Save Budget"
+            )
+          )
+        )
+      ),
+
+    // =================================================
+    // DELETE CONFIRMATION
+    // =================================================
+
+    budgetToDelete &&
+      React.createElement(
+        "div",
+        {
+          style: {
+            position: "fixed",
+            inset: 0,
+            background:
+              "rgba(0,0,0,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            zIndex: 1100
+          }
+        },
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              width: "100%",
+              maxWidth: "400px",
+              background: "#fff",
+              borderRadius: "16px",
+              padding: "22px"
+            }
+          },
+
+          React.createElement(
+            "h3",
+            null,
+            "Delete Budget?"
+          ),
+
+          React.createElement(
+            "p",
+            {
+              style: {
+                color: "#666"
+              }
+            },
+            "This will permanently remove this budget record."
+          ),
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "flex",
+                justifyContent:
+                  "flex-end",
+                gap: "10px",
+                marginTop: "20px"
+              }
+            },
+
+            React.createElement(
+              "button",
+              {
+                onClick: function () {
+                  setBudgetToDelete(null);
+                },
+                disabled: budgetDeleting,
+                style: {
+                  padding: "10px 15px",
+                  border:
+                    "1px solid #ddd",
+                  borderRadius: "9px",
+                  background: "#fff"
+                }
+              },
+              "Cancel"
+            ),
+
+            React.createElement(
+              "button",
+              {
+                onClick: deleteBudget,
+                disabled: budgetDeleting,
+                style: {
+                  padding: "10px 15px",
+                  border: "none",
+                  borderRadius: "9px",
+                  background: "#d32f2f",
+                  color: "#fff",
+                  fontWeight: "700"
+                }
+              },
+              budgetDeleting
+                ? "Deleting..."
+                : "Delete"
+            )
+          )
+        )
+      )
+  );
+}
 
   // =====================================================
   // GENERIC MODULE PAGE

@@ -492,6 +492,365 @@ const [transactionDeleting, setTransactionDeleting] = useState(false);
     }
   }
 
+   // =====================================================
+// TRANSACTIONS API
+// LOAD TRANSACTIONS
+// =====================================================
+
+async function loadTransactions() {
+  setTransactionsLoading(true);
+  setTransactionsError("");
+
+  try {
+    const response = await fetch(
+      "https://ai-finance-trading-os-api.onrender.com/api/transactions/"
+    );
+
+    if (!response.ok) {
+      throw new Error("Unable to load transactions.");
+    }
+
+    const data = await response.json();
+
+    setTransactions(Array.isArray(data) ? data : []);
+  } catch (error) {
+    setTransactionsError(
+      error?.message || "Unable to load transactions."
+    );
+  } finally {
+    setTransactionsLoading(false);
+  }
+}
+
+
+// =====================================================
+// LOAD TRANSACTIONS WHEN TRANSACTIONS PAGE OPENS
+// =====================================================
+
+useEffect(
+  function () {
+    if (active === "Transactions") {
+      loadTransactions();
+    }
+  },
+  [active]
+);
+
+
+// =====================================================
+// TRANSACTION FORM FIELD HANDLER
+// =====================================================
+
+function updateTransactionForm(field, value) {
+  setTransactionForm(function (current) {
+    return {
+      ...current,
+      [field]: value
+    };
+  });
+}
+
+
+// =====================================================
+// RESET TRANSACTION FORM
+// =====================================================
+
+function resetTransactionForm() {
+  setTransactionForm({
+    account_id: "",
+    category_id: "",
+    transaction_type: "expense",
+    amount: "",
+    currency: "INR",
+    description: "",
+    merchant: "",
+    reference_number: "",
+    transaction_date: new Date().toISOString().slice(0, 10),
+    notes: ""
+  });
+
+  setEditingTransaction(null);
+  setTransactionsError("");
+}
+
+
+// =====================================================
+// OPEN NEW TRANSACTION FORM
+// =====================================================
+
+function openNewTransactionForm() {
+  resetTransactionForm();
+
+  // Automatically select the first available account.
+  if (accounts.length > 0) {
+    setTransactionForm(function (current) {
+      return {
+        ...current,
+        account_id: String(accounts[0].id)
+      };
+    });
+  }
+
+  setShowTransactionForm(true);
+}
+
+
+// =====================================================
+// OPEN EDIT TRANSACTION FORM
+// =====================================================
+
+function openEditTransactionForm(transaction) {
+  setEditingTransaction(transaction);
+
+  setTransactionForm({
+    account_id:
+      transaction.account_id !== null &&
+      transaction.account_id !== undefined
+        ? String(transaction.account_id)
+        : "",
+
+    category_id:
+      transaction.category_id !== null &&
+      transaction.category_id !== undefined
+        ? String(transaction.category_id)
+        : "",
+
+    transaction_type:
+      transaction.transaction_type || "expense",
+
+    amount:
+      transaction.amount !== null &&
+      transaction.amount !== undefined
+        ? String(transaction.amount)
+        : "",
+
+    currency:
+      transaction.currency || "INR",
+
+    description:
+      transaction.description || "",
+
+    merchant:
+      transaction.merchant || "",
+
+    reference_number:
+      transaction.reference_number || "",
+
+    transaction_date:
+      transaction.transaction_date
+        ? String(transaction.transaction_date).slice(0, 10)
+        : new Date().toISOString().slice(0, 10),
+
+    notes:
+      transaction.notes || ""
+  });
+
+  setTransactionsError("");
+  setShowTransactionForm(true);
+}
+
+
+// =====================================================
+// CLOSE TRANSACTION FORM
+// =====================================================
+
+function closeTransactionForm() {
+  if (transactionSaving) {
+    return;
+  }
+
+  setShowTransactionForm(false);
+  setEditingTransaction(null);
+  setTransactionsError("");
+}
+
+
+// =====================================================
+// CREATE / UPDATE TRANSACTION
+// =====================================================
+
+async function saveTransaction() {
+  setTransactionsError("");
+
+  // ---------------------------------------------------
+  // BASIC VALIDATION
+  // ---------------------------------------------------
+
+  if (!transactionForm.account_id) {
+    setTransactionsError("Please select an account.");
+    return;
+  }
+
+  const amount = Number(transactionForm.amount);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    setTransactionsError("Amount must be greater than zero.");
+    return;
+  }
+
+  if (!transactionForm.transaction_date) {
+    setTransactionsError("Transaction date is required.");
+    return;
+  }
+
+  // ---------------------------------------------------
+  // PREPARE API DATA
+  // ---------------------------------------------------
+
+  const payload = {
+    account_id: Number(transactionForm.account_id),
+
+    category_id:
+      transactionForm.category_id === ""
+        ? null
+        : Number(transactionForm.category_id),
+
+    transaction_type: transactionForm.transaction_type,
+
+    amount: amount,
+
+    currency: transactionForm.currency || "INR",
+
+    description:
+      transactionForm.description.trim() || null,
+
+    merchant:
+      transactionForm.merchant.trim() || null,
+
+    reference_number:
+      transactionForm.reference_number.trim() || null,
+
+    transaction_date:
+      transactionForm.transaction_date,
+
+    notes:
+      transactionForm.notes.trim() || null
+  };
+
+  setTransactionSaving(true);
+
+  try {
+    const isEditing = Boolean(editingTransaction);
+
+    const url = isEditing
+      ? `https://ai-finance-trading-os-api.onrender.com/api/transactions/${editingTransaction.id}`
+      : "https://ai-finance-trading-os-api.onrender.com/api/transactions/";
+
+    const response = await fetch(url, {
+      method: isEditing ? "PUT" : "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to save transaction."
+      );
+    }
+
+    // -------------------------------------------------
+    // SUCCESS
+    // -------------------------------------------------
+
+    resetTransactionForm();
+    setShowTransactionForm(false);
+
+    // Reload accounts because transaction balance
+    // changes the account's current balance.
+    await loadAccounts();
+
+    // Reload transactions so the table is current.
+    await loadTransactions();
+
+  } catch (error) {
+    setTransactionsError(
+      error?.message || "Unable to save transaction."
+    );
+  } finally {
+    setTransactionSaving(false);
+  }
+}
+
+
+// =====================================================
+// DELETE TRANSACTION
+// =====================================================
+
+async function deleteTransaction(transactionId) {
+  if (!transactionId) {
+    return;
+  }
+
+  setTransactionDeleting(true);
+  setTransactionsError("");
+
+  try {
+    const response = await fetch(
+      `https://ai-finance-trading-os-api.onrender.com/api/transactions/${transactionId}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to delete transaction."
+      );
+    }
+
+    // -------------------------------------------------
+    // SUCCESS
+    // -------------------------------------------------
+
+    setTransactionToDelete(null);
+
+    // The backend reverses the transaction's balance
+    // effect when the transaction is deleted.
+    await loadAccounts();
+
+    await loadTransactions();
+
+  } catch (error) {
+    setTransactionsError(
+      error?.message || "Unable to delete transaction."
+    );
+  } finally {
+    setTransactionDeleting(false);
+  }
+}
+
+
+// =====================================================
+// TRANSACTION TYPE LABEL
+// =====================================================
+
+function transactionTypeLabel(type) {
+  if (!type) {
+    return "Transaction";
+  }
+
+  return String(type)
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, function (letter) {
+      return letter.toUpperCase();
+    });
+    }
   // =====================================================
   // MONEY FORMATTER
   // =====================================================

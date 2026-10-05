@@ -790,12 +790,16 @@ async function loadTransactions() {
 
 
 // =====================================================
-// LOAD TRANSACTIONS WHEN TRANSACTIONS PAGE OPENS
+// LOAD TRANSACTIONS WHEN TRANSACTIONS OR CASH FLOW
+// PAGE OPENS
 // =====================================================
 
 useEffect(
   function () {
-    if (active === "Transactions") {
+    if (
+      active === "Transactions" ||
+      active === "Cash Flow"
+    ) {
       loadTransactions();
     }
   },

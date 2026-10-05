@@ -3,16 +3,36 @@ import React, { useEffect, useState } from "react";
 /*
 =====================================================
 AI FINANCE TRADING OS
-MAIN APPLICATION SHELL
+APP.JSX
 =====================================================
 
-IMPORTANT:
-- This file controls the frontend navigation and pages.
-- Backend/API URLs are intentionally unchanged.
-- Accounts still use the existing backend endpoint.
-- Placeholder pages are intentionally lightweight.
-- React.createElement is used to preserve the current
-  working frontend setup.
+NAVIGATION RULES
+-----------------------------------------------------
+1. Overview is the global homepage.
+
+2. Finance itself opens Finance Overview.
+   Finance does NOT contain "Finance Overview"
+   as a separate submenu item.
+
+3. Wealth itself opens Wealth Overview.
+
+4. Investments itself opens Investment Overview.
+
+5. Trading itself opens Trading Overview.
+
+6. AI itself opens AI Overview.
+
+7. Clicking the section NAME:
+   - opens its overview
+   - expands its submenu
+
+8. Clicking the ARROW:
+   - only expands/collapses the submenu
+   - does NOT change the current page
+
+9. Only ONE major section can be expanded at a time.
+
+10. Accounts API is preserved.
 =====================================================
 */
 
@@ -25,17 +45,11 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // =====================================================
-  // EXPANDED MAIN SECTIONS
-  // EDIT HERE IF YOU WANT DEFAULT OPEN SECTIONS
+  // EXPANDED SECTION
+  // null = everything collapsed
   // =====================================================
 
-  const [expanded, setExpanded] = useState({
-    Finance: true,
-    Wealth: false,
-    Investments: false,
-    Trading: false,
-    AI: false
-  });
+  const [expandedSection, setExpandedSection] = useState(null);
 
   // =====================================================
   // ACCOUNTS STATE
@@ -47,8 +61,10 @@ function App() {
   const [accountsError, setAccountsError] = useState("");
 
   // =====================================================
-  // MAIN NAVIGATION STRUCTURE
-  // DO NOT CHANGE API ROUTES HERE
+  // NAVIGATION STRUCTURE
+  // IMPORTANT:
+  // OVERVIEW ITEMS ARE NOT SUBMENU ITEMS.
+  // THE MAIN SECTION ITSELF IS THE OVERVIEW.
   // =====================================================
 
   const navigation = [
@@ -63,7 +79,6 @@ function App() {
       icon: "💰",
       type: "section",
       children: [
-        "Finance Overview",
         "Accounts",
         "Transactions",
         "Categories",
@@ -79,7 +94,6 @@ function App() {
       icon: "💎",
       type: "section",
       children: [
-        "Wealth Overview",
         "Assets",
         "Liabilities",
         "Net Worth",
@@ -95,7 +109,6 @@ function App() {
       icon: "📊",
       type: "section",
       children: [
-        "Investment Overview",
         "Portfolio",
         "Stocks",
         "Mutual Funds",
@@ -111,7 +124,6 @@ function App() {
       icon: "📈",
       type: "section",
       children: [
-        "Trading Overview",
         "Markets",
         "Watchlist",
         "Screener",
@@ -155,7 +167,6 @@ function App() {
 
   // =====================================================
   // OVERVIEW KPI DATA
-  // REAL DATA WILL BE CONNECTED LATER
   // =====================================================
 
   const overviewCards = [
@@ -166,49 +177,116 @@ function App() {
   ];
 
   // =====================================================
-  // NAVIGATION HELPERS
+  // SECTION OVERVIEW TITLES
   // =====================================================
 
-  function navigate(page) {
-    setActive(page);
+  const sectionOverviewTitles = {
+    Finance: "Finance Overview",
+    Wealth: "Wealth Overview",
+    Investments: "Investment Overview",
+    Trading: "Trading Overview",
+    AI: "AI Overview"
+  };
+
+  // =====================================================
+  // SECTION OVERVIEW DESCRIPTIONS
+  // =====================================================
+
+  const sectionDescriptions = {
+    Finance:
+      "Accounts, transactions, cash flow, budgets and everyday finances.",
+
+    Wealth:
+      "Assets, liabilities, net worth, insurance and long-term wealth.",
+
+    Investments:
+      "Your investment portfolio, holdings and investment performance.",
+
+    Trading:
+      "Markets, strategies, positions, orders, risk and trading activity.",
+
+    AI:
+      "Your AI-powered financial assistant, research, analysis and reports."
+  };
+
+  // =====================================================
+  // FIND PARENT SECTION
+  // =====================================================
+
+  function findParentSection(page) {
+    for (let i = 0; i < navigation.length; i += 1) {
+      const item = navigation[i];
+
+      if (
+        item.type === "section" &&
+        item.children.indexOf(page) !== -1
+      ) {
+        return item.name;
+      }
+    }
+
+    return null;
+  }
+
+  // =====================================================
+  // OPEN MAIN SECTION
+  //
+  // Example:
+  // Click Finance
+  // -> Finance Overview
+  // -> Finance expands
+  // =====================================================
+
+  function openMainSection(sectionName) {
+    setActive(sectionName);
+    setExpandedSection(sectionName);
     setMenuOpen(false);
   }
 
-  function toggleSection(section) {
-    setExpanded(function (previous) {
-      return {
-        ...previous,
-        [section]: !previous[section]
-      };
+  // =====================================================
+  // TOGGLE ONLY THE ARROW
+  //
+  // IMPORTANT:
+  // This does NOT change active page.
+  // =====================================================
+
+  function toggleSection(sectionName) {
+    setExpandedSection(function (current) {
+      if (current === sectionName) {
+        return null;
+      }
+
+      return sectionName;
     });
-  }
-
-  function openSection(section) {
-    const item = navigation.find(function (nav) {
-      return nav.name === section;
-    });
-
-    if (!item) return;
-
-    if (item.children && item.children.length > 0) {
-      navigate(item.children[0]);
-
-      setExpanded(function (previous) {
-        return {
-          ...previous,
-          [section]: true
-        };
-      });
-
-      return;
-    }
-
-    navigate(section);
   }
 
   // =====================================================
-  // LOAD ACCOUNTS FROM EXISTING BACKEND
-  // IMPORTANT: EXISTING API PRESERVED
+  // OPEN SINGLE PAGE
+  //
+  // Overview / Reports / Settings
+  // collapse all major sections.
+  // =====================================================
+
+  function openSinglePage(page) {
+    setActive(page);
+    setExpandedSection(null);
+    setMenuOpen(false);
+  }
+
+  // =====================================================
+  // OPEN SUBPAGE
+  // =====================================================
+
+  function openSubPage(page, parentSection) {
+    setActive(page);
+    setExpandedSection(parentSection);
+    setMenuOpen(false);
+  }
+
+  // =====================================================
+  // LOAD ACCOUNTS
+  //
+  // EXISTING API URL PRESERVED
   // =====================================================
 
   async function loadAccounts() {
@@ -237,7 +315,7 @@ function App() {
   }
 
   // =====================================================
-  // LOAD ACCOUNTS WHEN ACCOUNTS PAGE IS OPENED
+  // LOAD ACCOUNTS WHEN ACCOUNTS PAGE OPENS
   // =====================================================
 
   useEffect(
@@ -270,7 +348,9 @@ function App() {
   // =====================================================
 
   function accountTypeLabel(type) {
-    if (!type) return "Account";
+    if (!type) {
+      return "Account";
+    }
 
     return String(type)
       .replaceAll("_", " ")
@@ -280,10 +360,34 @@ function App() {
   }
 
   // =====================================================
-  // GET CURRENT PAGE TITLE
+  // DETERMINE CURRENT OVERVIEW SECTION
+  // =====================================================
+
+  function getCurrentOverviewSection() {
+    if (
+      active === "Finance" ||
+      active === "Wealth" ||
+      active === "Investments" ||
+      active === "Trading" ||
+      active === "AI"
+    ) {
+      return active;
+    }
+
+    return null;
+  }
+
+  // =====================================================
+  // PAGE TITLE
   // =====================================================
 
   function getPageTitle() {
+    const overviewSection = getCurrentOverviewSection();
+
+    if (overviewSection) {
+      return sectionOverviewTitles[overviewSection];
+    }
+
     if (active === "Overview") {
       return "Overview";
     }
@@ -292,19 +396,19 @@ function App() {
   }
 
   // =====================================================
-  // GET CURRENT PAGE DESCRIPTION
+  // PAGE DESCRIPTION
   // =====================================================
 
   function getPageDescription() {
+    const overviewSection = getCurrentOverviewSection();
+
+    if (overviewSection) {
+      return sectionDescriptions[overviewSection];
+    }
+
     const descriptions = {
-      Overview:
-        "Your complete financial, wealth, investment and trading picture.",
-
-      "Finance Overview":
-        "Accounts, cash flow, transactions and everyday finances.",
-
       Accounts:
-        "Manage your bank accounts, cash, cards and wallets.",
+        "Manage your bank accounts, cash, credit cards and wallets.",
 
       Transactions:
         "View and manage your financial transactions.",
@@ -323,9 +427,6 @@ function App() {
 
       "Statements / Import":
         "Import and reconcile financial statements.",
-
-      "Wealth Overview":
-        "Your assets, liabilities and overall net worth.",
 
       Assets:
         "Manage everything you own.",
@@ -348,9 +449,6 @@ function App() {
       "Financial Goals":
         "Set and track your long-term financial goals.",
 
-      "Investment Overview":
-        "Your complete investment portfolio.",
-
       Portfolio:
         "Track investment holdings and performance.",
 
@@ -367,13 +465,10 @@ function App() {
         "Track fixed-income investments.",
 
       Gold:
-        "Track physical and financial gold holdings.",
+        "Track gold holdings.",
 
       Crypto:
         "Track cryptocurrency investments.",
-
-      "Trading Overview":
-        "Trading activity, positions, performance and risk.",
 
       Markets:
         "Market intelligence and market data.",
@@ -409,7 +504,7 @@ function App() {
         "Monitor exposure and trading risk.",
 
       "Trading Journal":
-        "Record and analyze your trading decisions.",
+        "Record and analyze trading decisions.",
 
       "AI Chat":
         "Talk to your AI financial assistant.",
@@ -481,7 +576,7 @@ function App() {
        ================================================= */
 
     .finance-sidebar {
-      width: 270px;
+      width: 275px;
       min-height: 100vh;
       flex-shrink: 0;
       background: #ffffff;
@@ -500,21 +595,30 @@ function App() {
       color: #7048ff;
     }
 
-    .main-nav-button {
+    /* =================================================
+       MAIN NAVIGATION BUTTON
+       ================================================= */
+
+    .main-nav-row {
+      display: flex;
       width: 100%;
+      margin-bottom: 3px;
+    }
+
+    .main-nav-button {
+      flex: 1;
+      min-width: 0;
       border: 0;
       background: transparent;
-      border-radius: 10px;
+      border-radius: 10px 0 0 10px;
       padding: 11px 12px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      gap: 9px;
       cursor: pointer;
       color: #514c61;
       font-size: 14px;
       text-align: left;
-      margin-bottom: 3px;
     }
 
     .main-nav-button:hover {
@@ -525,6 +629,26 @@ function App() {
       background: #eee8ff;
       color: #5530d9;
       font-weight: 700;
+    }
+
+    .nav-arrow-button {
+      width: 42px;
+      border: 0;
+      background: transparent;
+      border-radius: 0 10px 10px 0;
+      color: #817b91;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .nav-arrow-button:hover {
+      background: #f5f1ff;
+      color: #5530d9;
+    }
+
+    .main-nav-row.active-row .nav-arrow-button {
+      background: #eee8ff;
+      color: #5530d9;
     }
 
     .nav-left {
@@ -540,10 +664,9 @@ function App() {
       flex-shrink: 0;
     }
 
-    .nav-arrow {
-      color: #9992aa;
-      font-size: 12px;
-    }
+    /* =================================================
+       SUB NAVIGATION
+       ================================================= */
 
     .sub-nav {
       padding: 2px 0 7px 30px;
@@ -574,7 +697,7 @@ function App() {
     }
 
     /* =================================================
-       MAIN
+       MAIN AREA
        ================================================= */
 
     .finance-main {
@@ -819,12 +942,6 @@ function App() {
       padding: 19px;
     }
 
-    .account-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
     .account-name {
       font-size: 17px;
       font-weight: 700;
@@ -875,7 +992,7 @@ function App() {
     }
 
     /* =================================================
-       PLACEHOLDER MODULE
+       MODULE PAGE
        ================================================= */
 
     .module-card {
@@ -884,9 +1001,6 @@ function App() {
       border-radius: 16px;
       padding: 28px;
       min-height: 220px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
     }
 
     .module-icon {
@@ -904,22 +1018,13 @@ function App() {
       font-size: 14px;
       line-height: 1.6;
       max-width: 700px;
-      margin: 0;
     }
 
     /* =================================================
-       MOBILE BOTTOM NAV
+       MOBILE
        ================================================= */
 
     .mobile-bottom {
-      display: none;
-    }
-
-    /* =================================================
-       MOBILE DRAWER
-       ================================================= */
-
-    .drawer-overlay {
       display: none;
     }
 
@@ -927,13 +1032,9 @@ function App() {
       display: none;
     }
 
-    /* =================================================
-       TABLET
-       ================================================= */
-
     @media (max-width: 1050px) {
       .finance-sidebar {
-        width: 235px;
+        width: 240px;
       }
 
       .kpi-grid {
@@ -948,10 +1049,6 @@ function App() {
         grid-template-columns: repeat(2, 1fr);
       }
     }
-
-    /* =================================================
-       MOBILE
-       ================================================= */
 
     @media (max-width: 700px) {
       .finance-app {
@@ -1050,7 +1147,7 @@ function App() {
       }
 
       /* =============================================
-         MOBILE BOTTOM
+         MOBILE BOTTOM NAV
          ============================================= */
 
       .mobile-bottom {
@@ -1086,11 +1183,10 @@ function App() {
       }
 
       /* =============================================
-         DRAWER
+         MOBILE DRAWER
          ============================================= */
 
       .drawer-overlay {
-        display: block;
         position: fixed;
         inset: 0;
         background: rgba(20, 16, 35, 0.38);
@@ -1109,7 +1205,7 @@ function App() {
         background: #ffffff;
         z-index: 90;
         padding: 20px 15px;
-        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.14);
+        box-shadow: 8px 0 30px rgba(0,0,0,0.14);
       }
 
       .drawer-head {
@@ -1134,15 +1230,21 @@ function App() {
         cursor: pointer;
       }
 
-      .drawer-main-button {
+      .drawer-main-row {
+        display: flex;
         width: 100%;
+        margin-bottom: 3px;
+      }
+
+      .drawer-main-button {
+        flex: 1;
         border: 0;
         background: transparent;
-        border-radius: 10px;
+        border-radius: 10px 0 0 10px;
         padding: 12px 10px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: 8px;
         text-align: left;
         cursor: pointer;
         color: #514c61;
@@ -1151,8 +1253,21 @@ function App() {
 
       .drawer-main-button.active {
         background: #eee8ff;
-        color: #5530d9;
+        color: #5535d9;
         font-weight: 700;
+      }
+
+      .drawer-arrow-button {
+        width: 42px;
+        border: 0;
+        background: transparent;
+        border-radius: 0 10px 10px 0;
+        cursor: pointer;
+        color: #817b91;
+      }
+
+      .drawer-arrow-button:hover {
+        background: #f5f1ff;
       }
 
       .drawer-sub {
@@ -1174,7 +1289,7 @@ function App() {
 
       .drawer-sub button.active {
         background: #eee8ff;
-        color: #5530d9;
+        color: #5535d9;
         font-weight: 700;
       }
     }
@@ -1191,11 +1306,15 @@ function App() {
   `;
 
   // =====================================================
-  // DESKTOP SIDEBAR RENDERER
+  // DESKTOP NAVIGATION
   // =====================================================
 
   function renderDesktopNavigation() {
     return navigation.map(function (item) {
+      // -------------------------------------------------
+      // SINGLE ITEM
+      // -------------------------------------------------
+
       if (item.type === "single") {
         return React.createElement(
           "button",
@@ -1206,75 +1325,129 @@ function App() {
                 ? "main-nav-button active-main"
                 : "main-nav-button",
             onClick: function () {
-              navigate(item.name);
+              openSinglePage(item.name);
             }
           },
+
           React.createElement(
             "span",
             { className: "nav-left" },
+
             React.createElement(
               "span",
               { className: "nav-icon" },
               item.icon
             ),
+
             item.name
           )
         );
       }
 
-      const isSectionActive =
-        active === item.children[0] ||
-        item.children.indexOf(active) !== -1;
+      // -------------------------------------------------
+      // MAIN SECTION
+      // -------------------------------------------------
+
+      const sectionIsActive =
+        active === item.name ||
+        findParentSection(active) === item.name;
 
       return React.createElement(
         React.Fragment,
         { key: item.name },
 
         React.createElement(
-          "button",
+          "div",
           {
             className:
-              isSectionActive
-                ? "main-nav-button active-main"
-                : "main-nav-button",
-            onClick: function () {
-              openSection(item.name);
-            }
+              sectionIsActive
+                ? "main-nav-row active-row"
+                : "main-nav-row"
           },
+
+          // ---------------------------------------------
+          // SECTION NAME
+          // ---------------------------------------------
+
           React.createElement(
-            "span",
-            { className: "nav-left" },
+            "button",
+            {
+              className:
+                sectionIsActive
+                  ? "main-nav-button active-main"
+                  : "main-nav-button",
+
+              onClick: function () {
+                openMainSection(item.name);
+              }
+            },
+
             React.createElement(
               "span",
-              { className: "nav-icon" },
-              item.icon
-            ),
-            item.name
+              { className: "nav-left" },
+
+              React.createElement(
+                "span",
+                { className: "nav-icon" },
+                item.icon
+              ),
+
+              item.name
+            )
           ),
+
+          // ---------------------------------------------
+          // ARROW
+          // ONLY COLLAPSES / EXPANDS
+          // ---------------------------------------------
+
           React.createElement(
-            "span",
-            { className: "nav-arrow" },
-            expanded[item.name] ? "▲" : "▼"
+            "button",
+            {
+              className: "nav-arrow-button",
+
+              onClick: function (event) {
+                event.stopPropagation();
+                toggleSection(item.name);
+              },
+
+              "aria-label":
+                expandedSection === item.name
+                  ? `Collapse ${item.name}`
+                  : `Expand ${item.name}`
+            },
+
+            expandedSection === item.name
+              ? "▲"
+              : "▼"
           )
         ),
 
-        expanded[item.name] &&
+        // -----------------------------------------------
+        // CHILDREN
+        // -----------------------------------------------
+
+        expandedSection === item.name &&
           React.createElement(
             "div",
             { className: "sub-nav" },
+
             item.children.map(function (child) {
               return React.createElement(
                 "button",
                 {
                   key: child,
+
                   className:
                     active === child
                       ? "sub-nav-button active"
                       : "sub-nav-button",
+
                   onClick: function () {
-                    navigate(child);
+                    openSubPage(child, item.name);
                   }
                 },
+
                 child
               );
             })
@@ -1284,80 +1457,144 @@ function App() {
   }
 
   // =====================================================
-  // MOBILE DRAWER RENDERER
+  // MOBILE NAVIGATION
   // =====================================================
 
   function renderMobileNavigation() {
     return navigation.map(function (item) {
+      // -------------------------------------------------
+      // SINGLE ITEM
+      // -------------------------------------------------
+
       if (item.type === "single") {
         return React.createElement(
           "button",
           {
             key: item.name,
+
             className:
               active === item.name
                 ? "drawer-main-button active"
                 : "drawer-main-button",
+
             onClick: function () {
-              navigate(item.name);
+              openSinglePage(item.name);
             }
           },
+
           React.createElement(
             "span",
             { className: "nav-left" },
+
             React.createElement(
               "span",
               { className: "nav-icon" },
               item.icon
             ),
+
             item.name
           )
         );
       }
+
+      // -------------------------------------------------
+      // SECTION
+      // -------------------------------------------------
+
+      const sectionIsActive =
+        active === item.name ||
+        findParentSection(active) === item.name;
 
       return React.createElement(
         React.Fragment,
         { key: item.name },
 
         React.createElement(
-          "button",
+          "div",
           {
             className:
-              item.children.indexOf(active) !== -1
-                ? "drawer-main-button active"
-                : "drawer-main-button",
-            onClick: function () {
-              toggleSection(item.name);
-            }
+              sectionIsActive
+                ? "drawer-main-row active-row"
+                : "drawer-main-row"
           },
+
+          // ---------------------------------------------
+          // SECTION NAME
+          // ---------------------------------------------
+
           React.createElement(
-            "span",
-            { className: "nav-left" },
+            "button",
+            {
+              className:
+                sectionIsActive
+                  ? "drawer-main-button active"
+                  : "drawer-main-button",
+
+              onClick: function () {
+                openMainSection(item.name);
+              }
+            },
+
             React.createElement(
               "span",
-              { className: "nav-icon" },
-              item.icon
-            ),
-            item.name
+              { className: "nav-left" },
+
+              React.createElement(
+                "span",
+                { className: "nav-icon" },
+                item.icon
+              ),
+
+              item.name
+            )
           ),
-          expanded[item.name] ? "▲" : "▼"
+
+          // ---------------------------------------------
+          // MOBILE ARROW
+          // ---------------------------------------------
+
+          React.createElement(
+            "button",
+            {
+              className: "drawer-arrow-button",
+
+              onClick: function (event) {
+                event.stopPropagation();
+                toggleSection(item.name);
+              }
+            },
+
+            expandedSection === item.name
+              ? "▲"
+              : "▼"
+          )
         ),
 
-        expanded[item.name] &&
+        // -----------------------------------------------
+        // MOBILE CHILDREN
+        // -----------------------------------------------
+
+        expandedSection === item.name &&
           React.createElement(
             "div",
             { className: "drawer-sub" },
+
             item.children.map(function (child) {
               return React.createElement(
                 "button",
                 {
                   key: child,
+
                   className:
-                    active === child ? "active" : "",
+                    active === child
+                      ? "active"
+                      : "",
+
                   onClick: function () {
-                    navigate(child);
+                    openSubPage(child, item.name);
                   }
                 },
+
                 child
               );
             })
@@ -1367,7 +1604,7 @@ function App() {
   }
 
   // =====================================================
-  // OVERVIEW PAGE
+  // GLOBAL OVERVIEW
   // =====================================================
 
   function renderOverview() {
@@ -1378,7 +1615,13 @@ function App() {
       React.createElement(
         "div",
         { className: "page-heading" },
-        React.createElement("h2", null, "Overview"),
+
+        React.createElement(
+          "h2",
+          null,
+          "Overview"
+        ),
+
         React.createElement(
           "p",
           null,
@@ -1389,20 +1632,27 @@ function App() {
       React.createElement(
         "div",
         { className: "kpi-grid" },
+
         overviewCards.map(function (card) {
           return React.createElement(
             "div",
-            { className: "kpi", key: card[0] },
+            {
+              className: "kpi",
+              key: card[0]
+            },
+
             React.createElement(
               "div",
               { className: "kpi-label" },
               card[0]
             ),
+
             React.createElement(
               "div",
               { className: "kpi-value" },
               card[1]
             ),
+
             React.createElement(
               "div",
               { className: "kpi-note" },
@@ -1419,16 +1669,19 @@ function App() {
         React.createElement(
           "div",
           { className: "panel" },
+
           React.createElement(
             "h3",
             null,
             "Financial Overview"
           ),
+
           React.createElement(
             "div",
             { className: "panel-subtitle" },
-            "Your financial activity will appear here."
+            "Your combined financial picture will appear here."
           ),
+
           React.createElement(
             "div",
             { className: "chart-placeholder" },
@@ -1439,16 +1692,19 @@ function App() {
         React.createElement(
           "div",
           { className: "panel ai-panel" },
+
           React.createElement(
             "div",
             { className: "ai-icon" },
             "AI"
           ),
+
           React.createElement(
             "h3",
             null,
             "AI Finance Assistant"
           ),
+
           React.createElement(
             "div",
             { className: "ai-text" },
@@ -1466,14 +1722,20 @@ function App() {
           {
             className: "quick",
             onClick: function () {
-              navigate("Accounts");
+              openMainSection("Finance");
             }
           },
-          React.createElement("strong", null, "Accounts"),
+
+          React.createElement(
+            "strong",
+            null,
+            "Finance"
+          ),
+
           React.createElement(
             "span",
             null,
-            "Manage your financial accounts"
+            "Accounts, transactions and cash flow"
           )
         ),
 
@@ -1482,14 +1744,20 @@ function App() {
           {
             className: "quick",
             onClick: function () {
-              navigate("Transactions");
+              openMainSection("Wealth");
             }
           },
-          React.createElement("strong", null, "Transactions"),
+
+          React.createElement(
+            "strong",
+            null,
+            "Wealth"
+          ),
+
           React.createElement(
             "span",
             null,
-            "Track income and expenses"
+            "Assets, liabilities and net worth"
           )
         ),
 
@@ -1498,14 +1766,20 @@ function App() {
           {
             className: "quick",
             onClick: function () {
-              navigate("Portfolio");
+              openMainSection("Investments");
             }
           },
-          React.createElement("strong", null, "Portfolio"),
+
+          React.createElement(
+            "strong",
+            null,
+            "Investments"
+          ),
+
           React.createElement(
             "span",
             null,
-            "View investments"
+            "Portfolio and investments"
           )
         ),
 
@@ -1514,14 +1788,20 @@ function App() {
           {
             className: "quick",
             onClick: function () {
-              navigate("AI Chat");
+              openMainSection("AI");
             }
           },
-          React.createElement("strong", null, "AI Chat"),
+
+          React.createElement(
+            "strong",
+            null,
+            "AI"
+          ),
+
           React.createElement(
             "span",
             null,
-            "Ask your financial AI"
+            "AI financial assistant"
           )
         )
       )
@@ -1529,8 +1809,68 @@ function App() {
   }
 
   // =====================================================
+  // SECTION OVERVIEW PAGE
+  // =====================================================
+
+  function renderSectionOverview(sectionName) {
+    const iconMap = {
+      Finance: "💰",
+      Wealth: "💎",
+      Investments: "📊",
+      Trading: "📈",
+      AI: "🤖"
+    };
+
+    return React.createElement(
+      React.Fragment,
+      null,
+
+      React.createElement(
+        "div",
+        { className: "page-heading" },
+
+        React.createElement(
+          "h2",
+          null,
+          sectionOverviewTitles[sectionName]
+        ),
+
+        React.createElement(
+          "p",
+          null,
+          sectionDescriptions[sectionName]
+        )
+      ),
+
+      React.createElement(
+        "div",
+        { className: "module-card" },
+
+        React.createElement(
+          "div",
+          { className: "module-icon" },
+          iconMap[sectionName]
+        ),
+
+        React.createElement(
+          "h3",
+          null,
+          sectionOverviewTitles[sectionName]
+        ),
+
+        React.createElement(
+          "p",
+          null,
+          "This is the main overview for the ",
+          sectionName,
+          " section. Its dashboard, analytics and real data will be connected here as we build the individual modules."
+        )
+      )
+    );
+  }
+
+  // =====================================================
   // ACCOUNTS PAGE
-  // EXISTING BACKEND FUNCTIONALITY PRESERVED
   // =====================================================
 
   function renderAccounts() {
@@ -1548,7 +1888,13 @@ function App() {
       React.createElement(
         "div",
         { className: "page-heading" },
-        React.createElement("h2", null, "Accounts"),
+
+        React.createElement(
+          "h2",
+          null,
+          "Accounts"
+        ),
+
         React.createElement(
           "p",
           null,
@@ -1570,11 +1916,13 @@ function App() {
         React.createElement(
           "div",
           { className: "summary-card" },
+
           React.createElement(
             "div",
             { className: "summary-label" },
             "Total Accounts"
           ),
+
           React.createElement(
             "div",
             { className: "summary-value" },
@@ -1585,11 +1933,13 @@ function App() {
         React.createElement(
           "div",
           { className: "summary-card" },
+
           React.createElement(
             "div",
             { className: "summary-label" },
             "Total Balance"
           ),
+
           React.createElement(
             "div",
             { className: "summary-value" },
@@ -1600,15 +1950,19 @@ function App() {
         React.createElement(
           "div",
           { className: "summary-card" },
+
           React.createElement(
             "div",
             { className: "summary-label" },
             "Status"
           ),
+
           React.createElement(
             "div",
             { className: "summary-value" },
-            accountsLoading ? "Loading..." : "Connected"
+            accountsLoading
+              ? "Loading..."
+              : "Connected"
           )
         )
       ),
@@ -1623,21 +1977,29 @@ function App() {
               { className: "account-empty" },
               "Loading accounts..."
             )
+
           : accounts.length === 0
           ? React.createElement(
               "div",
               { className: "account-empty" },
+
               React.createElement(
                 "strong",
                 null,
                 "No active accounts yet."
               ),
+
               React.createElement(
                 "div",
-                { style: { marginTop: "8px" } },
-                "Your Accounts section is connected to the backend. Add Account functionality will be built next."
+                {
+                  style: {
+                    marginTop: "8px"
+                  }
+                },
+                "The Accounts section is connected to the backend. Account creation will be added next."
               )
             )
+
           : accounts.map(function (account) {
               return React.createElement(
                 "div",
@@ -1648,24 +2010,14 @@ function App() {
 
                 React.createElement(
                   "div",
-                  { className: "account-top" },
+                  { className: "account-name" },
+                  account.name
+                ),
 
-                  React.createElement(
-                    "div",
-                    null,
-
-                    React.createElement(
-                      "div",
-                      { className: "account-name" },
-                      account.name
-                    ),
-
-                    React.createElement(
-                      "div",
-                      { className: "account-type" },
-                      accountTypeLabel(account.account_type)
-                    )
-                  )
+                React.createElement(
+                  "div",
+                  { className: "account-type" },
+                  accountTypeLabel(account.account_type)
                 ),
 
                 React.createElement(
@@ -1680,10 +2032,13 @@ function App() {
                 React.createElement(
                   "div",
                   { className: "account-meta" },
+
                   account.institution
                     ? `Institution: ${account.institution}`
                     : "Institution: —",
+
                   React.createElement("br"),
+
                   account.account_number
                     ? `Account: ${account.account_number}`
                     : "Account: —"
@@ -1702,34 +2057,59 @@ function App() {
     let icon = "📁";
 
     if (
-      active.toLowerCase().includes("finance") ||
       active === "Transactions" ||
       active === "Accounts" ||
-      active === "Budget"
+      active === "Budget" ||
+      active === "Cash Flow" ||
+      active === "Categories"
     ) {
       icon = "💰";
-    } else if (
-      active.toLowerCase().includes("wealth") ||
+    }
+
+    if (
       active === "Assets" ||
       active === "Liabilities" ||
-      active === "Net Worth"
+      active === "Net Worth" ||
+      active === "Insurance" ||
+      active === "Real Estate"
     ) {
       icon = "💎";
-    } else if (
-      active.toLowerCase().includes("investment") ||
+    }
+
+    if (
       active === "Portfolio" ||
       active === "Stocks" ||
+      active === "Mutual Funds" ||
+      active === "ETFs" ||
+      active === "Bonds" ||
+      active === "Gold" ||
       active === "Crypto"
     ) {
       icon = "📊";
-    } else if (
-      active.toLowerCase().includes("trading") ||
+    }
+
+    if (
       active === "Markets" ||
+      active === "Watchlist" ||
+      active === "Screener" ||
       active === "Charts" ||
-      active === "Backtesting"
+      active === "Strategies" ||
+      active === "Backtesting" ||
+      active === "Paper Trading" ||
+      active === "Live Trading" ||
+      active === "Positions" ||
+      active === "Orders"
     ) {
       icon = "📈";
-    } else if (active.toLowerCase().includes("ai")) {
+    }
+
+    if (
+      active === "AI Chat" ||
+      active === "AI Research" ||
+      active === "AI Analysis" ||
+      active === "AI Predictions" ||
+      active === "AI Reports"
+    ) {
       icon = "🤖";
     }
 
@@ -1740,7 +2120,13 @@ function App() {
       React.createElement(
         "div",
         { className: "page-heading" },
-        React.createElement("h2", null, active),
+
+        React.createElement(
+          "h2",
+          null,
+          active
+        ),
+
         React.createElement(
           "p",
           null,
@@ -1767,38 +2153,52 @@ function App() {
         React.createElement(
           "p",
           null,
-          "The navigation structure is now ready. This module will be connected to its real functionality without changing the rest of the application."
+          "This module is part of the Finance OS architecture and will be connected to its full functionality without affecting the other modules."
         )
       )
     );
   }
 
   // =====================================================
-  // PAGE CONTENT ROUTER
+  // PAGE ROUTER
   // =====================================================
 
   function renderPage() {
+    // Global overview
     if (active === "Overview") {
       return renderOverview();
     }
 
+    // Main section overview
+    if (
+      active === "Finance" ||
+      active === "Wealth" ||
+      active === "Investments" ||
+      active === "Trading" ||
+      active === "AI"
+    ) {
+      return renderSectionOverview(active);
+    }
+
+    // Existing Accounts page
     if (active === "Accounts") {
       return renderAccounts();
     }
 
+    // Everything else for now
     return renderModulePage();
   }
 
   // =====================================================
-  // MOBILE BOTTOM NAVIGATION
+  // MOBILE QUICK NAVIGATION
   // =====================================================
 
   const mobileShortcuts = [
     ["Overview", "🏠"],
-    ["Finance Overview", "💰"],
-    ["Investment Overview", "📊"],
-    ["Trading Overview", "📈"],
-    ["AI Chat", "🤖"]
+    ["Finance", "💰"],
+    ["Investments", "📊"],
+    ["Trading", "📈"],
+    ["AI", "🤖"]
   ];
 
   // =====================================================
@@ -1810,7 +2210,7 @@ function App() {
     null,
 
     // ===================================================
-    // GLOBAL CSS
+    // GLOBAL STYLES
     // ===================================================
 
     React.createElement(
@@ -1830,6 +2230,7 @@ function App() {
 
         React.createElement("div", {
           className: "drawer-overlay",
+
           onClick: function () {
             setMenuOpen(false);
           }
@@ -1846,10 +2247,16 @@ function App() {
             React.createElement(
               "div",
               { className: "drawer-brand" },
+
               "AI ",
+
               React.createElement(
                 "span",
-                { style: { color: "#7048ff" } },
+                {
+                  style: {
+                    color: "#7048ff"
+                  }
+                },
                 "Finance"
               )
             ),
@@ -1858,6 +2265,7 @@ function App() {
               "button",
               {
                 className: "drawer-close",
+
                 onClick: function () {
                   setMenuOpen(false);
                 }
@@ -1889,7 +2297,9 @@ function App() {
         React.createElement(
           "div",
           { className: "brand" },
+
           "AI ",
+
           React.createElement(
             "span",
             null,
@@ -1901,7 +2311,7 @@ function App() {
       ),
 
       // =================================================
-      // MAIN AREA
+      // MAIN CONTENT
       // =================================================
 
       React.createElement(
@@ -1924,6 +2334,7 @@ function App() {
               "button",
               {
                 className: "mobile-menu",
+
                 onClick: function () {
                   setMenuOpen(true);
                 }
@@ -1957,7 +2368,7 @@ function App() {
         ),
 
         // ===============================================
-        // PAGE
+        // PAGE CONTENT
         // ===============================================
 
         React.createElement(
@@ -1981,12 +2392,15 @@ function App() {
           "button",
           {
             key: item[0],
+
             className:
-              active === item[0]
+              active === item[0] ||
+              findParentSection(active) === item[0]
                 ? "bottom-item active"
                 : "bottom-item",
+
             onClick: function () {
-              navigate(item[0]);
+              openMainSection(item[0]);
             }
           },
 
@@ -1997,8 +2411,6 @@ function App() {
           ),
 
           item[0]
-            .replace(" Overview", "")
-            .replace(" Chat", "")
         );
       })
     )

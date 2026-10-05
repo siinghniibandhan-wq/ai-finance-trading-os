@@ -203,7 +203,40 @@ async function loadCategories() {
   }
 }
 
+// =====================================================
+// LOAD BUDGETS FROM BACKEND
+// =====================================================
 
+async function loadBudgets() {
+  setBudgetLoading(true);
+  setBudgetError("");
+
+  try {
+    const response = await fetch(
+      "https://ai-finance-trading-os-api.onrender.com/api/budgets/"
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to load budgets."
+      );
+    }
+
+    setBudgets(Array.isArray(data) ? data : []);
+  } catch (error) {
+    setBudgetError(
+      error?.message || "Unable to load budgets."
+    );
+  } finally {
+    setBudgetLoading(false);
+  }
+}
 // =====================================================
 // CATEGORY CRUD STATE
 // =====================================================

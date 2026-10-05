@@ -1564,6 +1564,7 @@ async function loadTransactions() {
 useEffect(
   function () {
     if (
+  active === "Finance" ||
   active === "Transactions" ||
   active === "Cash Flow" ||
   active === "Budget"

@@ -136,6 +136,30 @@ const [categoriesError, setCategoriesError] = useState("");
 
 // =====================================================
 // BUDGET STATE
+// =====================================================
+
+const [budgets, setBudgets] = useState([]);
+const [budgetsLoading, setBudgetsLoading] = useState(false);
+const [budgetsError, setBudgetsError] = useState("");
+
+// =====================================================
+// BUDGET FORM STATE
+// =====================================================
+
+const [showBudgetForm, setShowBudgetForm] = useState(false);
+const [editingBudget, setEditingBudget] = useState(null);
+const [budgetSaving, setBudgetSaving] = useState(false);
+const [budgetDeleting, setBudgetDeleting] = useState(false);
+const [budgetToDelete, setBudgetToDelete] = useState(null);
+
+const [budgetForm, setBudgetForm] = useState({
+  month: new Date().toISOString().slice(0, 7),
+  category_id: "",
+  amount: ""
+});
+
+// =====================================================
+// BUDGET STATE
 // FINANCE BUDGET DATA
 // =====================================================
 

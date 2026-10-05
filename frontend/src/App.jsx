@@ -948,20 +948,28 @@ async function deleteCategory(categoryId) {
 }
 
 // =====================================================
-// LOAD CATEGORIES WHEN CATEGORIES, TRANSACTIONS OR
-// CASH FLOW OPENS
+// LOAD FINANCE DATA WHEN PAGE OPENS
 // =====================================================
 
 useEffect(
   function () {
     if (
-  active === "Categories" ||
-  active === "Transactions" ||
-  active === "Cash Flow" ||
-  active === "Budget" ||
-  active === "Bills & Subscriptions"
-) {
+      active === "Categories" ||
+      active === "Transactions" ||
+      active === "Cash Flow" ||
+      active === "Budget" ||
+      active === "Bills & Subscriptions"
+    ) {
       loadCategories();
+    }
+
+    // -------------------------------------------------
+    // BILLS & SUBSCRIPTIONS
+    // Load bills directly from PostgreSQL through API
+    // whenever the Bills page is opened.
+    // -------------------------------------------------
+    if (active === "Bills & Subscriptions") {
+      loadBills();
     }
   },
   [active]

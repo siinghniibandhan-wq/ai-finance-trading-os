@@ -1,20 +1,39 @@
-{
-  "name": "ai-finance-trading-os-frontend",
-  "private": true,
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "lucide-react": "^0.468.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^6.0.7"
-  }
-}
+const root = document.getElementById("root");
+
+root.innerHTML = `
+  <div style="padding:30px;font-family:Arial">
+    <h2>Checking React...</h2>
+  </div>
+`;
+
+Promise.all([
+  import("react"),
+  import("react-dom/client")
+])
+  .then(([ReactModule, ReactDOMModule]) => {
+    const React = ReactModule.default;
+    const ReactDOM = ReactDOMModule;
+
+    ReactDOM.createRoot(root).render(
+      React.createElement(
+        "div",
+        { style: { padding: "30px", fontFamily: "Arial" } },
+        React.createElement("h1", null, "React Working ✅"),
+        React.createElement("p", null, "React loaded successfully.")
+      )
+    );
+  })
+  .catch((error) => {
+    root.innerHTML = `
+      <div style="
+        padding:30px;
+        font-family:Arial;
+        color:#b00020;
+        background:#fff0f0;
+        min-height:100vh;
+      ">
+        <h2>React Error ❌</h2>
+        <pre style="white-space:pre-wrap">${String(error?.stack || error)}</pre>
+      </div>
+    `;
+  });

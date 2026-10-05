@@ -4053,7 +4053,7 @@ function renderCategories() {
                 style: {
                   width: "100%",
                   padding: "12px",
-                  border: "1px 
+                  border: "1px solid #ddd7eb",
           
               
 

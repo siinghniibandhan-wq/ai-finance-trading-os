@@ -159,22 +159,6 @@ const [budgetForm, setBudgetForm] = useState({
 });
 
 // =====================================================
-// BUDGET STATE
-// FINANCE BUDGET DATA
-// =====================================================
-
-const [budgets, setBudgets] = useState([]);
-
-const [budgetLoading, setBudgetLoading] = useState(false);
-
-const [budgetError, setBudgetError] = useState("");
-
-const [budgetForm, setBudgetForm] = useState({
-  month: new Date().toISOString().slice(0, 7),
-  category_id: "",
-  amount: ""
-});
-// =====================================================
 // LOAD CATEGORIES FROM BACKEND
 // =====================================================
 
@@ -208,8 +192,8 @@ async function loadCategories() {
 // =====================================================
 
 async function loadBudgets() {
-  setBudgetLoading(true);
-  setBudgetError("");
+  setBudgetsLoading(true);
+  setBudgetsError("");
 
   try {
     const response = await fetch(
@@ -230,11 +214,11 @@ async function loadBudgets() {
 
     setBudgets(Array.isArray(data) ? data : []);
   } catch (error) {
-    setBudgetError(
+    setBudgetsError(
       error?.message || "Unable to load budgets."
     );
   } finally {
-    setBudgetLoading(false);
+    setBudgetsLoading(false);
   }
 }
 // =====================================================

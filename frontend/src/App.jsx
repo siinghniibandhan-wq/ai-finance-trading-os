@@ -8168,24 +8168,64 @@ function renderBills() {
               )
             ),
 
-            React.createElement(
-              "button",
-              {
-                onClick: function () {
-                  openEditBillForm(bill);
-                },
+// ===================================================
+// EDIT + DELETE BILL ACTIONS
+// ===================================================
 
-                style: {
-                  border: "1px solid #ddd7eb",
-                  borderRadius: "9px",
-                  background: "#ffffff",
-                  color: "#5942b8",
-                  padding: "9px 13px",
-                  fontWeight: "700",
-                  cursor: "pointer"
-                }
-              },
-              "Edit"
+React.createElement(
+  "div",
+  {
+    style: {
+      display: "flex",
+      gap: "8px",
+      flexWrap: "wrap",
+      marginTop: "4px"
+    }
+  },
+
+  // EDIT BUTTON
+  React.createElement(
+    "button",
+    {
+      onClick: function () {
+        openEditBillForm(bill);
+      },
+
+      style: {
+        border: "1px solid #ddd7eb",
+        borderRadius: "9px",
+        background: "#ffffff",
+        color: "#5942b8",
+        padding: "9px 13px",
+        fontWeight: "700",
+        cursor: "pointer"
+      }
+    },
+    "Edit"
+  ),
+
+  // DELETE BUTTON
+  React.createElement(
+    "button",
+    {
+      onClick: function () {
+        setBillToDelete(bill);
+        setBillsError("");
+      },
+
+      style: {
+        border: "1px solid #f0caca",
+        borderRadius: "9px",
+        background: "#fff5f5",
+        color: "#c62828",
+        padding: "9px 13px",
+        fontWeight: "700",
+        cursor: "pointer"
+      }
+    },
+    "Delete"
+  )
+)
             )
           );
         })
@@ -8523,12 +8563,150 @@ function renderBills() {
           )
         )
       )
-    : null;
+        : null;
 
 
-  // ===================================================
-  // FINAL BILLS PAGE
-  // ===================================================
+// ===================================================
+// DELETE BILL CONFIRMATION MODAL
+// =====================================================
+
+const deleteBillModal = billToDelete
+  ? React.createElement(
+      "div",
+      {
+        style: {
+          position: "fixed",
+          inset: 0,
+          zIndex: 1100,
+          background: "rgba(20, 15, 35, 0.48)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "15px"
+        }
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            width: "min(430px, 100%)",
+            background: "#ffffff",
+            borderRadius: "18px",
+            padding: "22px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.22)"
+          }
+        },
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              fontSize: "20px",
+              fontWeight: "800",
+              color: "#211b35",
+              marginBottom: "10px"
+            }
+          },
+          "Delete Bill?"
+        ),
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              fontSize: "14px",
+              lineHeight: "1.6",
+              color: "#625b7a",
+              marginBottom: "20px"
+            }
+          },
+          "Are you sure you want to delete ",
+          React.createElement(
+            "strong",
+            null,
+            billToDelete.name
+          ),
+          "? This action cannot be undone."
+        ),
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "10px",
+              flexWrap: "wrap"
+            }
+          },
+
+          // CANCEL
+          React.createElement(
+            "button",
+            {
+              onClick: function () {
+                if (!billDeleting) {
+                  setBillToDelete(null);
+                }
+              },
+
+              disabled: billDeleting,
+
+              style: {
+                border: "1px solid #ddd7eb",
+                borderRadius: "10px",
+                padding: "11px 16px",
+                background: "#ffffff",
+                color: "#4f4966",
+                fontWeight: "700",
+                cursor: billDeleting
+                  ? "not-allowed"
+                  : "pointer"
+              }
+            },
+            "Cancel"
+          ),
+
+          // CONFIRM DELETE
+          React.createElement(
+            "button",
+            {
+              onClick: function () {
+                if (!billDeleting && billToDelete) {
+                  deleteBill(billToDelete.id);
+                }
+              },
+
+              disabled: billDeleting,
+
+              style: {
+                border: 0,
+                borderRadius: "10px",
+                padding: "11px 16px",
+                background: billDeleting
+                  ? "#aaa"
+                  : "#d32f2f",
+                color: "#ffffff",
+                fontWeight: "700",
+                cursor: billDeleting
+                  ? "not-allowed"
+                  : "pointer"
+              }
+            },
+            billDeleting
+              ? "Deleting..."
+              : "Delete Bill"
+          )
+        )
+      )
+    )
+  : null;
+
+
+// ===================================================
+// FINAL BILLS PAGE
+// ===================================================
 
   return React.createElement(
     React.Fragment,
@@ -8542,7 +8720,9 @@ function renderBills() {
 
     billList,
 
-    billModal
+    billModal,
+
+    deleteBillModal
   );
 }
 

@@ -77,6 +77,53 @@ function App() {
 
   const [accountSaving, setAccountSaving] = useState(false);
 
+// =====================================================
+// TRANSACTIONS STATE
+// NEW TRANSACTION MODULE
+// =====================================================
+
+// -----------------------------------------------------
+// TRANSACTION LIST
+// -----------------------------------------------------
+const [transactions, setTransactions] = useState([]);
+const [transactionsLoading, setTransactionsLoading] = useState(false);
+const [transactionsError, setTransactionsError] = useState("");
+
+// -----------------------------------------------------
+// ADD / EDIT TRANSACTION MODAL
+// -----------------------------------------------------
+const [showTransactionForm, setShowTransactionForm] = useState(false);
+const [editingTransaction, setEditingTransaction] = useState(null);
+const [transactionSaving, setTransactionSaving] = useState(false);
+
+// -----------------------------------------------------
+// TRANSACTION FORM
+// -----------------------------------------------------
+const [transactionForm, setTransactionForm] = useState({
+  account_id: "",
+  category_id: "",
+  transaction_type: "expense",
+  amount: "",
+  currency: "INR",
+  description: "",
+  merchant: "",
+  reference_number: "",
+  transaction_date: new Date().toISOString().slice(0, 10),
+  notes: ""
+});
+
+// -----------------------------------------------------
+// TRANSACTION FILTERS
+// -----------------------------------------------------
+const [transactionSearch, setTransactionSearch] = useState("");
+const [transactionTypeFilter, setTransactionTypeFilter] = useState("all");
+const [transactionAccountFilter, setTransactionAccountFilter] = useState("all");
+
+// -----------------------------------------------------
+// DELETE CONFIRMATION
+// -----------------------------------------------------
+const [transactionToDelete, setTransactionToDelete] = useState(null);
+const [transactionDeleting, setTransactionDeleting] = useState(false);
   // =====================================================
   // NAVIGATION STRUCTURE
   // IMPORTANT:

@@ -13,6 +13,12 @@ from backend.routes.assets import router as assets_router
 from backend.routes.liabilities import router as liabilities_router
 from backend.routes.dashboard import router as dashboard_router
 
+# =====================================================
+# BUDGET ROUTES
+# =====================================================
+
+from backend import budgets
+
 
 app = FastAPI(
     title="AI Finance Trading OS",
@@ -52,7 +58,11 @@ app.include_router(transactions_router)
 app.include_router(assets_router)
 app.include_router(liabilities_router)
 app.include_router(dashboard_router)
+# =====================================================
+# BUDGET ROUTES
+# =====================================================
 
+app.include_router(budgets.router)
 
 # ============================================================
 # BASIC ROUTES

@@ -1411,6 +1411,7 @@ if (active === "Statements / Import") {
 useEffect(
   function () {
     if (
+  active === "Finance" ||
   active === "Accounts" ||
   active === "Transactions" ||
   active === "Cash Flow" ||

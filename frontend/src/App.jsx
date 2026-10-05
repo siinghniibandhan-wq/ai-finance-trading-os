@@ -3281,7 +3281,8 @@ function transactionTypeLabel(type) {
     );
   }
 
-   // =====================================================
+
+// =====================================================
 // CATEGORIES PAGE
 // FINANCE CATEGORY MANAGEMENT
 // =====================================================
@@ -3291,9 +3292,10 @@ function renderCategories() {
     React.Fragment,
     null,
 
-    // ---------------------------------------------------
+    // ===================================================
     // PAGE HEADER
-    // ---------------------------------------------------
+    // ===================================================
+
     React.createElement(
       "div",
       {
@@ -3343,9 +3345,10 @@ function renderCategories() {
       )
     ),
 
-    // ---------------------------------------------------
+    // ===================================================
     // SUMMARY CARDS
-    // ---------------------------------------------------
+    // ===================================================
+
     React.createElement(
       "div",
       {
@@ -3358,6 +3361,8 @@ function renderCategories() {
         }
       },
 
+      // TOTAL
+
       React.createElement(
         "div",
         {
@@ -3366,11 +3371,13 @@ function renderCategories() {
             margin: 0
           }
         },
+
         React.createElement(
           "strong",
           null,
           "Total Categories"
         ),
+
         React.createElement(
           "div",
           {
@@ -3384,6 +3391,8 @@ function renderCategories() {
         )
       ),
 
+      // INCOME
+
       React.createElement(
         "div",
         {
@@ -3392,11 +3401,13 @@ function renderCategories() {
             margin: 0
           }
         },
+
         React.createElement(
           "strong",
           null,
           "Income Categories"
         ),
+
         React.createElement(
           "div",
           {
@@ -3415,6 +3426,8 @@ function renderCategories() {
         )
       ),
 
+      // EXPENSE
+
       React.createElement(
         "div",
         {
@@ -3423,11 +3436,13 @@ function renderCategories() {
             margin: 0
           }
         },
+
         React.createElement(
           "strong",
           null,
           "Expense Categories"
         ),
+
         React.createElement(
           "div",
           {
@@ -3447,9 +3462,10 @@ function renderCategories() {
       )
     ),
 
-    // ---------------------------------------------------
+    // ===================================================
     // ERROR MESSAGE
-    // ---------------------------------------------------
+    // ===================================================
+
     categoriesError
       ? React.createElement(
           "div",
@@ -3467,9 +3483,10 @@ function renderCategories() {
         )
       : null,
 
-    // ---------------------------------------------------
+    // ===================================================
     // CATEGORY LIST
-    // ---------------------------------------------------
+    // ===================================================
+
     React.createElement(
       "div",
       {
@@ -3512,6 +3529,7 @@ function renderCategories() {
       ),
 
       categories.length === 0 && !categoriesLoading
+
         ? React.createElement(
             "div",
             {
@@ -3553,6 +3571,7 @@ function renderCategories() {
               "Create your first income or expense category."
             )
           )
+
         : React.createElement(
             "div",
             {
@@ -3591,9 +3610,18 @@ function renderCategories() {
                   }
                 },
 
+                // ---------------------------------------
+                // CATEGORY INFORMATION
+                // ---------------------------------------
+
                 React.createElement(
                   "div",
-                  null,
+                  {
+                    style: {
+                      flex: "1 1 220px",
+                      minWidth: 0
+                    }
+                  },
 
                   React.createElement(
                     "div",
@@ -3617,8 +3645,26 @@ function renderCategories() {
                         },
                         category.description
                       )
+                    : null,
+
+                  category.parent_id
+                    ? React.createElement(
+                        "div",
+                        {
+                          style: {
+                            fontSize: "12px",
+                            color: "#8a829d",
+                            marginTop: "5px"
+                          }
+                        },
+                        "Subcategory"
+                      )
                     : null
                 ),
+
+                // ---------------------------------------
+                // TYPE BADGE
+                // ---------------------------------------
 
                 React.createElement(
                   "span",
@@ -3643,13 +3689,374 @@ function renderCategories() {
                     }
                   },
                   typeLabel
+                ),
+
+                // ---------------------------------------
+                // ACTION BUTTONS
+                // ---------------------------------------
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      gap: "8px",
+                      flexWrap: "wrap"
+                    }
+                  },
+
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: function () {
+                        openEditCategoryForm(category);
+                      },
+                      style: {
+                        border: "1px solid #ddd7eb",
+                        background: "#ffffff",
+                        color: "#4f46a5",
+                        borderRadius: "9px",
+                        padding: "7px 12px",
+                        cursor: "pointer",
+                        fontWeight: "700"
+                      }
+                    },
+                    "Edit"
+                  ),
+
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: function () {
+                        setCategoryToDelete(category);
+                      },
+                      style: {
+                        border: "1px solid #ffd0d0",
+                        background: "#fff5f5",
+                        color: "#c62828",
+                        borderRadius: "9px",
+                        padding: "7px 12px",
+                        cursor: "pointer",
+                        fontWeight: "700"
+                      }
+                    },
+                    "Delete"
+                  )
                 )
               );
             })
           )
-    )
-  );
-}
+    ),
+
+    // ===================================================
+    // CATEGORY FORM MODAL
+    // ADD / EDIT
+    // ===================================================
+
+    showCategoryForm
+      ? React.createElement(
+          "div",
+          {
+            style: {
+              position: "fixed",
+              inset: 0,
+              background: "rgba(20, 16, 40, 0.45)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px",
+              zIndex: 9999
+            }
+          },
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                width: "100%",
+                maxWidth: "520px",
+                maxHeight: "90vh",
+                overflowY: "auto",
+                background: "#ffffff",
+                borderRadius: "18px",
+                padding: "22px",
+                boxShadow:
+                  "0 20px 60px rgba(0,0,0,0.18)"
+              }
+            },
+
+            // -----------------------------------------
+            // MODAL HEADER
+            // -----------------------------------------
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "20px"
+                }
+              },
+
+              React.createElement(
+                "h3",
+                {
+                  style: {
+                    margin: 0
+                  }
+                },
+                editingCategory
+                  ? "Edit Category"
+                  : "Add Category"
+              ),
+
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  onClick: closeCategoryForm,
+                  disabled: categorySaving,
+                  style: {
+                    border: "none",
+                    background: "#f2eff8",
+                    borderRadius: "10px",
+                    width: "36px",
+                    height: "36px",
+                    cursor: "pointer",
+                    fontSize: "20px"
+                  }
+                },
+                "×"
+              )
+            ),
+
+            // -----------------------------------------
+            // CATEGORY NAME
+            // -----------------------------------------
+
+            React.createElement(
+              "label",
+              {
+                style: {
+                  display: "block",
+                  marginBottom: "6px",
+                  fontWeight: "700"
+                }
+              },
+              "Category Name"
+            ),
+
+            React.createElement("input", {
+              type: "text",
+              value: categoryForm.name,
+
+              onChange: function (event) {
+                setCategoryForm(function (current) {
+                  return {
+                    ...current,
+                    name: event.target.value
+                  };
+                });
+              },
+
+              placeholder: "e.g. Groceries",
+
+              style: {
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #ddd7eb",
+                borderRadius: "10px",
+                marginBottom: "16px",
+                fontSize: "15px"
+              }
+            }),
+
+            // -----------------------------------------
+            // CATEGORY TYPE
+            // -----------------------------------------
+
+            React.createElement(
+              "label",
+              {
+                style: {
+                  display: "block",
+                  marginBottom: "6px",
+                  fontWeight: "700"
+                }
+              },
+              "Category Type"
+            ),
+
+            React.createElement(
+              "select",
+              {
+                value: categoryForm.category_type,
+
+                onChange: function (event) {
+                  setCategoryForm(function (current) {
+                    return {
+                      ...current,
+                      category_type:
+                        event.target.value
+                    };
+                  });
+                },
+
+                style: {
+                  width: "100%",
+                  padding: "12px",
+                  border: "1px solid #ddd7eb",
+                  borderRadius: "10px",
+                  marginBottom: "16px",
+                  fontSize: "15px",
+                  background: "#ffffff"
+                }
+              },
+
+              React.createElement(
+                "option",
+                {
+                  value: "expense"
+                },
+                "Expense"
+              ),
+
+              React.createElement(
+                "option",
+                {
+                  value: "income"
+                },
+                "Income"
+              ),
+
+              React.createElement(
+                "option",
+                {
+                  value: "other"
+                },
+                "Other"
+              )
+            ),
+
+            // -----------------------------------------
+            // PARENT CATEGORY
+            // -----------------------------------------
+
+            React.createElement(
+              "label",
+              {
+                style: {
+                  display: "block",
+                  marginBottom: "6px",
+                  fontWeight: "700"
+                }
+              },
+              "Parent Category"
+            ),
+
+            React.createElement(
+              "select",
+              {
+                value: categoryForm.parent_id,
+
+                onChange: function (event) {
+                  setCategoryForm(function (current) {
+                    return {
+                      ...current,
+                      parent_id: event.target.value
+                    };
+                  });
+                },
+
+                style: {
+                  width: "100%",
+                  padding: "12px",
+                  border: "1px solid #ddd7eb",
+                  borderRadius: "10px",
+                  marginBottom: "16px",
+                  fontSize: "15px",
+                  background: "#ffffff"
+                }
+              },
+
+              React.createElement(
+                "option",
+                {
+                  value: ""
+                },
+                "No Parent Category"
+              ),
+
+              categories
+                .filter(function (category) {
+                  if (
+                    editingCategory &&
+                    category.id ===
+                      editingCategory.id
+                  ) {
+                    return false;
+                  }
+
+                  return true;
+                })
+                .map(function (category) {
+                  return React.createElement(
+                    "option",
+                    {
+                      key: category.id,
+                      value: category.id
+                    },
+                    category.name
+                  );
+                })
+            ),
+
+            // -----------------------------------------
+            // DESCRIPTION
+            // -----------------------------------------
+
+            React.createElement(
+              "label",
+              {
+                style: {
+                  display: "block",
+                  marginBottom: "6px",
+                  fontWeight: "700"
+                }
+              },
+              "Description"
+            ),
+
+            React.createElement(
+              "textarea",
+              {
+                value: categoryForm.description,
+
+                onChange: function (event) {
+                  setCategoryForm(function (current) {
+                    return {
+                      ...current,
+                      description:
+                        event.target.value
+                    };
+                  });
+                },
+
+                placeholder: "Optional description",
+
+                rows: 4,
+
+                style: {
+                  width: "100%",
+                  padding: "12px",
+                  border: "1px 
+          
+              
+
   // =====================================================
   // GENERIC MODULE PAGE
   // =====================================================

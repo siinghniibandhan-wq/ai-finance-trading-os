@@ -130,9 +130,37 @@ const [transactionDeleting, setTransactionDeleting] = useState(false);
 // FINANCE CATEGORY DATA
 // =====================================================
 
+// =====================================================
+// CATEGORIES STATE
+// FINANCE CATEGORY MANAGEMENT
+// =====================================================
+
 const [categories, setCategories] = useState([]);
 const [categoriesLoading, setCategoriesLoading] = useState(false);
 const [categoriesError, setCategoriesError] = useState("");
+
+// =====================================================
+// CATEGORY FORM
+// ADD / EDIT CATEGORY
+// =====================================================
+
+const [showCategoryForm, setShowCategoryForm] = useState(false);
+const [editingCategory, setEditingCategory] = useState(null);
+const [categorySaving, setCategorySaving] = useState(false);
+
+const [categoryForm, setCategoryForm] = useState({
+  name: "",
+  description: "",
+  category_type: "expense",
+  parent_id: ""
+});
+
+// =====================================================
+// CATEGORY DELETE
+// =====================================================
+
+const [categoryToDelete, setCategoryToDelete] = useState(null);
+const [categoryDeleting, setCategoryDeleting] = useState(false);
 
 
 // =====================================================
@@ -165,6 +193,230 @@ async function loadCategories() {
 }
 
 
+// =====================================================
+// RESET CATEGORY FORM
+// =====================================================
+
+function resetCategoryForm() {
+  setCategoryForm({
+    name: "",
+    description: "",
+    category_type: "expense",
+    parent_id: ""
+  });
+
+  setEditingCategory(null);
+}
+
+
+// =====================================================
+// OPEN ADD CATEGORY FORM
+// =====================================================
+
+function openAddCategoryForm() {
+  resetCategoryForm();
+
+  setCategoriesError("");
+  setShowCategoryForm(true);
+}
+
+
+// =====================================================
+// OPEN EDIT CATEGORY FORM
+// =====================================================
+
+function openEditCategoryForm(category) {
+  if (!category) {
+    return;
+  }
+
+  setEditingCategory(category);
+
+  setCategoryForm({
+    name: category.name || "",
+
+    description:
+      category.description || "",
+
+    category_type:
+      category.category_type || "expense",
+
+    parent_id:
+      category.parent_id !== null &&
+      category.parent_id !== undefined
+        ? String(category.parent_id)
+        : ""
+  });
+
+  setCategoriesError("");
+  setShowCategoryForm(true);
+}
+
+
+// =====================================================
+// CLOSE CATEGORY FORM
+// =====================================================
+
+function closeCategoryForm() {
+  if (categorySaving) {
+    return;
+  }
+
+  setShowCategoryForm(false);
+  setEditingCategory(null);
+  setCategoriesError("");
+
+  resetCategoryForm();
+}
+
+
+// =====================================================
+// SAVE CATEGORY
+// CREATE / UPDATE
+// =====================================================
+
+async function saveCategory() {
+  setCategoriesError("");
+
+  // ---------------------------------------------------
+  // VALIDATION
+  // ---------------------------------------------------
+
+  const name = categoryForm.name.trim();
+
+  if (!name) {
+    setCategoriesError("Category name is required.");
+    return;
+  }
+
+  if (
+    categoryForm.category_type !== "income" &&
+    categoryForm.category_type !== "expense" &&
+    categoryForm.category_type !== "other"
+  ) {
+    setCategoriesError("Please select a valid category type.");
+    return;
+  }
+
+  // ---------------------------------------------------
+  // PREPARE API PAYLOAD
+  // ---------------------------------------------------
+
+  const payload = {
+    name: name,
+
+    description:
+      categoryForm.description.trim() || null,
+
+    category_type:
+      categoryForm.category_type,
+
+    parent_id:
+      categoryForm.parent_id === ""
+        ? null
+        : Number(categoryForm.parent_id)
+  };
+
+  setCategorySaving(true);
+
+  try {
+    const isEditing = Boolean(editingCategory);
+
+    const url = isEditing
+      ? `https://ai-finance-trading-os-api.onrender.com/api/categories/${editingCategory.id}`
+      : "https://ai-finance-trading-os-api.onrender.com/api/categories/";
+
+    const response = await fetch(url, {
+      method: isEditing ? "PUT" : "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to save category."
+      );
+    }
+
+    // -------------------------------------------------
+    // SUCCESS
+    // -------------------------------------------------
+
+    setShowCategoryForm(false);
+    resetCategoryForm();
+
+    await loadCategories();
+
+  } catch (error) {
+    setCategoriesError(
+      error?.message ||
+      "Unable to save category."
+    );
+  } finally {
+    setCategorySaving(false);
+  }
+}
+
+
+// =====================================================
+// DELETE / ARCHIVE CATEGORY
+// =====================================================
+
+async function deleteCategory(categoryId) {
+  if (!categoryId) {
+    return;
+  }
+
+  setCategoryDeleting(true);
+  setCategoriesError("");
+
+  try {
+    const response = await fetch(
+      `https://ai-finance-trading-os-api.onrender.com/api/categories/${categoryId}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to delete category."
+      );
+    }
+
+    // -------------------------------------------------
+    // SUCCESS
+    // -------------------------------------------------
+
+    setCategoryToDelete(null);
+
+    await loadCategories();
+
+  } catch (error) {
+    setCategoriesError(
+      error?.message ||
+      "Unable to delete category."
+    );
+  } finally {
+    setCategoryDeleting(false);
+  }
+}
 // =====================================================
 // LOAD CATEGORIES WHEN CATEGORIES OR TRANSACTIONS OPENS
 // =====================================================

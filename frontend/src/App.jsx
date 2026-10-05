@@ -9369,7 +9369,13 @@ if (active === "Budget") {
 if (active === "Bills & Subscriptions") {
   return renderBills();
 }
-     
+// =====================================================
+// STATEMENTS / IMPORT PAGE
+// =====================================================
+
+if (active === "Statements / Import") {
+  return renderStatements();
+}    
 // =====================================================
 // CASH FLOW PAGE
 // =====================================================

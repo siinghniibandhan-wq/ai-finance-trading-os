@@ -8226,7 +8226,6 @@ React.createElement(
     "Delete"
   )
 )
-            )
           );
         })
   );

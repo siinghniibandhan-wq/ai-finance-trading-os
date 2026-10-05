@@ -1,8 +1,25 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 function App() {
+  // =====================================================
+  // BASIC APP STATE
+  // =====================================================
+
   const [active, setActive] = useState("Dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // =====================================================
+  // ACCOUNTS STATE
+  // =====================================================
+
+  const [accounts, setAccounts] = useState([]);
+  const [accountsLoading, setAccountsLoading] = useState(false);
+  const [accountsError, setAccountsError] = useState("");
+
+  // =====================================================
+  // NAVIGATION MENU
+  // EDIT MENU ITEMS HERE
+  // =====================================================
 
   const menu = [
     "Dashboard",
@@ -17,6 +34,11 @@ function App() {
     "Settings"
   ];
 
+  // =====================================================
+  // DASHBOARD KPI DATA
+  // WILL BE CONNECTED TO REAL DATA LATER
+  // =====================================================
+
   const cards = [
     ["Net Worth", "₹0", "Assets − liabilities"],
     ["Total Assets", "₹0", "Current asset value"],
@@ -24,14 +46,100 @@ function App() {
     ["Investments", "₹0", "Portfolio value"]
   ];
 
+  // =====================================================
+  // NAVIGATION FUNCTION
+  // =====================================================
+
   function navigate(item) {
     setActive(item);
     setMenuOpen(false);
   }
 
+  // =====================================================
+  // LOAD ACCOUNTS FROM BACKEND
+  //
+  // EDIT API URL HERE IF BACKEND URL EVER CHANGES
+  // =====================================================
+
+  async function loadAccounts() {
+    setAccountsLoading(true);
+    setAccountsError("");
+
+    try {
+      const response = await fetch(
+        "https://ai-finance-trading-os-api.onrender.com/api/accounts/"
+      );
+
+      if (!response.ok) {
+        throw new Error("Unable to load accounts.");
+      }
+
+      const data = await response.json();
+
+      setAccounts(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setAccountsError(
+        error?.message || "Unable to load accounts."
+      );
+    } finally {
+      setAccountsLoading(false);
+    }
+  }
+
+  // =====================================================
+  // LOAD ACCOUNTS WHEN ACCOUNTS PAGE IS OPENED
+  // =====================================================
+
+  useEffect(
+    function () {
+      if (active === "Accounts") {
+        loadAccounts();
+      }
+    },
+    [active]
+  );
+
+  // =====================================================
+  // HELPER: FORMAT MONEY
+  // =====================================================
+
+  function formatMoney(value, currency) {
+    const amount = Number(value || 0);
+
+    return `${currency || "INR"} ${amount.toLocaleString(
+      "en-IN",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    )}`;
+  }
+
+  // =====================================================
+  // ACCOUNT TYPE LABEL
+  // =====================================================
+
+  function accountTypeLabel(type) {
+    if (!type) return "Account";
+
+    return String(type)
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, function (letter) {
+        return letter.toUpperCase();
+      });
+  }
+
+  // =====================================================
+  // MAIN APP
+  // =====================================================
+
   return React.createElement(
     React.Fragment,
     null,
+
+    // ===================================================
+    // GLOBAL STYLES
+    // ===================================================
 
     React.createElement(
       "style",
@@ -41,7 +149,9 @@ function App() {
         box-sizing: border-box;
       }
 
-      html, body, #root {
+      html,
+      body,
+      #root {
         margin: 0;
         min-height: 100%;
         width: 100%;
@@ -57,13 +167,19 @@ function App() {
         font-family: inherit;
       }
 
+      /* =================================================
+         APP LAYOUT
+         ================================================= */
+
       .finance-app {
         min-height: 100vh;
         display: flex;
         background: #f5f3fb;
       }
 
-      /* SIDEBAR */
+      /* =================================================
+         DESKTOP SIDEBAR
+         ================================================= */
 
       .finance-sidebar {
         width: 245px;
@@ -107,7 +223,9 @@ function App() {
         font-weight: 700;
       }
 
-      /* MAIN */
+      /* =================================================
+         MAIN AREA
+         ================================================= */
 
       .finance-main {
         flex: 1;
@@ -151,7 +269,9 @@ function App() {
         display: none;
       }
 
-      /* CONTENT */
+      /* =================================================
+         GENERAL PAGE
+         ================================================= */
 
       .page {
         padding: 26px;
@@ -173,7 +293,9 @@ function App() {
         font-size: 14px;
       }
 
-      /* KPI */
+      /* =================================================
+         DASHBOARD KPI
+         ================================================= */
 
       .kpi-grid {
         display: grid;
@@ -206,7 +328,9 @@ function App() {
         font-size: 12px;
       }
 
-      /* DASHBOARD BLOCKS */
+      /* =================================================
+         DASHBOARD PANELS
+         ================================================= */
 
       .dashboard-grid {
         display: grid;
@@ -237,20 +361,7 @@ function App() {
       .chart {
         height: 190px;
         border-radius: 12px;
-        background:
-          linear-gradient(
-            to bottom,
-            transparent 24%,
-            #eeeaf6 25%,
-            transparent 26%,
-            transparent 49%,
-            #eeeaf6 50%,
-            transparent 51%,
-            transparent 74%,
-            #eeeaf6 75%,
-            transparent 76%
-          ),
-          #faf9fd;
+        background: #faf9fd;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -259,7 +370,11 @@ function App() {
       }
 
       .ai-panel {
-        background: linear-gradient(145deg, #ffffff, #f8f5ff);
+        background: linear-gradient(
+          145deg,
+          #ffffff,
+          #f8f5ff
+        );
       }
 
       .ai-icon {
@@ -292,7 +407,9 @@ function App() {
         margin-top: 15px;
       }
 
-      /* QUICK ACTIONS */
+      /* =================================================
+         QUICK ACTIONS
+         ================================================= */
 
       .quick-grid {
         display: grid;
@@ -319,7 +436,126 @@ function App() {
         color: #8b859b;
       }
 
-      /* MOBILE BOTTOM NAV */
+      /* =================================================
+         ACCOUNTS PAGE
+         ================================================= */
+
+      .accounts-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .accounts-summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .summary-card {
+        background: #ffffff;
+        border: 1px solid #e8e3f4;
+        border-radius: 16px;
+        padding: 18px;
+      }
+
+      .summary-label {
+        color: #858092;
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+
+      .summary-value {
+        font-size: 23px;
+        font-weight: 800;
+      }
+
+      .add-account-button {
+        border: 0;
+        background: #7048ff;
+        color: #ffffff;
+        padding: 11px 18px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .accounts-list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 15px;
+      }
+
+      .account-card {
+        background: #ffffff;
+        border: 1px solid #e8e3f4;
+        border-radius: 16px;
+        padding: 19px;
+        min-width: 0;
+      }
+
+      .account-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .account-name {
+        font-size: 17px;
+        font-weight: 700;
+        word-break: break-word;
+      }
+
+      .account-type {
+        display: inline-block;
+        margin-top: 6px;
+        padding: 5px 9px;
+        border-radius: 8px;
+        background: #f0ecff;
+        color: #6040dc;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .account-balance {
+        margin-top: 22px;
+        font-size: 24px;
+        font-weight: 800;
+      }
+
+      .account-meta {
+        margin-top: 9px;
+        color: #858092;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .account-empty {
+        background: #ffffff;
+        border: 1px dashed #d9d2e9;
+        border-radius: 16px;
+        padding: 45px 20px;
+        text-align: center;
+        color: #858092;
+        grid-column: 1 / -1;
+      }
+
+      .account-error {
+        background: #fff1f1;
+        border: 1px solid #f1caca;
+        color: #a33333;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 15px;
+      }
+
+      /* =================================================
+         MOBILE BOTTOM NAV
+         ================================================= */
 
       .mobile-bottom {
         display: none;
@@ -329,7 +565,9 @@ function App() {
         display: none;
       }
 
-      /* TABLET */
+      /* =================================================
+         TABLET
+         ================================================= */
 
       @media (max-width: 1000px) {
         .finance-sidebar {
@@ -347,9 +585,15 @@ function App() {
         .quick-grid {
           grid-template-columns: repeat(2, 1fr);
         }
+
+        .accounts-list {
+          grid-template-columns: repeat(2, 1fr);
+        }
       }
 
-      /* MOBILE */
+      /* =================================================
+         MOBILE
+         ================================================= */
 
       @media (max-width: 700px) {
         .finance-app {
@@ -460,6 +704,42 @@ function App() {
           padding: 13px;
         }
 
+        /* =============================================
+           ACCOUNTS MOBILE
+           ============================================= */
+
+        .accounts-toolbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .accounts-summary {
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+
+        .summary-card:last-child {
+          grid-column: 1 / -1;
+        }
+
+        .accounts-list {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .account-card {
+          padding: 17px;
+          border-radius: 14px;
+        }
+
+        .account-balance {
+          font-size: 22px;
+        }
+
+        /* =============================================
+           MOBILE BOTTOM NAV
+           ============================================= */
+
         .mobile-bottom {
           position: fixed;
           display: grid;
@@ -492,7 +772,9 @@ function App() {
           margin-bottom: 3px;
         }
 
-        /* DRAWER */
+        /* =============================================
+           MOBILE DRAWER
+           ============================================= */
 
         .drawer-overlay {
           position: fixed;
@@ -550,6 +832,10 @@ function App() {
         }
       }
 
+      /* =================================================
+         VERY SMALL MOBILE
+         ================================================= */
+
       @media (max-width: 420px) {
         .kpi-grid {
           grid-template-columns: 1fr;
@@ -559,6 +845,14 @@ function App() {
           grid-template-columns: 1fr 1fr;
         }
 
+        .accounts-summary {
+          grid-template-columns: 1fr;
+        }
+
+        .summary-card:last-child {
+          grid-column: auto;
+        }
+
         .kpi-value {
           font-size: 25px;
         }
@@ -566,11 +860,17 @@ function App() {
       `
     ),
 
+    // ===================================================
+    // APP CONTAINER
+    // ===================================================
+
     React.createElement(
       "div",
       { className: "finance-app" },
 
-      /* DESKTOP SIDEBAR */
+      // =================================================
+      // DESKTOP SIDEBAR
+      // =================================================
 
       React.createElement(
         "aside",
@@ -583,7 +883,7 @@ function App() {
           React.createElement("span", null, "Finance")
         ),
 
-        menu.map(function(item) {
+        menu.map(function (item) {
           return React.createElement(
             "button",
             {
@@ -592,7 +892,7 @@ function App() {
                 active === item
                   ? "side-item active"
                   : "side-item",
-              onClick: function() {
+              onClick: function () {
                 navigate(item);
               }
             },
@@ -601,7 +901,9 @@ function App() {
         })
       ),
 
-      /* MOBILE DRAWER */
+      // =================================================
+      // MOBILE DRAWER
+      // =================================================
 
       menuOpen &&
         React.createElement(
@@ -611,297 +913,4 @@ function App() {
           React.createElement(
             "div",
             {
-              className: "drawer-overlay",
-              onClick: function() {
-                setMenuOpen(false);
-              }
-            }
-          ),
-
-          React.createElement(
-            "aside",
-            { className: "drawer" },
-
-            React.createElement(
-              "div",
-              { className: "drawer-head" },
-
-              React.createElement(
-                "div",
-                { className: "drawer-brand" },
-                "AI Finance"
-              ),
-
-              React.createElement(
-                "button",
-                {
-                  className: "drawer-close",
-                  onClick: function() {
-                    setMenuOpen(false);
-                  }
-                },
-                "×"
-              )
-            ),
-
-            menu.map(function(item) {
-              return React.createElement(
-                "div",
-                {
-                  key: item,
-                  className:
-                    active === item
-                      ? "drawer-item active"
-                      : "drawer-item",
-                  onClick: function() {
-                    navigate(item);
-                  }
-                },
-                item
-              );
-            })
-          )
-        ),
-
-      /* MAIN */
-
-      React.createElement(
-        "main",
-        { className: "finance-main" },
-
-        React.createElement(
-          "header",
-          { className: "topbar" },
-
-          React.createElement(
-            "div",
-            { className: "top-left" },
-
-            React.createElement(
-              "button",
-              {
-                className: "mobile-menu",
-                onClick: function() {
-                  setMenuOpen(true);
-                }
-              },
-              "☰"
-            ),
-
-            React.createElement(
-              "div",
-              { className: "top-title" },
-
-              React.createElement(
-                "small",
-                null,
-                "Personal Finance & Wealth"
-              ),
-
-              React.createElement(
-                "strong",
-                null,
-                active
-              )
-            )
-          ),
-
-          React.createElement(
-            "div",
-            { className: "profile" },
-            "N"
-          )
-        ),
-
-        React.createElement(
-          "section",
-          { className: "page" },
-
-          React.createElement(
-            "div",
-            { className: "page-heading" },
-
-            React.createElement(
-              "h2",
-              null,
-              "Financial Overview"
-            ),
-
-            React.createElement(
-              "p",
-              null,
-              "Your complete financial picture in one place."
-            )
-          ),
-
-          /* KPI */
-
-          React.createElement(
-            "div",
-            { className: "kpi-grid" },
-
-            cards.map(function(card) {
-              return React.createElement(
-                "div",
-                {
-                  className: "kpi",
-                  key: card[0]
-                },
-
-                React.createElement(
-                  "div",
-                  { className: "kpi-label" },
-                  card[0]
-                ),
-
-                React.createElement(
-                  "div",
-                  { className: "kpi-value" },
-                  card[1]
-                ),
-
-                React.createElement(
-                  "div",
-                  { className: "kpi-note" },
-                  card[2]
-                )
-              );
-            })
-          ),
-
-          /* MAIN PANELS */
-
-          React.createElement(
-            "div",
-            { className: "dashboard-grid" },
-
-            React.createElement(
-              "div",
-              { className: "panel" },
-
-              React.createElement(
-                "h3",
-                null,
-                "Cash Flow"
-              ),
-
-              React.createElement(
-                "div",
-                { className: "panel-subtitle" },
-                "Income and expenses"
-              ),
-
-              React.createElement(
-                "div",
-                { className: "chart" },
-                "Cash flow chart"
-              )
-            ),
-
-            React.createElement(
-              "div",
-              { className: "panel ai-panel" },
-
-              React.createElement(
-                "div",
-                { className: "ai-icon" },
-                "AI"
-              ),
-
-              React.createElement(
-                "h3",
-                null,
-                "AI Finance Assistant"
-              ),
-
-              React.createElement(
-                "div",
-                { className: "ai-text" },
-                "Ask about your finances, investments, portfolio, taxes, goals or trading."
-              ),
-
-              React.createElement(
-                "button",
-                { className: "primary-button" },
-                "Open AI Chat"
-              )
-            )
-          ),
-
-          /* QUICK ACTIONS */
-
-          React.createElement(
-            "div",
-            { className: "quick-grid" },
-
-            [
-              ["＋", "Add Transaction", "Record income or expense"],
-              ["↔", "Transfer", "Move money between accounts"],
-              ["＋", "Add Investment", "Record an investment"],
-              ["AI", "Ask AI", "Ask your finance assistant"]
-            ].map(function(item) {
-              return React.createElement(
-                "div",
-                {
-                  className: "quick",
-                  key: item[1]
-                },
-
-                React.createElement(
-                  "strong",
-                  null,
-                  item[0] + "  " + item[1]
-                ),
-
-                React.createElement(
-                  "span",
-                  null,
-                  item[2]
-                )
-              );
-            })
-          )
-        )
-      ),
-
-      /* MOBILE BOTTOM NAV */
-
-      React.createElement(
-        "nav",
-        { className: "mobile-bottom" },
-
-        [
-          ["⌂", "Dashboard"],
-          ["₹", "Accounts"],
-          ["↕", "Transactions"],
-          ["◈", "Investments"],
-          ["AI", "AI Chat"]
-        ].map(function(item) {
-          return React.createElement(
-            "button",
-            {
-              key: item[1],
-              className:
-                active === item[1]
-                  ? "bottom-item active"
-                  : "bottom-item",
-              onClick: function() {
-                navigate(item[1]);
-              }
-            },
-
-            React.createElement(
-              "span",
-              { className: "bottom-icon" },
-              item[0]
-            ),
-
-            item[1]
-          );
-        })
-      )
-    )
-  );
-}
-
-export default App;
+              

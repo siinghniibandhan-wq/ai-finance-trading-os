@@ -1,3 +1,8 @@
+# =====================================================
+# AI FINANCE TRADING OS
+# TRANSACTIONS API
+# =====================================================
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -5,13 +10,12 @@ from database.database import get_db
 from database.models import Account, Category, Transaction
 from database.schemas import (
     TransactionCreate,
-    TransactionResponse,
     TransactionUpdate,
 )
 
 
 # =====================================================
-# TRANSACTIONS ROUTER
+# ROUTER
 # =====================================================
 
 router = APIRouter(
@@ -21,20 +25,30 @@ router = APIRouter(
 
 
 # =====================================================
-# BALANCE EFFECT HELPER
-#
-# Positive effect = money enters account
-# Negative effect = money leaves account
-#
-# IMPORTANT:
-# Keep this function as the single place where
-# transaction balance behavior is defined.
+# HELPER
+# TRANSACTION BALANCE EFFECT
 # =====================================================
 
 def get_balance_effect(transaction_type, amount):
     """
-    Return how much this transaction changes
-    the account balance.
+    Determines how a transaction changes the account balance.
+
+    Positive:
+    - income
+    - refund
+    - interest
+    - dividend
+
+    Negative:
+    - expense
+    - withdrawal
+    - tax
+    - loan_repayment
+
+    Zero:
+    - transfer
+    - investment
+    - other
     """
 
     if transaction_type in [
@@ -53,26 +67,55 @@ def get_balance_effect(transaction_type, amount):
     ]:
         return -amount
 
-    # Transfer/investment/other transaction types
-    # currently do not change the account balance here.
-    #
-    # They can be given dedicated accounting logic later
-    # when the corresponding transaction structure is added.
     return 0
+
+
+# =====================================================
+# HELPER
+# TRANSACTION RESPONSE
+# =====================================================
+
+def transaction_to_dict(transaction):
+    """
+    Converts the SQLAlchemy Transaction object into a
+    frontend-friendly dictionary.
+
+    IMPORTANT:
+    The existing database Transaction model does NOT
+    contain a currency column.
+
+    Therefore currency is supplied as INR for now.
+    The frontend can continue using the currency field.
+    """
+
+    return {
+        "id": transaction.id,
+        "account_id": transaction.account_id,
+        "category_id": transaction.category_id,
+        "transaction_type": transaction.transaction_type,
+        "amount": transaction.amount,
+        "currency": "INR",
+        "description": transaction.description,
+        "merchant": transaction.merchant,
+        "reference_number": transaction.reference_number,
+        "transaction_date": transaction.transaction_date,
+        "notes": transaction.notes,
+    }
 
 
 # =====================================================
 # GET ALL TRANSACTIONS
 # =====================================================
 
-@router.get(
-    "/",
-    response_model=list[TransactionResponse],
-)
+@router.get("/")
 def get_transactions(
     db: Session = Depends(get_db),
 ):
-    return (
+    """
+    Returns all active transactions.
+    """
+
+    transactions = (
         db.query(Transaction)
         .filter(
             Transaction.is_deleted.is_(False)
@@ -83,19 +126,25 @@ def get_transactions(
         .all()
     )
 
+    return [
+        transaction_to_dict(transaction)
+        for transaction in transactions
+    ]
+
 
 # =====================================================
 # GET SINGLE TRANSACTION
 # =====================================================
 
-@router.get(
-    "/{transaction_id}",
-    response_model=TransactionResponse,
-)
+@router.get("/{transaction_id}")
 def get_transaction(
     transaction_id: int,
     db: Session = Depends(get_db),
 ):
+    """
+    Returns one transaction.
+    """
+
     transaction = (
         db.query(Transaction)
         .filter(
@@ -111,7 +160,7 @@ def get_transaction(
             detail="Transaction not found",
         )
 
-    return transaction
+    return transaction_to_dict(transaction)
 
 
 # =====================================================
@@ -120,17 +169,24 @@ def get_transaction(
 
 @router.post(
     "/",
-    response_model=TransactionResponse,
     status_code=201,
 )
 def create_transaction(
     data: TransactionCreate,
     db: Session = Depends(get_db),
 ):
+    """
+    Creates a new transaction.
 
-    # =================================================
-    # VALIDATE ACCOUNT
-    # =================================================
+    IMPORTANT:
+    We intentionally DO NOT pass currency to the
+    SQLAlchemy Transaction model because the existing
+    database model does not contain that column.
+    """
+
+    # -------------------------------------------------
+    # FIND ACCOUNT
+    # -------------------------------------------------
 
     account = (
         db.query(Account)
@@ -147,9 +203,9 @@ def create_transaction(
             detail="Account not found",
         )
 
-    # =================================================
+    # -------------------------------------------------
     # VALIDATE CATEGORY
-    # =================================================
+    # -------------------------------------------------
 
     if data.category_id is not None:
 
@@ -168,16 +224,21 @@ def create_transaction(
                 detail="Category not found",
             )
 
-    # =================================================
+    # -------------------------------------------------
     # CREATE TRANSACTION
-    # =================================================
+    # -------------------------------------------------
+    #
+    # DO NOT ADD:
+    # currency=data.currency
+    #
+    # The existing Transaction model does not support it.
+    # -------------------------------------------------
 
     transaction = Transaction(
         account_id=data.account_id,
         category_id=data.category_id,
         transaction_type=data.transaction_type,
         amount=data.amount,
-        currency=data.currency,
         description=data.description,
         merchant=data.merchant,
         reference_number=data.reference_number,
@@ -187,9 +248,9 @@ def create_transaction(
 
     db.add(transaction)
 
-    # =================================================
+    # -------------------------------------------------
     # UPDATE ACCOUNT BALANCE
-    # =================================================
+    # -------------------------------------------------
 
     balance_effect = get_balance_effect(
         data.transaction_type,
@@ -198,40 +259,36 @@ def create_transaction(
 
     account.current_balance += balance_effect
 
-    # =================================================
+    # -------------------------------------------------
     # SAVE
-    # =================================================
+    # -------------------------------------------------
 
     db.commit()
     db.refresh(transaction)
 
-    return transaction
+    return transaction_to_dict(transaction)
 
 
 # =====================================================
 # UPDATE TRANSACTION
-#
-# IMPORTANT:
-# 1. Reverse old transaction effect.
-# 2. Apply new transaction effect.
-#
-# This prevents incorrect balances when the user edits
-# amount, type or account.
 # =====================================================
 
-@router.put(
-    "/{transaction_id}",
-    response_model=TransactionResponse,
-)
+@router.put("/{transaction_id}")
 def update_transaction(
     transaction_id: int,
     data: TransactionUpdate,
     db: Session = Depends(get_db),
 ):
+    """
+    Updates an existing transaction.
 
-    # =================================================
+    Account balance is corrected when the transaction
+    amount/type/account changes.
+    """
+
+    # -------------------------------------------------
     # FIND EXISTING TRANSACTION
-    # =================================================
+    # -------------------------------------------------
 
     transaction = (
         db.query(Transaction)
@@ -248,63 +305,57 @@ def update_transaction(
             detail="Transaction not found",
         )
 
-    # =================================================
-    # SAVE OLD VALUES BEFORE CHANGES
-    # =================================================
-
-    old_account_id = transaction.account_id
-    old_transaction_type = transaction.transaction_type
-    old_amount = transaction.amount
-
-    # =================================================
-    # FIND OLD ACCOUNT
-    # =================================================
+    # -------------------------------------------------
+    # SAVE OLD VALUES
+    # -------------------------------------------------
 
     old_account = (
         db.query(Account)
         .filter(
-            Account.id == old_account_id,
+            Account.id == transaction.account_id
         )
         .first()
     )
 
-    if not old_account:
-        raise HTTPException(
-            status_code=404,
-            detail="Original account not found",
-        )
-
-    # =================================================
-    # VALIDATE NEW ACCOUNT
-    # =================================================
-
-    new_account_id = data.account_id
-
-    if new_account_id is None:
-        new_account_id = old_account_id
-
-    new_account = (
-        db.query(Account)
-        .filter(
-            Account.id == new_account_id,
-            Account.is_active.is_(True),
-        )
-        .first()
+    old_effect = get_balance_effect(
+        transaction.transaction_type,
+        transaction.amount,
     )
 
-    if not new_account:
-        raise HTTPException(
-            status_code=404,
-            detail="Account not found",
-        )
-
-    # =================================================
-    # VALIDATE CATEGORY
-    # =================================================
+    # -------------------------------------------------
+    # PREPARE UPDATE DATA
+    # -------------------------------------------------
 
     update_data = data.model_dump(
         exclude_unset=True
     )
+
+    # -------------------------------------------------
+    # VALIDATE NEW ACCOUNT
+    # -------------------------------------------------
+
+    new_account = old_account
+
+    if "account_id" in update_data:
+
+        new_account = (
+            db.query(Account)
+            .filter(
+                Account.id == update_data["account_id"],
+                Account.is_active.is_(True),
+            )
+            .first()
+        )
+
+        if not new_account:
+            raise HTTPException(
+                status_code=404,
+                detail="Account not found",
+            )
+
+    # -------------------------------------------------
+    # VALIDATE NEW CATEGORY
+    # -------------------------------------------------
 
     if "category_id" in update_data:
 
@@ -327,84 +378,100 @@ def update_transaction(
                     detail="Category not found",
                 )
 
-    # =================================================
-    # CALCULATE OLD BALANCE EFFECT
-    # =================================================
-
-    old_balance_effect = get_balance_effect(
-        old_transaction_type,
-        old_amount,
-    )
-
-    # =================================================
-    # REVERSE OLD TRANSACTION
-    #
-    # Example:
-    # Old expense = -500
-    # Reverse = +500
-    # =================================================
-
-    old_account.current_balance -= old_balance_effect
-
-    # =================================================
-    # APPLY NEW TRANSACTION FIELDS
-    # =================================================
+    # -------------------------------------------------
+    # UPDATE TRANSACTION FIELDS
+    # -------------------------------------------------
 
     for field, value in update_data.items():
-        setattr(
-            transaction,
-            field,
-            value,
-        )
 
-    # =================================================
+        # ---------------------------------------------
+        # IMPORTANT
+        # ---------------------------------------------
+        #
+        # Currency exists in the frontend/schema but
+        # NOT in the current SQLAlchemy model.
+        #
+        # Therefore do not attempt:
+        #
+        # transaction.currency = ...
+        #
+        # ---------------------------------------------
+
+        if field == "currency":
+            continue
+
+        # Only update fields actually present on model.
+        if hasattr(Transaction, field):
+            setattr(
+                transaction,
+                field,
+                value,
+            )
+
+    # -------------------------------------------------
     # CALCULATE NEW BALANCE EFFECT
-    # =================================================
+    # -------------------------------------------------
 
-    new_transaction_type = transaction.transaction_type
-    new_amount = transaction.amount
+    new_transaction_type = (
+        update_data.get(
+            "transaction_type",
+            transaction.transaction_type,
+        )
+    )
 
-    new_balance_effect = get_balance_effect(
+    new_amount = (
+        update_data.get(
+            "amount",
+            transaction.amount,
+        )
+    )
+
+    new_effect = get_balance_effect(
         new_transaction_type,
         new_amount,
     )
 
-    # =================================================
-    # APPLY NEW TRANSACTION EFFECT
-    # =================================================
+    # -------------------------------------------------
+    # REVERSE OLD BALANCE EFFECT
+    # -------------------------------------------------
 
-    new_account.current_balance += new_balance_effect
+    if old_account:
+        old_account.current_balance -= old_effect
 
-    # =================================================
+    # -------------------------------------------------
+    # APPLY NEW BALANCE EFFECT
+    # -------------------------------------------------
+
+    if new_account:
+        new_account.current_balance += new_effect
+
+    # -------------------------------------------------
     # SAVE
-    # =================================================
+    # -------------------------------------------------
 
     db.commit()
     db.refresh(transaction)
 
-    return transaction
+    return transaction_to_dict(transaction)
 
 
 # =====================================================
 # DELETE TRANSACTION
-#
-# Soft delete is preserved.
-#
-# Before deleting:
-# Reverse the transaction's effect on the account.
 # =====================================================
 
-@router.delete(
-    "/{transaction_id}"
-)
+@router.delete("/{transaction_id}")
 def delete_transaction(
     transaction_id: int,
     db: Session = Depends(get_db),
 ):
+    """
+    Soft-deletes a transaction and reverses its
+    account balance effect.
+    """
 
-    # =================================================
+    # -------------------------------------------------
     # FIND TRANSACTION
-    # =================================================
+    # -------------------------------------------------
 
     transaction = (
         db.query(Transaction)
@@ -421,48 +488,40 @@ def delete_transaction(
             detail="Transaction not found",
         )
 
-    # =================================================
+    # -------------------------------------------------
     # FIND ACCOUNT
-    # =================================================
+    # -------------------------------------------------
 
     account = (
         db.query(Account)
         .filter(
-            Account.id == transaction.account_id,
+            Account.id == transaction.account_id
         )
         .first()
     )
 
-    if not account:
-        raise HTTPException(
-            status_code=404,
-            detail="Account not found",
+    # -------------------------------------------------
+    # REVERSE BALANCE EFFECT
+    # -------------------------------------------------
+
+    if account:
+
+        balance_effect = get_balance_effect(
+            transaction.transaction_type,
+            transaction.amount,
         )
 
-    # =================================================
-    # CALCULATE TRANSACTION EFFECT
-    # =================================================
+        account.current_balance -= balance_effect
 
-    balance_effect = get_balance_effect(
-        transaction.transaction_type,
-        transaction.amount,
-    )
-
-    # =================================================
-    # REVERSE TRANSACTION
-    # =================================================
-
-    account.current_balance -= balance_effect
-
-    # =================================================
+    # -------------------------------------------------
     # SOFT DELETE
-    # =================================================
+    # -------------------------------------------------
 
     transaction.is_deleted = True
 
-    # =================================================
+    # -------------------------------------------------
     # SAVE
-    # =================================================
+    # -------------------------------------------------
 
     db.commit()
 

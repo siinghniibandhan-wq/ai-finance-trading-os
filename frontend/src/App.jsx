@@ -134,7 +134,22 @@ const [categories, setCategories] = useState([]);
 const [categoriesLoading, setCategoriesLoading] = useState(false);
 const [categoriesError, setCategoriesError] = useState("");
 
+// =====================================================
+// BUDGET STATE
+// FINANCE BUDGET DATA
+// =====================================================
 
+const [budgets, setBudgets] = useState([]);
+
+const [budgetLoading, setBudgetLoading] = useState(false);
+
+const [budgetError, setBudgetError] = useState("");
+
+const [budgetForm, setBudgetForm] = useState({
+  month: new Date().toISOString().slice(0, 7),
+  category_id: "",
+  amount: ""
+});
 // =====================================================
 // LOAD CATEGORIES FROM BACKEND
 // =====================================================

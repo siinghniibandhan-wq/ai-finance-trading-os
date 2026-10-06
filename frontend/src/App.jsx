@@ -110,6 +110,8 @@ const [assetSaving, setAssetSaving] = useState(false);
 const [assetDeleting, setAssetDeleting] = useState(false);
 const [assetToDelete, setAssetToDelete] = useState(null);
 
+const [assetTypeOpen, setAssetTypeOpen] = useState(false);
+
 const [statements, setStatements] = useState([]);
 const [statementsLoading, setStatementsLoading] = useState(false);
 const [statementsError, setStatementsError] = useState("");

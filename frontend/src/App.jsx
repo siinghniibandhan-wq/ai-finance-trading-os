@@ -1240,6 +1240,14 @@ function Transactions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+   
+  // ----------------------------------------------------------
+  // ACCOUNT & CATEGORY OPTIONS
+  // ----------------------------------------------------------
+
+  const [accounts, setAccounts] = useState([]);
+  const [categories, setCategories] = useState([]);
+
   // ----------------------------------------------------------
   // ADD TRANSACTION FORM STATE
   // ----------------------------------------------------------

@@ -97,6 +97,26 @@ def create_transaction(
     )
 
     db.add(transaction)
+
+    # --------------------------------------------------------
+    # UPDATE ACCOUNT BALANCE
+    # --------------------------------------------------------
+    if transaction_data.transaction_type in [
+        "income",
+        "refund",
+        "interest",
+        "dividend",
+    ]:
+        account.balance += transaction_data.amount
+
+    elif transaction_data.transaction_type in [
+        "expense",
+        "withdrawal",
+        "tax",
+        "loan_repayment",
+    ]:
+        account.balance -= transaction_data.amount
+
     db.commit()
     db.refresh(transaction)
 

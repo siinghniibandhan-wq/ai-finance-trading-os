@@ -1377,6 +1377,114 @@ function Transactions() {
   };
 
 // ----------------------------------------------------------
+// SAVE TRANSACTION
+// ----------------------------------------------------------
+
+const handleTransactionSubmit = async () => {
+  try {
+    setError("");
+    setFormMessage("");
+
+    // Validate required fields
+    if (!formData.account_id) {
+      setFormMessage("Please select an account.");
+      return;
+    }
+
+    if (!formData.category_id) {
+      setFormMessage("Please select a category.");
+      return;
+    }
+
+    if (!formData.amount || Number(formData.amount) <= 0) {
+      setFormMessage("Please enter a valid amount.");
+      return;
+    }
+
+    if (!formData.transaction_date) {
+      setFormMessage("Please select a transaction date.");
+      return;
+    }
+
+    setSavingTransaction(true);
+
+    const payload = {
+      user_id: USER_ID,
+      account_id: Number(formData.account_id),
+      category_id: Number(formData.category_id),
+      transaction_type: formData.transaction_type,
+      amount: Number(formData.amount),
+      description: formData.description.trim(),
+      transaction_date: formData.transaction_date,
+      reference: formData.reference.trim(),
+    };
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/transactions/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+          "Unable to create transaction."
+      );
+    }
+
+    // Refresh transaction list
+    const refreshResponse = await fetch(
+      `${API_BASE_URL}/api/transactions/?user_id=${USER_ID}`
+    );
+
+    if (!refreshResponse.ok) {
+      throw new Error(
+        "Transaction was saved, but the list could not be refreshed."
+      );
+    }
+
+    const refreshedTransactions =
+      await refreshResponse.json();
+
+    setTransactions(refreshedTransactions);
+
+    // Close and reset form
+    setShowForm(false);
+
+    setFormData({
+      account_id: "",
+      category_id: "",
+      transaction_type: "expense",
+      amount: "",
+      transaction_date:
+        new Date().toISOString().split("T")[0],
+      description: "",
+      reference: "",
+    });
+
+  } catch (err) {
+    console.error(
+      "Create transaction error:",
+      err
+    );
+
+    setFormMessage(
+      err.message ||
+        "Unable to save transaction."
+    );
+  } finally {
+    setSavingTransaction(false);
+  }
+};
+  
+// ----------------------------------------------------------
 // TRANSACTION FORM MODAL
 // ----------------------------------------------------------
 

@@ -1798,6 +1798,262 @@ useEffect(
   [active]
 );
 
+// =====================================================
+// LOAN DISBURSEMENT HELPERS
+// =====================================================
+
+function updateLoanDisbursementForm(field, value) {
+  setLoanDisbursementForm(function (current) {
+    return {
+      ...current,
+      [field]: value
+    };
+  });
+}
+
+
+// -----------------------------------------------------
+// RESET LOAN DISBURSEMENT FORM
+// -----------------------------------------------------
+
+function resetLoanDisbursementForm() {
+  setLoanDisbursementForm({
+    name: "",
+    liability_type: "personal_loan",
+    institution: "",
+    account_number: "",
+    interest_rate: "",
+    monthly_emi: "",
+    start_date:
+      transactionForm.transaction_date ||
+      new Date().toISOString().slice(0, 10),
+    due_date: "",
+    notes: ""
+  });
+}
+
+
+// -----------------------------------------------------
+// CHECK WHETHER CATEGORY IS LOAN DISBURSEMENT
+// -----------------------------------------------------
+
+function isLoanDisbursementCategory(category) {
+  if (!category) {
+    return false;
+  }
+
+  const name = String(category.name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+
+  return (
+    name === "loan disbursement" ||
+    name === "loan disbursal" ||
+    name === "loan proceeds" ||
+    name === "loan received"
+  );
+}
+
+
+// -----------------------------------------------------
+// GET SELECTED TRANSACTION CATEGORY
+// -----------------------------------------------------
+
+function getSelectedTransactionCategory() {
+  if (!transactionForm.category_id) {
+    return null;
+  }
+
+  return categories.find(function (category) {
+    return (
+      String(category.id) ===
+      String(transactionForm.category_id)
+    );
+  }) || null;
+}
+
+
+// -----------------------------------------------------
+// OPEN LOAN DISBURSEMENT FORM
+// -----------------------------------------------------
+
+function openLoanDisbursementForm() {
+  resetLoanDisbursementForm();
+
+  setShowLoanDisbursementForm(true);
+}
+
+
+// -----------------------------------------------------
+// MASK CREDIT CARD NUMBER
+// -----------------------------------------------------
+
+function maskCardNumber(value) {
+  const digits = String(value || "")
+    .replace(/\D/g, "");
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.length <= 4) {
+    return digits;
+  }
+
+  return "XXXX XXXX XXXX " + digits.slice(-4);
+}
+
+
+// -----------------------------------------------------
+// CREATE LINKED ACCOUNT FOR LIABILITY
+// -----------------------------------------------------
+
+async function createLinkedLiabilityAccount(
+  liability,
+  accountType
+) {
+  if (!liability) {
+    return null;
+  }
+
+  const liabilityName =
+    liability.name ||
+    "Liability Account";
+
+  const accountNumber =
+    liability.account_number ||
+    null;
+
+  // ---------------------------------------------------
+  // Load existing accounts directly from API.
+  // Do not rely on React state because setState is async.
+  // ---------------------------------------------------
+
+  const accountsResponse = await fetch(
+    "https://ai-finance-trading-os-api.onrender.com/api/accounts/"
+  );
+
+  const accountsData =
+    await accountsResponse.json().catch(function () {
+      return [];
+    });
+
+  if (!accountsResponse.ok) {
+    throw new Error(
+      "Unable to check existing accounts."
+    );
+  }
+
+  const existingAccounts =
+    Array.isArray(accountsData)
+      ? accountsData
+      : [];
+
+
+  // ---------------------------------------------------
+  // Find existing linked account.
+  // ---------------------------------------------------
+
+  const existingAccount =
+    existingAccounts.find(function (account) {
+
+      const sameType =
+        String(account.account_type || "")
+          .toLowerCase() ===
+        String(accountType || "")
+          .toLowerCase();
+
+      const sameNumber =
+        accountNumber &&
+        String(account.account_number || "")
+          .toLowerCase() ===
+        String(accountNumber)
+          .toLowerCase();
+
+      const sameName =
+        String(account.name || "")
+          .trim()
+          .toLowerCase() ===
+        String(liabilityName)
+          .trim()
+          .toLowerCase();
+
+      return (
+        sameType &&
+        (sameNumber || sameName)
+      );
+    });
+
+
+  if (existingAccount) {
+    return existingAccount;
+  }
+
+
+  // ---------------------------------------------------
+  // Create new linked account.
+  //
+  // Liability balance is represented as negative in
+  // Accounts so Net Worth can eventually use:
+  //
+  // Assets + Liabilities
+  //
+  // ---------------------------------------------------
+
+  const outstanding =
+    Number(
+      liability.outstanding_amount || 0
+    );
+
+  const response = await fetch(
+    "https://ai-finance-trading-os-api.onrender.com/api/accounts/",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+        name: liabilityName,
+
+        account_type: accountType,
+
+        institution:
+          liability.institution || null,
+
+        account_number:
+          accountNumber,
+
+        currency:
+          liability.currency || "INR",
+
+        opening_balance:
+          -Math.abs(outstanding)
+      })
+    }
+  );
+
+
+  const data =
+    await response.json().catch(function () {
+      return null;
+    });
+
+
+  if (!response.ok) {
+    throw new Error(
+      data?.detail ||
+      data?.message ||
+      "Unable to create linked account."
+    );
+  }
+
+  return data;
+}
+  
 function updateTransactionForm(field, value) {
   setTransactionForm(function (current) {
     return {

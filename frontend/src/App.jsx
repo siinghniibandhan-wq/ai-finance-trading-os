@@ -1957,7 +1957,17 @@ function getActualSpending(categoryId, month) {
 
             <div
               style={{
-                width: "0%",
+                width: `${Math.min(
+  100,
+  Math.round(
+    (
+      getActualSpending(
+        budget.category_id,
+        budget.month
+      ) / Number(budget.amount || 0)
+    ) * 100
+  )
+)}%`,
                 height: "100%",
                 borderRadius: "999px",
                 background:

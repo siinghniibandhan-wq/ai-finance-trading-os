@@ -1516,6 +1516,15 @@ const deleteAccount = async () => {
           </button>
 
           <button
+  type="button"
+  onClick={() => handleToggleAccountStatus(account)}
+  disabled={accountStatusSaving}
+  className="px-3 py-2 rounded-lg border text-sm"
+>
+  {account.is_active ? "Deactivate" : "Activate"}
+</button>
+          
+          <button
             type="button"
             className="secondary-button"
             onClick={() =>

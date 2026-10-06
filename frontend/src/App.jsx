@@ -1226,7 +1226,485 @@ function Accounts() {
     );
 }
 
+// ============================================================
+// TRANSACTIONS
+// ============================================================
 
+function Transactions() {
+
+  // ----------------------------------------------------------
+  // STATE
+  // ----------------------------------------------------------
+
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // ----------------------------------------------------------
+  // API CONFIGURATION
+  // ----------------------------------------------------------
+
+  const API_BASE_URL =
+    "https://ai-finance-trading-os-api.onrender.com";
+
+  const USER_ID = 1;
+
+  // ----------------------------------------------------------
+  // LOAD TRANSACTIONS
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+
+    const loadTransactions = async () => {
+
+      try {
+
+        setLoading(true);
+        setError("");
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/transactions/?user_id=${USER_ID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Transactions API error: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        setTransactions(data);
+
+      } catch (err) {
+
+        console.error(
+          "Transactions API error:",
+          err
+        );
+
+        setError(
+          "Unable to load transactions."
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+    loadTransactions();
+
+  }, []);
+
+  // ----------------------------------------------------------
+  // FORMAT CURRENCY
+  // ----------------------------------------------------------
+
+  const formatCurrency = (value) => {
+
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(value || 0);
+
+  };
+
+  // ----------------------------------------------------------
+  // TRANSACTION TYPE
+  // ----------------------------------------------------------
+
+  const isIncome = (transaction) => {
+
+    return (
+      transaction.transaction_type === "income"
+    );
+
+  };
+
+  // ----------------------------------------------------------
+  // RENDER
+  // ----------------------------------------------------------
+
+  return (
+
+    <div className="dashboard">
+
+      {/* ====================================================
+          HEADER
+      ==================================================== */}
+
+      <section className="welcome-section">
+
+        <div>
+
+          <p className="welcome-label">
+            MONEY
+          </p>
+
+          <h2>
+            Your <span>transactions.</span>
+          </h2>
+
+          <p className="welcome-description">
+            Track your income, expenses and
+            financial activity in one place.
+          </p>
+
+        </div>
+
+        <button className="primary-button">
+          <Plus size={18} />
+          Add Transaction
+        </button>
+
+      </section>
+
+
+      {/* ====================================================
+          SUMMARY
+      ==================================================== */}
+
+      <section className="metrics-grid">
+
+        <MetricCard
+          title="Transactions"
+          value={
+            loading
+              ? "Loading..."
+              : String(transactions.length)
+          }
+          change="Total"
+          positive
+          icon={Receipt}
+        />
+
+        <MetricCard
+          title="Expenses"
+          value={
+            loading
+              ? "Loading..."
+              : formatCurrency(
+                  transactions
+                    .filter(
+                      (transaction) =>
+                        !isIncome(transaction)
+                    )
+                    .reduce(
+                      (total, transaction) =>
+                        total +
+                        Number(
+                          transaction.amount || 0
+                        ),
+                      0
+                    )
+                )
+          }
+          change="Recorded"
+          positive={false}
+          icon={CreditCard}
+        />
+
+      </section>
+
+
+      {/* ====================================================
+          ERROR
+      ==================================================== */}
+
+      {error && (
+
+        <div className="glass-card">
+
+          <strong>
+            {error}
+          </strong>
+
+        </div>
+
+      )}
+
+
+      {/* ====================================================
+          TRANSACTION LIST
+      ==================================================== */}
+
+      <section className="glass-card">
+
+        <div className="card-header">
+
+          <div>
+
+            <p className="card-label">
+              TRANSACTION HISTORY
+            </p>
+
+            <h3>
+              Recent Transactions
+            </h3>
+
+          </div>
+
+          <span className="score">
+            {transactions.length}
+          </span>
+
+        </div>
+
+
+        {/* --------------------------------------------------
+            LOADING
+        -------------------------------------------------- */}
+
+        {loading && (
+
+          <div className="empty-chart">
+
+            <strong>
+              Loading transactions...
+            </strong>
+
+          </div>
+
+        )}
+
+
+        {/* --------------------------------------------------
+            EMPTY
+        -------------------------------------------------- */}
+
+        {!loading &&
+          transactions.length === 0 && (
+
+            <div className="empty-chart">
+
+              <div className="chart-icon">
+                <Receipt size={28} />
+              </div>
+
+              <strong>
+                No transactions found
+              </strong>
+
+              <span>
+                Add your first transaction
+                to start tracking your finances.
+              </span>
+
+              <button className="secondary-button">
+                Add Transaction
+              </button>
+
+            </div>
+
+          )}
+
+
+        {/* --------------------------------------------------
+            TRANSACTION CARDS
+        -------------------------------------------------- */}
+
+        {!loading &&
+          transactions.length > 0 && (
+
+            <div
+              style={{
+                display: "grid",
+                gap: "12px",
+                marginTop: "20px",
+              }}
+            >
+
+              {transactions.map(
+                (transaction) => {
+
+                  const income =
+                    isIncome(transaction);
+
+                  return (
+
+                    <div
+                      key={transaction.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent:
+                          "space-between",
+                        gap: "16px",
+                        padding: "18px",
+                        borderRadius: "18px",
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+                        border:
+                          "1px solid rgba(255,255,255,0.08)",
+                      }}
+                    >
+
+                      {/* LEFT SIDE */}
+
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems:
+                            "center",
+                          gap: "14px",
+                          minWidth: 0,
+                        }}
+                      >
+
+                        <div
+                          style={{
+                            width: "46px",
+                            height: "46px",
+                            minWidth: "46px",
+                            borderRadius: "14px",
+                            display: "flex",
+                            alignItems:
+                              "center",
+                            justifyContent:
+                              "center",
+                            background:
+                              income
+                                ? "rgba(34,197,94,0.16)"
+                                : "rgba(239,68,68,0.16)",
+                          }}
+                        >
+
+                          <Receipt
+                            size={20}
+                          />
+
+                        </div>
+
+
+                        <div
+                          style={{
+                            minWidth: 0,
+                          }}
+                        >
+
+                          <div
+                            style={{
+                              fontSize:
+                                "15px",
+                              fontWeight:
+                                700,
+                              color:
+                                "#ffffff",
+                              marginBottom:
+                                "5px",
+                              overflow:
+                                "hidden",
+                              textOverflow:
+                                "ellipsis",
+                              whiteSpace:
+                                "nowrap",
+                            }}
+                          >
+                            {transaction.description ||
+                              "Transaction"}
+                          </div>
+
+
+                          <div
+                            style={{
+                              fontSize:
+                                "12px",
+                              color:
+                                "rgba(255,255,255,0.55)",
+                            }}
+                          >
+
+                            {transaction.transaction_date ||
+                              "No date"}
+
+                            {" • "}
+
+                            {transaction.transaction_type}
+
+                          </div>
+
+
+                          {transaction.reference && (
+
+                            <div
+                              style={{
+                                fontSize:
+                                  "11px",
+                                color:
+                                  "rgba(255,255,255,0.35)",
+                                marginTop:
+                                  "4px",
+                              }}
+                            >
+                              {transaction.reference}
+                            </div>
+
+                          )}
+
+                        </div>
+
+                      </div>
+
+
+                      {/* RIGHT SIDE */}
+
+                      <div
+                        style={{
+                          textAlign:
+                            "right",
+                          minWidth:
+                            "105px",
+                        }}
+                      >
+
+                        <div
+                          style={{
+                            fontSize:
+                              "16px",
+                            fontWeight:
+                              800,
+                            color:
+                              income
+                                ? "#4ade80"
+                                : "#fb7185",
+                            whiteSpace:
+                              "nowrap",
+                          }}
+                        >
+
+                          {income
+                            ? "+"
+                            : "-"}
+                          {formatCurrency(
+                            transaction.amount
+                          )}
+
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                  );
+
+                }
+              )}
+
+            </div>
+
+          )}
+
+      </section>
+
+    </div>
+
+  );
+
+}
 
 
 

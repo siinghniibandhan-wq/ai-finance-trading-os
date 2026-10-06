@@ -2002,6 +2002,32 @@ function getActualSpending(categoryId, month) {
 
         </div>
 
+  
+{/* ---------------------------------------------
+    CARD ACTIONS
+--------------------------------------------- */}
+
+<div
+  style={{
+    position: "relative",
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "8px",
+    marginTop: "16px",
+  }}
+>
+  <button
+    type="button"
+    className="secondary-button"
+    onClick={() => openEditBudgetForm(budget)}
+    style={{
+      padding: "7px 12px",
+      fontSize: "11px",
+    }}
+  >
+    Edit
+  </button>
+</div>
 
         {/* ---------------------------------------------
             FOOTER

@@ -1306,6 +1306,43 @@ function Budget() {
     }
   }
 
+// ----------------------------------------------------------
+// LOAD TRANSACTIONS
+// ----------------------------------------------------------
+
+async function loadTransactions() {
+
+  try {
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/transactions/?user_id=${USER_ID}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Unable to load transactions.");
+    }
+
+    const data = await response.json();
+
+    setTransactions(
+      Array.isArray(data) ? data : []
+    );
+
+  } catch (err) {
+
+    console.error(
+      "Budget transaction API error:",
+      err
+    );
+
+    setError(
+      err?.message ||
+      "Unable to load transactions."
+    );
+
+  }
+}
+  
   // ----------------------------------------------------------
   // LOAD CATEGORIES
   // ----------------------------------------------------------

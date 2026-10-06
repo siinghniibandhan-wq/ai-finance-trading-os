@@ -1824,6 +1824,21 @@ const transactionFormModal = showForm && (
         />
       </div>
 
+      {formMessage && (
+  <div
+    style={{
+      marginBottom: "16px",
+      padding: "12px 14px",
+      borderRadius: "12px",
+      background: "rgba(239,68,68,0.12)",
+      border: "1px solid rgba(239,68,68,0.25)",
+      color: "#fca5a5",
+      fontSize: "13px",
+    }}
+  >
+    {formMessage}
+  </div>
+)}
       {/* ACTIONS */}
 
       <div

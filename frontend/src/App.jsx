@@ -1404,10 +1404,13 @@ function Transactions() {
 
         </div>
 
-        <button className="primary-button">
-          <Plus size={18} />
-          Add Transaction
-        </button>
+      <button
+  className="primary-button"
+  onClick={openTransactionForm}
+>
+  <Plus size={18} />
+  Add Transaction
+</button>
 
       </section>
 

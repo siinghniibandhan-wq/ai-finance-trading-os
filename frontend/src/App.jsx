@@ -827,6 +827,22 @@ function Accounts() {
   const [error, setError] = useState("");
 
   // ----------------------------------------------------------
+  // ACCOUNT FORM STATE
+  // ----------------------------------------------------------
+
+  const [showAccountForm, setShowAccountForm] = useState(false);
+  const [accountSaving, setAccountSaving] = useState(false);
+
+  const [accountForm, setAccountForm] = useState({
+    name: "",
+    account_type: "bank",
+    institution: "",
+    account_number: "",
+    currency: "INR",
+    balance: "",
+  });
+
+  // ----------------------------------------------------------
   // API CONFIGURATION
   // ----------------------------------------------------------
 

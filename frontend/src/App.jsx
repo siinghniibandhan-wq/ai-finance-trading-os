@@ -2111,15 +2111,19 @@ const transactionFormModal = showForm && (
 
           )}
 
-      </section>
+            </section>
+
+      {/* ====================================================
+          TRANSACTION FORM MODAL
+      ==================================================== */}
+
+      {transactionFormModal}
 
     </div>
 
   );
 
 }
-
-
 
 
 

@@ -1524,14 +1524,28 @@ const deleteAccount = async () => {
             Edit
           </button>
 
-          <button
-  type="button"
-  onClick={() => handleToggleAccountStatus(account)}
-  disabled={accountStatusSaving}
-  className="px-3 py-2 rounded-lg border text-sm"
->
-  {account.is_active ? "Deactivate" : "Activate"}
-</button>
+                        <button
+                type="button"
+                className="secondary-button"
+                onClick={() =>
+                  handleToggleAccountStatus(account)
+                }
+                disabled={accountStatusSaving}
+                style={{
+                  padding: "7px 12px",
+                  fontSize: "11px",
+                  color: account.is_active
+                    ? "#fbbf24"
+                    : "#4ade80",
+                  borderColor: account.is_active
+                    ? "rgba(251,191,36,0.25)"
+                    : "rgba(74,222,128,0.25)",
+                }}
+              >
+                {account.is_active
+                  ? "Deactivate"
+                  : "Activate"}
+              </button>
           
           <button
             type="button"

@@ -240,6 +240,52 @@ const [assetForm, setAssetForm] = useState({
   notes: "",
   status: "active"
 });
+
+// =====================================================
+// WEALTH - ASSETS API
+// =====================================================
+
+// -----------------------------------------------------
+// LOAD ASSETS FROM BACKEND
+// -----------------------------------------------------
+
+async function loadAssets() {
+  setAssetsLoading(true);
+  setAssetsError("");
+
+  try {
+    const response = await fetch(
+      "https://ai-finance-trading-os-api.onrender.com/api/assets/"
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to load assets."
+      );
+    }
+
+    setAssets(
+      Array.isArray(data)
+        ? data
+        : []
+    );
+
+  } catch (error) {
+    setAssetsError(
+      error?.message ||
+      "Unable to load assets."
+    );
+
+  } finally {
+    setAssetsLoading(false);
+  }
+}
 // =====================================================
 // LOAD CATEGORIES FROM BACKEND
 // =====================================================

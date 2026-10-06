@@ -896,6 +896,104 @@ function Accounts() {
     loadAccounts();
 
   }, []);
+  
+
+  // ----------------------------------------------------------
+  // SAVE ACCOUNT
+  // ----------------------------------------------------------
+
+  const handleAccountSubmit = async () => {
+
+    try {
+
+      setError("");
+
+      if (!accountForm.name.trim()) {
+        setError("Please enter an account name.");
+        return;
+      }
+
+      if (!accountForm.institution.trim()) {
+        setError("Please enter the institution name.");
+        return;
+      }
+
+      if (
+        accountForm.balance === "" ||
+        Number(accountForm.balance) < 0
+      ) {
+        setError("Please enter a valid opening balance.");
+        return;
+      }
+
+      setAccountSaving(true);
+
+      const payload = {
+        user_id: USER_ID,
+        name: accountForm.name.trim(),
+        account_type: accountForm.account_type,
+        institution: accountForm.institution.trim(),
+        account_number:
+          accountForm.account_number.trim(),
+        currency: accountForm.currency,
+        balance: Number(accountForm.balance),
+      };
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/accounts/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail ||
+            "Unable to create account."
+        );
+      }
+
+      setAccounts((previous) => [
+        data,
+        ...previous,
+      ]);
+
+      setAccountForm({
+        name: "",
+        account_type: "bank",
+        institution: "",
+        account_number: "",
+        currency: "INR",
+        balance: "",
+      });
+
+      setShowAccountForm(false);
+
+    } catch (err) {
+
+      console.error(
+        "Create account error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+          "Unable to create account."
+      );
+
+    } finally {
+
+      setAccountSaving(false);
+
+    }
+
+  };
 
   // ----------------------------------------------------------
   // FORMAT CURRENCY

@@ -1518,6 +1518,7 @@ gap: "16px",
               handleEditAccount(account)
             }
             style={{
+              width: "100%",
               padding: "7px 12px",
               fontSize: "11px",
             }}
@@ -1533,6 +1534,7 @@ gap: "16px",
                 }
                 disabled={accountStatusSaving}
                 style={{
+                  width: "100%",
                   padding: "7px 12px",
                   fontSize: "11px",
                   color: account.is_active
@@ -1556,6 +1558,7 @@ gap: "16px",
             }
             disabled={accountDeleting}
             style={{
+              width: "100%".
               padding: "7px 12px",
               fontSize: "11px",
               color: "#fb7185",

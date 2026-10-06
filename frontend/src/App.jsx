@@ -1250,7 +1250,7 @@ function Budget() {
   const [message, setMessage] = useState("");
 
   const [showForm, setShowForm] = useState(false);
-
+  const [editingBudget, setEditingBudget] = useState(null);
   const [formData, setFormData] = useState({
     month: new Date().toISOString().slice(0, 7),
     category_id: "",

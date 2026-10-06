@@ -1219,3 +1219,677 @@ button {
 
   color: white;
 }
+/* ============================================================
+   FINANCIAL OS
+   PROFESSIONAL RESPONSIVE LAYOUT SYSTEM
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   GLOBAL RESPONSIVE SAFETY
+   ------------------------------------------------------------ */
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  min-width: 0;
+}
+
+.app-shell,
+.main-area,
+.content,
+.dashboard,
+section,
+.glass-card {
+  max-width: 100%;
+}
+
+
+/* ------------------------------------------------------------
+   CONTENT WIDTH CONTROL
+   ------------------------------------------------------------ */
+
+.content {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.dashboard {
+  width: 100%;
+  max-width: 1500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* ------------------------------------------------------------
+   PROFESSIONAL CARD BEHAVIOUR
+   ------------------------------------------------------------ */
+
+.glass-card {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.metrics-grid,
+.dashboard-grid {
+  width: 100%;
+  min-width: 0;
+}
+
+.metric-card,
+.large-card,
+.ai-card,
+.health-card,
+.placeholder-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+
+/* ------------------------------------------------------------
+   TEXT SAFETY
+   ------------------------------------------------------------ */
+
+.metric-label,
+.metric-value,
+.card-header,
+.card-header h3,
+.welcome-description,
+.placeholder-card,
+.placeholder-card h2,
+.placeholder-card p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+
+/* ------------------------------------------------------------
+   ACCOUNT / LIST CARD SAFETY
+   ------------------------------------------------------------ */
+
+/*
+   Account cards currently use the existing health-footer
+   layout. Make the internal content responsive instead
+   of allowing the right side to push outside the screen.
+*/
+
+.health-footer {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: nowrap;
+}
+
+.health-footer > div {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.health-footer > div:first-child {
+  flex: 1 1 auto;
+}
+
+.health-footer > div:last-child {
+  flex: 0 1 auto;
+  min-width: 0 !important;
+  max-width: 42%;
+}
+
+
+/* ------------------------------------------------------------
+   ACCOUNT NAME / INSTITUTION
+   ------------------------------------------------------------ */
+
+.health-footer strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.health-footer span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* ------------------------------------------------------------
+   BALANCE AREA
+   ------------------------------------------------------------ */
+
+.health-footer > div:last-child > div {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.health-footer > div:last-child strong,
+.health-footer > div:last-child {
+  text-align: right;
+}
+
+
+/* ------------------------------------------------------------
+   BUTTON RESPONSIVENESS
+   ------------------------------------------------------------ */
+
+.primary-button,
+.secondary-button,
+.small-button {
+  max-width: 100%;
+}
+
+.primary-button {
+  flex-shrink: 0;
+}
+
+
+/* ------------------------------------------------------------
+   TABLET
+   ------------------------------------------------------------ */
+
+@media (max-width: 1100px) {
+
+  .content {
+    padding: 28px;
+  }
+
+  .welcome-section h2 {
+    font-size: clamp(30px, 5vw, 46px);
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .large-card,
+  .ai-card {
+    width: 100%;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   MOBILE TABLET
+   ------------------------------------------------------------ */
+
+@media (max-width: 800px) {
+
+  .main-area {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+  }
+
+  .topbar {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 16px;
+  }
+
+  .content {
+    width: 100%;
+    max-width: 100%;
+    padding: 22px 16px 40px;
+  }
+
+  .welcome-section {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .welcome-section h2 {
+    max-width: 100%;
+    font-size: clamp(30px, 8vw, 40px);
+    letter-spacing: -1.8px;
+  }
+
+  .welcome-description {
+    max-width: 100%;
+    font-size: 12px;
+  }
+
+  .welcome-section .primary-button {
+    align-self: flex-start;
+  }
+
+  .metrics-grid {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .metric-card {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .metric-value {
+    font-size: clamp(20px, 5vw, 24px);
+  }
+
+  .dashboard-grid {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .large-card,
+  .ai-card {
+    width: 100%;
+    min-width: 0;
+    min-height: 300px;
+    padding: 18px;
+  }
+
+  .card-header {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .card-header h3 {
+    font-size: 14px;
+  }
+
+  .empty-chart,
+  .ai-empty {
+    width: 100%;
+    max-width: 100%;
+  }
+
+
+  /* ----------------------------------------------------------
+     ACCOUNT CARDS
+     ---------------------------------------------------------- */
+
+  .health-footer {
+    width: 100%;
+    max-width: 100%;
+    gap: 12px;
+    flex-wrap: nowrap;
+  }
+
+  .health-footer > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0 !important;
+  }
+
+  .health-footer > div:last-child {
+    flex: 0 1 38%;
+    min-width: 0 !important;
+    max-width: 38%;
+  }
+
+  .health-footer strong {
+    max-width: 100%;
+    font-size: 14px;
+  }
+
+  .health-footer span {
+    max-width: 100%;
+    font-size: 11px;
+  }
+
+
+  /* ----------------------------------------------------------
+     TOPBAR
+     ---------------------------------------------------------- */
+
+  .profile-info {
+    display: none;
+  }
+
+  .profile {
+    padding-left: 8px;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   PHONE
+   ------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+
+  .content {
+    padding: 18px 12px 32px;
+  }
+
+  .topbar {
+    height: 66px;
+    padding: 0 12px;
+  }
+
+  .page-title h1 {
+    font-size: 17px;
+  }
+
+  .eyebrow {
+    font-size: 7px;
+  }
+
+  .profile-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+
+  /* ----------------------------------------------------------
+     WELCOME
+     ---------------------------------------------------------- */
+
+  .welcome-section {
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .welcome-label {
+    font-size: 8px;
+    letter-spacing: 1.6px;
+  }
+
+  .welcome-section h2 {
+    font-size: clamp(28px, 9vw, 36px);
+    line-height: 1;
+    letter-spacing: -1.6px;
+  }
+
+  .welcome-description {
+    margin-top: 10px;
+    font-size: 11px;
+    line-height: 1.55;
+  }
+
+  .welcome-section .primary-button {
+    width: 100%;
+  }
+
+
+  /* ----------------------------------------------------------
+     METRICS
+     ---------------------------------------------------------- */
+
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .metric-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .metric-top {
+    margin-bottom: 14px;
+  }
+
+  .metric-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .metric-change {
+    font-size: 8px;
+  }
+
+  .metric-label {
+    font-size: 9px;
+  }
+
+  .metric-value {
+    font-size: 19px;
+    letter-spacing: -0.5px;
+  }
+
+
+  /* ----------------------------------------------------------
+     MAIN CARDS
+     ---------------------------------------------------------- */
+
+  .large-card,
+  .ai-card {
+    min-height: 280px;
+    padding: 15px;
+    border-radius: 17px;
+  }
+
+  .card-label {
+    font-size: 7px;
+  }
+
+  .card-header h3 {
+    font-size: 14px;
+  }
+
+  .empty-chart {
+    height: 210px;
+  }
+
+  .ai-empty {
+    height: 210px;
+  }
+
+
+  /* ----------------------------------------------------------
+     ACCOUNT CARDS
+     ---------------------------------------------------------- */
+
+  .health-card {
+    padding: 15px;
+  }
+
+  .health-footer {
+    gap: 10px;
+  }
+
+  .health-footer > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0 !important;
+  }
+
+  .health-footer > div:last-child {
+    flex: 0 0 34%;
+    width: 34%;
+    min-width: 0 !important;
+    max-width: 34%;
+  }
+
+  .health-footer strong {
+    font-size: 13px !important;
+    line-height: 1.3;
+  }
+
+  .health-footer span {
+    font-size: 10px !important;
+    line-height: 1.4;
+  }
+
+  .health-footer > div:last-child > div:first-child {
+    font-size: 9px !important;
+    margin-bottom: 3px !important;
+  }
+
+  .health-footer > div:last-child > div:last-child {
+    font-size: 15px !important;
+  }
+
+
+  /* ----------------------------------------------------------
+     BUTTONS
+     ---------------------------------------------------------- */
+
+  .primary-button {
+    min-height: 42px;
+    padding: 10px 14px;
+    font-size: 10px;
+  }
+
+  .secondary-button,
+  .small-button {
+    min-height: 38px;
+    padding: 9px 12px;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   SMALL PHONE
+   ------------------------------------------------------------ */
+
+@media (max-width: 420px) {
+
+  .content {
+    padding: 16px 10px 28px;
+  }
+
+  .topbar {
+    padding: 0 10px;
+  }
+
+  .metrics-grid {
+    gap: 8px;
+  }
+
+  .metric-card {
+    padding: 12px;
+  }
+
+  .metric-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .metric-value {
+    font-size: 17px;
+  }
+
+  .metric-label {
+    font-size: 8px;
+  }
+
+  .metric-change {
+    font-size: 7px;
+  }
+
+
+  /* Account card becomes more compact */
+  .health-footer {
+    gap: 8px;
+  }
+
+  .health-footer > div:last-child {
+    flex-basis: 32%;
+    width: 32%;
+    max-width: 32%;
+  }
+
+  .health-footer strong {
+    font-size: 12px !important;
+  }
+
+  .health-footer span {
+    font-size: 9px !important;
+  }
+
+  .health-footer > div:last-child > div:last-child {
+    font-size: 14px !important;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   VERY SMALL PHONE
+   ------------------------------------------------------------ */
+
+@media (max-width: 360px) {
+
+  .content {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card {
+    padding: 14px;
+  }
+
+  .welcome-section h2 {
+    font-size: 29px;
+  }
+
+  .health-footer > div:last-child {
+    flex-basis: 30%;
+    width: 30%;
+    max-width: 30%;
+  }
+
+  .health-footer > div:last-child > div:last-child {
+    font-size: 13px !important;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   ACCESSIBILITY / TOUCH TARGETS
+   ------------------------------------------------------------ */
+
+@media (max-width: 800px) {
+
+  button,
+  .navigation-item {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .navigation-item {
+    min-height: 42px;
+  }
+
+  .icon-button,
+  .menu-button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   FINAL HORIZONTAL OVERFLOW PROTECTION
+   ------------------------------------------------------------ */
+
+@media (max-width: 800px) {
+
+  .content,
+  .dashboard,
+  .welcome-section,
+  .metrics-grid,
+  .dashboard-grid,
+  .glass-card,
+  .health-card,
+  .health-footer {
+    overflow-x: hidden;
+  }
+
+  img,
+  svg,
+  canvas {
+    max-width: 100%;
+  }
+}

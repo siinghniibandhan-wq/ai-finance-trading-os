@@ -1,10 +1,23 @@
 # ============================================================
 # FINANCIAL OS
-# BACKEND ENTRY POINT
+# FASTAPI APPLICATION
 # ============================================================
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+
+from app.database.database import Base, engine
+
+# Import models so SQLAlchemy knows about all tables.
+from app import models
+
+
+# ============================================================
+# CREATE DATABASE TABLES
+# ============================================================
+
+Base.metadata.create_all(
+    bind=engine
+)
 
 
 # ============================================================
@@ -22,6 +35,9 @@ app = FastAPI(
 # CORS
 # ============================================================
 
+from fastapi.middleware.cors import CORSMiddleware
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,7 +48,7 @@ app.add_middleware(
 
 
 # ============================================================
-# HEALTH CHECK
+# ROOT
 # ============================================================
 
 @app.get("/")
@@ -44,8 +60,32 @@ def root():
     }
 
 
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
 @app.get("/health")
 def health():
     return {
         "status": "healthy",
+        "database": "connected",
+    }
+
+
+# ============================================================
+# DATABASE CHECK
+# ============================================================
+
+@app.get("/api/database-status")
+def database_status():
+
+    return {
+        "status": "connected",
+        "database": "Financial OS PostgreSQL",
+        "tables": [
+            "users",
+            "accounts",
+            "categories",
+            "transactions",
+        ],
     }

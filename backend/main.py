@@ -31,6 +31,12 @@ from backend import bills
 
 from backend import statements
 
+# =====================================================
+# WEALTH - ASSETS ROUTES
+# =====================================================
+
+from backend import assets
+
 app = FastAPI(
     title="AI Finance Trading OS",
     description="AI-powered personal finance, wealth management, investment and trading platform.",
@@ -86,6 +92,12 @@ app.include_router(bills.router)
 # =====================================================
 
 app.include_router(statements.router)
+
+# =====================================================
+# WEALTH - ASSETS ROUTES
+# =====================================================
+
+app.include_router(assets.router)
 
 # ============================================================
 # BASIC ROUTES

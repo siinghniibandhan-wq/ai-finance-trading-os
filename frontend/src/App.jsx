@@ -304,16 +304,19 @@ export default function App() {
         =================================================== */}
 
         <section className="content">
-
-          {activePage === "Dashboard" ? (
+          
+{activePage === "Dashboard" ? (
   <Dashboard />
 ) : activePage === "Accounts" ? (
   <Accounts />
+) : activePage === "Transactions" ? (
+  <Transactions />
 ) : (
   <PlaceholderPage
     title={activePage}
   />
 )}
+        
 
         </section>
 

@@ -6532,6 +6532,571 @@ function renderCategories() {
           )
         : null,
 
+// =====================================================
+// LOAN DISBURSEMENT MODAL
+// =====================================================
+
+showLoanDisbursementForm
+  ? React.createElement(
+      "div",
+      {
+        style: {
+          position: "fixed",
+          inset: 0,
+          zIndex: 3200,
+          background: "rgba(20, 15, 35, 0.48)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "18px"
+        }
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            width: "min(650px, 100%)",
+            maxHeight: "92vh",
+            overflowY: "auto",
+            background: "#ffffff",
+            borderRadius: "18px",
+            padding: "22px",
+            boxShadow:
+              "0 20px 70px rgba(0,0,0,0.25)"
+          }
+        },
+
+        React.createElement(
+          "h3",
+          {
+            style: {
+              margin: "0 0 6px"
+            }
+          },
+          "Create Loan from Disbursement"
+        ),
+
+        React.createElement(
+          "p",
+          {
+            style: {
+              margin: "0 0 18px",
+              color: "#777",
+              fontSize: "13px"
+            }
+          },
+          "The transaction amount will automatically become the original and outstanding loan amount."
+        ),
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              background: "#f5f1ff",
+              borderRadius: "12px",
+              padding: "14px",
+              marginBottom: "16px"
+            }
+          },
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                fontSize: "12px",
+                color: "#777"
+              }
+            },
+            "Loan Disbursement Amount"
+          ),
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                fontSize: "24px",
+                fontWeight: "800",
+                marginTop: "4px"
+              }
+            },
+            formatMoney(
+              Number(
+                transactionForm.amount || 0
+              ),
+              transactionForm.currency ||
+                "INR"
+            )
+          )
+        ),
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(2, minmax(0, 1fr))",
+              gap: "14px"
+            }
+          },
+
+          React.createElement(
+            "label",
+            { style: { display: "grid", gap: "6px" } },
+
+            React.createElement(
+              "span",
+              {
+                style: {
+                  fontSize: "12px",
+                  fontWeight: "800"
+                }
+              },
+              "Loan Name *"
+            ),
+
+            React.createElement(
+              "input",
+              {
+                type: "text",
+                value:
+                  loanDisbursementForm.name,
+
+                onChange:
+                  function (event) {
+                    updateLoanDisbursementForm(
+                      "name",
+                      event.target.value
+                    );
+                  },
+
+                placeholder:
+                  "e.g. HDFC Personal Loan",
+
+                style: fieldStyle()
+              }
+            )
+          ),
+
+          React.createElement(
+            "label",
+            { style: { display: "grid", gap: "6px" } },
+
+            React.createElement(
+              "span",
+              {
+                style: {
+                  fontSize: "12px",
+                  fontWeight: "800"
+                }
+              },
+              "Loan Type"
+            ),
+
+            React.createElement(
+              "select",
+              {
+                value:
+                  loanDisbursementForm.liability_type,
+
+                onChange:
+                  function (event) {
+                    updateLoanDisbursementForm(
+                      "liability_type",
+                      event.target.value
+                    );
+                  },
+
+                style: fieldStyle()
+              },
+
+              React.createElement(
+                "option",
+                { value: "personal_loan" },
+                "Personal Loan"
+              ),
+
+              React.createElement(
+                "option",
+                { value: "home_loan" },
+                "Home Loan"
+              ),
+
+              React.createElement(
+                "option",
+                { value: "car_loan" },
+                "Car Loan"
+              ),
+
+              React.createElement(
+                "option",
+                { value: "education_loan" },
+                "Education Loan"
+              ),
+
+              React.createElement(
+                "option",
+                { value: "business_loan" },
+                "Business Loan"
+              ),
+
+              React.createElement(
+                "option",
+                { value: "other" },
+                "Other Loan"
+              )
+            )
+          ),
+
+          React.createElement(
+            "label",
+            { style: { display: "grid", gap: "6px" } },
+
+            React.createElement(
+              "span",
+              {
+                style: {
+                  fontSize: "12px",
+                  fontWeight: "800"
+                }
+              },
+              "Institution / Lender"
+            ),
+
+            React.createElement(
+              "input",
+              {
+                type: "text",
+                value:
+                  loanDisbursementForm.institution,
+
+                onChange:
+                  function (event) {
+                    updateLoanDisbursementForm(
+                      "institution",
+                      event.target.value
+                    );
+                  },
+
+                placeholder:
+                  "e.g. HDFC Bank",
+
+                style: fieldStyle()
+              }
+            )
+          ),
+
+          React.createElement(
+            "label",
+            { style: { display: "grid", gap: "6px" } },
+
+            React.createElement(
+              "span",
+              {
+                style: {
+                  fontSize: "12px",
+                  fontWeight: "800"
+                }
+              },
+              "Loan Account Number"
+            ),
+
+            React.createElement(
+              "input",
+              {
+                type: "text",
+                value:
+                  loanDisbursementForm.account_number,
+
+                onChange:
+                  function (event) {
+                    updateLoanDisbursementForm(
+                      "account_number",
+                      event.target.value
+                    );
+                  },
+
+                placeholder:
+                  "Optional",
+
+                style: fieldStyle()
+              }
+            )
+          ),
+
+          React.createElement(
+            "label",
+            { style: { display: "grid", gap: "6px" } },
+
+            React.createElement(
+              "span",
+              {
+                style: {
+                  fontSize: "12px",
+                  fontWeight: "800"
+                }
+              },
+              "Interest Rate (%)"
+            ),
+
+            React.createElement(
+              "input",
+              {
+                type: "number",
+                step: "0.01",
+                value:
+                  loanDisbursementForm.interest_rate,
+
+                onChange:
+                  function (event) {
+                    updateLoanDisbursementForm(
+                      "interest_rate",
+                      event.target.value
+                    );
+                  },
+
+                placeholder:
+                  "e.g. 11.5",
+
+                style: fieldStyle()
+              }
+            )
+          ),
+
+          React.createElement(
+            "label",
+            { style: { display: "grid", gap: "6px" } },
+
+            React.createElement(
+              "span",
+              {
+                style: {
+                  fontSize: "12px",
+                  fontWeight: "800"
+                }
+              },
+              "Monthly EMI"
+            ),
+
+            React.createElement(
+              "input",
+              {
+                type: "number",
+                step: "0.01",
+                value:
+                  loanDisbursementForm.monthly_emi,
+
+                onChange:
+                  function (event) {
+                    updateLoanDisbursementForm(
+                      "monthly_emi",
+                      event.target.value
+                    );
+                  },
+
+                placeholder:
+                  "e.g. 22000",
+
+                style: fieldStyle()
+              }
+            )
+          ),
+
+          React.createElement(
+            "label",
+            { style: { display: "grid", gap: "6px" } },
+
+            React.createElement(
+              "span",
+              {
+                style: {
+                  fontSize: "12px",
+                  fontWeight: "800"
+                }
+              },
+              "Start Date"
+            ),
+
+            React.createElement(
+              "input",
+              {
+                type: "date",
+                value:
+                  loanDisbursementForm.start_date,
+
+                onChange:
+                  function (event) {
+                    updateLoanDisbursementForm(
+                      "start_date",
+                      event.target.value
+                    );
+                  },
+
+                style: fieldStyle()
+              }
+            )
+          ),
+
+          React.createElement(
+            "label",
+            { style: { display: "grid", gap: "6px" } },
+
+            React.createElement(
+              "span",
+              {
+                style: {
+                  fontSize: "12px",
+                  fontWeight: "800"
+                }
+              },
+              "Final Due Date"
+            ),
+
+            React.createElement(
+              "input",
+              {
+                type: "date",
+                value:
+                  loanDisbursementForm.due_date,
+
+                onChange:
+                  function (event) {
+                    updateLoanDisbursementForm(
+                      "due_date",
+                      event.target.value
+                    );
+                  },
+
+                style: fieldStyle()
+              }
+            )
+          ),
+
+          React.createElement(
+            "label",
+            {
+              style: {
+                display: "grid",
+                gap: "6px",
+                gridColumn: "1 / -1"
+              }
+            },
+
+            React.createElement(
+              "span",
+              {
+                style: {
+                  fontSize: "12px",
+                  fontWeight: "800"
+                }
+              },
+              "Notes"
+            ),
+
+            React.createElement(
+              "textarea",
+              {
+                value:
+                  loanDisbursementForm.notes,
+
+                onChange:
+                  function (event) {
+                    updateLoanDisbursementForm(
+                      "notes",
+                      event.target.value
+                    );
+                  },
+
+                placeholder:
+                  "Optional loan notes",
+
+                rows: 3,
+
+                style: fieldStyle()
+              }
+            )
+          )
+        ),
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "10px",
+              marginTop: "20px",
+              flexWrap: "wrap"
+            }
+          },
+
+          React.createElement(
+            "button",
+            {
+              type: "button",
+
+              onClick:
+                function () {
+                  if (!loanDisbursementSaving) {
+                    setShowLoanDisbursementForm(false);
+                  }
+                },
+
+              disabled:
+                loanDisbursementSaving,
+
+              style: {
+                border:
+                  "1px solid #ddd7ee",
+                background:
+                  "#ffffff",
+                borderRadius:
+                  "10px",
+                padding:
+                  "10px 16px",
+                fontWeight:
+                  "700"
+              }
+            },
+            "Cancel"
+          ),
+
+          React.createElement(
+            "button",
+            {
+              type: "button",
+
+              onClick:
+                saveTransaction,
+
+              disabled:
+                transactionSaving,
+
+              style: {
+                border: "none",
+                background:
+                  "#6d4aff",
+                color: "#ffffff",
+                borderRadius:
+                  "10px",
+                padding:
+                  "10px 18px",
+                fontWeight:
+                  "800"
+              }
+            },
+
+            transactionSaving
+              ? "Creating..."
+              : "Create Transaction + Loan"
+          )
+        )
+      )
+    )
+  : null,
+
+      
       transactionToDelete
         ? React.createElement(
             "div",

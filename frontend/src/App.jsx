@@ -1520,16 +1520,20 @@ const handleTransactionSubmit = async () => {
       reference: formData.reference.trim(),
     };
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/transactions/`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      }
-    );
+  const isEditing = Boolean(editingTransaction);
+
+const response = await fetch(
+  isEditing
+    ? `${API_BASE_URL}/api/transactions/${editingTransaction.id}`
+    : `${API_BASE_URL}/api/transactions/`,
+  {
+    method: isEditing ? "PUT" : "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  }
+);
 
     const data = await response.json();
 

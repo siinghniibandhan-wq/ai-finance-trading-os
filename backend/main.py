@@ -24,7 +24,7 @@ from backend import budgets
 # =====================================================
 
 from backend import bills
-
+from backend import liabilities
 # =====================================================
 # STATEMENTS / IMPORT ROUTES
 # =====================================================
@@ -86,7 +86,7 @@ app.include_router(budgets.router)
 # =====================================================
 
 app.include_router(bills.router)
-
+app.include_router(liabilities.router)
 # =====================================================
 # STATEMENTS / IMPORT ROUTES
 # =====================================================

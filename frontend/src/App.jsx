@@ -1504,6 +1504,40 @@ async function loadTransactions() {
     }
   }
 
+// ----------------------------------------------------------
+// CALCULATE ACTUAL SPENDING
+// ----------------------------------------------------------
+
+function getActualSpending(categoryId, month) {
+
+  return transactions
+    .filter((transaction) => {
+
+      const transactionMonth =
+        transaction.transaction_date
+          ? String(transaction.transaction_date).slice(0, 7)
+          : "";
+
+      const isExpense =
+        transaction.transaction_type === "expense" ||
+        transaction.transaction_type === "withdrawal" ||
+        transaction.transaction_type === "tax" ||
+        transaction.transaction_type === "loan_repayment";
+
+      return (
+        transactionMonth === month &&
+        Number(transaction.category_id) === Number(categoryId) &&
+        isExpense
+      );
+
+    })
+    .reduce(
+      (total, transaction) =>
+        total + Number(transaction.amount || 0),
+      0
+    );
+}
+  
   // ----------------------------------------------------------
   // FORMAT CURRENCY
   // ----------------------------------------------------------

@@ -1373,6 +1373,368 @@ function Transactions() {
     setShowForm(false);
     setError("");
   };
+
+// ----------------------------------------------------------
+// TRANSACTION FORM MODAL
+// ----------------------------------------------------------
+
+const transactionFormModal = showForm && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 9999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "20px",
+      background: "rgba(0,0,0,0.65)",
+      backdropFilter: "blur(10px)",
+    }}
+    onClick={closeTransactionForm}
+  >
+    <div
+      className="glass-card"
+      style={{
+        width: "100%",
+        maxWidth: "620px",
+        maxHeight: "90vh",
+        overflowY: "auto",
+        padding: "28px",
+      }}
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "24px",
+        }}
+      >
+        <div>
+          <p className="card-label">MONEY</p>
+          <h3>Add Transaction</h3>
+        </div>
+
+        <button
+          type="button"
+          className="icon-button"
+          onClick={closeTransactionForm}
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* TRANSACTION TYPE */}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "12px",
+          marginBottom: "18px",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() =>
+            setFormData((previous) => ({
+              ...previous,
+              transaction_type: "expense",
+            }))
+          }
+          style={{
+            padding: "14px",
+            borderRadius: "14px",
+            border:
+              formData.transaction_type === "expense"
+                ? "1px solid rgba(239,68,68,0.7)"
+                : "1px solid rgba(255,255,255,0.10)",
+            background:
+              formData.transaction_type === "expense"
+                ? "rgba(239,68,68,0.16)"
+                : "rgba(255,255,255,0.05)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 700,
+          }}
+        >
+          Expense
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setFormData((previous) => ({
+              ...previous,
+              transaction_type: "income",
+            }))
+          }
+          style={{
+            padding: "14px",
+            borderRadius: "14px",
+            border:
+              formData.transaction_type === "income"
+                ? "1px solid rgba(34,197,94,0.7)"
+                : "1px solid rgba(255,255,255,0.10)",
+            background:
+              formData.transaction_type === "income"
+                ? "rgba(34,197,94,0.16)"
+                : "rgba(255,255,255,0.05)",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 700,
+          }}
+        >
+          Income
+        </button>
+      </div>
+
+      {/* ACCOUNT */}
+
+      <div style={{ marginBottom: "16px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "7px",
+            fontSize: "13px",
+            color: "rgba(255,255,255,0.70)",
+          }}
+        >
+          Account
+        </label>
+
+        <select
+          name="account_id"
+          value={formData.account_id}
+          onChange={handleFormChange}
+          style={{
+            width: "100%",
+            padding: "13px 14px",
+            borderRadius: "12px",
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "#151525",
+            color: "#fff",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        >
+          <option value="">Select account</option>
+          <option value="1">
+            Axis Bank Savings Account
+          </option>
+        </select>
+      </div>
+
+      {/* CATEGORY */}
+
+      <div style={{ marginBottom: "16px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "7px",
+            fontSize: "13px",
+            color: "rgba(255,255,255,0.70)",
+          }}
+        >
+          Category
+        </label>
+
+        <select
+          name="category_id"
+          value={formData.category_id}
+          onChange={handleFormChange}
+          style={{
+            width: "100%",
+            padding: "13px 14px",
+            borderRadius: "12px",
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "#151525",
+            color: "#fff",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        >
+          <option value="">Select category</option>
+          <option value="1">General</option>
+        </select>
+      </div>
+
+      {/* AMOUNT + DATE */}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "14px",
+          marginBottom: "16px",
+        }}
+      >
+        <div>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "7px",
+              fontSize: "13px",
+              color: "rgba(255,255,255,0.70)",
+            }}
+          >
+            Amount
+          </label>
+
+          <input
+            type="number"
+            name="amount"
+            value={formData.amount}
+            onChange={handleFormChange}
+            placeholder="0.00"
+            min="0"
+            step="0.01"
+            style={{
+              width: "100%",
+              padding: "13px 14px",
+              borderRadius: "12px",
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(255,255,255,0.06)",
+              color: "#fff",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
+
+        <div>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "7px",
+              fontSize: "13px",
+              color: "rgba(255,255,255,0.70)",
+            }}
+          >
+            Date
+          </label>
+
+          <input
+            type="date"
+            name="transaction_date"
+            value={formData.transaction_date}
+            onChange={handleFormChange}
+            style={{
+              width: "100%",
+              padding: "13px 14px",
+              borderRadius: "12px",
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(255,255,255,0.06)",
+              color: "#fff",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* DESCRIPTION */}
+
+      <div style={{ marginBottom: "16px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "7px",
+            fontSize: "13px",
+            color: "rgba(255,255,255,0.70)",
+          }}
+        >
+          Description
+        </label>
+
+        <input
+          type="text"
+          name="description"
+          value={formData.description}
+          onChange={handleFormChange}
+          placeholder="e.g. Grocery shopping"
+          style={{
+            width: "100%",
+            padding: "13px 14px",
+            borderRadius: "12px",
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+
+      {/* REFERENCE */}
+
+      <div style={{ marginBottom: "24px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "7px",
+            fontSize: "13px",
+            color: "rgba(255,255,255,0.70)",
+          }}
+        >
+          Reference
+        </label>
+
+        <input
+          type="text"
+          name="reference"
+          value={formData.reference}
+          onChange={handleFormChange}
+          placeholder="Optional reference"
+          style={{
+            width: "100%",
+            padding: "13px 14px",
+            borderRadius: "12px",
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+
+      {/* ACTIONS */}
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "12px",
+        }}
+      >
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={closeTransactionForm}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          className="primary-button"
+          onClick={() => {
+            setError(
+              "Transaction API connection will be added in Step 3."
+            );
+          }}
+        >
+          <Plus size={17} />
+          Save Transaction
+        </button>
+      </div>
+    </div>
+  </div>
+);
+  
   // ----------------------------------------------------------
   // RENDER
   // ----------------------------------------------------------

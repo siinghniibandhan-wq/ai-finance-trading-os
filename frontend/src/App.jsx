@@ -359,7 +359,7 @@ account_number:
         liabilityForm.interest_rate === ""
           ? null
           : Number(liabilityForm.interest_rate),
-      monthly_emi:
+      emi_amount:
         liabilityForm.monthly_emi === ""
           ? null
           : Number(liabilityForm.monthly_emi),

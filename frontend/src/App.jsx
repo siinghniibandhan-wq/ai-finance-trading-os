@@ -1530,6 +1530,53 @@ function openEditBudgetForm(budget) {
   }
 
 // ----------------------------------------------------------
+// DELETE BUDGET
+// ----------------------------------------------------------
+
+async function deleteBudget() {
+  if (!budgetToDelete) {
+    return;
+  }
+
+  setBudgetDeleting(true);
+  setError("");
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/budgets/${budgetToDelete.id}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+          data?.message ||
+          "Unable to delete budget."
+      );
+    }
+
+    setBudgetToDelete(null);
+
+    await loadBudgets();
+
+    setMessage("Budget deleted successfully.");
+  } catch (err) {
+    console.error("Delete budget error:", err);
+
+    setError(
+      err?.message ||
+        "Unable to delete budget."
+    );
+  } finally {
+    setBudgetDeleting(false);
+  }
+}
+  
+// ----------------------------------------------------------
 // CALCULATE ACTUAL SPENDING
 // ----------------------------------------------------------
 

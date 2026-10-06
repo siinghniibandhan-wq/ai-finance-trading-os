@@ -832,7 +832,7 @@ function Accounts() {
 
   const [showAccountForm, setShowAccountForm] = useState(false);
   const [accountSaving, setAccountSaving] = useState(false);
-
+  const [editingAccount, setEditingAccount] = useState(null);
   const [accountForm, setAccountForm] = useState({
     name: "",
     account_type: "bank",

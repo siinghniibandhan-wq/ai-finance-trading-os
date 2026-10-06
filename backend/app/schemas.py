@@ -91,3 +91,41 @@ class CategoryResponse(BaseModel):
     name: str
     category_type: str
     description: str | None
+
+# ============================================================
+# TRANSACTION SCHEMAS
+# ============================================================
+
+class TransactionCreate(BaseModel):
+    user_id: int
+    account_id: int
+    category_id: int | None = None
+    transaction_type: str
+    amount: Decimal
+    description: str | None = None
+    transaction_date: date
+    reference: str | None = None
+
+
+class TransactionUpdate(BaseModel):
+    account_id: int | None = None
+    category_id: int | None = None
+    transaction_type: str | None = None
+    amount: Decimal | None = None
+    description: str | None = None
+    transaction_date: date | None = None
+    reference: str | None = None
+
+
+class TransactionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    account_id: int
+    category_id: int | None
+    transaction_type: str
+    amount: Decimal
+    description: str | None
+    transaction_date: date
+    reference: str | None

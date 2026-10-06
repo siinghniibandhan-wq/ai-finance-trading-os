@@ -1020,6 +1020,68 @@ const handleAccountSubmit = async () => {
   }
 
 };
+
+// ----------------------------------------------------------
+// TOGGLE ACCOUNT STATUS
+// ACTIVE / INACTIVE
+// ----------------------------------------------------------
+
+const handleToggleAccountStatus = async (account) => {
+
+  try {
+
+    setAccountStatusSaving(true);
+    setError("");
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/accounts/${account.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          is_active: !account.is_active,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+          "Unable to update account status."
+      );
+    }
+
+    setAccounts((previous) =>
+      previous.map((item) =>
+        item.id === data.id
+          ? data
+          : item
+      )
+    );
+
+  } catch (err) {
+
+    console.error(
+      "Account status error:",
+      err
+    );
+
+    setError(
+      err?.message ||
+        "Unable to update account status."
+    );
+
+  } finally {
+
+    setAccountStatusSaving(false);
+
+  }
+
+};
   
 // ----------------------------------------------------------
 // EDIT ACCOUNT — LOAD ACCOUNT INTO FORM

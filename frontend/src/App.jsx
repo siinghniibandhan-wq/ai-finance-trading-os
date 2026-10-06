@@ -2190,80 +2190,208 @@ function closeTransactionForm() {
   setTransactionsError("");
 }
 
+// =====================================================
+// SAVE TRANSACTION
+// WITH AUTOMATIC LOAN DISBURSEMENT WORKFLOW
+// =====================================================
+
 async function saveTransaction() {
+
   setTransactionsError("");
 
+
+  // ---------------------------------------------------
+  // BASIC VALIDATION
+  // ---------------------------------------------------
+
   if (!transactionForm.account_id) {
-    setTransactionsError("Please select an account.");
+    setTransactionsError(
+      "Please select an account."
+    );
     return;
   }
 
-  const amount = Number(transactionForm.amount);
 
-  if (!Number.isFinite(amount) || amount <= 0) {
-    setTransactionsError("Amount must be greater than zero.");
+  const amount =
+    Number(transactionForm.amount);
+
+
+  if (
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ) {
+    setTransactionsError(
+      "Amount must be greater than zero."
+    );
     return;
   }
+
 
   if (!transactionForm.transaction_date) {
-    setTransactionsError("Transaction date is required.");
+    setTransactionsError(
+      "Transaction date is required."
+    );
     return;
   }
 
+
+  // ---------------------------------------------------
+  // DETECT LOAN DISBURSEMENT
+  // ---------------------------------------------------
+
+  const selectedCategory =
+    getSelectedTransactionCategory();
+
+  const isLoanDisbursement =
+    String(
+      transactionForm.transaction_type || ""
+    ).toLowerCase() === "income" &&
+    isLoanDisbursementCategory(
+      selectedCategory
+    ) &&
+    !editingTransaction;
+
+
+  // ---------------------------------------------------
+  // If Loan Disbursement is selected but the
+  // Loan Details popup has not been completed,
+  // open it first.
+  // ---------------------------------------------------
+
+  if (
+    isLoanDisbursement &&
+    !showLoanDisbursementForm
+  ) {
+
+    openLoanDisbursementForm();
+
+    return;
+  }
+
+
+  // ---------------------------------------------------
+  // Validate Loan Details
+  // ---------------------------------------------------
+
+  if (isLoanDisbursement) {
+
+    if (
+      !loanDisbursementForm.name.trim()
+    ) {
+
+      setTransactionsError(
+        "Please enter the loan name."
+      );
+
+      setShowLoanDisbursementForm(true);
+
+      return;
+    }
+  }
+
+
+  // ---------------------------------------------------
+  // Transaction payload
+  // ---------------------------------------------------
+
   const payload = {
-    account_id: Number(transactionForm.account_id),
+
+    account_id:
+      Number(transactionForm.account_id),
 
     category_id:
       transactionForm.category_id === ""
         ? null
-        : Number(transactionForm.category_id),
+        : Number(
+            transactionForm.category_id
+          ),
 
-    transaction_type: transactionForm.transaction_type,
+    transaction_type:
+      transactionForm.transaction_type,
 
-    amount: amount,
+    amount:
+      amount,
 
-    currency: transactionForm.currency || "INR",
+    currency:
+      transactionForm.currency || "INR",
 
     description:
-      transactionForm.description.trim() || null,
+      transactionForm.description.trim() ||
+      null,
 
     merchant:
-      transactionForm.merchant.trim() || null,
+      transactionForm.merchant.trim() ||
+      null,
 
     reference_number:
-      transactionForm.reference_number.trim() || null,
+      transactionForm.reference_number.trim() ||
+      null,
 
     transaction_date:
       transactionForm.transaction_date,
 
     notes:
-      transactionForm.notes.trim() || null
+      transactionForm.notes.trim() ||
+      null
   };
+
 
   setTransactionSaving(true);
 
+
+  let createdTransactionId =
+    null;
+
+  let createdLiabilityId =
+    null;
+
+
   try {
-    const isEditing = Boolean(editingTransaction);
 
-    const url = isEditing
-      ? `https://ai-finance-trading-os-api.onrender.com/api/transactions/${editingTransaction.id}`
-      : "https://ai-finance-trading-os-api.onrender.com/api/transactions/";
+    const isEditing =
+      Boolean(editingTransaction);
 
-    const response = await fetch(url, {
-      method: isEditing ? "PUT" : "POST",
 
-      headers: {
-        "Content-Type": "application/json"
-      },
+    const url =
+      isEditing
+        ? `https://ai-finance-trading-os-api.onrender.com/api/transactions/${editingTransaction.id}`
+        : "https://ai-finance-trading-os-api.onrender.com/api/transactions/";
 
-      body: JSON.stringify(payload)
-    });
 
-    const data = await response.json().catch(function () {
-      return null;
-    });
+    // -------------------------------------------------
+    // 1. SAVE TRANSACTION
+    // -------------------------------------------------
+
+    const response =
+      await fetch(
+        url,
+        {
+          method:
+            isEditing
+              ? "PUT"
+              : "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify(payload)
+        }
+      );
+
+
+    const data =
+      await response.json().catch(
+        function () {
+          return null;
+        }
+      );
+
 
     if (!response.ok) {
+
       throw new Error(
         data?.detail ||
         data?.message ||
@@ -2271,18 +2399,188 @@ async function saveTransaction() {
       );
     }
 
+
+    createdTransactionId =
+      data?.id || null;
+
+
+    // -------------------------------------------------
+    // 2. AUTOMATIC LOAN CREATION
+    // -------------------------------------------------
+
+    if (isLoanDisbursement) {
+
+      const loanPayload = {
+
+        name:
+          loanDisbursementForm.name.trim(),
+
+        liability_type:
+          loanDisbursementForm.liability_type,
+
+        institution:
+          loanDisbursementForm.institution.trim() ||
+          null,
+
+        account_number:
+          loanDisbursementForm.account_number.trim() ||
+          null,
+
+        original_amount:
+          amount,
+
+        outstanding_amount:
+          amount,
+
+        interest_rate:
+          loanDisbursementForm.interest_rate === ""
+            ? null
+            : Number(
+                loanDisbursementForm.interest_rate
+              ),
+
+        monthly_emi:
+          loanDisbursementForm.monthly_emi === ""
+            ? null
+            : Number(
+                loanDisbursementForm.monthly_emi
+              ),
+
+        start_date:
+          loanDisbursementForm.start_date ||
+          transactionForm.transaction_date,
+
+        due_date:
+          loanDisbursementForm.due_date ||
+          null,
+
+        currency:
+          transactionForm.currency || "INR",
+
+        status:
+          "active",
+
+        notes:
+          loanDisbursementForm.notes.trim() ||
+          null
+      };
+
+
+      // -----------------------------------------------
+      // Create Liability
+      // -----------------------------------------------
+
+      const liabilityResponse =
+        await fetch(
+          "https://ai-finance-trading-os-api.onrender.com/api/liabilities/",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify(
+                loanPayload
+              )
+          }
+        );
+
+
+      const liabilityData =
+        await liabilityResponse
+          .json()
+          .catch(function () {
+            return null;
+          });
+
+
+      if (!liabilityResponse.ok) {
+
+        throw new Error(
+          liabilityData?.detail ||
+          liabilityData?.message ||
+          "Transaction was saved, but the loan liability could not be created."
+        );
+      }
+
+
+      createdLiabilityId =
+        liabilityData?.id || null;
+
+
+      // -----------------------------------------------
+      // Create linked Loan Account
+      // -----------------------------------------------
+
+      await createLinkedLiabilityAccount(
+        liabilityData ||
+          loanPayload,
+        "loan"
+      );
+    }
+
+
+    // -------------------------------------------------
+    // FINISH
+    // -------------------------------------------------
+
     resetTransactionForm();
+
     setShowTransactionForm(false);
+
+    setShowLoanDisbursementForm(false);
+
+    resetLoanDisbursementForm();
+
 
     await loadAccounts();
 
     await loadTransactions();
 
+    await loadLiabilities();
+
+
   } catch (error) {
+
+    // -------------------------------------------------
+    // ROLLBACK TRANSACTION IF AUTOMATIC LOAN CREATION
+    // FAILED
+    // -------------------------------------------------
+
+    if (
+      createdTransactionId &&
+      !editingTransaction
+    ) {
+
+      try {
+
+        await fetch(
+          `https://ai-finance-trading-os-api.onrender.com/api/transactions/${createdTransactionId}`,
+          {
+            method: "DELETE"
+          }
+        );
+
+      } catch (rollbackError) {
+
+        console.error(
+          "Transaction rollback failed:",
+          rollbackError
+        );
+      }
+    }
+
+
     setTransactionsError(
-      error?.message || "Unable to save transaction."
+      error?.message ||
+      "Unable to save transaction."
     );
+
   } finally {
+
     setTransactionSaving(false);
   }
 }

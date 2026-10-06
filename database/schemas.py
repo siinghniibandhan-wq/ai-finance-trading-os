@@ -170,10 +170,15 @@ class LiabilityBase(BaseModel):
     name: str
     liability_type: str
     lender: str | None = None
-    principal_amount: Decimal = Decimal("0")
+
+    # IMPORTANT:
+    # These names must match database.models.Liability
+    original_amount: Decimal = Decimal("0")
     outstanding_amount: Decimal = Decimal("0")
+
     interest_rate: Decimal | None = None
-    monthly_emi: Decimal | None = None
+    emi_amount: Decimal | None = None
+
     currency: str = "INR"
     start_date: datetime | None = None
     notes: str | None = None
@@ -187,10 +192,15 @@ class LiabilityUpdate(BaseModel):
     name: str | None = None
     liability_type: str | None = None
     lender: str | None = None
-    principal_amount: Decimal | None = None
+
+    # IMPORTANT:
+    # These names must match database.models.Liability
+    original_amount: Decimal | None = None
     outstanding_amount: Decimal | None = None
+
     interest_rate: Decimal | None = None
-    monthly_emi: Decimal | None = None
+    emi_amount: Decimal | None = None
+
     currency: str | None = None
     start_date: datetime | None = None
     notes: str | None = None

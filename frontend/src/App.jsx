@@ -1253,7 +1253,7 @@ function Transactions() {
   // ----------------------------------------------------------
 
   const [showForm, setShowForm] = useState(false);
-
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [formData, setFormData] = useState({
     account_id: "",
     category_id: "",

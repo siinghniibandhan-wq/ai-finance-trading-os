@@ -1402,6 +1402,7 @@ async function loadTransactions() {
 
     setMessage("");
     setError("");
+    setEditingBudget(null);
     setShowForm(true);
 
   }

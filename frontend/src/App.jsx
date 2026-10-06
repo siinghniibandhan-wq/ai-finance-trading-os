@@ -2076,6 +2076,21 @@ function getActualSpending(categoryId, month) {
   >
     Edit
   </button>
+  <button
+  type="button"
+  className="secondary-button"
+  onClick={() => setBudgetToDelete(budget)}
+  disabled={budgetDeleting}
+  style={{
+    padding: "7px 12px",
+    fontSize: "11px",
+    marginLeft: "6px",
+    color: "#fb7185",
+    borderColor: "rgba(251,113,133,0.25)",
+  }}
+>
+  Delete
+</button>
 </div>
 
         {/* ---------------------------------------------

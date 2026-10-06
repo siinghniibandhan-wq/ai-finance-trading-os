@@ -1268,8 +1268,6 @@ function Transactions() {
 // TRANSACTION FORM OPTIONS & SAVE STATE
 // ----------------------------------------------------------
 
-const [accounts, setAccounts] = useState([]);
-const [categories, setCategories] = useState([]);
 const [savingTransaction, setSavingTransaction] = useState(false);
 const [formMessage, setFormMessage] = useState("");
   // ----------------------------------------------------------

@@ -2295,13 +2295,95 @@ function getActualSpending(categoryId, month) {
 
         </div>
 
+            )}
+
+      {/* ====================================================
+          DELETE BUDGET CONFIRMATION
+      ==================================================== */}
+
+      {budgetToDelete && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            background: "rgba(0,0,0,0.65)",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <div
+            className="glass-card"
+            style={{
+              width: "100%",
+              maxWidth: "420px",
+              padding: "24px",
+            }}
+          >
+            <p className="card-label">
+              DELETE BUDGET
+            </p>
+
+            <h3>
+              Delete this budget?
+            </h3>
+
+            <p
+              style={{
+                color: "rgba(255,255,255,0.60)",
+                fontSize: "13px",
+                lineHeight: 1.6,
+                marginTop: "10px",
+              }}
+            >
+              This budget will be permanently removed.
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+                marginTop: "22px",
+              }}
+            >
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setBudgetToDelete(null)}
+                disabled={budgetDeleting}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={deleteBudget}
+                disabled={budgetDeleting}
+                style={{
+                  color: "#fb7185",
+                  borderColor:
+                    "rgba(251,113,133,0.30)",
+                }}
+              >
+                {budgetDeleting
+                  ? "Deleting..."
+                  : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
 
   );
+
 }
-        
 
 
 

@@ -1,3 +1,7 @@
+# ============================================================
+# LIABILITIES API ROUTES
+# ============================================================
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -10,23 +14,46 @@ from database.schemas import (
 )
 
 
+# ============================================================
+# ROUTER CONFIGURATION
+# ============================================================
+
 router = APIRouter(
     prefix="/api/liabilities",
     tags=["Liabilities"],
 )
 
 
-@router.get("/", response_model=list[LiabilityResponse])
+# ============================================================
+# GET ALL LIABILITIES
+# ============================================================
+
+@router.get(
+    "/",
+    response_model=list[LiabilityResponse],
+)
 def get_liabilities(
     db: Session = Depends(get_db),
 ):
+    """
+    Return all active liabilities.
+    """
+
     return (
         db.query(Liability)
-        .filter(Liability.is_active.is_(True))
-        .order_by(Liability.id.desc())
+        .filter(
+            Liability.is_active.is_(True)
+        )
+        .order_by(
+            Liability.id.desc()
+        )
         .all()
     )
 
+
+# ============================================================
+# GET SINGLE LIABILITY
+# ============================================================
 
 @router.get(
     "/{liability_id}",
@@ -36,6 +63,10 @@ def get_liability(
     liability_id: int,
     db: Session = Depends(get_db),
 ):
+    """
+    Return one active liability by ID.
+    """
+
     liability = (
         db.query(Liability)
         .filter(
@@ -54,6 +85,10 @@ def get_liability(
     return liability
 
 
+# ============================================================
+# CREATE LIABILITY
+# ============================================================
+
 @router.post(
     "/",
     response_model=LiabilityResponse,
@@ -63,25 +98,51 @@ def create_liability(
     data: LiabilityCreate,
     db: Session = Depends(get_db),
 ):
+    """
+    Create a new liability.
+
+    IMPORTANT:
+    The field names below must match
+    database.models.Liability exactly.
+    """
+
     liability = Liability(
         name=data.name,
         liability_type=data.liability_type,
         lender=data.lender,
-        principal_amount=data.principal_amount,
+
+        # Correct database model field
+        original_amount=data.original_amount,
+
+        # Correct database model field
         outstanding_amount=data.outstanding_amount,
+
         interest_rate=data.interest_rate,
-        monthly_emi=data.monthly_emi,
+
+        # Correct database model field
+        emi_amount=data.emi_amount,
+
         currency=data.currency,
         start_date=data.start_date,
         notes=data.notes,
     )
 
     db.add(liability)
-    db.commit()
+
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
     db.refresh(liability)
 
     return liability
 
+
+# ============================================================
+# UPDATE LIABILITY
+# ============================================================
 
 @router.put(
     "/{liability_id}",
@@ -92,6 +153,10 @@ def update_liability(
     data: LiabilityUpdate,
     db: Session = Depends(get_db),
 ):
+    """
+    Update an existing active liability.
+    """
+
     liability = (
         db.query(Liability)
         .filter(
@@ -112,19 +177,40 @@ def update_liability(
     )
 
     for field, value in update_data.items():
-        setattr(liability, field, value)
+        setattr(
+            liability,
+            field,
+            value,
+        )
 
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
     db.refresh(liability)
 
     return liability
 
 
-@router.delete("/{liability_id}")
+# ============================================================
+# DELETE / ARCHIVE LIABILITY
+# ============================================================
+
+@router.delete(
+    "/{liability_id}"
+)
 def archive_liability(
     liability_id: int,
     db: Session = Depends(get_db),
 ):
+    """
+    Soft-delete/archive a liability.
+
+    The database record is retained.
+    """
+
     liability = (
         db.query(Liability)
         .filter(
@@ -142,9 +228,13 @@ def archive_liability(
 
     liability.is_active = False
 
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
     return {
         "message": "Liability archived successfully",
         "liability_id": liability_id,
-  }
+    }

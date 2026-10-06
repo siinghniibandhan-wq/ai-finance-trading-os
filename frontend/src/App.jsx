@@ -1242,9 +1242,158 @@ function Accounts() {
 
     ))}
 
-  </div>
+    </div>
 
 )}
+
+        {/* ==================================================
+            ADD ACCOUNT FORM
+        ================================================== */}
+
+        {showAccountForm && (
+
+          <div
+            className="glass-card"
+            style={{
+              marginTop: "20px",
+            }}
+          >
+
+            <div className="card-header">
+
+              <div>
+                <p className="card-label">
+                  MONEY
+                </p>
+
+                <h3>
+                  Add Account
+                </h3>
+              </div>
+
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gap: "14px",
+              }}
+            >
+
+              <input
+                type="text"
+                placeholder="Account name"
+                value={accountForm.name}
+                onChange={(event) =>
+                  setAccountForm({
+                    ...accountForm,
+                    name: event.target.value,
+                  })
+                }
+              />
+
+              <select
+                value={accountForm.account_type}
+                onChange={(event) =>
+                  setAccountForm({
+                    ...accountForm,
+                    account_type: event.target.value,
+                  })
+                }
+              >
+                <option value="bank">
+                  Bank
+                </option>
+
+                <option value="credit_card">
+                  Credit Card
+                </option>
+
+                <option value="cash">
+                  Cash
+                </option>
+
+                <option value="investment">
+                  Investment
+                </option>
+
+                <option value="other">
+                  Other
+                </option>
+              </select>
+
+              <input
+                type="text"
+                placeholder="Institution / Bank name"
+                value={accountForm.institution}
+                onChange={(event) =>
+                  setAccountForm({
+                    ...accountForm,
+                    institution: event.target.value,
+                  })
+                }
+              />
+
+              <input
+                type="text"
+                placeholder="Account number"
+                value={accountForm.account_number}
+                onChange={(event) =>
+                  setAccountForm({
+                    ...accountForm,
+                    account_number: event.target.value,
+                  })
+                }
+              />
+
+              <input
+                type="number"
+                placeholder="Opening balance"
+                value={accountForm.balance}
+                onChange={(event) =>
+                  setAccountForm({
+                    ...accountForm,
+                    balance: event.target.value,
+                  })
+                }
+              />
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  marginTop: "8px",
+                }}
+              >
+
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={accountSaving}
+                >
+                  {accountSaving
+                    ? "Saving..."
+                    : "Save Account"}
+                </button>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() =>
+                    setShowAccountForm(false)
+                  }
+                  disabled={accountSaving}
+                >
+                  Cancel
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
 
       </section>
 

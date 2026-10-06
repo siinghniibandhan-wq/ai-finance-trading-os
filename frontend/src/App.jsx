@@ -1470,9 +1470,11 @@ function openEditBudgetForm(budget) {
       setSaving(true);
 
       const response = await fetch(
-        `${API_BASE_URL}/api/budgets/`,
-        {
-          method: "POST",
+  editingBudget
+    ? `${API_BASE_URL}/api/budgets/${editingBudget.id}`
+    : `${API_BASE_URL}/api/budgets/`,
+  {
+    method: editingBudget ? "PUT" : "POST",
           headers: {
             "Content-Type": "application/json",
           },

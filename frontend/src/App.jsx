@@ -204,6 +204,88 @@ async function loadLiabilities() {
     setLiabilitiesLoading(false);
   }
 } 
+
+// =====================================================
+// WEALTH - LIABILITIES CRUD
+// =====================================================
+
+function resetLiabilityForm() {
+  setLiabilityForm({
+    name: "",
+    liability_type: "other",
+    institution: "",
+    account_number: "",
+    original_amount: "",
+    outstanding_amount: "",
+    interest_rate: "",
+    monthly_emi: "",
+    start_date: "",
+    due_date: "",
+    currency: "INR",
+    status: "active",
+    notes: ""
+  });
+
+  setEditingLiability(null);
+}
+
+function openAddLiabilityForm() {
+  resetLiabilityForm();
+  setLiabilitiesError("");
+  setShowLiabilityForm(true);
+}
+
+function openEditLiabilityForm(liability) {
+  if (!liability) {
+    return;
+  }
+
+  setEditingLiability(liability);
+
+  setLiabilityForm({
+    name: liability.name || "",
+    liability_type: liability.liability_type || "other",
+    institution: liability.institution || "",
+    account_number: liability.account_number || "",
+    original_amount:
+      liability.original_amount !== null &&
+      liability.original_amount !== undefined
+        ? String(liability.original_amount)
+        : "",
+    outstanding_amount:
+      liability.outstanding_amount !== null &&
+      liability.outstanding_amount !== undefined
+        ? String(liability.outstanding_amount)
+        : "",
+    interest_rate:
+      liability.interest_rate !== null &&
+      liability.interest_rate !== undefined
+        ? String(liability.interest_rate)
+        : "",
+    monthly_emi:
+      liability.monthly_emi !== null &&
+      liability.monthly_emi !== undefined
+        ? String(liability.monthly_emi)
+        : "",
+    start_date: liability.start_date || "",
+    due_date: liability.due_date || "",
+    currency: liability.currency || "INR",
+    status: liability.status || "active",
+    notes: liability.notes || ""
+  });
+
+  setLiabilitiesError("");
+  setShowLiabilityForm(true);
+}
+
+function handleLiabilityChange(field, value) {
+  setLiabilityForm(function (previous) {
+    return {
+      ...previous,
+      [field]: value
+    };
+  });
+}  
   
 async function loadAssets() {
   setAssetsLoading(true);

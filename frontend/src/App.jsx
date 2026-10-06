@@ -2421,7 +2421,42 @@ const transactionFormModal = showForm && (
                         >
                           Edit
                         </button>
-                        
+                                           <button
+                          type="button"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                "Are you sure you want to delete this transaction?"
+                              )
+                            ) {
+                              handleDeleteTransaction(
+                                transaction.id
+                              );
+                            }
+                          }}
+                          disabled={Boolean(deletingTransaction)}
+                          style={{
+                            marginTop: "8px",
+                            marginLeft: "6px",
+                            padding: "7px 12px",
+                            borderRadius: "10px",
+                            border:
+                              "1px solid rgba(251,113,133,0.25)",
+                            background:
+                              "rgba(251,113,133,0.08)",
+                            color: "#fb7185",
+                            cursor: deletingTransaction
+                              ? "not-allowed"
+                              : "pointer",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            opacity: deletingTransaction
+                              ? 0.6
+                              : 1,
+                          }}
+                        >
+                          Delete
+                        </button>     
                       </div>
 
                     </div>

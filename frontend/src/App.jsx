@@ -326,6 +326,89 @@ export default function App() {
 // ============================================================
 
 function Dashboard() {
+  // ----------------------------------------------------------
+  // DASHBOARD STATE
+  // ----------------------------------------------------------
+
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // ----------------------------------------------------------
+  // API CONFIGURATION
+  // ----------------------------------------------------------
+
+  const API_BASE_URL =
+    "https://ai-finance-trading-os-api.onrender.com";
+
+  const USER_ID = 1;
+
+  // ----------------------------------------------------------
+  // LOAD DASHBOARD DATA
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/dashboard/summary?user_id=${USER_ID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Dashboard API error: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        setDashboardData(data);
+      } catch (err) {
+        console.error("Dashboard API error:", err);
+
+        setError(
+          "Unable to load financial data."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboard();
+  }, []);
+
+  // ----------------------------------------------------------
+  // FORMAT CURRENCY
+  // ----------------------------------------------------------
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(value || 0);
+  };
+
+  // ----------------------------------------------------------
+  // DATA
+  // ----------------------------------------------------------
+
+  const summary = dashboardData?.summary || {};
+
+  const totalBalance = summary.total_balance || 0;
+  const totalIncome = summary.total_income || 0;
+  const totalExpense = summary.total_expense || 0;
+  const netCashFlow = summary.net_cash_flow || 0;
+
+  const recentTransactions =
+    dashboardData?.recent_transactions || [];
+
+  // ----------------------------------------------------------
+  // RENDER
+  // ----------------------------------------------------------
 
   return (
     <div className="dashboard">
@@ -362,6 +445,18 @@ function Dashboard() {
 
       </section>
 
+
+      {/* ====================================================
+          ERROR
+      ==================================================== */}
+
+      {error && (
+        <div className="glass-card">
+          <strong>{error}</strong>
+        </div>
+      )}
+
+
       {/* ====================================================
           METRICS
       ==================================================== */}
@@ -369,38 +464,59 @@ function Dashboard() {
       <section className="metrics-grid">
 
         <MetricCard
-          title="Net Worth"
-          value="₹0"
-          change="+0.00%"
+          title="Cash Balance"
+          value={
+            loading
+              ? "Loading..."
+              : formatCurrency(totalBalance)
+          }
+          change="Current"
           positive
           icon={Wallet}
         />
 
         <MetricCard
-          title="Cash Balance"
-          value="₹0"
-          change="+0.00%"
-          positive
-          icon={Landmark}
-        />
-
-        <MetricCard
-          title="Investments"
-          value="₹0"
-          change="+0.00%"
+          title="Total Income"
+          value={
+            loading
+              ? "Loading..."
+              : formatCurrency(totalIncome)
+          }
+          change="Income"
           positive
           icon={TrendingUp}
         />
 
         <MetricCard
-          title="Credit / Debt"
-          value="₹0"
-          change="0.00%"
+          title="Total Expenses"
+          value={
+            loading
+              ? "Loading..."
+              : formatCurrency(totalExpense)
+          }
+          change="Expenses"
           positive={false}
           icon={CreditCard}
         />
 
+        <MetricCard
+          title="Net Cash Flow"
+          value={
+            loading
+              ? "Loading..."
+              : formatCurrency(netCashFlow)
+          }
+          change={
+            netCashFlow >= 0
+              ? "Positive"
+              : "Negative"
+          }
+          positive={netCashFlow >= 0}
+          icon={CircleDollarSign}
+        />
+
       </section>
+
 
       {/* ====================================================
           MAIN GRID
@@ -408,13 +524,16 @@ function Dashboard() {
 
       <section className="dashboard-grid">
 
-        {/* CASH FLOW */}
+        {/* ==================================================
+            CASH FLOW
+        ================================================== */}
 
         <div className="glass-card large-card">
 
           <div className="card-header">
 
             <div>
+
               <p className="card-label">
                 CASH FLOW
               </p>
@@ -422,38 +541,56 @@ function Dashboard() {
               <h3>
                 Income & Expenses
               </h3>
+
             </div>
 
             <button className="small-button">
-              This Month
+              Current
             </button>
 
           </div>
 
-          <div className="empty-chart">
 
-            <div className="chart-icon">
-              <BarChart3 size={28} />
+          {loading ? (
+
+            <div className="empty-chart">
+
+              <strong>
+                Loading financial data...
+              </strong>
+
             </div>
 
-            <strong>
-              No financial data yet
-            </strong>
+          ) : (
 
-            <span>
-              Add your first transaction to
-              start seeing your cash flow.
-            </span>
+            <div className="empty-chart">
 
-            <button className="secondary-button">
-              Add Transaction
-            </button>
+              <div className="chart-icon">
+                <BarChart3 size={28} />
+              </div>
 
-          </div>
+              <strong>
+                {formatCurrency(totalIncome)}
+                {" income / "}
+                {formatCurrency(totalExpense)}
+                {" expenses"}
+              </strong>
+
+              <span>
+                Net cash flow:{" "}
+                {formatCurrency(netCashFlow)}
+              </span>
+
+            </div>
+
+          )}
 
         </div>
 
-        {/* AI INSIGHT */}
+
+        {/* ==================================================
+            AI INSIGHT
+        ================================================== */}
 
         <div className="glass-card ai-card">
 
@@ -468,6 +605,7 @@ function Dashboard() {
               </div>
 
               <div>
+
                 <p className="card-label">
                   AI INSIGHT
                 </p>
@@ -475,6 +613,7 @@ function Dashboard() {
                 <h3>
                   Financial Assistant
                 </h3>
+
               </div>
 
             </div>
@@ -499,8 +638,9 @@ function Dashboard() {
 
       </section>
 
+
       {/* ====================================================
-          FINANCIAL HEALTH
+          RECENT TRANSACTIONS
       ==================================================== */}
 
       <section className="glass-card health-card">
@@ -508,46 +648,73 @@ function Dashboard() {
         <div className="card-header">
 
           <div>
+
             <p className="card-label">
-              FINANCIAL HEALTH
+              RECENT ACTIVITY
             </p>
 
             <h3>
-              Financial Health Score
+              Recent Transactions
             </h3>
+
           </div>
 
           <span className="score">
-            0 / 100
+            {summary.transaction_count || 0}
           </span>
 
         </div>
 
-        <div className="health-progress">
 
-          <div className="health-progress-fill" />
+        {recentTransactions.length === 0 ? (
 
-        </div>
+          <div className="health-footer">
 
-        <div className="health-footer">
+            <span>
+              No transactions available.
+            </span>
 
-          <span>
-            Add your financial information
-            to calculate your score.
-          </span>
+          </div>
 
-          <button className="secondary-button">
-            Complete Profile
-          </button>
+        ) : (
 
-        </div>
+          <div>
+
+            {recentTransactions.map((transaction) => (
+
+              <div
+                key={transaction.id}
+                className="health-footer"
+              >
+
+                <span>
+                  {transaction.description ||
+                    "Transaction"}
+                  {" • "}
+                  {transaction.transaction_date}
+                </span>
+
+                <strong>
+                  {transaction.transaction_type ===
+                  "expense"
+                    ? "-"
+                    : "+"}
+                  {formatCurrency(transaction.amount)}
+                </strong>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        )}
 
       </section>
 
     </div>
   );
-}
-
+        }
 // ============================================================
 // METRIC CARD
 // ============================================================

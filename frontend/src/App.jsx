@@ -6028,8 +6028,53 @@ function renderCategories() {
                     {
                       value: transactionForm.category_id,
                       onChange: function (event) {
-                        updateTransactionForm("category_id", event.target.value);
-                      },
+  const nextCategoryId = event.target.value;
+
+  updateTransactionForm(
+    "category_id",
+    nextCategoryId
+  );
+
+  // =================================================
+  // AUTO OPEN LOAN DISBURSEMENT FORM
+  // =================================================
+
+  if (
+    String(transactionForm.transaction_type || "")
+      .toLowerCase() === "income" &&
+    !editingTransaction
+  ) {
+    const selectedCategory = categories.find(
+      function (category) {
+        return (
+          String(category.id) ===
+          String(nextCategoryId)
+        );
+      }
+    );
+
+    if (
+      selectedCategory &&
+      isLoanDisbursementCategory(selectedCategory)
+    ) {
+      setLoanDisbursementForm(function (current) {
+        return {
+          ...current,
+
+          start_date:
+            transactionForm.transaction_date ||
+            new Date()
+              .toISOString()
+              .slice(0, 10)
+        };
+      });
+
+      setShowLoanDisbursementForm(true);
+    }
+  }
+},
+
+                      
                       style: fieldStyle()
                     },
                     React.createElement("option", { value: "" }, "No Category"),

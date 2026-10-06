@@ -1384,6 +1384,7 @@ async function loadTransactions() {
 
     loadBudgets();
     loadCategories();
+    loadTransactions();
 
   }, []);
 

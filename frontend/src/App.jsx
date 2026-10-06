@@ -1241,6 +1241,7 @@ function Budget() {
 
   const [budgets, setBudgets] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [transactions, setTransactions] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

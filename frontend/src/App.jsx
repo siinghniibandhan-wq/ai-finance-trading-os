@@ -1467,6 +1467,7 @@ function Accounts() {
                 <button
                   type="button"
                   className="primary-button"
+                  onClick={handleAccountSubmit}
                   disabled={accountSaving}
                 >
                   {accountSaving

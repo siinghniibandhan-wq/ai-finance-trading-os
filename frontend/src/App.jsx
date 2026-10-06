@@ -833,6 +833,8 @@ function Accounts() {
   const [showAccountForm, setShowAccountForm] = useState(false);
   const [accountSaving, setAccountSaving] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
+  const [accountToDelete, setAccountToDelete] = useState(null);
+  const [accountDeleting, setAccountDeleting] = useState(false);
   const [accountForm, setAccountForm] = useState({
     name: "",
     account_type: "bank",
@@ -1038,7 +1040,53 @@ const handleEditAccount = (account) => {
   setError("");
 };
   
+// ----------------------------------------------------------
+// DELETE ACCOUNT
+// ----------------------------------------------------------
 
+const deleteAccount = async () => {
+  if (!accountToDelete) {
+    return;
+  }
+
+  setAccountDeleting(true);
+  setError("");
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/accounts/${accountToDelete.id}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+          data?.message ||
+          "Unable to delete account."
+      );
+    }
+
+    setAccountToDelete(null);
+
+    await loadAccounts();
+
+    setMessage("Account deleted successfully.");
+  } catch (err) {
+    console.error("Delete account error:", err);
+
+    setError(
+      err?.message ||
+        "Unable to delete account."
+    );
+  } finally {
+    setAccountDeleting(false);
+  }
+};
+  
   // ----------------------------------------------------------
   // FORMAT CURRENCY
   // ----------------------------------------------------------

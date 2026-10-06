@@ -311,10 +311,12 @@ export default function App() {
   <Accounts />
 ) : activePage === "Transactions" ? (
   <Transactions />
+) : activePage === "Budget" ? (
+  <Budget />
 ) : (
   <PlaceholderPage
     title={activePage}
-  />
+/>
 )}
         
 

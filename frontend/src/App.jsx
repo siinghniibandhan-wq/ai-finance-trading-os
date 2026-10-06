@@ -56,13 +56,17 @@ const navigation = [
         icon: ArrowLeftRight
       },
       {
-        name: "Budget",
-        icon: PieChart
-      },
-      {
-        name: "Bills",
-        icon: Receipt
-      }
+  name: "Budget",
+  icon: PieChart
+},
+{
+  name: "Categories",
+  icon: CircleDollarSign
+},
+{
+  name: "Bills",
+  icon: Receipt
+}
     ]
   },
 

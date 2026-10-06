@@ -65,3 +65,29 @@ class AccountResponse(BaseModel):
     currency: str
     balance: Decimal
     is_active: bool
+    
+# ============================================================
+# CATEGORY SCHEMAS
+# ============================================================
+
+class CategoryCreate(BaseModel):
+    user_id: int
+    name: str
+    category_type: str
+    description: str | None = None
+
+
+class CategoryUpdate(BaseModel):
+    name: str | None = None
+    category_type: str | None = None
+    description: str | None = None
+
+
+class CategoryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    name: str
+    category_type: str
+    description: str | None

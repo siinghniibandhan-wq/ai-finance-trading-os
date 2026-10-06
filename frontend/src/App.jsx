@@ -2332,7 +2332,28 @@ const transactionFormModal = showForm && (
                           )}
 
                         </div>
-
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openEditTransactionForm(transaction)
+                          }
+                          style={{
+                            marginTop: "8px",
+                            padding: "7px 12px",
+                            borderRadius: "10px",
+                            border:
+                              "1px solid rgba(255,255,255,0.12)",
+                            background:
+                              "rgba(255,255,255,0.06)",
+                            color: "#ffffff",
+                            cursor: "pointer",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          Edit
+                        </button>
+                        
                       </div>
 
                     </div>

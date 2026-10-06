@@ -186,7 +186,30 @@ const [billForm, setBillForm] = useState({
   status: "active",
   notes: ""
 });   
+// =====================================================
+// WEALTH - ASSETS STATE
+// =====================================================
 
+// -----------------------------------------------------
+// ASSET LIST
+// -----------------------------------------------------
+const [assets, setAssets] = useState([]);
+const [assetsLoading, setAssetsLoading] = useState(false);
+const [assetsError, setAssetsError] = useState("");
+
+// -----------------------------------------------------
+// ADD / EDIT ASSET FORM
+// -----------------------------------------------------
+const [showAssetForm, setShowAssetForm] = useState(false);
+const [editingAsset, setEditingAsset] = useState(null);
+const [assetSaving, setAssetSaving] = useState(false);
+
+// -----------------------------------------------------
+// DELETE ASSET
+// -----------------------------------------------------
+const [assetDeleting, setAssetDeleting] = useState(false);
+const [assetToDelete, setAssetToDelete] = useState(null);
+   
 // =====================================================
 // STATEMENTS / IMPORT STATE
 // =====================================================

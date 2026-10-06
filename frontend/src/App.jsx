@@ -994,6 +994,27 @@ function Accounts() {
     }
 
   };
+  
+// ----------------------------------------------------------
+// EDIT ACCOUNT — LOAD ACCOUNT INTO FORM
+// ----------------------------------------------------------
+
+const handleEditAccount = (account) => {
+  setEditingAccount(account);
+
+  setAccountForm({
+    name: account.name || "",
+    account_type: account.account_type || "bank",
+    institution: account.institution || "",
+    account_number: account.account_number || "",
+    currency: account.currency || "INR",
+    balance: account.balance ?? "",
+  });
+
+  setShowAccountForm(true);
+  setError("");
+};
+  
 
   // ----------------------------------------------------------
   // FORMAT CURRENCY

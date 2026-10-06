@@ -1353,21 +1353,23 @@ function Transactions() {
     }));
   };
 
-  const openTransactionForm = () => {
-    setFormData({
-      account_id: "",
-      category_id: "",
-      transaction_type: "expense",
-      amount: "",
-      transaction_date:
-        new Date().toISOString().split("T")[0],
-      description: "",
-      reference: "",
-    });
+  const openTransactionForm = async () => {
+  setFormData({
+    account_id: "",
+    category_id: "",
+    transaction_type: "expense",
+    amount: "",
+    transaction_date:
+      new Date().toISOString().split("T")[0],
+    description: "",
+    reference: "",
+  });
 
-    setShowForm(true);
-    setError("");
-  };
+  setShowForm(true);
+  setError("");
+
+  await loadFormOptions();
+};
 
   const closeTransactionForm = () => {
     setShowForm(false);

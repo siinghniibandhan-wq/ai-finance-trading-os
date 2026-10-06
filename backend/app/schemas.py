@@ -93,6 +93,32 @@ class CategoryResponse(BaseModel):
     description: str | None
 
 # ============================================================
+# BUDGET SCHEMAS
+# ============================================================
+
+class BudgetCreate(BaseModel):
+    user_id: int
+    month: str
+    category_id: int
+    amount: Decimal
+
+
+class BudgetUpdate(BaseModel):
+    month: str | None = None
+    category_id: int | None = None
+    amount: Decimal | None = None
+
+
+class BudgetResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    month: str
+    category_id: int
+    amount: Decimal
+
+# ============================================================
 # TRANSACTION SCHEMAS
 # ============================================================
 

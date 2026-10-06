@@ -1562,7 +1562,15 @@ const transactionFormModal = showForm && (
           }}
         >
           <option value="">Select category</option>
-          <option value="1">General</option>
+
+{categories.map((category) => (
+  <option
+    key={category.id}
+    value={category.id}
+  >
+    {category.name}
+  </option>
+))}
         </select>
       </div>
 

@@ -93,7 +93,7 @@ def get_dashboard_summary(
         db.query(func.count(Account.id))
         .filter(
             Account.user_id == user_id,
-            Account.active == True,
+            Account.is_active == True,
         )
         .scalar()
     )

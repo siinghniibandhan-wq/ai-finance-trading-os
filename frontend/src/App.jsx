@@ -286,7 +286,223 @@ function handleLiabilityChange(field, value) {
     };
   });
 }  
-  
+
+// =====================================================
+// WEALTH - LIABILITIES CRUD
+// =====================================================
+
+function resetLiabilityForm() {
+  setLiabilityForm({
+    name: "",
+    liability_type: "other",
+    institution: "",
+    account_number: "",
+    original_amount: "",
+    outstanding_amount: "",
+    interest_rate: "",
+    monthly_emi: "",
+    start_date: "",
+    due_date: "",
+    currency: "INR",
+    status: "active",
+    notes: ""
+  });
+
+  setEditingLiability(null);
+}
+
+function openAddLiabilityForm() {
+  resetLiabilityForm();
+  setLiabilitiesError("");
+  setShowLiabilityForm(true);
+}
+
+function openEditLiabilityForm(liability) {
+  if (!liability) {
+    return;
+  }
+
+  setEditingLiability(liability);
+
+  setLiabilityForm({
+    name: liability.name || "",
+    liability_type: liability.liability_type || "other",
+    institution: liability.institution || "",
+    account_number: liability.account_number || "",
+    original_amount:
+      liability.original_amount !== null &&
+      liability.original_amount !== undefined
+        ? String(liability.original_amount)
+        : "",
+    outstanding_amount:
+      liability.outstanding_amount !== null &&
+      liability.outstanding_amount !== undefined
+        ? String(liability.outstanding_amount)
+        : "",
+    interest_rate:
+      liability.interest_rate !== null &&
+      liability.interest_rate !== undefined
+        ? String(liability.interest_rate)
+        : "",
+    monthly_emi:
+      liability.monthly_emi !== null &&
+      liability.monthly_emi !== undefined
+        ? String(liability.monthly_emi)
+        : "",
+    start_date: liability.start_date || "",
+    due_date: liability.due_date || "",
+    currency: liability.currency || "INR",
+    status: liability.status || "active",
+    notes: liability.notes || ""
+  });
+
+  setLiabilitiesError("");
+  setShowLiabilityForm(true);
+}
+
+function handleLiabilityChange(field, value) {
+  setLiabilityForm(function (previous) {
+    return {
+      ...previous,
+      [field]: value
+    };
+  });
+}
+
+async function saveLiability() {
+  setLiabilitiesError("");
+
+  if (!liabilityForm.name.trim()) {
+    setLiabilitiesError("Liability name is required.");
+    return;
+  }
+
+  if (
+    liabilityForm.outstanding_amount === "" ||
+    Number(liabilityForm.outstanding_amount) < 0
+  ) {
+    setLiabilitiesError(
+      "Outstanding amount is required and cannot be negative."
+    );
+    return;
+  }
+
+  setLiabilitySaving(true);
+
+  try {
+    const payload = {
+      name: liabilityForm.name.trim(),
+      liability_type: liabilityForm.liability_type,
+      institution:
+        liabilityForm.institution.trim() || null,
+      account_number:
+        liabilityForm.account_number.trim() || null,
+      original_amount:
+        liabilityForm.original_amount === ""
+          ? null
+          : Number(liabilityForm.original_amount),
+      outstanding_amount:
+        Number(liabilityForm.outstanding_amount),
+      interest_rate:
+        liabilityForm.interest_rate === ""
+          ? null
+          : Number(liabilityForm.interest_rate),
+      monthly_emi:
+        liabilityForm.monthly_emi === ""
+          ? null
+          : Number(liabilityForm.monthly_emi),
+      start_date:
+        liabilityForm.start_date || null,
+      due_date:
+        liabilityForm.due_date || null,
+      currency: liabilityForm.currency,
+      status: liabilityForm.status,
+      notes:
+        liabilityForm.notes.trim() || null
+    };
+
+    const url = editingLiability
+      ? `https://ai-finance-trading-os-api.onrender.com/api/liabilities/${editingLiability.id}`
+      : "https://ai-finance-trading-os-api.onrender.com/api/liabilities/";
+
+    const response = await fetch(url, {
+      method: editingLiability ? "PUT" : "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to save liability."
+      );
+    }
+
+    resetLiabilityForm();
+    setShowLiabilityForm(false);
+
+    await loadLiabilities();
+
+  } catch (error) {
+    setLiabilitiesError(
+      error?.message ||
+      "Unable to save liability."
+    );
+
+  } finally {
+    setLiabilitySaving(false);
+  }
+}
+
+async function deleteLiability(liabilityId) {
+  if (!liabilityId) {
+    return;
+  }
+
+  setLiabilityDeleting(true);
+  setLiabilitiesError("");
+
+  try {
+    const response = await fetch(
+      `https://ai-finance-trading-os-api.onrender.com/api/liabilities/${liabilityId}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to delete liability."
+      );
+    }
+
+    setLiabilityToDelete(null);
+
+    await loadLiabilities();
+
+  } catch (error) {
+    setLiabilitiesError(
+      error?.message ||
+      "Unable to delete liability."
+    );
+
+  } finally {
+    setLiabilityDeleting(false);
+  }
+}
 async function loadAssets() {
   setAssetsLoading(true);
   setAssetsError("");

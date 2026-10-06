@@ -9334,16 +9334,137 @@ function renderAssets() {
               style: { padding: "12px", borderRadius: "9px", border: "1px solid #ddd" }
             }),
             React.createElement(
-              "select",
-              {
-                value: assetForm.asset_type,
-                onChange: function (e) { handleAssetChange("asset_type", e.target.value); },
-                style: { padding: "12px", borderRadius: "9px", border: "1px solid #ddd" }
+  "div",
+  {
+    style: {
+      position: "relative"
+    }
+  },
+
+  React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: function () {
+        if (!assetSaving) {
+          setAssetTypeOpen(function (current) {
+            return !current;
+          });
+        }
+      },
+      style: {
+        width: "100%",
+        minHeight: "44px",
+        padding: "12px 14px",
+        borderRadius: "9px",
+        border: "1px solid #ddd7eb",
+        background: "#ffffff",
+        color: "#18152b",
+        fontSize: "14px",
+        textAlign: "left",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        boxSizing: "border-box"
+      }
+    },
+
+    React.createElement(
+      "span",
+      null,
+      String(assetForm.asset_type || "other")
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, function (letter) {
+          return letter.toUpperCase();
+        })
+    ),
+
+    React.createElement(
+      "span",
+      {
+        style: {
+          color: "#7048ff",
+          fontSize: "13px"
+        }
+      },
+      assetTypeOpen ? "▲" : "▼"
+    )
+  ),
+
+  assetTypeOpen
+    ? React.createElement(
+        "div",
+        {
+          style: {
+            position: "absolute",
+            top: "calc(100% + 5px)",
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+            background: "#ffffff",
+            border: "1px solid #e3dcef",
+            borderRadius: "10px",
+            boxShadow: "0 10px 28px rgba(43, 24, 82, 0.18)",
+            overflow: "hidden",
+            maxHeight: "260px",
+            overflowY: "auto"
+          }
+        },
+
+        [
+          "other",
+          "bank",
+          "cash",
+          "fixed_deposit",
+          "recurring_deposit",
+          "stock",
+          "mutual_fund",
+          "etf",
+          "bond",
+          "gold",
+          "crypto",
+          "real_estate",
+          "vehicle",
+          "business",
+          "jewellery"
+        ].map(function (type) {
+          const label = type
+            .replaceAll("_", " ")
+            .replace(/\b\w/g, function (letter) {
+              return letter.toUpperCase();
+            });
+
+          const selected = assetForm.asset_type === type;
+
+          return React.createElement(
+            "button",
+            {
+              key: type,
+              type: "button",
+              onClick: function () {
+                handleAssetChange("asset_type", type);
+                setAssetTypeOpen(false);
               },
-              ["other", "bank", "cash", "fixed_deposit", "recurring_deposit", "stock", "mutual_fund", "etf", "bond", "gold", "crypto", "real_estate", "vehicle", "business", "jewellery"].map(function (type) {
-                return React.createElement("option", { key: type, value: type }, type.replaceAll("_", " "));
-              })
-            ),
+              style: {
+                width: "100%",
+                border: 0,
+                borderBottom: "1px solid #eee9f5",
+                padding: "12px 14px",
+                background: selected ? "#f0e9ff" : "#ffffff",
+                color: selected ? "#6c2bd9" : "#18152b",
+                fontSize: "14px",
+                fontWeight: selected ? "700" : "500",
+                textAlign: "left",
+                cursor: "pointer"
+              }
+            },
+            label
+          );
+        })
+      )
+    : null
+),
             React.createElement("input", {
               value: assetForm.category,
               onChange: function (e) { handleAssetChange("category", e.target.value); },

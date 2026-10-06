@@ -1213,6 +1213,9 @@ if (active === "Statements / Import") {
 if (active === "Assets") {
   loadAssets();
 }
+if (active === "Liabilities") {
+  loadLiabilities();
+}
   },
   [active]
 );

@@ -9817,8 +9817,12 @@ if (active === "Transactions") {
 if (active === "Assets") {
   return renderAssets();
 }
+// =====================================================
+// WEALTH - LIABILITIES PAGE
+// =====================================================
+
 if (active === "Liabilities") {
-  loadLiabilities();
+  return renderLiabilities();
 }
     
 if (active === "Budget") {

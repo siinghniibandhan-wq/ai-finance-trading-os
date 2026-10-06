@@ -49,7 +49,7 @@ def get_dashboard_summary(
         db.query(func.coalesce(func.sum(Account.balance), 0))
         .filter(
             Account.user_id == user_id,
-            Account.active == True,
+            Account.is_active == True,
         )
         .scalar()
     )

@@ -12,7 +12,7 @@ from app.database.database import Base, engine
 from app import models
 
 # Import API routes.
-from app.routes import users, accounts, categories
+from app.routes import users, accounts, categories, transactions
 
 
 # ============================================================
@@ -98,6 +98,7 @@ def database_status():
 app.include_router(users.router)
 app.include_router(accounts.router)
 app.include_router(categories.router)
+app.include_router(transactions.router)
 
 
 

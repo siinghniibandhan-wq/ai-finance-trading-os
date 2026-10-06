@@ -9901,6 +9901,411 @@ function renderStatements() {
   );
 }
 
+// =====================================================
+// WEALTH - ASSETS PAGE
+// =====================================================
+
+function renderAssets() {
+
+  // ---------------------------------------------------
+  // PAGE HEADER
+  // ---------------------------------------------------
+  const pageHeader = React.createElement(
+    "div",
+    { className: "page-heading" },
+
+    React.createElement(
+      "h2",
+      null,
+      "Assets"
+    ),
+
+    React.createElement(
+      "p",
+      null,
+      "Manage everything you own."
+    )
+  );
+
+  // ---------------------------------------------------
+  // TOTAL VALUE
+  // ---------------------------------------------------
+  const totalAssets = assets.reduce(
+    function (total, asset) {
+      return total + Number(asset.current_value || 0);
+    },
+    0
+  );
+
+  const activeAssets = assets.filter(
+    function (asset) {
+      return String(asset.status || "active").toLowerCase() === "active";
+    }
+  );
+
+  function assetMoney(value, currency) {
+    return `${currency || "INR"} ${Number(
+      value || 0
+    ).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  }
+
+  // ---------------------------------------------------
+  // SUMMARY CARDS
+  // ---------------------------------------------------
+  const summaryCards = React.createElement(
+    "div",
+    {
+      style: {
+        display: "grid",
+        gridTemplateColumns:
+          "repeat(auto-fit, minmax(200px, 1fr))",
+        gap: "14px",
+        marginBottom: "20px"
+      }
+    },
+
+    React.createElement(
+      "div",
+      { className: "module-card" },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "13px",
+            color: "#777",
+            marginBottom: "8px"
+          }
+        },
+        "Total Assets"
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "24px",
+            fontWeight: "800"
+          }
+        },
+        assetMoney(totalAssets, "INR")
+      )
+    ),
+
+    React.createElement(
+      "div",
+      { className: "module-card" },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "13px",
+            color: "#777",
+            marginBottom: "8px"
+          }
+        },
+        "Active Assets"
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "24px",
+            fontWeight: "800"
+          }
+        },
+        String(activeAssets.length)
+      )
+    )
+  );
+
+  // ---------------------------------------------------
+  // ACTION BAR
+  // ---------------------------------------------------
+  const actionBar = React.createElement(
+    "div",
+    {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "10px",
+        flexWrap: "wrap",
+        marginBottom: "20px"
+      }
+    },
+
+    React.createElement(
+      "div",
+      {
+        style: {
+          fontSize: "14px",
+          color: "#777"
+        }
+      },
+      "Your wealth assets"
+    ),
+
+    React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: openAddAssetForm,
+        style: {
+          border: 0,
+          borderRadius: "10px",
+          padding: "11px 18px",
+          background: "#6c2bd9",
+          color: "#ffffff",
+          fontWeight: "700",
+          cursor: "pointer"
+        }
+      },
+      "+ Add Asset"
+    )
+  );
+
+  // ---------------------------------------------------
+  // ERROR
+  // ---------------------------------------------------
+  const errorMessage = assetsError
+    ? React.createElement(
+        "div",
+        {
+          style: {
+            marginBottom: "20px",
+            padding: "12px 14px",
+            borderRadius: "10px",
+            background: "#ffebee",
+            color: "#c62828",
+            fontWeight: "600"
+          }
+        },
+        assetsError
+      )
+    : null;
+
+  // ---------------------------------------------------
+  // LOADING
+  // ---------------------------------------------------
+  if (assetsLoading) {
+    return React.createElement(
+      React.Fragment,
+      null,
+      pageHeader,
+      React.createElement(
+        "div",
+        { className: "module-card" },
+        "Loading assets..."
+      )
+    );
+  }
+
+  // ---------------------------------------------------
+  // ASSET LIST
+  // ---------------------------------------------------
+  const assetList =
+    assets.length > 0
+      ? React.createElement(
+          "div",
+          {
+            style: {
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: "14px"
+            }
+          },
+
+          assets.map(function (asset) {
+
+            return React.createElement(
+              "div",
+              {
+                key: asset.id,
+                className: "module-card"
+              },
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: "10px",
+                    marginBottom: "12px"
+                  }
+                },
+
+                React.createElement(
+                  "h3",
+                  {
+                    style: {
+                      margin: 0
+                    }
+                  },
+                  asset.name || "Unnamed Asset"
+                ),
+
+                React.createElement(
+                  "span",
+                  {
+                    style: {
+                      fontSize: "12px",
+                      padding: "5px 9px",
+                      borderRadius: "20px",
+                      background: "#e8f5e9",
+                      fontWeight: "700"
+                    }
+                  },
+                  asset.status || "active"
+                )
+              ),
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    color: "#777",
+                    fontSize: "13px",
+                    marginBottom: "8px"
+                  }
+                },
+                asset.asset_type || "Other"
+              ),
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    fontSize: "23px",
+                    fontWeight: "800",
+                    marginBottom: "8px"
+                  }
+                },
+                assetMoney(
+                  asset.current_value,
+                  asset.currency || "INR"
+                )
+              ),
+
+              asset.institution
+                ? React.createElement(
+                    "div",
+                    {
+                      style: {
+                        fontSize: "13px",
+                        color: "#777",
+                        marginBottom: "12px"
+                      }
+                    },
+                    asset.institution
+                  )
+                : null,
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    display: "flex",
+                    gap: "8px",
+                    flexWrap: "wrap"
+                  }
+                },
+
+                React.createElement(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: function () {
+                      openEditAssetForm(asset);
+                    },
+                    style: {
+                      border: "1px solid #ddd7eb",
+                      borderRadius: "9px",
+                      padding: "8px 13px",
+                      background: "#ffffff",
+                      fontWeight: "700",
+                      cursor: "pointer"
+                    }
+                  },
+                  "Edit"
+                ),
+
+                React.createElement(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: function () {
+                      setAssetToDelete(asset);
+                    },
+                    style: {
+                      border: 0,
+                      borderRadius: "9px",
+                      padding: "8px 13px",
+                      background: "#d32f2f",
+                      color: "#ffffff",
+                      fontWeight: "700",
+                      cursor: "pointer"
+                    }
+                  },
+                  "Delete"
+                )
+              )
+            );
+          })
+        )
+      : React.createElement(
+          "div",
+          {
+            className: "module-card",
+            style: {
+              textAlign: "center",
+              padding: "35px 20px"
+            }
+          },
+
+          React.createElement(
+            "h3",
+            null,
+            "No Assets Yet"
+          ),
+
+          React.createElement(
+            "p",
+            {
+              style: {
+                color: "#777"
+              }
+            },
+            "Add your first asset to start building your wealth profile."
+          )
+        );
+
+  // ---------------------------------------------------
+  // FINAL ASSETS PAGE
+  // ---------------------------------------------------
+  return React.createElement(
+    React.Fragment,
+    null,
+
+    pageHeader,
+
+    summaryCards,
+
+    errorMessage,
+
+    actionBar,
+
+    assetList
+  );
+}
+   
   // =====================================================
   // GENERIC MODULE PAGE
   // =====================================================

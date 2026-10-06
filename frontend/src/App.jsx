@@ -9898,6 +9898,1607 @@ function renderAssets() {
   );
 }
 
+// =====================================================
+// WEALTH - LIABILITIES PAGE
+// =====================================================
+
+function renderLiabilities() {
+
+  // -----------------------------------------------------
+  // PAGE HEADER
+  // -----------------------------------------------------
+
+  const pageHeader = React.createElement(
+    "div",
+    {
+      className: "page-heading"
+    },
+
+    React.createElement(
+      "h2",
+      null,
+      "Liabilities"
+    ),
+
+    React.createElement(
+      "p",
+      null,
+      "Manage loans, credit cards and other outstanding obligations."
+    )
+  );
+
+  // -----------------------------------------------------
+  // LIABILITY TOTALS
+  // -----------------------------------------------------
+
+  const totalOutstanding = liabilities.reduce(
+    function (total, liability) {
+      return total + Number(
+        liability.outstanding_amount || 0
+      );
+    },
+    0
+  );
+
+  const totalOriginal = liabilities.reduce(
+    function (total, liability) {
+      return total + Number(
+        liability.original_amount || 0
+      );
+    },
+    0
+  );
+
+  const activeLiabilities = liabilities.filter(
+    function (liability) {
+      return String(
+        liability.status || "active"
+      ).toLowerCase() === "active";
+    }
+  );
+
+  const totalMonthlyEMI = liabilities.reduce(
+    function (total, liability) {
+      return total + Number(
+        liability.monthly_emi || 0
+      );
+    },
+    0
+  );
+
+  // -----------------------------------------------------
+  // MONEY FORMATTER
+  // -----------------------------------------------------
+
+  function liabilityMoney(value, currency) {
+    return `${currency || "INR"} ${Number(
+      value || 0
+    ).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  }
+
+  // -----------------------------------------------------
+  // SUMMARY CARDS
+  // -----------------------------------------------------
+
+  const summaryCards = React.createElement(
+    "div",
+    {
+      style: {
+        display: "grid",
+        gridTemplateColumns:
+          "repeat(auto-fit, minmax(200px, 1fr))",
+        gap: "14px",
+        marginBottom: "20px"
+      }
+    },
+
+    // Outstanding
+    React.createElement(
+      "div",
+      {
+        className: "module-card"
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "13px",
+            color: "#777",
+            marginBottom: "8px"
+          }
+        },
+        "Total Outstanding"
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "24px",
+            fontWeight: "800"
+          }
+        },
+        liabilityMoney(
+          totalOutstanding,
+          "INR"
+        )
+      )
+    ),
+
+    // Original Amount
+    React.createElement(
+      "div",
+      {
+        className: "module-card"
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "13px",
+            color: "#777",
+            marginBottom: "8px"
+          }
+        },
+        "Original Borrowed"
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "24px",
+            fontWeight: "800"
+          }
+        },
+        liabilityMoney(
+          totalOriginal,
+          "INR"
+        )
+      )
+    ),
+
+    // Active Liabilities
+    React.createElement(
+      "div",
+      {
+        className: "module-card"
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "13px",
+            color: "#777",
+            marginBottom: "8px"
+          }
+        },
+        "Active Liabilities"
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "24px",
+            fontWeight: "800"
+          }
+        },
+        String(activeLiabilities.length)
+      )
+    ),
+
+    // Monthly EMI
+    React.createElement(
+      "div",
+      {
+        className: "module-card"
+      },
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "13px",
+            color: "#777",
+            marginBottom: "8px"
+          }
+        },
+        "Monthly EMI"
+      ),
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            fontSize: "24px",
+            fontWeight: "800"
+          }
+        },
+        liabilityMoney(
+          totalMonthlyEMI,
+          "INR"
+        )
+      )
+    )
+  );
+
+  // -----------------------------------------------------
+  // ACTION BAR
+  // -----------------------------------------------------
+
+  const actionBar = React.createElement(
+    "div",
+    {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "10px",
+        flexWrap: "wrap",
+        marginBottom: "20px"
+      }
+    },
+
+    React.createElement(
+      "div",
+      {
+        style: {
+          fontSize: "14px",
+          color: "#777"
+        }
+      },
+      "Your loans and outstanding obligations"
+    ),
+
+    React.createElement(
+      "button",
+      {
+        type: "button",
+
+        onClick: openAddLiabilityForm,
+
+        style: {
+          border: 0,
+          borderRadius: "10px",
+          padding: "11px 18px",
+          background: "#6c2bd9",
+          color: "#ffffff",
+          fontWeight: "700",
+          cursor: "pointer"
+        }
+      },
+      "+ Add Liability"
+    )
+  );
+
+  // -----------------------------------------------------
+  // ERROR MESSAGE
+  // -----------------------------------------------------
+
+  const errorMessage = liabilitiesError
+    ? React.createElement(
+        "div",
+        {
+          style: {
+            background: "#fff3f3",
+            border: "1px solid #f1b5b5",
+            color: "#c62828",
+            borderRadius: "10px",
+            padding: "12px 14px",
+            marginBottom: "18px",
+            fontSize: "14px",
+            fontWeight: "600"
+          }
+        },
+        liabilitiesError
+      )
+    : null;
+
+  // -----------------------------------------------------
+  // LOADING STATE
+  // -----------------------------------------------------
+
+  if (liabilitiesLoading) {
+    return React.createElement(
+      React.Fragment,
+      null,
+
+      pageHeader,
+
+      summaryCards,
+
+      errorMessage,
+
+      actionBar,
+
+      React.createElement(
+        "div",
+        {
+          className: "module-card",
+          style: {
+            textAlign: "center",
+            padding: "40px 20px"
+          }
+        },
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              fontSize: "16px",
+              fontWeight: "700",
+              marginBottom: "8px"
+            }
+          },
+          "Loading liabilities..."
+        ),
+
+        React.createElement(
+          "div",
+          {
+            style: {
+              color: "#777",
+              fontSize: "14px"
+            }
+          },
+          "Please wait while your liability data is loaded."
+        )
+      )
+    );
+  }
+
+  // -----------------------------------------------------
+  // LIABILITY LIST
+  // -----------------------------------------------------
+
+  const liabilityList =
+    liabilities.length > 0
+
+      ? React.createElement(
+          "div",
+          {
+            style: {
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "14px"
+            }
+          },
+
+          liabilities.map(
+            function (liability) {
+
+              const status =
+                String(
+                  liability.status || "active"
+                ).toLowerCase();
+
+              const liabilityType =
+                String(
+                  liability.liability_type || "other"
+                );
+
+              const formattedType =
+                liabilityType
+                  .replace(/_/g, " ")
+                  .replace(
+                    /\b\w/g,
+                    function (letter) {
+                      return letter.toUpperCase();
+                    }
+                  );
+
+              return React.createElement(
+                "div",
+                {
+                  key: liability.id,
+                  className: "module-card",
+                  style: {
+                    position: "relative"
+                  }
+                },
+
+                // -------------------------------------------------
+                // CARD HEADER
+                // -------------------------------------------------
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                      alignItems: "flex-start",
+                      gap: "10px",
+                      marginBottom: "14px"
+                    }
+                  },
+
+                  React.createElement(
+                    "div",
+                    null,
+
+                    React.createElement(
+                      "h3",
+                      {
+                        style: {
+                          margin: "0 0 6px 0"
+                        }
+                      },
+                      liability.name ||
+                        "Unnamed Liability"
+                    ),
+
+                    React.createElement(
+                      "div",
+                      {
+                        style: {
+                          fontSize: "13px",
+                          color: "#777"
+                        }
+                      },
+                      formattedType
+                    )
+                  ),
+
+                  React.createElement(
+                    "span",
+                    {
+                      style: {
+                        display: "inline-block",
+                        padding: "5px 9px",
+                        borderRadius: "999px",
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        background:
+                          status === "active"
+                            ? "#e8f5e9"
+                            : "#f1f1f1",
+                        color:
+                          status === "active"
+                            ? "#2e7d32"
+                            : "#666",
+                        textTransform:
+                          "capitalize"
+                      }
+                    },
+                    status
+                  )
+                ),
+
+                // -------------------------------------------------
+                // OUTSTANDING AMOUNT
+                // -------------------------------------------------
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      marginBottom: "14px"
+                    }
+                  },
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        fontSize: "12px",
+                        color: "#777",
+                        marginBottom: "5px"
+                      }
+                    },
+                    "Outstanding Amount"
+                  ),
+
+                  React.createElement(
+                    "div",
+                    {
+                      style: {
+                        fontSize: "23px",
+                        fontWeight: "800"
+                      }
+                    },
+                    liabilityMoney(
+                      liability.outstanding_amount,
+                      liability.currency ||
+                        "INR"
+                    )
+                  )
+                ),
+
+                // -------------------------------------------------
+                // DETAILS
+                // -------------------------------------------------
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      fontSize: "14px",
+                      lineHeight: "1.75",
+                      marginBottom: "15px"
+                    }
+                  },
+
+                  liability.original_amount !==
+                    null &&
+                  liability.original_amount !==
+                    undefined
+
+                    ? React.createElement(
+                        React.Fragment,
+                        null,
+                        "Original: ",
+                        liabilityMoney(
+                          liability.original_amount,
+                          liability.currency ||
+                            "INR"
+                        ),
+                        React.createElement(
+                          "br"
+                        )
+                      )
+                    : null,
+
+                  liability.interest_rate !==
+                    null &&
+                  liability.interest_rate !==
+                    undefined
+
+                    ? React.createElement(
+                        React.Fragment,
+                        null,
+                        "Interest: ",
+                        liability.interest_rate,
+                        "%",
+                        React.createElement(
+                          "br"
+                        )
+                      )
+                    : null,
+
+                  liability.monthly_emi !==
+                    null &&
+                  liability.monthly_emi !==
+                    undefined
+
+                    ? React.createElement(
+                        React.Fragment,
+                        null,
+                        "Monthly EMI: ",
+                        liabilityMoney(
+                          liability.monthly_emi,
+                          liability.currency ||
+                            "INR"
+                        ),
+                        React.createElement(
+                          "br"
+                        )
+                      )
+                    : null,
+
+                  liability.institution
+                    ? React.createElement(
+                        React.Fragment,
+                        null,
+                        "Institution: ",
+                        liability.institution,
+                        React.createElement(
+                          "br"
+                        )
+                      )
+                    : null,
+
+                  liability.account_number
+                    ? React.createElement(
+                        React.Fragment,
+                        null,
+                        "Account: ",
+                        liability.account_number,
+                        React.createElement(
+                          "br"
+                        )
+                      )
+                    : null,
+
+                  liability.due_date
+                    ? React.createElement(
+                        React.Fragment,
+                        null,
+                        "Due Date: ",
+                        liability.due_date
+                      )
+                    : null
+                ),
+
+                // -------------------------------------------------
+                // ACTION BUTTONS
+                // -------------------------------------------------
+
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      gap: "8px",
+                      flexWrap: "wrap"
+                    }
+                  },
+
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+
+                      onClick:
+                        function () {
+                          openEditLiabilityForm(
+                            liability
+                          );
+                        },
+
+                      style: {
+                        border:
+                          "1px solid #ddd7eb",
+                        borderRadius: "9px",
+                        padding: "8px 13px",
+                        background:
+                          "#ffffff",
+                        fontWeight: "700",
+                        cursor: "pointer"
+                      }
+                    },
+                    "Edit"
+                  ),
+
+                  React.createElement(
+                    "button",
+                    {
+                      type: "button",
+
+                      onClick:
+                        function () {
+                          setLiabilityToDelete(
+                            liability
+                          );
+                        },
+
+                      style: {
+                        border: 0,
+                        borderRadius: "9px",
+                        padding: "8px 13px",
+                        background:
+                          "#d32f2f",
+                        color: "#ffffff",
+                        fontWeight: "700",
+                        cursor: "pointer"
+                      }
+                    },
+                    "Delete"
+                  )
+                )
+              );
+            }
+          )
+        )
+
+      : React.createElement(
+          "div",
+          {
+            className: "module-card",
+            style: {
+              textAlign: "center",
+              padding: "40px 20px"
+            }
+          },
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                fontSize: "42px",
+                marginBottom: "10px"
+              }
+            },
+            "💳"
+          ),
+
+          React.createElement(
+            "h3",
+            null,
+            "No Liabilities Yet"
+          ),
+
+          React.createElement(
+            "p",
+            {
+              style: {
+                color: "#777"
+              }
+            },
+            "Add your first loan, credit card or other liability to start tracking your outstanding obligations."
+          ),
+
+          React.createElement(
+            "button",
+            {
+              type: "button",
+
+              onClick:
+                openAddLiabilityForm,
+
+              style: {
+                marginTop: "12px",
+                border: 0,
+                borderRadius: "10px",
+                padding: "10px 16px",
+                background: "#6c2bd9",
+                color: "#ffffff",
+                fontWeight: "700",
+                cursor: "pointer"
+              }
+            },
+            "+ Add Liability"
+          )
+        );
+
+  // -----------------------------------------------------
+  // FORM FIELD HELPER
+  // -----------------------------------------------------
+
+  function liabilityInput(
+    label,
+    field,
+    type,
+    placeholder
+  ) {
+
+    return React.createElement(
+      "div",
+      null,
+
+      React.createElement(
+        "label",
+        {
+          style: {
+            display: "block",
+            fontSize: "13px",
+            fontWeight: "700",
+            marginBottom: "6px",
+            color: "#4f4966"
+          }
+        },
+        label
+      ),
+
+      React.createElement(
+        "input",
+        {
+          type: type || "text",
+
+          value:
+            liabilityForm[field] || "",
+
+          onChange:
+            function (event) {
+              handleLiabilityChange(
+                field,
+                event.target.value
+              );
+            },
+
+          placeholder:
+            placeholder || "",
+
+          style: {
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "11px 12px",
+            borderRadius: "9px",
+            border: "1px solid #ddd7eb",
+            background: "#ffffff",
+            outline: "none"
+          }
+        }
+      )
+    );
+  }
+
+  // -----------------------------------------------------
+  // ADD / EDIT MODAL
+  // -----------------------------------------------------
+
+  const liabilityFormModal =
+    showLiabilityForm
+
+      ? React.createElement(
+          "div",
+          {
+            style: {
+              position: "fixed",
+              inset: 0,
+              zIndex: 1000,
+              background:
+                "rgba(0,0,0,0.45)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "16px"
+            }
+          },
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                width: "100%",
+                maxWidth: "680px",
+                maxHeight: "90vh",
+                overflowY: "auto",
+                background: "#ffffff",
+                borderRadius: "16px",
+                padding: "20px",
+                boxSizing: "border-box"
+              }
+            },
+
+            // Modal header
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  justifyContent:
+                    "space-between",
+                  alignItems: "center",
+                  marginBottom: "18px"
+                }
+              },
+
+              React.createElement(
+                "h3",
+                {
+                  style: {
+                    margin: 0
+                  }
+                },
+                editingLiability
+                  ? "Edit Liability"
+                  : "Add Liability"
+              ),
+
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+
+                  onClick:
+                    function () {
+                      if (
+                        !liabilitySaving
+                      ) {
+                        setShowLiabilityForm(
+                          false
+                        );
+                        resetLiabilityForm();
+                      }
+                    },
+
+                  style: {
+                    border: 0,
+                    background:
+                      "transparent",
+                    fontSize: "24px",
+                    cursor: "pointer",
+                    color: "#777"
+                  }
+                },
+                "×"
+              )
+            ),
+
+            // Form grid
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: "14px"
+                }
+              },
+
+              liabilityInput(
+                "Liability Name *",
+                "name",
+                "text",
+                "e.g. Home Loan"
+              ),
+
+              // Liability Type
+              React.createElement(
+                "div",
+                null,
+
+                React.createElement(
+                  "label",
+                  {
+                    style: {
+                      display: "block",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      marginBottom: "6px",
+                      color: "#4f4966"
+                    }
+                  },
+                  "Liability Type"
+                ),
+
+                React.createElement(
+                  "select",
+                  {
+                    value:
+                      liabilityForm.liability_type,
+
+                    onChange:
+                      function (event) {
+                        handleLiabilityChange(
+                          "liability_type",
+                          event.target.value
+                        );
+                      },
+
+                    style: {
+                      width: "100%",
+                      boxSizing: "border-box",
+                      padding: "11px 12px",
+                      borderRadius: "9px",
+                      border:
+                        "1px solid #ddd7eb",
+                      background:
+                        "#ffffff"
+                    }
+                  },
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "home_loan"
+                    },
+                    "Home Loan"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "personal_loan"
+                    },
+                    "Personal Loan"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "car_loan"
+                    },
+                    "Car Loan"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "education_loan"
+                    },
+                    "Education Loan"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "credit_card"
+                    },
+                    "Credit Card"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "business_loan"
+                    },
+                    "Business Loan"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "other"
+                    },
+                    "Other"
+                  )
+                )
+              ),
+
+              liabilityInput(
+                "Institution / Lender",
+                "institution",
+                "text",
+                "e.g. HDFC Bank"
+              ),
+
+              liabilityInput(
+                "Account Number",
+                "account_number",
+                "text",
+                "Optional"
+              ),
+
+              liabilityInput(
+                "Original Amount",
+                "original_amount",
+                "number",
+                "0.00"
+              ),
+
+              liabilityInput(
+                "Outstanding Amount *",
+                "outstanding_amount",
+                "number",
+                "0.00"
+              ),
+
+              liabilityInput(
+                "Interest Rate (%)",
+                "interest_rate",
+                "number",
+                "e.g. 8.5"
+              ),
+
+              liabilityInput(
+                "Monthly EMI",
+                "monthly_emi",
+                "number",
+                "0.00"
+              ),
+
+              liabilityInput(
+                "Start Date",
+                "start_date",
+                "date",
+                ""
+              ),
+
+              liabilityInput(
+                "Due Date",
+                "due_date",
+                "date",
+                ""
+              ),
+
+              // Currency
+              React.createElement(
+                "div",
+                null,
+
+                React.createElement(
+                  "label",
+                  {
+                    style: {
+                      display: "block",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      marginBottom: "6px",
+                      color: "#4f4966"
+                    }
+                  },
+                  "Currency"
+                ),
+
+                React.createElement(
+                  "select",
+                  {
+                    value:
+                      liabilityForm.currency,
+
+                    onChange:
+                      function (event) {
+                        handleLiabilityChange(
+                          "currency",
+                          event.target.value
+                        );
+                      },
+
+                    style: {
+                      width: "100%",
+                      boxSizing: "border-box",
+                      padding: "11px 12px",
+                      borderRadius: "9px",
+                      border:
+                        "1px solid #ddd7eb",
+                      background:
+                        "#ffffff"
+                    }
+                  },
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "INR"
+                    },
+                    "INR — Indian Rupee"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "USD"
+                    },
+                    "USD — US Dollar"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "EUR"
+                    },
+                    "EUR — Euro"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "GBP"
+                    },
+                    "GBP — British Pound"
+                  )
+                )
+              ),
+
+              // Status
+              React.createElement(
+                "div",
+                null,
+
+                React.createElement(
+                  "label",
+                  {
+                    style: {
+                      display: "block",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      marginBottom: "6px",
+                      color: "#4f4966"
+                    }
+                  },
+                  "Status"
+                ),
+
+                React.createElement(
+                  "select",
+                  {
+                    value:
+                      liabilityForm.status,
+
+                    onChange:
+                      function (event) {
+                        handleLiabilityChange(
+                          "status",
+                          event.target.value
+                        );
+                      },
+
+                    style: {
+                      width: "100%",
+                      boxSizing: "border-box",
+                      padding: "11px 12px",
+                      borderRadius: "9px",
+                      border:
+                        "1px solid #ddd7eb",
+                      background:
+                        "#ffffff"
+                    }
+                  },
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "active"
+                    },
+                    "Active"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "closed"
+                    },
+                    "Closed"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "overdue"
+                    },
+                    "Overdue"
+                  ),
+
+                  React.createElement(
+                    "option",
+                    {
+                      value: "settled"
+                    },
+                    "Settled"
+                  )
+                )
+              ),
+
+              // Notes
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    gridColumn:
+                      "1 / -1"
+                  }
+                },
+
+                React.createElement(
+                  "label",
+                  {
+                    style: {
+                      display: "block",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      marginBottom: "6px",
+                      color: "#4f4966"
+                    }
+                  },
+                  "Notes"
+                ),
+
+                React.createElement(
+                  "textarea",
+                  {
+                    value:
+                      liabilityForm.notes,
+
+                    onChange:
+                      function (event) {
+                        handleLiabilityChange(
+                          "notes",
+                          event.target.value
+                        );
+                      },
+
+                    rows: 4,
+
+                    placeholder:
+                      "Optional notes",
+
+                    style: {
+                      width: "100%",
+                      boxSizing: "border-box",
+                      padding: "11px 12px",
+                      borderRadius: "9px",
+                      border:
+                        "1px solid #ddd7eb",
+                      resize: "vertical"
+                    }
+                  }
+                )
+              )
+            ),
+
+            // Error inside modal
+            liabilitiesError
+              ? React.createElement(
+                  "div",
+                  {
+                    style: {
+                      color: "#c62828",
+                      marginTop: "14px",
+                      fontSize: "14px",
+                      fontWeight: "600"
+                    }
+                  },
+                  liabilitiesError
+                )
+              : null,
+
+            // Modal buttons
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  justifyContent:
+                    "flex-end",
+                  gap: "10px",
+                  marginTop: "18px",
+                  flexWrap: "wrap"
+                }
+              },
+
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+
+                  onClick:
+                    function () {
+                      if (
+                        !liabilitySaving
+                      ) {
+                        setShowLiabilityForm(
+                          false
+                        );
+                        resetLiabilityForm();
+                      }
+                    },
+
+                  disabled:
+                    liabilitySaving,
+
+                  style: {
+                    border:
+                      "1px solid #ddd7eb",
+                    borderRadius: "9px",
+                    padding: "10px 16px",
+                    background:
+                      "#ffffff",
+                    color: "#4f4966",
+                    fontWeight: "700",
+                    cursor:
+                      liabilitySaving
+                        ? "not-allowed"
+                        : "pointer"
+                  }
+                },
+                "Cancel"
+              ),
+
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+
+                  onClick:
+                    saveLiability,
+
+                  disabled:
+                    liabilitySaving,
+
+                  style: {
+                    border: 0,
+                    borderRadius: "9px",
+                    padding: "10px 16px",
+                    background:
+                      liabilitySaving
+                        ? "#aaa"
+                        : "#6c2bd9",
+                    color: "#ffffff",
+                    fontWeight: "700",
+                    cursor:
+                      liabilitySaving
+                        ? "not-allowed"
+                        : "pointer"
+                  }
+                },
+
+                liabilitySaving
+                  ? "Saving..."
+                  : editingLiability
+                  ? "Update Liability"
+                  : "Save Liability"
+              )
+            )
+          )
+        )
+      : null;
+
+  // -----------------------------------------------------
+  // DELETE CONFIRMATION MODAL
+  // -----------------------------------------------------
+
+  const deleteLiabilityModal =
+    liabilityToDelete
+
+      ? React.createElement(
+          "div",
+          {
+            style: {
+              position: "fixed",
+              inset: 0,
+              zIndex: 1100,
+              background:
+                "rgba(20,15,35,0.48)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "15px"
+            }
+          },
+
+          React.createElement(
+            "div",
+            {
+              style: {
+                width:
+                  "min(430px, 100%)",
+                background:
+                  "#ffffff",
+                borderRadius:
+                  "18px",
+                padding: "22px",
+                boxShadow:
+                  "0 20px 60px rgba(0,0,0,0.22)"
+              }
+            },
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  fontSize: "20px",
+                  fontWeight: "800",
+                  color: "#211b35",
+                  marginBottom: "10px"
+                }
+              },
+              "Delete Liability?"
+            ),
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  fontSize: "14px",
+                  lineHeight: "1.6",
+                  color: "#625b7a",
+                  marginBottom: "20px"
+                }
+              },
+
+              "Are you sure you want to delete ",
+
+              React.createElement(
+                "strong",
+                null,
+                liabilityToDelete.name ||
+                  "this liability"
+              ),
+
+              "? This action cannot be undone."
+            ),
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  justifyContent:
+                    "flex-end",
+                  gap: "10px",
+                  flexWrap: "wrap"
+                }
+              },
+
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+
+                  onClick:
+                    function () {
+                      if (
+                        !liabilityDeleting
+                      ) {
+                        setLiabilityToDelete(
+                          null
+                        );
+                      }
+                    },
+
+                  disabled:
+                    liabilityDeleting,
+
+                  style: {
+                    border:
+                      "1px solid #ddd7eb",
+                    borderRadius: "10px",
+                    padding: "11px 16px",
+                    background:
+                      "#ffffff",
+                    color: "#4f4966",
+                    fontWeight: "700",
+                    cursor:
+                      liabilityDeleting
+                        ? "not-allowed"
+                        : "pointer"
+                  }
+                },
+                "Cancel"
+              ),
+
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+
+                  onClick:
+                    function () {
+                      if (
+                        !liabilityDeleting &&
+                        liabilityToDelete
+                      ) {
+                        deleteLiability(
+                          liabilityToDelete.id
+                        );
+                      }
+                    },
+
+                  disabled:
+                    liabilityDeleting,
+
+                  style: {
+                    border: 0,
+                    borderRadius: "10px",
+                    padding: "11px 16px",
+                    background:
+                      liabilityDeleting
+                        ? "#aaa"
+                        : "#d32f2f",
+                    color: "#ffffff",
+                    fontWeight: "700",
+                    cursor:
+                      liabilityDeleting
+                        ? "not-allowed"
+                        : "pointer"
+                  }
+                },
+
+                liabilityDeleting
+                  ? "Deleting..."
+                  : "Delete Liability"
+              )
+            )
+          )
+        )
+      : null;
+
+  // -----------------------------------------------------
+  // FINAL LIABILITY PAGE
+  // -----------------------------------------------------
+
+  return React.createElement(
+    React.Fragment,
+    null,
+
+    pageHeader,
+
+    summaryCards,
+
+    errorMessage,
+
+    actionBar,
+
+    liabilityList,
+
+    liabilityFormModal,
+
+    deleteLiabilityModal
+  );
+}
+  
   // GENERIC MODULE PAGE
   function renderModulePage() {
     let icon = "📁";

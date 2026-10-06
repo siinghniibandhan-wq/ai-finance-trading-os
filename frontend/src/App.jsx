@@ -1228,6 +1228,7 @@ function Accounts() {
     );
 }
 
+
 // ============================================================
 // BUDGET
 // ============================================================
@@ -1239,8 +1240,21 @@ function Budget() {
   // ----------------------------------------------------------
 
   const [budgets, setBudgets] = useState([]);
+  const [categories, setCategories] = useState([]);
+
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const [showForm, setShowForm] = useState(false);
+
+  const [formData, setFormData] = useState({
+    month: new Date().toISOString().slice(0, 7),
+    category_id: "",
+    amount: "",
+  });
 
   // ----------------------------------------------------------
   // API CONFIGURATION
@@ -1249,17 +1263,21 @@ function Budget() {
   const API_BASE_URL =
     "https://ai-finance-trading-os-api.onrender.com";
 
+  const USER_ID = 1;
+
   // ----------------------------------------------------------
   // LOAD BUDGETS
   // ----------------------------------------------------------
 
   async function loadBudgets() {
-    setLoading(true);
-    setError("");
 
     try {
+
+      setLoading(true);
+      setError("");
+
       const response = await fetch(
-        `${API_BASE_URL}/api/budgets/?user_id=1`
+        `${API_BASE_URL}/api/budgets/?user_id=${USER_ID}`
       );
 
       if (!response.ok) {
@@ -1268,12 +1286,16 @@ function Budget() {
 
       const data = await response.json();
 
-      setBudgets(Array.isArray(data) ? data : []);
+      setBudgets(
+        Array.isArray(data) ? data : []
+      );
 
-    } catch (error) {
+    } catch (err) {
+
+      console.error("Budget API error:", err);
 
       setError(
-        error?.message || "Unable to load budgets."
+        err?.message || "Unable to load budgets."
       );
 
     } finally {
@@ -1284,47 +1306,602 @@ function Budget() {
   }
 
   // ----------------------------------------------------------
-  // LOAD BUDGETS WHEN MODULE OPENS
+  // LOAD CATEGORIES
+  // ----------------------------------------------------------
+
+  async function loadCategories() {
+
+    try {
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/categories/?user_id=${USER_ID}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Unable to load categories.");
+      }
+
+      const data = await response.json();
+
+      setCategories(
+        Array.isArray(data) ? data : []
+      );
+
+    } catch (err) {
+
+      console.error("Category API error:", err);
+
+      setError(
+        err?.message || "Unable to load categories."
+      );
+
+    }
+  }
+
+  // ----------------------------------------------------------
+  // LOAD DATA WHEN BUDGET OPENS
   // ----------------------------------------------------------
 
   useEffect(() => {
+
     loadBudgets();
+    loadCategories();
+
   }, []);
 
   // ----------------------------------------------------------
-  // BASIC BUDGET VIEW
+  // OPEN ADD BUDGET FORM
+  // ----------------------------------------------------------
+
+  function openBudgetForm() {
+
+    setFormData({
+      month: new Date().toISOString().slice(0, 7),
+      category_id: "",
+      amount: "",
+    });
+
+    setMessage("");
+    setError("");
+    setShowForm(true);
+
+  }
+
+  // ----------------------------------------------------------
+  // FORM CHANGE
+  // ----------------------------------------------------------
+
+  function updateForm(field, value) {
+
+    setFormData((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
+
+  }
+
+  // ----------------------------------------------------------
+  // SAVE BUDGET
+  // ----------------------------------------------------------
+
+  async function saveBudget(event) {
+
+    event.preventDefault();
+
+    setMessage("");
+    setError("");
+
+    if (!formData.month) {
+      setError("Please select a month.");
+      return;
+    }
+
+    if (!formData.category_id) {
+      setError("Please select a category.");
+      return;
+    }
+
+    if (!formData.amount || Number(formData.amount) <= 0) {
+      setError("Please enter a valid budget amount.");
+      return;
+    }
+
+    try {
+
+      setSaving(true);
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/budgets/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: USER_ID,
+            month: formData.month,
+            category_id: Number(formData.category_id),
+            amount: Number(formData.amount),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+
+        const errorData =
+          await response.json().catch(() => null);
+
+        throw new Error(
+          errorData?.detail ||
+          "Unable to save budget."
+        );
+
+      }
+
+      setMessage("Budget saved successfully.");
+
+      setShowForm(false);
+
+      setFormData({
+        month: new Date().toISOString().slice(0, 7),
+        category_id: "",
+        amount: "",
+      });
+
+      await loadBudgets();
+
+    } catch (err) {
+
+      console.error("Save budget error:", err);
+
+      setError(
+        err?.message || "Unable to save budget."
+      );
+
+    } finally {
+
+      setSaving(false);
+
+    }
+  }
+
+  // ----------------------------------------------------------
+  // FORMAT CURRENCY
+  // ----------------------------------------------------------
+
+  function formatCurrency(value) {
+
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(Number(value || 0));
+
+  }
+
+  // ----------------------------------------------------------
+  // GET CATEGORY NAME
+  // ----------------------------------------------------------
+
+  function getCategoryName(categoryId) {
+
+    const category = categories.find(
+      (item) =>
+        Number(item.id) === Number(categoryId)
+    );
+
+    return category?.name || "Category";
+
+  }
+
+  // ----------------------------------------------------------
+  // RENDER
   // ----------------------------------------------------------
 
   return (
-    <div>
 
-      {loading && (
-        <p>Loading budgets...</p>
+    <div className="dashboard">
+
+      {/* ====================================================
+          HEADER
+      ==================================================== */}
+
+      <section className="welcome-section">
+
+        <div>
+
+          <p className="welcome-label">
+            MONEY
+          </p>
+
+          <h2>
+            Your <span>budget.</span>
+          </h2>
+
+          <p className="welcome-description">
+            Plan your monthly spending and stay
+            within your financial limits.
+          </p>
+
+        </div>
+
+        <button
+          className="primary-button"
+          onClick={openBudgetForm}
+        >
+          <Plus size={18} />
+          Add Budget
+        </button>
+
+      </section>
+
+
+      {/* ====================================================
+          MESSAGE
+      ==================================================== */}
+
+      {message && (
+
+        <div className="glass-card">
+
+          <strong>
+            {message}
+          </strong>
+
+        </div>
+
       )}
+
+
+      {/* ====================================================
+          ERROR
+      ==================================================== */}
 
       {error && (
-        <p>{error}</p>
-      )}
 
-      {!loading && !error && budgets.length === 0 && (
-        <p>No budgets created yet.</p>
-      )}
+        <div className="glass-card">
 
-      {!loading && !error && budgets.length > 0 && (
-        <div>
-          {budgets.map((budget) => (
-            <div key={budget.id}>
-              <strong>{budget.month}</strong>
-              <div>₹{budget.amount}</div>
-              <div>Category ID: {budget.category_id}</div>
-            </div>
-          ))}
+          <strong>
+            {error}
+          </strong>
+
         </div>
+
+      )}
+
+
+      {/* ====================================================
+          BUDGET LIST
+      ==================================================== */}
+
+      <section className="glass-card">
+
+        <div className="card-header">
+
+          <div>
+
+            <p className="card-label">
+              MONTHLY BUDGET
+            </p>
+
+            <h3>
+              Budget Plans
+            </h3>
+
+          </div>
+
+          <span className="score">
+            {budgets.length}
+          </span>
+
+        </div>
+
+
+        {/* --------------------------------------------------
+            LOADING
+        -------------------------------------------------- */}
+
+        {loading && (
+
+          <div className="empty-chart">
+
+            <strong>
+              Loading budgets...
+            </strong>
+
+          </div>
+
+        )}
+
+
+        {/* --------------------------------------------------
+            EMPTY
+        -------------------------------------------------- */}
+
+        {!loading && budgets.length === 0 && (
+
+          <div className="empty-chart">
+
+            <div className="chart-icon">
+              <PieChart size={28} />
+            </div>
+
+            <strong>
+              No budgets created yet.
+            </strong>
+
+            <span>
+              Create your first monthly budget
+              to start controlling your spending.
+            </span>
+
+            <button
+              className="secondary-button"
+              onClick={openBudgetForm}
+            >
+              Add Budget
+            </button>
+
+          </div>
+
+        )}
+
+
+        {/* --------------------------------------------------
+            BUDGET CARDS
+        -------------------------------------------------- */}
+
+        {!loading && budgets.length > 0 && (
+
+          <div
+            style={{
+              display: "grid",
+              gap: "12px",
+              marginTop: "20px",
+            }}
+          >
+
+            {budgets.map((budget) => (
+
+              <div
+                key={budget.id}
+                style={{
+                  padding: "18px",
+                  borderRadius: "18px",
+                  background:
+                    "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+                  border:
+                    "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                >
+
+                  <div>
+
+                    <div
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: 700,
+                        color: "#ffffff",
+                      }}
+                    >
+                      {getCategoryName(
+                        budget.category_id
+                      )}
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color:
+                          "rgba(255,255,255,0.55)",
+                        marginTop: "5px",
+                      }}
+                    >
+                      {budget.month}
+                    </div>
+
+                  </div>
+
+                  <strong>
+                    {formatCurrency(
+                      budget.amount
+                    )}
+                  </strong>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        )}
+
+      </section>
+
+
+      {/* ====================================================
+          ADD BUDGET FORM
+      ==================================================== */}
+
+      {showForm && (
+
+        <div className="glass-card">
+
+          <div className="card-header">
+
+            <div>
+
+              <p className="card-label">
+                NEW BUDGET
+              </p>
+
+              <h3>
+                Create Budget
+              </h3>
+
+            </div>
+
+          </div>
+
+
+          <form onSubmit={saveBudget}>
+
+            {/* MONTH */}
+
+            <div style={{ marginBottom: "16px" }}>
+
+              <label>
+                Month
+              </label>
+
+              <input
+                type="month"
+                value={formData.month}
+                onChange={(event) =>
+                  updateForm(
+                    "month",
+                    event.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  marginTop: "8px",
+                  padding: "12px",
+                  borderRadius: "12px",
+                }}
+              />
+
+            </div>
+
+
+            {/* CATEGORY */}
+
+            <div style={{ marginBottom: "16px" }}>
+
+              <label>
+                Category
+              </label>
+
+              <select
+                value={formData.category_id}
+                onChange={(event) =>
+                  updateForm(
+                    "category_id",
+                    event.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  marginTop: "8px",
+                  padding: "12px",
+                  borderRadius: "12px",
+                }}
+              >
+
+                <option value="">
+                  Select category
+                </option>
+
+                {categories.map((category) => (
+
+                  <option
+                    key={category.id}
+                    value={category.id}
+                  >
+                    {category.name}
+                  </option>
+
+                ))}
+
+              </select>
+
+            </div>
+
+
+            {/* AMOUNT */}
+
+            <div style={{ marginBottom: "16px" }}>
+
+              <label>
+                Monthly Budget Amount
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Enter amount"
+                value={formData.amount}
+                onChange={(event) =>
+                  updateForm(
+                    "amount",
+                    event.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  marginTop: "8px",
+                  padding: "12px",
+                  borderRadius: "12px",
+                }}
+              />
+
+            </div>
+
+
+            {/* ACTIONS */}
+
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+              }}
+            >
+
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={saving}
+              >
+                {saving
+                  ? "Saving..."
+                  : "Save Budget"}
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() =>
+                  setShowForm(false)
+                }
+              >
+                Cancel
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
+
       )}
 
     </div>
+
   );
 }
+        
 
 
 

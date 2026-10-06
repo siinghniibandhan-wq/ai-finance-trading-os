@@ -100,7 +100,7 @@ app.include_router(accounts.router)
 app.include_router(categories.router)
 app.include_router(transactions.router)
 app.include_router(dashboard.router)
-
+app.include_router(budgets.router)
 
 
 

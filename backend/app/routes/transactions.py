@@ -231,12 +231,63 @@ def update_transaction(
     # --------------------------------------------------------
     # Update only supplied fields
     # --------------------------------------------------------
+
+    # --------------------------------------------------------
+    # Update account balance before changing transaction
+    # --------------------------------------------------------
+
+    old_account = (
+        db.query(Account)
+        .filter(Account.id == transaction.account_id)
+        .first()
+    )
+
+    if old_account:
+        if transaction.transaction_type in [
+            "income",
+            "refund",
+            "interest",
+            "dividend",
+        ]:
+            old_account.balance -= transaction.amount
+
+        elif transaction.transaction_type in [
+            "expense",
+            "withdrawal",
+            "tax",
+            "loan_repayment",
+        ]:
+            old_account.balance += transaction.amount
+
     update_data = transaction_data.model_dump(
         exclude_unset=True
     )
 
     for field, value in update_data.items():
         setattr(transaction, field, value)
+
+    new_account = (
+        db.query(Account)
+        .filter(Account.id == transaction.account_id)
+        .first()
+    )
+
+    if new_account:
+        if transaction.transaction_type in [
+            "income",
+            "refund",
+            "interest",
+            "dividend",
+        ]:
+            new_account.balance += transaction.amount
+
+        elif transaction.transaction_type in [
+            "expense",
+            "withdrawal",
+            "tax",
+            "loan_repayment",
+        ]:
+            new_account.balance -= transaction.amount
 
     db.commit()
     db.refresh(transaction)

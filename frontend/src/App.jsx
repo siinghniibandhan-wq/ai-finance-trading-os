@@ -1930,8 +1930,18 @@ function getActualSpending(categoryId, month) {
           >
 
             <span>
-              Spending progress
-            </span>
+  {Math.min(
+    100,
+    Math.round(
+      (
+        getActualSpending(
+          budget.category_id,
+          budget.month
+        ) / Number(budget.amount || 0)
+      ) * 100
+    )
+  )}%
+</span>
 
             <span>
               0%

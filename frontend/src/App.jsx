@@ -9817,7 +9817,10 @@ if (active === "Transactions") {
 if (active === "Assets") {
   return renderAssets();
 }
-
+if (active === "Liabilities") {
+  loadLiabilities();
+}
+    
 if (active === "Budget") {
   return renderBudget();
 }

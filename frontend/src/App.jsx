@@ -952,10 +952,13 @@ function Accounts() {
 
         </div>
 
-        <button className="primary-button">
-          <Plus size={18} />
-          Add Account
-        </button>
+        <button
+  className="primary-button"
+  onClick={() => setShowAccountForm(true)}
+>
+  <Plus size={18} />
+  Add Account
+</button>
 
       </section>
 

@@ -202,7 +202,44 @@ const [statementsError, setStatementsError] = useState("");
 // STATEMENT IMPORT FORM
 // -----------------------------------------------------
 const [statementFile, setStatementFile] = useState(null);
-const [statementImporting, setStatementImporting] = useState(false);   
+const [statementImporting, setStatementImporting] = useState(false);
+
+// =====================================================
+// WEALTH - ASSETS STATE
+// =====================================================
+
+// -----------------------------------------------------
+// ASSET LIST
+// -----------------------------------------------------
+const [assets, setAssets] = useState([]);
+const [assetsLoading, setAssetsLoading] = useState(false);
+const [assetsError, setAssetsError] = useState("");
+
+// -----------------------------------------------------
+// ASSET FORM
+// -----------------------------------------------------
+const [showAssetForm, setShowAssetForm] = useState(false);
+const [editingAsset, setEditingAsset] = useState(null);
+const [assetSaving, setAssetSaving] = useState(false);
+const [assetDeleting, setAssetDeleting] = useState(false);
+const [assetToDelete, setAssetToDelete] = useState(null);
+
+// -----------------------------------------------------
+// ASSET FORM DATA
+// -----------------------------------------------------
+const [assetForm, setAssetForm] = useState({
+  name: "",
+  asset_type: "other",
+  category: "",
+  institution: "",
+  quantity: "",
+  purchase_value: "",
+  current_value: "",
+  purchase_date: "",
+  currency: "INR",
+  notes: "",
+  status: "active"
+});
 // =====================================================
 // LOAD CATEGORIES FROM BACKEND
 // =====================================================

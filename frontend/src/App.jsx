@@ -110,6 +110,36 @@ const [assetSaving, setAssetSaving] = useState(false);
 const [assetDeleting, setAssetDeleting] = useState(false);
 const [assetToDelete, setAssetToDelete] = useState(null);
 
+ // =====================================================
+// WEALTH - LIABILITIES STATE
+// =====================================================
+
+const [liabilities, setLiabilities] = useState([]);
+const [liabilitiesLoading, setLiabilitiesLoading] = useState(false);
+const [liabilitiesError, setLiabilitiesError] = useState("");
+
+const [showLiabilityForm, setShowLiabilityForm] = useState(false);
+const [editingLiability, setEditingLiability] = useState(null);
+const [liabilitySaving, setLiabilitySaving] = useState(false);
+const [liabilityDeleting, setLiabilityDeleting] = useState(false);
+const [liabilityToDelete, setLiabilityToDelete] = useState(null);
+
+const [liabilityForm, setLiabilityForm] = useState({
+  name: "",
+  liability_type: "other",
+  institution: "",
+  account_number: "",
+  original_amount: "",
+  outstanding_amount: "",
+  interest_rate: "",
+  monthly_emi: "",
+  start_date: "",
+  due_date: "",
+  currency: "INR",
+  status: "active",
+  notes: ""
+});
+
 const [assetTypeOpen, setAssetTypeOpen] = useState(false);
 
 const [statements, setStatements] = useState([]);

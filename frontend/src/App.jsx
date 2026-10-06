@@ -1368,6 +1368,65 @@ const [formMessage, setFormMessage] = useState("");
     }));
   };
 
+  // ----------------------------------------------------------
+  // LOAD ACCOUNT & CATEGORY OPTIONS
+  // ----------------------------------------------------------
+
+  const loadFormOptions = async () => {
+    try {
+      const [accountsResponse, categoriesResponse] =
+        await Promise.all([
+          fetch(
+            `${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`
+          ),
+          fetch(
+            `${API_BASE_URL}/api/categories/?user_id=${USER_ID}`
+          ),
+        ]);
+
+      if (!accountsResponse.ok) {
+        throw new Error(
+          `Accounts API error: ${accountsResponse.status}`
+        );
+      }
+
+      if (!categoriesResponse.ok) {
+        throw new Error(
+          `Categories API error: ${categoriesResponse.status}`
+        );
+      }
+
+      const accountsData =
+        await accountsResponse.json();
+
+      const categoriesData =
+        await categoriesResponse.json();
+
+      setAccounts(
+        Array.isArray(accountsData)
+          ? accountsData
+          : []
+      );
+
+      setCategories(
+        Array.isArray(categoriesData)
+          ? categoriesData
+          : []
+      );
+
+    } catch (err) {
+      console.error(
+        "Transaction form options error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+        "Unable to load accounts and categories."
+      );
+    }
+  };
+
   const openTransactionForm = async () => {
   setFormData({
     account_id: "",

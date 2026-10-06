@@ -1227,6 +1227,106 @@ function Accounts() {
 }
 
 // ============================================================
+// BUDGET
+// ============================================================
+
+function Budget() {
+
+  // ----------------------------------------------------------
+  // STATE
+  // ----------------------------------------------------------
+
+  const [budgets, setBudgets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // ----------------------------------------------------------
+  // API CONFIGURATION
+  // ----------------------------------------------------------
+
+  const API_BASE_URL =
+    "https://ai-finance-trading-os-api.onrender.com";
+
+  // ----------------------------------------------------------
+  // LOAD BUDGETS
+  // ----------------------------------------------------------
+
+  async function loadBudgets() {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/budgets/?user_id=1`
+      );
+
+      if (!response.ok) {
+        throw new Error("Unable to load budgets.");
+      }
+
+      const data = await response.json();
+
+      setBudgets(Array.isArray(data) ? data : []);
+
+    } catch (error) {
+
+      setError(
+        error?.message || "Unable to load budgets."
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  }
+
+  // ----------------------------------------------------------
+  // LOAD BUDGETS WHEN MODULE OPENS
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+    loadBudgets();
+  }, []);
+
+  // ----------------------------------------------------------
+  // BASIC BUDGET VIEW
+  // ----------------------------------------------------------
+
+  return (
+    <div>
+
+      {loading && (
+        <p>Loading budgets...</p>
+      )}
+
+      {error && (
+        <p>{error}</p>
+      )}
+
+      {!loading && !error && budgets.length === 0 && (
+        <p>No budgets created yet.</p>
+      )}
+
+      {!loading && !error && budgets.length > 0 && (
+        <div>
+          {budgets.map((budget) => (
+            <div key={budget.id}>
+              <strong>{budget.month}</strong>
+              <div>₹{budget.amount}</div>
+              <div>Category ID: {budget.category_id}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+
+
+// ============================================================
 // TRANSACTIONS
 // ============================================================
 

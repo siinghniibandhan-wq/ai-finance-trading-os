@@ -58,6 +58,28 @@ const [transactionAccountFilter, setTransactionAccountFilter] = useState("all");
 const [transactionToDelete, setTransactionToDelete] = useState(null);
 const [transactionDeleting, setTransactionDeleting] = useState(false);
 
+// =====================================================
+// LOAN DISBURSEMENT WORKFLOW
+// Automatically creates a liability/account when
+// "Loan Disbursement" is selected as an income category.
+// =====================================================
+
+const [showLoanDisbursementForm, setShowLoanDisbursementForm] = useState(false);
+
+const [loanDisbursementSaving, setLoanDisbursementSaving] = useState(false);
+
+const [loanDisbursementForm, setLoanDisbursementForm] = useState({
+  name: "",
+  liability_type: "personal_loan",
+  institution: "",
+  account_number: "",
+  interest_rate: "",
+  monthly_emi: "",
+  start_date: new Date().toISOString().slice(0, 10),
+  due_date: "",
+  notes: ""
+});
+
 const [categories, setCategories] = useState([]);
 const [categoriesLoading, setCategoriesLoading] = useState(false);
 const [categoriesError, setCategoriesError] = useState("");

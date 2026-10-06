@@ -1628,7 +1628,101 @@ const deleteAccount = async () => {
           </div>
 
         )}
+        
+      {/* ACCOUNT DELETE CONFIRMATION MODAL */}
+      {accountToDelete && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "20px",
+          }}
+        >
+          <div
+            className="glass-card"
+            style={{
+              width: "100%",
+              maxWidth: "420px",
+              padding: "24px",
+            }}
+          >
+            <div className="card-header">
+              <div>
+                <p className="card-label">
+                  ACCOUNT
+                </p>
 
+                <h3>
+                  Delete Account
+                </h3>
+              </div>
+            </div>
+
+            <p
+              style={{
+                color: "rgba(255,255,255,0.70)",
+                lineHeight: 1.6,
+                marginTop: "16px",
+              }}
+            >
+              Are you sure you want to delete{" "}
+              <strong style={{ color: "#ffffff" }}>
+                {accountToDelete.name}
+              </strong>
+              ?
+            </p>
+
+            <p
+              style={{
+                color: "rgba(255,255,255,0.50)",
+                fontSize: "13px",
+                marginTop: "8px",
+              }}
+            >
+              This action cannot be undone.
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                marginTop: "20px",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setAccountToDelete(null)}
+                disabled={accountDeleting}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={deleteAccount}
+                disabled={accountDeleting}
+                style={{
+                  color: "#fb7185",
+                  borderColor: "rgba(251,113,133,0.25)",
+                }}
+              >
+                {accountDeleting
+                  ? "Deleting..."
+                  : "Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+        
       </section>
 
     </div>

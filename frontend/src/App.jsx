@@ -1241,6 +1241,21 @@ function Transactions() {
   const [error, setError] = useState("");
 
   // ----------------------------------------------------------
+  // ADD TRANSACTION FORM STATE
+  // ----------------------------------------------------------
+
+  const [showForm, setShowForm] = useState(false);
+
+  const [formData, setFormData] = useState({
+    account_id: "",
+    category_id: "",
+    transaction_type: "expense",
+    amount: "",
+    transaction_date: new Date().toISOString().split("T")[0],
+    description: "",
+    reference: "",
+  });
+  // ----------------------------------------------------------
   // API CONFIGURATION
   // ----------------------------------------------------------
 
@@ -1325,6 +1340,39 @@ function Transactions() {
 
   };
 
+  // ----------------------------------------------------------
+  // FORM HANDLERS
+  // ----------------------------------------------------------
+
+  const handleFormChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  const openTransactionForm = () => {
+    setFormData({
+      account_id: "",
+      category_id: "",
+      transaction_type: "expense",
+      amount: "",
+      transaction_date:
+        new Date().toISOString().split("T")[0],
+      description: "",
+      reference: "",
+    });
+
+    setShowForm(true);
+    setError("");
+  };
+
+  const closeTransactionForm = () => {
+    setShowForm(false);
+    setError("");
+  };
   // ----------------------------------------------------------
   // RENDER
   // ----------------------------------------------------------

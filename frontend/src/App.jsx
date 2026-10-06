@@ -1943,10 +1943,6 @@ function getActualSpending(categoryId, month) {
   )}%
 </span>
 
-            <span>
-              0%
-            </span>
-
           </div>
 
           <div

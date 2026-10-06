@@ -1428,6 +1428,49 @@ const deleteAccount = async () => {
 
         </div>
 
+                {/* ACCOUNT ACTIONS */}
+
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            alignItems: "center",
+          }}
+        >
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() =>
+              handleEditAccount(account)
+            }
+            style={{
+              padding: "7px 12px",
+              fontSize: "11px",
+            }}
+          >
+            Edit
+          </button>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() =>
+              setAccountToDelete(account)
+            }
+            disabled={accountDeleting}
+            style={{
+              padding: "7px 12px",
+              fontSize: "11px",
+              color: "#fb7185",
+              borderColor:
+                "rgba(251,113,133,0.25)",
+            }}
+          >
+            Delete
+          </button>
+
+        </div>
       </div>
 
     ))}

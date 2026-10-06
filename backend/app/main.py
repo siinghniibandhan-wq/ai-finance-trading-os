@@ -4,11 +4,15 @@
 # ============================================================
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.database import Base, engine
 
-# Import models so SQLAlchemy knows about all tables.
+# Import models before create_all().
 from app import models
+
+# Import API routes.
+from app.routes import users, accounts
 
 
 # ============================================================
@@ -34,9 +38,6 @@ app = FastAPI(
 # ============================================================
 # CORS
 # ============================================================
-
-from fastapi.middleware.cors import CORSMiddleware
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -73,12 +74,11 @@ def health():
 
 
 # ============================================================
-# DATABASE CHECK
+# DATABASE STATUS
 # ============================================================
 
 @app.get("/api/database-status")
 def database_status():
-
     return {
         "status": "connected",
         "database": "Financial OS PostgreSQL",
@@ -89,3 +89,11 @@ def database_status():
             "transactions",
         ],
     }
+
+
+# ============================================================
+# API ROUTES
+# ============================================================
+
+app.include_router(users.router)
+app.include_router(accounts.router)

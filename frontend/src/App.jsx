@@ -3645,6 +3645,971 @@ const transactionFormModal = showForm && (
 
 }
 
+// ============================================================
+// CATEGORIES
+// ============================================================
+
+function Category() {
+
+  // ----------------------------------------------------------
+  // STATE
+  // ----------------------------------------------------------
+
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const [showForm, setShowForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    category_type: "expense",
+    description: "",
+  });
+
+  // ----------------------------------------------------------
+  // API CONFIGURATION
+  // ----------------------------------------------------------
+
+  const API_BASE_URL =
+    "https://ai-finance-trading-os-api.onrender.com";
+
+  const USER_ID = 1;
+
+  // ----------------------------------------------------------
+  // LOAD CATEGORIES
+  // ----------------------------------------------------------
+
+  async function loadCategories() {
+
+    try {
+
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/categories/?user_id=${USER_ID}`
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Categories API error: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      setCategories(
+        Array.isArray(data) ? data : []
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Categories API error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+        "Unable to load categories."
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  }
+
+  // ----------------------------------------------------------
+  // LOAD WHEN PAGE OPENS
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+
+    loadCategories();
+
+  }, []);
+
+  // ----------------------------------------------------------
+  // OPEN ADD FORM
+  // ----------------------------------------------------------
+
+  function openAddCategoryForm() {
+
+    setEditingCategory(null);
+
+    setFormData({
+      name: "",
+      category_type: "expense",
+      description: "",
+    });
+
+    setMessage("");
+    setError("");
+    setShowForm(true);
+
+  }
+
+  // ----------------------------------------------------------
+  // OPEN EDIT FORM
+  // ----------------------------------------------------------
+
+  function openEditCategoryForm(category) {
+
+    setEditingCategory(category);
+
+    setFormData({
+      name: category.name || "",
+      category_type:
+        category.category_type || "expense",
+      description:
+        category.description || "",
+    });
+
+    setMessage("");
+    setError("");
+    setShowForm(true);
+
+  }
+
+  // ----------------------------------------------------------
+  // FORM CHANGE
+  // ----------------------------------------------------------
+
+  function updateForm(field, value) {
+
+    setFormData((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
+
+  }
+
+  // ----------------------------------------------------------
+  // SAVE CATEGORY
+  // CREATE / UPDATE
+  // ----------------------------------------------------------
+
+  async function saveCategory(event) {
+
+    event.preventDefault();
+
+    setMessage("");
+    setError("");
+
+    const name =
+      formData.name.trim();
+
+    if (!name) {
+
+      setError(
+        "Category name is required."
+      );
+
+      return;
+    }
+
+    if (
+      !["income", "expense", "other"]
+        .includes(formData.category_type)
+    ) {
+
+      setError(
+        "Please select a valid category type."
+      );
+
+      return;
+    }
+
+    try {
+
+      setSaving(true);
+
+      const isEditing =
+        Boolean(editingCategory);
+
+      const response = await fetch(
+
+        isEditing
+          ? `${API_BASE_URL}/api/categories/${editingCategory.id}`
+          : `${API_BASE_URL}/api/categories/`,
+
+        {
+          method:
+            isEditing
+              ? "PUT"
+              : "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify(
+
+            isEditing
+
+              ? {
+                  name: name,
+                  category_type:
+                    formData.category_type,
+                  description:
+                    formData.description.trim() ||
+                    null,
+                }
+
+              : {
+                  user_id: USER_ID,
+                  name: name,
+                  category_type:
+                    formData.category_type,
+                  description:
+                    formData.description.trim() ||
+                    null,
+                }
+
+          ),
+        }
+
+      );
+
+      const data =
+        await response
+          .json()
+          .catch(() => null);
+
+      if (!response.ok) {
+
+        throw new Error(
+          data?.detail ||
+          data?.message ||
+          "Unable to save category."
+        );
+
+      }
+
+      setShowForm(false);
+      setEditingCategory(null);
+
+      setFormData({
+        name: "",
+        category_type: "expense",
+        description: "",
+      });
+
+      setMessage(
+        isEditing
+          ? "Category updated successfully."
+          : "Category created successfully."
+      );
+
+      await loadCategories();
+
+    } catch (err) {
+
+      console.error(
+        "Save category error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+        "Unable to save category."
+      );
+
+    } finally {
+
+      setSaving(false);
+
+    }
+  }
+
+  // ----------------------------------------------------------
+  // DELETE CATEGORY
+  // ----------------------------------------------------------
+
+  async function deleteCategory() {
+
+    if (!categoryToDelete) {
+      return;
+    }
+
+    try {
+
+      setDeleting(true);
+      setError("");
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/categories/${categoryToDelete.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data =
+        await response
+          .json()
+          .catch(() => null);
+
+      if (!response.ok) {
+
+        throw new Error(
+          data?.detail ||
+          data?.message ||
+          "Unable to delete category."
+        );
+
+      }
+
+      setCategoryToDelete(null);
+
+      setMessage(
+        "Category deleted successfully."
+      );
+
+      await loadCategories();
+
+    } catch (err) {
+
+      console.error(
+        "Delete category error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+        "Unable to delete category."
+      );
+
+    } finally {
+
+      setDeleting(false);
+
+    }
+  }
+
+  // ----------------------------------------------------------
+  // RENDER
+  // ----------------------------------------------------------
+
+  return (
+
+    <div className="dashboard">
+
+      {/* ====================================================
+          HEADER
+      ==================================================== */}
+
+      <section className="welcome-section">
+
+        <div>
+
+          <p className="welcome-label">
+            MONEY
+          </p>
+
+          <h2>
+            Your <span>categories.</span>
+          </h2>
+
+          <p className="welcome-description">
+            Organize your income and expenses
+            for better financial tracking.
+          </p>
+
+        </div>
+
+        <button
+          className="primary-button"
+          onClick={openAddCategoryForm}
+        >
+          <Plus size={18} />
+          Add Category
+        </button>
+
+      </section>
+
+
+      {/* ====================================================
+          MESSAGE
+      ==================================================== */}
+
+      {message && (
+
+        <div className="glass-card">
+
+          <strong>
+            {message}
+          </strong>
+
+        </div>
+
+      )}
+
+
+      {/* ====================================================
+          ERROR
+      ==================================================== */}
+
+      {error && (
+
+        <div className="glass-card">
+
+          <strong>
+            {error}
+          </strong>
+
+        </div>
+
+      )}
+
+
+      {/* ====================================================
+          SUMMARY
+      ==================================================== */}
+
+      <section className="metrics-grid">
+
+        <MetricCard
+          title="Total Categories"
+          value={
+            loading
+              ? "Loading..."
+              : String(categories.length)
+          }
+          change="Categories"
+          positive
+          icon={PieChart}
+        />
+
+        <MetricCard
+          title="Income Categories"
+          value={
+            loading
+              ? "Loading..."
+              : String(
+                  categories.filter(
+                    (category) =>
+                      category.category_type ===
+                      "income"
+                  ).length
+                )
+          }
+          change="Income"
+          positive
+          icon={TrendingUp}
+        />
+
+        <MetricCard
+          title="Expense Categories"
+          value={
+            loading
+              ? "Loading..."
+              : String(
+                  categories.filter(
+                    (category) =>
+                      category.category_type ===
+                      "expense"
+                  ).length
+                )
+          }
+          change="Expenses"
+          positive={false}
+          icon={CreditCard}
+        />
+
+      </section>
+
+
+      {/* ====================================================
+          CATEGORY LIST
+      ==================================================== */}
+
+      <section className="glass-card">
+
+        <div className="card-header">
+
+          <div>
+
+            <p className="card-label">
+              CATEGORY MANAGEMENT
+            </p>
+
+            <h3>
+              Your Categories
+            </h3>
+
+          </div>
+
+          <span className="score">
+            {categories.length}
+          </span>
+
+        </div>
+
+
+        {loading && (
+
+          <div className="empty-chart">
+
+            <strong>
+              Loading categories...
+            </strong>
+
+          </div>
+
+        )}
+
+
+        {!loading &&
+          categories.length === 0 && (
+
+          <div className="empty-chart">
+
+            <div className="chart-icon">
+              <PieChart size={28} />
+            </div>
+
+            <strong>
+              No categories found.
+            </strong>
+
+            <span>
+              Create your first category
+              to organize your transactions.
+            </span>
+
+          </div>
+
+        )}
+
+
+        {!loading &&
+          categories.length > 0 && (
+
+          <div
+            style={{
+              display: "grid",
+              gap: "14px",
+              marginTop: "20px",
+            }}
+          >
+
+            {categories.map((category) => (
+
+              <div
+                key={category.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent:
+                    "space-between",
+                  gap: "16px",
+                  padding: "18px",
+                  borderRadius: "18px",
+                  background:
+                    "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+                  border:
+                    "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+
+                <div>
+
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 700,
+                      color: "#ffffff",
+                    }}
+                  >
+                    {category.name}
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: "5px",
+                      fontSize: "12px",
+                      color:
+                        "rgba(255,255,255,0.55)",
+                      textTransform:
+                        "capitalize",
+                    }}
+                  >
+                    {category.category_type}
+
+                    {category.description
+                      ? ` • ${category.description}`
+                      : ""}
+                  </div>
+
+                </div>
+
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                    flexShrink: 0,
+                  }}
+                >
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() =>
+                      openEditCategoryForm(
+                        category
+                      )
+                    }
+                    style={{
+                      padding:
+                        "7px 12px",
+                      fontSize: "11px",
+                    }}
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() =>
+                      setCategoryToDelete(
+                        category
+                      )
+                    }
+                    style={{
+                      padding:
+                        "7px 12px",
+                      fontSize: "11px",
+                      color: "#fb7185",
+                      borderColor:
+                        "rgba(251,113,133,0.25)",
+                    }}
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        )}
+
+      </section>
+
+
+      {/* ====================================================
+          CATEGORY FORM
+      ==================================================== */}
+
+      {showForm && (
+
+        <div className="glass-card">
+
+          <div className="card-header">
+
+            <div>
+
+              <p className="card-label">
+                {editingCategory
+                  ? "EDIT CATEGORY"
+                  : "NEW CATEGORY"}
+              </p>
+
+              <h3>
+                {editingCategory
+                  ? "Update Category"
+                  : "Create Category"}
+              </h3>
+
+            </div>
+
+          </div>
+
+
+          <form onSubmit={saveCategory}>
+
+            {/* NAME */}
+
+            <div
+              style={{
+                marginBottom: "16px",
+              }}
+            >
+
+              <label>
+                Category Name
+              </label>
+
+              <input
+                type="text"
+                placeholder="e.g. Food & Dining"
+                value={formData.name}
+                onChange={(event) =>
+                  updateForm(
+                    "name",
+                    event.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  marginTop: "8px",
+                  padding: "12px",
+                  borderRadius: "12px",
+                }}
+              />
+
+            </div>
+
+
+            {/* TYPE */}
+
+            <div
+              style={{
+                marginBottom: "16px",
+              }}
+            >
+
+              <label>
+                Category Type
+              </label>
+
+              <select
+                value={
+                  formData.category_type
+                }
+                onChange={(event) =>
+                  updateForm(
+                    "category_type",
+                    event.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  marginTop: "8px",
+                  padding: "12px",
+                  borderRadius: "12px",
+                }}
+              >
+
+                <option value="expense">
+                  Expense
+                </option>
+
+                <option value="income">
+                  Income
+                </option>
+
+                <option value="other">
+                  Other
+                </option>
+
+              </select>
+
+            </div>
+
+
+            {/* DESCRIPTION */}
+
+            <div
+              style={{
+                marginBottom: "16px",
+              }}
+            >
+
+              <label>
+                Description
+              </label>
+
+              <textarea
+                placeholder="Optional description"
+                value={
+                  formData.description
+                }
+                onChange={(event) =>
+                  updateForm(
+                    "description",
+                    event.target.value
+                  )
+                }
+                rows="3"
+                style={{
+                  width: "100%",
+                  marginTop: "8px",
+                  padding: "12px",
+                  borderRadius: "12px",
+                  resize: "vertical",
+                  boxSizing: "border-box",
+                }}
+              />
+
+            </div>
+
+
+            {/* ACTIONS */}
+
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+              }}
+            >
+
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={saving}
+              >
+                {saving
+                  ? "Saving..."
+                  : editingCategory
+                  ? "Update Category"
+                  : "Save Category"}
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() =>
+                  setShowForm(false)
+                }
+                disabled={saving}
+              >
+                Cancel
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      )}
+
+
+      {/* ====================================================
+          DELETE CONFIRMATION
+      ==================================================== */}
+
+      {categoryToDelete && (
+
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            background:
+              "rgba(0,0,0,0.65)",
+            backdropFilter:
+              "blur(10px)",
+          }}
+        >
+
+          <div
+            className="glass-card"
+            style={{
+              width: "100%",
+              maxWidth: "420px",
+              padding: "24px",
+            }}
+          >
+
+            <p className="card-label">
+              DELETE CATEGORY
+            </p>
+
+            <h3>
+              Delete this category?
+            </h3>
+
+            <p
+              style={{
+                color:
+                  "rgba(255,255,255,0.60)",
+                fontSize: "13px",
+                lineHeight: 1.6,
+                marginTop: "10px",
+              }}
+            >
+              This will permanently remove{" "}
+              <strong>
+                {categoryToDelete.name}
+              </strong>
+              .
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent:
+                  "flex-end",
+                gap: "10px",
+                marginTop: "22px",
+              }}
+            >
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() =>
+                  setCategoryToDelete(null)
+                }
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={deleteCategory}
+                disabled={deleting}
+                style={{
+                  color: "#fb7185",
+                  borderColor:
+                    "rgba(251,113,133,0.30)",
+                }}
+              >
+                {deleting
+                  ? "Deleting..."
+                  : "Delete"}
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+    </div>
+
+  );
+
+}
+
+
+
+
 
 
 

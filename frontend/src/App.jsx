@@ -1844,11 +1844,7 @@ const transactionFormModal = showForm && (
         <button
           type="button"
           className="primary-button"
-          onClick={() => {
-            setError(
-              "Transaction API connection will be added in Step 3."
-            );
-          }}
+          onClick={handleTransactionSubmit}
         >
           <Plus size={17} />
           Save Transaction

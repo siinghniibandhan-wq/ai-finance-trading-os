@@ -163,6 +163,48 @@ const [assetForm, setAssetForm] = useState({
   status: "active"
 });
 
+// =====================================================
+// WEALTH - LIABILITIES API
+// =====================================================
+
+async function loadLiabilities() {
+  setLiabilitiesLoading(true);
+  setLiabilitiesError("");
+
+  try {
+    const response = await fetch(
+      "https://ai-finance-trading-os-api.onrender.com/api/liabilities/"
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to load liabilities."
+      );
+    }
+
+    setLiabilities(
+      Array.isArray(data)
+        ? data
+        : []
+    );
+
+  } catch (error) {
+    setLiabilitiesError(
+      error?.message ||
+      "Unable to load liabilities."
+    );
+
+  } finally {
+    setLiabilitiesLoading(false);
+  }
+} 
+  
 async function loadAssets() {
   setAssetsLoading(true);
   setAssetsError("");

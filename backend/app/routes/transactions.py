@@ -316,6 +316,33 @@ def delete_transaction(
             detail="Transaction not found",
         )
 
+    # --------------------------------------------------------
+    # RESTORE ACCOUNT BALANCE BEFORE DELETING TRANSACTION
+    # --------------------------------------------------------
+
+    account = (
+        db.query(Account)
+        .filter(Account.id == transaction.account_id)
+        .first()
+    )
+
+    if account:
+        if transaction.transaction_type in [
+            "income",
+            "refund",
+            "interest",
+            "dividend",
+        ]:
+            account.balance -= transaction.amount
+
+        elif transaction.transaction_type in [
+            "expense",
+            "withdrawal",
+            "tax",
+            "loan_repayment",
+        ]:
+            account.balance += transaction.amount
+
     db.delete(transaction)
     db.commit()
 

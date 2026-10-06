@@ -1055,54 +1055,170 @@ function Accounts() {
         )}
 
 
-        {/* --------------------------------------------------
-            ACCOUNTS
-        -------------------------------------------------- */}
+{/* --------------------------------------------------
+    ACCOUNT CARDS
+-------------------------------------------------- */}
 
-        {!loading &&
-          accounts.length > 0 && (
+{!loading && accounts.length > 0 && (
 
-            <div>
+  <div
+    style={{
+      display: "grid",
+      gap: "14px",
+      marginTop: "20px",
+    }}
+  >
 
-              {accounts.map((account) => (
+    {accounts.map((account) => (
 
-                <div
-                  key={account.id}
-                  className="health-footer"
-                >
+      <div
+        key={account.id}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "20px",
+          padding: "20px",
+          borderRadius: "18px",
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow:
+            "0 12px 30px rgba(0,0,0,0.18)",
+          minHeight: "90px",
+        }}
+      >
 
-                  <div>
+        {/* ACCOUNT INFORMATION */}
 
-                    <strong>
-                      {account.name}
-                    </strong>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "15px",
+            minWidth: 0,
+          }}
+        >
 
-                    <br />
+          {/* ACCOUNT ICON */}
 
-                    <span>
-                      {account.institution ||
-                        "Financial Account"}
-                      {" • "}
-                      {account.type}
-                    </span>
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              minWidth: "48px",
+              borderRadius: "14px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background:
+                "linear-gradient(135deg, rgba(168,85,247,0.30), rgba(236,72,153,0.20))",
+              border:
+                "1px solid rgba(255,255,255,0.10)",
+            }}
+          >
+            <Landmark size={21} />
+          </div>
 
-                  </div>
+          {/* DETAILS */}
 
-                  <strong>
-                    {formatCurrency(account.balance)}
-                  </strong>
+          <div
+            style={{
+              minWidth: 0,
+            }}
+          >
 
-                </div>
-
-              ))}
-
+            <div
+              style={{
+                fontSize: "15px",
+                fontWeight: 700,
+                color: "#ffffff",
+                marginBottom: "5px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {account.name}
             </div>
 
-          )}
+            <div
+              style={{
+                fontSize: "12px",
+                color: "rgba(255,255,255,0.60)",
+                textTransform: "capitalize",
+              }}
+            >
+              {account.institution ||
+                "Financial Account"}
+              {" • "}
+              {account.type}
+            </div>
 
-      </section>
+            {account.account_number && (
 
-    </div>
+              <div
+                style={{
+                  fontSize: "11px",
+                  color: "rgba(255,255,255,0.40)",
+                  marginTop: "4px",
+                }}
+              >
+                {account.account_number}
+              </div>
 
-  );
-}
+            )}
+
+          </div>
+
+        </div>
+
+
+        {/* BALANCE */}
+
+        <div
+          style={{
+            textAlign: "right",
+            minWidth: "110px",
+          }}
+        >
+
+          <div
+            style={{
+              fontSize: "10px",
+              color: "rgba(255,255,255,0.45)",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              marginBottom: "5px",
+            }}
+          >
+            Balance
+          </div>
+
+          <div
+            style={{
+              fontSize: "17px",
+              fontWeight: 800,
+              color: "#ffffff",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {formatCurrency(account.balance)}
+          </div>
+
+        </div>
+
+      </div>
+
+    ))}
+
+  </div>
+
+)}
+        
+
+
+
+
+
+

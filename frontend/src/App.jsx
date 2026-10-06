@@ -1589,7 +1589,70 @@ const response = await fetch(
     setSavingTransaction(false);
   }
 };
-  
+
+  // ----------------------------------------------------------
+  // DELETE TRANSACTION
+  // ----------------------------------------------------------
+
+  const handleDeleteTransaction = async (transactionId) => {
+    if (!transactionId) {
+      return;
+    }
+
+    setDeletingTransaction(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/transactions/${transactionId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail ||
+          data?.message ||
+          "Unable to delete transaction."
+        );
+      }
+
+      setDeletingTransaction(null);
+
+
+      const transactionsResponse = await fetch(
+        `${API_BASE_URL}/api/transactions/?user_id=${USER_ID}`
+      );
+
+      if (transactionsResponse.ok) {
+        const transactionsData =
+          await transactionsResponse.json();
+
+        setTransactions(
+          Array.isArray(transactionsData)
+            ? transactionsData
+            : []
+        );
+      }
+
+    } catch (err) {
+      console.error(
+        "Delete transaction error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+        "Unable to delete transaction."
+      );
+    } finally {
+      setDeletingTransaction(false);
+    }
+  };
+
 // ----------------------------------------------------------
 // TRANSACTION FORM MODAL
 // ----------------------------------------------------------

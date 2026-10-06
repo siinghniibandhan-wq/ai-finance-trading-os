@@ -835,6 +835,7 @@ function Accounts() {
   const [editingAccount, setEditingAccount] = useState(null);
   const [accountToDelete, setAccountToDelete] = useState(null);
   const [accountDeleting, setAccountDeleting] = useState(false);
+  const [accountStatusSaving, setAccountStatusSaving] = useState(false);
   const [accountForm, setAccountForm] = useState({
     name: "",
     account_type: "bank",

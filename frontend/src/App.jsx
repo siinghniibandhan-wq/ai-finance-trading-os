@@ -396,7 +396,19 @@ account_number:
         "Unable to save liability."
       );
     }
+// =====================================================
+// AUTOMATIC CREDIT CARD ACCOUNT CREATION
+// =====================================================
 
+if (
+  !editingLiability &&
+  liabilityForm.liability_type === "credit_card"
+) {
+  await createLinkedLiabilityAccount(
+    data || payload,
+    "credit_card"
+  );
+}
     resetLiabilityForm();
     setShowLiabilityForm(false);
 

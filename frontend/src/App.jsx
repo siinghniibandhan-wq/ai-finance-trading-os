@@ -289,6 +289,222 @@ async function loadAssets() {
     setAssetsLoading(false);
   }
 }
+
+// =====================================================
+// WEALTH - ASSETS CRUD
+// =====================================================
+
+// -----------------------------------------------------
+// RESET ASSET FORM
+// -----------------------------------------------------
+function resetAssetForm() {
+  setAssetForm({
+    name: "",
+    asset_type: "other",
+    category: "",
+    institution: "",
+    quantity: "",
+    purchase_value: "",
+    current_value: "",
+    purchase_date: "",
+    currency: "INR",
+    notes: "",
+    status: "active"
+  });
+
+  setEditingAsset(null);
+}
+
+// -----------------------------------------------------
+// OPEN ADD ASSET FORM
+// -----------------------------------------------------
+function openAddAssetForm() {
+  resetAssetForm();
+  setAssetsError("");
+  setShowAssetForm(true);
+}
+
+// -----------------------------------------------------
+// OPEN EDIT ASSET FORM
+// -----------------------------------------------------
+function openEditAssetForm(asset) {
+  if (!asset) {
+    return;
+  }
+
+  setEditingAsset(asset);
+
+  setAssetForm({
+    name: asset.name || "",
+    asset_type: asset.asset_type || "other",
+    category: asset.category || "",
+    institution: asset.institution || "",
+    quantity:
+      asset.quantity !== null &&
+      asset.quantity !== undefined
+        ? String(asset.quantity)
+        : "",
+    purchase_value:
+      asset.purchase_value !== null &&
+      asset.purchase_value !== undefined
+        ? String(asset.purchase_value)
+        : "",
+    current_value:
+      asset.current_value !== null &&
+      asset.current_value !== undefined
+        ? String(asset.current_value)
+        : "",
+    purchase_date: asset.purchase_date || "",
+    currency: asset.currency || "INR",
+    notes: asset.notes || "",
+    status: asset.status || "active"
+  });
+
+  setAssetsError("");
+  setShowAssetForm(true);
+}
+
+// -----------------------------------------------------
+// ASSET FORM FIELD HANDLER
+// -----------------------------------------------------
+function handleAssetChange(field, value) {
+  setAssetForm(function (previous) {
+    return {
+      ...previous,
+      [field]: value
+    };
+  });
+}
+
+// -----------------------------------------------------
+// SAVE ASSET
+// CREATE + UPDATE
+// -----------------------------------------------------
+async function saveAsset() {
+  setAssetsError("");
+
+  if (!assetForm.name.trim()) {
+    setAssetsError("Asset name is required.");
+    return;
+  }
+
+  if (
+    !assetForm.current_value ||
+    Number(assetForm.current_value) < 0
+  ) {
+    setAssetsError("Current value is required.");
+    return;
+  }
+
+  setAssetSaving(true);
+
+  try {
+    const payload = {
+      name: assetForm.name.trim(),
+      asset_type: assetForm.asset_type || "other",
+      category: assetForm.category.trim() || null,
+      institution: assetForm.institution.trim() || null,
+      quantity:
+        assetForm.quantity !== ""
+          ? Number(assetForm.quantity)
+          : null,
+      purchase_value:
+        assetForm.purchase_value !== ""
+          ? Number(assetForm.purchase_value)
+          : null,
+      current_value: Number(assetForm.current_value),
+      purchase_date:
+        assetForm.purchase_date || null,
+      currency: assetForm.currency || "INR",
+      notes: assetForm.notes.trim() || null,
+      status: assetForm.status || "active"
+    };
+
+    const url = editingAsset
+      ? `https://ai-finance-trading-os-api.onrender.com/api/assets/${editingAsset.id}`
+      : "https://ai-finance-trading-os-api.onrender.com/api/assets/";
+
+    const response = await fetch(url, {
+      method: editingAsset ? "PUT" : "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to save asset."
+      );
+    }
+
+    setShowAssetForm(false);
+    resetAssetForm();
+
+    await loadAssets();
+
+  } catch (error) {
+    setAssetsError(
+      error?.message ||
+      "Unable to save asset."
+    );
+
+  } finally {
+    setAssetSaving(false);
+  }
+}
+
+// -----------------------------------------------------
+// DELETE ASSET
+// -----------------------------------------------------
+async function deleteAsset(assetId) {
+  if (!assetId) {
+    return;
+  }
+
+  setAssetDeleting(true);
+  setAssetsError("");
+
+  try {
+    const response = await fetch(
+      `https://ai-finance-trading-os-api.onrender.com/api/assets/${assetId}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await response.json().catch(function () {
+      return null;
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+        data?.message ||
+        "Unable to delete asset."
+      );
+    }
+
+    setAssetToDelete(null);
+
+    await loadAssets();
+
+  } catch (error) {
+    setAssetsError(
+      error?.message ||
+      "Unable to delete asset."
+    );
+
+  } finally {
+    setAssetDeleting(false);
+  }
+       }   
 // =====================================================
 // LOAD CATEGORIES FROM BACKEND
 // =====================================================

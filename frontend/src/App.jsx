@@ -800,3 +800,309 @@ function PlaceholderPage({ title }) {
     </div>
   );
 }
+
+// ============================================================
+// ACCOUNTS
+// ============================================================
+
+function Accounts() {
+
+  // ----------------------------------------------------------
+  // STATE
+  // ----------------------------------------------------------
+
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // ----------------------------------------------------------
+  // API CONFIGURATION
+  // ----------------------------------------------------------
+
+  const API_BASE_URL =
+    "https://ai-finance-trading-os-api.onrender.com";
+
+  const USER_ID = 1;
+
+  // ----------------------------------------------------------
+  // LOAD ACCOUNTS
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+
+    const loadAccounts = async () => {
+
+      try {
+
+        setLoading(true);
+        setError("");
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Accounts API error: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        setAccounts(data);
+
+      } catch (err) {
+
+        console.error("Accounts API error:", err);
+
+        setError(
+          "Unable to load accounts."
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+    };
+
+    loadAccounts();
+
+  }, []);
+
+  // ----------------------------------------------------------
+  // FORMAT CURRENCY
+  // ----------------------------------------------------------
+
+  const formatCurrency = (value) => {
+
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(value || 0);
+
+  };
+
+  // ----------------------------------------------------------
+  // TOTAL BALANCE
+  // ----------------------------------------------------------
+
+  const totalBalance = accounts.reduce(
+    (total, account) =>
+      total + Number(account.balance || 0),
+    0
+  );
+
+  // ----------------------------------------------------------
+  // RENDER
+  // ----------------------------------------------------------
+
+  return (
+
+    <div className="dashboard">
+
+      {/* ====================================================
+          HEADER
+      ==================================================== */}
+
+      <section className="welcome-section">
+
+        <div>
+
+          <p className="welcome-label">
+            MONEY
+          </p>
+
+          <h2>
+            Your <span>accounts.</span>
+          </h2>
+
+          <p className="welcome-description">
+            Manage your bank accounts, cards and
+            other financial accounts in one place.
+          </p>
+
+        </div>
+
+        <button className="primary-button">
+          <Plus size={18} />
+          Add Account
+        </button>
+
+      </section>
+
+
+      {/* ====================================================
+          SUMMARY
+      ==================================================== */}
+
+      <section className="metrics-grid">
+
+        <MetricCard
+          title="Total Balance"
+          value={
+            loading
+              ? "Loading..."
+              : formatCurrency(totalBalance)
+          }
+          change={`${accounts.length} account${
+            accounts.length === 1 ? "" : "s"
+          }`}
+          positive
+          icon={Wallet}
+        />
+
+        <MetricCard
+          title="Active Accounts"
+          value={
+            loading
+              ? "Loading..."
+              : String(accounts.length)
+          }
+          change="Connected"
+          positive
+          icon={Landmark}
+        />
+
+      </section>
+
+
+      {/* ====================================================
+          ERROR
+      ==================================================== */}
+
+      {error && (
+
+        <div className="glass-card">
+
+          <strong>
+            {error}
+          </strong>
+
+        </div>
+
+      )}
+
+
+      {/* ====================================================
+          ACCOUNT LIST
+      ==================================================== */}
+
+      <section className="glass-card">
+
+        <div className="card-header">
+
+          <div>
+
+            <p className="card-label">
+              YOUR ACCOUNTS
+            </p>
+
+            <h3>
+              Connected Accounts
+            </h3>
+
+          </div>
+
+          <span className="score">
+            {accounts.length}
+          </span>
+
+        </div>
+
+
+        {/* --------------------------------------------------
+            LOADING
+        -------------------------------------------------- */}
+
+        {loading && (
+
+          <div className="empty-chart">
+
+            <strong>
+              Loading accounts...
+            </strong>
+
+          </div>
+
+        )}
+
+
+        {/* --------------------------------------------------
+            EMPTY
+        -------------------------------------------------- */}
+
+        {!loading && accounts.length === 0 && (
+
+          <div className="empty-chart">
+
+            <div className="chart-icon">
+              <Wallet size={28} />
+            </div>
+
+            <strong>
+              No accounts found
+            </strong>
+
+            <span>
+              Add your first financial account
+              to get started.
+            </span>
+
+          </div>
+
+        )}
+
+
+        {/* --------------------------------------------------
+            ACCOUNTS
+        -------------------------------------------------- */}
+
+        {!loading &&
+          accounts.length > 0 && (
+
+            <div>
+
+              {accounts.map((account) => (
+
+                <div
+                  key={account.id}
+                  className="health-footer"
+                >
+
+                  <div>
+
+                    <strong>
+                      {account.name}
+                    </strong>
+
+                    <br />
+
+                    <span>
+                      {account.institution ||
+                        "Financial Account"}
+                      {" • "}
+                      {account.type}
+                    </span>
+
+                  </div>
+
+                  <strong>
+                    {formatCurrency(account.balance)}
+                  </strong>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
+
+      </section>
+
+    </div>
+
+  );
+}

@@ -306,12 +306,14 @@ export default function App() {
         <section className="content">
 
           {activePage === "Dashboard" ? (
-            <Dashboard />
-          ) : (
-            <PlaceholderPage
-              title={activePage}
-            />
-          )}
+  <Dashboard />
+) : activePage === "Accounts" ? (
+  <Accounts />
+) : (
+  <PlaceholderPage
+    title={activePage}
+  />
+)}
 
         </section>
 

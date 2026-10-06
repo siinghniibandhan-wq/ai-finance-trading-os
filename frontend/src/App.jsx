@@ -1444,7 +1444,34 @@ const [formMessage, setFormMessage] = useState("");
 
   await loadFormOptions();
 };
+  
+  // ----------------------------------------------------------
+  // OPEN EDIT TRANSACTION FORM
+  // ----------------------------------------------------------
 
+  const openEditTransactionForm = async (transaction) => {
+    setEditingTransaction(transaction);
+
+    setFormData({
+      account_id: String(transaction.account_id || ""),
+      category_id: String(transaction.category_id || ""),
+      transaction_type: transaction.transaction_type || "expense",
+      amount: transaction.amount ?? "",
+      transaction_date:
+        transaction.transaction_date ||
+        new Date().toISOString().split("T")[0],
+      description: transaction.description || "",
+      reference: transaction.reference || "",
+    });
+
+    setError("");
+    setFormMessage("");
+
+    await loadFormOptions();
+
+    setShowForm(true);
+  };
+  
   const closeTransactionForm = () => {
     setShowForm(false);
     setError("");

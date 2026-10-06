@@ -335,8 +335,20 @@ async function saveLiability() {
       liability_type: liabilityForm.liability_type,
       institution:
         liabilityForm.institution.trim() || null,
-      account_number:
-        liabilityForm.account_number.trim() || null,
+      
+ // Credit card numbers are never stored in full.
+// Only the last four digits are retained.
+
+account_number:
+  liabilityForm.liability_type === "credit_card"
+    ? (
+        maskCardNumber(
+          liabilityForm.account_number
+        ) || null
+      )
+    : (
+        liabilityForm.account_number.trim() || null
+      ),
       original_amount:
         liabilityForm.original_amount === ""
           ? null

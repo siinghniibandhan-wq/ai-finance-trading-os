@@ -1647,88 +1647,284 @@ function Budget() {
         )}
 
 
-        {/* --------------------------------------------------
-            BUDGET CARDS
-        -------------------------------------------------- */}
+{/* ====================================================
+    BUDGET CARDS
+==================================================== */}
 
-        {!loading && budgets.length > 0 && (
+{!loading && budgets.length > 0 && (
 
-          <div
-            style={{
-              display: "grid",
-              gap: "12px",
-              marginTop: "20px",
-            }}
-          >
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "repeat(auto-fit, minmax(280px, 1fr))",
+      gap: "16px",
+      marginTop: "20px",
+    }}
+  >
 
-            {budgets.map((budget) => (
+    {budgets.map((budget) => (
 
-              <div
-                key={budget.id}
-                style={{
-                  padding: "18px",
-                  borderRadius: "18px",
-                  background:
-                    "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
-                  border:
-                    "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
+      <div
+        key={budget.id}
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          padding: "20px",
+          borderRadius: "20px",
+          background:
+            "linear-gradient(145deg, rgba(112,72,255,0.18), rgba(244,91,105,0.08), rgba(255,255,255,0.04))",
+          border:
+            "1px solid rgba(255,255,255,0.10)",
+          boxShadow:
+            "0 12px 35px rgba(0,0,0,0.18)",
+        }}
+      >
 
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: "12px",
-                  }}
-                >
+        {/* ---------------------------------------------
+            DECORATIVE GLOW
+        --------------------------------------------- */}
 
-                  <div>
+        <div
+          style={{
+            position: "absolute",
+            width: "100px",
+            height: "100px",
+            borderRadius: "50%",
+            background:
+              "rgba(112,72,255,0.16)",
+            filter: "blur(30px)",
+            top: "-40px",
+            right: "-30px",
+            pointerEvents: "none",
+          }}
+        />
 
-                    <div
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 700,
-                        color: "#ffffff",
-                      }}
-                    >
-                      {getCategoryName(
-                        budget.category_id
-                      )}
-                    </div>
+        {/* ---------------------------------------------
+            TOP ROW
+        --------------------------------------------- */}
 
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color:
-                          "rgba(255,255,255,0.55)",
-                        marginTop: "5px",
-                      }}
-                    >
-                      {budget.month}
-                    </div>
+        <div
+          style={{
+            position: "relative",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: "12px",
+          }}
+        >
 
-                  </div>
+          <div>
 
-                  <strong>
-                    {formatCurrency(
-                      budget.amount
-                    )}
-                  </strong>
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color:
+                  "rgba(255,255,255,0.50)",
+                marginBottom: "7px",
+              }}
+            >
+              Budget Category
+            </div>
 
-                </div>
-
-              </div>
-
-            ))}
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "18px",
+                fontWeight: 700,
+                color: "#ffffff",
+              }}
+            >
+              {getCategoryName(
+                budget.category_id
+              )}
+            </h3>
 
           </div>
 
-        )}
+          <div
+            style={{
+              padding: "6px 10px",
+              borderRadius: "999px",
+              background:
+                "rgba(112,72,255,0.18)",
+              border:
+                "1px solid rgba(150,120,255,0.20)",
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#cfc4ff",
+              whiteSpace: "nowrap",
+            }}
+          >
+            ACTIVE
+          </div>
 
-      </section>
+        </div>
 
+
+        {/* ---------------------------------------------
+            MONTH
+        --------------------------------------------- */}
+
+        <div
+          style={{
+            position: "relative",
+            marginTop: "18px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            color:
+              "rgba(255,255,255,0.58)",
+            fontSize: "13px",
+          }}
+        >
+
+          <span>📅</span>
+
+          <span>
+            {budget.month}
+          </span>
+
+        </div>
+
+
+        {/* ---------------------------------------------
+            BUDGET AMOUNT
+        --------------------------------------------- */}
+
+        <div
+          style={{
+            position: "relative",
+            marginTop: "20px",
+            paddingTop: "16px",
+            borderTop:
+              "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+
+          <div
+            style={{
+              fontSize: "12px",
+              color:
+                "rgba(255,255,255,0.50)",
+              marginBottom: "5px",
+            }}
+          >
+            Monthly Budget
+          </div>
+
+          <div
+            style={{
+              fontSize: "28px",
+              lineHeight: 1.2,
+              fontWeight: 800,
+              color: "#ffffff",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {formatCurrency(
+              budget.amount
+            )}
+          </div>
+
+        </div>
+
+
+        {/* ---------------------------------------------
+            PROGRESS PLACEHOLDER
+            Actual spending will be connected next.
+        --------------------------------------------- */}
+
+        <div
+          style={{
+            position: "relative",
+            marginTop: "18px",
+          }}
+        >
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: "11px",
+              color:
+                "rgba(255,255,255,0.45)",
+              marginBottom: "7px",
+            }}
+          >
+
+            <span>
+              Spending progress
+            </span>
+
+            <span>
+              0%
+            </span>
+
+          </div>
+
+          <div
+            style={{
+              height: "7px",
+              borderRadius: "999px",
+              background:
+                "rgba(255,255,255,0.08)",
+              overflow: "hidden",
+            }}
+          >
+
+            <div
+              style={{
+                width: "0%",
+                height: "100%",
+                borderRadius: "999px",
+                background:
+                  "linear-gradient(90deg, #7048ff, #f45b69)",
+              }}
+            />
+
+          </div>
+
+        </div>
+
+
+        {/* ---------------------------------------------
+            FOOTER
+        --------------------------------------------- */}
+
+        <div
+          style={{
+            position: "relative",
+            marginTop: "18px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            fontSize: "11px",
+            color:
+              "rgba(255,255,255,0.42)",
+          }}
+        >
+
+          <span>
+            Budget #{budget.id}
+          </span>
+
+          <span>
+            Monthly plan
+          </span>
+
+        </div>
+
+      </div>
+
+    ))}
+
+  </div>
+
+)}
 
       {/* ====================================================
           ADD BUDGET FORM

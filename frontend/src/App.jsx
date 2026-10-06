@@ -3523,6 +3523,403 @@ function transactionTypeLabel(type) {
   // =====================================================
 
   function renderSectionOverview(sectionName) {
+  // =====================================================
+  // FINANCE OVERVIEW DASHBOARD
+  // Live data from Accounts + Transactions
+  // =====================================================
+
+  if (sectionName === "Finance") {
+
+    // ---------------------------------------------------
+    // TRANSACTION TYPE GROUPS
+    // ---------------------------------------------------
+
+    const financeIncomeTypes = [
+      "income",
+      "refund",
+      "interest",
+      "dividend"
+    ];
+
+    const financeExpenseTypes = [
+      "expense",
+      "withdrawal",
+      "tax",
+      "loan_repayment"
+    ];
+
+    // ---------------------------------------------------
+    // TOTAL ACCOUNT BALANCE
+    // ---------------------------------------------------
+
+    const financeTotalBalance = accounts.reduce(
+      function (total, account) {
+        return total + Number(
+          account.current_balance || 0
+        );
+      },
+      0
+    );
+
+    // ---------------------------------------------------
+    // TOTAL INCOME
+    // ---------------------------------------------------
+
+    const financeTotalIncome = transactions.reduce(
+      function (total, transaction) {
+        const type = String(
+          transaction.transaction_type || ""
+        ).toLowerCase();
+
+        return financeIncomeTypes.includes(type)
+          ? total + Number(transaction.amount || 0)
+          : total;
+      },
+      0
+    );
+
+    // ---------------------------------------------------
+    // TOTAL EXPENSE
+    // ---------------------------------------------------
+
+    const financeTotalExpense = transactions.reduce(
+      function (total, transaction) {
+        const type = String(
+          transaction.transaction_type || ""
+        ).toLowerCase();
+
+        return financeExpenseTypes.includes(type)
+          ? total + Number(transaction.amount || 0)
+          : total;
+      },
+      0
+    );
+
+    // ---------------------------------------------------
+    // NET CASH FLOW
+    // ---------------------------------------------------
+
+    const financeNetCashFlow =
+      financeTotalIncome - financeTotalExpense;
+
+    // ---------------------------------------------------
+    // MONEY FORMATTER
+    // ---------------------------------------------------
+
+    function financeMoney(value) {
+      return "INR " + Number(value || 0).toLocaleString(
+        "en-IN",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }
+      );
+    }
+
+    // ---------------------------------------------------
+    // RECENT TRANSACTIONS
+    // ---------------------------------------------------
+
+    const financeRecentTransactions =
+      transactions
+        .slice()
+        .sort(function (a, b) {
+          return String(
+            b.transaction_date || ""
+          ).localeCompare(
+            String(a.transaction_date || "")
+          );
+        })
+        .slice(0, 5);
+
+    // ---------------------------------------------------
+    // ACCOUNT CARDS
+    // ---------------------------------------------------
+
+    const financeAccountCards =
+      accounts.slice(0, 6).map(
+        function (account) {
+
+          return React.createElement(
+            "div",
+            {
+              key: account.id,
+              style: {
+                padding: "16px",
+                borderRadius: "14px",
+                background: "#ffffff",
+                border: "1px solid #eceaf3"
+              }
+            },
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  fontWeight: "700",
+                  marginBottom: "6px"
+                }
+              },
+              account.name || "Account"
+            ),
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  fontSize: "20px",
+                  fontWeight: "800"
+                }
+              },
+              financeMoney(
+                account.current_balance
+              )
+            )
+          );
+        }
+      );
+
+    // ---------------------------------------------------
+    // RECENT TRANSACTION ROWS
+    // ---------------------------------------------------
+
+    const financeTransactionRows =
+      financeRecentTransactions.map(
+        function (transaction) {
+
+          const type = String(
+            transaction.transaction_type || ""
+          ).toLowerCase();
+
+          const isIncome =
+            financeIncomeTypes.includes(type);
+
+          return React.createElement(
+            "div",
+            {
+              key: transaction.id,
+              style: {
+                display: "flex",
+                justifyContent: "space-between",
+                gap: "12px",
+                padding: "12px 0",
+                borderBottom: "1px solid #eeeeee"
+              }
+            },
+
+            React.createElement(
+              "div",
+              null,
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    fontWeight: "700"
+                  }
+                },
+                transaction.description ||
+                transaction.merchant ||
+                "Transaction"
+              ),
+
+              React.createElement(
+                "div",
+                {
+                  style: {
+                    fontSize: "12px",
+                    color: "#777"
+                  }
+                },
+                transaction.transaction_date ||
+                "—"
+              )
+            ),
+
+            React.createElement(
+              "div",
+              {
+                style: {
+                  fontWeight: "800",
+                  whiteSpace: "nowrap"
+                }
+              },
+              (isIncome ? "+" : "-") +
+                financeMoney(transaction.amount)
+            )
+          );
+        }
+      );
+
+    // ---------------------------------------------------
+    // FINANCE OVERVIEW RETURN
+    // ---------------------------------------------------
+
+    return React.createElement(
+      React.Fragment,
+      null,
+
+      React.createElement(
+        "div",
+        {
+          className: "page-heading"
+        },
+
+        React.createElement(
+          "h2",
+          null,
+          "Finance Overview"
+        ),
+
+        React.createElement(
+          "p",
+          null,
+          "Your financial position, cash flow and recent activity."
+        )
+      ),
+
+      // -------------------------------------------------
+      // SUMMARY CARDS
+      // -------------------------------------------------
+
+      React.createElement(
+        "div",
+        {
+          style: {
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(190px, 1fr))",
+            gap: "16px",
+            marginBottom: "20px"
+          }
+        },
+
+        React.createElement(
+          "div",
+          { className: "module-card" },
+          React.createElement(
+            "div",
+            null,
+            "Total Balance"
+          ),
+          React.createElement(
+            "h2",
+            null,
+            financeMoney(financeTotalBalance)
+          )
+        ),
+
+        React.createElement(
+          "div",
+          { className: "module-card" },
+          React.createElement(
+            "div",
+            null,
+            "Total Income"
+          ),
+          React.createElement(
+            "h2",
+            null,
+            financeMoney(financeTotalIncome)
+          )
+        ),
+
+        React.createElement(
+          "div",
+          { className: "module-card" },
+          React.createElement(
+            "div",
+            null,
+            "Total Expenses"
+          ),
+          React.createElement(
+            "h2",
+            null,
+            financeMoney(financeTotalExpense)
+          )
+        ),
+
+        React.createElement(
+          "div",
+          { className: "module-card" },
+          React.createElement(
+            "div",
+            null,
+            "Net Cash Flow"
+          ),
+          React.createElement(
+            "h2",
+            null,
+            financeMoney(financeNetCashFlow)
+          )
+        )
+      ),
+
+      // -------------------------------------------------
+      // ACCOUNTS
+      // -------------------------------------------------
+
+      React.createElement(
+        "div",
+        {
+          className: "module-card",
+          style: {
+            marginBottom: "20px"
+          }
+        },
+
+        React.createElement(
+          "h3",
+          null,
+          "Accounts"
+        ),
+
+        accounts.length === 0
+          ? React.createElement(
+              "p",
+              null,
+              "No accounts added yet."
+            )
+          : React.createElement(
+              "div",
+              {
+                style: {
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: "12px"
+                }
+              },
+              financeAccountCards
+            )
+      ),
+
+      // -------------------------------------------------
+      // RECENT TRANSACTIONS
+      // -------------------------------------------------
+
+      React.createElement(
+        "div",
+        {
+          className: "module-card"
+        },
+
+        React.createElement(
+          "h3",
+          null,
+          "Recent Transactions"
+        ),
+
+        financeTransactionRows.length === 0
+          ? React.createElement(
+              "p",
+              null,
+              "No transactions available yet."
+            )
+          : financeTransactionRows
+      )
+    );
+  }
     const iconMap = {
       Finance: "💰",
       Wealth: "💎",

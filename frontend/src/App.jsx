@@ -1406,6 +1406,26 @@ async function loadTransactions() {
 
   }
 
+// ----------------------------------------------------------
+// OPEN EDIT BUDGET FORM
+// ----------------------------------------------------------
+
+function openEditBudgetForm(budget) {
+
+  setEditingBudget(budget);
+
+  setFormData({
+    month: budget.month || "",
+    category_id: String(budget.category_id || ""),
+    amount: budget.amount ?? "",
+  });
+
+  setMessage("");
+  setError("");
+  setShowForm(true);
+
+}
+  
   // ----------------------------------------------------------
   // FORM CHANGE
   // ----------------------------------------------------------

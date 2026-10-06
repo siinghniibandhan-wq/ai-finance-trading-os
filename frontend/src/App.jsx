@@ -1503,12 +1503,13 @@ gap: "16px",
 
 {/* ACCOUNT ACTIONS */}
 <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            alignItems: "center",
-          }}
-        >
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: "7px",
+    alignItems: "stretch",
+  }}
+>
 
           <button
             type="button"

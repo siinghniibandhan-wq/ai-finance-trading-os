@@ -1491,9 +1491,18 @@ const deleteAccount = async () => {
 
         </div>
 
-                {/* ACCOUNT ACTIONS */}
+<span
+  className={`text-xs font-medium ${
+    account.is_active
+      ? "text-green-600"
+      : "text-red-600"
+  }`}
+>
+  {account.is_active ? "Active" : "Inactive"}
+</span>
 
-        <div
+{/* ACCOUNT ACTIONS */}
+<div
           style={{
             display: "flex",
             gap: "8px",

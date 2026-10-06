@@ -1558,13 +1558,12 @@ gap: "16px",
             }
             disabled={accountDeleting}
             style={{
-              width: "100%".
-              padding: "7px 12px",
-              fontSize: "11px",
-              color: "#fb7185",
-              borderColor:
-                "rgba(251,113,133,0.25)",
-            }}
+  width: "100%",
+  padding: "7px 12px",
+  fontSize: "11px",
+  color: "#fb7185",
+  borderColor: "rgba(251,113,133,0.25)",
+}}
           >
             Delete
           </button>

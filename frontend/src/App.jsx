@@ -1874,7 +1874,7 @@ const summaryCards = [
                     fontWeight: 800,
                   }}
                 >
-                {investments.length > 0 ? "100%" : "0%"}
+                {totalInvested > 0 ? "100%" : "0%"}
                 </div>
 
                 <div

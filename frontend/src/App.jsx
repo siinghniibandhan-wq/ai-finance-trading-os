@@ -828,6 +828,8 @@ function Portfolio() {
 
   const [showInvestmentForm, setShowInvestmentForm] =
     useState(false);
+  const [editingInvestmentId, setEditingInvestmentId] =
+  useState(null);
 
   const [investmentForm, setInvestmentForm] = useState({
     name: "",

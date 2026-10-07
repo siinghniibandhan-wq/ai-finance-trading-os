@@ -1563,7 +1563,9 @@ const totalInvested = Object.values(assetAllocation).reduce(
               className="primary-button"
               onClick={handleInvestmentSubmit}
             >
-              Save Investment
+              {editingInvestmentId
+  ? "Update Investment"
+  : "Save Investment"}
             </button>
 
             <button

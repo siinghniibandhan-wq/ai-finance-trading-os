@@ -948,7 +948,8 @@ function Portfolio() {
 
       </section>
 
-           {/* =====================================================
+
+            {/* =====================================================
           ADD INVESTMENT FORM
       ===================================================== */}
 
@@ -983,6 +984,8 @@ function Portfolio() {
             }}
           >
 
+            {/* INVESTMENT NAME */}
+
             <input
               type="text"
               placeholder="Investment name"
@@ -993,30 +996,82 @@ function Portfolio() {
                   name: event.target.value,
                 })
               }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "11px 12px",
+                borderRadius: "10px",
+                border:
+                  "1px solid rgba(255,255,255,0.10)",
+                background:
+                  "rgba(255,255,255,0.05)",
+                color: "#ffffff",
+                fontSize: "12px",
+                outline: "none",
+              }}
             />
+
+
+            {/* INVESTMENT TYPE */}
 
             <select
               value={investmentForm.investment_type}
               onChange={(event) =>
                 setInvestmentForm({
                   ...investmentForm,
-                  investment_type: event.target.value,
+                  investment_type:
+                    event.target.value,
                 })
               }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "11px 12px",
+                borderRadius: "10px",
+                border:
+                  "1px solid rgba(255,255,255,0.10)",
+                background:
+                  "rgba(255,255,255,0.05)",
+                color: "#ffffff",
+                fontSize: "12px",
+                outline: "none",
+              }}
             >
-              <option value="Stocks">Stocks</option>
+              <option value="Stocks">
+                Stocks
+              </option>
+
               <option value="Mutual Funds">
                 Mutual Funds
               </option>
-              <option value="ETFs">ETFs</option>
-              <option value="Gold">Gold</option>
-              <option value="Bonds">Bonds</option>
-              <option value="NPS">NPS</option>
+
+              <option value="ETFs">
+                ETFs
+              </option>
+
+              <option value="Gold">
+                Gold
+              </option>
+
+              <option value="Bonds">
+                Bonds
+              </option>
+
+              <option value="NPS">
+                NPS
+              </option>
+
               <option value="Fixed Deposits">
                 Fixed Deposits
               </option>
-              <option value="Other">Other</option>
+
+              <option value="Other">
+                Other
+              </option>
             </select>
+
+
+            {/* SYMBOL / ISIN */}
 
             <input
               type="text"
@@ -1028,7 +1083,23 @@ function Portfolio() {
                   symbol: event.target.value,
                 })
               }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "11px 12px",
+                borderRadius: "10px",
+                border:
+                  "1px solid rgba(255,255,255,0.10)",
+                background:
+                  "rgba(255,255,255,0.05)",
+                color: "#ffffff",
+                fontSize: "12px",
+                outline: "none",
+              }}
             />
+
+
+            {/* QUANTITY */}
 
             <input
               type="number"
@@ -1040,7 +1111,23 @@ function Portfolio() {
                   quantity: event.target.value,
                 })
               }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "11px 12px",
+                borderRadius: "10px",
+                border:
+                  "1px solid rgba(255,255,255,0.10)",
+                background:
+                  "rgba(255,255,255,0.05)",
+                color: "#ffffff",
+                fontSize: "12px",
+                outline: "none",
+              }}
             />
+
+
+            {/* BUY PRICE */}
 
             <input
               type="number"
@@ -1052,7 +1139,23 @@ function Portfolio() {
                   buy_price: event.target.value,
                 })
               }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "11px 12px",
+                borderRadius: "10px",
+                border:
+                  "1px solid rgba(255,255,255,0.10)",
+                background:
+                  "rgba(255,255,255,0.05)",
+                color: "#ffffff",
+                fontSize: "12px",
+                outline: "none",
+              }}
             />
+
+
+            {/* BUY DATE */}
 
             <input
               type="date"
@@ -1063,7 +1166,24 @@ function Portfolio() {
                   buy_date: event.target.value,
                 })
               }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "11px 12px",
+                borderRadius: "10px",
+                border:
+                  "1px solid rgba(255,255,255,0.10)",
+                background:
+                  "rgba(255,255,255,0.05)",
+                color: "#ffffff",
+                fontSize: "12px",
+                outline: "none",
+                colorScheme: "dark",
+              }}
             />
+
+
+            {/* BROKER */}
 
             <input
               type="text"
@@ -1075,7 +1195,23 @@ function Portfolio() {
                   broker: event.target.value,
                 })
               }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "11px 12px",
+                borderRadius: "10px",
+                border:
+                  "1px solid rgba(255,255,255,0.10)",
+                background:
+                  "rgba(255,255,255,0.05)",
+                color: "#ffffff",
+                fontSize: "12px",
+                outline: "none",
+              }}
             />
+
+
+            {/* FEES */}
 
             <input
               type="number"
@@ -1087,7 +1223,23 @@ function Portfolio() {
                   fees: event.target.value,
                 })
               }
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                padding: "11px 12px",
+                borderRadius: "10px",
+                border:
+                  "1px solid rgba(255,255,255,0.10)",
+                background:
+                  "rgba(255,255,255,0.05)",
+                color: "#ffffff",
+                fontSize: "12px",
+                outline: "none",
+              }}
             />
+
+
+            {/* NOTES */}
 
             <textarea
               placeholder="Notes"
@@ -1099,13 +1251,27 @@ function Portfolio() {
                 })
               }
               style={{
+                width: "100%",
+                boxSizing: "border-box",
                 gridColumn: "1 / -1",
                 minHeight: "90px",
+                padding: "11px 12px",
+                borderRadius: "10px",
+                border:
+                  "1px solid rgba(255,255,255,0.10)",
+                background:
+                  "rgba(255,255,255,0.05)",
+                color: "#ffffff",
+                fontSize: "12px",
+                outline: "none",
                 resize: "vertical",
               }}
             />
 
           </div>
+
+
+          {/* ACTION BUTTONS */}
 
           <div
             style={{
@@ -1135,7 +1301,9 @@ function Portfolio() {
           </div>
 
         </div>
-      )} 
+      )}     
+              
+            
 
       {/* =====================================================
           SUMMARY CARDS

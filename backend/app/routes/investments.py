@@ -332,6 +332,7 @@ def update_investment(
                 symbol = :symbol,
                 quantity = :quantity,
                 buy_price = :buy_price,
+                current_price = :current_price,
                 buy_date = :buy_date,
                 broker = :broker,
                 fees = :fees,
@@ -366,6 +367,7 @@ def update_investment(
                 else None,
             "quantity": data.quantity,
             "buy_price": data.buy_price,
+            "current_price": data.current_price,
             "buy_date": data.buy_date,
             "broker": data.broker.strip()
                 if data.broker

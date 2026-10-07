@@ -1516,15 +1516,6 @@ columnGap: "20px",
 
         </div>
 
-<span
-  className={`text-xs font-medium ${
-    account.is_active
-      ? "text-green-600"
-      : "text-red-600"
-  }`}
->
-  {account.is_active ? "Active" : "Inactive"}
-</span>
 
 {/* ACCOUNT ACTIONS */}
 <div

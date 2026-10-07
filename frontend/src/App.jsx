@@ -1452,6 +1452,31 @@ columnGap: "20px",
 
             )}
 
+            <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "5px",
+    marginTop: "6px",
+    fontSize: "10px",
+    color: account.is_active
+      ? "#4ade80"
+      : "#f87171",
+  }}
+>
+  <span
+    style={{
+      width: "6px",
+      height: "6px",
+      borderRadius: "50%",
+      background: account.is_active
+        ? "#4ade80"
+        : "#f87171",
+    }}
+  />
+
+  {account.is_active ? "Active" : "Inactive"}
+</div>
           </div>
 
         </div>

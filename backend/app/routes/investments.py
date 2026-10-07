@@ -132,6 +132,10 @@ class InvestmentCreate(BaseModel):
     )
     current_price: Decimal | None = None
     
+    price_source: str | None = "Manual"
+
+    price_updated_at: datetime | None = None
+    
     buy_date: date
 
     broker: str | None = None

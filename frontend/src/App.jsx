@@ -1779,7 +1779,7 @@ function Portfolio() {
                     fontWeight: 800,
                   }}
                 >
-                  0%
+                {investments.length > 0 ? "100%" : "0%"}
                 </div>
 
                 <div

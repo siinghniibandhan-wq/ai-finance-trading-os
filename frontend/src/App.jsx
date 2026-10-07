@@ -1061,8 +1061,12 @@ const assetAllocation = investments.reduce((allocation, investment) => {
   const type = investment.investment_type || "Other";
 
   const value =
-    Number(investment.quantity || 0) *
-    Number(investment.buy_price || 0);
+  Number(investment.quantity || 0) *
+  Number(
+    investment.current_price ??
+      investment.buy_price ??
+      0
+  );
 
   allocation[type] = (allocation[type] || 0) + value;
 

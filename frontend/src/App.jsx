@@ -876,6 +876,29 @@ function Portfolio() {
     }
   };
 
+// ----------------------------------------------------------
+// EDIT INVESTMENT
+// ----------------------------------------------------------
+
+const handleEditInvestment = (investment) => {
+  setInvestmentForm({
+    name: investment.name || "",
+    investment_type:
+      investment.investment_type || "Stocks",
+    symbol: investment.symbol || "",
+    quantity: investment.quantity || "",
+    buy_price: investment.buy_price || "",
+    current_price: investment.current_price || "",
+    buy_date: investment.buy_date || "",
+    broker: investment.broker || "",
+    fees: investment.fees || "",
+    notes: investment.notes || "",
+  });
+
+  setEditingInvestmentId(investment.id);
+  setShowInvestmentForm(true);
+};
+  
   useEffect(() => {
     loadInvestments();
   }, []);

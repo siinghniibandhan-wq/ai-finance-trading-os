@@ -2056,6 +2056,24 @@ const summaryCards = [
       const investedAmount =
         Number(investment.quantity || 0) *
         Number(investment.buy_price || 0);
+      const currentValue =
+  Number(investment.quantity || 0) *
+  Number(
+    investment.current_price ??
+      investment.buy_price ??
+      0
+  );
+
+const gainLoss =
+  currentValue - investedAmount;
+
+const holdingReturn =
+  investedAmount > 0
+    ? (
+        (gainLoss / investedAmount) *
+        100
+      ).toFixed(2) + "%"
+    : "0.00%";
 
       return (
         <div

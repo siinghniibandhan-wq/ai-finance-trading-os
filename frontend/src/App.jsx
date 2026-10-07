@@ -1798,67 +1798,175 @@ function Portfolio() {
                 "1px solid rgba(255,255,255,0.08)",
             }}
           >
-            0 Holdings
+            {investments.length} Holdings
           </span>
 
         </div>
 
         <div
+  style={{
+    minHeight: "120px",
+    borderRadius: "14px",
+    background:
+      "rgba(255,255,255,0.02)",
+    border:
+      "1px solid rgba(255,255,255,0.06)",
+    padding: "14px",
+  }}
+>
+
+  {investments.length === 0 ? (
+
+    <div
+      style={{
+        minHeight: "90px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+      }}
+    >
+      <div>
+
+        <Wallet
+          size={26}
           style={{
-            minHeight: "120px",
-            display: "flex",
+            opacity: 0.45,
+            marginBottom: "7px",
+          }}
+        />
+
+        <div
+          style={{
+            fontSize: "13px",
+            fontWeight: 700,
+          }}
+        >
+          No holdings yet
+        </div>
+
+        <div
+          style={{
+            marginTop: "4px",
+            fontSize: "11px",
+            color:
+              "rgba(255,255,255,0.40)",
+          }}
+        >
+          Your investments will appear here.
+        </div>
+
+      </div>
+    </div>
+
+  ) : (
+
+    investments.map((investment) => {
+
+      const investedAmount =
+        Number(investment.quantity || 0) *
+        Number(investment.buy_price || 0);
+
+      return (
+        <div
+          key={investment.id}
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "minmax(0, 1fr) auto",
+            gap: "12px",
             alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "14px",
+            padding: "14px",
+            borderRadius: "12px",
             background:
-              "rgba(255,255,255,0.02)",
+              "rgba(255,255,255,0.04)",
             border:
-              "1px solid rgba(255,255,255,0.06)",
+              "1px solid rgba(255,255,255,0.08)",
+            marginBottom: "8px",
           }}
         >
 
-          <div
-            style={{
-              textAlign: "center",
-            }}
-          >
-
-            <Wallet
-              size={26}
-              style={{
-                opacity: 0.45,
-                marginBottom: "7px",
-              }}
-            />
+          <div>
 
             <div
               style={{
-                fontSize: "13px",
-                fontWeight: 700,
+                fontSize: "14px",
+                fontWeight: 800,
               }}
             >
-              No holdings yet
+              {investment.name}
             </div>
 
             <div
               style={{
                 marginTop: "4px",
                 fontSize: "11px",
-                color: "rgba(255,255,255,0.40)",
+                color:
+                  "rgba(255,255,255,0.45)",
               }}
             >
-              Your investments will appear here.
+              {investment.investment_type}
+              {investment.symbol
+                ? ` • ${investment.symbol}`
+                : ""}
+            </div>
+
+            <div
+              style={{
+                marginTop: "6px",
+                fontSize: "11px",
+                color:
+                  "rgba(255,255,255,0.55)",
+              }}
+            >
+              Qty: {investment.quantity}
+              {" • "}
+              Buy Price:{" "}
+              {formatCurrency(
+                investment.buy_price
+              )}
+            </div>
+
+          </div>
+
+          <div
+            style={{
+              textAlign: "right",
+            }}
+          >
+
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: 800,
+              }}
+            >
+              {formatCurrency(
+                investedAmount
+              )}
+            </div>
+
+            <div
+              style={{
+                marginTop: "4px",
+                fontSize: "10px",
+                color:
+                  "rgba(255,255,255,0.40)",
+              }}
+            >
+              Invested
             </div>
 
           </div>
 
         </div>
+      );
+    })
 
-      </div>
+  )}
 
-    </div>
-  );
-}
+</div>
+            
 
 // ============================================================
 // ACCOUNTS

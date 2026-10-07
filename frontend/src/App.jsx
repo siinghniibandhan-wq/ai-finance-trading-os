@@ -1020,8 +1020,15 @@ const response = await fetch(
 
       // Close form
       setShowInvestmentForm(false);
+setEditingInvestmentId(null);
 
-      alert("Investment saved successfully.");
+await loadInvestments();
+
+alert(
+  editingInvestmentId
+    ? "Investment updated successfully."
+    : "Investment saved successfully."
+);
 
     } catch (err) {
       console.error(

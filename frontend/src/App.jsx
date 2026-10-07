@@ -2125,34 +2125,43 @@ const totalInvested = Object.values(assetAllocation).reduce(
           </div>
 
           <div
-            style={{
-              textAlign: "right",
-            }}
-          >
+  style={{
+    textAlign: "right",
+  }}
+>
+  <div
+    style={{
+      fontSize: "14px",
+      fontWeight: 800,
+    }}
+  >
+    {formatCurrency(investedAmount)}
+  </div>
 
-            <div
-              style={{
-                fontSize: "14px",
-                fontWeight: 800,
-              }}
-            >
-              {formatCurrency(
-                investedAmount
-              )}
-            </div>
+  <div
+    style={{
+      marginTop: "4px",
+      fontSize: "10px",
+      color: "rgba(255,255,255,0.40)",
+    }}
+  >
+    Invested
+  </div>
 
-            <div
-              style={{
-                marginTop: "4px",
-                fontSize: "10px",
-                color:
-                  "rgba(255,255,255,0.40)",
-              }}
-            >
-              Invested
-            </div>
-
-          </div>
+  <button
+    type="button"
+    className="small-button"
+    style={{
+      marginTop: "8px",
+      cursor: "pointer",
+    }}
+    onClick={() =>
+      handleEditInvestment(investment)
+    }
+  >
+    Edit
+  </button>
+</div>
 
         </div>
       );

@@ -1818,14 +1818,50 @@ const totalInvested = Object.values(assetAllocation).reduce(
           </div>
 
           <div
+  style={{
+    marginTop: "4px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+  }}
+>
+  {Object.entries(assetAllocation).map(
+    ([type, value]) => {
+      const percentage =
+        totalInvested > 0
+          ? (value / totalInvested) * 100
+          : 0;
+
+      return (
+        <div
+          key={type}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            fontSize: "11px",
+          }}
+        >
+          <span
             style={{
-              textAlign: "center",
-              fontSize: "11px",
-              color: "rgba(255,255,255,0.42)",
+              color: "rgba(255,255,255,0.65)",
             }}
           >
-            Add investments to build your allocation.
-          </div>
+            {type}
+          </span>
+
+          <span
+            style={{
+              fontWeight: 700,
+            }}
+          >
+            {percentage.toFixed(1)}%
+          </span>
+        </div>
+      );
+    }
+  )}
+</div>
 
         </div>
 

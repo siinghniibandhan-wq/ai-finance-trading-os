@@ -842,6 +842,42 @@ function Portfolio() {
   });
 
   // ----------------------------------------------------------
+  // INVESTMENT DATA
+  // ----------------------------------------------------------
+
+  const [investments, setInvestments] = useState([]);
+
+  const loadInvestments = async () => {
+    try {
+      const response = await fetch(
+        "https://ai-finance-trading-os-api.onrender.com/api/investments/?user_id=1"
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Investments API error: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      setInvestments(
+        Array.isArray(data) ? data : []
+      );
+
+    } catch (error) {
+      console.error(
+        "Load investments error:",
+        error
+      );
+    }
+  };
+
+  useEffect(() => {
+    loadInvestments();
+  }, []);
+  
+  // ----------------------------------------------------------
   // INVESTMENT FORM FIELD STYLE
   // ----------------------------------------------------------
 

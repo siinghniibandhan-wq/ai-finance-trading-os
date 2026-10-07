@@ -1,51 +1,27 @@
 # =====================================================
-# BILLS & SUBSCRIPTIONS API
-# AI FINANCE TRADING OS
-# =====================================================
-
-from datetime import date
-from decimal import Decimal
-
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-
-from database.database import get_db
-from database.models import Account, Category
-
-
-# =====================================================
-# ROUTER
-# =====================================================
-
-router = APIRouter(
-    prefix="/api/bills",
-    tags=["Bills & Subscriptions"],
-)
-
-
-# =====================================================
 # DATABASE TABLE
 # =====================================================
 
 def ensure_bills_table(db: Session):
     """
     Create the bills table if it does not already exist.
-    This keeps Bills independent from the existing
-    transaction/category/account tables.
     """
 
-    db.execute(
-        text(
-            """
-            CREATE TABLE IF NOT EXISTS bills (
-                id SERIAL PRIMARY KEY,
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS bills (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        category_id INTEGER NULL,
+        account_id INTEGER NULL,
+        amount NUMERIC(14,2) NOT NULL,
+        frequency VARCHAR(50) NOT NULL,
+        next_due_date DATE NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'active',
+        notes TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """
 
-                name VARCHAR(255) NOT NULL,
-
-                category_id INTEGER NULL,
-
-                account_id INTEGER NULL,
-
-               
+    db.execute(text(create_table_sql))
+    db.commit()

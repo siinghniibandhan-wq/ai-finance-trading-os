@@ -12,7 +12,16 @@ from app.database.database import Base, engine
 from app import models
 
 # Import API routes.
-from app.routes import users, accounts, categories, transactions, dashboard, budgets, bills
+from app.routes import (
+    users,
+    accounts,
+    categories,
+    transactions,
+    dashboard,
+    budgets,
+    bills,
+    investments,
+)
 
 
 # ============================================================
@@ -102,4 +111,4 @@ app.include_router(transactions.router)
 app.include_router(dashboard.router)
 app.include_router(budgets.router)
 app.include_router(bills.router)
-
+app.include_router(investments.router)

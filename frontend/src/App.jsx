@@ -321,6 +321,8 @@ export default function App() {
   <Category />
 ) : activePage === "Bills" ? (
   <Bills />
+) : activePage === "Portfolio" ? (
+  <Portfolio />
 ) : (
   <PlaceholderPage
     title={activePage}
@@ -807,6 +809,516 @@ function PlaceholderPage({ title }) {
           We will connect it to the Financial OS
           engine in the next stages.
         </p>
+
+      </div>
+
+    </div>
+  );
+}
+
+// ============================================================
+// PORTFOLIO
+// ============================================================
+
+function Portfolio() {
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(value || 0);
+  };
+
+  const summaryCards = [
+    {
+      label: "PORTFOLIO VALUE",
+      value: formatCurrency(0),
+      change: "Current market value",
+    },
+    {
+      label: "INVESTED AMOUNT",
+      value: formatCurrency(0),
+      change: "Total capital invested",
+    },
+    {
+      label: "TOTAL GAIN / LOSS",
+      value: formatCurrency(0),
+      change: "Unrealised + realised",
+    },
+    {
+      label: "OVERALL RETURN",
+      value: "0.00%",
+      change: "Portfolio return",
+    },
+  ];
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "22px",
+      }}
+    >
+
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
+      <section
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "16px",
+          flexWrap: "wrap",
+        }}
+      >
+
+        <div>
+          <p className="card-label">
+            INVESTMENTS
+          </p>
+
+          <h2
+            style={{
+              margin: "4px 0 6px",
+              fontSize: "28px",
+              fontWeight: 800,
+            }}
+          >
+            Your portfolio.
+          </h2>
+
+          <p
+            style={{
+              margin: 0,
+              color: "rgba(255,255,255,0.55)",
+              fontSize: "13px",
+            }}
+          >
+            Track your investments, returns and asset allocation.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="primary-button"
+        >
+          <Plus size={16} />
+          Add Investment
+        </button>
+
+      </section>
+
+
+      {/* =====================================================
+          SUMMARY CARDS
+      ===================================================== */}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(150px, 1fr))",
+          gap: "14px",
+        }}
+      >
+
+        {summaryCards.map((card) => (
+          <div
+            key={card.label}
+            className="glass-card"
+            style={{
+              padding: "18px",
+              minHeight: "105px",
+            }}
+          >
+
+            <div
+              style={{
+                fontSize: "10px",
+                color: "rgba(255,255,255,0.42)",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: "8px",
+              }}
+            >
+              {card.label}
+            </div>
+
+            <div
+              style={{
+                fontSize: "20px",
+                fontWeight: 800,
+                color: "#ffffff",
+              }}
+            >
+              {card.value}
+            </div>
+
+            <div
+              style={{
+                marginTop: "6px",
+                fontSize: "11px",
+                color: "rgba(255,255,255,0.42)",
+              }}
+            >
+              {card.change}
+            </div>
+
+          </div>
+        ))}
+
+      </div>
+
+
+      {/* =====================================================
+          PERFORMANCE + ALLOCATION
+      ===================================================== */}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "minmax(0, 1.5fr) minmax(280px, 1fr)",
+          gap: "16px",
+        }}
+      >
+
+        {/* PERFORMANCE */}
+
+        <div
+          className="glass-card"
+          style={{
+            padding: "20px",
+            minHeight: "280px",
+          }}
+        >
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "10px",
+              flexWrap: "wrap",
+            }}
+          >
+
+            <div>
+              <div
+                style={{
+                  fontSize: "15px",
+                  fontWeight: 800,
+                }}
+              >
+                Portfolio Performance
+              </div>
+
+              <div
+                style={{
+                  marginTop: "4px",
+                  fontSize: "11px",
+                  color: "rgba(255,255,255,0.45)",
+                }}
+              >
+                Track portfolio growth over time
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "5px",
+              }}
+            >
+              {["1M", "3M", "6M", "1Y", "3Y"].map(
+                (period, index) => (
+                  <span
+                    key={period}
+                    style={{
+                      padding: "5px 8px",
+                      borderRadius: "8px",
+                      fontSize: "10px",
+                      background:
+                        index === 3
+                          ? "rgba(168,85,247,0.18)"
+                          : "rgba(255,255,255,0.04)",
+                      border:
+                        "1px solid rgba(255,255,255,0.08)",
+                      color:
+                        index === 3
+                          ? "#d8b4fe"
+                          : "rgba(255,255,255,0.50)",
+                    }}
+                  >
+                    {period}
+                  </span>
+                )
+              )}
+            </div>
+
+          </div>
+
+          <div
+            style={{
+              height: "180px",
+              marginTop: "24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "14px",
+              border:
+                "1px dashed rgba(255,255,255,0.10)",
+              background:
+                "rgba(255,255,255,0.02)",
+            }}
+          >
+
+            <div
+              style={{
+                textAlign: "center",
+                color: "rgba(255,255,255,0.40)",
+              }}
+            >
+              <TrendingUp
+                size={28}
+                style={{
+                  marginBottom: "8px",
+                  opacity: 0.55,
+                }}
+              />
+
+              <div
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 700,
+                }}
+              >
+                No investment data yet
+              </div>
+
+              <div
+                style={{
+                  fontSize: "11px",
+                  marginTop: "4px",
+                }}
+              >
+                Add investments to see performance.
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* ASSET ALLOCATION */}
+
+        <div
+          className="glass-card"
+          style={{
+            padding: "20px",
+            minHeight: "280px",
+          }}
+        >
+
+          <div
+            style={{
+              fontSize: "15px",
+              fontWeight: 800,
+            }}
+          >
+            Asset Allocation
+          </div>
+
+          <div
+            style={{
+              marginTop: "4px",
+              fontSize: "11px",
+              color: "rgba(255,255,255,0.45)",
+            }}
+          >
+            Where your investment money is allocated
+          </div>
+
+          <div
+            style={{
+              height: "190px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+
+            <div
+              style={{
+                width: "130px",
+                height: "130px",
+                borderRadius: "50%",
+                border:
+                  "18px solid rgba(168,85,247,0.10)",
+                boxShadow:
+                  "0 0 0 1px rgba(255,255,255,0.05)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <div
+                style={{
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "20px",
+                    fontWeight: 800,
+                  }}
+                >
+                  0%
+                </div>
+
+                <div
+                  style={{
+                    fontSize: "9px",
+                    color: "rgba(255,255,255,0.40)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Invested
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: "11px",
+              color: "rgba(255,255,255,0.42)",
+            }}
+          >
+            Add investments to build your allocation.
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          HOLDINGS PREVIEW
+      ===================================================== */}
+
+      <div
+        className="glass-card"
+        style={{
+          padding: "20px",
+        }}
+      >
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "12px",
+            marginBottom: "16px",
+          }}
+        >
+
+          <div>
+            <div
+              style={{
+                fontSize: "15px",
+                fontWeight: 800,
+              }}
+            >
+              Holdings
+            </div>
+
+            <div
+              style={{
+                marginTop: "4px",
+                fontSize: "11px",
+                color: "rgba(255,255,255,0.45)",
+              }}
+            >
+              Your current investments
+            </div>
+          </div>
+
+          <span
+            style={{
+              padding: "5px 9px",
+              borderRadius: "999px",
+              fontSize: "10px",
+              color: "rgba(255,255,255,0.55)",
+              background:
+                "rgba(255,255,255,0.05)",
+              border:
+                "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            0 Holdings
+          </span>
+
+        </div>
+
+        <div
+          style={{
+            minHeight: "120px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "14px",
+            background:
+              "rgba(255,255,255,0.02)",
+            border:
+              "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+
+          <div
+            style={{
+              textAlign: "center",
+            }}
+          >
+
+            <Wallet
+              size={26}
+              style={{
+                opacity: 0.45,
+                marginBottom: "7px",
+              }}
+            />
+
+            <div
+              style={{
+                fontSize: "13px",
+                fontWeight: 700,
+              }}
+            >
+              No holdings yet
+            </div>
+
+            <div
+              style={{
+                marginTop: "4px",
+                fontSize: "11px",
+                color: "rgba(255,255,255,0.40)",
+              }}
+            >
+              Your investments will appear here.
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
 

@@ -5228,7 +5228,1790 @@ function Category() {
 }
 
 
+// ============================================================
+// BILLS & SUBSCRIPTIONS
+// ============================================================
 
+function Bills() {
+
+  // ----------------------------------------------------------
+  // API
+  // ----------------------------------------------------------
+
+  const BILLS_API =
+    "https://ai-finance-trading-os-api.onrender.com/api/bills";
+
+  const API_BASE_URL =
+    "https://ai-finance-trading-os-api.onrender.com";
+
+
+  // ----------------------------------------------------------
+  // STATE
+  // ----------------------------------------------------------
+
+  const [bills, setBills] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const [showForm, setShowForm] = useState(false);
+  const [editingBill, setEditingBill] = useState(null);
+  const [billToDelete, setBillToDelete] = useState(null);
+
+
+  // ----------------------------------------------------------
+  // FORM
+  // ----------------------------------------------------------
+
+  const [formData, setFormData] = useState({
+    name: "",
+    category_id: "",
+    account_id: "",
+    amount: "",
+    frequency: "monthly",
+    next_due_date: new Date()
+      .toISOString()
+      .slice(0, 10),
+    status: "active",
+    notes: "",
+  });
+
+
+  // ----------------------------------------------------------
+  // FORMAT CURRENCY
+  // ----------------------------------------------------------
+
+  const formatBillCurrency = (value) => {
+
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(Number(value || 0));
+
+  };
+
+
+  // ----------------------------------------------------------
+  // LOAD BILLS
+  // ----------------------------------------------------------
+
+  const loadBills = async () => {
+
+    try {
+
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(
+        `${BILLS_API}/`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+
+        throw new Error(
+          data?.detail ||
+          "Unable to load bills."
+        );
+
+      }
+
+      setBills(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Load bills error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+        "Unable to load bills."
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+
+  // ----------------------------------------------------------
+  // LOAD CATEGORIES
+  // ----------------------------------------------------------
+
+  const loadCategories = async () => {
+
+    try {
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/categories/?user_id=1`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail ||
+          "Unable to load categories."
+        );
+      }
+
+      setCategories(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Load bill categories error:",
+        err
+      );
+
+    }
+
+  };
+
+
+  // ----------------------------------------------------------
+  // LOAD ACCOUNTS
+  // ----------------------------------------------------------
+
+  const loadAccounts = async () => {
+
+    try {
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/accounts/?user_id=1`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail ||
+          "Unable to load accounts."
+        );
+      }
+
+      setAccounts(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Load bill accounts error:",
+        err
+      );
+
+    }
+
+  };
+
+
+  // ----------------------------------------------------------
+  // INITIAL LOAD
+  // ----------------------------------------------------------
+
+  useEffect(() => {
+
+    loadBills();
+    loadCategories();
+    loadAccounts();
+
+  }, []);
+
+
+  // ----------------------------------------------------------
+  // RESET FORM
+  // ----------------------------------------------------------
+
+  const resetForm = () => {
+
+    setFormData({
+      name: "",
+      category_id: "",
+      account_id: "",
+      amount: "",
+      frequency: "monthly",
+      next_due_date: new Date()
+        .toISOString()
+        .slice(0, 10),
+      status: "active",
+      notes: "",
+    });
+
+    setEditingBill(null);
+
+  };
+
+
+  // ----------------------------------------------------------
+  // OPEN ADD FORM
+  // ----------------------------------------------------------
+
+  const handleAddBill = () => {
+
+    resetForm();
+
+    setError("");
+    setMessage("");
+
+    setShowForm(true);
+
+  };
+
+
+  // ----------------------------------------------------------
+  // OPEN EDIT FORM
+  // ----------------------------------------------------------
+
+  const handleEditBill = (bill) => {
+
+    setEditingBill(bill);
+
+    setFormData({
+      name: bill.name || "",
+
+      category_id:
+        bill.category_id !== null &&
+        bill.category_id !== undefined
+          ? String(bill.category_id)
+          : "",
+
+      account_id:
+        bill.account_id !== null &&
+        bill.account_id !== undefined
+          ? String(bill.account_id)
+          : "",
+
+      amount:
+        bill.amount !== null &&
+        bill.amount !== undefined
+          ? String(bill.amount)
+          : "",
+
+      frequency:
+        bill.frequency || "monthly",
+
+      next_due_date:
+        bill.next_due_date ||
+        new Date()
+          .toISOString()
+          .slice(0, 10),
+
+      status:
+        bill.status || "active",
+
+      notes:
+        bill.notes || "",
+    });
+
+    setError("");
+    setMessage("");
+
+    setShowForm(true);
+
+  };
+
+
+  // ----------------------------------------------------------
+  // FORM CHANGE
+  // ----------------------------------------------------------
+
+  const handleChange = (field, value) => {
+
+    setFormData((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
+
+  };
+
+
+  // ----------------------------------------------------------
+  // SAVE BILL
+  // CREATE / UPDATE
+  // ----------------------------------------------------------
+
+  const handleSaveBill = async () => {
+
+    try {
+
+      setError("");
+      setMessage("");
+
+      if (!formData.name.trim()) {
+
+        setError(
+          "Bill name is required."
+        );
+
+        return;
+
+      }
+
+      if (
+        formData.amount === "" ||
+        Number(formData.amount) <= 0
+      ) {
+
+        setError(
+          "Bill amount must be greater than 0."
+        );
+
+        return;
+
+      }
+
+      if (!formData.next_due_date) {
+
+        setError(
+          "Next due date is required."
+        );
+
+        return;
+
+      }
+
+      setSaving(true);
+
+      const isEditing =
+        Boolean(editingBill);
+
+      const payload = {
+
+        name:
+          formData.name.trim(),
+
+        category_id:
+          formData.category_id === ""
+            ? null
+            : Number(formData.category_id),
+
+        account_id:
+          formData.account_id === ""
+            ? null
+            : Number(formData.account_id),
+
+        amount:
+          Number(formData.amount),
+
+        frequency:
+          formData.frequency,
+
+        next_due_date:
+          formData.next_due_date,
+
+        status:
+          formData.status,
+
+        notes:
+          formData.notes.trim() || null,
+
+      };
+
+
+      const response = await fetch(
+
+        isEditing
+          ? `${BILLS_API}/${editingBill.id}`
+          : `${BILLS_API}/`,
+
+        {
+          method:
+            isEditing
+              ? "PUT"
+              : "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body:
+            JSON.stringify(payload),
+
+        }
+
+      );
+
+
+      const data =
+        await response.json();
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          data?.detail ||
+          "Unable to save bill."
+        );
+
+      }
+
+
+      resetForm();
+
+      setShowForm(false);
+
+      setMessage(
+        isEditing
+          ? "Bill updated successfully."
+          : "Bill created successfully."
+      );
+
+
+      await loadBills();
+
+    } catch (err) {
+
+      console.error(
+        "Save bill error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+        "Unable to save bill."
+      );
+
+    } finally {
+
+      setSaving(false);
+
+    }
+
+  };
+
+
+  // ----------------------------------------------------------
+  // DELETE BILL
+  // ----------------------------------------------------------
+
+  const handleDeleteBill = async () => {
+
+    if (!billToDelete) {
+      return;
+    }
+
+    try {
+
+      setDeleting(true);
+      setError("");
+      setMessage("");
+
+      const response = await fetch(
+        `${BILLS_API}/${billToDelete.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+
+      const data =
+        await response.json()
+          .catch(() => null);
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          data?.detail ||
+          "Unable to delete bill."
+        );
+
+      }
+
+
+      setBillToDelete(null);
+
+      setMessage(
+        "Bill deleted successfully."
+      );
+
+      await loadBills();
+
+    } catch (err) {
+
+      console.error(
+        "Delete bill error:",
+        err
+      );
+
+      setError(
+        err?.message ||
+        "Unable to delete bill."
+      );
+
+    } finally {
+
+      setDeleting(false);
+
+    }
+
+  };
+
+
+  // ----------------------------------------------------------
+  // SUMMARY VALUES
+  // ----------------------------------------------------------
+
+  const activeBills =
+    bills.filter(
+      (bill) =>
+        bill.status === "active"
+    );
+
+  const pausedBills =
+    bills.filter(
+      (bill) =>
+        bill.status === "paused"
+    );
+
+  const totalMonthlyAmount =
+    activeBills.reduce(
+      (total, bill) => {
+
+        const amount =
+          Number(
+            bill.amount || 0
+          );
+
+        if (
+          bill.frequency ===
+          "monthly"
+        ) {
+
+          return total + amount;
+
+        }
+
+        if (
+          bill.frequency ===
+          "weekly"
+        ) {
+
+          return total +
+            amount * 4.33;
+
+        }
+
+        if (
+          bill.frequency ===
+          "daily"
+        ) {
+
+          return total +
+            amount * 30;
+
+        }
+
+        if (
+          bill.frequency ===
+          "quarterly"
+        ) {
+
+          return total +
+            amount / 3;
+
+        }
+
+        if (
+          bill.frequency ===
+          "half_yearly"
+        ) {
+
+          return total +
+            amount / 6;
+
+        }
+
+        if (
+          bill.frequency ===
+          "yearly"
+        ) {
+
+          return total +
+            amount / 12;
+
+        }
+
+        return total;
+
+      },
+      0
+    );
+
+
+  // ----------------------------------------------------------
+  // CATEGORY NAME
+  // ----------------------------------------------------------
+
+  const getCategoryName =
+    (categoryId) => {
+
+      const category =
+        categories.find(
+          (item) =>
+            Number(item.id) ===
+            Number(categoryId)
+        );
+
+      return (
+        category?.name ||
+        "Uncategorized"
+      );
+
+    };
+
+
+  // ----------------------------------------------------------
+  // ACCOUNT NAME
+  // ----------------------------------------------------------
+
+  const getAccountName =
+    (accountId) => {
+
+      const account =
+        accounts.find(
+          (item) =>
+            Number(item.id) ===
+            Number(accountId)
+        );
+
+      return (
+        account?.name ||
+        "No account"
+      );
+
+    };
+
+
+  // ----------------------------------------------------------
+  // STATUS DISPLAY
+  // ----------------------------------------------------------
+
+  const getStatusStyle =
+    (status) => {
+
+      if (status === "active") {
+
+        return {
+          color: "#4ade80",
+          background:
+            "rgba(74,222,128,0.10)",
+          borderColor:
+            "rgba(74,222,128,0.25)",
+        };
+
+      }
+
+      if (status === "paused") {
+
+        return {
+          color: "#fbbf24",
+          background:
+            "rgba(251,191,36,0.10)",
+          borderColor:
+            "rgba(251,191,36,0.25)",
+        };
+
+      }
+
+      return {
+        color: "#fb7185",
+        background:
+          "rgba(251,113,133,0.10)",
+        borderColor:
+          "rgba(251,113,133,0.25)",
+      };
+
+    };
+
+
+  // ----------------------------------------------------------
+  // FREQUENCY DISPLAY
+  // ----------------------------------------------------------
+
+  const getFrequencyLabel =
+    (frequency) => {
+
+      const labels = {
+
+        daily: "Daily",
+
+        weekly: "Weekly",
+
+        monthly: "Monthly",
+
+        quarterly: "Quarterly",
+
+        half_yearly:
+          "Half-Yearly",
+
+        yearly: "Yearly",
+
+        custom: "Custom",
+
+      };
+
+      return (
+        labels[frequency] ||
+        frequency
+      );
+
+    };
+
+
+  // ----------------------------------------------------------
+  // RENDER
+  // ----------------------------------------------------------
+
+  return (
+
+    <div>
+
+      {/* ================================================== */}
+      {/* HEADER */}
+      {/* ================================================== */}
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent:
+            "space-between",
+          alignItems: "center",
+          gap: "20px",
+          flexWrap: "wrap",
+        }}
+      >
+
+        <div>
+
+          <div
+            className="eyebrow"
+          >
+            MONEY
+          </div>
+
+          <h1
+            style={{
+              margin: "6px 0 8px",
+            }}
+          >
+            Your bills.
+          </h1>
+
+          <p
+            style={{
+              color:
+                "rgba(255,255,255,0.55)",
+              margin: 0,
+            }}
+          >
+            Manage recurring bills,
+            subscriptions and upcoming
+            payments.
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          className="primary-button"
+          onClick={handleAddBill}
+        >
+          + Add Bill
+        </button>
+
+      </div>
+
+
+      {/* ================================================== */}
+      {/* SUMMARY */}
+      {/* ================================================== */}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(3, minmax(0, 1fr))",
+          gap: "14px",
+          marginTop: "28px",
+        }}
+      >
+
+        <div
+          className="glass-card"
+          style={{
+            padding: "20px",
+          }}
+        >
+
+          <div
+            className="card-label"
+          >
+            TOTAL BILLS
+          </div>
+
+          <div
+            style={{
+              fontSize: "24px",
+              fontWeight: 800,
+              marginTop: "8px",
+            }}
+          >
+            {bills.length}
+          </div>
+
+        </div>
+
+
+        <div
+          className="glass-card"
+          style={{
+            padding: "20px",
+          }}
+        >
+
+          <div
+            className="card-label"
+          >
+            ACTIVE BILLS
+          </div>
+
+          <div
+            style={{
+              fontSize: "24px",
+              fontWeight: 800,
+              marginTop: "8px",
+              color: "#4ade80",
+            }}
+          >
+            {activeBills.length}
+          </div>
+
+        </div>
+
+
+        <div
+          className="glass-card"
+          style={{
+            padding: "20px",
+          }}
+        >
+
+          <div
+            className="card-label"
+          >
+            MONTHLY COMMITMENT
+          </div>
+
+          <div
+            style={{
+              fontSize: "24px",
+              fontWeight: 800,
+              marginTop: "8px",
+            }}
+          >
+            {formatBillCurrency(
+              totalMonthlyAmount
+            )}
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* ================================================== */}
+      {/* MESSAGES */}
+      {/* ================================================== */}
+
+      {error && (
+
+        <div
+          className="glass-card"
+          style={{
+            marginTop: "18px",
+            padding: "14px 16px",
+            color: "#fb7185",
+            border:
+              "1px solid rgba(251,113,133,0.25)",
+          }}
+        >
+          {error}
+        </div>
+
+      )}
+
+
+      {message && (
+
+        <div
+          className="glass-card"
+          style={{
+            marginTop: "18px",
+            padding: "14px 16px",
+            color: "#4ade80",
+            border:
+              "1px solid rgba(74,222,128,0.25)",
+          }}
+        >
+          {message}
+        </div>
+
+      )}
+
+
+      {/* ================================================== */}
+      {/* BILL LIST */}
+      {/* ================================================== */}
+
+      <div
+        style={{
+          marginTop: "22px",
+        }}
+      >
+
+        <div
+          className="card-label"
+          style={{
+            marginBottom: "10px",
+          }}
+        >
+          YOUR BILLS
+        </div>
+
+
+        {loading ? (
+
+          <div
+            className="glass-card"
+            style={{
+              padding: "30px",
+              textAlign: "center",
+              color:
+                "rgba(255,255,255,0.55)",
+            }}
+          >
+            Loading bills...
+          </div>
+
+        ) : bills.length === 0 ? (
+
+          <div
+            className="glass-card"
+            style={{
+              padding: "35px",
+              textAlign: "center",
+            }}
+          >
+
+            <div
+              style={{
+                fontSize: "18px",
+                fontWeight: 700,
+              }}
+            >
+              No bills yet
+            </div>
+
+            <p
+              style={{
+                color:
+                  "rgba(255,255,255,0.50)",
+                margin:
+                  "8px 0 20px",
+              }}
+            >
+              Add your first recurring
+              bill or subscription.
+            </p>
+
+            <button
+              type="button"
+              className="primary-button"
+              onClick={handleAddBill}
+            >
+              + Add Bill
+            </button>
+
+          </div>
+
+        ) : (
+
+          <div
+            style={{
+              display: "grid",
+              gap: "12px",
+            }}
+          >
+
+            {bills.map((bill) => (
+
+              <div
+                key={bill.id}
+                className="glass-card"
+                style={{
+                  padding: "18px 20px",
+                  display: "grid",
+                  gridTemplateColumns:
+                    "minmax(0,1fr) 120px 150px",
+                  alignItems: "center",
+                  gap: "18px",
+                }}
+              >
+
+                {/* BILL INFORMATION */}
+
+                <div
+                  style={{
+                    minWidth: 0,
+                  }}
+                >
+
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {bill.name}
+                  </div>
+
+                  <div
+                    style={{
+                      color:
+                        "rgba(255,255,255,0.50)",
+                      fontSize: "12px",
+                      marginTop: "5px",
+                    }}
+                  >
+                    {getCategoryName(
+                      bill.category_id
+                    )}
+                    {" • "}
+                    {getAccountName(
+                      bill.account_id
+                    )}
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginTop: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        padding:
+                          "4px 8px",
+                        borderRadius:
+                          "999px",
+                        border:
+                          "1px solid rgba(255,255,255,0.10)",
+                        color:
+                          "rgba(255,255,255,0.65)",
+                      }}
+                    >
+                      {getFrequencyLabel(
+                        bill.frequency
+                      )}
+                    </span>
+
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        padding:
+                          "4px 8px",
+                        borderRadius:
+                          "999px",
+                        border:
+                          "1px solid",
+                        ...getStatusStyle(
+                          bill.status
+                        ),
+                      }}
+                    >
+                      {bill.status
+                        ? bill.status
+                            .charAt(0)
+                            .toUpperCase() +
+                          bill.status.slice(1)
+                        : "Active"}
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+                {/* AMOUNT / DUE */}
+
+                <div
+                  style={{
+                    textAlign:
+                      "center",
+                  }}
+                >
+
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      color:
+                        "rgba(255,255,255,0.40)",
+                      textTransform:
+                        "uppercase",
+                      letterSpacing:
+                        "0.08em",
+                    }}
+                  >
+                    Amount
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: "17px",
+                      fontWeight: 800,
+                      marginTop: "4px",
+                    }}
+                  >
+                    {formatBillCurrency(
+                      bill.amount
+                    )}
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color:
+                        "rgba(255,255,255,0.45)",
+                      marginTop: "4px",
+                    }}
+                  >
+                    Due{" "}
+                    {bill.next_due_date}
+                  </div>
+
+                </div>
+
+
+                {/* ACTIONS */}
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection:
+                      "column",
+                    gap: "7px",
+                    alignItems:
+                      "stretch",
+                  }}
+                >
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() =>
+                      handleEditBill(
+                        bill
+                      )
+                    }
+                    style={{
+                      width: "100%",
+                      padding:
+                        "7px 12px",
+                      fontSize: "11px",
+                    }}
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() =>
+                      setBillToDelete(
+                        bill
+                      )
+                    }
+                    style={{
+                      width: "100%",
+                      padding:
+                        "7px 12px",
+                      fontSize: "11px",
+                      color: "#fb7185",
+                      borderColor:
+                        "rgba(251,113,133,0.25)",
+                    }}
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        )}
+
+      </div>
+
+
+      {/* ================================================== */}
+      {/* ADD / EDIT BILL FORM */}
+      {/* ================================================== */}
+
+      {showForm && (
+
+        <div
+          className="glass-card"
+          style={{
+            marginTop: "22px",
+            padding: "22px",
+          }}
+        >
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent:
+                "space-between",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom:
+                "18px",
+            }}
+          >
+
+            <div>
+
+              <div
+                className="card-label"
+              >
+                {editingBill
+                  ? "EDIT BILL"
+                  : "ADD BILL"}
+              </div>
+
+              <h3
+                style={{
+                  margin:
+                    "5px 0 0",
+                }}
+              >
+                {editingBill
+                  ? "Update bill"
+                  : "Create a new bill"}
+              </h3>
+
+            </div>
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                resetForm();
+                setShowForm(false);
+              }}
+            >
+              Cancel
+            </button>
+
+          </div>
+
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(2, minmax(0, 1fr))",
+              gap: "14px",
+            }}
+          >
+
+            {/* NAME */}
+
+            <div>
+
+              <label>
+                Bill Name
+              </label>
+
+              <input
+                value={
+                  formData.name
+                }
+                onChange={(event) =>
+                  handleChange(
+                    "name",
+                    event.target.value
+                  )
+                }
+                placeholder="Electricity"
+              />
+
+            </div>
+
+
+            {/* AMOUNT */}
+
+            <div>
+
+              <label>
+                Amount
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={
+                  formData.amount
+                }
+                onChange={(event) =>
+                  handleChange(
+                    "amount",
+                    event.target.value
+                  )
+                }
+                placeholder="1000"
+              />
+
+            </div>
+
+
+            {/* CATEGORY */}
+
+            <div>
+
+              <label>
+                Category
+              </label>
+
+              <select
+                value={
+                  formData.category_id
+                }
+                onChange={(event) =>
+                  handleChange(
+                    "category_id",
+                    event.target.value
+                  )
+                }
+              >
+
+                <option value="">
+                  Select category
+                </option>
+
+                {categories
+                  .filter(
+                    (category) =>
+                      category.category_type ===
+                        "expense" ||
+                      category.category_type ===
+                        "Expense"
+                  )
+                  .map(
+                    (category) => (
+                      <option
+                        key={
+                          category.id
+                        }
+                        value={
+                          category.id
+                        }
+                      >
+                        {category.name}
+                      </option>
+                    )
+                  )}
+
+              </select>
+
+            </div>
+
+
+            {/* ACCOUNT */}
+
+            <div>
+
+              <label>
+                Payment Account
+              </label>
+
+              <select
+                value={
+                  formData.account_id
+                }
+                onChange={(event) =>
+                  handleChange(
+                    "account_id",
+                    event.target.value
+                  )
+                }
+              >
+
+                <option value="">
+                  Select account
+                </option>
+
+                {accounts
+                  .filter(
+                    (account) =>
+                      account.is_active
+                  )
+                  .map(
+                    (account) => (
+                      <option
+                        key={
+                          account.id
+                        }
+                        value={
+                          account.id
+                        }
+                      >
+                        {account.name}
+                      </option>
+                    )
+                  )}
+
+              </select>
+
+            </div>
+
+
+            {/* FREQUENCY */}
+
+            <div>
+
+              <label>
+                Frequency
+              </label>
+
+              <select
+                value={
+                  formData.frequency
+                }
+                onChange={(event) =>
+                  handleChange(
+                    "frequency",
+                    event.target.value
+                  )
+                }
+              >
+
+                <option value="daily">
+                  Daily
+                </option>
+
+                <option value="weekly">
+                  Weekly
+                </option>
+
+                <option value="monthly">
+                  Monthly
+                </option>
+
+                <option value="quarterly">
+                  Quarterly
+                </option>
+
+                <option value="half_yearly">
+                  Half-Yearly
+                </option>
+
+                <option value="yearly">
+                  Yearly
+                </option>
+
+                <option value="custom">
+                  Custom
+                </option>
+
+              </select>
+
+            </div>
+
+
+            {/* NEXT DUE DATE */}
+
+            <div>
+
+              <label>
+                Next Due Date
+              </label>
+
+              <input
+                type="date"
+                value={
+                  formData.next_due_date
+                }
+                onChange={(event) =>
+                  handleChange(
+                    "next_due_date",
+                    event.target.value
+                  )
+                }
+              />
+
+            </div>
+
+
+            {/* STATUS */}
+
+            <div>
+
+              <label>
+                Status
+              </label>
+
+              <select
+                value={
+                  formData.status
+                }
+                onChange={(event) =>
+                  handleChange(
+                    "status",
+                    event.target.value
+                  )
+                }
+              >
+
+                <option value="active">
+                  Active
+                </option>
+
+                <option value="paused">
+                  Paused
+                </option>
+
+                <option value="cancelled">
+                  Cancelled
+                </option>
+
+              </select>
+
+            </div>
+
+
+            {/* NOTES */}
+
+            <div>
+
+              <label>
+                Notes
+              </label>
+
+              <input
+                value={
+                  formData.notes
+                }
+                onChange={(event) =>
+                  handleChange(
+                    "notes",
+                    event.target.value
+                  )
+                }
+                placeholder="Optional notes"
+              />
+
+            </div>
+
+          </div>
+
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent:
+                "flex-end",
+              gap: "10px",
+              marginTop: "20px",
+            }}
+          >
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                resetForm();
+                setShowForm(false);
+              }}
+              disabled={saving}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              className="primary-button"
+              onClick={
+                handleSaveBill
+              }
+              disabled={saving}
+            >
+              {saving
+                ? "Saving..."
+                : editingBill
+                ? "Update Bill"
+                : "Save Bill"}
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* ================================================== */}
+      {/* DELETE CONFIRMATION */}
+      {/* ================================================== */}
+
+      {billToDelete && (
+
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background:
+              "rgba(0,0,0,0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent:
+              "center",
+            zIndex: 1000,
+            padding: "20px",
+          }}
+        >
+
+          <div
+            className="glass-card"
+            style={{
+              width: "100%",
+              maxWidth: "420px",
+              padding: "24px",
+            }}
+          >
+
+            <div
+              className="card-label"
+            >
+              DELETE BILL
+            </div>
+
+            <h3
+              style={{
+                margin:
+                  "6px 0 10px",
+              }}
+            >
+              Delete this bill?
+            </h3>
+
+            <p
+              style={{
+                color:
+                  "rgba(255,255,255,0.60)",
+                fontSize: "13px",
+                lineHeight: 1.6,
+              }}
+            >
+              This will permanently
+              remove{" "}
+              <strong>
+                {billToDelete.name}
+              </strong>
+              .
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent:
+                  "flex-end",
+                gap: "10px",
+                marginTop: "20px",
+              }}
+            >
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() =>
+                  setBillToDelete(
+                    null
+                  )
+                }
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={
+                  handleDeleteBill
+                }
+                disabled={deleting}
+                style={{
+                  color: "#fb7185",
+                  borderColor:
+                    "rgba(251,113,133,0.30)",
+                }}
+              >
+                {deleting
+                  ? "Deleting..."
+                  : "Delete"}
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      )}
+
+    </div>
+
+  );
+
+}
 
 
 

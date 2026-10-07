@@ -1018,17 +1018,19 @@ const response = await fetch(
         notes: "",
       });
 
-      // Close form
-      setShowInvestmentForm(false);
+ // Close form
+const wasEditing = Boolean(editingInvestmentId);
+
+setShowInvestmentForm(false);
 setEditingInvestmentId(null);
 
 await loadInvestments();
 
 alert(
-  editingInvestmentId
+  wasEditing
     ? "Investment updated successfully."
     : "Investment saved successfully."
-);
+);     
 
     } catch (err) {
       console.error(

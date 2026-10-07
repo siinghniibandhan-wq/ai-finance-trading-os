@@ -1006,6 +1006,27 @@ function Portfolio() {
     }).format(value || 0);
   };
 
+// ============================================================
+// ASSET ALLOCATION
+// ============================================================
+
+const assetAllocation = investments.reduce((allocation, investment) => {
+  const type = investment.investment_type || "Other";
+
+  const value =
+    Number(investment.quantity || 0) *
+    Number(investment.buy_price || 0);
+
+  allocation[type] = (allocation[type] || 0) + value;
+
+  return allocation;
+}, {});
+
+const totalInvested = Object.values(assetAllocation).reduce(
+  (total, value) => total + value,
+  0
+);
+  
   const summaryCards = [
     {
       label: "PORTFOLIO VALUE",

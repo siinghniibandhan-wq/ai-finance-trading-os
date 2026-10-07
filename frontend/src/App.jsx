@@ -841,6 +841,22 @@ function Portfolio() {
     notes: "",
   });
 
+  // ----------------------------------------------------------
+  // INVESTMENT FORM FIELD STYLE
+  // ----------------------------------------------------------
+
+  const investmentFieldStyle = {
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "11px 12px",
+    borderRadius: "10px",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.05)",
+    color: "#ffffff",
+    fontSize: "12px",
+    outline: "none",
+  };
+  
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",

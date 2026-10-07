@@ -1243,8 +1243,11 @@ const totalInvested = Object.values(assetAllocation).reduce(
               </p>
 
               <h3>
-                Add Investment
-              </h3>
+  {editingInvestmentId
+    ? "Edit Investment"
+    : "Add Investment"}
+</h3>
+              
             </div>
 
           </div>

@@ -1014,7 +1014,15 @@ function Portfolio() {
     },
     {
       label: "INVESTED AMOUNT",
-      value: formatCurrency(0),
+      value: formatCurrency(
+  investments.reduce(
+    (total, investment) =>
+      total +
+      Number(investment.quantity || 0) *
+      Number(investment.buy_price || 0),
+    0
+  )
+),
       change: "Total capital invested",
     },
     {

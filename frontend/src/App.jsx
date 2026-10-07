@@ -1073,98 +1073,66 @@ const totalInvested = Object.values(assetAllocation).reduce(
   (total, value) => total + value,
   0
 );
-  
-  const summaryCards = [
-    {
-      label: "PORTFOLIO VALUE",
-      value: formatCurrency(
-  investments.reduce(
-    (total, investment) =>
-      total +
-      Number(investment.quantity || 0) *
+
+// ============================================================
+// PORTFOLIO SUMMARY CALCULATIONS
+// ============================================================
+
+const investedAmount = investments.reduce(
+  (total, investment) =>
+    total +
+    Number(investment.quantity || 0) *
       Number(investment.buy_price || 0),
-    0
-  )
-),
-      change: "Current market value",
-    },
-    {
-      label: "INVESTED AMOUNT",
-      value: formatCurrency(
-  investments.reduce(
-    (total, investment) =>
-      total +
-      Number(investment.quantity || 0) *
-      Number(investment.buy_price || 0),
-    0
-  )
-),
-      change: "Total capital invested",
-    },
-    {
-      label: "TOTAL GAIN / LOSS",
-      value: formatCurrency(
-  investments.reduce(
-    (total, investment) =>
-      total +
-      Number(investment.quantity || 0) *
-      Number(investment.buy_price || 0),
-    0
-  ) -
-  investments.reduce(
-    (total, investment) =>
-      total +
-      Number(investment.quantity || 0) *
-      Number(investment.buy_price || 0),
-    0
-  )
-),
-      change: "Unrealised + realised",
-    },
-    {
-      label: "OVERALL RETURN",
-      value:
-  investments.reduce(
-    (total, investment) =>
-      total +
-      Number(investment.quantity || 0) *
-      Number(investment.buy_price || 0),
-    0
-  ) > 0
+  0
+);
+
+const portfolioValue = investments.reduce(
+  (total, investment) =>
+    total +
+    Number(investment.quantity || 0) *
+      Number(
+        investment.current_price ??
+          investment.buy_price ??
+          0
+      ),
+  0
+);
+
+const totalGainLoss =
+  portfolioValue - investedAmount;
+
+const overallReturn =
+  investedAmount > 0
     ? (
-        (
-          (
-            investments.reduce(
-              (total, investment) =>
-                total +
-                Number(investment.quantity || 0) *
-                Number(investment.buy_price || 0),
-              0
-            ) -
-            investments.reduce(
-              (total, investment) =>
-                total +
-                Number(investment.quantity || 0) *
-                Number(investment.buy_price || 0),
-              0
-            )
-          ) /
-          investments.reduce(
-            (total, investment) =>
-              total +
-              Number(investment.quantity || 0) *
-              Number(investment.buy_price || 0),
-            0
-          )
-        ) *
+        (totalGainLoss / investedAmount) *
         100
       ).toFixed(2) + "%"
-    : "0.00%",
-      change: "Portfolio return",
-    },
-  ];
+    : "0.00%";
 
-  return (
+const summaryCards = [
+  {
+    label: "PORTFOLIO VALUE",
+    value: formatCurrency(portfolioValue),
+    change: "Current market value",
+  },
+  {
+    label: "INVESTED AMOUNT",
+    value: formatCurrency(investedAmount),
+    change: "Total capital invested",
+  },
+  {
+    label: "TOTAL GAIN / LOSS",
+    value: formatCurrency(totalGainLoss),
+    change: "Unrealised + realised",
+  },
+  {
+    label: "OVERALL RETURN",
+    value: overallReturn,
+    change: "Portfolio return",
+  },
+];
+ 
+    return (
     <div
       style={{
         display: "flex",

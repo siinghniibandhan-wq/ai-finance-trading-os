@@ -6274,18 +6274,26 @@ function Bills() {
 
             {bills.map((bill) => (
 
-              <div
-                key={bill.id}
-                className="glass-card"
-                style={{
-                  padding: "18px 20px",
-                  display: "grid",
-                  gridTemplateColumns:
-                    "minmax(0,1fr) 120px 150px",
-                  alignItems: "center",
-                  gap: "18px",
-                }}
-              >
+             <div
+  key={bill.id}
+  className="glass-card"
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "minmax(0, 1fr) minmax(120px, 1fr) 90px",
+    alignItems: "center",
+    columnGap: "20px",
+    padding: "20px",
+    borderRadius: "18px",
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+    border:
+      "1px solid rgba(255,255,255,0.08)",
+    boxShadow:
+      "0 12px 30px rgba(0,0,0,0.18)",
+    minHeight: "90px",
+  }}
+> 
 
                 {/* BILL INFORMATION */}
 

@@ -69,14 +69,37 @@ def ensure_investments_table(db: Session):
         )
     )
 
-    db.execute(
+# ============================================================
+# CURRENT PRICE + PRICE TRACKING FIELDS
+# ============================================================
+
+db.execute(
     text(
         """
         ALTER TABLE investments
         ADD COLUMN IF NOT EXISTS current_price NUMERIC(18,4)
         """
     )
+)
+
+db.execute(
+    text(
+        """
+        ALTER TABLE investments
+        ADD COLUMN IF NOT EXISTS price_source VARCHAR(20)
+        DEFAULT 'Manual'
+        """
     )
+)
+
+db.execute(
+    text(
+        """
+        ALTER TABLE investments
+        ADD COLUMN IF NOT EXISTS price_updated_at TIMESTAMP
+        """
+    )
+)
     db.commit()
 
 

@@ -1775,15 +1775,7 @@ const summaryCards = [
       marginBottom: "6px",
     }}
   >
-    {formatCurrency(
-      investments.reduce(
-        (total, investment) =>
-          total +
-          Number(investment.quantity || 0) *
-            Number(investment.buy_price || 0),
-        0
-      )
-    )}
+    {formatCurrency(portfolioValue)}
   </div>
 
   <div
@@ -1792,7 +1784,7 @@ const summaryCards = [
       color: "rgba(255,255,255,0.45)",
     }}
   >
-    Invested portfolio value
+    Current portfolio value
   </div>
 
   <div
@@ -1802,7 +1794,7 @@ const summaryCards = [
       fontWeight: 700,
     }}
   >
-    Return: 0.00%
+    Return: {overallReturn}
   </div>
 </div>    
 

@@ -1699,38 +1699,59 @@ const totalInvested = Object.values(assetAllocation).reduce(
             }}
           >
 
-            <div
-              style={{
-                textAlign: "center",
-                color: "rgba(255,255,255,0.40)",
-              }}
-            >
-              <TrendingUp
-                size={28}
-                style={{
-                  marginBottom: "8px",
-                  opacity: 0.55,
-                }}
-              />
+        <div
+  style={{
+    width: "100%",
+    textAlign: "center",
+  }}
+>
+  <div
+    style={{
+      fontSize: "12px",
+      color: "rgba(255,255,255,0.45)",
+      marginBottom: "8px",
+    }}
+  >
+    CURRENT PORTFOLIO PERFORMANCE
+  </div>
 
-              <div
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 700,
-                }}
-              >
-                No investment data yet
-              </div>
+  <div
+    style={{
+      fontSize: "24px",
+      fontWeight: 800,
+      marginBottom: "6px",
+    }}
+  >
+    {formatCurrency(
+      investments.reduce(
+        (total, investment) =>
+          total +
+          Number(investment.quantity || 0) *
+            Number(investment.buy_price || 0),
+        0
+      )
+    )}
+  </div>
 
-              <div
-                style={{
-                  fontSize: "11px",
-                  marginTop: "4px",
-                }}
-              >
-                Add investments to see performance.
-              </div>
-            </div>
+  <div
+    style={{
+      fontSize: "12px",
+      color: "rgba(255,255,255,0.45)",
+    }}
+  >
+    Invested portfolio value
+  </div>
+
+  <div
+    style={{
+      marginTop: "12px",
+      fontSize: "12px",
+      fontWeight: 700,
+    }}
+  >
+    Return: 0.00%
+  </div>
+</div>    
 
           </div>
 

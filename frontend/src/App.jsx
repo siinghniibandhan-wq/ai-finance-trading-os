@@ -1055,7 +1055,43 @@ function Portfolio() {
     },
     {
       label: "OVERALL RETURN",
-      value: "0.00%",
+      value:
+  investments.reduce(
+    (total, investment) =>
+      total +
+      Number(investment.quantity || 0) *
+      Number(investment.buy_price || 0),
+    0
+  ) > 0
+    ? (
+        (
+          (
+            investments.reduce(
+              (total, investment) =>
+                total +
+                Number(investment.quantity || 0) *
+                Number(investment.buy_price || 0),
+              0
+            ) -
+            investments.reduce(
+              (total, investment) =>
+                total +
+                Number(investment.quantity || 0) *
+                Number(investment.buy_price || 0),
+              0
+            )
+          ) /
+          investments.reduce(
+            (total, investment) =>
+              total +
+              Number(investment.quantity || 0) *
+              Number(investment.buy_price || 0),
+            0
+          )
+        ) *
+        100
+      ).toFixed(2) + "%"
+    : "0.00%",
       change: "Portfolio return",
     },
   ];

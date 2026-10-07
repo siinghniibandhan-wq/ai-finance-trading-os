@@ -11,8 +11,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from database.database import get_db
-from database.models import Account, Category
+from app.database.database import get_db
+from app.models import Account, Category
 
 
 # =====================================================

@@ -1035,7 +1035,22 @@ function Portfolio() {
     },
     {
       label: "TOTAL GAIN / LOSS",
-      value: formatCurrency(0),
+      value: formatCurrency(
+  investments.reduce(
+    (total, investment) =>
+      total +
+      Number(investment.quantity || 0) *
+      Number(investment.buy_price || 0),
+    0
+  ) -
+  investments.reduce(
+    (total, investment) =>
+      total +
+      Number(investment.quantity || 0) *
+      Number(investment.buy_price || 0),
+    0
+  )
+),
       change: "Unrealised + realised",
     },
     {

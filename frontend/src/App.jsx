@@ -856,6 +856,111 @@ function Portfolio() {
     fontSize: "12px",
     outline: "none",
   };
+
+  // ----------------------------------------------------------
+  // SAVE INVESTMENT
+  // ----------------------------------------------------------
+
+  const handleInvestmentSubmit = async () => {
+    try {
+      // Validate required fields
+      if (!investmentForm.name.trim()) {
+        alert("Please enter an investment name.");
+        return;
+      }
+
+      if (
+        !investmentForm.quantity ||
+        Number(investmentForm.quantity) <= 0
+      ) {
+        alert("Please enter a valid quantity.");
+        return;
+      }
+
+      if (
+        !investmentForm.buy_price ||
+        Number(investmentForm.buy_price) <= 0
+      ) {
+        alert("Please enter a valid buy price.");
+        return;
+      }
+
+      if (!investmentForm.buy_date) {
+        alert("Please select a buy date.");
+        return;
+      }
+
+      const payload = {
+        user_id: 1,
+        name: investmentForm.name.trim(),
+        investment_type:
+          investmentForm.investment_type,
+        symbol:
+          investmentForm.symbol.trim() || null,
+        quantity:
+          Number(investmentForm.quantity),
+        buy_price:
+          Number(investmentForm.buy_price),
+        buy_date:
+          investmentForm.buy_date,
+        broker:
+          investmentForm.broker.trim() || null,
+        fees:
+          Number(investmentForm.fees || 0),
+        notes:
+          investmentForm.notes.trim() || null,
+      };
+
+      const response = await fetch(
+        "https://ai-finance-trading-os-api.onrender.com/api/investments/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail ||
+            "Unable to save investment."
+        );
+      }
+
+      // Reset form
+      setInvestmentForm({
+        name: "",
+        investment_type: "Stocks",
+        symbol: "",
+        quantity: "",
+        buy_price: "",
+        buy_date: "",
+        broker: "",
+        fees: "",
+        notes: "",
+      });
+
+      // Close form
+      setShowInvestmentForm(false);
+
+      alert("Investment saved successfully.");
+
+    } catch (err) {
+      console.error(
+        "Save investment error:",
+        err
+      );
+
+      alert(
+        err?.message ||
+          "Unable to save investment."
+      );
+    }
+  };
   
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("en-IN", {

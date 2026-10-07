@@ -172,6 +172,8 @@ def list_investments(
                 quantity,
                 buy_price,
                 current_price,
+                price_source,
+                price_updated_at,
                 buy_date,
                 broker,
                 fees,

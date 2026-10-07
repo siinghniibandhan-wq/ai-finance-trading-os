@@ -6563,14 +6563,427 @@ function Bills() {
 
 
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(2, minmax(0, 1fr))",
-              gap: "14px",
-            }}
-          >
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(2, minmax(0, 1fr))",
+    gap: "16px",
+  }}
+>
+  {/* BILL NAME */}
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "7px",
+    }}
+  >
+    <label
+      style={{
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "rgba(255,255,255,0.60)",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+      }}
+    >
+      Bill Name
+    </label>
 
+    <input
+      value={formData.name}
+      onChange={(event) =>
+        handleChange(
+          "name",
+          event.target.value
+        )
+      }
+      placeholder="Electricity"
+      style={{
+        width: "100%",
+        minHeight: "42px",
+        padding: "10px 12px",
+        border:
+          "1px solid rgba(255,255,255,0.12)",
+        borderRadius: "12px",
+        background: "rgba(255,255,255,0.05)",
+        color: "#ffffff",
+        outline: "none",
+        fontSize: "13px",
+        boxSizing: "border-box",
+      }}
+    />
+  </div>
+
+  {/* AMOUNT */}
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "7px",
+    }}
+  >
+    <label
+      style={{
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "rgba(255,255,255,0.60)",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+      }}
+    >
+      Amount
+    </label>
+
+    <input
+      type="number"
+      min="0"
+      step="0.01"
+      value={formData.amount}
+      onChange={(event) =>
+        handleChange(
+          "amount",
+          event.target.value
+        )
+      }
+      placeholder="1000"
+      style={{
+        width: "100%",
+        minHeight: "42px",
+        padding: "10px 12px",
+        border:
+          "1px solid rgba(255,255,255,0.12)",
+        borderRadius: "12px",
+        background: "rgba(255,255,255,0.05)",
+        color: "#ffffff",
+        outline: "none",
+        fontSize: "13px",
+        boxSizing: "border-box",
+      }}
+    />
+  </div>
+
+  {/* CATEGORY */}
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "7px",
+    }}
+  >
+    <label
+      style={{
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "rgba(255,255,255,0.60)",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+      }}
+    >
+      Category
+    </label>
+
+    <select
+      value={formData.category_id}
+      onChange={(event) =>
+        handleChange(
+          "category_id",
+          event.target.value
+        )
+      }
+      style={{
+        width: "100%",
+        minHeight: "42px",
+        padding: "10px 12px",
+        border:
+          "1px solid rgba(255,255,255,0.12)",
+        borderRadius: "12px",
+        background: "#151525",
+        color: "#ffffff",
+        outline: "none",
+        fontSize: "13px",
+        boxSizing: "border-box",
+      }}
+    >
+      <option value="">
+        Select category
+      </option>
+
+      {categories
+        .filter(
+          (category) =>
+            category.category_type ===
+              "expense" ||
+            category.category_type ===
+              "Expense"
+        )
+        .map((category) => (
+          <option
+            key={category.id}
+            value={category.id}
+          >
+            {category.name}
+          </option>
+        ))}
+    </select>
+  </div>
+
+  {/* PAYMENT ACCOUNT */}
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "7px",
+    }}
+  >
+    <label
+      style={{
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "rgba(255,255,255,0.60)",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+      }}
+    >
+      Payment Account
+    </label>
+
+    <select
+      value={formData.account_id}
+      onChange={(event) =>
+        handleChange(
+          "account_id",
+          event.target.value
+        )
+      }
+      style={{
+        width: "100%",
+        minHeight: "42px",
+        padding: "10px 12px",
+        border:
+          "1px solid rgba(255,255,255,0.12)",
+        borderRadius: "12px",
+        background: "#151525",
+        color: "#ffffff",
+        outline: "none",
+        fontSize: "13px",
+        boxSizing: "border-box",
+      }}
+    >
+      <option value="">
+        Select account
+      </option>
+
+      {accounts
+        .filter(
+          (account) =>
+            account.is_active
+        )
+        .map((account) => (
+          <option
+            key={account.id}
+            value={account.id}
+          >
+            {account.name}
+          </option>
+        ))}
+    </select>
+  </div>
+
+  {/* FREQUENCY */}
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "7px",
+    }}
+  >
+    <label
+      style={{
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "rgba(255,255,255,0.60)",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+      }}
+    >
+      Frequency
+    </label>
+
+    <select
+      value={formData.frequency}
+      onChange={(event) =>
+        handleChange(
+          "frequency",
+          event.target.value
+        )
+      }
+      style={{
+        width: "100%",
+        minHeight: "42px",
+        padding: "10px 12px",
+        border:
+          "1px solid rgba(255,255,255,0.12)",
+        borderRadius: "12px",
+        background: "#151525",
+        color: "#ffffff",
+        outline: "none",
+        fontSize: "13px",
+        boxSizing: "border-box",
+      }}
+    >
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="quarterly">Quarterly</option>
+      <option value="half_yearly">
+        Half-Yearly
+      </option>
+      <option value="yearly">Yearly</option>
+      <option value="custom">Custom</option>
+    </select>
+  </div>
+
+  {/* NEXT DUE DATE */}
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "7px",
+    }}
+  >
+    <label
+      style={{
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "rgba(255,255,255,0.60)",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+      }}
+    >
+      Next Due Date
+    </label>
+
+    <input
+      type="date"
+      value={formData.next_due_date}
+      onChange={(event) =>
+        handleChange(
+          "next_due_date",
+          event.target.value
+        )
+      }
+      style={{
+        width: "100%",
+        minHeight: "42px",
+        padding: "10px 12px",
+        border:
+          "1px solid rgba(255,255,255,0.12)",
+        borderRadius: "12px",
+        background: "#151525",
+        color: "#ffffff",
+        outline: "none",
+        fontSize: "13px",
+        boxSizing: "border-box",
+      }}
+    />
+  </div>
+
+  {/* STATUS */}
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "7px",
+    }}
+  >
+    <label
+      style={{
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "rgba(255,255,255,0.60)",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+      }}
+    >
+      Status
+    </label>
+
+    <select
+      value={formData.status}
+      onChange={(event) =>
+        handleChange(
+          "status",
+          event.target.value
+        )
+      }
+      style={{
+        width: "100%",
+        minHeight: "42px",
+        padding: "10px 12px",
+        border:
+          "1px solid rgba(255,255,255,0.12)",
+        borderRadius: "12px",
+        background: "#151525",
+        color: "#ffffff",
+        outline: "none",
+        fontSize: "13px",
+        boxSizing: "border-box",
+      }}
+    >
+      <option value="active">Active</option>
+      <option value="paused">Paused</option>
+      <option value="cancelled">
+        Cancelled
+      </option>
+    </select>
+  </div>
+
+  {/* NOTES */}
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "7px",
+    }}
+  >
+    <label
+      style={{
+        fontSize: "11px",
+        fontWeight: 700,
+        color: "rgba(255,255,255,0.60)",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+      }}
+    >
+      Notes
+    </label>
+
+    <input
+      value={formData.notes}
+      onChange={(event) =>
+        handleChange(
+          "notes",
+          event.target.value
+        )
+      }
+      placeholder="Optional notes"
+      style={{
+        width: "100%",
+        minHeight: "42px",
+        padding: "10px 12px",
+        border:
+          "1px solid rgba(255,255,255,0.12)",
+        borderRadius: "12px",
+        background: "rgba(255,255,255,0.05)",
+        color: "#ffffff",
+        outline: "none",
+        fontSize: "13px",
+        boxSizing: "border-box",
+      }}
+    />
+  </div>
+</div>
             {/* NAME */}
 
             <div>

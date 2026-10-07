@@ -938,6 +938,11 @@ function Portfolio() {
           Number(investmentForm.quantity),
         buy_price:
           Number(investmentForm.buy_price),
+        current_price:
+  Number(
+    investmentForm.current_price ||
+    investmentForm.buy_price
+  ),
         buy_date:
           investmentForm.buy_date,
         broker:
@@ -975,6 +980,7 @@ function Portfolio() {
         symbol: "",
         quantity: "",
         buy_price: "",
+        current_price: "",
         buy_date: "",
         broker: "",
         fees: "",
@@ -1384,6 +1390,32 @@ const totalInvested = Object.values(assetAllocation).reduce(
               }}
             />
 
+            {/* CURRENT PRICE */}
+
+<input
+  type="number"
+  placeholder="Current price"
+  value={investmentForm.current_price}
+  onChange={(event) =>
+    setInvestmentForm({
+      ...investmentForm,
+      current_price: event.target.value,
+    })
+  }
+  style={{
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "11px 12px",
+    borderRadius: "10px",
+    border:
+      "1px solid rgba(255,255,255,0.10)",
+    background:
+      "rgba(255,255,255,0.05)",
+    color: "#ffffff",
+    fontSize: "12px",
+    outline: "none",
+  }}
+/>
 
             {/* BUY DATE */}
 

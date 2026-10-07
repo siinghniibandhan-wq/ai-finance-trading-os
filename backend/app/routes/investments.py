@@ -107,7 +107,8 @@ class InvestmentCreate(BaseModel):
     buy_price: Decimal = Field(
         gt=0
     )
-
+    current_price: Decimal | None = None
+    
     buy_date: date
 
     broker: str | None = None

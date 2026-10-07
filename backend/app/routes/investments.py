@@ -364,6 +364,12 @@ def update_investment(
                 quantity = :quantity,
                 buy_price = :buy_price,
                 current_price = :current_price,
+                price_source = COALESCE(:price_source, price_source),
+price_updated_at = CASE
+    WHEN :current_price IS DISTINCT FROM current_price
+    THEN CURRENT_TIMESTAMP
+    ELSE price_updated_at
+END,
                 buy_date = :buy_date,
                 broker = :broker,
                 fees = :fees,
@@ -399,6 +405,7 @@ def update_investment(
             "quantity": data.quantity,
             "buy_price": data.buy_price,
             "current_price": data.current_price,
+            "price_source": data.price_source,
             "buy_date": data.buy_date,
             "broker": data.broker.strip()
                 if data.broker

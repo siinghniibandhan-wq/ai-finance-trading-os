@@ -1390,32 +1390,6 @@ const totalInvested = Object.values(assetAllocation).reduce(
               }}
             />
 
-            {/* CURRENT PRICE */}
-
-<input
-  type="number"
-  placeholder="Current price"
-  value={investmentForm.current_price}
-  onChange={(event) =>
-    setInvestmentForm({
-      ...investmentForm,
-      current_price: event.target.value,
-    })
-  }
-  style={{
-    width: "100%",
-    boxSizing: "border-box",
-    padding: "11px 12px",
-    borderRadius: "10px",
-    border:
-      "1px solid rgba(255,255,255,0.10)",
-    background:
-      "rgba(255,255,255,0.05)",
-    color: "#ffffff",
-    fontSize: "12px",
-    outline: "none",
-  }}
-/>
 
             {/* BUY DATE */}
 

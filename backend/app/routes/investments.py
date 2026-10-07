@@ -310,6 +310,84 @@ def get_investment(
 
 
 # ============================================================
+# UPDATE INVESTMENT
+# ============================================================
+
+@router.put("/{investment_id}")
+def update_investment(
+    investment_id: int,
+    data: InvestmentCreate,
+    db: Session = Depends(get_db),
+):
+
+    ensure_investments_table(db)
+
+    result = db.execute(
+        text(
+            """
+            UPDATE investments
+            SET
+                name = :name,
+                investment_type = :investment_type,
+                symbol = :symbol,
+                quantity = :quantity,
+                buy_price = :buy_price,
+                buy_date = :buy_date,
+                broker = :broker,
+                fees = :fees,
+                notes = :notes,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = :investment_id
+            AND user_id = :user_id
+            RETURNING
+                id,
+                user_id,
+                name,
+                investment_type,
+                symbol,
+                quantity,
+                buy_price,
+                current_price,
+                buy_date,
+                broker,
+                fees,
+                notes,
+                created_at,
+                updated_at
+            """
+        ),
+        {
+            "investment_id": investment_id,
+            "user_id": data.user_id,
+            "name": data.name.strip(),
+            "investment_type": data.investment_type.strip(),
+            "symbol": data.symbol.strip()
+                if data.symbol
+                else None,
+            "quantity": data.quantity,
+            "buy_price": data.buy_price,
+            "buy_date": data.buy_date,
+            "broker": data.broker.strip()
+                if data.broker
+                else None,
+            "fees": data.fees,
+            "notes": data.notes,
+        },
+    )
+
+    investment = result.first()
+
+    if not investment:
+        raise HTTPException(
+            status_code=404,
+            detail="Investment not found.",
+        )
+
+    db.commit()
+
+    return dict(investment._mapping)
+
+# ============================================================
 # DELETE INVESTMENT
 # ============================================================
 

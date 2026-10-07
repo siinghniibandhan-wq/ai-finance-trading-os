@@ -48,7 +48,9 @@ def ensure_investments_table(db: Session):
                 quantity NUMERIC(18,6) NOT NULL,
 
                 buy_price NUMERIC(18,4) NOT NULL,
-
+                
+                current_price NUMERIC(18,4),
+                
                 buy_date DATE NOT NULL,
 
                 broker VARCHAR(255),
@@ -67,6 +69,14 @@ def ensure_investments_table(db: Session):
         )
     )
 
+    db.execute(
+    text(
+        """
+        ALTER TABLE investments
+        ADD COLUMN IF NOT EXISTS current_price NUMERIC(18,4)
+        """
+    )
+    )
     db.commit()
 
 

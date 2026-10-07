@@ -319,6 +319,8 @@ export default function App() {
   <Budget />
 ) : activePage === "Categories" ? (
   <Category />
+) : activePage === "Bills" ? (
+  <Bills />
 ) : (
   <PlaceholderPage
     title={activePage}

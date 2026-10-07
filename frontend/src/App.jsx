@@ -1358,7 +1358,7 @@ const deleteAccount = async () => {
         key={account.id}
         style={{
           display: "grid",
-gridTemplateColumns: "minmax(0, 1fr) 110px 90px 90px",
+gridTemplateColumns: "minmax(0, 1fr) 110px 90px",
 alignItems: "center",
 columnGap: "20px",
           padding: "20px",

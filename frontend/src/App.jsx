@@ -2137,11 +2137,12 @@ const holdingReturn =
 
           </div>
 
-          <div
+      <div
   style={{
     textAlign: "right",
   }}
 >
+  {/* INVESTED AMOUNT */}
   <div
     style={{
       fontSize: "14px",
@@ -2161,6 +2162,60 @@ const holdingReturn =
     Invested
   </div>
 
+  {/* CURRENT VALUE */}
+  <div
+    style={{
+      marginTop: "8px",
+      fontSize: "13px",
+      fontWeight: 800,
+    }}
+  >
+    {formatCurrency(currentValue)}
+  </div>
+
+  <div
+    style={{
+      marginTop: "4px",
+      fontSize: "10px",
+      color: "rgba(255,255,255,0.40)",
+    }}
+  >
+    Current Value
+  </div>
+
+  {/* GAIN / LOSS */}
+  <div
+    style={{
+      marginTop: "8px",
+      fontSize: "12px",
+      fontWeight: 700,
+    }}
+  >
+    {formatCurrency(gainLoss)}
+  </div>
+
+  <div
+    style={{
+      marginTop: "4px",
+      fontSize: "10px",
+      color: "rgba(255,255,255,0.40)",
+    }}
+  >
+    Gain / Loss
+  </div>
+
+  {/* RETURN */}
+  <div
+    style={{
+      marginTop: "8px",
+      fontSize: "11px",
+      fontWeight: 700,
+    }}
+  >
+    Return: {holdingReturn}
+  </div>
+
+  {/* EDIT BUTTON */}
   <button
     type="button"
     className="small-button"
@@ -2174,7 +2229,7 @@ const holdingReturn =
   >
     Edit
   </button>
-</div>
+</div>  
 
         </div>
       );

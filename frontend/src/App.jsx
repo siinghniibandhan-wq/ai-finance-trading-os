@@ -835,6 +835,7 @@ function Portfolio() {
     symbol: "",
     quantity: "",
     buy_price: "",
+    current_price: "",
     buy_date: "",
     broker: "",
     fees: "",

@@ -1389,6 +1389,7 @@ function Portfolio() {
             <button
               type="button"
               className="primary-button"
+              onClick={handleInvestmentSubmit}
             >
               Save Investment
             </button>

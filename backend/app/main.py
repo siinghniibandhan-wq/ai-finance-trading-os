@@ -21,6 +21,8 @@ from app.routes import (
     budgets,
     bills,
     investments,
+    market,
+  
 )
 
 

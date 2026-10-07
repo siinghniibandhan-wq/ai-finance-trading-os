@@ -821,6 +821,25 @@ function PlaceholderPage({ title }) {
 // ============================================================
 
 function Portfolio() {
+  
+  // ----------------------------------------------------------
+  // ADD INVESTMENT FORM STATE
+  // ----------------------------------------------------------
+
+  const [showInvestmentForm, setShowInvestmentForm] =
+    useState(false);
+
+  const [investmentForm, setInvestmentForm] = useState({
+    name: "",
+    investment_type: "Stocks",
+    symbol: "",
+    quantity: "",
+    buy_price: "",
+    buy_date: "",
+    broker: "",
+    fees: "",
+    notes: "",
+  });
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("en-IN", {
@@ -902,16 +921,205 @@ function Portfolio() {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="primary-button"
-        >
-          <Plus size={16} />
-          Add Investment
-        </button>
+       <button
+  type="button"
+  className="primary-button"
+  onClick={() => setShowInvestmentForm(true)}
+>
+  <Plus size={16} />
+  Add Investment
+</button> 
 
       </section>
 
+           {/* =====================================================
+          ADD INVESTMENT FORM
+      ===================================================== */}
+
+      {showInvestmentForm && (
+        <div
+          className="glass-card"
+          style={{
+            padding: "20px",
+          }}
+        >
+
+          <div className="card-header">
+
+            <div>
+              <p className="card-label">
+                INVESTMENTS
+              </p>
+
+              <h3>
+                Add Investment
+              </h3>
+            </div>
+
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "14px",
+            }}
+          >
+
+            <input
+              type="text"
+              placeholder="Investment name"
+              value={investmentForm.name}
+              onChange={(event) =>
+                setInvestmentForm({
+                  ...investmentForm,
+                  name: event.target.value,
+                })
+              }
+            />
+
+            <select
+              value={investmentForm.investment_type}
+              onChange={(event) =>
+                setInvestmentForm({
+                  ...investmentForm,
+                  investment_type: event.target.value,
+                })
+              }
+            >
+              <option value="Stocks">Stocks</option>
+              <option value="Mutual Funds">
+                Mutual Funds
+              </option>
+              <option value="ETFs">ETFs</option>
+              <option value="Gold">Gold</option>
+              <option value="Bonds">Bonds</option>
+              <option value="NPS">NPS</option>
+              <option value="Fixed Deposits">
+                Fixed Deposits
+              </option>
+              <option value="Other">Other</option>
+            </select>
+
+            <input
+              type="text"
+              placeholder="Symbol / ISIN"
+              value={investmentForm.symbol}
+              onChange={(event) =>
+                setInvestmentForm({
+                  ...investmentForm,
+                  symbol: event.target.value,
+                })
+              }
+            />
+
+            <input
+              type="number"
+              placeholder="Quantity"
+              value={investmentForm.quantity}
+              onChange={(event) =>
+                setInvestmentForm({
+                  ...investmentForm,
+                  quantity: event.target.value,
+                })
+              }
+            />
+
+            <input
+              type="number"
+              placeholder="Buy price"
+              value={investmentForm.buy_price}
+              onChange={(event) =>
+                setInvestmentForm({
+                  ...investmentForm,
+                  buy_price: event.target.value,
+                })
+              }
+            />
+
+            <input
+              type="date"
+              value={investmentForm.buy_date}
+              onChange={(event) =>
+                setInvestmentForm({
+                  ...investmentForm,
+                  buy_date: event.target.value,
+                })
+              }
+            />
+
+            <input
+              type="text"
+              placeholder="Broker / Platform"
+              value={investmentForm.broker}
+              onChange={(event) =>
+                setInvestmentForm({
+                  ...investmentForm,
+                  broker: event.target.value,
+                })
+              }
+            />
+
+            <input
+              type="number"
+              placeholder="Fees"
+              value={investmentForm.fees}
+              onChange={(event) =>
+                setInvestmentForm({
+                  ...investmentForm,
+                  fees: event.target.value,
+                })
+              }
+            />
+
+            <textarea
+              placeholder="Notes"
+              value={investmentForm.notes}
+              onChange={(event) =>
+                setInvestmentForm({
+                  ...investmentForm,
+                  notes: event.target.value,
+                })
+              }
+              style={{
+                gridColumn: "1 / -1",
+                minHeight: "90px",
+                resize: "vertical",
+              }}
+            />
+
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              marginTop: "18px",
+            }}
+          >
+
+            <button
+              type="button"
+              className="primary-button"
+            >
+              Save Investment
+            </button>
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() =>
+                setShowInvestmentForm(false)
+              }
+            >
+              Cancel
+            </button>
+
+          </div>
+
+        </div>
+      )} 
 
       {/* =====================================================
           SUMMARY CARDS

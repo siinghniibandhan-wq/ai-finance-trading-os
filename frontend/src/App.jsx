@@ -1241,7 +1241,11 @@ const deleteAccount = async () => {
           value={
             loading
               ? "Loading..."
-              : String(accounts.length)
+              : String(
+    accounts.filter(
+      (account) => account.is_active
+    ).length
+  )
           }
           change="Connected"
           positive

@@ -978,16 +978,22 @@ const handleEditInvestment = (investment) => {
           investmentForm.notes.trim() || null,
       };
 
-      const response = await fetch(
-        "https://ai-finance-trading-os-api.onrender.com/api/investments/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+const url = editingInvestmentId
+  ? `https://ai-finance-trading-os-api.onrender.com/api/investments/${editingInvestmentId}`
+  : "https://ai-finance-trading-os-api.onrender.com/api/investments/";
+
+const response = await fetch(
+  url,
+  {
+    method: editingInvestmentId
+      ? "PUT"
+      : "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  }
+);
 
       const data = await response.json();
 

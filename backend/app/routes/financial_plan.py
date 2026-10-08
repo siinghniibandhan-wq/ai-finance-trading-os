@@ -181,3 +181,200 @@ def get_financial_plan(
                 ),
                 0,
             ).label(
+                                "income"
+            ),
+
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            Transaction.transaction_type
+                            == "expense",
+                            Transaction.amount,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label(
+                "expense"
+            ),
+
+            func.count(
+                Transaction.id
+            ).label(
+                "transaction_count"
+            ),
+        )
+        .filter(
+            Transaction.user_id == user_id,
+        )
+        .one()
+    )
+
+
+    # ========================================================
+    # NORMALIZE VALUES
+    # ========================================================
+
+    total_balance = to_decimal(
+        total_balance
+    )
+
+    total_income = to_decimal(
+        transaction_summary.income
+    )
+
+    total_expense = to_decimal(
+        transaction_summary.expense
+    )
+
+    transaction_count = (
+        transaction_summary.transaction_count
+        or 0
+    )
+
+
+    # ========================================================
+    # MONTHLY PLANNING BASE
+    # ========================================================
+
+    monthly_income = total_income
+
+    monthly_expense = total_expense
+
+    monthly_savings = (
+        monthly_income
+        - monthly_expense
+    )
+
+
+    # ========================================================
+    # SAVINGS RATE
+    # ========================================================
+
+    savings_rate = calculate_percentage(
+        monthly_savings,
+        monthly_income,
+    )
+
+
+    # ========================================================
+    # EMERGENCY FUND
+    # ========================================================
+
+    emergency_fund_months = Decimal("6")
+
+    emergency_fund_target = (
+        monthly_expense
+        * emergency_fund_months
+    )
+
+    emergency_fund_current = total_balance
+
+
+    # ========================================================
+    # EMERGENCY FUND PROGRESS
+    # ========================================================
+
+    emergency_fund_progress = calculate_percentage(
+        emergency_fund_current,
+        emergency_fund_target,
+    )
+
+    if emergency_fund_progress > Decimal("100"):
+        emergency_fund_progress = Decimal("100")
+
+
+    # ========================================================
+    # EMERGENCY FUND REMAINING
+    # ========================================================
+
+    emergency_fund_remaining = (
+        emergency_fund_target
+        - emergency_fund_current
+    )
+
+    if emergency_fund_remaining < Decimal("0"):
+        emergency_fund_remaining = Decimal("0")
+
+
+    # ========================================================
+    # INVESTMENT CONTRIBUTION CAPACITY
+    # ========================================================
+
+    investment_contribution_capacity = (
+        monthly_savings
+    )
+
+    if investment_contribution_capacity < Decimal("0"):
+        investment_contribution_capacity = Decimal("0")
+
+
+    # ========================================================
+    # FINANCIAL POSITION
+    # ========================================================
+
+    if monthly_income == 0:
+
+        financial_position = "no_income_data"
+
+    elif monthly_savings < 0:
+
+        financial_position = "negative_cash_flow"
+
+    elif monthly_savings == 0:
+
+        financial_position = "break_even"
+
+    else:
+
+        financial_position = "positive_cash_flow"
+
+
+    # ========================================================
+    # RETURN FINANCIAL PLAN
+    # ========================================================
+
+    return {
+        "status": "success",
+
+        "user_id": user_id,
+
+        "planning_engine": {
+            "name": "Financial Planning Engine",
+            "version": "1.0",
+            "read_only": True,
+        },
+
+        "cash": {
+            "account_count": account_count,
+            "current_balance": total_balance,
+        },
+
+        "monthly_cash_flow": {
+            "income": monthly_income,
+            "expense": monthly_expense,
+            "savings": monthly_savings,
+            "savings_rate_percent": savings_rate,
+        },
+
+        "emergency_fund": {
+            "target_months": emergency_fund_months,
+            "target_amount": emergency_fund_target,
+            "current_amount": emergency_fund_current,
+            "remaining_amount": emergency_fund_remaining,
+            "progress_percent": emergency_fund_progress,
+        },
+
+        "investment_planning": {
+            "monthly_contribution_capacity": (
+                investment_contribution_capacity
+            ),
+        },
+
+        "financial_position": {
+            "status": financial_position,
+            "transaction_count": transaction_count,
+        },
+    }

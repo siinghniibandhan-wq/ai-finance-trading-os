@@ -1731,13 +1731,18 @@ const summaryCards = [
 
         {summaryCards.map((card) => (
           <div
-            key={card.label}
-            className="glass-card"
-            style={{
-              padding: "18px",
-              minHeight: "105px",
-            }}
-          >
+  key={card.label}
+  className="glass-card"
+  style={{
+    padding: "18px",
+    minHeight: "105px",
+    minWidth: 0,
+    boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+  }}
+>
 
             <div
               style={{
@@ -1752,14 +1757,17 @@ const summaryCards = [
             </div>
 
             <div
-              style={{
-                fontSize: "20px",
-                fontWeight: 800,
-                color: "#ffffff",
-              }}
-            >
-              {card.value}
-            </div>
+  style={{
+    fontSize: "20px",
+    fontWeight: 800,
+    color: "#ffffff",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  }}
+>
+  {card.value}
+</div>
 
             <div
               style={{

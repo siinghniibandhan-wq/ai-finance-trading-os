@@ -30,6 +30,7 @@ from app.routes import (
     financial_plan,
     tax_data,
     capital_gains,
+    capital_gains_classification,
 )
 
 
@@ -130,3 +131,4 @@ app.include_router(financial_analytics.router)
 app.include_router(financial_plan.router)
 app.include_router(tax_data.router)
 app.include_router(capital_gains.router)
+app.include_router(capital_gains_classification.router)

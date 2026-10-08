@@ -3,23 +3,26 @@
 # FINANCIAL DATA ENGINE - SUMMARY
 # ============================================================
 #
-# Version: 1.0
+# Version: 1.1
 #
 # Purpose:
 #   Create one read-only financial snapshot from the
 #   existing Financial OS data.
 #
+# Used later by:
+#   Home
+#   Plan
+#   Tax
+#   AI
+#
 # IMPORTANT:
-#   This file does NOT modify:
+#   This module does NOT modify:
 #   - Transactions
 #   - Investments
 #   - Holdings
 #   - P&L
 #   - Market prices
 #   - Database structure
-#
-# Future modules will consume this summary:
-#   Home → Plan → Tax → AI
 # ============================================================
 
 from decimal import Decimal
@@ -53,12 +56,39 @@ router = APIRouter(
 # ============================================================
 
 def to_decimal(value):
-    """Safely convert database values to Decimal."""
+    """Safely convert a database value to Decimal."""
 
     if value is None:
         return Decimal("0")
 
     return Decimal(str(value))
+
+
+# ============================================================
+# PERCENTAGE HELPER
+# ============================================================
+
+def calculate_percentage(
+    numerator,
+    denominator,
+):
+    """
+    Safely calculate a percentage.
+
+    Returns 0 when the denominator is zero.
+    """
+
+    numerator = to_decimal(numerator)
+    denominator = to_decimal(denominator)
+
+    if denominator == 0:
+        return Decimal("0")
+
+    return (
+        numerator
+        / denominator
+        * Decimal("100")
+    )
 
 
 # ============================================================
@@ -75,12 +105,12 @@ def get_financial_summary(
 
     Example:
 
-    GET /api/financial-summary/?user_id=1
+        GET /api/financial-summary/?user_id=1
     """
 
-    # --------------------------------------------------------
+    # ========================================================
     # ACTIVE ACCOUNT BALANCE
-    # --------------------------------------------------------
+    # ========================================================
 
     total_balance = (
         db.query(
@@ -107,9 +137,9 @@ def get_financial_summary(
         .scalar()
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # TOTAL INCOME
-    # --------------------------------------------------------
+    # ========================================================
 
     total_income = (
         db.query(
@@ -125,9 +155,9 @@ def get_financial_summary(
         .scalar()
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # TOTAL EXPENSE
-    # --------------------------------------------------------
+    # ========================================================
 
     total_expense = (
         db.query(
@@ -143,9 +173,9 @@ def get_financial_summary(
         .scalar()
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # NORMALIZE NUMBERS
-    # --------------------------------------------------------
+    # ========================================================
 
     total_balance = to_decimal(
         total_balance
@@ -159,18 +189,35 @@ def get_financial_summary(
         total_expense
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # NET CASH FLOW
-    # --------------------------------------------------------
+    # ========================================================
 
     net_cash_flow = (
         total_income
         - total_expense
     )
 
-    # --------------------------------------------------------
+    # ========================================================
+    # SAVINGS RATE
+    # ========================================================
+    #
+    # Formula:
+    #
+    #   Net Cash Flow / Income × 100
+    #
+    # If income is zero, savings rate = 0.
+    #
+    # ========================================================
+
+    savings_rate = calculate_percentage(
+        net_cash_flow,
+        total_income,
+    )
+
+    # ========================================================
     # LOAD EXISTING INVESTMENT DATA
-    # --------------------------------------------------------
+    # ========================================================
 
     investments = load_investments(
         db,
@@ -187,9 +234,9 @@ def get_financial_summary(
         investment_transactions,
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # INVESTMENT TOTALS
-    # --------------------------------------------------------
+    # ========================================================
 
     investment_cost_basis = sum(
         (
@@ -248,33 +295,52 @@ def get_financial_summary(
         + unrealised_gain_loss
     )
 
-    # --------------------------------------------------------
-    # FIRST VERSION OF NET WORTH
-    # --------------------------------------------------------
+    # ========================================================
+    # INVESTMENT RETURN
+    # ========================================================
     #
-    # Assets currently included:
+    # Formula:
+    #
+    #   Total P&L / Cost Basis × 100
+    #
+    # This is a simple portfolio-level return indicator.
+    #
+    # It is NOT a time-weighted or XIRR return.
+    #
+    # ========================================================
+
+    investment_return = calculate_percentage(
+        total_gain_loss,
+        investment_cost_basis,
+    )
+
+    # ========================================================
+    # NET WORTH
+    # ========================================================
+    #
+    # Current version:
     #
     #   Active account balances
     #   +
     #   Current investment value
     #
-    # Later we will add:
+    # Future versions can add:
     #   Property
     #   Vehicles
     #   Other assets
     #   Loans
     #   Credit liabilities
     #
-    # --------------------------------------------------------
+    # ========================================================
 
     net_worth = (
         total_balance
         + investment_current_value
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # RETURN FINANCIAL SNAPSHOT
-    # --------------------------------------------------------
+    # ========================================================
 
     return {
         "status": "success",
@@ -283,7 +349,7 @@ def get_financial_summary(
 
         "engine": {
             "name": "Financial Data Engine",
-            "version": "1.0",
+            "version": "1.1",
             "read_only": True,
         },
 
@@ -296,6 +362,7 @@ def get_financial_summary(
             "total_income": total_income,
             "total_expense": total_expense,
             "net_cash_flow": net_cash_flow,
+            "savings_rate_percent": savings_rate,
         },
 
         "investments": {
@@ -305,6 +372,7 @@ def get_financial_summary(
             "realised_gain_loss": realised_gain_loss,
             "unrealised_gain_loss": unrealised_gain_loss,
             "total_gain_loss": total_gain_loss,
+            "return_percent": investment_return,
         },
 
         "net_worth": {

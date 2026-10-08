@@ -1,39 +1,34 @@
 # ============================================================
 # FINANCIAL OS
-# TAX LIABILITY ENGINE v1.0
+# TAX LIABILITY ENGINE
 # ============================================================
 #
+# Version: 1.1
+#
 # Purpose:
-#   Combine Financial OS tax data into an estimated
-#   capital-gain tax liability.
+#   Calculate indicative capital-gains tax liability using:
+#   - FIFO realised gains
+#   - Asset classification
+#   - STCG / LTCG classification
+#   - Section 111A
+#   - Section 112A
+#   - LTCG threshold
+#   - 4% cess
 #
 # IMPORTANT:
-#   - READ-ONLY
-#   - Does NOT modify database
-#   - Does NOT modify investments
-#   - Does NOT modify transactions
-#   - Does NOT modify capital-gain calculations
+#   This engine is READ-ONLY.
 #
-# v1.0 scope:
-#   - STCG Section 111A
-#   - LTCG Section 112A
-#   - Aggregate LTCG threshold
-#   - STT confirmation
-#   - Basic tax
-#   - Surcharge context
-#   - Health & Education Cess
-#   - Taxpayer context
+#   It does NOT modify:
+#   - Transactions
+#   - Investments
+#   - Investment transactions
+#   - Holdings
+#   - Tax records
+#   - Database structure
 #
-# NOT YET INCLUDED:
-#   - Complete salary/business tax computation
-#   - Capital-loss set-off
-#   - Capital-loss carry-forward
-#   - Complete 87A computation
-#   - Complete old-regime deductions
-#   - Complete surcharge/marginal-relief calculation
-#   - TDS/TCS
-#   - Advance tax
-#   - Complete ITR computation
+#   Final total income-tax liability is intentionally NOT
+#   calculated because complete income, deductions, losses,
+#   surcharge and TDS/TCS data are not yet available.
 #
 # ============================================================
 
@@ -41,32 +36,11 @@
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 
-from fastapi import (
-    APIRouter,
-    Depends,
-)
-
-from sqlalchemy import func, text
-)
-
+from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.models import Transaction
-
-from app.routes.capital_gains import (
-    get_financial_year_dates,
-    load_transactions,
-    calculate_fifo_gains,
-)
-
-from app.routes.asset_classification import (
-    resolve_asset_class,
-)
-
-from app.routes.capital_gains_classification import (
-    classify_gain,
-)
 
 
 # ============================================================
@@ -75,7 +49,7 @@ from app.routes.capital_gains_classification import (
 
 router = APIRouter(
     prefix="/api/tax-liability",
-    tags=["Tax Liability"],
+    tags=["Tax Liability Engine"],
 )
 
 
@@ -83,19 +57,67 @@ router = APIRouter(
 # TAX CONSTANTS
 # ============================================================
 
-STCG_RATE_111A = Decimal("0.20")
+STCG_RATE = Decimal("0.20")
 
-LTCG_RATE_112A = Decimal("0.125")
-
-LTCG_112A_THRESHOLD = Decimal(
-    "125000"
-)
+LTCG_RATE = Decimal("0.125")
 
 CESS_RATE = Decimal("0.04")
 
-MAX_SPECIAL_GAIN_SURCHARGE_RATE = Decimal(
-    "0.15"
+LTCG_THRESHOLD = Decimal("125000")
+
+
+# ============================================================
+# 87A CONTEXT
+# ============================================================
+
+NEW_REGIME_87A_INCOME_LIMIT = Decimal(
+    "1200000"
 )
+
+NEW_REGIME_87A_MAX_REBATE = Decimal(
+    "60000"
+)
+
+OLD_REGIME_87A_INCOME_LIMIT = Decimal(
+    "500000"
+)
+
+OLD_REGIME_87A_MAX_REBATE = Decimal(
+    "12500"
+)
+
+
+# ============================================================
+# CAPITAL-GAIN ASSET RULES
+# ============================================================
+
+ASSET_CLASS_RULES = {
+
+    "listed_equity": {
+        "threshold_days": 365,
+        "threshold_months": 12,
+    },
+
+    "equity_oriented_mf": {
+        "threshold_days": 365,
+        "threshold_months": 12,
+    },
+
+    "unlisted_equity": {
+        "threshold_days": 730,
+        "threshold_months": 24,
+    },
+
+    "listed_other_security": {
+        "threshold_days": 365,
+        "threshold_months": 12,
+    },
+
+    "unlisted_other_security": {
+        "threshold_days": 730,
+        "threshold_months": 24,
+    },
+}
 
 
 # ============================================================
@@ -103,9 +125,6 @@ MAX_SPECIAL_GAIN_SURCHARGE_RATE = Decimal(
 # ============================================================
 
 def to_decimal(value):
-    """
-    Safely convert a value to Decimal.
-    """
 
     if value is None:
         return Decimal("0")
@@ -118,141 +137,308 @@ def to_decimal(value):
 # ============================================================
 
 def money(value):
-    """
-    Round monetary values to two decimal places.
-    """
 
-    return to_decimal(
-        value
-    ).quantize(
+    return to_decimal(value).quantize(
         Decimal("0.01"),
         rounding=ROUND_HALF_UP,
     )
 
 
 # ============================================================
-# ASSET CLASS LOADER
+# FINANCIAL YEAR
 # ============================================================
 
-def load_asset_classes(
+def get_financial_year_dates(
+    financial_year,
+):
+    """
+    Convert:
+
+        2026-27
+
+    into:
+
+        01-Apr-2026
+        31-Mar-2027
+    """
+
+    if (
+        not financial_year
+        or len(financial_year) != 7
+        or financial_year[4] != "-"
+    ):
+        raise ValueError(
+            "financial_year must use YYYY-YY format."
+        )
+
+    try:
+
+        start_year = int(
+            financial_year[:4]
+        )
+
+        end_year_suffix = int(
+            financial_year[5:]
+        )
+
+    except ValueError:
+
+        raise ValueError(
+            "financial_year must use YYYY-YY format."
+        )
+
+    expected_suffix = (
+        (start_year + 1) % 100
+    )
+
+    if end_year_suffix != expected_suffix:
+
+        raise ValueError(
+            "Invalid financial year. Example: 2026-27."
+        )
+
+    return (
+        date(
+            start_year,
+            4,
+            1,
+        ),
+        date(
+            start_year + 1,
+            3,
+            31,
+        ),
+    )
+
+
+# ============================================================
+# ASSET CLASSIFICATION
+# ============================================================
+
+def resolve_asset_class(
+    investment_type,
+):
+    """
+    Resolve existing investment_type into a tax asset class.
+
+    Unknown values remain unclassified.
+    """
+
+    value = str(
+        investment_type or ""
+    ).strip().lower()
+
+    mapping = {
+
+        # ----------------------------------------------------
+        # LISTED EQUITY
+        # ----------------------------------------------------
+
+        "stock":
+            "listed_equity",
+
+        "stocks":
+            "listed_equity",
+
+        "equity":
+            "listed_equity",
+
+        "share":
+            "listed_equity",
+
+        "shares":
+            "listed_equity",
+
+        "listed equity":
+            "listed_equity",
+
+        "listed stock":
+            "listed_equity",
+
+        "listed shares":
+            "listed_equity",
+
+        # ----------------------------------------------------
+        # EQUITY MUTUAL FUNDS
+        # ----------------------------------------------------
+
+        "equity mutual fund":
+            "equity_oriented_mf",
+
+        "equity mutual funds":
+            "equity_oriented_mf",
+
+        "equity mf":
+            "equity_oriented_mf",
+
+        "equity-oriented mutual fund":
+            "equity_oriented_mf",
+
+        "equity-oriented mutual funds":
+            "equity_oriented_mf",
+
+        # ----------------------------------------------------
+        # UNLISTED EQUITY
+        # ----------------------------------------------------
+
+        "unlisted equity":
+            "unlisted_equity",
+
+        "unlisted stock":
+            "unlisted_equity",
+
+        "unlisted shares":
+            "unlisted_equity",
+
+        # ----------------------------------------------------
+        # LISTED OTHER SECURITIES
+        # ----------------------------------------------------
+
+        "listed security":
+            "listed_other_security",
+
+        "listed securities":
+            "listed_other_security",
+
+        "bond":
+            "listed_other_security",
+
+        "bonds":
+            "listed_other_security",
+
+        # ----------------------------------------------------
+        # UNLISTED OTHER SECURITIES
+        # ----------------------------------------------------
+
+        "unlisted security":
+            "unlisted_other_security",
+
+        "unlisted securities":
+            "unlisted_other_security",
+    }
+
+    return mapping.get(
+        value
+    )
+
+
+# ============================================================
+# LOAD INVESTMENTS
+# ============================================================
+
+def load_investments(
     db: Session,
     user_id: int,
 ):
     """
-    Load investment asset classifications.
-
-    Uses the existing Asset Classification Resolver.
+    Load investment metadata required for classification.
     """
 
-    rows = (
-        db.execute(
-    text(
-        """
-        SELECT
-            id,
-            name,
-            investment_type,
-            symbol
-        FROM investments
-        WHERE user_id = :user_id
-        ORDER BY id ASC
-        """
-    ),
-    {
-        "user_id": user_id,
-    },
-        )
+    result = db.execute(
+        text(
+            """
+            SELECT
+                id,
+                name,
+                investment_type,
+                symbol
+            FROM investments
+            WHERE user_id = :user_id
+            ORDER BY id ASC
+            """
+        ),
+        {
+            "user_id": user_id,
+        },
     )
 
-    asset_classes = {}
+    investments = {}
 
-    for row in rows:
+    for row in result.mappings().all():
 
-        investment = dict(
-            row._mapping
-        )
+        investment = dict(row)
 
-        resolution = (
-            resolve_asset_class(
-                investment[
-                    "investment_type"
-                ]
-            )
-        )
-
-        asset_classes[
+        investments[
             investment["id"]
-        ] = {
-            "investment_id": (
-                investment["id"]
-            ),
-            "name": (
-                investment["name"]
-            ),
-            "investment_type": (
-                investment[
-                    "investment_type"
-                ]
-            ),
-            "symbol": (
-                investment["symbol"]
-            ),
-            "asset_class": (
-                resolution[
-                    "asset_class"
-                ]
-            ),
-            "classification_status": (
-                resolution[
-                    "status"
-                ]
-            ),
-        }
+        ] = investment
 
-    return asset_classes
+    return investments
 
 
 # ============================================================
-# CAPITAL GAIN SUMMARY
+# LOAD INVESTMENT TRANSACTIONS
 # ============================================================
 
-def build_capital_gain_summary(
+def load_investment_transactions(
     db: Session,
     user_id: int,
-    start_date: date,
     end_date: date,
 ):
     """
-    Build STCG/LTCG totals from the existing
-    FIFO + classification engines.
+    Load all BUY/SELL investment transactions up to FY end.
+
+    Earlier BUY transactions are required because a current
+    FY SELL can consume an older FIFO lot.
     """
 
-    asset_classes = load_asset_classes(
-        db=db,
-        user_id=user_id,
+    result = db.execute(
+        text(
+            """
+            SELECT
+                id,
+                investment_id,
+                transaction_type,
+                quantity,
+                price,
+                fees,
+                transaction_date
+            FROM investment_transactions
+            WHERE
+                user_id = :user_id
+                AND transaction_date <= :end_date
+            ORDER BY
+                investment_id ASC,
+                transaction_date ASC,
+                id ASC
+            """
+        ),
+        {
+            "user_id": user_id,
+            "end_date": end_date,
+        },
     )
 
-    transactions = load_transactions(
-        db=db,
-        user_id=user_id,
-        end_date=end_date,
-    )
+    return [
+        dict(row)
+        for row in result.mappings().all()
+    ]
 
-    gains = calculate_fifo_gains(
-        transactions=transactions,
-        start_date=start_date,
-        end_date=end_date,
-    )
 
-    stcg = Decimal("0")
-    ltcg = Decimal("0")
-    unclassified = Decimal("0")
+# ============================================================
+# FIFO CALCULATION
+# ============================================================
 
-    realised_transactions = []
+def calculate_fifo_sales(
+    investments,
+    transactions,
+    start_date,
+    end_date,
+):
+    """
+    Calculate realised capital gains using FIFO.
 
-    for transaction in gains[
-        "transactions"
-    ]:
+    FIFO is maintained separately for every investment_id.
+    """
+
+    lots_by_investment = {}
+
+    sales = []
+
+    # --------------------------------------------------------
+    # PROCESS TRANSACTIONS
+    # --------------------------------------------------------
+
+    for transaction in transactions:
 
         investment_id = (
             transaction[
@@ -260,191 +446,471 @@ def build_capital_gain_summary(
             ]
         )
 
-        investment_info = (
-            asset_classes.get(
-                investment_id
-            )
-        )
-
-        if investment_info is None:
-
-            asset_class = (
-                "UNCLASSIFIED"
-            )
-
-        else:
-
-            asset_class = (
-                investment_info[
-                    "asset_class"
-                ]
-            )
-
-        classification = classify_gain(
-            holding_days=(
-                transaction[
-                    "holding_days"
-                ]
-            ),
-            asset_class=asset_class,
-        )
-
-        classification_name = (
-            classification[
-                "classification"
-            ]
-        )
-
-        gain_loss = to_decimal(
+        transaction_type = str(
             transaction[
-                "realised_gain_loss"
+                "transaction_type"
+            ] or ""
+        ).strip().upper()
+
+        quantity = to_decimal(
+            transaction[
+                "quantity"
             ]
         )
 
-        if classification_name == "STCG":
+        price = to_decimal(
+            transaction[
+                "price"
+            ]
+        )
 
-            stcg += gain_loss
+        fees = to_decimal(
+            transaction[
+                "fees"
+            ]
+        )
 
-        elif classification_name == "LTCG":
+        transaction_date = (
+            transaction[
+                "transaction_date"
+            ]
+        )
 
-            ltcg += gain_loss
+        # ----------------------------------------------------
+        # BUY
+        # ----------------------------------------------------
+
+        if transaction_type == "BUY":
+
+            lots_by_investment.setdefault(
+                investment_id,
+                [],
+            )
+
+            lots_by_investment[
+                investment_id
+            ].append(
+                {
+                    "buy_transaction_id":
+                        transaction["id"],
+
+                    "buy_date":
+                        transaction_date,
+
+                    "quantity_remaining":
+                        quantity,
+
+                    "unit_price":
+                        price,
+
+                    "total_buy_fee":
+                        fees,
+                }
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # ONLY SELL TRANSACTIONS CREATE REALISED GAINS
+        # ----------------------------------------------------
+
+        if transaction_type != "SELL":
+            continue
+
+        # ----------------------------------------------------
+        # ONLY SALES INSIDE SELECTED FY
+        # ----------------------------------------------------
+
+        if transaction_date < start_date:
+            continue
+
+        if transaction_date > end_date:
+            continue
+
+        remaining_quantity = quantity
+
+        gross_sale_value = (
+            quantity * price
+        )
+
+        sale_fee = fees
+
+        cost_basis = Decimal("0")
+
+        matched_lots = []
+
+        lots = lots_by_investment.setdefault(
+            investment_id,
+            [],
+        )
+
+        # ----------------------------------------------------
+        # CONSUME FIFO LOTS
+        # ----------------------------------------------------
+
+        while (
+            remaining_quantity > 0
+            and lots
+        ):
+
+            lot = lots[0]
+
+            available_quantity = (
+                to_decimal(
+                    lot[
+                        "quantity_remaining"
+                    ]
+                )
+            )
+
+            if available_quantity <= 0:
+
+                lots.pop(0)
+
+                continue
+
+            matched_quantity = min(
+                remaining_quantity,
+                available_quantity,
+            )
+
+            buy_fee_remaining = (
+                to_decimal(
+                    lot[
+                        "total_buy_fee"
+                    ]
+                )
+            )
+
+            allocated_buy_fee = Decimal(
+                "0"
+            )
+
+            if available_quantity > 0:
+
+                allocated_buy_fee = (
+                    buy_fee_remaining
+                    * matched_quantity
+                    / available_quantity
+                )
+
+            matched_cost = (
+                matched_quantity
+                * to_decimal(
+                    lot[
+                        "unit_price"
+                    ]
+                )
+                + allocated_buy_fee
+            )
+
+            cost_basis += matched_cost
+
+            holding_days = (
+                transaction_date
+                - lot["buy_date"]
+            ).days
+
+            matched_lots.append(
+                {
+                    "buy_transaction_id":
+                        lot[
+                            "buy_transaction_id"
+                        ],
+
+                    "buy_date":
+                        lot["buy_date"],
+
+                    "quantity":
+                        matched_quantity,
+
+                    "buy_price":
+                        to_decimal(
+                            lot[
+                                "unit_price"
+                            ]
+                        ),
+
+                    "allocated_buy_fee":
+                        allocated_buy_fee,
+
+                    "holding_days":
+                        holding_days,
+                }
+            )
+
+            # ------------------------------------------------
+            # REDUCE LOT
+            # ------------------------------------------------
+
+            lot[
+                "quantity_remaining"
+            ] = (
+                available_quantity
+                - matched_quantity
+            )
+
+            lot[
+                "total_buy_fee"
+            ] = (
+                buy_fee_remaining
+                - allocated_buy_fee
+            )
+
+            remaining_quantity -= (
+                matched_quantity
+            )
+
+            if (
+                lot[
+                    "quantity_remaining"
+                ]
+                <= 0
+            ):
+
+                lots.pop(0)
+
+        # ----------------------------------------------------
+        # UNMATCHED QUANTITY
+        # ----------------------------------------------------
+
+        unmatched_quantity = max(
+            remaining_quantity,
+            Decimal("0"),
+        )
+
+        # ----------------------------------------------------
+        # NET SALE PROCEEDS
+        # ----------------------------------------------------
+
+        net_sale_proceeds = (
+            gross_sale_value
+            - sale_fee
+        )
+
+        # ----------------------------------------------------
+        # REALISED GAIN / LOSS
+        # ----------------------------------------------------
+
+        realised_gain_loss = (
+            net_sale_proceeds
+            - cost_basis
+        )
+
+        # ----------------------------------------------------
+        # WEIGHTED HOLDING PERIOD
+        # ----------------------------------------------------
+
+        if matched_lots:
+
+            total_matched_quantity = sum(
+                (
+                    lot["quantity"]
+                    for lot in matched_lots
+                ),
+                Decimal("0"),
+            )
+
+            weighted_days = (
+                sum(
+                    (
+                        lot["holding_days"]
+                        * lot["quantity"]
+                    )
+                    for lot in matched_lots
+                )
+                / total_matched_quantity
+            )
+
+            holding_days = int(
+                weighted_days
+            )
 
         else:
 
-            unclassified += gain_loss
+            holding_days = None
 
-        realised_transactions.append(
+        # ----------------------------------------------------
+        # INVESTMENT DETAILS
+        # ----------------------------------------------------
+
+        investment = investments.get(
+            investment_id,
+            {},
+        )
+
+        sales.append(
             {
-                **transaction,
-                "asset_class": (
-                    asset_class
-                ),
-                "classification": (
-                    classification_name
-                ),
+                "sell_transaction_id":
+                    transaction["id"],
+
+                "investment_id":
+                    investment_id,
+
+                "investment_name":
+                    investment.get(
+                        "name"
+                    ),
+
+                "symbol":
+                    investment.get(
+                        "symbol"
+                    ),
+
+                "investment_type":
+                    investment.get(
+                        "investment_type"
+                    ),
+
+                "sale_date":
+                    transaction_date,
+
+                "quantity":
+                    quantity,
+
+                "sale_price":
+                    price,
+
+                "gross_sale_value":
+                    gross_sale_value,
+
+                "sell_fee":
+                    sale_fee,
+
+                "net_sale_proceeds":
+                    net_sale_proceeds,
+
+                "cost_basis":
+                    cost_basis,
+
+                "realised_gain_loss":
+                    realised_gain_loss,
+
+                "holding_days":
+                    holding_days,
+
+                "matched_lots":
+                    matched_lots,
+
+                "unmatched_quantity":
+                    unmatched_quantity,
             }
         )
 
-    return {
-        "stcg": stcg,
-        "ltcg": ltcg,
-        "unclassified": unclassified,
-        "transactions": (
-            realised_transactions
-        ),
-    }
+    return sales
 
 
 # ============================================================
-# CAPITAL GAIN TAX
+# CLASSIFY SALE
 # ============================================================
 
-def calculate_capital_gain_tax(
-    stcg,
-    ltcg,
-    stt_confirmed,
+def classify_sale(
+    sale,
 ):
     """
-    Calculate special-rate capital-gain tax.
-
-    STCG:
-        Section 111A at 20% only when
-        STT condition is confirmed.
-
-    LTCG:
-        Section 112A at 12.5% after the
-        aggregate ₹1.25 lakh threshold.
+    Classify realised gain as STCG/LTCG.
     """
 
-    stcg = money(stcg)
-    ltcg = money(ltcg)
+    asset_class = resolve_asset_class(
+        sale[
+            "investment_type"
+        ]
+    )
+
+    result = {
+        "asset_class":
+            asset_class,
+
+        "asset_class_source":
+            "investment_type",
+
+        "classification":
+            "UNCLASSIFIED",
+
+        "classification_reason":
+            None,
+
+        "threshold_days":
+            None,
+
+        "threshold_months":
+            None,
+    }
 
     # --------------------------------------------------------
-    # STCG
+    # UNKNOWN ASSET CLASS
     # --------------------------------------------------------
 
-    if stt_confirmed:
+    if not asset_class:
 
-        stcg_taxable = stcg
+        result[
+            "classification_reason"
+        ] = "asset_class_required"
 
-        stcg_tax = money(
-            stcg_taxable
-            * STCG_RATE_111A
-        )
+        return result
 
-        stcg_status = (
-            "calculated"
-        )
+    rules = ASSET_CLASS_RULES[
+        asset_class
+    ]
 
-    else:
+    result[
+        "threshold_days"
+    ] = rules[
+        "threshold_days"
+    ]
 
-        stcg_taxable = Decimal("0")
-        stcg_tax = Decimal("0")
+    result[
+        "threshold_months"
+    ] = rules[
+        "threshold_months"
+    ]
 
-        stcg_status = (
-            "requires_stt_confirmation"
-        )
+    holding_days = sale[
+        "holding_days"
+    ]
+
+    if holding_days is None:
+
+        result[
+            "classification_reason"
+        ] = "holding_period_unavailable"
+
+        return result
 
     # --------------------------------------------------------
     # LTCG
     # --------------------------------------------------------
 
-    if ltcg > LTCG_112A_THRESHOLD:
+    if (
+        holding_days
+        >= rules[
+            "threshold_days"
+        ]
+    ):
 
-        ltcg_taxable = (
-            ltcg
-            - LTCG_112A_THRESHOLD
-        )
+        result[
+            "classification"
+        ] = "LTCG"
+
+        result[
+            "classification_reason"
+        ] = "holding_period_reached"
+
+    # --------------------------------------------------------
+    # STCG
+    # --------------------------------------------------------
 
     else:
 
-        ltcg_taxable = Decimal("0")
+        result[
+            "classification"
+        ] = "STCG"
 
-    ltcg_tax = money(
-        ltcg_taxable
-        * LTCG_RATE_112A
-    )
+        result[
+            "classification_reason"
+        ] = "holding_period_below_threshold"
 
-    # --------------------------------------------------------
-    # BASE TAX
-    # --------------------------------------------------------
-
-    base_tax = money(
-        stcg_tax
-        + ltcg_tax
-    )
-
-    return {
-        "stcg": {
-            "gross_gain": stcg,
-            "taxable_gain": (
-                stcg_taxable
-            ),
-            "rate": (
-                STCG_RATE_111A
-            ),
-            "tax": stcg_tax,
-            "status": stcg_status,
-            "section": "111A",
-        },
-
-        "ltcg": {
-            "gross_gain": ltcg,
-            "threshold": (
-                LTCG_112A_THRESHOLD
-            ),
-            "taxable_gain": (
-                ltcg_taxable
-            ),
-            "rate": (
-                LTCG_RATE_112A
-            ),
-            "tax": ltcg_tax,
-            "section": "112A",
-        },
-
-        "base_tax": base_tax,
-    }
+    return result
 
 
 # ============================================================
@@ -462,186 +928,258 @@ def get_tax_liability(
     db: Session = Depends(get_db),
 ):
     """
-    Return an estimated tax liability snapshot.
+    Return a read-only indicative capital-gains tax liability.
 
-    Example:
+    Current scope:
 
-    /api/tax-liability/
-    ?user_id=1
+        FIFO capital gains
+        STCG/LTCG classification
+        Section 111A STCG
+        Section 112A LTCG
+        LTCG threshold
+        4% cess
+        87A context
 
-    Optional context:
+    Not yet included:
 
-    taxpayer_type=individual
-    residential_status=resident
-    tax_regime=new
-    stt_confirmed=true
+        Salary income
+        Business income
+        Other income
+        Deductions
+        Loss set-off
+        Loss carry-forward
+        Surcharge
+        Marginal relief
+        TDS/TCS
+        Advance tax
+        Final ITR liability
     """
 
     # ========================================================
-    # NORMALIZE TAX CONTEXT
+    # NORMALIZE INPUT
     # ========================================================
 
-    taxpayer_type = (
-        taxpayer_type.strip().lower()
-    )
+    taxpayer_type = str(
+        taxpayer_type
+    ).strip().lower()
 
-    residential_status = (
-        residential_status.strip().lower()
-    )
+    residential_status = str(
+        residential_status
+    ).strip().lower()
 
-    tax_regime = (
-        tax_regime.strip().lower()
-    )
+    tax_regime = str(
+        tax_regime
+    ).strip().lower()
 
     # ========================================================
-    # VALIDATE TAXPAYER
+    # VALIDATION
     # ========================================================
 
-    valid_taxpayer_types = {
+    if taxpayer_type not in {
         "individual",
         "huf",
-    }
-
-    if taxpayer_type not in (
-        valid_taxpayer_types
-    ):
+    }:
 
         return {
             "status": "error",
-            "message": (
-                "taxpayer_type must be "
-                "individual or huf."
-            ),
+            "message":
+                "taxpayer_type must be individual or huf.",
         }
 
-    # ========================================================
-    # VALIDATE RESIDENTIAL STATUS
-    # ========================================================
-
-    valid_residential_status = {
+    if residential_status not in {
         "resident",
         "non_resident",
-    }
-
-    if residential_status not in (
-        valid_residential_status
-    ):
+    }:
 
         return {
             "status": "error",
-            "message": (
-                "residential_status must be "
-                "resident or non_resident."
-            ),
+            "message":
+                "residential_status must be resident or non_resident.",
         }
 
-    # ========================================================
-    # VALIDATE TAX REGIME
-    # ========================================================
-
-    valid_tax_regimes = {
+    if tax_regime not in {
         "new",
         "old",
-    }
-
-    if tax_regime not in (
-        valid_tax_regimes
-    ):
+    }:
 
         return {
             "status": "error",
-            "message": (
-                "tax_regime must be "
-                "new or old."
-            ),
+            "message":
+                "tax_regime must be new or old.",
         }
 
     # ========================================================
     # FINANCIAL YEAR
     # ========================================================
 
-    (
-        resolved_financial_year,
-        start_date,
-        end_date,
-    ) = get_financial_year_dates(
-        financial_year
+    try:
+
+        start_date, end_date = (
+            get_financial_year_dates(
+                financial_year
+            )
+        )
+
+    except ValueError as error:
+
+        return {
+            "status": "error",
+            "message": str(error),
+        }
+
+    # ========================================================
+    # LOAD DATA
+    # ========================================================
+
+    investments = load_investments(
+        db,
+        user_id,
     )
 
-    # ========================================================
-    # CAPITAL GAINS
-    # ========================================================
-
-    capital_gains = (
-        build_capital_gain_summary(
-            db=db,
-            user_id=user_id,
-            start_date=start_date,
-            end_date=end_date,
+    transactions = (
+        load_investment_transactions(
+            db,
+            user_id,
+            end_date,
         )
     )
 
     # ========================================================
-    # TAX CALCULATION
+    # FIFO SALES
     # ========================================================
 
-    tax = calculate_capital_gain_tax(
-        stcg=capital_gains[
-            "stcg"
-        ],
-        ltcg=capital_gains[
-            "ltcg"
-        ],
-        stt_confirmed=stt_confirmed,
-    )
-
-    base_tax = money(
-        tax["base_tax"]
+    sales = calculate_fifo_sales(
+        investments,
+        transactions,
+        start_date,
+        end_date,
     )
 
     # ========================================================
-    # SURCHARGE
-    # ========================================================
-    #
-    # We do NOT guess surcharge because complete total
-    # income is not yet available to this engine.
-    #
-    # Special-rate capital-gain income is subject to
-    # specific surcharge limitations.
-    #
-    # Therefore v1.0 exposes the applicable maximum
-    # special-rate surcharge context but does not apply it.
-    #
+    # CLASSIFICATION TOTALS
     # ========================================================
 
-    surcharge = Decimal("0")
+    stcg_gain = Decimal("0")
 
-    surcharge_status = (
-        "not_calculated_total_income_required"
+    ltcg_gain = Decimal("0")
+
+    unclassified_gain = Decimal("0")
+
+    classified_sale_count = 0
+
+    unclassified_sale_count = 0
+
+    classified_sales = []
+
+    # ========================================================
+    # CLASSIFY EACH SALE
+    # ========================================================
+
+    for sale in sales:
+
+        classification = classify_sale(
+            sale
+        )
+
+        gain = to_decimal(
+            sale[
+                "realised_gain_loss"
+            ]
+        )
+
+        enriched_sale = {
+            **sale,
+            **classification,
+        }
+
+        classified_sales.append(
+            enriched_sale
+        )
+
+        classification_name = (
+            classification[
+                "classification"
+            ]
+        )
+
+        if classification_name == "STCG":
+
+            stcg_gain += gain
+
+            classified_sale_count += 1
+
+        elif classification_name == "LTCG":
+
+            ltcg_gain += gain
+
+            classified_sale_count += 1
+
+        else:
+
+            unclassified_gain += gain
+
+            unclassified_sale_count += 1
+
+    # ========================================================
+    # STCG TAX
+    # ========================================================
+
+    stcg_tax = Decimal("0")
+
+    stcg_status = "not_applicable"
+
+    if stcg_gain > 0:
+
+        if stt_confirmed:
+
+            stcg_tax = (
+                stcg_gain
+                * STCG_RATE
+            )
+
+            stcg_status = "calculated"
+
+        else:
+
+            stcg_status = (
+                "requires_stt_confirmation"
+            )
+
+    # ========================================================
+    # LTCG TAX
+    # ========================================================
+
+    taxable_ltcg = max(
+        ltcg_gain
+        - LTCG_THRESHOLD,
+        Decimal("0"),
+    )
+
+    ltcg_tax = (
+        taxable_ltcg
+        * LTCG_RATE
+    )
+
+    # ========================================================
+    # BASE TAX
+    # ========================================================
+
+    base_tax = (
+        stcg_tax
+        + ltcg_tax
     )
 
     # ========================================================
     # CESS
     # ========================================================
-    #
-    # Cess is calculated only on tax + surcharge.
-    #
-    # Since surcharge is currently zero in v1.0,
-    # this is 4% of base tax.
-    #
-    # ========================================================
 
-    cess = money(
-        (
-            base_tax
-            + surcharge
-        )
+    cess = (
+        base_tax
         * CESS_RATE
     )
 
-    total_capital_gain_tax = money(
+    special_rate_tax_total = (
         base_tax
-        + surcharge
         + cess
     )
 
@@ -649,49 +1187,52 @@ def get_tax_liability(
     # 87A CONTEXT
     # ========================================================
 
-    rebate_possible = (
-        taxpayer_type == "individual"
-        and residential_status == "resident"
-    )
-
     if tax_regime == "new":
 
-        rebate_limit = Decimal(
-            "60000"
-        )
+        rebate_context = {
+            "possible": True,
 
-        rebate_income_limit = Decimal(
-            "1200000"
-        )
+            "income_limit":
+                NEW_REGIME_87A_INCOME_LIMIT,
+
+            "maximum_rebate":
+                NEW_REGIME_87A_MAX_REBATE,
+
+            "calculated": False,
+
+            "reason":
+                "Complete total income is required before applying 87A rebate.",
+        }
 
     else:
 
-        rebate_limit = Decimal(
-            "12500"
-        )
+        rebate_context = {
+            "possible": True,
 
-        rebate_income_limit = Decimal(
-            "500000"
-        )
+            "income_limit":
+                OLD_REGIME_87A_INCOME_LIMIT,
+
+            "maximum_rebate":
+                OLD_REGIME_87A_MAX_REBATE,
+
+            "calculated": False,
+
+            "reason":
+                "Complete total income is required before applying 87A rebate.",
+        }
 
     # ========================================================
     # ENGINE STATUS
     # ========================================================
 
-    if (
-        capital_gains[
-            "unclassified"
-        ] != 0
-    ):
+    if unclassified_sale_count > 0:
 
         engine_status = (
-            "requires_review"
+            "requires_asset_classification"
         )
 
     elif (
-        capital_gains[
-            "stcg"
-        ] != 0
+        stcg_gain > 0
         and not stt_confirmed
     ):
 
@@ -706,160 +1247,399 @@ def get_tax_liability(
         )
 
     # ========================================================
-    # FINAL SCOPE STATUS
+    # SERIALIZE SALES
     # ========================================================
 
-    final_liability_status = (
-        "incomplete_total_income_required"
-    )
+    serialized_sales = []
+
+    for sale in classified_sales:
+
+        serialized_lots = []
+
+        for lot in sale[
+            "matched_lots"
+        ]:
+
+            serialized_lots.append(
+                {
+                    "buy_transaction_id":
+                        lot[
+                            "buy_transaction_id"
+                        ],
+
+                    "buy_date":
+                        lot[
+                            "buy_date"
+                        ],
+
+                    "quantity":
+                        lot[
+                            "quantity"
+                        ],
+
+                    "buy_price":
+                        money(
+                            lot[
+                                "buy_price"
+                            ]
+                        ),
+
+                    "allocated_buy_fee":
+                        money(
+                            lot[
+                                "allocated_buy_fee"
+                            ]
+                        ),
+
+                    "holding_days":
+                        lot[
+                            "holding_days"
+                        ],
+                }
+            )
+
+        serialized_sales.append(
+            {
+                "sell_transaction_id":
+                    sale[
+                        "sell_transaction_id"
+                    ],
+
+                "investment_id":
+                    sale[
+                        "investment_id"
+                    ],
+
+                "investment_name":
+                    sale[
+                        "investment_name"
+                    ],
+
+                "symbol":
+                    sale[
+                        "symbol"
+                    ],
+
+                "investment_type":
+                    sale[
+                        "investment_type"
+                    ],
+
+                "asset_class":
+                    sale[
+                        "asset_class"
+                    ],
+
+                "classification":
+                    sale[
+                        "classification"
+                    ],
+
+                "classification_reason":
+                    sale[
+                        "classification_reason"
+                    ],
+
+                "sale_date":
+                    sale[
+                        "sale_date"
+                    ],
+
+                "quantity":
+                    sale[
+                        "quantity"
+                    ],
+
+                "sale_price":
+                    money(
+                        sale[
+                            "sale_price"
+                        ]
+                    ),
+
+                "gross_sale_value":
+                    money(
+                        sale[
+                            "gross_sale_value"
+                        ]
+                    ),
+
+                "sell_fee":
+                    money(
+                        sale[
+                            "sell_fee"
+                        ]
+                    ),
+
+                "net_sale_proceeds":
+                    money(
+                        sale[
+                            "net_sale_proceeds"
+                        ]
+                    ),
+
+                "cost_basis":
+                    money(
+                        sale[
+                            "cost_basis"
+                        ]
+                    ),
+
+                "realised_gain_loss":
+                    money(
+                        sale[
+                            "realised_gain_loss"
+                        ]
+                    ),
+
+                "holding_days":
+                    sale[
+                        "holding_days"
+                    ],
+
+                "threshold_days":
+                    sale[
+                        "threshold_days"
+                    ],
+
+                "threshold_months":
+                    sale[
+                        "threshold_months"
+                    ],
+
+                "unmatched_quantity":
+                    sale[
+                        "unmatched_quantity"
+                    ],
+
+                "matched_lots":
+                    serialized_lots,
+            }
+        )
 
     # ========================================================
     # RESPONSE
     # ========================================================
 
     return {
+
         "status": "success",
 
         "user_id": user_id,
 
-        "tax_liability_engine": {
-            "name": (
-                "Tax Liability Engine"
-            ),
-            "version": "1.0",
-            "read_only": True,
-            "status": engine_status,
-            "final_liability_status": (
-                final_liability_status
-            ),
+        "engine": {
+            "name":
+                "Tax Liability Engine",
+
+            "version":
+                "1.1",
+
+            "read_only":
+                True,
+
+            "status":
+                engine_status,
         },
 
-        "financial_year": (
-            resolved_financial_year
-        ),
-
         "taxpayer_context": {
-            "type": taxpayer_type,
-            "residential_status": (
-                residential_status
-            ),
-            "tax_regime": tax_regime,
+
+            "taxpayer_type":
+                taxpayer_type,
+
+            "residential_status":
+                residential_status,
+
+            "tax_regime":
+                tax_regime,
+
+            "financial_year":
+                financial_year,
+
+            "period": {
+
+                "start_date":
+                    start_date,
+
+                "end_date":
+                    end_date,
+            },
+
+            "stt_confirmed":
+                stt_confirmed,
         },
 
         "capital_gains": {
-            "stcg": money(
-                capital_gains[
-                    "stcg"
-                ]
-            ),
-            "ltcg": money(
-                capital_gains[
-                    "ltcg"
-                ]
-            ),
-            "unclassified": money(
-                capital_gains[
-                    "unclassified"
-                ]
-            ),
-        },
 
-        "tax_rates": {
-            "section_111a_stcg": (
-                STCG_RATE_111A
-            ),
-            "section_112a_ltcg": (
-                LTCG_RATE_112A
-            ),
-            "section_112a_threshold": (
-                LTCG_112A_THRESHOLD
-            ),
+            "sale_count":
+                len(sales),
+
+            "classified_sale_count":
+                classified_sale_count,
+
+            "unclassified_sale_count":
+                unclassified_sale_count,
+
+            "stcg_realised_gain_loss":
+                money(
+                    stcg_gain
+                ),
+
+            "ltcg_realised_gain_loss":
+                money(
+                    ltcg_gain
+                ),
+
+            "unclassified_gain_loss":
+                money(
+                    unclassified_gain
+                ),
         },
 
         "tax_calculation": {
-            "stcg": tax["stcg"],
-            "ltcg": tax["ltcg"],
-            "base_tax": base_tax,
+
+            "stcg": {
+
+                "section":
+                    "111A",
+
+                "rate":
+                    STCG_RATE,
+
+                "gain":
+                    money(
+                        stcg_gain
+                    ),
+
+                "tax":
+                    money(
+                        stcg_tax
+                    ),
+
+                "stt_confirmed":
+                    stt_confirmed,
+
+                "status":
+                    stcg_status,
+            },
+
+            "ltcg": {
+
+                "section":
+                    "112A",
+
+                "rate":
+                    LTCG_RATE,
+
+                "aggregate_threshold":
+                    LTCG_THRESHOLD,
+
+                "gain":
+                    money(
+                        ltcg_gain
+                    ),
+
+                "taxable_gain_after_threshold":
+                    money(
+                        taxable_ltcg
+                    ),
+
+                "tax":
+                    money(
+                        ltcg_tax
+                    ),
+            },
+
+            "base_tax":
+                money(
+                    base_tax
+                ),
+
+            "surcharge": {
+
+                "calculated":
+                    False,
+
+                "amount":
+                    Decimal("0"),
+
+                "reason":
+                    "Complete total income is required before calculating surcharge.",
+            },
+
+            "cess": {
+
+                "rate":
+                    CESS_RATE,
+
+                "amount":
+                    money(
+                        cess
+                    ),
+            },
+
+            "special_rate_tax_total":
+                money(
+                    special_rate_tax_total
+                ),
         },
 
-        "surcharge": {
-            "calculated": False,
-            "amount": surcharge,
-            "maximum_special_gain_rate": (
-                MAX_SPECIAL_GAIN_SURCHARGE_RATE
-            ),
-            "status": surcharge_status,
-        },
+        "rebate_87a_context":
+            rebate_context,
 
-        "cess": {
-            "rate": CESS_RATE,
-            "amount": cess,
-        },
+        "sales":
+            serialized_sales,
 
-        "estimated_capital_gain_tax": {
-            "tax": base_tax,
-            "surcharge": surcharge,
-            "cess": cess,
-            "total": (
-                total_capital_gain_tax
-            ),
-        },
+        "final_liability": {
 
-        "rebate_context": {
-            "section": "87A",
-            "possible": rebate_possible,
-            "maximum_rebate": (
-                rebate_limit
-            ),
-            "income_limit": (
-                rebate_income_limit
-            ),
-            "calculated": False,
+            "status":
+                "incomplete_total_income_required",
+
+            "amount":
+                None,
+
+            "reason":
+                "Final income-tax liability requires complete total income, deductions, loss set-off/carry-forward, surcharge, rebate applicability, TDS/TCS and other tax inputs.",
         },
 
         "scope": {
-            "capital_gains": True,
-            "salary_tax": False,
-            "business_tax": False,
-            "other_income_tax": False,
-            "loss_setoff": False,
-            "loss_carry_forward": False,
-            "tds": False,
-            "tcs": False,
-            "advance_tax": False,
-            "complete_itr": False,
+
+            "capital_gains":
+                True,
+
+            "salary_income":
+                False,
+
+            "business_income":
+                False,
+
+            "other_income":
+                False,
+
+            "deductions":
+                False,
+
+            "loss_setoff":
+                False,
+
+            "loss_carry_forward":
+                False,
+
+            "surcharge":
+                False,
+
+            "marginal_relief":
+                False,
+
+            "tds_tcs":
+                False,
+
+            "advance_tax":
+                False,
+
+            "itr_calculation":
+                False,
         },
 
-        "next_engine": (
-            "Income Tax & Loss Set-off Engine"
-        ),
-
-        "limitations": [
-            (
-                "This v1.0 calculates capital-gain "
-                "tax liability only."
-            ),
-            (
-                "It is not a complete final income-tax "
-                "liability calculation."
-            ),
-            (
-                "Complete surcharge requires total "
-                "income and applicable tax details."
-            ),
-            (
-                "87A rebate is exposed as context but "
-                "is not automatically applied."
-            ),
-            (
-                "Capital-loss set-off and carry-forward "
-                "are not yet implemented."
-            ),
-            (
-                "TDS/TCS and advance-tax credits are "
-                "not yet implemented."
-            ),
-        ],
-
-        "read_only": True,
+        "next_engine":
+            "Income Tax & Loss Set-off Engine",
     }

@@ -28,6 +28,7 @@ from app.routes import (
     financial_summary,
     financial_analytics,
     financial_plan,
+    tax_data,
 )
 
 
@@ -126,3 +127,4 @@ app.include_router(investment_pnl.router)
 app.include_router(financial_summary.router)
 app.include_router(financial_analytics.router)
 app.include_router(financial_plan.router)
+app.include_router(tax_data.router)

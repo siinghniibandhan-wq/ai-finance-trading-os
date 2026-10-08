@@ -1274,15 +1274,53 @@ const summaryCards = [
           </p>
         </div>
 
-       <button
-  type="button"
-  className="primary-button"
-  onClick={() => setShowInvestmentForm(true)}
->
-  <Plus size={16} />
-  Add Investment
-</button> 
+       {/* =====================================================
+    PORTFOLIO ACTIONS
+===================================================== */}
 
+<div
+  style={{
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+  }}
+>
+
+  {/* REFRESH MARKET PRICES */}
+
+  <button
+    type="button"
+    className="secondary-button"
+    onClick={refreshMarketPrices}
+    disabled={refreshingPrices}
+    style={{
+      opacity: refreshingPrices ? 0.6 : 1,
+      cursor: refreshingPrices
+        ? "wait"
+        : "pointer",
+    }}
+  >
+    <TrendingUp size={16} />
+
+    {refreshingPrices
+      ? "Refreshing..."
+      : "Refresh Prices"}
+  </button>
+
+  {/* ADD INVESTMENT */}
+
+  <button
+    type="button"
+    className="primary-button"
+    onClick={() =>
+      setShowInvestmentForm(true)
+    }
+  >
+    <Plus size={16} />
+    Add Investment
+  </button>
+
+</div>
       </section>
 
 

@@ -190,7 +190,8 @@ app.include_router(income_tax_aggregation.router)
 # ------------------------------------------------------------
 
 app.include_router(
-    deductions_exempt_income.router)
+    deductions_exempt_income.router
+)
 # ------------------------------------------------------------
 # MODULE 11
 # FINAL TAXABLE INCOME

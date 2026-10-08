@@ -22,6 +22,7 @@ from app.routes import (
     bills,
     investments,
     market,
+    investment_transactions,
   
 )
 
@@ -115,3 +116,5 @@ app.include_router(budgets.router)
 app.include_router(bills.router)
 app.include_router(investments.router)
 app.include_router(market.router)
+app.include_router(investment_transactions.router)
+

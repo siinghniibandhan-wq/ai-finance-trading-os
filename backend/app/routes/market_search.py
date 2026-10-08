@@ -7,6 +7,7 @@ Purpose:
 - Use the existing AWS m.Stock Gateway.
 - Read-only.
 - No database writes.
+- Uses Python standard library only.
 
 Flow:
 
@@ -19,9 +20,9 @@ AWS m.Stock Gateway /instruments
 m.Stock Script Master
 """
 
+import csv
 from io import StringIO
 
-import pandas as pd
 import requests
 from fastapi import APIRouter, HTTPException, Query
 
@@ -83,6 +84,7 @@ def search_market(
             f"{MSTOCK_GATEWAY_URL}/instruments",
             timeout=30,
         )
+
     except requests.RequestException as exc:
         raise HTTPException(
             status_code=502,
@@ -110,9 +112,101 @@ def search_market(
     # --------------------------------------------------------
 
     try:
-        dataframe = pd.read_csv(
+        reader = csv.DictReader(
             StringIO(response.text)
         )
+
+        results = []
+
+        for row in reader:
+
+            row_exchange = (
+                (row.get("exchange") or "")
+                .strip()
+                .upper()
+            )
+
+            if row_exchange != cleaned_exchange:
+                continue
+
+            symbol = (
+                (row.get("tradingsymbol") or "")
+                .strip()
+            )
+
+            name = (
+                (row.get("name") or "")
+                .strip()
+            )
+
+            symbol_upper = symbol.upper()
+            name_upper = name.upper()
+
+            # ------------------------------------------------
+            # Search symbol OR company name
+            # ------------------------------------------------
+
+            if (
+                cleaned_query not in symbol_upper
+                and cleaned_query not in name_upper
+            ):
+                continue
+
+            # ------------------------------------------------
+            # Instrument token
+            # ------------------------------------------------
+
+            instrument_token = row.get(
+                "instrument_token"
+            )
+
+            try:
+                instrument_token = (
+                    int(instrument_token)
+                    if instrument_token
+                    else None
+                )
+            except (ValueError, TypeError):
+                instrument_token = None
+
+            # ------------------------------------------------
+            # Last price
+            # ------------------------------------------------
+
+            last_price = row.get("last_price")
+
+            try:
+                last_price = (
+                    float(last_price)
+                    if last_price
+                    else None
+                )
+            except (ValueError, TypeError):
+                last_price = None
+
+            # ------------------------------------------------
+            # Add result
+            # ------------------------------------------------
+
+            results.append({
+                "instrument_token": instrument_token,
+                "symbol": symbol or None,
+                "name": name or None,
+                "exchange": row_exchange or None,
+                "instrument_type": (
+                    row.get("instrument_type")
+                    or None
+                ),
+                "last_price": last_price,
+            })
+
+            # ------------------------------------------------
+            # Stop once requested limit is reached
+            # ------------------------------------------------
+
+            if len(results) >= limit:
+                break
+
     except Exception as exc:
         raise HTTPException(
             status_code=502,
@@ -120,94 +214,8 @@ def search_market(
         ) from exc
 
     # --------------------------------------------------------
-    # Exchange filter
+    # API response
     # --------------------------------------------------------
-
-    if "exchange" in dataframe.columns:
-        dataframe = dataframe[
-            dataframe["exchange"]
-            .fillna("")
-            .astype(str)
-            .str.upper()
-            == cleaned_exchange
-        ]
-
-    # --------------------------------------------------------
-    # Search symbol OR company name
-    # --------------------------------------------------------
-
-    symbol_match = (
-        dataframe["tradingsymbol"]
-        .fillna("")
-        .astype(str)
-        .str.upper()
-        .str.contains(
-            cleaned_query,
-            regex=False,
-        )
-    )
-
-    name_match = (
-        dataframe["name"]
-        .fillna("")
-        .astype(str)
-        .str.upper()
-        .str.contains(
-            cleaned_query,
-            regex=False,
-        )
-    )
-
-    dataframe = dataframe[
-        symbol_match | name_match
-    ]
-
-    # --------------------------------------------------------
-    # Limit results
-    # --------------------------------------------------------
-
-    dataframe = dataframe.head(limit)
-
-    # --------------------------------------------------------
-    # Convert to API response
-    # --------------------------------------------------------
-
-    results = []
-
-    for _, row in dataframe.iterrows():
-
-        results.append({
-            "instrument_token": (
-                int(row["instrument_token"])
-                if pd.notna(row.get("instrument_token"))
-                else None
-            ),
-            "symbol": (
-                str(row["tradingsymbol"])
-                if pd.notna(row.get("tradingsymbol"))
-                else None
-            ),
-            "name": (
-                str(row["name"])
-                if pd.notna(row.get("name"))
-                else None
-            ),
-            "exchange": (
-                str(row["exchange"])
-                if pd.notna(row.get("exchange"))
-                else None
-            ),
-            "instrument_type": (
-                str(row["instrument_type"])
-                if pd.notna(row.get("instrument_type"))
-                else None
-            ),
-            "last_price": (
-                float(row["last_price"])
-                if pd.notna(row.get("last_price"))
-                else None
-            ),
-        })
 
     return {
         "status": "success",

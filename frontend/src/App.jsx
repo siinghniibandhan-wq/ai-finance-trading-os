@@ -859,6 +859,37 @@ const [refreshingPrices, setRefreshingPrices] =
 const [refreshMessage, setRefreshMessage] =
   useState("");
   
+// ============================================================
+// INVESTMENT BUY / SELL TRANSACTION STATE
+// ============================================================
+
+const [transactionModal, setTransactionModal] =
+  useState(null);
+
+const [transactionType, setTransactionType] =
+  useState("BUY");
+
+const [transactionForm, setTransactionForm] =
+  useState({
+    quantity: "",
+    price: "",
+    fees: "",
+    transaction_date:
+      new Date().toISOString().split("T")[0],
+    notes: "",
+  });
+
+const [investmentTransactions, setInvestmentTransactions] =
+  useState([]);
+
+const [transactionLoading, setTransactionLoading] =
+  useState(false);
+
+const [transactionHistoryLoading, setTransactionHistoryLoading] =
+  useState(false);
+
+const [transactionMessage, setTransactionMessage] =
+  useState("");
   const loadInvestments = async () => {
     try {
       const response = await fetch(

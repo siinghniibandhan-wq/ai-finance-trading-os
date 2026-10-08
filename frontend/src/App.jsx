@@ -1719,15 +1719,7 @@ const summaryCards = [
           SUMMARY CARDS
       ===================================================== */}
 
-      <div
-  style={{
-    display: "grid",
-    gridTemplateColumns:
-      "repeat(4, minmax(0, 1fr))",
-    gap: "14px",
-    width: "100%",
-  }}
->
+      <div className="portfolio-summary-grid">
 
         {summaryCards.map((card) => (
           <div
@@ -1756,16 +1748,7 @@ const summaryCards = [
               {card.label}
             </div>
 
-            <div
-  style={{
-    fontSize: "20px",
-    fontWeight: 800,
-    color: "#ffffff",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  }}
->
+            <div className="portfolio-summary-value">
   {card.value}
 </div>
 

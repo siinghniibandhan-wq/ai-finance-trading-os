@@ -2863,7 +2863,610 @@ const holdingReturn =
          </div>
 
     </div>
+  {/* =====================================================
+      STEP 3 — BUY / SELL TRANSACTION MODAL
+  ===================================================== */}
 
+  {transactionModal && (
+
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "18px",
+        background: "rgba(0,0,0,0.72)",
+        backdropFilter: "blur(8px)",
+      }}
+      onClick={closeInvestmentTransactionModal}
+    >
+
+      <div
+        className="glass-card"
+        style={{
+          width: "100%",
+          maxWidth: "560px",
+          maxHeight: "90vh",
+          overflowY: "auto",
+          padding: "22px",
+        }}
+        onClick={(event) =>
+          event.stopPropagation()
+        }
+      >
+
+        {/* MODAL HEADER */}
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "12px",
+            marginBottom: "18px",
+          }}
+        >
+
+          <div>
+
+            <p className="card-label">
+              INVESTMENT TRANSACTION
+            </p>
+
+            <h3
+              style={{
+                margin: "4px 0 0",
+              }}
+            >
+              {transactionModal.investment.name}
+            </h3>
+
+            <div
+              style={{
+                marginTop: "4px",
+                fontSize: "11px",
+                color: "rgba(255,255,255,0.45)",
+              }}
+            >
+              {transactionModal.investment.symbol ||
+                transactionModal.investment.investment_type}
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            className="icon-button"
+            onClick={closeInvestmentTransactionModal}
+          >
+            <X size={18} />
+          </button>
+
+        </div>
+
+
+        {/* BUY / SELL / HISTORY */}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(3, minmax(0, 1fr))",
+            gap: "8px",
+            marginBottom: "18px",
+          }}
+        >
+
+          <button
+            type="button"
+            className="small-button"
+            style={{
+              padding: "10px",
+              color:
+                transactionType === "BUY"
+                  ? "#86efac"
+                  : "rgba(255,255,255,0.55)",
+            }}
+            onClick={() => {
+              setTransactionType("BUY");
+              setTransactionModal({
+                ...transactionModal,
+                mode: "form",
+              });
+              setTransactionMessage("");
+            }}
+          >
+            BUY
+          </button>
+
+
+          <button
+            type="button"
+            className="small-button"
+            style={{
+              padding: "10px",
+              color:
+                transactionType === "SELL"
+                  ? "#fca5a5"
+                  : "rgba(255,255,255,0.55)",
+            }}
+            onClick={() => {
+              setTransactionType("SELL");
+              setTransactionModal({
+                ...transactionModal,
+                mode: "form",
+              });
+              setTransactionMessage("");
+            }}
+          >
+            SELL
+          </button>
+
+
+          <button
+            type="button"
+            className="small-button"
+            style={{
+              padding: "10px",
+            }}
+            onClick={async () => {
+
+              setTransactionModal({
+                ...transactionModal,
+                mode: "history",
+              });
+
+              await loadInvestmentTransactions(
+                transactionModal.investment.id
+              );
+
+            }}
+          >
+            History
+          </button>
+
+        </div>
+
+
+        {/* =================================================
+            BUY / SELL FORM
+        ================================================= */}
+
+        {transactionModal.mode === "form" && (
+
+          <div>
+
+            <div
+              style={{
+                padding: "12px",
+                borderRadius: "12px",
+                marginBottom: "16px",
+                background:
+                  transactionType === "BUY"
+                    ? "rgba(34,197,94,0.08)"
+                    : "rgba(239,68,68,0.08)",
+              }}
+            >
+
+              <div
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 800,
+                }}
+              >
+                {transactionType === "BUY"
+                  ? "Buy Investment"
+                  : "Sell Investment"}
+              </div>
+
+              <div
+                style={{
+                  marginTop: "4px",
+                  fontSize: "10px",
+                  color:
+                    "rgba(255,255,255,0.45)",
+                }}
+              >
+                Record this transaction in your
+                permanent investment ledger.
+              </div>
+
+            </div>
+
+
+            {/* QUANTITY */}
+
+            <label
+              style={{
+                display: "block",
+                marginBottom: "6px",
+                fontSize: "11px",
+                color:
+                  "rgba(255,255,255,0.55)",
+              }}
+            >
+              Quantity
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={transactionForm.quantity}
+              onChange={(event) =>
+                setTransactionForm((previous) => ({
+                  ...previous,
+                  quantity:
+                    event.target.value,
+                }))
+              }
+              placeholder="Enter quantity"
+              style={investmentFieldStyle}
+            />
+
+
+            {/* PRICE */}
+
+            <label
+              style={{
+                display: "block",
+                marginTop: "12px",
+                marginBottom: "6px",
+                fontSize: "11px",
+                color:
+                  "rgba(255,255,255,0.55)",
+              }}
+            >
+              Price
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={transactionForm.price}
+              onChange={(event) =>
+                setTransactionForm((previous) => ({
+                  ...previous,
+                  price:
+                    event.target.value,
+                }))
+              }
+              placeholder="Enter price"
+              style={investmentFieldStyle}
+            />
+
+
+            {/* FEES */}
+
+            <label
+              style={{
+                display: "block",
+                marginTop: "12px",
+                marginBottom: "6px",
+                fontSize: "11px",
+                color:
+                  "rgba(255,255,255,0.55)",
+              }}
+            >
+              Fees
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={transactionForm.fees}
+              onChange={(event) =>
+                setTransactionForm((previous) => ({
+                  ...previous,
+                  fees:
+                    event.target.value,
+                }))
+              }
+              placeholder="0"
+              style={investmentFieldStyle}
+            />
+
+
+            {/* TRANSACTION DATE */}
+
+            <label
+              style={{
+                display: "block",
+                marginTop: "12px",
+                marginBottom: "6px",
+                fontSize: "11px",
+                color:
+                  "rgba(255,255,255,0.55)",
+              }}
+            >
+              Transaction Date
+            </label>
+
+            <input
+              type="date"
+              value={
+                transactionForm.transaction_date
+              }
+              onChange={(event) =>
+                setTransactionForm((previous) => ({
+                  ...previous,
+                  transaction_date:
+                    event.target.value,
+                }))
+              }
+              style={{
+                ...investmentFieldStyle,
+                colorScheme: "dark",
+              }}
+            />
+
+
+            {/* NOTES */}
+
+            <label
+              style={{
+                display: "block",
+                marginTop: "12px",
+                marginBottom: "6px",
+                fontSize: "11px",
+                color:
+                  "rgba(255,255,255,0.55)",
+              }}
+            >
+              Notes
+            </label>
+
+            <textarea
+              rows={3}
+              value={transactionForm.notes}
+              onChange={(event) =>
+                setTransactionForm((previous) => ({
+                  ...previous,
+                  notes:
+                    event.target.value,
+                }))
+              }
+              placeholder="Optional notes"
+              style={{
+                ...investmentFieldStyle,
+                resize: "vertical",
+              }}
+            />
+
+
+            {/* MESSAGE */}
+
+            {transactionMessage && (
+
+              <div
+                style={{
+                  marginTop: "12px",
+                  padding: "10px",
+                  borderRadius: "10px",
+                  background:
+                    "rgba(255,255,255,0.05)",
+                  fontSize: "11px",
+                }}
+              >
+                {transactionMessage}
+              </div>
+
+            )}
+
+
+            {/* SUBMIT */}
+
+            <button
+              type="button"
+              className="primary-button"
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                marginTop: "16px",
+              }}
+              disabled={transactionLoading}
+              onClick={
+                handleInvestmentTransactionSubmit
+              }
+            >
+              {transactionLoading
+                ? "Saving..."
+                : `Confirm ${transactionType}`}
+            </button>
+
+          </div>
+
+        )}
+
+
+        {/* =================================================
+            TRANSACTION HISTORY
+        ================================================= */}
+
+        {transactionModal.mode === "history" && (
+
+          <div>
+
+            <div
+              style={{
+                marginBottom: "12px",
+                fontSize: "13px",
+                fontWeight: 800,
+              }}
+            >
+              Transaction History
+            </div>
+
+            {transactionHistoryLoading ? (
+
+              <div
+                style={{
+                  padding: "30px 10px",
+                  textAlign: "center",
+                  fontSize: "12px",
+                  color:
+                    "rgba(255,255,255,0.45)",
+                }}
+              >
+                Loading transactions...
+              </div>
+
+            ) : investmentTransactions.length ===
+              0 ? (
+
+              <div
+                style={{
+                  padding: "30px 10px",
+                  textAlign: "center",
+                  fontSize: "12px",
+                  color:
+                    "rgba(255,255,255,0.45)",
+                }}
+              >
+                No transactions yet.
+              </div>
+
+            ) : (
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                }}
+              >
+
+                {investmentTransactions.map(
+                  (transaction) => (
+
+                    <div
+                      key={transaction.id}
+                      style={{
+                        padding: "12px",
+                        borderRadius: "12px",
+                        background:
+                          "rgba(255,255,255,0.04)",
+                        border:
+                          "1px solid rgba(255,255,255,0.08)",
+                      }}
+                    >
+
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent:
+                            "space-between",
+                          gap: "10px",
+                        }}
+                      >
+
+                        <div>
+
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: 800,
+                              color:
+                                transaction.transaction_type ===
+                                "BUY"
+                                  ? "#86efac"
+                                  : "#fca5a5",
+                            }}
+                          >
+                            {transaction.transaction_type}
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: "4px",
+                              fontSize: "10px",
+                              color:
+                                "rgba(255,255,255,0.45)",
+                            }}
+                          >
+                            {transaction.transaction_date}
+                          </div>
+
+                        </div>
+
+
+                        <div
+                          style={{
+                            textAlign: "right",
+                          }}
+                        >
+
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: 800,
+                            }}
+                          >
+                            {transaction.quantity}
+                            {" × "}
+                            {formatCurrency(
+                              transaction.price
+                            )}
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: "4px",
+                              fontSize: "10px",
+                              color:
+                                "rgba(255,255,255,0.45)",
+                            }}
+                          >
+                            Fees:{" "}
+                            {formatCurrency(
+                              transaction.fees
+                            )}
+                          </div>
+
+                        </div>
+
+                      </div>
+
+
+                      {transaction.notes && (
+
+                        <div
+                          style={{
+                            marginTop: "8px",
+                            fontSize: "10px",
+                            color:
+                              "rgba(255,255,255,0.45)",
+                          }}
+                        >
+                          {transaction.notes}
+                        </div>
+
+                      )}
+
+                    </div>
+
+                  )
+                )}
+
+              </div>
+
+            )}
+
+          </div>
+
+        )}
+
+      </div>
+
+    </div>
+
+  )}
+      
   );
               }         
 

@@ -46,8 +46,7 @@ from fastapi import (
     Depends,
 )
 
-from sqlalchemy import (
-    func,
+from sqlalchemy import func, text
 )
 
 from sqlalchemy.orm import Session
@@ -147,19 +146,21 @@ def load_asset_classes(
 
     rows = (
         db.execute(
-            """
-            SELECT
-                id,
-                name,
-                investment_type,
-                symbol
-            FROM investments
-            WHERE user_id = :user_id
-            ORDER BY id ASC
-            """,
-            {
-                "user_id": user_id,
-            },
+    text(
+        """
+        SELECT
+            id,
+            name,
+            investment_type,
+            symbol
+        FROM investments
+        WHERE user_id = :user_id
+        ORDER BY id ASC
+        """
+    ),
+    {
+        "user_id": user_id,
+    },
         )
     )
 

@@ -3,20 +3,29 @@
 # MARKET DATA API
 # ============================================================
 #
-# This API is the Financial OS gateway to market data.
+# This route uses the Financial OS market-price service.
 #
-# Frontend / Application
-#          ↓
-#     Financial OS API
-#          ↓
-#     Market Provider
-#          ↓
-#     Alpha Vantage
+# Flow:
+#
+# Financial OS API
+#       ↓
+# market.py
+#       ↓
+# market_price.py
+#       ↓
+# AWS m.Stock Gateway
+#       ↓
+# m.Stock
+#       ↓
+# NSE / BSE market price
 #
 # IMPORTANT:
-# The frontend NEVER calls Alpha Vantage directly.
-#
+# - No m.Stock API key here
+# - No TOTP here
+# - No access token here
+# - No Alpha Vantage here
 # ============================================================
+
 
 from fastapi import APIRouter, HTTPException
 
@@ -27,7 +36,7 @@ from app.services.market_price import (
 
 
 # ============================================================
-# ROUTER
+# ROUTER CONFIGURATION
 # ============================================================
 
 router = APIRouter(
@@ -43,57 +52,62 @@ router = APIRouter(
 @router.get("/status")
 def market_status():
     """
-    Check whether the Financial OS market-data service
-    is available.
+    Check the Financial OS Market Data API.
 
-    This does NOT call Alpha Vantage.
+    This endpoint does not call m.Stock.
+    It only reports the configured provider.
     """
 
     return {
         "status": "online",
         "service": "Financial OS Market Data API",
-        "provider": "Alpha Vantage",
+        "provider": "m.Stock",
+        "gateway": "AWS m.Stock Gateway",
     }
 
 
 # ============================================================
-# GET MARKET QUOTE
+# MARKET QUOTE
 # ============================================================
 
 @router.get("/quote")
 def market_quote(symbol: str):
     """
-    Get the latest available market price for a symbol.
+    Get the latest market price for an investment symbol.
 
     Example:
 
-    /api/market/quote?symbol=IBM
+        /api/market/quote?symbol=RELIANCE
 
-    The frontend calls this endpoint.
-
-    The backend then calls Alpha Vantage.
+    The market-price service handles communication with
+    the AWS m.Stock Gateway.
     """
+
+    # --------------------------------------------------------
+    # Clean symbol
+    # --------------------------------------------------------
+
+    symbol = symbol.strip().upper()
 
     # --------------------------------------------------------
     # Validate symbol
     # --------------------------------------------------------
 
-    symbol = symbol.strip().upper()
-
     if not symbol:
-
         raise HTTPException(
             status_code=400,
             detail="Market symbol is required.",
         )
 
     # --------------------------------------------------------
-    # Fetch market price
+    # Get latest market price
     # --------------------------------------------------------
 
     try:
 
-        price = get_market_price(symbol)
+        price = get_market_price(
+            symbol
+        )
 
     except MarketPriceError as exc:
 
@@ -103,12 +117,13 @@ def market_quote(symbol: str):
         ) from exc
 
     # --------------------------------------------------------
-    # Return normalized Financial OS response
+    # Return successful response
     # --------------------------------------------------------
 
     return {
         "status": "success",
         "symbol": symbol,
         "price": price,
-        "provider": "Alpha Vantage",
+        "provider": "m.Stock",
+        "source": "AWS m.Stock Gateway",
     }

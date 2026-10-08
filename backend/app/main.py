@@ -32,6 +32,7 @@ from app.routes import (
     market_history,
     market_charts,
     watchlist,
+    market_movers,
     investment_transactions,
     holdings,
     investment_pnl,
@@ -167,6 +168,7 @@ app.include_router(market_search.router)
 app.include_router(market_history.router)
 app.include_router(market_charts.router)
 app.include_router(watchlist.router)
+app.include_router(market_movers.router)
 app.include_router(investment_transactions.router)
 app.include_router(holdings.router)
 app.include_router(investment_pnl.router)

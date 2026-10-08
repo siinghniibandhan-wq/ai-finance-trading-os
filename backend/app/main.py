@@ -35,6 +35,7 @@ from app.routes import (
     tax_calculation,
     tax_context,
     tax_liability,
+    income_tax_loss_setoff,
 )
 
 
@@ -140,3 +141,4 @@ app.include_router(asset_classification.router)
 app.include_router(tax_calculation.router)
 app.include_router(tax_context.router)
 app.include_router(tax_liability.router)
+app.include_router(income_tax_loss_setoff.router)

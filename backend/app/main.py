@@ -50,6 +50,9 @@ from app.routes import (
 
     # Module 10
     deductions_exempt_income,
+
+    # Module 11
+    final_taxable_income,
 )
 
 
@@ -187,5 +190,11 @@ app.include_router(income_tax_aggregation.router)
 # ------------------------------------------------------------
 
 app.include_router(
-    deductions_exempt_income.router
+    deductions_exempt_income.router)
+# ------------------------------------------------------------
+# MODULE 11
+# FINAL TAXABLE INCOME
+# ------------------------------------------------------------
+app.include_router(
+    final_taxable_income.router
 )

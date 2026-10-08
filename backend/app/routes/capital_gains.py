@@ -1,15 +1,16 @@
 # ============================================================
 # FINANCIAL OS
-# CAPITAL GAINS DATA ENGINE v1.0
+# CAPITAL GAINS DATA ENGINE v1.1
 # ============================================================
 #
 # Purpose:
 # - Calculate realised capital gains from BUY / SELL ledger
 # - Use FIFO matching
+# - Track individual BUY lots
+# - Calculate holding period
 # - Calculate sale proceeds
 # - Calculate cost of units sold
-# - Include buy/sell fees
-# - Calculate holding period
+# - Allocate BUY and SELL fees
 # - Provide financial-year capital-gain data
 #
 # IMPORTANT:
@@ -19,14 +20,6 @@
 # - Does NOT modify holdings
 # - Does NOT calculate final income tax liability
 # - Does NOT apply STCG/LTCG tax rates
-#
-# FIFO MODEL:
-#
-# BUY  → creates a lot
-# SELL → consumes oldest available BUY lot
-#
-# Capital Gain =
-# Net Sale Proceeds - Allocated Acquisition Cost
 #
 # ============================================================
 
@@ -140,9 +133,8 @@ def load_transactions(
     Load all BUY / SELL transactions up to the end of
     the requested financial year.
 
-    We intentionally load transactions before the FY start
-    because a SELL during the current FY may use a BUY lot
-    created in an earlier financial year.
+    Earlier BUY transactions are required because a SELL
+    in the current FY may use a BUY lot from an earlier FY.
     """
 
     result = db.execute(
@@ -191,9 +183,10 @@ def calculate_fifo_gains(
 
     FIFO is maintained separately for each investment_id.
 
-    This is intentional for v1.0 because the existing ledger
-    identifies transactions by investment_id. Instrument Master
-    / canonical security identity will be introduced later.
+    Every SELL is matched against the oldest available BUY
+    lots.
+
+    Each matched lot records its own holding period.
     """
 
     # --------------------------------------------------------
@@ -254,10 +247,9 @@ def calculate_fifo_gains(
 
         if transaction_type == "BUY":
 
-            # Acquisition cost includes BUY fees.
-            acquisition_cost = (
+            gross_buy_value = (
                 quantity * price
-            ) + fees
+            )
 
             buy_lots.setdefault(
                 investment_id,
@@ -268,16 +260,23 @@ def calculate_fifo_gains(
                 investment_id
             ].append(
                 {
-                    "transaction_id": transaction[
-                        "id"
-                    ],
-                    "quantity_remaining": quantity,
-                    "unit_cost": (
-                        acquisition_cost
-                        / quantity
+                    "buy_transaction_id": (
+                        transaction["id"]
                     ),
-                    "transaction_date": (
+                    "buy_date": (
                         transaction_date
+                    ),
+                    "quantity_remaining": (
+                        quantity
+                    ),
+                    "unit_price": (
+                        price
+                    ),
+                    "total_buy_fee": (
+                        fees
+                    ),
+                    "gross_buy_value": (
+                        gross_buy_value
                     ),
                 }
             )
@@ -293,17 +292,23 @@ def calculate_fifo_gains(
 
         remaining_quantity = quantity
 
-        # Net proceeds after SELL fees.
-        sale_proceeds = (
-            quantity * price
-        ) - fees
-
-        allocated_cost = Decimal("0")
-        allocated_buy_fees = Decimal("0")
-
         lots = buy_lots.setdefault(
             investment_id,
             [],
+        )
+
+        matched_lots = []
+
+        total_matched_quantity = (
+            Decimal("0")
+        )
+
+        total_allocated_cost = (
+            Decimal("0")
+        )
+
+        total_allocated_buy_fees = (
+            Decimal("0")
         )
 
         # ----------------------------------------------------
@@ -326,43 +331,86 @@ def calculate_fifo_gains(
                 lot_quantity,
             )
 
-            matched_cost = (
-                matched_quantity
-                * lot["unit_cost"]
-            )
+            # ------------------------------------------------
+            # ALLOCATE BUY FEE
+            # ------------------------------------------------
 
-            allocated_cost += matched_cost
+            if lot_quantity > 0:
 
-            # The BUY fee is already included inside
-            # the lot's unit cost. We expose the allocated
-            # portion separately for reporting.
-            original_buy_value = (
-                lot_quantity
-                * lot["unit_cost"]
-            )
-
-            if original_buy_value > 0:
                 allocated_buy_fee = (
-                    matched_quantity
-                    / lot_quantity
-                ) * (
-                    original_buy_value
-                    - (
-                        lot_quantity
-                        * (
-                            lot["unit_cost"]
-                        )
+                    lot["total_buy_fee"]
+                    * (
+                        matched_quantity
+                        / lot_quantity
                     )
                 )
+
             else:
-                allocated_buy_fee = Decimal("0")
 
-            # The expression above normally resolves to zero
-            # because unit_cost already contains fees.
-            # Actual acquisition cost remains represented by
-            # unit_cost and is used for gain calculation.
+                allocated_buy_fee = (
+                    Decimal("0")
+                )
 
-            allocated_buy_fees += (
+            # ------------------------------------------------
+            # ACQUISITION COST
+            # ------------------------------------------------
+
+            gross_acquisition_cost = (
+                matched_quantity
+                * lot["unit_price"]
+            )
+
+            acquisition_cost = (
+                gross_acquisition_cost
+                + allocated_buy_fee
+            )
+
+            # ------------------------------------------------
+            # HOLDING PERIOD
+            # ------------------------------------------------
+
+            holding_days = (
+                transaction_date
+                - lot["buy_date"]
+            ).days
+
+            matched_lots.append(
+                {
+                    "buy_transaction_id": (
+                        lot[
+                            "buy_transaction_id"
+                        ]
+                    ),
+                    "buy_date": (
+                        lot["buy_date"]
+                    ),
+                    "quantity": (
+                        matched_quantity
+                    ),
+                    "buy_price": (
+                        lot["unit_price"]
+                    ),
+                    "allocated_buy_fee": (
+                        allocated_buy_fee
+                    ),
+                    "cost_basis": (
+                        acquisition_cost
+                    ),
+                    "holding_days": (
+                        holding_days
+                    ),
+                }
+            )
+
+            total_matched_quantity += (
+                matched_quantity
+            )
+
+            total_allocated_cost += (
+                acquisition_cost
+            )
+
+            total_allocated_buy_fees += (
                 allocated_buy_fee
             )
 
@@ -374,13 +422,18 @@ def calculate_fifo_gains(
                 matched_quantity
             )
 
+            # ------------------------------------------------
+            # REMOVE FULLY CONSUMED LOT
+            # ------------------------------------------------
+
             if lot[
                 "quantity_remaining"
             ] <= 0:
+
                 lots.pop(0)
 
         # ----------------------------------------------------
-        # DATA QUALITY CHECK
+        # UNMATCHED SELL QUANTITY
         # ----------------------------------------------------
 
         if remaining_quantity > 0:
@@ -399,69 +452,91 @@ def calculate_fifo_gains(
         ):
             continue
 
-        matched_quantity = (
-            quantity - remaining_quantity
-        )
+        # ----------------------------------------------------
+        # MATCHED SALE
+        # ----------------------------------------------------
 
-        # If a sale has no matching BUY data,
-        # do not create a false capital gain.
-        if matched_quantity <= 0:
+        if total_matched_quantity <= 0:
             continue
 
-        # For v1.0, if the entire sale is not matched,
-        # report only the matched portion.
-        matched_sale_proceeds = (
-            matched_quantity
+        # ----------------------------------------------------
+        # SALE PROCEEDS
+        # ----------------------------------------------------
+
+        gross_sale_proceeds = (
+            total_matched_quantity
             * price
         )
 
-        # Allocate SELL fees proportionally.
+        # Allocate SELL fee only to the matched quantity.
         if quantity > 0:
-            matched_sell_fees = (
+
+            allocated_sell_fee = (
                 fees
                 * (
-                    matched_quantity
+                    total_matched_quantity
                     / quantity
                 )
             )
-        else:
-            matched_sell_fees = Decimal("0")
 
-        matched_net_proceeds = (
-            matched_sale_proceeds
-            - matched_sell_fees
+        else:
+
+            allocated_sell_fee = (
+                Decimal("0")
+            )
+
+        net_sale_proceeds = (
+            gross_sale_proceeds
+            - allocated_sell_fee
         )
+
+        # ----------------------------------------------------
+        # REALISED GAIN / LOSS
+        # ----------------------------------------------------
 
         realised_gain_loss = (
-            matched_net_proceeds
-            - allocated_cost
+            net_sale_proceeds
+            - total_allocated_cost
         )
 
-        holding_days = None
+        # ----------------------------------------------------
+        # WEIGHTED AVERAGE HOLDING DAYS
+        # ----------------------------------------------------
 
-        # The exact holding period depends on which FIFO lots
-        # were consumed. For v1.0, calculate it from the oldest
-        # relevant transaction date available.
-        #
-        # This is intentionally conservative and will be
-        # enhanced with lot-level disposal records later.
-
-        sale_lots = buy_lots.get(
-            investment_id,
-            []
+        weighted_holding_days = (
+            Decimal("0")
         )
 
-        # Since the consumed lots have been removed above,
-        # the exact consumed BUY date is not retained here.
-        # Therefore v1.0 leaves holding_days as None rather
-        # than inventing a value.
+        if total_matched_quantity > 0:
+
+            for lot in matched_lots:
+
+                weighted_holding_days += (
+                    Decimal(
+                        str(
+                            lot[
+                                "holding_days"
+                            ]
+                        )
+                    )
+                    * lot["quantity"]
+                )
+
+            weighted_holding_days = (
+                weighted_holding_days
+                / total_matched_quantity
+            )
+
+        # ----------------------------------------------------
+        # TOTALS
+        # ----------------------------------------------------
 
         total_sale_proceeds += (
-            matched_net_proceeds
+            net_sale_proceeds
         )
 
         total_cost_basis += (
-            allocated_cost
+            total_allocated_cost
         )
 
         total_realised_gain_loss += (
@@ -469,12 +544,16 @@ def calculate_fifo_gains(
         )
 
         total_sell_fees += (
-            matched_sell_fees
+            allocated_sell_fee
         )
 
         total_buy_fees_allocated += (
-            allocated_buy_fees
+            total_allocated_buy_fees
         )
+
+        # ----------------------------------------------------
+        # TRANSACTION RESULT
+        # ----------------------------------------------------
 
         realised_gains.append(
             {
@@ -488,27 +567,34 @@ def calculate_fifo_gains(
                     transaction_date
                 ),
                 "quantity_sold": (
-                    matched_quantity
+                    total_matched_quantity
                 ),
                 "sale_price": price,
                 "gross_sale_proceeds": (
-                    matched_sale_proceeds
+                    gross_sale_proceeds
                 ),
                 "sell_fees": (
-                    matched_sell_fees
+                    allocated_sell_fee
                 ),
                 "net_sale_proceeds": (
-                    matched_net_proceeds
+                    net_sale_proceeds
                 ),
                 "cost_basis": (
-                    allocated_cost
+                    total_allocated_cost
                 ),
                 "realised_gain_loss": (
                     realised_gain_loss
                 ),
-                "holding_days": holding_days,
+                "holding_days": (
+                    weighted_holding_days
+                ),
+                "matched_lots": matched_lots,
             }
         )
+
+    # --------------------------------------------------------
+    # RETURN RESULT
+    # --------------------------------------------------------
 
     return {
         "transactions": realised_gains,
@@ -591,12 +677,7 @@ def capital_gains(
     ]
 
     # --------------------------------------------------------
-    # GAIN TYPE
-    # --------------------------------------------------------
-    #
-    # v1.0 does NOT classify STCG/LTCG because exact holding
-    # period handling and security-specific tax rules belong
-    # to the later Tax Calculation Engine.
+    # TAX CLASSIFICATION
     # --------------------------------------------------------
 
     return {
@@ -607,7 +688,7 @@ def capital_gains(
             "name": (
                 "Capital Gains Data Engine"
             ),
-            "version": "1.0",
+            "version": "1.1",
             "read_only": True,
         },
 
@@ -630,15 +711,17 @@ def capital_gains(
             "message": (
                 "STCG/LTCG classification and "
                 "tax liability are not calculated "
-                "by Capital Gains Data Engine v1.0."
+                "by Capital Gains Data Engine v1.1."
             ),
         },
 
         "summary": summary,
 
-        "realised_transactions": result[
-            "transactions"
-        ],
+        "realised_transactions": (
+            result[
+                "transactions"
+            ]
+        ),
 
         "transaction_count": len(
             transactions

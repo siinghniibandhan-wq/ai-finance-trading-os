@@ -1713,7 +1713,37 @@ const summaryCards = [
         </div>
       )}     
               
-            
+    {/* =====================================================
+    PORTFOLIO SUMMARY CARD RESPONSIVE STYLE
+===================================================== */}
+
+<style>
+{`
+  .portfolio-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    width: 100%;
+  }
+
+  .portfolio-summary-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .portfolio-summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .portfolio-summary-value {
+      font-size: 17px;
+    }
+  }
+`}
+</style>        
 
       {/* =====================================================
           SUMMARY CARDS

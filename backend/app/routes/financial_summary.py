@@ -3,11 +3,11 @@
 # FINANCIAL DATA ENGINE - SUMMARY
 # ============================================================
 #
-# Version: 1.1
+# Version: 1.2
 #
 # Purpose:
-#   Create one read-only financial snapshot from the
-#   existing Financial OS data.
+#   Create one read-only financial snapshot and support
+#   time-based cash-flow analysis.
 #
 # Used later by:
 #   Home
@@ -23,11 +23,19 @@
 #   - P&L
 #   - Market prices
 #   - Database structure
+#
 # ============================================================
 
+
+from datetime import date
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+)
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -52,11 +60,11 @@ router = APIRouter(
 
 
 # ============================================================
-# HELPER
+# DECIMAL HELPER
 # ============================================================
 
 def to_decimal(value):
-    """Safely convert a database value to Decimal."""
+    """Safely convert database values to Decimal."""
 
     if value is None:
         return Decimal("0")
@@ -98,15 +106,46 @@ def calculate_percentage(
 @router.get("/")
 def get_financial_summary(
     user_id: int,
+    start_date: date | None = None,
+    end_date: date | None = None,
     db: Session = Depends(get_db),
 ):
     """
     Return a read-only financial snapshot.
 
-    Example:
+    Current financial snapshot:
 
-        GET /api/financial-summary/?user_id=1
+        /api/financial-summary/?user_id=1
+
+    Period analysis:
+
+        /api/financial-summary/
+        ?user_id=1
+        &start_date=2026-10-01
+        &end_date=2026-10-31
+
+    IMPORTANT:
+
+    The investment section remains a CURRENT snapshot because
+    the current market-data system provides current prices.
+
+    The period section applies to transaction-based
+    income/expense analysis.
     """
+
+    # ========================================================
+    # VALIDATE DATE RANGE
+    # ========================================================
+
+    if (
+        start_date is not None
+        and end_date is not None
+        and start_date > end_date
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="start_date cannot be after end_date.",
+        )
 
     # ========================================================
     # ACTIVE ACCOUNT BALANCE
@@ -138,7 +177,7 @@ def get_financial_summary(
     )
 
     # ========================================================
-    # TOTAL INCOME
+    # ALL-TIME INCOME
     # ========================================================
 
     total_income = (
@@ -156,7 +195,7 @@ def get_financial_summary(
     )
 
     # ========================================================
-    # TOTAL EXPENSE
+    # ALL-TIME EXPENSE
     # ========================================================
 
     total_expense = (
@@ -190,7 +229,7 @@ def get_financial_summary(
     )
 
     # ========================================================
-    # NET CASH FLOW
+    # ALL-TIME NET CASH FLOW
     # ========================================================
 
     net_cash_flow = (
@@ -199,20 +238,150 @@ def get_financial_summary(
     )
 
     # ========================================================
-    # SAVINGS RATE
-    # ========================================================
-    #
-    # Formula:
-    #
-    #   Net Cash Flow / Income × 100
-    #
-    # If income is zero, savings rate = 0.
-    #
+    # ALL-TIME SAVINGS RATE
     # ========================================================
 
     savings_rate = calculate_percentage(
         net_cash_flow,
         total_income,
+    )
+
+    # ========================================================
+    # PERIOD CASH FLOW
+    # ========================================================
+    #
+    # This section only filters transaction-based
+    # income and expense.
+    #
+    # We intentionally preserve the existing meaning of
+    # total_income and total_expense.
+    #
+    # Other transaction types such as:
+    # refund
+    # interest
+    # dividend
+    # withdrawal
+    # tax
+    # loan_repayment
+    #
+    # are NOT silently reclassified here.
+    #
+    # ========================================================
+
+    period_income_query = (
+        db.query(
+            func.coalesce(
+                func.sum(Transaction.amount),
+                0,
+            )
+        )
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.transaction_type == "income",
+        )
+    )
+
+    period_expense_query = (
+        db.query(
+            func.coalesce(
+                func.sum(Transaction.amount),
+                0,
+            )
+        )
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.transaction_type == "expense",
+        )
+    )
+
+    period_count_query = (
+        db.query(
+            func.count(Transaction.id)
+        )
+        .filter(
+            Transaction.user_id == user_id,
+        )
+    )
+
+    # --------------------------------------------------------
+    # APPLY START DATE
+    # --------------------------------------------------------
+
+    if start_date is not None:
+
+        period_income_query = (
+            period_income_query.filter(
+                Transaction.transaction_date
+                >= start_date
+            )
+        )
+
+        period_expense_query = (
+            period_expense_query.filter(
+                Transaction.transaction_date
+                >= start_date
+            )
+        )
+
+        period_count_query = (
+            period_count_query.filter(
+                Transaction.transaction_date
+                >= start_date
+            )
+        )
+
+    # --------------------------------------------------------
+    # APPLY END DATE
+    # --------------------------------------------------------
+
+    if end_date is not None:
+
+        period_income_query = (
+            period_income_query.filter(
+                Transaction.transaction_date
+                <= end_date
+            )
+        )
+
+        period_expense_query = (
+            period_expense_query.filter(
+                Transaction.transaction_date
+                <= end_date
+            )
+        )
+
+        period_count_query = (
+            period_count_query.filter(
+                Transaction.transaction_date
+                <= end_date
+            )
+        )
+
+    # --------------------------------------------------------
+    # EXECUTE PERIOD QUERIES
+    # --------------------------------------------------------
+
+    period_income = to_decimal(
+        period_income_query.scalar()
+    )
+
+    period_expense = to_decimal(
+        period_expense_query.scalar()
+    )
+
+    period_transaction_count = (
+        period_count_query.scalar()
+        or 0
+    )
+
+    period_net_cash_flow = (
+        period_income
+        - period_expense
+    )
+
+    period_savings_rate = calculate_percentage(
+        period_net_cash_flow,
+        period_income,
     )
 
     # ========================================================
@@ -298,16 +467,6 @@ def get_financial_summary(
     # ========================================================
     # INVESTMENT RETURN
     # ========================================================
-    #
-    # Formula:
-    #
-    #   Total P&L / Cost Basis × 100
-    #
-    # This is a simple portfolio-level return indicator.
-    #
-    # It is NOT a time-weighted or XIRR return.
-    #
-    # ========================================================
 
     investment_return = calculate_percentage(
         total_gain_loss,
@@ -317,26 +476,26 @@ def get_financial_summary(
     # ========================================================
     # NET WORTH
     # ========================================================
-    #
-    # Current version:
-    #
-    #   Active account balances
-    #   +
-    #   Current investment value
-    #
-    # Future versions can add:
-    #   Property
-    #   Vehicles
-    #   Other assets
-    #   Loans
-    #   Credit liabilities
-    #
-    # ========================================================
 
     net_worth = (
         total_balance
         + investment_current_value
     )
+
+    # ========================================================
+    # PERIOD DESCRIPTION
+    # ========================================================
+
+    if (
+        start_date is None
+        and end_date is None
+    ):
+
+        period_scope = "all_time"
+
+    else:
+
+        period_scope = "custom"
 
     # ========================================================
     # RETURN FINANCIAL SNAPSHOT
@@ -349,14 +508,22 @@ def get_financial_summary(
 
         "engine": {
             "name": "Financial Data Engine",
-            "version": "1.1",
+            "version": "1.2",
             "read_only": True,
         },
+
+        # ----------------------------------------------------
+        # CURRENT CASH
+        # ----------------------------------------------------
 
         "cash": {
             "account_count": account_count,
             "total_balance": total_balance,
         },
+
+        # ----------------------------------------------------
+        # ALL-TIME CASH FLOW
+        # ----------------------------------------------------
 
         "cash_flow": {
             "total_income": total_income,
@@ -364,6 +531,25 @@ def get_financial_summary(
             "net_cash_flow": net_cash_flow,
             "savings_rate_percent": savings_rate,
         },
+
+        # ----------------------------------------------------
+        # PERIOD CASH FLOW
+        # ----------------------------------------------------
+
+        "period": {
+            "scope": period_scope,
+            "start_date": start_date,
+            "end_date": end_date,
+            "transaction_count": period_transaction_count,
+            "income": period_income,
+            "expense": period_expense,
+            "net_cash_flow": period_net_cash_flow,
+            "savings_rate_percent": period_savings_rate,
+        },
+
+        # ----------------------------------------------------
+        # CURRENT INVESTMENT SNAPSHOT
+        # ----------------------------------------------------
 
         "investments": {
             "holding_count": len(holdings),
@@ -374,6 +560,10 @@ def get_financial_summary(
             "total_gain_loss": total_gain_loss,
             "return_percent": investment_return,
         },
+
+        # ----------------------------------------------------
+        # CURRENT NET WORTH
+        # ----------------------------------------------------
 
         "net_worth": {
             "total": net_worth,

@@ -19,7 +19,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.database.database import get_db
 from app.models import Transaction
 
 from app.routes.income_tax_loss_setoff import (

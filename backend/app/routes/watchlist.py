@@ -1,0 +1,346 @@
+"""
+Financial OS — Watchlist Engine v1.0
+
+Purpose:
+- Store a user's market watchlist.
+- Add market instruments to a watchlist.
+- List watchlist instruments.
+- Remove instruments from a watchlist.
+- Keep watchlist data separate from investment holdings.
+- Read/write only to the watchlist table.
+- No changes to investments or transactions.
+"""
+
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.database.database import get_db
+
+
+# ============================================================
+# ROUTER
+# ============================================================
+
+router = APIRouter(
+    prefix="/api/watchlist",
+    tags=["Watchlist"],
+)
+
+
+# ============================================================
+# DATABASE TABLE
+# ============================================================
+
+def ensure_watchlist_table(db: Session):
+    """
+    Create the watchlist table if it does not already exist.
+
+    This keeps Watchlist independent from the existing
+    investments and investment_transactions tables.
+    """
+
+    db.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS watchlist (
+                id SERIAL PRIMARY KEY,
+
+                user_id INTEGER NOT NULL,
+
+                symbol VARCHAR(100) NOT NULL,
+
+                exchange VARCHAR(20) NOT NULL
+                    DEFAULT 'NSE',
+
+                name VARCHAR(255),
+
+                instrument_token BIGINT,
+
+                created_at TIMESTAMP
+                    DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+    )
+
+    # Prevent duplicate symbols for the same user/exchange.
+    db.execute(
+        text(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS
+            idx_watchlist_user_exchange_symbol
+            ON watchlist (
+                user_id,
+                exchange,
+                symbol
+            )
+            """
+        )
+    )
+
+    db.commit()
+
+
+# ============================================================
+# PYDANTIC SCHEMA
+# ============================================================
+
+class WatchlistCreate(BaseModel):
+
+    user_id: int
+
+    symbol: str = Field(
+        min_length=1,
+        max_length=100,
+    )
+
+    exchange: str = Field(
+        default="NSE",
+        min_length=1,
+        max_length=20,
+    )
+
+    name: str | None = Field(
+        default=None,
+        max_length=255,
+    )
+
+    instrument_token: int | None = None
+
+
+# ============================================================
+# LIST WATCHLIST
+# ============================================================
+
+@router.get("/")
+def list_watchlist(
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Return all watchlist instruments for a user.
+    """
+
+    ensure_watchlist_table(db)
+
+    result = db.execute(
+        text(
+            """
+            SELECT
+                id,
+                user_id,
+                symbol,
+                exchange,
+                name,
+                instrument_token,
+                created_at
+            FROM watchlist
+            WHERE user_id = :user_id
+            ORDER BY id DESC
+            """
+        ),
+        {
+            "user_id": user_id,
+        },
+    )
+
+    return {
+        "status": "success",
+        "engine": "Watchlist Engine",
+        "version": "1.0",
+        "read_only": True,
+        "user_id": user_id,
+        "count": result.rowcount
+            if result.rowcount >= 0
+            else 0,
+        "watchlist": [
+            dict(row._mapping)
+            for row in result
+        ],
+        "database_write": False,
+    }
+
+
+# ============================================================
+# ADD TO WATCHLIST
+# ============================================================
+
+@router.post("/", status_code=201)
+def add_to_watchlist(
+    data: WatchlistCreate,
+    db: Session = Depends(get_db),
+):
+    """
+    Add a market instrument to the user's watchlist.
+    """
+
+    ensure_watchlist_table(db)
+
+    symbol = data.symbol.strip().upper()
+    exchange = data.exchange.strip().upper()
+
+    if not symbol:
+        raise HTTPException(
+            status_code=400,
+            detail="Market symbol is required.",
+        )
+
+    if not exchange:
+        raise HTTPException(
+            status_code=400,
+            detail="Exchange is required.",
+        )
+
+    # --------------------------------------------------------
+    # Prevent duplicates
+    # --------------------------------------------------------
+
+    existing = db.execute(
+        text(
+            """
+            SELECT
+                id,
+                user_id,
+                symbol,
+                exchange,
+                name,
+                instrument_token,
+                created_at
+            FROM watchlist
+            WHERE user_id = :user_id
+              AND exchange = :exchange
+              AND symbol = :symbol
+            """
+        ),
+        {
+            "user_id": data.user_id,
+            "exchange": exchange,
+            "symbol": symbol,
+        },
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail="Symbol is already in the watchlist.",
+        )
+
+    # --------------------------------------------------------
+    # Insert
+    # --------------------------------------------------------
+
+    result = db.execute(
+        text(
+            """
+            INSERT INTO watchlist (
+                user_id,
+                symbol,
+                exchange,
+                name,
+                instrument_token
+            )
+            VALUES (
+                :user_id,
+                :symbol,
+                :exchange,
+                :name,
+                :instrument_token
+            )
+            RETURNING
+                id,
+                user_id,
+                symbol,
+                exchange,
+                name,
+                instrument_token,
+                created_at
+            """
+        ),
+        {
+            "user_id": data.user_id,
+            "symbol": symbol,
+            "exchange": exchange,
+            "name": (
+                data.name.strip()
+                if data.name
+                else None
+            ),
+            "instrument_token": data.instrument_token,
+        },
+    )
+
+    db.commit()
+
+    watchlist_item = result.first()
+
+    if not watchlist_item:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to add instrument to watchlist.",
+        )
+
+    return {
+        "status": "success",
+        "engine": "Watchlist Engine",
+        "version": "1.0",
+        "action": "added",
+        "item": dict(
+            watchlist_item._mapping
+        ),
+        "database_write": True,
+    }
+
+
+# ============================================================
+# REMOVE FROM WATCHLIST
+# ============================================================
+
+@router.delete("/{watchlist_id}")
+def remove_from_watchlist(
+    watchlist_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Remove one watchlist item belonging to the user.
+    """
+
+    ensure_watchlist_table(db)
+
+    result = db.execute(
+        text(
+            """
+            DELETE FROM watchlist
+            WHERE id = :watchlist_id
+              AND user_id = :user_id
+            RETURNING id
+            """
+        ),
+        {
+            "watchlist_id": watchlist_id,
+            "user_id": user_id,
+        },
+    )
+
+    deleted = result.first()
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Watchlist item not found.",
+        )
+
+    db.commit()
+
+    return {
+        "status": "success",
+        "engine": "Watchlist Engine",
+        "version": "1.0",
+        "action": "removed",
+        "watchlist_id": watchlist_id,
+        "database_write": True,
+    }

@@ -32,7 +32,7 @@ from app.routes import (
     capital_gains,
     capital_gains_classification,
     asset_classification,
-    tax_calculation
+    tax_calculation,
     tax_context,
 )
 

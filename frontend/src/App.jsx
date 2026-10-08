@@ -1018,6 +1018,315 @@ const handleEditInvestment = (investment) => {
   setEditingInvestmentId(investment.id);
   setShowInvestmentForm(true);
 };
+
+// ============================================================
+// LOAD INVESTMENT TRANSACTIONS
+// ============================================================
+
+const loadInvestmentTransactions = async (
+  investmentId
+) => {
+
+  try {
+
+    setTransactionHistoryLoading(true);
+    setTransactionMessage("");
+
+    const response = await fetch(
+      `https://ai-finance-trading-os-api.onrender.com/api/investment-transactions/?user_id=1&investment_id=${investmentId}`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+          "Unable to load investment transactions."
+      );
+    }
+
+    setInvestmentTransactions(
+      Array.isArray(data)
+        ? data
+        : []
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Investment transaction history error:",
+      error
+    );
+
+    setTransactionMessage(
+      error?.message ||
+        "Unable to load transactions."
+    );
+
+  } finally {
+
+    setTransactionHistoryLoading(false);
+
+  }
+
+};
+
+
+// ============================================================
+// OPEN BUY / SELL MODAL
+// ============================================================
+
+const openInvestmentTransaction = (
+  investment,
+  type
+) => {
+
+  setTransactionType(type);
+
+  setTransactionModal({
+    investment,
+    mode: "form",
+  });
+
+  setTransactionForm({
+    quantity: "",
+    price:
+      investment.current_price ??
+      investment.buy_price ??
+      "",
+    fees: "",
+    transaction_date:
+      new Date().toISOString().split("T")[0],
+    notes: "",
+  });
+
+  setInvestmentTransactions([]);
+  setTransactionMessage("");
+
+};
+
+
+// ============================================================
+// OPEN TRANSACTION HISTORY
+// ============================================================
+
+const openInvestmentTransactions = async (
+  investment
+) => {
+
+  setTransactionModal({
+    investment,
+    mode: "history",
+  });
+
+  setTransactionType("BUY");
+
+  setTransactionMessage("");
+
+  await loadInvestmentTransactions(
+    investment.id
+  );
+
+};
+
+
+// ============================================================
+// CLOSE TRANSACTION MODAL
+// ============================================================
+
+const closeInvestmentTransactionModal = () => {
+
+  setTransactionModal(null);
+
+  setInvestmentTransactions([]);
+
+  setTransactionMessage("");
+
+};
+
+
+// ============================================================
+// SUBMIT BUY / SELL TRANSACTION
+// ============================================================
+
+const handleInvestmentTransactionSubmit =
+  async () => {
+
+    if (!transactionModal?.investment) {
+      return;
+    }
+
+    const investment =
+      transactionModal.investment;
+
+    try {
+
+      setTransactionLoading(true);
+      setTransactionMessage("");
+
+      // ------------------------------------------------------
+      // VALIDATION
+      // ------------------------------------------------------
+
+      if (
+        !transactionForm.quantity ||
+        Number(transactionForm.quantity) <= 0
+      ) {
+
+        setTransactionMessage(
+          "Please enter a valid quantity."
+        );
+
+        return;
+
+      }
+
+      if (
+        !transactionForm.price ||
+        Number(transactionForm.price) <= 0
+      ) {
+
+        setTransactionMessage(
+          "Please enter a valid price."
+        );
+
+        return;
+
+      }
+
+      if (!transactionForm.transaction_date) {
+
+        setTransactionMessage(
+          "Please select a transaction date."
+        );
+
+        return;
+
+      }
+
+      // ------------------------------------------------------
+      // TRANSACTION PAYLOAD
+      // ------------------------------------------------------
+
+      const payload = {
+
+        user_id: 1,
+
+        investment_id:
+          investment.id,
+
+        transaction_type:
+          transactionType,
+
+        quantity:
+          Number(
+            transactionForm.quantity
+          ),
+
+        price:
+          Number(
+            transactionForm.price
+          ),
+
+        fees:
+          Number(
+            transactionForm.fees || 0
+          ),
+
+        transaction_date:
+          transactionForm.transaction_date,
+
+        notes:
+          transactionForm.notes.trim() ||
+          null,
+
+      };
+
+      // ------------------------------------------------------
+      // CREATE TRANSACTION
+      // ------------------------------------------------------
+
+      const response = await fetch(
+        "https://ai-finance-trading-os-api.onrender.com/api/investment-transactions/",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body:
+            JSON.stringify(payload),
+        }
+      );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+
+        throw new Error(
+          data?.detail ||
+            `Unable to create ${transactionType} transaction.`
+        );
+
+      }
+
+      // ------------------------------------------------------
+      // SUCCESS
+      // ------------------------------------------------------
+
+      setTransactionMessage(
+        `${transactionType} transaction created successfully.`
+      );
+
+      // Refresh transaction history
+      await loadInvestmentTransactions(
+        investment.id
+      );
+
+      // Refresh investment data
+      await loadInvestments();
+
+      // Reset quantity/fees/notes
+      setTransactionForm({
+        quantity: "",
+        price:
+          investment.current_price ??
+          investment.buy_price ??
+          "",
+        fees: "",
+        transaction_date:
+          new Date().toISOString().split("T")[0],
+        notes: "",
+      });
+
+      // Switch to transaction history
+      setTransactionModal({
+        investment,
+        mode: "history",
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Investment transaction error:",
+        error
+      );
+
+      setTransactionMessage(
+        error?.message ||
+          `Unable to create ${transactionType} transaction.`
+      );
+
+    } finally {
+
+      setTransactionLoading(false);
+
+    }
+
+  };
   
   useEffect(() => {
     loadInvestments();

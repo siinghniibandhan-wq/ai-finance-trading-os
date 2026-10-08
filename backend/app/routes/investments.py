@@ -2,8 +2,36 @@
 # FINANCIAL OS
 # INVESTMENTS API
 # ============================================================
+#
+# Portfolio flow:
+#
+# Portfolio
+#     ↓
+# Investments API
+#     ↓
+# Market Price Service
+#     ↓
+# AWS m.Stock Gateway
+#     ↓
+# m.Stock
+#     ↓
+# NSE / BSE market price
+#
+# IMPORTANT:
+# - m.Stock API credentials are NOT stored here.
+# - TOTP is NOT stored here.
+# - Access token is NOT stored here.
+# - Authentication remains inside the AWS m.Stock Gateway.
+#
+# Supported automatic market refresh:
+# - Stocks
+# - ETFs
+#
+# Other investment types continue to use their stored current_price.
+# ============================================================
 
-from datetime import date, datetime
+
+from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,6 +40,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+
 from app.services.market_price import (
     MarketPriceError,
     get_market_price,
@@ -33,6 +62,11 @@ router = APIRouter(
 # ============================================================
 
 def ensure_investments_table(db: Session):
+    """
+    Create the investments table if it does not exist.
+
+    Existing databases are preserved.
+    """
 
     db.execute(
         text(
@@ -52,9 +86,9 @@ def ensure_investments_table(db: Session):
                 quantity NUMERIC(18,6) NOT NULL,
 
                 buy_price NUMERIC(18,4) NOT NULL,
-                
+
                 current_price NUMERIC(18,4),
-                
+
                 buy_date DATE NOT NULL,
 
                 broker VARCHAR(255),
@@ -73,45 +107,16 @@ def ensure_investments_table(db: Session):
         )
     )
 
-    # ============================================================
-    # PRICE TRACKING FIELDS
-    # ============================================================
+    # --------------------------------------------------------
+    # Safety migration for existing databases
+    # --------------------------------------------------------
 
     db.execute(
         text(
             """
             ALTER TABLE investments
-            ADD COLUMN IF NOT EXISTS price_source VARCHAR(20)
-            DEFAULT 'Manual'
-            """
-        )
-    )
-
-    db.execute(
-        text(
-            """
-            ALTER TABLE investments
-            ADD COLUMN IF NOT EXISTS price_updated_at TIMESTAMP
-            """
-        )
-    )
-
-    # ============================================================
-    # INITIALIZE PRICE TRACKING FOR EXISTING INVESTMENTS
-    # ============================================================
-
-    db.execute(
-        text(
-            """
-            UPDATE investments
-            SET
-                current_price = buy_price,
-                price_source = COALESCE(price_source, 'Manual'),
-                price_updated_at = COALESCE(
-                    price_updated_at,
-                    CURRENT_TIMESTAMP
-                )
-            WHERE current_price IS NULL
+            ADD COLUMN IF NOT EXISTS current_price
+            NUMERIC(18,4)
             """
         )
     )
@@ -146,12 +151,9 @@ class InvestmentCreate(BaseModel):
     buy_price: Decimal = Field(
         gt=0
     )
-    current_price: Decimal | None = None
-    
-    price_source: str | None = "Manual"
 
-    price_updated_at: datetime | None = None
-    
+    current_price: Decimal | None = None
+
     buy_date: date
 
     broker: str | None = None
@@ -162,6 +164,97 @@ class InvestmentCreate(BaseModel):
     )
 
     notes: str | None = None
+
+
+# ============================================================
+# HELPER — SERIALIZE INVESTMENT
+# ============================================================
+
+def investment_response(row):
+    """
+    Convert database row into a portfolio response.
+
+    Also calculates:
+    - invested_value
+    - current_value
+    - gain_loss
+    - return_percent
+    """
+
+    data = dict(row._mapping)
+
+    quantity = Decimal(
+        str(data.get("quantity") or 0)
+    )
+
+    buy_price = Decimal(
+        str(data.get("buy_price") or 0)
+    )
+
+    current_price = data.get("current_price")
+
+    if current_price is None:
+        current_price = buy_price
+    else:
+        current_price = Decimal(
+            str(current_price)
+        )
+
+    invested_value = quantity * buy_price
+
+    current_value = quantity * current_price
+
+    gain_loss = (
+        current_value - invested_value
+    )
+
+    if invested_value > 0:
+
+        return_percent = (
+            gain_loss / invested_value
+        ) * Decimal("100")
+
+    else:
+
+        return_percent = Decimal("0")
+
+    data["invested_value"] = invested_value
+
+    data["current_value"] = current_value
+
+    data["gain_loss"] = gain_loss
+
+    data["return_percent"] = return_percent
+
+    return data
+
+
+# ============================================================
+# HELPER — MARKET ELIGIBLE INVESTMENT
+# ============================================================
+
+def is_market_investment(
+    investment_type: str | None,
+) -> bool:
+    """
+    Determine whether an investment should use
+    the m.Stock equity market-price API.
+    """
+
+    if not investment_type:
+        return False
+
+    normalized = (
+        investment_type
+        .strip()
+        .lower()
+    )
+
+    return normalized in {
+        "stock",
+        "stocks",
+        "etf",
+    }
 
 
 # ============================================================
@@ -188,16 +281,17 @@ def list_investments(
                 quantity,
                 buy_price,
                 current_price,
-                price_source,
-                price_updated_at,
                 buy_date,
                 broker,
                 fees,
                 notes,
                 created_at,
                 updated_at
+
             FROM investments
+
             WHERE user_id = :user_id
+
             ORDER BY id DESC
             """
         ),
@@ -207,7 +301,7 @@ def list_investments(
     )
 
     return [
-        dict(row._mapping)
+        investment_response(row)
         for row in result
     ]
 
@@ -228,6 +322,7 @@ def create_investment(
         text(
             """
             INSERT INTO investments (
+
                 user_id,
                 name,
                 investment_type,
@@ -235,14 +330,15 @@ def create_investment(
                 quantity,
                 buy_price,
                 current_price,
-                price_source,
-                price_updated_at,
                 buy_date,
                 broker,
                 fees,
                 notes
+
             )
+
             VALUES (
+
                 :user_id,
                 :name,
                 :investment_type,
@@ -250,14 +346,15 @@ def create_investment(
                 :quantity,
                 :buy_price,
                 :current_price,
-                :price_source,
-                :price_updated_at,
                 :buy_date,
                 :broker,
                 :fees,
                 :notes
+
             )
+
             RETURNING
+
                 id,
                 user_id,
                 name,
@@ -266,8 +363,6 @@ def create_investment(
                 quantity,
                 buy_price,
                 current_price,
-                price_source,
-                price_updated_at,
                 buy_date,
                 broker,
                 fees,
@@ -278,24 +373,33 @@ def create_investment(
         ),
         {
             "user_id": data.user_id,
+
             "name": data.name.strip(),
+
             "investment_type":
                 data.investment_type.strip(),
+
             "symbol":
-                data.symbol.strip()
+                data.symbol.strip().upper()
                 if data.symbol
                 else None,
+
             "quantity": data.quantity,
+
             "buy_price": data.buy_price,
-            "current_price": data.current_price,
-            "price_source": data.price_source,
-            "price_updated_at": data.price_updated_at,
+
+            "current_price":
+                data.current_price,
+
             "buy_date": data.buy_date,
+
             "broker":
                 data.broker.strip()
                 if data.broker
                 else None,
+
             "fees": data.fees,
+
             "notes": data.notes,
         },
     )
@@ -305,12 +409,497 @@ def create_investment(
     investment = result.first()
 
     if not investment:
+
         raise HTTPException(
             status_code=500,
             detail="Unable to create investment.",
         )
 
-    return dict(investment._mapping)
+    return investment_response(
+        investment
+    )
+
+
+# ============================================================
+# REFRESH ALL MARKET PRICES
+# ============================================================
+#
+# Example:
+#
+# POST
+# /api/investments/refresh?user_id=1
+#
+# This refreshes Stocks and ETFs only.
+#
+# ============================================================
+
+@router.post("/refresh")
+def refresh_market_prices(
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+
+    ensure_investments_table(db)
+
+    result = db.execute(
+        text(
+            """
+            SELECT
+                id,
+                user_id,
+                name,
+                investment_type,
+                symbol,
+                quantity,
+                buy_price,
+                current_price,
+                buy_date,
+                broker,
+                fees,
+                notes,
+                created_at,
+                updated_at
+
+            FROM investments
+
+            WHERE user_id = :user_id
+
+            ORDER BY id ASC
+            """
+        ),
+        {
+            "user_id": user_id
+        },
+    )
+
+    investments = list(result)
+
+    refreshed = []
+
+    skipped = []
+
+    failed = []
+
+    # --------------------------------------------------------
+    # Process each investment
+    # --------------------------------------------------------
+
+    for row in investments:
+
+        investment = dict(
+            row._mapping
+        )
+
+        investment_type = (
+            investment.get(
+                "investment_type"
+            )
+        )
+
+        symbol = investment.get(
+            "symbol"
+        )
+
+        # ----------------------------------------------------
+        # Skip unsupported investment types
+        # ----------------------------------------------------
+
+        if not is_market_investment(
+            investment_type
+        ):
+
+            skipped.append(
+                {
+                    "id":
+                        investment["id"],
+
+                    "name":
+                        investment["name"],
+
+                    "reason":
+                        "Market refresh is currently "
+                        "supported for Stocks and ETFs only.",
+                }
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # Skip missing symbols
+        # ----------------------------------------------------
+
+        if not symbol:
+
+            failed.append(
+                {
+                    "id":
+                        investment["id"],
+
+                    "name":
+                        investment["name"],
+
+                    "symbol":
+                        None,
+
+                    "error":
+                        "Investment symbol is missing.",
+                }
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # Get latest market price
+        # ----------------------------------------------------
+
+        try:
+
+            market_price = get_market_price(
+                symbol
+            )
+
+        except MarketPriceError as exc:
+
+            failed.append(
+                {
+                    "id":
+                        investment["id"],
+
+                    "name":
+                        investment["name"],
+
+                    "symbol":
+                        symbol,
+
+                    "error":
+                        str(exc),
+                }
+            )
+
+            continue
+
+        # ----------------------------------------------------
+        # Save current market price
+        # ----------------------------------------------------
+
+        db.execute(
+            text(
+                """
+                UPDATE investments
+
+                SET
+                    current_price = :current_price,
+                    updated_at = CURRENT_TIMESTAMP
+
+                WHERE
+                    id = :investment_id
+                    AND user_id = :user_id
+                """
+            ),
+            {
+                "current_price":
+                    market_price,
+
+                "investment_id":
+                    investment["id"],
+
+                "user_id":
+                    user_id,
+            },
+        )
+
+        # ----------------------------------------------------
+        # Calculate portfolio values
+        # ----------------------------------------------------
+
+        quantity = Decimal(
+            str(
+                investment.get(
+                    "quantity"
+                ) or 0
+            )
+        )
+
+        buy_price = Decimal(
+            str(
+                investment.get(
+                    "buy_price"
+                ) or 0
+            )
+        )
+
+        invested_value = (
+            quantity * buy_price
+        )
+
+        current_value = (
+            quantity * market_price
+        )
+
+        gain_loss = (
+            current_value -
+            invested_value
+        )
+
+        if invested_value > 0:
+
+            return_percent = (
+                gain_loss /
+                invested_value
+            ) * Decimal("100")
+
+        else:
+
+            return_percent = Decimal("0")
+
+        refreshed.append(
+            {
+                "id":
+                    investment["id"],
+
+                "name":
+                    investment["name"],
+
+                "symbol":
+                    symbol,
+
+                "previous_price":
+                    investment.get(
+                        "current_price"
+                    ),
+
+                "current_price":
+                    market_price,
+
+                "quantity":
+                    quantity,
+
+                "invested_value":
+                    invested_value,
+
+                "current_value":
+                    current_value,
+
+                "gain_loss":
+                    gain_loss,
+
+                "return_percent":
+                    return_percent,
+            }
+        )
+
+    # --------------------------------------------------------
+    # Commit all updated prices
+    # --------------------------------------------------------
+
+    db.commit()
+
+    # --------------------------------------------------------
+    # Response
+    # --------------------------------------------------------
+
+    return {
+        "status": "success",
+
+        "message":
+            "Market prices refreshed.",
+
+        "user_id":
+            user_id,
+
+        "refreshed":
+            refreshed,
+
+        "refreshed_count":
+            len(refreshed),
+
+        "skipped":
+            skipped,
+
+        "skipped_count":
+            len(skipped),
+
+        "failed":
+            failed,
+
+        "failed_count":
+            len(failed),
+    }
+
+
+# ============================================================
+# REFRESH SINGLE INVESTMENT
+# ============================================================
+#
+# Example:
+#
+# POST
+# /api/investments/1/refresh
+#
+# ============================================================
+
+@router.post("/{investment_id}/refresh")
+def refresh_single_investment(
+    investment_id: int,
+    db: Session = Depends(get_db),
+):
+
+    ensure_investments_table(db)
+
+    result = db.execute(
+        text(
+            """
+            SELECT
+                id,
+                user_id,
+                name,
+                investment_type,
+                symbol,
+                quantity,
+                buy_price,
+                current_price,
+                buy_date,
+                broker,
+                fees,
+                notes,
+                created_at,
+                updated_at
+
+            FROM investments
+
+            WHERE id = :investment_id
+            """
+        ),
+        {
+            "investment_id":
+                investment_id
+        },
+    )
+
+    row = result.first()
+
+    if not row:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Investment not found.",
+        )
+
+    investment = dict(
+        row._mapping
+    )
+
+    if not is_market_investment(
+        investment.get(
+            "investment_type"
+        )
+    ):
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Market price refresh is currently "
+                "supported for Stocks and ETFs only."
+            ),
+        )
+
+    symbol = investment.get(
+        "symbol"
+    )
+
+    if not symbol:
+
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Investment symbol is missing."
+            ),
+        )
+
+    # --------------------------------------------------------
+    # Get market price
+    # --------------------------------------------------------
+
+    try:
+
+        market_price = get_market_price(
+            symbol
+        )
+
+    except MarketPriceError as exc:
+
+        raise HTTPException(
+            status_code=502,
+            detail=str(exc),
+        ) from exc
+
+    # --------------------------------------------------------
+    # Save market price
+    # --------------------------------------------------------
+
+    db.execute(
+        text(
+            """
+            UPDATE investments
+
+            SET
+                current_price = :current_price,
+                updated_at = CURRENT_TIMESTAMP
+
+            WHERE
+                id = :investment_id
+            """
+        ),
+        {
+            "current_price":
+                market_price,
+
+            "investment_id":
+                investment_id,
+        },
+    )
+
+    db.commit()
+
+    # --------------------------------------------------------
+    # Return updated investment
+    # --------------------------------------------------------
+
+    updated_result = db.execute(
+        text(
+            """
+            SELECT
+                id,
+                user_id,
+                name,
+                investment_type,
+                symbol,
+                quantity,
+                buy_price,
+                current_price,
+                buy_date,
+                broker,
+                fees,
+                notes,
+                created_at,
+                updated_at
+
+            FROM investments
+
+            WHERE id = :investment_id
+            """
+        ),
+        {
+            "investment_id":
+                investment_id
+        },
+    )
+
+    updated = updated_result.first()
+
+    return investment_response(
+        updated
+    )
 
 
 # ============================================================
@@ -337,148 +926,36 @@ def get_investment(
                 quantity,
                 buy_price,
                 current_price,
-                price_source,
-                price_updated_at,
                 buy_date,
                 broker,
                 fees,
                 notes,
                 created_at,
                 updated_at
+
             FROM investments
+
             WHERE id = :investment_id
             """
         ),
         {
-            "investment_id": investment_id
+            "investment_id":
+                investment_id
         },
     )
 
     investment = result.first()
 
     if not investment:
+
         raise HTTPException(
             status_code=404,
             detail="Investment not found.",
         )
 
-    return dict(investment._mapping)
-
-
-# ============================================================
-# REFRESH MARKET PRICE
-# ============================================================
-
-@router.post("/{investment_id}/refresh-price")
-def refresh_market_price(
-    investment_id: int,
-    user_id: int,
-    db: Session = Depends(get_db),
-):
-
-    ensure_investments_table(db)
-
-    # --------------------------------------------------------
-    # Find the investment and market symbol
-    # --------------------------------------------------------
-
-    result = db.execute(
-        text(
-            """
-            SELECT
-                id,
-                symbol
-            FROM investments
-            WHERE id = :investment_id
-            AND user_id = :user_id
-            """
-        ),
-        {
-            "investment_id": investment_id,
-            "user_id": user_id,
-        },
+    return investment_response(
+        investment
     )
-
-    investment = result.first()
-
-    if not investment:
-        raise HTTPException(
-            status_code=404,
-            detail="Investment not found.",
-        )
-
-    symbol = investment.symbol
-
-    if not symbol:
-        raise HTTPException(
-            status_code=400,
-            detail="Investment symbol is required for market price refresh.",
-        )
-
-    # --------------------------------------------------------
-    # Fetch latest available market price
-    # --------------------------------------------------------
-
-    try:
-        market_price = get_market_price(symbol)
-    except MarketPriceError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=str(exc),
-        ) from exc
-
-    # --------------------------------------------------------
-    # Save API price and tracking metadata
-    # --------------------------------------------------------
-
-    result = db.execute(
-        text(
-            """
-            UPDATE investments
-            SET
-                current_price = :current_price,
-                price_source = 'API',
-                price_updated_at = CURRENT_TIMESTAMP,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = :investment_id
-            AND user_id = :user_id
-            RETURNING
-                id,
-                user_id,
-                name,
-                investment_type,
-                symbol,
-                quantity,
-                buy_price,
-                current_price,
-                price_source,
-                price_updated_at,
-                buy_date,
-                broker,
-                fees,
-                notes,
-                created_at,
-                updated_at
-            """
-        ),
-        {
-            "investment_id": investment_id,
-            "user_id": user_id,
-            "current_price": market_price,
-        },
-    )
-
-    updated_investment = result.first()
-
-    if not updated_investment:
-        raise HTTPException(
-            status_code=404,
-            detail="Investment not found.",
-        )
-
-    db.commit()
-
-    return dict(updated_investment._mapping)
 
 
 # ============================================================
@@ -494,35 +971,74 @@ def update_investment(
 
     ensure_investments_table(db)
 
+    # --------------------------------------------------------
+    # Check investment exists
+    # --------------------------------------------------------
+
+    existing = db.execute(
+        text(
+            """
+            SELECT id
+            FROM investments
+            WHERE id = :investment_id
+            """
+        ),
+        {
+            "investment_id":
+                investment_id
+        },
+    ).first()
+
+    if not existing:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Investment not found.",
+        )
+
+    # --------------------------------------------------------
+    # Update investment
+    # --------------------------------------------------------
+
     result = db.execute(
         text(
             """
             UPDATE investments
+
             SET
+
+                user_id = :user_id,
+
                 name = :name,
-                investment_type = :investment_type,
+
+                investment_type =
+                    :investment_type,
+
                 symbol = :symbol,
+
                 quantity = :quantity,
+
                 buy_price = :buy_price,
-                current_price = :current_price,
-                price_source = CASE
-                    WHEN :current_price IS DISTINCT FROM current_price
-                    THEN 'Manual'
-                    ELSE price_source
-                END,
-                price_updated_at = CASE
-                    WHEN :current_price IS DISTINCT FROM current_price
-                    THEN CURRENT_TIMESTAMP
-                    ELSE price_updated_at
-                END,
+
+                current_price =
+                    :current_price,
+
                 buy_date = :buy_date,
+
                 broker = :broker,
+
                 fees = :fees,
+
                 notes = :notes,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = :investment_id
-            AND user_id = :user_id
+
+                updated_at =
+                    CURRENT_TIMESTAMP
+
+            WHERE
+                id = :investment_id
+
             RETURNING
+
                 id,
                 user_id,
                 name,
@@ -531,8 +1047,6 @@ def update_investment(
                 quantity,
                 buy_price,
                 current_price,
-                price_source,
-                price_updated_at,
                 buy_date,
                 broker,
                 fees,
@@ -542,37 +1056,63 @@ def update_investment(
             """
         ),
         {
-            "investment_id": investment_id,
-            "user_id": data.user_id,
-            "name": data.name.strip(),
-            "investment_type": data.investment_type.strip(),
-            "symbol": data.symbol.strip()
+            "investment_id":
+                investment_id,
+
+            "user_id":
+                data.user_id,
+
+            "name":
+                data.name.strip(),
+
+            "investment_type":
+                data.investment_type.strip(),
+
+            "symbol":
+                data.symbol.strip().upper()
                 if data.symbol
                 else None,
-            "quantity": data.quantity,
-            "buy_price": data.buy_price,
-            "current_price": data.current_price,
-            "price_source": data.price_source,
-            "buy_date": data.buy_date,
-            "broker": data.broker.strip()
+
+            "quantity":
+                data.quantity,
+
+            "buy_price":
+                data.buy_price,
+
+            "current_price":
+                data.current_price,
+
+            "buy_date":
+                data.buy_date,
+
+            "broker":
+                data.broker.strip()
                 if data.broker
                 else None,
-            "fees": data.fees,
-            "notes": data.notes,
+
+            "fees":
+                data.fees,
+
+            "notes":
+                data.notes,
         },
     )
+
+    db.commit()
 
     investment = result.first()
 
     if not investment:
+
         raise HTTPException(
-            status_code=404,
-            detail="Investment not found.",
+            status_code=500,
+            detail="Unable to update investment.",
         )
 
-    db.commit()
+    return investment_response(
+        investment
+    )
 
-    return dict(investment._mapping)
 
 # ============================================================
 # DELETE INVESTMENT
@@ -590,18 +1130,22 @@ def delete_investment(
         text(
             """
             DELETE FROM investments
+
             WHERE id = :investment_id
+
             RETURNING id
             """
         ),
         {
-            "investment_id": investment_id
+            "investment_id":
+                investment_id
         },
     )
 
     deleted = result.first()
 
     if not deleted:
+
         raise HTTPException(
             status_code=404,
             detail="Investment not found.",
@@ -611,5 +1155,7 @@ def delete_investment(
 
     return {
         "status": "deleted",
-        "investment_id": investment_id,
-  }
+
+        "investment_id":
+            investment_id,
+    }

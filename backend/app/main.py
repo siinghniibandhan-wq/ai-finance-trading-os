@@ -37,6 +37,7 @@ from app.routes import (
     tax_liability,
     income_tax_loss_setoff,
     income_tax_aggregation,
+    deductions_exempt_income,
 )
 
 
@@ -144,3 +145,4 @@ app.include_router(tax_context.router)
 app.include_router(tax_liability.router)
 app.include_router(income_tax_loss_setoff.router)
 app.include_router(income_tax_aggregation.router)
+app.include_router(deductions_exempt_income.router)

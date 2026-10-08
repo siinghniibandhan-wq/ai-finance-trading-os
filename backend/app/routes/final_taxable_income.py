@@ -39,11 +39,11 @@ from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.models import Investment, InvestmentTransaction, Transaction
-
+from app.models import Transaction
 
 # ============================================================
 # ROUTER
@@ -279,16 +279,43 @@ def load_investments(
     user_id,
 ):
     """
-    Load investments for the user.
+    Load investments from the existing investments table.
     """
 
-    return (
-        db.query(Investment)
-        .filter(
-            Investment.user_id == user_id
-        )
-        .all()
+    result = db.execute(
+        text(
+            """
+            SELECT
+                id,
+                user_id,
+                name,
+                investment_type,
+                symbol,
+                quantity,
+                buy_price,
+                current_price,
+                buy_date,
+                broker,
+                fees,
+                notes
+            FROM investments
+            WHERE user_id = :user_id
+            ORDER BY id ASC
+            """
+        ),
+        {
+            "user_id": user_id,
+        },
     )
+
+    return [
+        type(
+            "InvestmentRecord",
+            (),
+            dict(row._mapping),
+        )()
+        for row in result
+    ]
 
 
 # ============================================================
@@ -300,25 +327,41 @@ def load_investment_transactions(
     user_id,
 ):
     """
-    Load all BUY/SELL investment transactions.
-
-    Historical BUY transactions are required because a
-    current-year SELL can consume a lot purchased before
-    the current Tax Year.
+    Load all BUY/SELL investment transactions
+    from the existing investment_transactions table.
     """
 
-    return (
-        db.query(InvestmentTransaction)
-        .filter(
-            InvestmentTransaction.user_id
-            == user_id
-        )
-        .order_by(
-            InvestmentTransaction.transaction_date.asc(),
-            InvestmentTransaction.id.asc(),
-        )
-        .all()
+    result = db.execute(
+        text(
+            """
+            SELECT
+                id,
+                user_id,
+                investment_id,
+                transaction_type,
+                quantity,
+                price,
+                fees,
+                transaction_date,
+                notes
+            FROM investment_transactions
+            WHERE user_id = :user_id
+            ORDER BY transaction_date ASC, id ASC
+            """
+        ),
+        {
+            "user_id": user_id,
+        },
     )
+
+    return [
+        type(
+            "InvestmentTransactionRecord",
+            (),
+            dict(row._mapping),
+        )()
+        for row in result
+    ]
 
 
 # ============================================================

@@ -884,7 +884,87 @@ const [refreshMessage, setRefreshMessage] =
       );
     }
   };
+  
+// ----------------------------------------------------------
+// REFRESH MARKET PRICES
+// ----------------------------------------------------------
+//
+// Portfolio
+//     ↓
+// Investments API
+//     ↓
+// m.Stock Market API
+//     ↓
+// Current prices updated
+//
+// ----------------------------------------------------------
 
+const refreshMarketPrices = async () => {
+
+  try {
+
+    setRefreshingPrices(true);
+    setRefreshMessage("");
+
+    const response = await fetch(
+      "https://ai-finance-trading-os-api.onrender.com/api/investments/refresh?user_id=1",
+      {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data?.detail ||
+          "Unable to refresh market prices."
+      );
+    }
+
+    // Reload portfolio after prices are updated
+    await loadInvestments();
+
+    const refreshedCount =
+      data?.refreshed_count || 0;
+
+    const failedCount =
+      data?.failed_count || 0;
+
+    if (failedCount > 0) {
+
+      setRefreshMessage(
+        `${refreshedCount} investment(s) updated. ${failedCount} could not be updated.`
+      );
+
+    } else {
+
+      setRefreshMessage(
+        `${refreshedCount} investment(s) updated successfully.`
+      );
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Market price refresh error:",
+      error
+    );
+
+    setRefreshMessage(
+      error?.message ||
+        "Unable to refresh market prices."
+    );
+
+  } finally {
+
+    setRefreshingPrices(false);
+  }
+};
+  
 // ----------------------------------------------------------
 // EDIT INVESTMENT
 // ----------------------------------------------------------

@@ -200,7 +200,7 @@ def list_transactions(
 
 
 # ============================================================
-# CREATE TRANSACTION
+# CREATE BUY / SELL TRANSACTION
 # ============================================================
 
 @router.post("/", status_code=201)
@@ -208,23 +208,22 @@ def create_transaction(
     data: InvestmentTransactionCreate,
     db: Session = Depends(get_db),
 ):
-
     ensure_transaction_table(db)
 
-    transaction_type = (
-        data.transaction_type.strip().upper()
-    )
+    # --------------------------------------------------------
+    # NORMALIZE TRANSACTION TYPE
+    # --------------------------------------------------------
+
+    transaction_type = data.transaction_type.strip().upper()
 
     if transaction_type not in {"BUY", "SELL"}:
-
         raise HTTPException(
             status_code=400,
             detail="Transaction type must be BUY or SELL.",
         )
 
-
     # --------------------------------------------------------
-    # VERIFY INVESTMENT EXISTS
+    # FIND INVESTMENT
     # --------------------------------------------------------
 
     investment_result = db.execute(
@@ -232,7 +231,8 @@ def create_transaction(
             """
             SELECT
                 id,
-                user_id
+                user_id,
+                quantity
             FROM investments
             WHERE id = :investment_id
               AND user_id = :user_id
@@ -247,66 +247,59 @@ def create_transaction(
     investment = investment_result.first()
 
     if not investment:
-
         raise HTTPException(
             status_code=404,
             detail="Investment not found for this user.",
         )
 
+    # --------------------------------------------------------
+    # CHECK CURRENT LEDGER HOLDING
+    # --------------------------------------------------------
+
+    balance_result = db.execute(
+        text(
+            """
+            SELECT
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN transaction_type = 'BUY'
+                            THEN quantity
+                            WHEN transaction_type = 'SELL'
+                            THEN -quantity
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS available_quantity
+            FROM investment_transactions
+            WHERE user_id = :user_id
+              AND investment_id = :investment_id
+            """
+        ),
+        {
+            "user_id": data.user_id,
+            "investment_id": data.investment_id,
+        },
+    )
+
+    balance_row = balance_result.first()
+
+    available_quantity = Decimal(
+        str(
+            balance_row.available_quantity
+            if balance_row
+            else 0
+        )
+    )
 
     # --------------------------------------------------------
     # SELL VALIDATION
     # --------------------------------------------------------
-    #
-    # Prevent selling more units than currently available.
-    #
-    # Current holdings are calculated from the ledger:
-    #
-    # BUY quantity - SELL quantity
-    #
-    # This is intentionally simple for Step 1.
-    # Cost-basis calculation comes later.
-    # --------------------------------------------------------
 
     if transaction_type == "SELL":
 
-        balance_result = db.execute(
-            text(
-                """
-                SELECT
-                    COALESCE(
-                        SUM(
-                            CASE
-                                WHEN transaction_type = 'BUY'
-                                THEN quantity
-                                ELSE -quantity
-                            END
-                        ),
-                        0
-                    ) AS available_quantity
-                FROM investment_transactions
-                WHERE user_id = :user_id
-                  AND investment_id = :investment_id
-                """
-            ),
-            {
-                "user_id": data.user_id,
-                "investment_id": data.investment_id,
-            },
-        )
-
-        balance_row = balance_result.first()
-
-        available_quantity = Decimal(
-            str(
-                balance_row.available_quantity
-                if balance_row
-                else 0
-            )
-        )
-
         if data.quantity > available_quantity:
-
             raise HTTPException(
                 status_code=400,
                 detail=(
@@ -315,6 +308,23 @@ def create_transaction(
                 ),
             )
 
+    # --------------------------------------------------------
+    # CALCULATE NEW HOLDING
+    # --------------------------------------------------------
+
+    if transaction_type == "BUY":
+
+        new_quantity = (
+            available_quantity
+            + data.quantity
+        )
+
+    else:
+
+        new_quantity = (
+            available_quantity
+            - data.quantity
+        )
 
     # --------------------------------------------------------
     # INSERT TRANSACTION
@@ -369,18 +379,46 @@ def create_transaction(
         },
     )
 
-    db.commit()
-
     transaction = result.first()
 
     if not transaction:
+        db.rollback()
 
         raise HTTPException(
             status_code=500,
             detail="Unable to create investment transaction.",
         )
 
+    # --------------------------------------------------------
+    # SYNC INVESTMENT QUANTITY
+    # --------------------------------------------------------
+
+    db.execute(
+        text(
+            """
+            UPDATE investments
+            SET
+                quantity = :quantity,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = :investment_id
+              AND user_id = :user_id
+            """
+        ),
+        {
+            "quantity": new_quantity,
+            "investment_id": data.investment_id,
+            "user_id": data.user_id,
+        },
+    )
+
+    # --------------------------------------------------------
+    # COMMIT
+    # --------------------------------------------------------
+
+    db.commit()
+
     return dict(transaction._mapping)
+
 
 
 # ============================================================

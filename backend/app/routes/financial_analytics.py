@@ -36,6 +36,7 @@ from fastapi import (
 )
 
 from sqlalchemy import (
+    case,
     extract,
     func,
 )
@@ -276,7 +277,7 @@ def monthly_cash_flow(
 
             func.coalesce(
                 func.sum(
-                    func.case(
+                    case(
                         (
                             Transaction.transaction_type
                             == "income",
@@ -292,7 +293,7 @@ def monthly_cash_flow(
 
             func.coalesce(
                 func.sum(
-                    func.case(
+                    case(
                         (
                             Transaction.transaction_type
                             == "expense",
@@ -443,7 +444,7 @@ def period_summary(
 
             func.coalesce(
                 func.sum(
-                    func.case(
+                    case(
                         (
                             Transaction.transaction_type
                             == "income",
@@ -459,7 +460,7 @@ def period_summary(
 
             func.coalesce(
                 func.sum(
-                    func.case(
+                    case(
                         (
                             Transaction.transaction_type
                             == "expense",

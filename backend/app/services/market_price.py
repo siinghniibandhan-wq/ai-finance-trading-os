@@ -37,6 +37,10 @@ MSTOCK_GATEWAY_URL = os.getenv(
 ).rstrip("/")
 
 
+# ============================================================
+# CUSTOM ERROR
+# ============================================================
+
 class MarketPriceError(Exception):
     """Raised when a market price cannot be fetched."""
 
@@ -188,7 +192,7 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
             response_symbol
         )
 
-    # Fallback: first quote in the response.
+    # Fallback: use the first quote returned.
     if raw_quote is None and gateway_data:
 
         raw_quote = next(

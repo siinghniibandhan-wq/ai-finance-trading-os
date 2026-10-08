@@ -1008,13 +1008,17 @@ const handleEditInvestment = (investment) => {
     outline: "none",
   };
 
-  // ----------------------------------------------------------
-  // SAVE INVESTMENT
-  // ----------------------------------------------------------
+
+  // ==========================================================
+  // SAVE INVESTMENT + CREATE INITIAL BUY TRANSACTION
+  // ==========================================================
 
   const handleInvestmentSubmit = async () => {
     try {
-      // Validate required fields
+      // --------------------------------------------------------
+      // VALIDATION
+      // --------------------------------------------------------
+
       if (!investmentForm.name.trim()) {
         alert("Please enter an investment name.");
         return;
@@ -1041,48 +1045,69 @@ const handleEditInvestment = (investment) => {
         return;
       }
 
+      // --------------------------------------------------------
+      // INVESTMENT PAYLOAD
+      // --------------------------------------------------------
+
       const payload = {
         user_id: 1,
-        name: investmentForm.name.trim(),
+
+        name:
+          investmentForm.name.trim(),
+
         investment_type:
           investmentForm.investment_type,
+
         symbol:
           investmentForm.symbol.trim() || null,
+
         quantity:
           Number(investmentForm.quantity),
+
         buy_price:
           Number(investmentForm.buy_price),
+
         current_price:
-  Number(
-    investmentForm.current_price ||
-    investmentForm.buy_price
-  ),
+          Number(
+            investmentForm.current_price ||
+            investmentForm.buy_price
+          ),
+
         buy_date:
           investmentForm.buy_date,
+
         broker:
           investmentForm.broker.trim() || null,
+
         fees:
           Number(investmentForm.fees || 0),
+
         notes:
           investmentForm.notes.trim() || null,
       };
 
-const url = editingInvestmentId
-  ? `https://ai-finance-trading-os-api.onrender.com/api/investments/${editingInvestmentId}`
-  : "https://ai-finance-trading-os-api.onrender.com/api/investments/";
+      // --------------------------------------------------------
+      // CREATE / UPDATE INVESTMENT
+      // --------------------------------------------------------
 
-const response = await fetch(
-  url,
-  {
-    method: editingInvestmentId
-      ? "PUT"
-      : "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  }
-);
+      const url = editingInvestmentId
+        ? `https://ai-finance-trading-os-api.onrender.com/api/investments/${editingInvestmentId}`
+        : "https://ai-finance-trading-os-api.onrender.com/api/investments/";
+
+      const response = await fetch(
+        url,
+        {
+          method: editingInvestmentId
+            ? "PUT"
+            : "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await response.json();
 
@@ -1093,7 +1118,100 @@ const response = await fetch(
         );
       }
 
-      // Reset form
+      // --------------------------------------------------------
+      // CREATE INITIAL BUY TRANSACTION
+      //
+      // IMPORTANT:
+      // Only CREATE mode creates a BUY transaction.
+      //
+      // Editing an existing investment does NOT create
+      // another BUY transaction.
+      // --------------------------------------------------------
+
+      if (!editingInvestmentId) {
+
+        const transactionPayload = {
+          user_id: 1,
+
+          investment_id:
+            data.id,
+
+          transaction_type:
+            "BUY",
+
+          quantity:
+            Number(investmentForm.quantity),
+
+          price:
+            Number(investmentForm.buy_price),
+
+          fees:
+            Number(investmentForm.fees || 0),
+
+          transaction_date:
+            investmentForm.buy_date,
+
+          notes:
+            investmentForm.notes.trim() ||
+            "Initial BUY transaction",
+        };
+
+        const transactionResponse =
+          await fetch(
+            "https://ai-finance-trading-os-api.onrender.com/api/investment-transactions/",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify(
+                  transactionPayload
+                ),
+            }
+          );
+
+        const transactionData =
+          await transactionResponse.json();
+
+        // ------------------------------------------------------
+        // TRANSACTION FAILED
+        // ------------------------------------------------------
+
+        if (!transactionResponse.ok) {
+
+          // Try to remove the newly created
+          // investment so we don't leave an
+          // incomplete investment record.
+
+          try {
+            await fetch(
+              `https://ai-finance-trading-os-api.onrender.com/api/investments/${data.id}`,
+              {
+                method: "DELETE",
+              }
+            );
+          } catch (rollbackError) {
+            console.error(
+              "Investment rollback failed:",
+              rollbackError
+            );
+          }
+
+          throw new Error(
+            transactionData?.detail ||
+              "Investment created, but BUY transaction failed."
+          );
+        }
+      }
+
+      // --------------------------------------------------------
+      // RESET FORM
+      // --------------------------------------------------------
+
       setInvestmentForm({
         name: "",
         investment_type: "Stocks",
@@ -1107,21 +1225,34 @@ const response = await fetch(
         notes: "",
       });
 
- // Close form
-const wasEditing = Boolean(editingInvestmentId);
+      // --------------------------------------------------------
+      // CLOSE FORM
+      // --------------------------------------------------------
 
-setShowInvestmentForm(false);
-setEditingInvestmentId(null);
+      const wasEditing =
+        Boolean(editingInvestmentId);
 
-await loadInvestments();
+      setShowInvestmentForm(false);
+      setEditingInvestmentId(null);
 
-alert(
-  wasEditing
-    ? "Investment updated successfully."
-    : "Investment saved successfully."
-);     
+      // --------------------------------------------------------
+      // RELOAD INVESTMENTS
+      // --------------------------------------------------------
+
+      await loadInvestments();
+
+      // --------------------------------------------------------
+      // SUCCESS MESSAGE
+      // --------------------------------------------------------
+
+      alert(
+        wasEditing
+          ? "Investment updated successfully."
+          : "Investment and BUY transaction created successfully."
+      );
 
     } catch (err) {
+
       console.error(
         "Save investment error:",
         err
@@ -1133,6 +1264,8 @@ alert(
       );
     }
   };
+
+
   
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("en-IN", {

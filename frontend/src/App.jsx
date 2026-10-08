@@ -849,7 +849,16 @@ function Portfolio() {
   // ----------------------------------------------------------
 
   const [investments, setInvestments] = useState([]);
+// ----------------------------------------------------------
+// MARKET PRICE REFRESH STATE
+// ----------------------------------------------------------
 
+const [refreshingPrices, setRefreshingPrices] =
+  useState(false);
+
+const [refreshMessage, setRefreshMessage] =
+  useState("");
+  
   const loadInvestments = async () => {
     try {
       const response = await fetch(

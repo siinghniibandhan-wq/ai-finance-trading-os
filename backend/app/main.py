@@ -56,6 +56,9 @@ from app.routes import (
 
     # Module 12
     final_tax_liability,
+
+    # Module 13
+    itr_ready_tax_report,
 )
 
 
@@ -195,6 +198,7 @@ app.include_router(income_tax_aggregation.router)
 app.include_router(
     deductions_exempt_income.router
 )
+
 # ------------------------------------------------------------
 # MODULE 11
 # FINAL TAXABLE INCOME
@@ -202,8 +206,16 @@ app.include_router(
 app.include_router(
     final_taxable_income.router
 )
+
 # ------------------------------------------------------------
 # MODULE 12
 # FINAL TAXABLE LIABILITY
 # ------------------------------------------------------------
 app.include_router(final_tax_liability.router)
+
+
+# ------------------------------------------------------------
+# MODULE 13
+# ITR READY TAX REPORT
+# ------------------------------------------------------------
+app.include_router(itr_ready_tax_report.router)

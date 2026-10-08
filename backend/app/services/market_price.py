@@ -1,16 +1,22 @@
 """
-Market Price Service
---------------------
-Provider layer for fetching market prices.
+Financial OS — Market Price Service
+-----------------------------------
 
-Current provider:
-- Alpha Vantage
+Provider:
+- AWS m.Stock Gateway
+- m.Stock handles NSE/BSE market data
 
-This file does NOT update the database.
-It only fetches and normalizes a market price.
+This service:
+- Receives an investment symbol
+- Calls the AWS m.Stock gateway
+- Extracts the latest market price
+- Returns Decimal price to the investment API
 
-Environment variable required:
-    ALPHAVANTAGE_API_KEY
+IMPORTANT:
+- m.Stock API key is NOT stored here.
+- TOTP is NOT stored here.
+- Access token is NOT stored here.
+- All m.Stock authentication remains inside the AWS gateway.
 """
 
 import json
@@ -21,124 +27,239 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
-ALPHA_VANTAGE_URL = "https://www.alphavantage.co/query"
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+MSTOCK_GATEWAY_URL = os.getenv(
+    "MSTOCK_GATEWAY_URL",
+    "http://54.153.201.74:8000",
+).rstrip("/")
 
 
 class MarketPriceError(Exception):
     """Raised when a market price cannot be fetched."""
 
 
-def _candidate_symbols(symbol: str) -> list[str]:
-    """
-    Build safe provider symbol candidates.
+# ============================================================
+# SYMBOL NORMALIZATION
+# ============================================================
 
-    If an exchange suffix is already supplied, use it directly.
-    Otherwise try the BSE-style symbol first, then the raw symbol.
+def normalize_symbol(symbol: str) -> str:
     """
+    Normalize an investment symbol before sending it
+    to the market gateway.
+
+    Examples:
+
+        RELIANCE
+        NSE:RELIANCE-EQ
+
+    Both are accepted by the AWS gateway.
+    """
+
     cleaned = symbol.strip().upper()
 
     if not cleaned:
-        raise MarketPriceError("Investment symbol is required.")
+        raise MarketPriceError(
+            "Investment symbol is required."
+        )
 
-    if "." in cleaned or ":" in cleaned:
-        return [cleaned]
-
-    return [f"{cleaned}.BSE", cleaned]
+    return cleaned
 
 
-def _fetch_alpha_vantage_quote(symbol: str, api_key: str) -> Decimal:
-    """Fetch one quote from Alpha Vantage GLOBAL_QUOTE."""
-    params = {
-        "function": "GLOBAL_QUOTE",
-        "symbol": symbol,
-        "apikey": api_key,
-    }
+# ============================================================
+# AWS m.STOCK GATEWAY REQUEST
+# ============================================================
 
-    url = f"{ALPHA_VANTAGE_URL}?{urlencode(params)}"
+def _fetch_gateway_quote(symbol: str) -> Decimal:
+    """
+    Fetch latest market price from the AWS m.Stock gateway.
+    """
+
+    normalized_symbol = normalize_symbol(symbol)
+
+    params = urlencode({
+        "symbol": normalized_symbol,
+    })
+
+    url = (
+        f"{MSTOCK_GATEWAY_URL}/quote"
+        f"?{params}"
+    )
 
     request = Request(
         url,
         headers={
             "Accept": "application/json",
-            "User-Agent": "AI-Finance-Trading-OS/1.0",
+            "User-Agent": "Financial-OS/1.0",
         },
+        method="GET",
     )
 
     try:
-        with urlopen(request, timeout=15) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+
+        with urlopen(
+            request,
+            timeout=15,
+        ) as response:
+
+            payload = json.loads(
+                response.read().decode("utf-8")
+            )
+
     except HTTPError as exc:
+
+        try:
+            error_body = (
+                exc.read()
+                .decode("utf-8")
+            )
+
+            error_payload = json.loads(
+                error_body
+            )
+
+            message = error_payload.get(
+                "message",
+                "Market gateway request failed.",
+            )
+
+        except Exception:
+            message = (
+                "Market gateway HTTP error."
+            )
+
         raise MarketPriceError(
-            f"Alpha Vantage HTTP error: {exc.code}"
+            f"Market gateway HTTP {exc.code}: {message}"
         ) from exc
+
     except URLError as exc:
+
         raise MarketPriceError(
-            "Unable to connect to Alpha Vantage."
+            "Unable to connect to the m.Stock market gateway."
         ) from exc
+
     except TimeoutError as exc:
+
         raise MarketPriceError(
-            "Alpha Vantage request timed out."
-        ) from exc
-    except (ValueError, UnicodeDecodeError) as exc:
-        raise MarketPriceError(
-            "Alpha Vantage returned an invalid response."
+            "m.Stock market gateway request timed out."
         ) from exc
 
-    # Provider-level errors.
-    if payload.get("Error Message"):
-        raise MarketPriceError(payload["Error Message"])
+    except (
+        ValueError,
+        UnicodeDecodeError,
+    ) as exc:
 
-    if payload.get("Information"):
-        raise MarketPriceError(payload["Information"])
-
-    if payload.get("Note"):
-        raise MarketPriceError(payload["Note"])
-
-    quote = payload.get("Global Quote") or {}
-    raw_price = quote.get("05. price")
-
-    if raw_price in (None, ""):
         raise MarketPriceError(
-            f"No market price returned for symbol {symbol}."
+            "m.Stock market gateway returned an invalid response."
+        ) from exc
+
+    # ========================================================
+    # PROVIDER RESPONSE VALIDATION
+    # ========================================================
+
+    if payload.get("status") != "success":
+
+        raise MarketPriceError(
+            payload.get(
+                "message",
+                "Market gateway returned an error.",
+            )
         )
+
+    gateway_data = payload.get(
+        "data"
+    ) or {}
+
+    # ========================================================
+    # FIND QUOTE
+    # ========================================================
+
+    raw_quote = None
+
+    # First try the exact symbol returned by gateway.
+    response_symbol = payload.get(
+        "symbol"
+    )
+
+    if response_symbol:
+        raw_quote = gateway_data.get(
+            response_symbol
+        )
+
+    # Fallback: first quote in the response.
+    if raw_quote is None and gateway_data:
+
+        raw_quote = next(
+            iter(gateway_data.values()),
+            None,
+        )
+
+    if not isinstance(
+        raw_quote,
+        dict,
+    ):
+
+        raise MarketPriceError(
+            f"No market quote returned for {symbol}."
+        )
+
+    raw_price = raw_quote.get(
+        "last_price"
+    )
+
+    if raw_price in (
+        None,
+        "",
+    ):
+
+        raise MarketPriceError(
+            f"No latest market price returned for {symbol}."
+        )
+
+    # ========================================================
+    # DECIMAL CONVERSION
+    # ========================================================
 
     try:
-        return Decimal(str(raw_price))
-    except (InvalidOperation, ValueError) as exc:
+
+        return Decimal(
+            str(raw_price)
+        )
+
+    except (
+        InvalidOperation,
+        ValueError,
+    ) as exc:
+
         raise MarketPriceError(
-            f"Invalid market price returned for symbol {symbol}."
+            f"Invalid market price returned for {symbol}."
         ) from exc
 
 
-def get_market_price(symbol: str) -> Decimal:
+# ============================================================
+# PUBLIC MARKET PRICE FUNCTION
+# ============================================================
+
+def get_market_price(
+    symbol: str,
+) -> Decimal:
     """
-    Fetch the latest available market price.
+    Return the latest market price.
 
-    The API key is read only from the environment.
-    No secret is stored in source code.
+    The investment API can call this function without
+    knowing anything about m.Stock authentication.
 
-    Returns:
-        Decimal: latest available price.
-
-    Raises:
-        MarketPriceError: when configuration or provider lookup fails.
+    Authentication remains inside the AWS gateway.
     """
-    api_key = os.getenv("ALPHAVANTAGE_API_KEY")
 
-    if not api_key:
+    if not MSTOCK_GATEWAY_URL:
+
         raise MarketPriceError(
-            "ALPHAVANTAGE_API_KEY environment variable is not configured."
+            "MSTOCK_GATEWAY_URL is not configured."
         )
 
-    last_error = None
-
-    for candidate in _candidate_symbols(symbol):
-        try:
-            return _fetch_alpha_vantage_quote(candidate, api_key)
-        except MarketPriceError as exc:
-            last_error = exc
-
-    raise MarketPriceError(
-        f"Unable to fetch market price for {symbol}: {last_error}"
+    return _fetch_gateway_quote(
+        symbol
     )
-  

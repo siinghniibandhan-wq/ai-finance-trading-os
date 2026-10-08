@@ -53,6 +53,9 @@ from app.routes import (
 
     # Module 11
     final_taxable_income,
+
+    # Module 12
+    final_tax_liability,
 )
 
 
@@ -199,3 +202,8 @@ app.include_router(
 app.include_router(
     final_taxable_income.router
 )
+# ------------------------------------------------------------
+# MODULE 12
+# FINAL TAXABLE LIABILITY
+# ------------------------------------------------------------
+app.include_router(final_tax_liability.router)

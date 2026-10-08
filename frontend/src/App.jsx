@@ -1720,13 +1720,14 @@ const summaryCards = [
       ===================================================== */}
 
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(150px, 1fr))",
-          gap: "14px",
-        }}
-      >
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(4, minmax(0, 1fr))",
+    gap: "14px",
+    width: "100%",
+  }}
+>
 
         {summaryCards.map((card) => (
           <div

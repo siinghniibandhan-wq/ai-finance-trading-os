@@ -11,7 +11,11 @@ from app.database.database import Base, engine
 # Import models before create_all().
 from app import models
 
-# Import API routes.
+
+# ============================================================
+# IMPORT API ROUTES
+# ============================================================
+
 from app.routes import (
     users,
     accounts,
@@ -25,18 +29,26 @@ from app.routes import (
     investment_transactions,
     holdings,
     investment_pnl,
+
+    # Financial Data & Analytics
     financial_summary,
     financial_analytics,
     financial_plan,
+
+    # Tax Data
     tax_data,
     capital_gains,
     capital_gains_classification,
     asset_classification,
     tax_calculation,
     tax_context,
+
+    # Tax Liability & Income Engines
     tax_liability,
     income_tax_loss_setoff,
     income_tax_aggregation,
+
+    # Module 10
     deductions_exempt_income,
 )
 
@@ -121,6 +133,10 @@ def database_status():
 # API ROUTES
 # ============================================================
 
+# ------------------------------------------------------------
+# CORE FINANCIAL OS
+# ------------------------------------------------------------
+
 app.include_router(users.router)
 app.include_router(accounts.router)
 app.include_router(categories.router)
@@ -133,16 +149,43 @@ app.include_router(market.router)
 app.include_router(investment_transactions.router)
 app.include_router(holdings.router)
 app.include_router(investment_pnl.router)
+
+
+# ------------------------------------------------------------
+# FINANCIAL DATA & ANALYTICS
+# ------------------------------------------------------------
+
 app.include_router(financial_summary.router)
 app.include_router(financial_analytics.router)
 app.include_router(financial_plan.router)
+
+
+# ------------------------------------------------------------
+# TAX DATA & CAPITAL GAINS
+# ------------------------------------------------------------
+
 app.include_router(tax_data.router)
 app.include_router(capital_gains.router)
 app.include_router(capital_gains_classification.router)
 app.include_router(asset_classification.router)
 app.include_router(tax_calculation.router)
 app.include_router(tax_context.router)
+
+
+# ------------------------------------------------------------
+# TAX LIABILITY & INCOME ENGINES
+# ------------------------------------------------------------
+
 app.include_router(tax_liability.router)
 app.include_router(income_tax_loss_setoff.router)
 app.include_router(income_tax_aggregation.router)
-app.include_router(deductions_exempt_income.router)
+
+
+# ------------------------------------------------------------
+# MODULE 10
+# DEDUCTIONS & EXEMPT INCOME
+# ------------------------------------------------------------
+
+app.include_router(
+    deductions_exempt_income.router
+)

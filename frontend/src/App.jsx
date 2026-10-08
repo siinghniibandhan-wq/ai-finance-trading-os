@@ -2836,21 +2836,88 @@ const holdingReturn =
   >
     Return: {holdingReturn}
   </div>
+{/* =====================================================
+    INVESTMENT ACTION BUTTONS
+===================================================== */}
 
-  {/* EDIT BUTTON */}
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: "6px",
+    marginTop: "10px",
+  }}
+>
+
+  {/* BUY */}
   <button
     type="button"
     className="small-button"
     style={{
-      marginTop: "8px",
+      cursor: "pointer",
+      color: "#86efac",
+    }}
+    onClick={() =>
+      openInvestmentTransaction(
+        investment,
+        "BUY"
+      )
+    }
+  >
+    BUY
+  </button>
+
+  {/* SELL */}
+  <button
+    type="button"
+    className="small-button"
+    style={{
+      cursor: "pointer",
+      color: "#fca5a5",
+    }}
+    onClick={() =>
+      openInvestmentTransaction(
+        investment,
+        "SELL"
+      )
+    }
+  >
+    SELL
+  </button>
+
+  {/* HISTORY */}
+  <button
+    type="button"
+    className="small-button"
+    style={{
       cursor: "pointer",
     }}
     onClick={() =>
-      handleEditInvestment(investment)
+      openInvestmentTransactions(
+        investment
+      )
     }
   >
-    Edit
+    History
   </button>
+
+</div>
+
+{/* EDIT BUTTON */}
+<button
+  type="button"
+  className="small-button"
+  style={{
+    marginTop: "6px",
+    cursor: "pointer",
+  }}
+  onClick={() =>
+    handleEditInvestment(investment)
+  }
+>
+  Edit
+</button>
+
 </div>  
 
         </div>

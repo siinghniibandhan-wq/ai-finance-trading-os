@@ -29,6 +29,7 @@ from app.routes import (
     market_overview,
     market_quote,
     market_search,
+    market_history,
     investment_transactions,
     holdings,
     investment_pnl,
@@ -161,6 +162,7 @@ app.include_router(market.router)
 app.include_router(market_overview.router)
 app.include_router(market_quote.router)
 app.include_router(market_search.router)
+app.include_router(market_history.router)
 app.include_router(investment_transactions.router)
 app.include_router(holdings.router)
 app.include_router(investment_pnl.router)

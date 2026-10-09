@@ -1,0 +1,131 @@
+"""
+Market Indices Engine v1.0
+Fetches NIFTY 50 and SENSEX through the existing AWS m.Stock gateway.
+Read-only: does not write to the database.
+"""
+
+import json
+import os
+from datetime import datetime, timezone
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
+from fastapi import APIRouter, HTTPException
+
+# --------------------------------------------------
+# Router configuration
+# --------------------------------------------------
+
+router = APIRouter(
+    prefix="/api/market-indices",
+    tags=["Market Indices"],
+)
+
+# --------------------------------------------------
+# Existing AWS gateway configuration
+# --------------------------------------------------
+
+GATEWAY_URL = os.getenv(
+    "MSTOCK_GATEWAY_URL",
+    "http://54.153.201.74:8000",
+).rstrip("/")
+
+# Only include indices verified during our earlier tests.
+SUPPORTED_INDICES = [
+    {"name": "NIFTY 50", "exchange": "NSE", "symbol": "NIFTY 50"},
+    {"name": "SENSEX", "exchange": "BSE", "symbol": "SENSEX"},
+]
+
+
+# --------------------------------------------------
+# Fetch one index from the existing AWS gateway
+# --------------------------------------------------
+
+def fetch_index(index):
+    query = urlencode({
+        "exchange": index["exchange"],
+        "symbol": index["symbol"],
+    })
+
+    url = f"{GATEWAY_URL}/index-quote?{query}"
+
+    request = Request(
+        url,
+        headers={"Accept": "application/json"},
+        method="GET",
+    )
+
+    with urlopen(request, timeout=15) as response:
+        result = json.loads(response.read().decode("utf-8"))
+
+    if not isinstance(result, dict):
+        raise ValueError("Gateway returned an invalid response.")
+
+    # Support the gateway's top-level or nested response format.
+    price = result.get("last_price")
+
+    if price is None:
+        data = result.get("data", {})
+        if isinstance(data, dict):
+            quote = data.get(
+                f'{index["exchange"]}:{index["symbol"]}',
+                {},
+            )
+            if isinstance(quote, dict):
+                price = quote.get("last_price")
+
+    if result.get("status") not in (None, "success"):
+        raise ValueError("Gateway reported an unsuccessful response.")
+
+    if price is None:
+        raise ValueError("Index price was not present in the response.")
+
+    return {
+        "name": index["name"],
+        "exchange": index["exchange"],
+        "symbol": index["symbol"],
+        "last_price": price,
+        "status": "success",
+    }
+
+
+# --------------------------------------------------
+# Market Indices API endpoint
+# --------------------------------------------------
+
+@router.get("/")
+def get_market_indices():
+    indices = []
+    errors = []
+
+    for index in SUPPORTED_INDICES:
+        try:
+            indices.append(fetch_index(index))
+
+        except (HTTPError, URLError, TimeoutError, ValueError,
+                json.JSONDecodeError, OSError) as exc:
+            errors.append({
+                "name": index["name"],
+                "message": str(exc),
+            })
+
+    if not indices:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "message": "Unable to retrieve market indices.",
+                "errors": errors,
+            },
+        )
+
+    return {
+        "engine": "Market Indices Engine",
+        "version": "1.0",
+        "status": "success" if not errors else "partial",
+        "read_only": True,
+        "database_write": False,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "indices": indices,
+        "errors": errors,
+    }

@@ -1,0 +1,2114 @@
+/* ============================================================
+   FINANCIAL OS
+   GLOBAL GLASSMORPHISM DESIGN SYSTEM
+   ============================================================ */
+
+
+/* ============================================================
+   RESET
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background:
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(124, 58, 237, 0.18),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 20%,
+      rgba(37, 99, 235, 0.15),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 50% 100%,
+      rgba(236, 72, 153, 0.10),
+      transparent 35%
+    ),
+    #060a12;
+
+  color: #f8fafc;
+
+  min-height: 100vh;
+
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+
+.sidebar {
+  width: 260px;
+
+  min-height: 100vh;
+
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  z-index: 50;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 22px 14px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15, 23, 42, 0.78),
+      rgba(7, 11, 20, 0.88)
+    );
+
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+/* ============================================================
+   BRAND
+   ============================================================ */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 4px 8px 24px;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #8b5cf6,
+      #ec4899
+    );
+
+  box-shadow:
+    0 8px 30px rgba(139, 92, 246, 0.28);
+
+  color: white;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-text strong {
+  font-size: 14px;
+  letter-spacing: -0.2px;
+}
+
+.brand-text span {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 9px;
+}
+
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+
+.navigation {
+  flex: 1;
+
+  overflow-y: auto;
+
+  padding-right: 3px;
+}
+
+.navigation-group {
+  margin-bottom: 22px;
+}
+
+.navigation-title {
+  padding: 0 11px 8px;
+
+  color: rgba(255, 255, 255, 0.32);
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+
+  text-transform: uppercase;
+}
+
+.navigation-item {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 10px 11px;
+
+  margin-bottom: 3px;
+
+  border: 1px solid transparent;
+
+  border-radius: 12px;
+
+  background: transparent;
+
+  color: rgba(255, 255, 255, 0.55);
+
+  text-align: left;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.navigation-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+
+  color: rgba(255, 255, 255, 0.9);
+
+  transform: translateX(2px);
+}
+
+.navigation-item.active {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(139, 92, 246, 0.22),
+      rgba(236, 72, 153, 0.10)
+    );
+
+  border-color:
+    rgba(139, 92, 246, 0.20);
+
+  color: white;
+
+  box-shadow:
+    inset 0 0 20px rgba(139, 92, 246, 0.05);
+}
+
+
+/* ============================================================
+   SIDEBAR FOOTER
+   ============================================================ */
+
+.sidebar-footer {
+  padding-top: 10px;
+
+  border-top:
+    1px solid rgba(255, 255, 255, 0.07);
+}
+
+
+/* ============================================================
+   MAIN AREA
+   ============================================================ */
+
+.main-area {
+  width: calc(100% - 260px);
+
+  margin-left: 260px;
+
+  min-height: 100vh;
+}
+
+
+/* ============================================================
+   TOPBAR
+   ============================================================ */
+
+.topbar {
+  height: 82px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 0 30px;
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 30;
+
+  background:
+    rgba(6, 10, 18, 0.65);
+
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+
+  border-bottom:
+    1px solid rgba(255, 255, 255, 0.06);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.page-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eyebrow {
+  color: rgba(255, 255, 255, 0.35);
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.7px;
+}
+
+.page-title h1 {
+  font-size: 19px;
+
+  font-weight: 650;
+
+  letter-spacing: -0.4px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.icon-button,
+.menu-button {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.08);
+
+  border-radius: 11px;
+
+  background:
+    rgba(255, 255, 255, 0.045);
+
+  color:
+    rgba(255, 255, 255, 0.65);
+
+  transition: all 0.2s ease;
+}
+
+.icon-button:hover,
+.menu-button:hover {
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  color: white;
+}
+
+.menu-button {
+  display: none;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  margin-left: 6px;
+
+  padding-left: 12px;
+
+  border-left:
+    1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-avatar {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #8b5cf6,
+      #ec4899
+    );
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+.profile-info strong {
+  font-size: 11px;
+}
+
+.profile-info span {
+  font-size: 9px;
+
+  color:
+    rgba(255, 255, 255, 0.35);
+}
+
+
+/* ============================================================
+   CONTENT
+   ============================================================ */
+
+.content {
+  padding: 34px;
+}
+
+.dashboard {
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+
+/* ============================================================
+   WELCOME
+   ============================================================ */
+
+.welcome-section {
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 28px;
+}
+
+.welcome-label {
+  color: #a78bfa;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 2px;
+
+  margin-bottom: 8px;
+}
+
+.welcome-section h2 {
+  font-size: clamp(32px, 4vw, 54px);
+
+  line-height: 0.98;
+
+  letter-spacing: -2.5px;
+
+  font-weight: 700;
+}
+
+.welcome-section h2 span {
+  background:
+    linear-gradient(
+      90deg,
+      #a78bfa,
+      #f472b6
+    );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  color: transparent;
+}
+
+.welcome-description {
+  max-width: 500px;
+
+  margin-top: 14px;
+
+  color:
+    rgba(255, 255, 255, 0.45);
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.primary-button {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  border: 0;
+
+  border-radius: 12px;
+
+  padding: 11px 16px;
+
+  color: white;
+
+  background:
+    linear-gradient(
+      135deg,
+      #7c3aed,
+      #db2777
+    );
+
+  box-shadow:
+    0 8px 25px rgba(124, 58, 237, 0.20);
+
+  font-size: 11px;
+
+  font-weight: 650;
+
+  white-space: nowrap;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 35px rgba(124, 58, 237, 0.30);
+}
+
+.secondary-button,
+.small-button {
+  border:
+    1px solid rgba(255, 255, 255, 0.09);
+
+  background:
+    rgba(255, 255, 255, 0.045);
+
+  color:
+    rgba(255, 255, 255, 0.68);
+
+  border-radius: 10px;
+
+  padding: 9px 13px;
+
+  font-size: 10px;
+}
+
+.secondary-button:hover,
+.small-button:hover {
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  color: white;
+}
+
+
+/* ============================================================
+   GLASS CARD
+   ============================================================ */
+
+.glass-card {
+  position: relative;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.075),
+      rgba(255, 255, 255, 0.025)
+    );
+
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+
+  border:
+    1px solid rgba(255, 255, 255, 0.09);
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 18px 60px rgba(0, 0, 0, 0.18);
+
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.glass-card:hover {
+  border-color:
+    rgba(255, 255, 255, 0.14);
+}
+
+
+/* ============================================================
+   METRICS
+   ============================================================ */
+
+.metrics-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 14px;
+
+  margin-bottom: 14px;
+}
+
+.metric-card {
+  padding: 18px;
+}
+
+.metric-top {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 18px;
+}
+
+.metric-icon {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 11px;
+
+  color: #c4b5fd;
+
+  background:
+    rgba(139, 92, 246, 0.10);
+
+  border:
+    1px solid rgba(139, 92, 246, 0.13);
+}
+
+.metric-change {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 2px;
+
+  font-size: 9px;
+
+  font-weight: 650;
+}
+
+.metric-change.positive {
+  color: #34d399;
+}
+
+.metric-change.negative {
+  color: #fb7185;
+}
+
+.metric-label {
+  color:
+    rgba(255, 255, 255, 0.40);
+
+  font-size: 10px;
+
+  margin-bottom: 5px;
+}
+
+.metric-value {
+  font-size: 23px;
+
+  letter-spacing: -0.7px;
+}
+
+
+/* ============================================================
+   DASHBOARD GRID
+   ============================================================ */
+
+.dashboard-grid {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1.7fr)
+    minmax(300px, 1fr);
+
+  gap: 14px;
+
+  margin-bottom: 14px;
+}
+
+.large-card,
+.ai-card {
+  min-height: 340px;
+
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+}
+
+.card-label {
+  color:
+    rgba(255, 255, 255, 0.34);
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+
+  margin-bottom: 5px;
+}
+
+.card-header h3 {
+  font-size: 15px;
+
+  letter-spacing: -0.3px;
+}
+
+
+/* ============================================================
+   EMPTY CHART
+   ============================================================ */
+
+.empty-chart {
+  height: 240px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  gap: 8px;
+}
+
+.chart-icon {
+  width: 54px;
+  height: 54px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  margin-bottom: 4px;
+
+  border-radius: 16px;
+
+  color: #a78bfa;
+
+  background:
+    rgba(139, 92, 246, 0.08);
+
+  border:
+    1px solid rgba(139, 92, 246, 0.12);
+}
+
+.empty-chart strong {
+  font-size: 12px;
+}
+
+.empty-chart span {
+  max-width: 280px;
+
+  color:
+    rgba(255, 255, 255, 0.35);
+
+  font-size: 10px;
+
+  line-height: 1.5;
+
+  margin-bottom: 7px;
+}
+
+
+/* ============================================================
+   AI CARD
+   ============================================================ */
+
+.ai-card {
+  background:
+    radial-gradient(
+      circle at 80% 10%,
+      rgba(236, 72, 153, 0.12),
+      transparent 35%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.075),
+      rgba(255, 255, 255, 0.025)
+    );
+}
+
+.ai-glow {
+  position: absolute;
+
+  width: 180px;
+  height: 180px;
+
+  right: -80px;
+  top: -80px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(168, 85, 247, 0.16);
+
+  filter: blur(45px);
+
+  pointer-events: none;
+}
+
+.ai-title {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+}
+
+.ai-icon {
+  width: 35px;
+  height: 35px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 11px;
+
+  color: #f0abfc;
+
+  background:
+    rgba(217, 70, 239, 0.10);
+
+  border:
+    1px solid rgba(217, 70, 239, 0.14);
+}
+
+.ai-empty {
+  height: 240px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: flex-start;
+
+  gap: 18px;
+}
+
+.ai-empty p {
+  max-width: 260px;
+
+  color:
+    rgba(255, 255, 255, 0.42);
+
+  font-size: 11px;
+
+  line-height: 1.6;
+}
+
+
+/* ============================================================
+   HEALTH
+   ============================================================ */
+
+.health-card {
+  padding: 20px;
+}
+
+.score {
+  font-size: 12px;
+
+  color:
+    rgba(255, 255, 255, 0.45);
+}
+
+.health-progress {
+  height: 8px;
+
+  margin-top: 25px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.06);
+}
+
+.health-progress-fill {
+  width: 2%;
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #8b5cf6,
+      #ec4899
+    );
+}
+
+.health-footer {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-top: 15px;
+
+  color:
+    rgba(255, 255, 255, 0.34);
+
+  font-size: 9px;
+}
+
+
+/* ============================================================
+   PLACEHOLDER
+   ============================================================ */
+
+.placeholder-page {
+  min-height: calc(100vh - 150px);
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+.placeholder-card {
+  width: 100%;
+
+  max-width: 520px;
+
+  padding: 45px;
+
+  text-align: center;
+}
+
+.placeholder-icon {
+  width: 65px;
+  height: 65px;
+
+  margin: 0 auto 20px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 20px;
+
+  color: #c4b5fd;
+
+  background:
+    rgba(139, 92, 246, 0.10);
+}
+
+.placeholder-card h2 {
+  margin-bottom: 10px;
+
+  font-size: 25px;
+}
+
+.placeholder-card p:last-child {
+  color:
+    rgba(255, 255, 255, 0.40);
+
+  font-size: 12px;
+
+  line-height: 1.6;
+}
+
+
+/* ============================================================
+   MOBILE OVERLAY
+   ============================================================ */
+
+.mobile-overlay {
+  display: none;
+}
+
+
+/* ============================================================
+   MOBILE RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1100px) {
+
+  .metrics-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+@media (max-width: 800px) {
+
+  .sidebar {
+    transform: translateX(-100%);
+
+    transition:
+      transform 0.25s ease;
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .mobile-overlay {
+    display: block;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 40;
+
+    background:
+      rgba(0, 0, 0, 0.55);
+
+    backdrop-filter: blur(3px);
+  }
+
+  .mobile-close {
+    display: flex;
+
+    margin-left: auto;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: 0;
+
+    background: transparent;
+
+    color:
+      rgba(255, 255, 255, 0.5);
+  }
+
+  .main-area {
+    width: 100%;
+
+    margin-left: 0;
+  }
+
+  .menu-button {
+    display: flex;
+  }
+
+  .topbar {
+    padding: 0 16px;
+
+    height: 70px;
+  }
+
+  .content {
+    padding: 20px 15px 35px;
+  }
+
+  .profile-info {
+    display: none;
+  }
+
+  .profile {
+    padding-left: 7px;
+  }
+
+  .welcome-section {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .welcome-section h2 {
+    font-size: 38px;
+  }
+
+  .primary-button {
+    width: auto;
+  }
+
+}
+
+
+@media (max-width: 520px) {
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-section h2 {
+    font-size: 34px;
+  }
+
+  .topbar-actions .icon-button {
+    display: none;
+  }
+
+  .large-card,
+  .ai-card {
+    min-height: 320px;
+
+    padding: 16px;
+  }
+
+  .health-footer {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .health-footer .secondary-button {
+    width: 100%;
+  }
+
+}
+
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background:
+    rgba(255, 255, 255, 0.12);
+
+  border-radius: 10px;
+}
+
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+
+::selection {
+  background:
+    rgba(139, 92, 246, 0.35);
+
+  color: white;
+}
+/* ============================================================
+   FINANCIAL OS
+   PROFESSIONAL RESPONSIVE LAYOUT SYSTEM
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   GLOBAL RESPONSIVE SAFETY
+   ------------------------------------------------------------ */
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  min-width: 0;
+}
+
+.app-shell,
+.main-area,
+.content,
+.dashboard,
+section,
+.glass-card {
+  max-width: 100%;
+}
+
+
+/* ------------------------------------------------------------
+   CONTENT WIDTH CONTROL
+   ------------------------------------------------------------ */
+
+.content {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.dashboard {
+  width: 100%;
+  max-width: 1500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* ------------------------------------------------------------
+   PROFESSIONAL CARD BEHAVIOUR
+   ------------------------------------------------------------ */
+
+.glass-card {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.metrics-grid,
+.dashboard-grid {
+  width: 100%;
+  min-width: 0;
+}
+
+.metric-card,
+.large-card,
+.ai-card,
+.health-card,
+.placeholder-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+
+/* ------------------------------------------------------------
+   TEXT SAFETY
+   ------------------------------------------------------------ */
+
+.metric-label,
+.metric-value,
+.card-header,
+.card-header h3,
+.welcome-description,
+.placeholder-card,
+.placeholder-card h2,
+.placeholder-card p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+
+/* ------------------------------------------------------------
+   ACCOUNT / LIST CARD SAFETY
+   ------------------------------------------------------------ */
+
+/*
+   Account cards currently use the existing health-footer
+   layout. Make the internal content responsive instead
+   of allowing the right side to push outside the screen.
+*/
+
+.health-footer {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: nowrap;
+}
+
+.health-footer > div {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.health-footer > div:first-child {
+  flex: 1 1 auto;
+}
+
+.health-footer > div:last-child {
+  flex: 0 1 auto;
+  min-width: 0 !important;
+  max-width: 42%;
+}
+
+
+/* ------------------------------------------------------------
+   ACCOUNT NAME / INSTITUTION
+   ------------------------------------------------------------ */
+
+.health-footer strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.health-footer span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* ------------------------------------------------------------
+   BALANCE AREA
+   ------------------------------------------------------------ */
+
+.health-footer > div:last-child > div {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.health-footer > div:last-child strong,
+.health-footer > div:last-child {
+  text-align: right;
+}
+
+
+/* ------------------------------------------------------------
+   BUTTON RESPONSIVENESS
+   ------------------------------------------------------------ */
+
+.primary-button,
+.secondary-button,
+.small-button {
+  max-width: 100%;
+}
+
+.primary-button {
+  flex-shrink: 0;
+}
+
+
+/* ------------------------------------------------------------
+   TABLET
+   ------------------------------------------------------------ */
+
+@media (max-width: 1100px) {
+
+  .content {
+    padding: 28px;
+  }
+
+  .welcome-section h2 {
+    font-size: clamp(30px, 5vw, 46px);
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .large-card,
+  .ai-card {
+    width: 100%;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   MOBILE TABLET
+   ------------------------------------------------------------ */
+
+@media (max-width: 800px) {
+
+  .main-area {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+  }
+
+  .topbar {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 16px;
+  }
+
+  .content {
+    width: 100%;
+    max-width: 100%;
+    padding: 22px 16px 40px;
+  }
+
+  .welcome-section {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .welcome-section h2 {
+    max-width: 100%;
+    font-size: clamp(30px, 8vw, 40px);
+    letter-spacing: -1.8px;
+  }
+
+  .welcome-description {
+    max-width: 100%;
+    font-size: 12px;
+  }
+
+  .welcome-section .primary-button {
+    align-self: flex-start;
+  }
+
+  .metrics-grid {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .metric-card {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .metric-value {
+    font-size: clamp(20px, 5vw, 24px);
+  }
+
+  .dashboard-grid {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .large-card,
+  .ai-card {
+    width: 100%;
+    min-width: 0;
+    min-height: 300px;
+    padding: 18px;
+  }
+
+  .card-header {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .card-header h3 {
+    font-size: 14px;
+  }
+
+  .empty-chart,
+  .ai-empty {
+    width: 100%;
+    max-width: 100%;
+  }
+
+
+  /* ----------------------------------------------------------
+     ACCOUNT CARDS
+     ---------------------------------------------------------- */
+
+  .health-footer {
+    width: 100%;
+    max-width: 100%;
+    gap: 12px;
+    flex-wrap: nowrap;
+  }
+
+  .health-footer > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0 !important;
+  }
+
+  .health-footer > div:last-child {
+    flex: 0 1 38%;
+    min-width: 0 !important;
+    max-width: 38%;
+  }
+
+  .health-footer strong {
+    max-width: 100%;
+    font-size: 14px;
+  }
+
+  .health-footer span {
+    max-width: 100%;
+    font-size: 11px;
+  }
+
+
+  /* ----------------------------------------------------------
+     TOPBAR
+     ---------------------------------------------------------- */
+
+  .profile-info {
+    display: none;
+  }
+
+  .profile {
+    padding-left: 8px;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   PHONE
+   ------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+
+  .content {
+    padding: 18px 12px 32px;
+  }
+
+  .topbar {
+    height: 66px;
+    padding: 0 12px;
+  }
+
+  .page-title h1 {
+    font-size: 17px;
+  }
+
+  .eyebrow {
+    font-size: 7px;
+  }
+
+  .profile-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+
+  /* ----------------------------------------------------------
+     WELCOME
+     ---------------------------------------------------------- */
+
+  .welcome-section {
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .welcome-label {
+    font-size: 8px;
+    letter-spacing: 1.6px;
+  }
+
+  .welcome-section h2 {
+    font-size: clamp(28px, 9vw, 36px);
+    line-height: 1;
+    letter-spacing: -1.6px;
+  }
+
+  .welcome-description {
+    margin-top: 10px;
+    font-size: 11px;
+    line-height: 1.55;
+  }
+
+  .welcome-section .primary-button {
+    width: 100%;
+  }
+
+
+  /* ----------------------------------------------------------
+     METRICS
+     ---------------------------------------------------------- */
+
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .metric-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .metric-top {
+    margin-bottom: 14px;
+  }
+
+  .metric-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .metric-change {
+    font-size: 8px;
+  }
+
+  .metric-label {
+    font-size: 9px;
+  }
+
+  .metric-value {
+    font-size: 19px;
+    letter-spacing: -0.5px;
+  }
+
+
+  /* ----------------------------------------------------------
+     MAIN CARDS
+     ---------------------------------------------------------- */
+
+  .large-card,
+  .ai-card {
+    min-height: 280px;
+    padding: 15px;
+    border-radius: 17px;
+  }
+
+  .card-label {
+    font-size: 7px;
+  }
+
+  .card-header h3 {
+    font-size: 14px;
+  }
+
+  .empty-chart {
+    height: 210px;
+  }
+
+  .ai-empty {
+    height: 210px;
+  }
+
+
+  /* ----------------------------------------------------------
+     ACCOUNT CARDS
+     ---------------------------------------------------------- */
+
+  .health-card {
+    padding: 15px;
+  }
+
+  .health-footer {
+    gap: 10px;
+  }
+
+  .health-footer > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0 !important;
+  }
+
+  .health-footer > div:last-child {
+    flex: 0 0 34%;
+    width: 34%;
+    min-width: 0 !important;
+    max-width: 34%;
+  }
+
+  .health-footer strong {
+    font-size: 13px !important;
+    line-height: 1.3;
+  }
+
+  .health-footer span {
+    font-size: 10px !important;
+    line-height: 1.4;
+  }
+
+  .health-footer > div:last-child > div:first-child {
+    font-size: 9px !important;
+    margin-bottom: 3px !important;
+  }
+
+  .health-footer > div:last-child > div:last-child {
+    font-size: 15px !important;
+  }
+
+
+  /* ----------------------------------------------------------
+     BUTTONS
+     ---------------------------------------------------------- */
+
+  .primary-button {
+    min-height: 42px;
+    padding: 10px 14px;
+    font-size: 10px;
+  }
+
+  .secondary-button,
+  .small-button {
+    min-height: 38px;
+    padding: 9px 12px;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   SMALL PHONE
+   ------------------------------------------------------------ */
+
+@media (max-width: 420px) {
+
+  .content {
+    padding: 16px 10px 28px;
+  }
+
+  .topbar {
+    padding: 0 10px;
+  }
+
+  .metrics-grid {
+    gap: 8px;
+  }
+
+  .metric-card {
+    padding: 12px;
+  }
+
+  .metric-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .metric-value {
+    font-size: 17px;
+  }
+
+  .metric-label {
+    font-size: 8px;
+  }
+
+  .metric-change {
+    font-size: 7px;
+  }
+
+
+  /* Account card becomes more compact */
+  .health-footer {
+    gap: 8px;
+  }
+
+  .health-footer > div:last-child {
+    flex-basis: 32%;
+    width: 32%;
+    max-width: 32%;
+  }
+
+  .health-footer strong {
+    font-size: 12px !important;
+  }
+
+  .health-footer span {
+    font-size: 9px !important;
+  }
+
+  .health-footer > div:last-child > div:last-child {
+    font-size: 14px !important;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   VERY SMALL PHONE
+   ------------------------------------------------------------ */
+
+@media (max-width: 360px) {
+
+  .content {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card {
+    padding: 14px;
+  }
+
+  .welcome-section h2 {
+    font-size: 29px;
+  }
+
+  .health-footer > div:last-child {
+    flex-basis: 30%;
+    width: 30%;
+    max-width: 30%;
+  }
+
+  .health-footer > div:last-child > div:last-child {
+    font-size: 13px !important;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   ACCESSIBILITY / TOUCH TARGETS
+   ------------------------------------------------------------ */
+
+@media (max-width: 800px) {
+
+  button,
+  .navigation-item {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .navigation-item {
+    min-height: 42px;
+  }
+
+  .icon-button,
+  .menu-button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   FINAL HORIZONTAL OVERFLOW PROTECTION
+   ------------------------------------------------------------ */
+
+@media (max-width: 800px) {
+
+  .content,
+  .dashboard,
+  .welcome-section,
+  .metrics-grid,
+  .dashboard-grid,
+  .glass-card,
+  .health-card,
+  .health-footer {
+    overflow-x: hidden;
+  }
+
+  img,
+  svg,
+  canvas {
+    max-width: 100%;
+  }
+}
+
+
+/* ============================================================
+   DASHBOARD OVERVIEW - CHARTS, MODULES AND NOTIFICATIONS
+   ============================================================ */
+.dashboard-overview { gap: 18px; }
+.dashboard-overview .welcome-section { align-items: center; gap: 18px; }
+.overview-chart, .category-chart { padding-top: 8px; }
+.chart-legend { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; opacity:.85; margin-bottom:16px; }
+.chart-legend span { display:inline-flex; align-items:center; gap:7px; }
+.chart-legend i { display:inline-block; width:9px; height:9px; border-radius:3px; }
+.legend-income { background:#9b5de5; }
+.legend-expense { background:#f15bb5; }
+.trend-columns { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; align-items:end; min-height:190px; padding:0 4px; }
+.trend-column { min-width:0; display:flex; flex-direction:column; align-items:center; gap:9px; color:var(--muted,#a8adbd); font-size:11px; }
+.trend-bars { width:100%; max-width:58px; height:150px; display:flex; align-items:end; justify-content:center; gap:5px; border-bottom:1px solid rgba(255,255,255,.12); }
+.trend-bar { width:38%; min-height:2px; border-radius:5px 5px 1px 1px; transition:height .25s ease; }
+.income-bar { background:linear-gradient(180deg,#c084fc,#7c3aed); }
+.expense-bar { background:linear-gradient(180deg,#f472b6,#db2777); }
+.chart-footnote { display:block; font-size:11px; line-height:1.5; opacity:.65; margin-top:14px; }
+.category-row { margin:14px 0; }
+.category-row-label { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12px; margin-bottom:7px; }
+.category-row-label span { overflow-wrap:anywhere; }
+.category-row-label strong { white-space:nowrap; }
+.category-track { height:7px; width:100%; border-radius:99px; overflow:hidden; background:rgba(255,255,255,.08); }
+.category-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#8b5cf6,#ec4899); }
+.goal-fill { background:linear-gradient(90deg,#34d399,#60a5fa); }
+.module-overview-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.module-overview-tile { display:flex; align-items:center; gap:11px; min-width:0; text-align:left; padding:14px; border-radius:13px; border:1px solid rgba(255,255,255,.07); background:rgba(255,255,255,.025); color:inherit; cursor:pointer; }
+.module-overview-tile:hover { border-color:rgba(192,132,252,.45); background:rgba(139,92,246,.08); }
+.module-tile-icon { width:36px; height:36px; flex:0 0 36px; display:grid; place-items:center; border-radius:10px; background:rgba(139,92,246,.16); color:#c4b5fd; }
+.module-overview-tile > span:nth-child(2) { min-width:0; flex:1; display:flex; flex-direction:column; gap:5px; }
+.module-overview-tile strong { font-size:13px; }
+.module-overview-tile small { font-size:11px; opacity:.68; line-height:1.45; overflow-wrap:anywhere; }
+.module-overview-tile > svg { flex:0 0 auto; opacity:.7; }
+.notification-count { display:grid; place-items:center; min-width:27px; height:27px; padding:0 7px; border-radius:99px; background:rgba(139,92,246,.2); font-size:12px; font-weight:700; }
+.notification-list { display:flex; flex-direction:column; gap:10px; }
+.notification-item { display:flex; align-items:flex-start; gap:11px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.06); background:rgba(255,255,255,.025); }
+.notification-dot { width:9px; height:9px; margin-top:5px; border-radius:50%; flex:0 0 9px; background:#60a5fa; }
+.severity-warning .notification-dot { background:#fbbf24; }
+.severity-critical .notification-dot { background:#fb7185; }
+.notification-item strong { display:block; font-size:12px; }
+.notification-item p { margin:5px 0 0; font-size:11px; line-height:1.5; opacity:.72; }
+.goal-summary-row { margin:16px 0; }
+.goal-summary-row small { display:block; margin-top:6px; opacity:.65; font-size:10px; }
+.dashboard-overview .empty-chart { min-height:90px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:9px; font-size:12px; opacity:.8; }
+.dashboard-overview .metrics-grid { align-items:stretch; }
+.dashboard-overview .metric-card { min-width:0; }
+@media (max-width: 1000px) {
+  .module-overview-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 600px) {
+  .dashboard-overview { gap:12px; }
+  .dashboard-overview .welcome-section { align-items:flex-start; flex-direction:column; }
+  .module-overview-grid { grid-template-columns:1fr; gap:8px; }
+  .trend-columns { gap:5px; min-height:155px; }
+  .trend-bars { height:118px; gap:3px; }
+  .trend-column { font-size:10px; }
+  .chart-legend { font-size:11px; }
+}
+
+
+/* ============================================================
+   DASHBOARD SPACING & ALIGNMENT PATCH
+   Appended intentionally so these rules override earlier
+   duplicated responsive rules without changing functionality.
+   ============================================================ */
+
+.dashboard-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Give each dashboard section a consistent, aligned inner edge. */
+.dashboard-overview > .glass-card,
+.dashboard-overview > section > .glass-card,
+.dashboard-overview .overview-chart,
+.dashboard-overview .category-chart,
+.dashboard-overview .module-overview-card,
+.dashboard-overview .notifications-card,
+.dashboard-overview .goal-progress-card,
+.dashboard-overview .recent-transactions-card {
+  padding: 20px;
+  min-width: 0;
+}
+
+/* Make section headings align with the content below them. */
+.dashboard-overview .card-header {
+  margin: 0 0 14px;
+  padding: 0;
+  align-items: flex-start;
+}
+
+/* Charts and category content should not sit against the card edge. */
+.dashboard-overview .overview-chart,
+.dashboard-overview .category-chart {
+  padding-top: 16px;
+}
+
+.dashboard-overview .chart-legend {
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+.dashboard-overview .trend-columns {
+  padding: 0 6px;
+}
+
+/* Keep the module grid separate from the following notifications. */
+.dashboard-overview .module-overview-grid {
+  margin-top: 14px;
+  gap: 12px;
+}
+
+.dashboard-overview .module-overview-tile {
+  padding: 14px;
+}
+
+/* Notification header and notification rows get clear separation. */
+.dashboard-overview .notification-list {
+  margin-top: 14px;
+  gap: 12px;
+}
+
+.dashboard-overview .notification-item {
+  padding: 14px;
+  min-width: 0;
+}
+
+/* Goal progress content stays inside its card with breathing room. */
+.dashboard-overview .goal-summary-row {
+  margin: 18px 0;
+}
+
+.dashboard-overview .category-row {
+  margin: 16px 0;
+}
+
+/* Provide reliable vertical separation between dashboard sections. */
+.dashboard-overview > * {
+  min-width: 0;
+}
+
+.dashboard-overview > .glass-card + .glass-card,
+.dashboard-overview > section + section,
+.dashboard-overview > section + .glass-card,
+.dashboard-overview > .glass-card + section {
+  margin-top: 0;
+}
+
+/* Responsive padding: comfortable on phones without wasting space. */
+@media (max-width: 800px) {
+  .dashboard-overview {
+    gap: 14px;
+  }
+
+  .dashboard-overview > .glass-card,
+  .dashboard-overview > section > .glass-card,
+  .dashboard-overview .overview-chart,
+  .dashboard-overview .category-chart,
+  .dashboard-overview .module-overview-card,
+  .dashboard-overview .notifications-card,
+  .dashboard-overview .goal-progress-card,
+  .dashboard-overview .recent-transactions-card {
+    padding: 17px;
+  }
+
+  .dashboard-overview .module-overview-grid {
+    gap: 10px;
+  }
+
+  .dashboard-overview .notification-list {
+    gap: 10px;
+  }
+
+  .dashboard-overview .notification-item {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-overview {
+    gap: 12px;
+  }
+
+  .dashboard-overview > .glass-card,
+  .dashboard-overview > section > .glass-card,
+  .dashboard-overview .overview-chart,
+  .dashboard-overview .category-chart,
+  .dashboard-overview .module-overview-card,
+  .dashboard-overview .notifications-card,
+  .dashboard-overview .goal-progress-card,
+  .dashboard-overview .recent-transactions-card {
+    padding: 15px;
+  }
+
+  .dashboard-overview .card-header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .dashboard-overview .module-overview-grid {
+    margin-top: 12px;
+    gap: 8px;
+  }
+
+  .dashboard-overview .trend-columns {
+    padding: 0 2px;
+  }
+
+  .dashboard-overview .category-row {
+    margin: 13px 0;
+  }
+
+  .dashboard-overview .goal-summary-row {
+    margin: 14px 0;
+  }
+}

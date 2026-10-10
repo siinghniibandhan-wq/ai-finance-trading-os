@@ -39,5 +39,14 @@ def ai_chat(request: ChatRequest):
     except ImportError as exc:
         raise HTTPException(status_code=503, detail="Gemini SDK is missing. Install google-genai in backend requirements.") from exc
     except Exception as exc:
-        # Avoid returning provider internals or secrets to the browser.
-        raise HTTPException(status_code=502, detail="Gemini request failed. Check the backend logs and model/API access.") from exc
+    import logging
+
+    logging.getLogger(__name__).exception(
+        "Gemini API request failed: %s",
+        type(exc).__name__,
+    )
+
+    raise HTTPException(
+        status_code=502,
+        detail="Gemini request failed. Check backend logs."
+    ) from exc

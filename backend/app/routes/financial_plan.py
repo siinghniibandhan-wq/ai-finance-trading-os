@@ -31,6 +31,11 @@
 # ============================================================
 
 
+# ============================================================
+# DATE AND FINANCIAL CALCULATION IMPORTS
+# ============================================================
+
+from datetime import date, timedelta
 from decimal import Decimal
 
 from fastapi import (

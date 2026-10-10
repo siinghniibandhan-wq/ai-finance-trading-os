@@ -290,19 +290,55 @@ def get_financial_plan(
     )
 
 
+
     # ========================================================
     # EMERGENCY FUND
     # ========================================================
+    #
+    # Calculate the emergency fund using eligible bank
+    # and cash accounts only.
+    #
+    # Investment accounts and credit cards are excluded.
+    # Other account types require separate classification.
+    #
+    # ========================================================
 
     emergency_fund_months = Decimal("6")
+
+    # --------------------------------------------------------
+    # Calculate the emergency fund target.
+    # --------------------------------------------------------
 
     emergency_fund_target = (
         monthly_expense
         * emergency_fund_months
     )
 
-    emergency_fund_current = total_balance
+    # --------------------------------------------------------
+    # Calculate eligible emergency cash.
+    # --------------------------------------------------------
 
+    emergency_fund_current = (
+        db.query(
+            func.coalesce(
+                func.sum(Account.balance),
+                0,
+            )
+        )
+        .filter(
+            Account.user_id == user_id,
+            Account.is_active == True,
+            Account.account_type.in_([
+                "bank",
+                "cash",
+            ]),
+        )
+        .scalar()
+    )
+
+    emergency_fund_current = to_decimal(
+        emergency_fund_current
+    )
 
     # ========================================================
     # EMERGENCY FUND PROGRESS

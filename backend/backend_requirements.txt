@@ -1,0 +1,13 @@
+# ============================================================
+# FINANCIAL OS - BACKEND DEPENDENCIES
+# ============================================================
+
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# Database
+SQLAlchemy==2.0.36
+psycopg[binary]==3.2.3
+
+# Google Gemini AI integration
+google-genai>=1.0.0

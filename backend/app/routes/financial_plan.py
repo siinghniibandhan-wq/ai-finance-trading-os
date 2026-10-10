@@ -168,8 +168,27 @@ def get_financial_plan(
 
 
     # ========================================================
-    # TRANSACTION SUMMARY
+    # TRANSACTION SUMMARY - LAST 90 DAYS
     # ========================================================
+    #
+    # IMPORTANT:
+    # We use the last 90 calendar days for financial planning.
+    #
+    # Monthly planning figures will be calculated by dividing
+    # the 90-day totals by 3.
+    #
+    # Only income and expense transactions are included,
+    # preserving the existing transaction classifications.
+    #
+    # No transactions or database records are modified.
+    #
+    # ========================================================
+
+    planning_end_date = date.today()
+
+    planning_start_date = (
+        planning_end_date - timedelta(days=89)
+    )
 
     transaction_summary = (
         db.query(
@@ -177,49 +196,44 @@ def get_financial_plan(
                 func.sum(
                     case(
                         (
-                            Transaction.transaction_type
-                            == "income",
+                            Transaction.transaction_type == "income",
                             Transaction.amount,
                         ),
                         else_=0,
                     )
                 ),
                 0,
-            ).label(
-                                "income"
-            ),
+            ).label("income"),
 
             func.coalesce(
                 func.sum(
                     case(
                         (
-                            Transaction.transaction_type
-                            == "expense",
+                            Transaction.transaction_type == "expense",
                             Transaction.amount,
                         ),
                         else_=0,
                     )
                 ),
                 0,
-            ).label(
-                "expense"
-            ),
+            ).label("expense"),
 
             func.count(
                 Transaction.id
-            ).label(
-                "transaction_count"
-            ),
+            ).label("transaction_count"),
         )
         .filter(
             Transaction.user_id == user_id,
+
+            Transaction.transaction_date >= planning_start_date,
+
+            Transaction.transaction_date <= planning_end_date,
         )
         .one()
     )
 
-
     # ========================================================
-    # NORMALIZE VALUES
+    # NORMALIZE 90-DAY TOTALS
     # ========================================================
 
     total_balance = to_decimal(
@@ -235,18 +249,30 @@ def get_financial_plan(
     )
 
     transaction_count = (
-        transaction_summary.transaction_count
-        or 0
+        transaction_summary.transaction_count or 0
     )
-
 
     # ========================================================
     # MONTHLY PLANNING BASE
     # ========================================================
+    #
+    # Calculate average monthly figures using the last
+    # 90 calendar days of recorded transactions.
+    #
+    # The 90-day period is treated as three months for
+    # planning purposes.
+    #
+    # ========================================================
 
-    monthly_income = total_income
+    planning_months = Decimal("3")
 
-    monthly_expense = total_expense
+    monthly_income = (
+        total_income / planning_months
+    )
+
+    monthly_expense = (
+        total_expense / planning_months
+    )
 
     monthly_savings = (
         monthly_income

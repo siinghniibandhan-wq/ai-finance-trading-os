@@ -372,10 +372,18 @@ def get_financial_plan(
 
         "user_id": user_id,
 
+        # ----------------------------------------------------
+        # PLANNING ENGINE VERSION AND CALCULATION PERIOD
+        # ----------------------------------------------------
+
         "planning_engine": {
             "name": "Financial Planning Engine",
-            "version": "1.0",
+            "version": "1.1",
             "read_only": True,
+            "calculation_basis": "rolling_90_day_average",
+            "period_start": planning_start_date.isoformat(),
+            "period_end": planning_end_date.isoformat(),
+            "period_days": 90,
         },
 
         "cash": {

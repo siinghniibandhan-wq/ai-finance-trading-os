@@ -170,17 +170,25 @@ class InitialPasswordSetupRequest(BaseModel):
     new_password: str = Field(min_length=12, max_length=128)
 
 
+# ============================================================
+# SET OR RESET PASSWORD FOR AN EXISTING USER
+# Requires the private AUTH_SETUP_SECRET.
+# ============================================================
+
 @router.post("/setup-password")
 def setup_existing_user_password(
     request: InitialPasswordSetupRequest,
     db: Session = Depends(get_db),
 ):
     # 1. Verify the private setup secret.
-    expected_secret = getenv("AUTH_SETUP_SECRET", "")
+    expected_secret = os.getenv("AUTH_SETUP_SECRET", "").strip()
 
     if (
         len(expected_secret) < 32
-        or not compare_digest(request.setup_secret, expected_secret)
+        or not hmac.compare_digest(
+            request.setup_secret,
+            expected_secret,
+        )
     ):
         raise HTTPException(
             status_code=403,
@@ -203,27 +211,26 @@ def setup_existing_user_password(
             detail="Active user not found.",
         )
 
-    # 3. Refuse to overwrite existing credentials.
+    # 3. Find the existing credential.
     credential = (
         db.query(UserCredential)
         .filter(UserCredential.user_id == user.id)
         .first()
     )
 
+    # 4. Update existing credentials or create them if missing.
     if credential:
-        raise HTTPException(
-            status_code=409,
-            detail="Credentials already exist. Use the normal password-reset process.",
+        credential.password_hash = _hash_password(
+            request.new_password
         )
+    else:
+        credential = UserCredential(
+            user_id=user.id,
+            password_hash=_hash_password(request.new_password),
+        )
+        db.add(credential)
 
-    # 4. Create credentials for the existing user.
-    credential = UserCredential(
-        user_id=user.id,
-        password_hash=_hash_password(request.new_password),
-    )
-
-    db.add(credential)
-
+    # 5. Save safely.
     try:
         db.commit()
     except Exception:
@@ -238,3 +245,5 @@ def setup_existing_user_password(
         "message": "Password configured for the existing account.",
         "user_id": user.id,
     }
+
+    

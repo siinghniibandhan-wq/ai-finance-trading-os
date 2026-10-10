@@ -155,95 +155,20 @@ def me(user: User = Depends(get_current_user)):
     return {"id": user.id, "name": user.name, "email": user.email, "currency": user.currency}
 
 
-# ============================================================
-# ONE-TIME PASSWORD SETUP FOR AN EXISTING USER
-# Uses AUTH_SETUP_SECRET stored in Render environment variables.
-# ============================================================
-
-from os import getenv
-from hmac import compare_digest
 
 
-class InitialPasswordSetupRequest(BaseModel):
-    user_id: int
-    setup_secret: str = Field(min_length=32, max_length=256)
-    new_password: str = Field(min_length=12, max_length=128)
 
 
-# ============================================================
-# SET OR RESET PASSWORD FOR AN EXISTING USER
-# Requires the private AUTH_SETUP_SECRET.
-# ============================================================
 
-@router.post("/setup-password")
-def setup_existing_user_password(
-    request: InitialPasswordSetupRequest,
-    db: Session = Depends(get_db),
-):
-    # 1. Verify the private setup secret.
-    expected_secret = os.getenv("AUTH_SETUP_SECRET", "").strip()
 
-    if (
-        len(expected_secret) < 32
-        or not hmac.compare_digest(
-            request.setup_secret,
-            expected_secret,
-        )
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid setup authorization.",
-        )
 
-    # 2. Find the existing active account.
-    user = (
-        db.query(User)
-        .filter(
-            User.id == request.user_id,
-            User.is_active.is_(True),
-        )
-        .first()
-    )
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="Active user not found.",
-        )
 
-    # 3. Find the existing credential.
-    credential = (
-        db.query(UserCredential)
-        .filter(UserCredential.user_id == user.id)
-        .first()
-    )
 
-    # 4. Update existing credentials or create them if missing.
-    if credential:
-        credential.password_hash = _hash_password(
-            request.new_password
-        )
-    else:
-        credential = UserCredential(
-            user_id=user.id,
-            password_hash=_hash_password(request.new_password),
-        )
-        db.add(credential)
 
-    # 5. Save safely.
-    try:
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail="Password setup failed.",
-        )
 
-    return {
-        "status": "success",
-        "message": "Password configured for the existing account.",
-        "user_id": user.id,
-    }
 
-    
+
+
+
+

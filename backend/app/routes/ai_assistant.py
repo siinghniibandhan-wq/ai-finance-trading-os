@@ -24,7 +24,7 @@ def ai_chat(request: ChatRequest):
         from google import genai
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
-            model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-latest"),
+            model=os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
             contents=(
                 "You are the AI assistant inside a personal Financial OS. Give clear, practical, cautious "+
                 "financial education. Do not claim to see the user's accounts or live market data unless "+

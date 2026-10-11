@@ -33,6 +33,51 @@ import {
 } from "lucide-react";
 
 // ============================================================
+// FINANCIAL OS — AUTHENTICATED API REQUESTS
+// Automatically attach the current login token to API requests.
+// ============================================================
+
+const FINANCIAL_OS_API_ORIGIN =
+  "https://ai-finance-trading-os-api.onrender.com";
+
+// Keep the original browser fetch function.
+const originalFetch = window.fetch.bind(window);
+
+// Attach the login token to requests sent to our backend.
+window.fetch = (input, init = {}) => {
+  const requestUrl =
+    typeof input === "string" || input instanceof URL
+      ? String(input)
+      : input.url;
+
+  // Leave unrelated requests unchanged.
+  if (!requestUrl.startsWith(FINANCIAL_OS_API_ORIGIN)) {
+    return originalFetch(input, init);
+  }
+
+  const token = sessionStorage.getItem("financial_os_token");
+
+  // Preserve existing request headers.
+  const headers = new Headers(
+    input instanceof Request ? input.headers : undefined
+  );
+
+  new Headers(init.headers || {}).forEach((value, key) => {
+    headers.set(key, value);
+  });
+
+  // Add the bearer token when a session exists.
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  return originalFetch(input, {
+    ...init,
+    headers,
+  });
+};
+
+// ============================================================
 // NAVIGATION
 // ============================================================
 

@@ -20,3 +20,12 @@ def test_unsupported_financial_year_is_not_calculated_with_current_rules(financi
 def test_invalid_financial_year_format_is_rejected(financial_year):
     with pytest.raises(ValueError):
         get_tax_rule_set(financial_year)
+
+
+def test_supported_financial_year_has_versioned_capital_gains_rules():
+    rules = get_tax_rule_set("2026-27")
+    capital_gains = rules["capital_gains"]
+    assert capital_gains["section_111a_rate"] == "0.20"
+    assert capital_gains["section_112a_rate"] == "0.125"
+    assert capital_gains["section_112a_annual_exemption"] == "125000"
+    assert capital_gains["eligibility_policy"] == "require_transaction_level_confirmation"

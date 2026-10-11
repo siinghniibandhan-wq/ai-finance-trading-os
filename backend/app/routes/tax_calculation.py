@@ -91,6 +91,27 @@ CESS_RATE = Decimal("0.04")
 # MONEY ROUNDING
 # ============================================================
 
+def lot_has_section_111a_confirmation(lot, transaction):
+    """Return true only for explicit transaction/lot-level confirmation."""
+    return (
+        lot.get("section_111a_eligibility_confirmed") is True
+        or transaction.get("section_111a_eligibility_confirmed") is True
+    )
+
+
+def requires_capital_gains_review(
+    *, has_unclassified_lot, unclassified_amount, has_unmatched_lots,
+    unmatched_quantity,
+):
+    """Review is required for data-quality flags, even if net amount is zero."""
+    return (
+        bool(has_unclassified_lot)
+        or Decimal(str(unclassified_amount)) != 0
+        or bool(has_unmatched_lots)
+        or Decimal(str(unmatched_quantity)) != 0
+    )
+
+
 def money(value):
     """
     Round monetary values to two decimal places.
@@ -410,6 +431,11 @@ def tax_calculation(
     stcg = Decimal("0")
     ltcg = Decimal("0")
     unclassified = Decimal("0")
+    # Track classification/reconciliation failures independently of amounts.
+    # A zero or negative unclassified gain must still require review.
+    has_unclassified_lot = False
+    has_unmatched_lots = False
+    has_unconfirmed_section_111a_lot = False
 
     classified_transactions = []
 
@@ -465,6 +491,9 @@ def tax_calculation(
 
         lot_results = []
         matched_lots = transaction.get("matched_lots") or []
+        transaction_unmatched_quantity = Decimal(str(transaction.get("unmatched_quantity", 0) or 0))
+        if transaction_unmatched_quantity != 0:
+            has_unmatched_lots = True
         matched_quantity = Decimal("0")
         for lot in matched_lots:
             matched_quantity += Decimal(str(lot.get("quantity", 0)))
@@ -495,11 +524,21 @@ def tax_calculation(
                 allocated_net_proceeds = Decimal("0")
             lot_gain = allocated_net_proceeds - cost_basis
             classification_name = classification["classification"]
+            # Special-rate eligibility must be established for the specific
+            # transaction/lot, not inferred from one request-wide STT flag.
+            # Accept only explicit booleans from the source lot/transaction.
+            lot_111a_confirmed = lot_has_section_111a_confirmation(
+                lot, transaction
+            )
             if classification_name == "STCG":
                 stcg += lot_gain
+                if not lot_111a_confirmed:
+                    has_unconfirmed_section_111a_lot = True
             elif classification_name == "LTCG":
                 ltcg += lot_gain
             else:
+                # Set the review flag even when this lot's gain is zero or a loss.
+                has_unclassified_lot = True
                 unclassified += lot_gain
             lot_results.append({
                 **lot,
@@ -509,6 +548,9 @@ def tax_calculation(
             })
 
         if not matched_lots:
+            # Without matched lots, the sale cannot be reliably classified or
+            # reconciled, regardless of whether the reported gain is zero.
+            has_unclassified_lot = True
             gain_loss = Decimal(str(transaction.get("realised_gain_loss", 0)))
             unclassified += gain_loss
 
@@ -516,6 +558,7 @@ def tax_calculation(
         # UNCLASSIFIED if any lot cannot safely be classified.
         lot_types = {x["capital_gain_classification"]["classification"] for x in lot_results}
         if not lot_results or "UNCLASSIFIED" in lot_types:
+            has_unclassified_lot = True
             sale_classification = {"classification": "UNCLASSIFIED", "classification_status": "one_or_more_lots_unclassified"}
         elif len(lot_types) > 1:
             sale_classification = {"classification": "MIXED", "classification_status": "sale_contains_multiple_holding_period_classes"}
@@ -536,9 +579,10 @@ def tax_calculation(
     tax = calculate_tax(
         stcg=stcg,
         ltcg=ltcg,
-        stt_confirmed=(
-            stt_confirmed
-        ),
+        # Request-wide STT confirmation is not enough to establish Section 111A
+        # eligibility for each lot. Tax only if every STCG lot is individually
+        # confirmed in source transaction/lot data.
+        stt_confirmed=(stcg != 0 and not has_unconfirmed_section_111a_lot),
         stcg_rate=stcg_rate,
         ltcg_rate=ltcg_rate,
         ltcg_exemption_limit=ltcg_exemption_limit,
@@ -552,9 +596,14 @@ def tax_calculation(
 
     unmatched_quantity = Decimal(str(gains.get("summary", {}).get("unmatched_quantity", 0)))
 
-    if unclassified != 0 or unmatched_quantity != 0:
+    if requires_capital_gains_review(
+        has_unclassified_lot=has_unclassified_lot,
+        unclassified_amount=unclassified,
+        has_unmatched_lots=has_unmatched_lots,
+        unmatched_quantity=unmatched_quantity,
+    ):
         engine_status = "requires_review"
-    elif stcg != 0 and not stt_confirmed:
+    elif stcg != 0 and (not stt_confirmed or has_unconfirmed_section_111a_lot):
         engine_status = "requires_stt_confirmation"
     elif ltcg != 0 and not section_112a_eligibility_confirmed:
         engine_status = "requires_section_112a_eligibility_confirmation"
@@ -619,6 +668,9 @@ def tax_calculation(
             "ltcg": money(ltcg),
             "unclassified": money(unclassified),
             "unmatched_quantity": unmatched_quantity,
+            "has_unclassified_lot": has_unclassified_lot,
+            "has_unmatched_lots": has_unmatched_lots,
+            "has_unconfirmed_section_111a_lot": has_unconfirmed_section_111a_lot,
         },
 
         "tax": tax,
@@ -644,8 +696,8 @@ def tax_calculation(
                 "adjustments are not included."
             ),
             (
-                "STT and all other Section 111A conditions must be established "
-                "before special-rate STCG tax is treated as final."
+                "Section 111A eligibility is checked per transaction/lot; a "
+                "request-wide STT confirmation alone is insufficient."
             ),
             (
                 "Section 112A eligibility is not inferred from asset class; "

@@ -38,6 +38,7 @@
 # ============================================================
 
 
+from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import APIRouter, Depends
@@ -56,7 +57,7 @@ from app.routes.asset_classification import (
 )
 
 from app.routes.capital_gains_classification import (
-    classify_gain,
+    classify_gain_by_dates,
 )
 
 
@@ -428,54 +429,87 @@ def tax_calculation(
                 ]
             )
 
-        classification = classify_gain(
-            holding_days=(
-                transaction[
-                    "holding_days"
-                ]
-            ),
-            asset_class=asset_class,
-        )
+        # ----------------------------------------------------
+        # CLASSIFY AND ALLOCATE GAIN AT FIFO-LOT LEVEL
+        # ----------------------------------------------------
+        # A sale may consume several acquisition lots. Allocate net proceeds
+        # proportionally by matched quantity and compare each allocation with
+        # that lot's own FIFO cost basis. Never classify a mixed sale by its
+        # weighted-average holding period.
+        sale_date = transaction.get("sale_date")
+        if isinstance(sale_date, datetime):
+            sale_date = sale_date.date()
+        elif isinstance(sale_date, str):
+            try:
+                sale_date = date.fromisoformat(sale_date[:10])
+            except ValueError:
+                sale_date = None
 
-        classification_name = (
-            classification[
-                "classification"
-            ]
-        )
+        lot_results = []
+        matched_lots = transaction.get("matched_lots") or []
+        matched_quantity = Decimal("0")
+        for lot in matched_lots:
+            matched_quantity += Decimal(str(lot.get("quantity", 0)))
 
-        gain_loss = Decimal(
-            str(
-                transaction[
-                    "realised_gain_loss"
-                ]
+        for lot in matched_lots:
+            buy_date = lot.get("buy_date")
+            if isinstance(buy_date, datetime):
+                buy_date = buy_date.date()
+            elif isinstance(buy_date, str):
+                try:
+                    buy_date = date.fromisoformat(buy_date[:10])
+                except ValueError:
+                    buy_date = None
+
+            classification = classify_gain_by_dates(
+                acquisition_date=buy_date,
+                sale_date=sale_date,
+                asset_class=asset_class,
             )
-        )
+            lot_quantity = Decimal(str(lot.get("quantity", 0)))
+            cost_basis = Decimal(str(lot.get("cost_basis", 0)))
+            if matched_quantity > 0:
+                allocated_net_proceeds = (
+                    Decimal(str(transaction.get("net_sale_proceeds", 0)))
+                    * lot_quantity / matched_quantity
+                )
+            else:
+                allocated_net_proceeds = Decimal("0")
+            lot_gain = allocated_net_proceeds - cost_basis
+            classification_name = classification["classification"]
+            if classification_name == "STCG":
+                stcg += lot_gain
+            elif classification_name == "LTCG":
+                ltcg += lot_gain
+            else:
+                unclassified += lot_gain
+            lot_results.append({
+                **lot,
+                "allocated_net_sale_proceeds": allocated_net_proceeds,
+                "realised_gain_loss": lot_gain,
+                "capital_gain_classification": classification,
+            })
 
-        if classification_name == "STCG":
-
-            stcg += gain_loss
-
-        elif classification_name == "LTCG":
-
-            ltcg += gain_loss
-
-        else:
-
+        if not matched_lots:
+            gain_loss = Decimal(str(transaction.get("realised_gain_loss", 0)))
             unclassified += gain_loss
 
-        classified_transactions.append(
-            {
-                **transaction,
+        # Sale-level status is MIXED when FIFO lots span STCG/LTCG, and
+        # UNCLASSIFIED if any lot cannot safely be classified.
+        lot_types = {x["capital_gain_classification"]["classification"] for x in lot_results}
+        if not lot_results or "UNCLASSIFIED" in lot_types:
+            sale_classification = {"classification": "UNCLASSIFIED", "classification_status": "one_or_more_lots_unclassified"}
+        elif len(lot_types) > 1:
+            sale_classification = {"classification": "MIXED", "classification_status": "sale_contains_multiple_holding_period_classes"}
+        else:
+            sale_classification = {"classification": next(iter(lot_types)), "classification_status": "classified_by_fifo_lot_dates"}
 
-                "asset_class": (
-                    asset_class
-                ),
-
-                "capital_gain_classification": (
-                    classification
-                ),
-            }
-        )
+        classified_transactions.append({
+            **transaction,
+            "asset_class": asset_class,
+            "capital_gain_classification": sale_classification,
+            "lot_level_results": lot_results,
+        })
 
     # --------------------------------------------------------
     # TAX CALCULATION

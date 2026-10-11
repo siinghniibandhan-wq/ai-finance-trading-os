@@ -278,13 +278,17 @@ def update_transaction(
     transaction_id: int,
     transaction_data: TransactionUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    transaction = (
+        transaction = (
         db.query(Transaction)
-        .filter(Transaction.id == transaction_id)
+        .filter(
+            Transaction.id == transaction_id,
+            Transaction.user_id == current_user.id,
+        )
         .with_for_update()
         .first()
-    )
+        )
 
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")

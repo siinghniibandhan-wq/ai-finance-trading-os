@@ -391,95 +391,71 @@ def calculate_87a_rebate(
     tax_regime,
     residential_status,
 ):
+    """Calculate Section 87A rebate and New Regime marginal relief.
+
+    This helper handles ordinary slab tax only. Special-rate capital-gains
+    tax remains separate in the caller. Rules here reflect the configured
+    ₹12 lakh / ₹60,000 New Regime threshold and ₹5 lakh / ₹12,500 Old Regime
+    threshold; callers must use the matching financial-year rule set.
     """
-    Calculate the 87A rebate context.
+    income = max(decimal(taxable_income), Decimal("0"))
+    slab_tax = max(decimal(normal_tax), Decimal("0"))
 
-    New regime:
-        taxable income <= 12L
-        maximum rebate = 60,000
-
-    Old regime:
-        taxable income <= 5L
-        maximum rebate = 12,500
-
-    The rebate is applied only against eligible normal
-    income tax. Special-rate capital-gain tax is not treated
-    as ordinary slab tax here.
-    """
-
-    income = decimal(taxable_income)
+    is_new = tax_regime == "new"
+    income_limit = (
+        NEW_REGIME_87A_INCOME_LIMIT
+        if is_new else OLD_REGIME_87A_INCOME_LIMIT
+    )
+    maximum_rebate = (
+        NEW_REGIME_87A_MAX_REBATE
+        if is_new else OLD_REGIME_87A_MAX_REBATE
+    )
 
     if residential_status != "resident":
-
         return {
             "eligible": False,
-            "reason":
-                "Section 87A rebate is available "
-                "to resident individuals.",
-            "income_limit": (
-                NEW_REGIME_87A_INCOME_LIMIT
-                if tax_regime == "new"
-                else OLD_REGIME_87A_INCOME_LIMIT
-            ),
-            "maximum_rebate": (
-                NEW_REGIME_87A_MAX_REBATE
-                if tax_regime == "new"
-                else OLD_REGIME_87A_MAX_REBATE
-            ),
-            "rebate": Decimal("0"),
+            "reason": "Section 87A is available only to eligible resident individuals.",
+            "income_limit": money(income_limit),
+            "maximum_rebate": money(maximum_rebate),
+            "rebate": money(0),
+            "marginal_relief": money(0),
         }
-
-    if tax_regime == "new":
-
-        income_limit = (
-            NEW_REGIME_87A_INCOME_LIMIT
-        )
-
-        maximum_rebate = (
-            NEW_REGIME_87A_MAX_REBATE
-        )
-
-    else:
-
-        income_limit = (
-            OLD_REGIME_87A_INCOME_LIMIT
-        )
-
-        maximum_rebate = (
-            OLD_REGIME_87A_MAX_REBATE
-        )
 
     if income <= income_limit:
-
-        rebate = min(
-            decimal(normal_tax),
-            maximum_rebate,
-        )
-
+        rebate = min(slab_tax, maximum_rebate)
         return {
             "eligible": True,
-            "reason":
-                "Taxable income is within the "
-                "applicable Section 87A limit.",
-            "income_limit":
-                money(income_limit),
-            "maximum_rebate":
-                money(maximum_rebate),
-            "rebate":
-                money(rebate),
+            "reason": "Taxable income is within the configured Section 87A limit.",
+            "income_limit": money(income_limit),
+            "maximum_rebate": money(maximum_rebate),
+            "rebate": money(rebate),
+            "marginal_relief": money(0),
         }
+
+    # New-regime marginal relief: just above the threshold, normal slab tax
+    # after rebate must not exceed the income above the threshold. Do not
+    # offset special-rate capital-gains tax here; that tax is calculated apart.
+    if is_new:
+        excess_income = income - income_limit
+        relief_needed = max(slab_tax - excess_income, Decimal("0"))
+        marginal_relief = min(relief_needed, slab_tax)
+        if marginal_relief > 0:
+            return {
+                "eligible": True,
+                "reason": "New-regime marginal relief limits normal slab tax to the income exceeding the threshold.",
+                "income_limit": money(income_limit),
+                "maximum_rebate": money(maximum_rebate),
+                "rebate": money(marginal_relief),
+                "marginal_relief": money(marginal_relief),
+            }
 
     return {
         "eligible": False,
-        "reason":
-            "Taxable income exceeds the applicable "
-            "Section 87A income limit.",
-        "income_limit":
-            money(income_limit),
-        "maximum_rebate":
-            money(maximum_rebate),
-        "rebate":
-            Decimal("0"),
+        "reason": "Taxable income exceeds the applicable Section 87A threshold and no marginal relief applies to normal slab tax.",
+        "income_limit": money(income_limit),
+        "maximum_rebate": money(maximum_rebate),
+        "rebate": money(0),
+        "marginal_relief": money(0),
     }
 
 

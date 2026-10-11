@@ -7616,147 +7616,132 @@ columnGap: "20px",
 )}
 
         {/* ==================================================
-            ADD ACCOUNT FORM
+            ACCOUNT FORM MODAL — compact, responsive dialog
+            Existing save/edit handlers and API payload are preserved.
         ================================================== */}
-
         {showAccountForm && (
-
           <div
-            className="glass-card"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget && !accountSaving) {
+                setShowAccountForm(false);
+                setEditingAccount(null);
+              }
+            }}
             style={{
-              marginTop: "20px",
+              position: "fixed",
+              inset: 0,
+              zIndex: 10000,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "16px",
+              background: "rgba(3, 7, 18, 0.78)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
             }}
           >
-
-            <div className="card-header">
-
-              <div>
-                <p className="card-label">
-                  MONEY
-                </p>
-
-                <h3>
-                  Add Account
-                </h3>
-              </div>
-
-            </div>
-
-            <div
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="account-form-title"
+              className="glass-card"
               style={{
-                display: "grid",
-                gap: "14px",
+                width: "100%",
+                maxWidth: "620px",
+                maxHeight: "min(88dvh, 760px)",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                padding: "clamp(18px, 4vw, 28px)",
+                border: "1px solid rgba(167, 139, 250, 0.3)",
+                borderRadius: "20px",
+                background: "linear-gradient(145deg, rgba(24, 29, 49, 0.99), rgba(13, 18, 33, 0.99))",
+                boxShadow: "0 24px 90px rgba(0,0,0,0.55)",
               }}
             >
+              <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "22px" }}>
+                <div>
+                  <p className="card-label" style={{ margin: "0 0 7px", letterSpacing: "0.14em" }}>MONEY · ACCOUNTS</p>
+                  <h3 id="account-form-title" style={{ margin: 0, fontSize: "clamp(21px, 4vw, 27px)", color: "#f8fafc" }}>
+                    {editingAccount ? "Edit account" : "Add a new account"}
+                  </h3>
+                  <p style={{ margin: "8px 0 0", color: "#9ca3af", fontSize: "13px", lineHeight: 1.5 }}>
+                    Enter the account details below. Fields marked * are required.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close account form"
+                  onClick={() => { if (!accountSaving) { setShowAccountForm(false); setEditingAccount(null); } }}
+                  disabled={accountSaving}
+                  style={{ flex: "0 0 auto", width: "36px", height: "36px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.05)", color: "#e5e7eb", fontSize: "21px", cursor: accountSaving ? "not-allowed" : "pointer" }}
+                >×</button>
+              </header>
 
-              <input
-                type="text"
-                placeholder="Account name"
-                value={accountForm.name}
-                onChange={(event) =>
-                  setAccountForm({
-                    ...accountForm,
-                    name: event.target.value,
-                  })
-                }
-              />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: "17px" }}>
+                {[
+                  { key: "name", label: "Account name *", placeholder: "e.g. Salary Account", type: "text", required: true },
+                  { key: "account_type", label: "Account type *", type: "select", required: true },
+                  { key: "institution", label: "Bank / Institution", placeholder: "e.g. HDFC Bank", type: "text" },
+                  { key: "account_number", label: "Account number", placeholder: "Enter account number (optional)", type: "text" },
+                  { key: "balance", label: "Opening balance (₹) *", placeholder: "0.00", type: "number", required: true },
+                ].map((field) => (
+                  <label key={field.key} style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: 0, color: "#d1d5db", fontSize: "13px", fontWeight: 600 }}>
+                    <span>{field.label}</span>
+                    {field.type === "select" ? (
+                      <select
+                        value={accountForm.account_type}
+                        onChange={(event) => setAccountForm({ ...accountForm, account_type: event.target.value })}
+                        style={{ width: "100%", minHeight: "44px", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(148,163,184,0.28)", background: "#151b2d", color: "#f3f4f6", outlineColor: "#a855f7", fontSize: "14px" }}
+                      >
+                        <option value="bank">Bank Account</option>
+                        <option value="cash">Cash in Hand</option>
+                        <option value="petty_cash">Petty Cash</option>
+                        <option value="wallet">Wallet</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="credit_line">Credit Line</option>
+                        <option value="loan">Loan Account</option>
+                        <option value="receivable">Receivable</option>
+                        <option value="payable">Payable</option>
+                        <option value="investment">Investment / Broker Cash</option>
+                        <option value="other">Other</option>
+                      </select>
+                    ) : (
+                      <input
+                        type={field.type}
+                        required={field.required || false}
+                        min={field.type === "number" ? "0" : undefined}
+                        step={field.type === "number" ? "0.01" : undefined}
+                        placeholder={field.placeholder}
+                        value={accountForm[field.key]}
+                        onChange={(event) => setAccountForm({ ...accountForm, [field.key]: event.target.value })}
+                        style={{ width: "100%", minHeight: "44px", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(148,163,184,0.28)", background: "rgba(8,13,27,0.72)", color: "#f9fafb", outlineColor: "#a855f7", fontSize: "14px" }}
+                      />
+                    )}
+                  </label>
+                ))}
+              </div>
 
-              <select
-                value={accountForm.account_type}
-                onChange={(event) =>
-                  setAccountForm({
-                    ...accountForm,
-                    account_type: event.target.value,
-                  })
-                }
-              >
-                <option value="bank">Bank Account</option>
-                <option value="cash">Cash in Hand</option>
-                <option value="petty_cash">Petty Cash</option>
-                <option value="wallet">Wallet</option>
-                <option value="credit_card">Credit Card</option>
-                <option value="credit_line">Credit Line</option>
-                <option value="loan">Loan Account</option>
-                <option value="receivable">Receivable</option>
-                <option value="payable">Payable</option>
-                <option value="investment">Investment / Broker Cash</option>
-                <option value="other">Other</option>
-              </select>
-
-              <input
-                type="text"
-                placeholder="Institution / Bank name"
-                value={accountForm.institution}
-                onChange={(event) =>
-                  setAccountForm({
-                    ...accountForm,
-                    institution: event.target.value,
-                  })
-                }
-              />
-
-              <input
-                type="text"
-                placeholder="Account number"
-                value={accountForm.account_number}
-                onChange={(event) =>
-                  setAccountForm({
-                    ...accountForm,
-                    account_number: event.target.value,
-                  })
-                }
-              />
-
-              <input
-                type="number"
-                placeholder="Opening balance"
-                value={accountForm.balance}
-                onChange={(event) =>
-                  setAccountForm({
-                    ...accountForm,
-                    balance: event.target.value,
-                  })
-                }
-              />
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  marginTop: "8px",
-                }}
-              >
-
+              <footer style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "10px", marginTop: "26px", paddingTop: "18px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => { setShowAccountForm(false); setEditingAccount(null); }}
+                  disabled={accountSaving}
+                  style={{ minWidth: "100px", padding: "11px 18px", borderRadius: "10px" }}
+                >Cancel</button>
                 <button
                   type="button"
                   className="primary-button"
                   onClick={handleAccountSubmit}
-                  disabled={accountSaving}
-                >
-                  {accountSaving
-                    ? "Saving..."
-                    : "Save Account"}
-                </button>
-
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() =>
-                    setShowAccountForm(false)
-                  }
-                  disabled={accountSaving}
-                >
-                  Cancel
-                </button>
-
-              </div>
-
-            </div>
-
+                  disabled={accountSaving || !accountForm.name.trim() || accountForm.balance === ""}
+                  style={{ minWidth: "145px", padding: "11px 18px", borderRadius: "10px", opacity: accountSaving || !accountForm.name.trim() || accountForm.balance === "" ? 0.65 : 1 }}
+                >{accountSaving ? "Saving…" : editingAccount ? "Save changes" : "Save account"}</button>
+              </footer>
+            </section>
           </div>
-
         )}
-        
+
       {/* ACCOUNT DELETE CONFIRMATION MODAL */}
       {accountToDelete && (
         <div

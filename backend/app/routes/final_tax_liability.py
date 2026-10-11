@@ -115,6 +115,36 @@ def decimal(value):
 
 
 # ============================================================
+# CAPITAL-GAINS CLASSIFICATION SAFETY
+# ============================================================
+
+def split_capital_gains_tax_bases(stcg, ltcg, stt_confirmed):
+    """Return the special-rate and ordinary-slab gain bases.
+
+    STCG is only taxed under Section 111A when the required STT
+    conditions are confirmed. If confirmation is absent, keep the gain
+    in ordinary slab income and mark the assessment conditional; never
+    drop it from both tax bases. LTCG is handled by the existing Section
+    112A path in this engine.
+    """
+    stcg_amount = max(decimal(stcg), Decimal("0"))
+    ltcg_amount = max(decimal(ltcg), Decimal("0"))
+
+    if stt_confirmed:
+        return {
+            "stcg_special_rate": stcg_amount,
+            "stcg_ordinary_slab": Decimal("0"),
+            "ltcg_special_rate": ltcg_amount,
+        }
+
+    return {
+        "stcg_special_rate": Decimal("0"),
+        "stcg_ordinary_slab": stcg_amount,
+        "ltcg_special_rate": ltcg_amount,
+    }
+
+
+# ============================================================
 # FINANCIAL YEAR
 # ============================================================
 
@@ -1069,14 +1099,19 @@ def get_final_tax_liability(
     # SPECIAL-RATE TAX
     # ========================================================
 
+    capital_gain_bases = split_capital_gains_tax_bases(
+        stcg,
+        ltcg,
+        stt_confirmed,
+    )
+
     if stt_confirmed:
-
         stcg_tax = money(
-            stcg * STCG_111A_RATE
+            capital_gain_bases["stcg_special_rate"] * STCG_111A_RATE
         )
-
     else:
-
+        # Without STT confirmation, Section 111A eligibility is not assumed.
+        # Keep the gain in normal slab income instead of dropping it.
         stcg_tax = Decimal("0")
 
     # --------------------------------------------------------
@@ -1108,7 +1143,9 @@ def get_final_tax_liability(
     # ========================================================
 
     normal_taxable_income = max(
-        available_taxable_income - stcg - ltcg,
+        available_taxable_income
+        - capital_gain_bases["stcg_special_rate"]
+        - capital_gain_bases["ltcg_special_rate"],
         Decimal("0"),
     )
 

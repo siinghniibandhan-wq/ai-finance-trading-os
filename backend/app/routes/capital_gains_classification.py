@@ -32,6 +32,8 @@
 # ============================================================
 
 
+from calendar import monthrange
+from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends
@@ -118,75 +120,58 @@ ASSET_CLASS_RULES = {
 # CLASSIFICATION HELPER
 # ============================================================
 
-def classify_gain(
-    holding_days,
-    asset_class,
-):
-    """
-    Classify one realised gain.
+def _add_months(value: date, months: int) -> date:
+    """Add calendar months while safely clamping end-of-month dates."""
+    month_index = value.month - 1 + months
+    year = value.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(value.day, monthrange(year, month)[1])
+    return date(year, month, day)
 
-    Conservative v1.1 rule:
-    - Holding period must be available.
-    - Asset class must be recognised.
-    - Unknown asset classes remain UNCLASSIFIED.
-    """
 
+def classify_gain_by_dates(acquisition_date, sale_date, asset_class):
+    """Classify a lot using its actual dates and asset-specific calendar months.
+
+    Unknown asset/date data is deliberately left unclassified. The threshold is
+    expressed in calendar months rather than approximated with 365/730 days.
+    """
     if asset_class not in ASSET_CLASS_RULES:
+        return {"classification": "UNCLASSIFIED", "classification_status": "unknown_asset_class"}
+    if not isinstance(acquisition_date, date) or not isinstance(sale_date, date):
+        return {"classification": "UNCLASSIFIED", "classification_status": "missing_or_invalid_transaction_date"}
+    if sale_date < acquisition_date:
+        return {"classification": "UNCLASSIFIED", "classification_status": "sale_before_acquisition"}
 
-        return {
-            "classification": "UNCLASSIFIED",
-            "classification_status": (
-                "unknown_asset_class"
-            ),
-        }
-
-    if holding_days is None:
-
-        return {
-            "classification": "UNCLASSIFIED",
-            "classification_status": (
-                "missing_holding_period"
-            ),
-        }
-
-    rule = ASSET_CLASS_RULES[
-        asset_class
-    ]
-
-    threshold_days = rule[
-        "threshold_days"
-    ]
-
-    if holding_days > threshold_days:
-
-        return {
-            "classification": "LTCG",
-            "classification_status": (
-                "classified"
-            ),
-            "threshold_days": (
-                threshold_days
-            ),
-            "threshold_months": (
-                rule[
-                    "minimum_long_term_months"
-                ]
-            ),
-        }
-
+    rule = ASSET_CLASS_RULES[asset_class]
+    threshold_months = rule["minimum_long_term_months"]
+    threshold_date = _add_months(acquisition_date, threshold_months)
+    # Use a strict greater-than test: the holding period must exceed the threshold.
+    classification = "LTCG" if sale_date > threshold_date else "STCG"
     return {
-        "classification": "STCG",
-        "classification_status": (
-            "classified"
-        ),
-        "threshold_days": (
-            threshold_days
-        ),
-        "threshold_months": (
-            rule[
-                "minimum_long_term_months"
-            ]
-        ),
+        "classification": classification,
+        "classification_status": "classified",
+        "threshold_months": threshold_months,
+        "threshold_date": threshold_date.isoformat(),
+        "acquisition_date": acquisition_date.isoformat(),
+        "sale_date": sale_date.isoformat(),
+    }
+
+
+def classify_gain(holding_days, asset_class):
+    """Legacy compatibility helper; date-based classification is preferred."""
+    if asset_class not in ASSET_CLASS_RULES:
+        return {"classification": "UNCLASSIFIED", "classification_status": "unknown_asset_class"}
+    if holding_days is None:
+        return {"classification": "UNCLASSIFIED", "classification_status": "missing_holding_period"}
+    rule = ASSET_CLASS_RULES[asset_class]
+    # This legacy helper remains for callers that only have holding days.
+    threshold_days = rule["threshold_days"]
+    classification = "LTCG" if holding_days > threshold_days else "STCG"
+    return {
+        "classification": classification,
+        "classification_status": "classified_legacy_day_threshold",
+        "threshold_days": threshold_days,
+        "threshold_months": rule["minimum_long_term_months"],
     }
 
 
@@ -396,14 +381,37 @@ def capital_gains_classification(
                 ]
             )
 
-        classification = classify_gain(
-            holding_days=(
-                transaction[
-                    "holding_days"
-                ]
-            ),
-            asset_class=asset_class,
-        )
+        # Classify each FIFO lot by its own acquisition/sale dates. A single
+        # sale may consume lots with different holding periods; never classify
+        # the entire sale from a weighted-average holding period.
+        lot_classifications = []
+        for lot in transaction.get("matched_lots", []):
+            lot_classifications.append(
+                classify_gain_by_dates(
+                    acquisition_date=lot.get("buy_date"),
+                    sale_date=transaction.get("sale_date"),
+                    asset_class=asset_class,
+                )
+            )
+
+        lot_types = {item["classification"] for item in lot_classifications}
+        if not lot_classifications:
+            classification = {
+                "classification": "UNCLASSIFIED",
+                "classification_status": "missing_fifo_lot_details",
+            }
+        elif len(lot_types) > 1:
+            classification = {
+                "classification": "MIXED",
+                "classification_status": "sale_contains_multiple_holding_period_classes",
+                "lot_classifications": lot_classifications,
+            }
+        else:
+            classification = {
+                **lot_classifications[0],
+                "lot_count": len(lot_classifications),
+                "lot_classifications": lot_classifications,
+            }
 
         classification_name = (
             classification[
@@ -431,6 +439,8 @@ def capital_gains_classification(
 
         else:
 
+            # MIXED sales need lot-level tax allocation before totals can be
+            # trusted; keep their gain visible as unresolved, not guessed.
             total_unclassified += gain_loss
             unclassified_count += 1
 

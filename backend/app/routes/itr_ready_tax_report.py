@@ -834,19 +834,11 @@ def get_itr_ready_tax_report(
         + capital_gain_income
     )
 
-    # Deductions/exemptions currently come only from verified claims.
-    # Keep them against normal-rate income in this provisional engine;
-    # do not silently reduce special-rate capital gains with general deductions.
-    taxable_normal_income = max(
-        normal_income
+    provisional_taxable_income = max(
+        gross_provisional_income
         - verified_deductions
         - verified_exempt_income,
         Decimal("0"),
-    )
-
-    provisional_taxable_income = (
-        taxable_normal_income
-        + max(capital_gain_income, Decimal("0"))
     )
 
     # --------------------------------------------------------
@@ -881,9 +873,19 @@ def get_itr_ready_tax_report(
     # 8. NORMAL SLAB TAX
     # --------------------------------------------------------
 
-    if regime.lower() == "old":
+    # Deduction claims are currently unavailable in this repository, so
+    # verified_deductions remains zero until a verified claims workflow is
+    # implemented. When verified claims become available, apply them to
+    # normal-rate income before calculating slab tax; do not calculate slab
+    # tax on gross normal income and report a different taxable-income figure.
+    normal_taxable_income = max(
+        normal_income - verified_deductions,
+        Decimal("0"),
+    )
+
+    if regime == "old":
         normal_tax = calculate_old_regime_slab_tax(
-            taxable_normal_income
+            normal_taxable_income
         )
 
         rebate_limit = OLD_REGIME_REBATE_LIMIT
@@ -891,7 +893,7 @@ def get_itr_ready_tax_report(
 
     else:
         normal_tax = calculate_new_regime_slab_tax(
-            taxable_normal_income
+            normal_taxable_income
         )
 
         rebate_limit = NEW_REGIME_REBATE_LIMIT
@@ -1104,9 +1106,6 @@ def get_itr_ready_tax_report(
 
         "taxable_income": {
             "normal_income": money(normal_income),
-            "taxable_normal_income_after_verified_deductions": money(
-                taxable_normal_income
-            ),
             "capital_gain_income": money(
                 capital_gain_income
             ),
@@ -1121,6 +1120,9 @@ def get_itr_ready_tax_report(
             ),
             "provisional_taxable_income": money(
                 provisional_taxable_income
+            ),
+            "normal_taxable_income_for_slab_tax": money(
+                normal_taxable_income
             ),
         },
 

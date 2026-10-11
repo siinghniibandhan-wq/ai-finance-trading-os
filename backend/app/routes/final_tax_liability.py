@@ -148,6 +148,24 @@ def split_capital_gains_tax_bases(
 
 
 # ============================================================
+# CAPITAL-GAINS REVIEW PROPAGATION
+# ============================================================
+
+def get_capital_gains_review_reasons(capital_head):
+    """Return upstream capital-gains issues that prevent a final liability."""
+    reasons = []
+    if capital_head.get("requires_review") or capital_head.get("status") == "requires_review":
+        reasons.append("capital_gains_engine_requires_review")
+    if capital_head.get("has_unclassified_lot"):
+        reasons.append("unclassified_capital_gain_lots")
+    if capital_head.get("has_unmatched_lots") or decimal(capital_head.get("unmatched_quantity")) != 0:
+        reasons.append("unmatched_fifo_quantities")
+    if capital_head.get("eligibility_review_required"):
+        reasons.append("capital_gains_eligibility_review_required")
+    return reasons
+
+
+# ============================================================
 # FINANCIAL YEAR
 # ============================================================
 
@@ -1152,6 +1170,10 @@ def get_final_tax_liability(
     income_heads = income_result.get("income_heads", {})
     other_head = income_heads.get("other_sources", {})
     capital_head = income_heads.get("capital_gains", {})
+    # Propagate upstream capital-gains reconciliation flags. The liability
+    # engine must not label the result final when its source reports unresolved
+    # FIFO lots, unclassified gains, or a review-required calculation.
+    capital_gains_review_reasons = get_capital_gains_review_reasons(capital_head)
     deductions_head = income_result.get("deductions", {})
     taxable_head = income_result.get("taxable_income", {})
 
@@ -1377,6 +1399,11 @@ def get_final_tax_liability(
 
         engine_status = "incomplete_missing_income_heads"
         liability_status = "not_final"
+
+    elif capital_gains_review_reasons:
+
+        engine_status = "capital_gains_review_required"
+        liability_status = "conditional"
 
     elif tax_regime == "old" and age_category is None and residential_status == "resident":
 
@@ -1735,6 +1762,14 @@ def get_final_tax_liability(
         # FINAL TAX
         # ----------------------------------------------------
 
+        "capital_gains_review": {
+            "required": bool(capital_gains_review_reasons),
+            "reasons": capital_gains_review_reasons,
+            "source_status": capital_head.get("status"),
+            "unmatched_quantity": capital_head.get("unmatched_quantity"),
+            "has_unclassified_lot": bool(capital_head.get("has_unclassified_lot", False)),
+        },
+
         "final_tax": {
 
             "tax_before_cess":
@@ -1802,9 +1837,7 @@ def get_final_tax_liability(
                 True,
 
             "final_liability_complete":
-                not bool(
-                    missing_income_heads
-                ),
+                not bool(missing_income_heads or capital_gains_review_reasons),
 
             "itr_filed":
                 False,

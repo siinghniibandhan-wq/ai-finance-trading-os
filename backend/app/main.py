@@ -18,6 +18,7 @@ from app import models
 
 from app.routes import (
     ai_assistant,
+    vibe_trading,
     users,
     loans,
     accounts,
@@ -158,6 +159,7 @@ def database_status():
 # CORE FINANCIAL OS
 # ------------------------------------------------------------
 app.include_router(ai_assistant.router)
+app.include_router(vibe_trading.router)
 
 app.include_router(users.router)
 app.include_router(loans.router)

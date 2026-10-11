@@ -23,10 +23,14 @@ Important:
 ============================================================
 """
 
-from fastapi import (
-    APIRouter,
-    Query,
-)
+from decimal import Decimal, InvalidOperation
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+
+from app.database.database import get_db
+from app.models import TaxDeductionClaim, User
 
 
 # ============================================================
@@ -331,6 +335,60 @@ def regime_available(
 # ============================================================
 # API
 # ============================================================
+
+class TaxDeductionClaimInput(BaseModel):
+    user_id: int = Field(ge=1)
+    financial_year: str = Field(pattern=r"^\d{4}-\d{2}$")
+    tax_regime: str = Field(pattern=r"^(old|new)$")
+    deduction_key: str = Field(min_length=1, max_length=60)
+    claimed_amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    evidence_reference: str | None = Field(default=None, max_length=2000)
+    notes: str | None = Field(default=None, max_length=4000)
+
+
+@router.post("/claims", status_code=201)
+def create_deduction_claim(payload: TaxDeductionClaimInput, db: Session = Depends(get_db)):
+    """Save a user claim for review; never marks a claim verified automatically."""
+    user = db.query(User).filter(User.id == payload.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    item = DEDUCTION_CATALOG.get(payload.deduction_key)
+    if not item:
+        raise HTTPException(status_code=400, detail="Unknown deduction_key")
+    if not regime_available(item, payload.tax_regime):
+        raise HTTPException(status_code=400, detail="Deduction is not available under the selected regime")
+    claim = TaxDeductionClaim(
+        user_id=payload.user_id, financial_year=payload.financial_year,
+        tax_regime=payload.tax_regime, deduction_key=payload.deduction_key,
+        claimed_amount=payload.claimed_amount, evidence_reference=payload.evidence_reference,
+        notes=payload.notes, status="pending_review",
+    )
+    db.add(claim)
+    db.commit()
+    db.refresh(claim)
+    return {"id": claim.id, "user_id": claim.user_id, "financial_year": claim.financial_year,
+            "tax_regime": claim.tax_regime, "deduction_key": claim.deduction_key,
+            "claimed_amount": str(claim.claimed_amount), "status": claim.status,
+            "affects_taxable_income": False,
+            "message": "Claim saved for review. It does not reduce taxable income until separately verified."}
+
+
+@router.get("/claims")
+def list_deduction_claims(user_id: int = Query(..., ge=1),
+                          financial_year: str = Query("2026-27"),
+                          db: Session = Depends(get_db)):
+    """List claims for one user and financial year; only the owner's records are queried."""
+    claims = (db.query(TaxDeductionClaim)
+              .filter(TaxDeductionClaim.user_id == user_id,
+                      TaxDeductionClaim.financial_year == financial_year)
+              .order_by(TaxDeductionClaim.created_at.desc()).all())
+    return {"user_id": user_id, "financial_year": financial_year, "claims": [
+        {"id": c.id, "tax_regime": c.tax_regime, "deduction_key": c.deduction_key,
+         "section": DEDUCTION_CATALOG.get(c.deduction_key, {}).get("section"),
+         "claimed_amount": str(c.claimed_amount), "status": c.status,
+         "evidence_reference": c.evidence_reference, "notes": c.notes,
+         "affects_taxable_income": False} for c in claims]}
+
 
 @router.get("/")
 def deductions_exempt_income(

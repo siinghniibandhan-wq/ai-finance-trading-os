@@ -557,6 +557,179 @@ def list_tax_credit_entries(
 
 
 # ============================================================
+# OFFICIAL STATEMENT RECONCILIATION PREVIEW (AIS / FORM 26AS)
+# ============================================================
+
+class OfficialTaxCreditRecord(BaseModel):
+    """A normalized credit row manually extracted from an official statement."""
+    credit_type: str = Field(pattern=r"^(tds|advance_tax|self_assessment_tax)$")
+    amount: Decimal = Field(ge=0, max_digits=18, decimal_places=2)
+    source_reference: str = Field(min_length=1, max_length=200)
+
+
+class TaxCreditReconciliationPreviewInput(BaseModel):
+    # Preview only: no entry is automatically verified or changed.
+    user_id: int = Field(ge=1)
+    financial_year: str = Field(pattern=r"^\d{4}-\d{2}$")
+    official_records: list[OfficialTaxCreditRecord] = Field(min_length=1, max_length=2000)
+
+
+def normalize_credit_reference(value):
+    """Normalize source references for robust matching without changing stored values."""
+    return " ".join(str(value or "").strip().casefold().split())
+
+
+@router.post("/credits/reconcile-preview")
+def preview_official_tax_credit_reconciliation(
+    payload: TaxCreditReconciliationPreviewInput,
+    db: Session = Depends(get_db),
+):
+    """
+    Compare user-provided rows transcribed from AIS / Form 26AS with saved credits.
+
+    This is a reconciliation preview only. It does not fetch official records,
+    verify their authenticity, update entry statuses, or change tax liability.
+    """
+    if not db.query(User).filter(User.id == payload.user_id).first():
+        raise HTTPException(status_code=404, detail="User not found")
+
+    saved_entries = db.query(TaxCreditEntry).filter(
+        TaxCreditEntry.user_id == payload.user_id,
+        TaxCreditEntry.financial_year == payload.financial_year,
+    ).order_by(TaxCreditEntry.id.asc()).all()
+
+    official_by_ref = {}
+    for record in payload.official_records:
+        ref = normalize_credit_reference(record.source_reference)
+        official_by_ref.setdefault(ref, []).append(record)
+
+    saved_by_ref = {}
+    for entry in saved_entries:
+        ref = normalize_credit_reference(entry.source_reference)
+        if ref:
+            saved_by_ref.setdefault(ref, []).append(entry)
+
+    duplicate_official_refs = sorted(
+        ref for ref, rows in official_by_ref.items() if len(rows) > 1
+    )
+    duplicate_saved_refs = sorted(
+        ref for ref, rows in saved_by_ref.items() if len(rows) > 1
+    )
+
+    matched = []
+    mismatches = []
+    official_unmatched = []
+    saved_unmatched = []
+    reviewed_official_refs = set()
+    reviewed_saved_ids = set()
+
+    # Only one-to-one reference matches can be considered for comparison.
+    for ref, official_rows in official_by_ref.items():
+        if ref in duplicate_official_refs:
+            mismatches.append({
+                "source_reference": ref,
+                "reason": "duplicate_reference_in_official_records",
+                "official_record_count": len(official_rows),
+            })
+            continue
+
+        saved_rows = saved_by_ref.get(ref, [])
+        if len(saved_rows) > 1:
+            mismatches.append({
+                "source_reference": ref,
+                "reason": "duplicate_reference_in_saved_records",
+                "saved_entry_ids": [row.id for row in saved_rows],
+            })
+            continue
+
+        if not saved_rows:
+            official_unmatched.append({
+                "source_reference": official_rows[0].source_reference,
+                "credit_type": official_rows[0].credit_type,
+                "amount": str(official_rows[0].amount),
+            })
+            continue
+
+        official = official_rows[0]
+        saved = saved_rows[0]
+        reviewed_official_refs.add(ref)
+        reviewed_saved_ids.add(saved.id)
+
+        if saved.credit_type != official.credit_type or decimal(saved.amount) != decimal(official.amount):
+            mismatches.append({
+                "source_reference": official.source_reference,
+                "saved_entry_id": saved.id,
+                "saved_credit_type": saved.credit_type,
+                "official_credit_type": official.credit_type,
+                "saved_amount": str(saved.amount),
+                "official_amount": str(official.amount),
+                "reason": "credit_type_or_amount_mismatch",
+            })
+        else:
+            matched.append({
+                "source_reference": official.source_reference,
+                "saved_entry_id": saved.id,
+                "credit_type": official.credit_type,
+                "amount": str(official.amount),
+                "saved_status": saved.status,
+                "verification_status": (
+                    "already_verified" if saved.status == "verified"
+                    else "still_requires_verification"
+                ),
+            })
+
+    for entry in saved_entries:
+        ref = normalize_credit_reference(entry.source_reference)
+        if not ref:
+            saved_unmatched.append({
+                "saved_entry_id": entry.id,
+                "source_reference": None,
+                "credit_type": entry.credit_type,
+                "amount": str(entry.amount),
+                "reason": "missing_source_reference",
+            })
+        elif ref not in official_by_ref and entry.id not in reviewed_saved_ids:
+            saved_unmatched.append({
+                "saved_entry_id": entry.id,
+                "source_reference": entry.source_reference,
+                "credit_type": entry.credit_type,
+                "amount": str(entry.amount),
+                "status": entry.status,
+                "reason": "not_found_in_official_records",
+            })
+
+    has_issues = bool(
+        mismatches or official_unmatched or saved_unmatched
+        or duplicate_official_refs or duplicate_saved_refs
+    )
+    return {
+        "status": "review_required" if has_issues else "matched_pending_verification",
+        "user_id": payload.user_id,
+        "financial_year": payload.financial_year,
+        "source": "user_supplied_official_statement_rows",
+        "official_source_authenticity_verified": False,
+        "records_persisted_or_modified": False,
+        "entries_marked_verified": False,
+        "tax_liability_changed": False,
+        "summary": {
+            "matched_count": len(matched),
+            "mismatch_count": len(mismatches),
+            "official_unmatched_count": len(official_unmatched),
+            "saved_unmatched_count": len(saved_unmatched),
+            "duplicate_official_references": duplicate_official_refs,
+            "duplicate_saved_references": duplicate_saved_refs,
+        },
+        "matched": matched,
+        "mismatches": mismatches,
+        "official_records_not_saved": official_unmatched,
+        "saved_entries_not_in_official_records": saved_unmatched,
+        "next_step": (
+            "Resolve mismatches and independently verify statement authenticity before marking any credit verified."
+        ),
+    }
+
+
+# ============================================================
 # VERIFIED CREDIT RECONCILIATION
 # ============================================================
 

@@ -509,6 +509,10 @@ def get_final_tax_liability(
     stt_confirmed: bool = Query(
         False
     ),
+    # Optional self-reported credits. None means unknown, not zero.
+    tds_credit: float | None = Query(None, ge=0),
+    advance_tax_credit: float | None = Query(None, ge=0),
+    self_assessment_tax_credit: float | None = Query(None, ge=0),
     db: Session = Depends(get_db),
 ):
     """
@@ -751,6 +755,32 @@ def get_final_tax_liability(
     )
 
     # ========================================================
+    # TAX CREDITS AND BALANCE (INPUTS ARE NOT VERIFIED)
+    # ========================================================
+
+    credits_complete = all(
+        value is not None
+        for value in (
+            tds_credit,
+            advance_tax_credit,
+            self_assessment_tax_credit,
+        )
+    )
+    total_credits = (
+        money(decimal(tds_credit) + decimal(advance_tax_credit)
+              + decimal(self_assessment_tax_credit))
+        if credits_complete else None
+    )
+    balance_after_credits = (
+        money(total_tax_payable - total_credits)
+        if credits_complete else None
+    )
+    balance_status = (
+        "self_reported_provisional"
+        if credits_complete else "tax_credit_data_incomplete"
+    )
+
+    # ========================================================
     # FINAL STATUS
     # ========================================================
 
@@ -837,6 +867,24 @@ def get_final_tax_liability(
 
         "taxable_income_engine_status": income_result.get("engine_status"),
         "taxable_income_source": "final-taxable-income engine",
+
+        # Credits are optional, user-supplied inputs, not verified records.
+        "tax_credits": {
+            "tds": money(tds_credit) if tds_credit is not None else None,
+            "advance_tax": money(advance_tax_credit) if advance_tax_credit is not None else None,
+            "self_assessment_tax": money(self_assessment_tax_credit) if self_assessment_tax_credit is not None else None,
+            "total": total_credits,
+            "data_status": balance_status,
+            "verified": False,
+        },
+        "balance_after_credits": {
+            "amount": balance_after_credits,
+            "interpretation": (
+                "positive=payable; negative=potential refund; zero=balanced"
+                if credits_complete else None
+            ),
+            "status": balance_status,
+        },
 
         # ----------------------------------------------------
         # TAXABLE INCOME
@@ -1071,13 +1119,14 @@ def get_final_tax_liability(
                 missing_income_heads,
 
             "salary":
-                not salary_income_available,
+                "salary" in missing_income_heads,
 
             "house_property":
-                not house_property_available,
+                "house_property" in missing_income_heads,
 
             "business_or_profession":
-                not business_income_available,
+                "business_or_profession" in missing_income_heads,
+            "tax_credits": not credits_complete,
         },
 
         # ----------------------------------------------------

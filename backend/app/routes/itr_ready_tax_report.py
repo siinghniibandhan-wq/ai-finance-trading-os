@@ -834,11 +834,19 @@ def get_itr_ready_tax_report(
         + capital_gain_income
     )
 
-    provisional_taxable_income = max(
-        gross_provisional_income
+    # Deductions/exemptions currently come only from verified claims.
+    # Keep them against normal-rate income in this provisional engine;
+    # do not silently reduce special-rate capital gains with general deductions.
+    taxable_normal_income = max(
+        normal_income
         - verified_deductions
         - verified_exempt_income,
         Decimal("0"),
+    )
+
+    provisional_taxable_income = (
+        taxable_normal_income
+        + max(capital_gain_income, Decimal("0"))
     )
 
     # --------------------------------------------------------
@@ -875,7 +883,7 @@ def get_itr_ready_tax_report(
 
     if regime.lower() == "old":
         normal_tax = calculate_old_regime_slab_tax(
-            normal_income
+            taxable_normal_income
         )
 
         rebate_limit = OLD_REGIME_REBATE_LIMIT
@@ -883,7 +891,7 @@ def get_itr_ready_tax_report(
 
     else:
         normal_tax = calculate_new_regime_slab_tax(
-            normal_income
+            taxable_normal_income
         )
 
         rebate_limit = NEW_REGIME_REBATE_LIMIT
@@ -1096,6 +1104,9 @@ def get_itr_ready_tax_report(
 
         "taxable_income": {
             "normal_income": money(normal_income),
+            "taxable_normal_income_after_verified_deductions": money(
+                taxable_normal_income
+            ),
             "capital_gain_income": money(
                 capital_gain_income
             ),

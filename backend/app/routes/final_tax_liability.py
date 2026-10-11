@@ -422,6 +422,7 @@ def calculate_87a_rebate(
         }
 
     if income <= income_limit:
+        # The statutory rebate applies only while income is within the limit.
         rebate = min(slab_tax, maximum_rebate)
         return {
             "eligible": True,
@@ -432,26 +433,26 @@ def calculate_87a_rebate(
             "marginal_relief": money(0),
         }
 
-    # New-regime marginal relief: just above the threshold, normal slab tax
-    # after rebate must not exceed the income above the threshold. Do not
-    # offset special-rate capital-gains tax here; that tax is calculated apart.
+    # New-regime marginal relief is NOT itself a Section 87A rebate.
+    # Keep it separately reported so downstream calculations do not label
+    # relief as a rebate or accidentally apply the two twice. This calculation
+    # applies to ordinary slab tax only; special-rate tax remains separate.
     if is_new:
         excess_income = income - income_limit
-        relief_needed = max(slab_tax - excess_income, Decimal("0"))
-        marginal_relief = min(relief_needed, slab_tax)
+        marginal_relief = max(slab_tax - excess_income, Decimal("0"))
         if marginal_relief > 0:
             return {
                 "eligible": True,
-                "reason": "New-regime marginal relief limits normal slab tax to the income exceeding the threshold.",
+                "reason": "New-regime marginal relief limits ordinary slab tax to the income exceeding the configured threshold.",
                 "income_limit": money(income_limit),
                 "maximum_rebate": money(maximum_rebate),
-                "rebate": money(marginal_relief),
+                "rebate": money(0),
                 "marginal_relief": money(marginal_relief),
             }
 
     return {
         "eligible": False,
-        "reason": "Taxable income exceeds the applicable Section 87A threshold and no marginal relief applies to normal slab tax.",
+        "reason": "Taxable income exceeds the applicable Section 87A threshold and no marginal relief applies to ordinary slab tax.",
         "income_limit": money(income_limit),
         "maximum_rebate": money(maximum_rebate),
         "rebate": money(0),
@@ -1119,17 +1120,15 @@ def get_final_tax_liability(
         residential_status,
     )
 
-    rebate_amount = decimal(
-        rebate["rebate"]
-    )
+    rebate_amount = decimal(rebate["rebate"])
+    marginal_relief_amount = decimal(rebate.get("marginal_relief"))
 
     # ========================================================
     # TAX AFTER REBATE
     # ========================================================
 
     tax_after_rebate = max(
-        normal_tax
-        - rebate_amount,
+        normal_tax - rebate_amount - marginal_relief_amount,
         Decimal("0"),
     )
 
@@ -1499,6 +1498,11 @@ def get_final_tax_liability(
             "rebate":
                 money(
                     rebate["rebate"]
+                ),
+
+            "marginal_relief":
+                money(
+                    rebate.get("marginal_relief", 0)
                 ),
 
             "reason":

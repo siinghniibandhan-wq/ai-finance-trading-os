@@ -1032,6 +1032,127 @@ def compare_tax_regimes(
 # ENDPOINT
 # ============================================================
 
+# ============================================================
+# CREDIT REVIEW STEP (VERIFY / UN-VERIFY / DELETE)
+# ============================================================
+# A saved credit starts as "pending_review" and is not counted. The owner
+# can mark it "verified" once it has its own source reference (Form 26AS /
+# AIS line, challan number, Form 16 reference). The app does not check the
+# document: marking a credit verified is the owner's own confirmation.
+
+class TaxCreditActionInput(BaseModel):
+    user_id: int = Field(ge=1)
+    source_reference: str | None = Field(default=None, max_length=200)
+
+
+def credit_verification_problem(source_reference, other_verified_references):
+    """Return a plain-language reason a credit cannot be verified, or None."""
+    reference = (source_reference or "").strip()
+    if not reference:
+        return (
+            "Add a source reference (Form 26AS / AIS line, challan number "
+            "or Form 16 reference) before marking a tax credit verified."
+        )
+    taken = {
+        (other or "").strip().casefold()
+        for other in other_verified_references
+    }
+    if reference.casefold() in taken:
+        return (
+            "Another verified credit already uses this reference. "
+            "Each verified credit needs its own reference."
+        )
+    return None
+
+
+def _get_owned_credit(db, credit_id, user_id):
+    entry = (
+        db.query(TaxCreditEntry)
+        .filter(
+            TaxCreditEntry.id == credit_id,
+            TaxCreditEntry.user_id == user_id,
+        )
+        .first()
+    )
+    if not entry:
+        raise HTTPException(status_code=404, detail="Tax credit entry not found")
+    return entry
+
+
+def _credit_summary(entry):
+    return {
+        "id": entry.id,
+        "credit_type": entry.credit_type,
+        "amount": str(entry.amount),
+        "source_reference": entry.source_reference,
+        "status": entry.status,
+        "counted_as_verified_credit": entry.status == "verified",
+    }
+
+
+@router.post("/credits/{credit_id}/verify")
+def verify_tax_credit_entry(
+    credit_id: int,
+    payload: TaxCreditActionInput,
+    db: Session = Depends(get_db),
+):
+    """Mark the owner's credit verified. Needs a unique source reference."""
+    entry = _get_owned_credit(db, credit_id, payload.user_id)
+    reference = (payload.source_reference or entry.source_reference or "").strip()
+    others = db.query(TaxCreditEntry).filter(
+        TaxCreditEntry.user_id == entry.user_id,
+        TaxCreditEntry.financial_year == entry.financial_year,
+        TaxCreditEntry.status == "verified",
+        TaxCreditEntry.id != entry.id,
+    ).all()
+    problem = credit_verification_problem(
+        reference, [other.source_reference for other in others]
+    )
+    if problem:
+        status_code = 409 if reference else 400
+        raise HTTPException(status_code=status_code, detail=problem)
+    entry.source_reference = reference
+    entry.status = "verified"
+    db.commit()
+    db.refresh(entry)
+    result = _credit_summary(entry)
+    result["message"] = (
+        "Marked verified on your confirmation. Keep the statement or "
+        "challan; this app does not check it."
+    )
+    return result
+
+
+@router.post("/credits/{credit_id}/unverify")
+def unverify_tax_credit_entry(
+    credit_id: int,
+    payload: TaxCreditActionInput,
+    db: Session = Depends(get_db),
+):
+    """Return a credit to pending review so it stops being counted."""
+    entry = _get_owned_credit(db, credit_id, payload.user_id)
+    entry.status = "pending_review"
+    db.commit()
+    db.refresh(entry)
+    result = _credit_summary(entry)
+    result["message"] = "Credit returned to pending review."
+    return result
+
+
+@router.delete("/credits/{credit_id}")
+def delete_tax_credit_entry(
+    credit_id: int,
+    user_id: int = Query(..., ge=1),
+    db: Session = Depends(get_db),
+):
+    """Delete one of the owner's tax credit entries."""
+    entry = _get_owned_credit(db, credit_id, user_id)
+    db.delete(entry)
+    db.commit()
+    return {"id": credit_id, "deleted": True}
+
+
+
 @router.get("/")
 def get_final_tax_liability(
     user_id: int = Query(

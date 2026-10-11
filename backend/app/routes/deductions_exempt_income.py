@@ -390,6 +390,108 @@ def list_deduction_claims(user_id: int = Query(..., ge=1),
          "affects_taxable_income": False} for c in claims]}
 
 
+# ============================================================
+# CLAIM REVIEW STEP (VERIFY / UN-VERIFY / DELETE)
+# ============================================================
+# A saved claim starts as "pending_review" and does not change taxable
+# income. The owner can explicitly mark it "verified" once an evidence
+# reference is recorded. The app does not read or check the documents:
+# marking a claim verified is the owner's own confirmation.
+
+class TaxClaimActionInput(BaseModel):
+    user_id: int = Field(ge=1)
+    evidence_reference: str | None = Field(default=None, max_length=2000)
+
+
+def claim_verification_problem(evidence_reference):
+    """Return a plain-language reason a claim cannot be verified, or None."""
+    if not (evidence_reference or "").strip():
+        return (
+            "Add an evidence reference (receipt, policy, certificate or "
+            "statement number) before marking a claim verified."
+        )
+    return None
+
+
+def _get_owned_claim(db, claim_id, user_id):
+    claim = (
+        db.query(TaxDeductionClaim)
+        .filter(
+            TaxDeductionClaim.id == claim_id,
+            TaxDeductionClaim.user_id == user_id,
+        )
+        .first()
+    )
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    return claim
+
+
+def _claim_summary(claim):
+    return {
+        "id": claim.id,
+        "tax_regime": claim.tax_regime,
+        "deduction_key": claim.deduction_key,
+        "claimed_amount": str(claim.claimed_amount),
+        "status": claim.status,
+        "evidence_reference": claim.evidence_reference,
+        "affects_taxable_income": claim.status == "verified",
+    }
+
+
+@router.post("/claims/{claim_id}/verify")
+def verify_deduction_claim(
+    claim_id: int,
+    payload: TaxClaimActionInput,
+    db: Session = Depends(get_db),
+):
+    """Mark the owner's claim verified. Requires an evidence reference."""
+    claim = _get_owned_claim(db, claim_id, payload.user_id)
+    evidence = (payload.evidence_reference or claim.evidence_reference or "").strip()
+    problem = claim_verification_problem(evidence)
+    if problem:
+        raise HTTPException(status_code=400, detail=problem)
+    claim.evidence_reference = evidence
+    claim.status = "verified"
+    db.commit()
+    db.refresh(claim)
+    result = _claim_summary(claim)
+    result["message"] = (
+        "Marked verified on your confirmation. Keep the supporting "
+        "document; this app does not check it."
+    )
+    return result
+
+
+@router.post("/claims/{claim_id}/unverify")
+def unverify_deduction_claim(
+    claim_id: int,
+    payload: TaxClaimActionInput,
+    db: Session = Depends(get_db),
+):
+    """Return a claim to pending review so it stops reducing taxable income."""
+    claim = _get_owned_claim(db, claim_id, payload.user_id)
+    claim.status = "pending_review"
+    db.commit()
+    db.refresh(claim)
+    result = _claim_summary(claim)
+    result["message"] = "Claim returned to pending review."
+    return result
+
+
+@router.delete("/claims/{claim_id}")
+def delete_deduction_claim(
+    claim_id: int,
+    user_id: int = Query(..., ge=1),
+    db: Session = Depends(get_db),
+):
+    """Delete one of the owner's claims."""
+    claim = _get_owned_claim(db, claim_id, user_id)
+    db.delete(claim)
+    db.commit()
+    return {"id": claim_id, "deleted": True}
+
+
 @router.get("/")
 def deductions_exempt_income(
     user_id: int = Query(
@@ -453,6 +555,7 @@ def deductions_exempt_income(
 
         regime_amounts = item.get("maximum_amount_by_regime", {})
         output_item = {
+            "deduction_key": key,
             "section":
                 item["section"],
 

@@ -186,6 +186,14 @@ TAX_RULE_SETS = {
         "old_regime_87a_income_limit": "500000",
         "old_regime_87a_max_rebate": "12500",
         "cess_rate": "0.04",
+        # Special-rate capital-gains settings are versioned with this FY.
+        # Eligibility still depends on the asset and transaction facts.
+        "capital_gains": {
+            "section_111a_rate": "0.20",
+            "section_112a_rate": "0.125",
+            "section_112a_annual_exemption": "125000",
+            "eligibility_policy": "require_transaction_level_confirmation",
+        },
         "review_status": "supported_with_conditional_capital_gains",
     }
 }
@@ -1168,6 +1176,13 @@ def get_final_tax_liability(
     # SPECIAL-RATE TAX
     # ========================================================
 
+    capital_gains_rules = tax_rule_set["capital_gains"]
+    stcg_111a_rate = decimal(capital_gains_rules["section_111a_rate"])
+    ltcg_112a_rate = decimal(capital_gains_rules["section_112a_rate"])
+    ltcg_112a_exemption = decimal(
+        capital_gains_rules["section_112a_annual_exemption"]
+    )
+
     capital_gain_bases = split_capital_gains_tax_bases(
         stcg,
         ltcg,
@@ -1177,7 +1192,7 @@ def get_final_tax_liability(
 
     if stt_confirmed:
         stcg_tax = money(
-            capital_gain_bases["stcg_special_rate"] * STCG_111A_RATE
+            capital_gain_bases["stcg_special_rate"] * stcg_111a_rate
         )
     else:
         # Without STT confirmation, Section 111A eligibility is not assumed.
@@ -1190,12 +1205,12 @@ def get_final_tax_liability(
 
     ltcg_112a_gain = capital_gain_bases["ltcg_special_rate"]
     ltcg_excess = max(
-        ltcg_112a_gain - LTCG_112A_EXEMPTION,
+        ltcg_112a_gain - ltcg_112a_exemption,
         Decimal("0"),
     )
 
     ltcg_tax = money(
-        ltcg_excess * LTCG_112A_RATE
+        ltcg_excess * ltcg_112a_rate
     )
 
     special_rate_tax = money(
@@ -1285,7 +1300,7 @@ def get_final_tax_liability(
 
     cess = money(
         tax_before_cess
-        * CESS_RATE
+        * decimal(tax_rule_set["cess_rate"])
     )
 
     # ========================================================
@@ -1566,7 +1581,7 @@ def get_final_tax_liability(
 
                 "rate":
                     money(
-                        STCG_111A_RATE
+                        stcg_111a_rate
                         * 100
                     ),
 
@@ -1602,13 +1617,13 @@ def get_final_tax_liability(
 
                 "rate":
                     money(
-                        LTCG_112A_RATE
+                        ltcg_112a_rate
                         * 100
                     ),
 
                 "threshold":
                     money(
-                        LTCG_112A_EXEMPTION
+                        ltcg_112a_exemption
                     ),
 
                 "taxable_gain":
@@ -1708,7 +1723,7 @@ def get_final_tax_liability(
 
             "rate":
                 money(
-                    CESS_RATE
+                    decimal(tax_rule_set["cess_rate"])
                     * 100
                 ),
 

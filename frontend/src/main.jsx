@@ -10,7 +10,7 @@
 // Backend: FastAPI deployed on Render
 // ============================================================
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import LandingPage from "./LandingPage";
@@ -456,6 +456,96 @@ function AuthPage({ mode }) {
   );
 }
 
+// ============================================================
+// PROTECTED DASHBOARD
+// Verify the saved token with the backend before showing App.
+// ============================================================
+
+function ProtectedApp() {
+  const [status, setStatus] = useState("checking");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function verifySession() {
+      const token = sessionStorage.getItem("financial_os_token");
+
+      // No login token: return to login.
+      if (!token) {
+        window.location.replace("/login");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/auth/me`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Session invalid or expired.");
+        }
+
+        const user = await response.json();
+
+        if (cancelled) return;
+
+        // Keep the logged-in user's details in the browser session.
+        sessionStorage.setItem(
+          "financial_os_user",
+          JSON.stringify(user)
+        );
+
+        sessionStorage.setItem(
+          "financial_os_user_id",
+          String(user.id)
+        );
+
+        setStatus("authenticated");
+      } catch (error) {
+        if (cancelled) return;
+
+        // Clear invalid sessions.
+        sessionStorage.removeItem("financial_os_token");
+        sessionStorage.removeItem("financial_os_user");
+        sessionStorage.removeItem("financial_os_user_id");
+
+        window.location.replace("/login");
+      }
+    }
+
+    verifySession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (status !== "authenticated") {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          background: "#090d1b",
+          color: "#ffffff",
+          fontFamily: "Arial, sans-serif",
+        }}
+      >
+        Verifying your secure session...
+      </main>
+    );
+  }
+
+  return <App />;
+}
 // ============================================================
 // ROOT ROUTER
 // ============================================================

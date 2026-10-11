@@ -198,6 +198,7 @@ def calculate_tax(
     ltcg_rate=LTCG_RATE_112A,
     ltcg_exemption_limit=LTCG_112A_EXEMPTION_LIMIT,
     cess_rate=CESS_RATE,
+    section_112a_eligibility_confirmed=False,
 ):
     """
     Calculate indicative special-rate capital-gain tax.
@@ -253,21 +254,20 @@ def calculate_tax(
     # LTCG SECTION 112A
     # --------------------------------------------------------
 
-    if ltcg > ltcg_exemption_limit:
-
-        ltcg_taxable = (
-            ltcg
-            - ltcg_exemption_limit
-        )
-
+    # Section 112A is not assumed from the asset label alone. Require an
+    # explicit eligibility confirmation; otherwise report the amount for
+    # review and do not apply the special rate automatically.
+    if section_112a_eligibility_confirmed:
+        if ltcg > ltcg_exemption_limit:
+            ltcg_taxable = ltcg - ltcg_exemption_limit
+        else:
+            ltcg_taxable = Decimal("0")
+        ltcg_tax = money(ltcg_taxable * ltcg_rate)
+        ltcg_status = "calculated_eligibility_confirmed"
     else:
-
         ltcg_taxable = Decimal("0")
-
-    ltcg_tax = money(
-        ltcg_taxable
-        * ltcg_rate
-    )
+        ltcg_tax = Decimal("0")
+        ltcg_status = "requires_section_112a_eligibility_confirmation"
 
     # --------------------------------------------------------
     # TOTAL SPECIAL-RATE TAX
@@ -321,6 +321,8 @@ def calculate_tax(
                 ltcg_rate
             ),
             "tax": ltcg_tax,
+            "eligibility_confirmed": section_112a_eligibility_confirmed,
+            "status": ltcg_status,
         },
 
         "summary": {
@@ -343,6 +345,7 @@ def tax_calculation(
     user_id: int,
     financial_year: str = "2026-27",
     stt_confirmed: bool = False,
+    section_112a_eligibility_confirmed: bool = False,
     db: Session = Depends(get_db),
 ):
     """
@@ -540,6 +543,7 @@ def tax_calculation(
         ltcg_rate=ltcg_rate,
         ltcg_exemption_limit=ltcg_exemption_limit,
         cess_rate=cess_rate,
+        section_112a_eligibility_confirmed=section_112a_eligibility_confirmed,
     )
 
     # --------------------------------------------------------
@@ -550,21 +554,12 @@ def tax_calculation(
 
     if unclassified != 0 or unmatched_quantity != 0:
         engine_status = "requires_review"
-
-    elif (
-        stcg != 0
-        and not stt_confirmed
-    ):
-
-        engine_status = (
-            "requires_stt_confirmation"
-        )
-
+    elif stcg != 0 and not stt_confirmed:
+        engine_status = "requires_stt_confirmation"
+    elif ltcg != 0 and not section_112a_eligibility_confirmed:
+        engine_status = "requires_section_112a_eligibility_confirmation"
     else:
-
-        engine_status = (
-            "calculated_special_rate_tax"
-        )
+        engine_status = "calculated_special_rate_tax"
 
     # --------------------------------------------------------
     # RESPONSE
@@ -615,9 +610,8 @@ def tax_calculation(
                 ltcg_exemption_limit
             ),
             "cess_rate": cess_rate,
-            "stt_confirmed": (
-                stt_confirmed
-            ),
+            "stt_confirmed": stt_confirmed,
+            "section_112a_eligibility_confirmed": section_112a_eligibility_confirmed,
         },
 
         "capital_gains": {
@@ -650,9 +644,13 @@ def tax_calculation(
                 "adjustments are not included."
             ),
             (
-                "STT eligibility must be "
-                "confirmed before Section "
-                "111A STCG tax is calculated."
+                "STT and all other Section 111A conditions must be established "
+                "before special-rate STCG tax is treated as final."
+            ),
+            (
+                "Section 112A eligibility is not inferred from asset class; "
+                "the explicit eligibility flag must be confirmed, and this "
+                "endpoint does not independently verify supporting evidence."
             ),
             (
                 "This endpoint currently supports only financial years "

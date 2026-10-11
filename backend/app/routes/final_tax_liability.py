@@ -236,75 +236,69 @@ def calculate_new_regime_slab_tax(
 
 def calculate_old_regime_slab_tax(
     taxable_income,
+    age_category="under_60",
+    residential_status="resident",
 ):
     """
-    Old-regime slabs for an individual below 60.
+    Calculate old-regime slab tax for an individual.
 
-    Up to 2.5L       0%
-    2.5L - 5L        5%
-    5L - 10L         20%
-    Above 10L        30%
+    age_category values:
+      - under_60
+      - 60_to_79
+      - 80_plus
+
+    Senior-citizen basic exemption thresholds apply only to residents.
+    If age is unknown, callers may calculate a provisional under-60
+    estimate, but must mark the assessment incomplete.
     """
+    income = max(decimal(taxable_income), Decimal("0"))
 
-    income = max(
-        decimal(taxable_income),
-        Decimal("0"),
+    # Non-residents do not receive the higher age-based basic exemption.
+    effective_age = (
+        age_category
+        if residential_status == "resident"
+        else "under_60"
     )
 
+    if effective_age == "80_plus":
+        slabs = [
+            (Decimal("500000"), Decimal("0.00")),
+            (Decimal("1000000"), Decimal("0.20")),
+            (None, Decimal("0.30")),
+        ]
+    elif effective_age == "60_to_79":
+        slabs = [
+            (Decimal("300000"), Decimal("0.00")),
+            (Decimal("500000"), Decimal("0.05")),
+            (Decimal("1000000"), Decimal("0.20")),
+            (None, Decimal("0.30")),
+        ]
+    else:
+        slabs = [
+            (Decimal("250000"), Decimal("0.00")),
+            (Decimal("500000"), Decimal("0.05")),
+            (Decimal("1000000"), Decimal("0.20")),
+            (None, Decimal("0.30")),
+        ]
+
     tax = Decimal("0")
-
-    slabs = [
-        (
-            Decimal("250000"),
-            Decimal("0.00"),
-        ),
-        (
-            Decimal("500000"),
-            Decimal("0.05"),
-        ),
-        (
-            Decimal("1000000"),
-            Decimal("0.20"),
-        ),
-        (
-            None,
-            Decimal("0.30"),
-        ),
-    ]
-
     previous_limit = Decimal("0")
 
     for upper_limit, rate in slabs:
-
         if upper_limit is None:
-
-            taxable_slice = (
-                income - previous_limit
-            )
-
+            taxable_slice = income - previous_limit
             if taxable_slice > 0:
-                tax += (
-                    taxable_slice * rate
-                )
-
+                tax += taxable_slice * rate
             break
 
         taxable_slice = min(
-            max(
-                income - previous_limit,
-                Decimal("0"),
-            ),
+            max(income - previous_limit, Decimal("0")),
             upper_limit - previous_limit,
         )
-
         if taxable_slice > 0:
-            tax += (
-                taxable_slice * rate
-            )
-
+            tax += taxable_slice * rate
         if income <= upper_limit:
             break
-
         previous_limit = upper_limit
 
     return money(tax)
@@ -880,6 +874,7 @@ def compare_tax_regimes(
     user_id: int = Query(..., ge=1),
     financial_year: str = Query("2026-27"),
     residential_status: str = Query("resident"),
+    age_category: str | None = Query(None, pattern=r"^(under_60|60_to_79|80_plus)$"),
     stt_confirmed: bool = Query(False),
     db: Session = Depends(get_db),
 ):
@@ -893,6 +888,7 @@ def compare_tax_regimes(
         financial_year=financial_year,
         tax_regime="old",
         residential_status=residential_status,
+        age_category=age_category,
         stt_confirmed=stt_confirmed,
         tds_credit=None,
         advance_tax_credit=None,
@@ -904,6 +900,7 @@ def compare_tax_regimes(
         financial_year=financial_year,
         tax_regime="new",
         residential_status=residential_status,
+        age_category=age_category,
         stt_confirmed=stt_confirmed,
         tds_credit=None,
         advance_tax_credit=None,
@@ -940,6 +937,10 @@ def get_final_tax_liability(
     ),
     residential_status: str = Query(
         "resident"
+    ),
+    age_category: str | None = Query(
+        None,
+        pattern=r"^(under_60|60_to_79|80_plus)$",
     ),
     stt_confirmed: bool = Query(
         False
@@ -1125,7 +1126,9 @@ def get_final_tax_liability(
 
         normal_tax = (
             calculate_old_regime_slab_tax(
-                normal_taxable_income
+                normal_taxable_income,
+                age_category=age_category or "under_60",
+                residential_status=residential_status,
             )
         )
 
@@ -1252,13 +1255,13 @@ def get_final_tax_liability(
 
     if missing_income_heads:
 
-        engine_status = (
-            "incomplete_missing_income_heads"
-        )
+        engine_status = "incomplete_missing_income_heads"
+        liability_status = "not_final"
 
-        liability_status = (
-            "not_final"
-        )
+    elif tax_regime == "old" and age_category is None and residential_status == "resident":
+
+        engine_status = "requires_age_confirmation"
+        liability_status = "conditional"
 
     elif not stt_confirmed and stcg > 0:
 
@@ -1319,6 +1322,13 @@ def get_final_tax_liability(
 
             "residential_status":
                 residential_status,
+
+            "age_category":
+                age_category,
+
+            "old_regime_age_assumption":
+                ("under_60_provisional" if tax_regime == "old" and age_category is None
+                 else None),
         },
 
         # ----------------------------------------------------
@@ -1333,6 +1343,12 @@ def get_final_tax_liability(
 
         "taxable_income_engine_status": income_result.get("engine_status"),
         "taxable_income_source": "final-taxable-income engine",
+        "tax_rule_notes": {
+            "old_regime_age_based_basic_exemption": True,
+            "old_regime_age_confirmation_required_for_resident": True,
+            "age_category_options": ["under_60", "60_to_79", "80_plus"],
+            "rules_scope": "individual slab-rate calculation; special cases still require separate review",
+        },
 
         # Persisted records count only after a separate verification step.
         "tax_credits": {

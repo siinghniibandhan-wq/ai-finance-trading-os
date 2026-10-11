@@ -1,6 +1,7 @@
 # ============================================================
-# FINANCIAL OS
-# ACCOUNTS API
+# FINANCIAL OS — SECURE ACCOUNTS API
+# Every operation is restricted to the authenticated user.
+# Existing database tables are preserved.
 # ============================================================
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,6 +14,7 @@ from app.schemas import (
     AccountResponse,
     AccountUpdate,
 )
+from app.routes.auth import get_current_user
 
 
 # ============================================================
@@ -27,28 +29,24 @@ router = APIRouter(
 
 # ============================================================
 # CREATE ACCOUNT
+# The authenticated user's ID determines account ownership.
 # ============================================================
 
 @router.post("/", response_model=AccountResponse)
 def create_account(
     account_data: AccountCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    # Make sure the user exists.
-    user = (
-        db.query(User)
-        .filter(User.id == account_data.user_id)
-        .first()
-    )
-
-    if not user:
+    # Reject attempts to create accounts for another user.
+    if account_data.user_id != current_user.id:
         raise HTTPException(
-            status_code=404,
-            detail="User not found.",
+            status_code=403,
+            detail="You cannot create an account for another user.",
         )
 
     account = Account(
-        user_id=account_data.user_id,
+        user_id=current_user.id,
         name=account_data.name,
         account_type=account_data.account_type,
         institution=account_data.institution,
@@ -66,16 +64,26 @@ def create_account(
 
 # ============================================================
 # LIST ACCOUNTS
+# Return accounts belonging only to the authenticated user.
 # ============================================================
 
 @router.get("/", response_model=list[AccountResponse])
 def list_accounts(
-    user_id: int,
+    user_id: int | None = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    # Preserve compatibility with existing frontend requests.
+    # A different user_id must never expose another user's data.
+    if user_id is not None and user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You cannot access another user's accounts.",
+        )
+
     return (
         db.query(Account)
-        .filter(Account.user_id == user_id)
+        .filter(Account.user_id == current_user.id)
         .order_by(Account.id.desc())
         .all()
     )
@@ -83,16 +91,21 @@ def list_accounts(
 
 # ============================================================
 # GET ACCOUNT
+# The account must belong to the authenticated user.
 # ============================================================
 
 @router.get("/{account_id}", response_model=AccountResponse)
 def get_account(
     account_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     account = (
         db.query(Account)
-        .filter(Account.id == account_id)
+        .filter(
+            Account.id == account_id,
+            Account.user_id == current_user.id,
+        )
         .first()
     )
 
@@ -107,6 +120,7 @@ def get_account(
 
 # ============================================================
 # UPDATE ACCOUNT
+# Prevent changes to accounts owned by another user.
 # ============================================================
 
 @router.put("/{account_id}", response_model=AccountResponse)
@@ -114,10 +128,14 @@ def update_account(
     account_id: int,
     account_data: AccountUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     account = (
         db.query(Account)
-        .filter(Account.id == account_id)
+        .filter(
+            Account.id == account_id,
+            Account.user_id == current_user.id,
+        )
         .first()
     )
 
@@ -131,6 +149,19 @@ def update_account(
         exclude_unset=True
     )
 
+    # Never allow an update to transfer account ownership.
+    if (
+        "user_id" in update_data
+        and update_data["user_id"] != current_user.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You cannot change account ownership.",
+        )
+
+    # Keep ownership fixed even if the update contains user_id.
+    update_data.pop("user_id", None)
+
     for field, value in update_data.items():
         setattr(account, field, value)
 
@@ -142,16 +173,21 @@ def update_account(
 
 # ============================================================
 # DELETE ACCOUNT
+# Delete only accounts owned by the authenticated user.
 # ============================================================
 
 @router.delete("/{account_id}")
 def delete_account(
     account_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     account = (
         db.query(Account)
-        .filter(Account.id == account_id)
+        .filter(
+            Account.id == account_id,
+            Account.user_id == current_user.id,
+        )
         .first()
     )
 

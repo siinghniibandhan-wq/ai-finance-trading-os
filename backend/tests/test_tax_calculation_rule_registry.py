@@ -16,6 +16,7 @@ def test_tax_calculation_uses_passed_financial_year_rates_and_threshold():
         ltcg_rate=Decimal(cg["section_112a_rate"]),
         ltcg_exemption_limit=Decimal(cg["section_112a_annual_exemption"]),
         cess_rate=Decimal(rules["cess_rate"]),
+        section_112a_eligibility_confirmed=True,
     )
     assert result["stcg"]["tax"] == Decimal("2000.00")
     assert result["ltcg"]["taxable_gain"] == Decimal("25000")

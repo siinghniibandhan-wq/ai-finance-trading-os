@@ -169,6 +169,53 @@ def get_financial_year_dates(financial_year):
 
 
 # ============================================================
+# FINANCIAL-YEAR TAX RULE REGISTRY
+# ============================================================
+
+# This engine currently contains a validated rate set for FY 2026-27 only.
+# Do not silently reuse these rules for another year: slab rates, rebates,
+# special-rate capital gains, surcharge rules, and governing provisions can
+# change by year. Add a complete reviewed rule set before enabling another FY.
+TAX_RULE_SETS = {
+    "2026-27": {
+        "rule_set_id": "IN-INDIVIDUAL-2026-27-v1",
+        "financial_year": "2026-27",
+        "new_regime_slabs": "4L/8L/12L/16L/20L/24L",
+        "new_regime_87a_income_limit": "1200000",
+        "new_regime_87a_max_rebate": "60000",
+        "old_regime_87a_income_limit": "500000",
+        "old_regime_87a_max_rebate": "12500",
+        "cess_rate": "0.04",
+        "review_status": "supported_with_conditional_capital_gains",
+    }
+}
+
+
+def get_tax_rule_set(financial_year):
+    """Return the explicit rule set for a supported financial year.
+
+    A valid-looking but unsupported year must not be calculated using
+    another year's constants.
+    """
+    try:
+        get_financial_year_dates(financial_year)
+    except (ValueError, TypeError):
+        raise ValueError(
+            "financial_year must use format YYYY-YY, for example 2026-27."
+        )
+
+    rule_set = TAX_RULE_SETS.get(financial_year)
+    if rule_set is None:
+        supported = ", ".join(sorted(TAX_RULE_SETS))
+        raise ValueError(
+            f"Tax rules are not configured for FY {financial_year}. "
+            f"Currently supported financial year(s): {supported}. "
+            "No tax calculation was performed."
+        )
+    return rule_set
+
+
+# ============================================================
 # NORMAL TAX — NEW REGIME
 # ============================================================
 
@@ -914,6 +961,11 @@ def compare_tax_regimes(
     This endpoint is read-only. It intentionally does not copy income data,
     create records, or apply user-entered provisional credit overrides.
     """
+    try:
+        get_tax_rule_set(financial_year)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error))
+
     old_result = get_final_tax_liability(
         user_id=user_id,
         financial_year=financial_year,
@@ -1054,6 +1106,17 @@ def get_final_tax_liability(
         return {
             "status": "error",
             "message": str(error),
+        }
+
+    try:
+        tax_rule_set = get_tax_rule_set(financial_year)
+    except ValueError as error:
+        return {
+            "status": "error",
+            "engine_status": "unsupported_financial_year",
+            "liability_status": "not_calculated",
+            "message": str(error),
+            "tax_calculation_performed": False,
         }
 
     # ========================================================
@@ -1385,6 +1448,11 @@ def get_final_tax_liability(
 
         "taxable_income_engine_status": income_result.get("engine_status"),
         "taxable_income_source": "final-taxable-income engine",
+        "tax_rule_set": {
+            **tax_rule_set,
+            "rule_set_applied": True,
+            "note": "Special-rate capital gains remain conditional on the eligibility inputs described below; this registry does not independently verify those facts.",
+        },
         "tax_rule_notes": {
             "old_regime_age_based_basic_exemption": True,
             "old_regime_age_confirmation_required_for_resident": True,

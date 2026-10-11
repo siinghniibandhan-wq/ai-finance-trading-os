@@ -52,6 +52,16 @@ DEDUCTION_CATALOG = {
     # COMMON / REGIME-SPECIFIC
     # --------------------------------------------------------
 
+    "STANDARD_DEDUCTION_SALARY": {
+        "section": "Section 16(ia)",
+        "name": "Standard deduction from eligible salary/pension",
+        "old_regime_available": True,
+        "new_regime_available": True,
+        "maximum_amount": None,
+        "maximum_amount_by_regime": {"old": 50000, "new": 75000},
+        "basis": "salary_income_and_financial_year_rules",
+    },
+
     "80C": {
         "section": "80C",
         "name": "Specified investments and payments",
@@ -242,7 +252,7 @@ DEDUCTION_CATALOG = {
         "old_regime_available": True,
         "new_regime_available": True,
         "maximum_amount": None,
-        "basis": "house_property_rules",
+        "basis": "self_occupied_old_regime_limit_or_let_out_property_rules; eligibility depends on property use and regime",
     },
 }
 
@@ -276,6 +286,16 @@ EXEMPT_INCOME_CATALOG = {
     "specified_allowances": {
         "category": "Specified exempt allowances",
         "section": "10",
+    },
+
+    "hra_exemption": {
+        "category": "House Rent Allowance exemption (where eligible)",
+        "section": "10(13A)",
+    },
+
+    "lta_exemption": {
+        "category": "Leave Travel Allowance exemption (where eligible)",
+        "section": "10(5)",
     },
 
     "other_exempt_income": {
@@ -373,6 +393,7 @@ def deductions_exempt_income(
             tax_regime,
         )
 
+        regime_amounts = item.get("maximum_amount_by_regime", {})
         output_item = {
             "section":
                 item["section"],
@@ -384,7 +405,9 @@ def deductions_exempt_income(
                 available,
 
             "maximum_amount":
-                item["maximum_amount"],
+                regime_amounts.get(tax_regime, item["maximum_amount"]),
+
+            "maximum_amount_by_regime": regime_amounts or None,
 
             "basis":
                 item["basis"],
@@ -483,6 +506,15 @@ def deductions_exempt_income(
 
         "tax_regime":
             tax_regime,
+
+        "rule_year_status": (
+            "catalogue_framework_for_selected_year; verify current Finance Act and eligibility before filing"
+            if financial_year in {"2025-26", "2026-27"}
+            else "financial_year_not_in_catalogue_validation_window; verify all limits against the applicable Finance Act"
+        ),
+
+        "automatic_claim_adjustment": False,
+        "automatic_claim_adjustment_reason": "The repository has no verified deduction/evidence ledger; catalog entries are eligibility guidance and are not deducted from taxable income automatically.",
 
         "engine_status":
             status,

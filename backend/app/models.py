@@ -471,3 +471,23 @@ class UserCredential(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
     )
+
+
+# ============================================================
+# TAX DEDUCTION CLAIMS (USER-ENTERED, NOT AUTO-VERIFIED)
+# ============================================================
+
+class TaxDeductionClaim(Base):
+    __tablename__ = "tax_deduction_claims"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    financial_year: Mapped[str] = mapped_column(String(9), nullable=False, index=True)
+    tax_regime: Mapped[str] = mapped_column(String(10), nullable=False)
+    deduction_key: Mapped[str] = mapped_column(String(60), nullable=False)
+    claimed_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(24), default="pending_review", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

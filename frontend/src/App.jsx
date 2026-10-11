@@ -3,7 +3,7 @@
 // MAIN APPLICATION
 // ============================================================
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import WealthManager from "./WealthManager";
 import LoanManagement from "./LoanManagement";
 
@@ -31,6 +31,41 @@ import {
   CircleDollarSign,
   Trash2
 } from "lucide-react";
+
+
+// ============================================================
+// CUSTOM FINANCIAL OS SELECT — branded dropdown instead of the
+// browser/Android native selection sheet. Keeps select-like props.
+// ============================================================
+function StyledSelect({ children, value, onChange, className = "", style = {}, disabled = false, name, id, "aria-label": ariaLabel }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const options = React.Children.toArray(children).filter((child) => React.isValidElement(child) && child.type === "option");
+  const selected = options.find((option) => String(option.props.value ?? option.props.children) === String(value));
+  const selectedLabel = selected ? selected.props.children : (options[0]?.props.children ?? "Select an option");
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutside = (event) => { if (rootRef.current && !rootRef.current.contains(event.target)) setOpen(false); };
+    const closeOnEscape = (event) => { if (event.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => { document.removeEventListener("pointerdown", closeOnOutside); document.removeEventListener("keydown", closeOnEscape); };
+  }, [open]);
+  return <div ref={rootRef} className={`finos-select-wrap ${className}`} style={{ position: "relative", minWidth: 0, ...style }}>
+    <button type="button" id={id} aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open} disabled={disabled} onClick={() => setOpen((previous) => !previous)} className="finos-select-trigger">
+      <span>{selectedLabel}</span><span className={`finos-select-chevron ${open ? "is-open" : ""}`}>⌄</span>
+    </button>
+    {open && <div className="finos-select-menu" role="listbox" aria-label={ariaLabel || name || "Options"}>
+      {options.map((option, index) => {
+        const optionValue = String(option.props.value ?? option.props.children);
+        const active = optionValue === String(value);
+        return <button type="button" role="option" aria-selected={active} key={`${optionValue}-${index}`} disabled={option.props.disabled} className={`finos-select-option ${active ? "is-selected" : ""}`} onClick={() => { onChange?.({ target: { name, value: optionValue } }); setOpen(false); }}>
+          <span>{option.props.children}</span><span className="finos-select-check">{active ? "✓" : ""}</span>
+        </button>;
+      })}
+    </div>}
+  </div>;
+}
 
 // ============================================================
 // API REQUESTS — no global authentication-token wrapper
@@ -159,6 +194,17 @@ const navigation = [
 // ============================================================
 // MAIN APP
 // ============================================================
+
+// Asset-class-specific product types prevent unrelated investment choices.
+const PRODUCT_TYPES_BY_ASSET_CLASS = {
+  Equity: ["Stocks", "Equity Mutual Funds", "Equity ETFs"],
+  "Fixed Income": ["Fixed Deposits", "Recurring Deposits", "Bonds", "Government Securities", "Debt Mutual Funds", "NPS"],
+  Commodities: ["Gold", "Silver", "Other Commodities"],
+  "Real Estate": ["Residential Property", "Commercial Property", "REITs"],
+  "Digital Assets": ["Cryptocurrencies", "Other Digital Assets"],
+  Alternatives: ["Private Equity", "Venture Capital", "Hedge Funds", "Other Alternatives"],
+  Other: ["Other"],
+};
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1059,8 +1105,8 @@ function TaxPage() {
       <div style={panelStyle}>
         <h3 style={{ marginTop: 0 }}>Calculation settings</h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", alignItems: "end" }}>
-          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "rgba(255,255,255,0.65)" }}>Financial year<select value={financialYear} onChange={e => setFinancialYear(e.target.value)} style={{ padding: "11px", borderRadius: "10px", background: "#151525", color: "white", border: "1px solid rgba(255,255,255,0.12)" }}><option value="2025-26">2025-26</option><option value="2026-27">2026-27</option></select></label>
-          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "rgba(255,255,255,0.65)" }}>Tax regime framework<select value={taxRegime} onChange={e => setTaxRegime(e.target.value)} style={{ padding: "11px", borderRadius: "10px", background: "#151525", color: "white", border: "1px solid rgba(255,255,255,0.12)" }}><option value="new">New regime</option><option value="old">Old regime</option></select></label>
+          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "rgba(255,255,255,0.65)" }}>Financial year<StyledSelect value={financialYear} onChange={e => setFinancialYear(e.target.value)} style={{ padding: "11px", borderRadius: "10px", background: "#151525", color: "white", border: "1px solid rgba(255,255,255,0.12)" }}><option value="2025-26">2025-26</option><option value="2026-27">2026-27</option></StyledSelect></label>
+          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "rgba(255,255,255,0.65)" }}>Tax regime framework<StyledSelect value={taxRegime} onChange={e => setTaxRegime(e.target.value)} style={{ padding: "11px", borderRadius: "10px", background: "#151525", color: "white", border: "1px solid rgba(255,255,255,0.12)" }}><option value="new">New regime</option><option value="old">Old regime</option></StyledSelect></label>
           <label style={{ display: "flex", alignItems: "center", gap: "9px", fontSize: "12px", color: "rgba(255,255,255,0.65)", minHeight: "42px" }}><input type="checkbox" checked={sttConfirmed} onChange={e => setSttConfirmed(e.target.checked)} /> Confirm applicable STT condition for STCG</label>
           <button type="button" className="primary-button" onClick={loadTaxData} disabled={loading}>{loading ? "Calculating..." : "Refresh / Calculate"}</button>
         </div>
@@ -1364,7 +1410,7 @@ function MarketsPage() {
       {busy && !indices.length ? <div style={card}>Loading market indices...</div> : indices.length ? indices.map((row, i) => <div key={`${row.name || row.symbol || "index"}-${i}`} style={card}><div style={muted}>{row.name || row.symbol || "Index"}</div><div style={{ fontSize: "23px", fontWeight: 800, marginTop: "7px" }}>{row.last_price == null || !Number.isFinite(Number(row.last_price)) ? "Unavailable" : Number(row.last_price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</div><div style={{ ...muted, marginTop: "6px" }}>{row.exchange || "Exchange"} · {row.status || "Latest available"}</div></div>) : <div style={card}><strong>Indices unavailable</strong><p style={muted}>Refresh later or check the market gateway.</p></div>}
       <div style={card}><div style={muted}>Gainers returned</div><div style={{ fontSize: "23px", fontWeight: 800, marginTop: "7px" }}>{gainers.length}</div></div><div style={card}><div style={muted}>Losers returned</div><div style={{ fontSize: "23px", fontWeight: 800, marginTop: "7px" }}>{losers.length}</div></div>
     </section>
-    <section style={card}><h3 style={{ margin: "0 0 5px" }}>Find a stock or instrument</h3><p style={{ ...muted, marginTop: 0 }}>Search the existing instrument master, then request a quote for a result.</p><form onSubmit={search} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 100px auto", gap: "9px", alignItems: "center" }}><input aria-label="Company name or symbol" style={input} value={query} onChange={e => setQuery(e.target.value)} placeholder="Company or symbol"/><select aria-label="Exchange" style={input} value={exchange} onChange={e => setExchange(e.target.value)}><option value="NSE">NSE</option><option value="BSE">BSE</option></select><button className="primary-button" type="submit" disabled={searchBusy}>{searchBusy ? "Searching..." : "Search"}</button></form>
+    <section style={card}><h3 style={{ margin: "0 0 5px" }}>Find a stock or instrument</h3><p style={{ ...muted, marginTop: 0 }}>Search the existing instrument master, then request a quote for a result.</p><form onSubmit={search} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 100px auto", gap: "9px", alignItems: "center" }}><input aria-label="Company name or symbol" style={input} value={query} onChange={e => setQuery(e.target.value)} placeholder="Company or symbol"/><StyledSelect aria-label="Exchange" style={input} value={exchange} onChange={e => setExchange(e.target.value)}><option value="NSE">NSE</option><option value="BSE">BSE</option></StyledSelect><button className="primary-button" type="submit" disabled={searchBusy}>{searchBusy ? "Searching..." : "Search"}</button></form>
       {searchError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px" }}>{searchError}</p>}
       {results.map((row, i) => <div key={`${row.exchange || exchange}-${row.symbol || row.instrument_token || i}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}><div><strong>{row.symbol || "Unknown symbol"}</strong><div style={muted}>{row.name || "Company name unavailable"} · {row.exchange || exchange}</div></div><div style={{ display: "flex", gap: "10px", alignItems: "center" }}><strong style={{ fontSize: "12px" }}>{money(row.last_price)}</strong><button type="button" className="secondary-button" onClick={() => getQuote(row.symbol)}>Get quote</button><button type="button" className="secondary-button" onClick={() => chooseChart(row.symbol, row.exchange || exchange)}>Chart</button></div></div>)}
     </section>
@@ -1375,7 +1421,7 @@ function MarketsPage() {
         <div><h3 style={{ margin: "0 0 4px" }}>Historical price chart</h3><p style={{ ...muted, margin: 0 }}>{chartInfo ? `${chartInfo.symbol || chartSymbol} · ${chartInfo.exchange || chartExchange} · Daily close` : "Choose a stock and period to load daily closing prices."}</p></div>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>{["1M", "3M", "6M", "1Y"].map((range) => <button key={range} type="button" className={chartRange === range ? "primary-button" : "secondary-button"} style={{ padding: "8px 10px", fontSize: "11px" }} onClick={() => { setChartRange(range); loadChart(chartSymbol, chartExchange, range); }}>{range}</button>)}</div>
       </div>
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}><input aria-label="Chart stock symbol" style={{ ...input, maxWidth: "220px" }} value={chartSymbol} onChange={(e) => setChartSymbol(e.target.value.toUpperCase())} placeholder="e.g. RELIANCE"/><select aria-label="Chart exchange" style={{ ...input, width: "100px" }} value={chartExchange} onChange={(e) => setChartExchange(e.target.value)}><option value="NSE">NSE</option><option value="BSE">BSE</option></select><button type="button" className="secondary-button" disabled={chartBusy} onClick={() => loadChart()}>{chartBusy ? "Loading chart..." : "Load chart"}</button></div>
+      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}><input aria-label="Chart stock symbol" style={{ ...input, maxWidth: "220px" }} value={chartSymbol} onChange={(e) => setChartSymbol(e.target.value.toUpperCase())} placeholder="e.g. RELIANCE"/><StyledSelect aria-label="Chart exchange" style={{ ...input, width: "100px" }} value={chartExchange} onChange={(e) => setChartExchange(e.target.value)}><option value="NSE">NSE</option><option value="BSE">BSE</option></StyledSelect><button type="button" className="secondary-button" disabled={chartBusy} onClick={() => loadChart()}>{chartBusy ? "Loading chart..." : "Load chart"}</button></div>
       {chartError && <p role="status" style={{ color: "#fcd34d", fontSize: "12px", lineHeight: 1.6, marginBottom: 0 }}>{chartError}</p>}
       {chartBusy && <p style={muted}>Requesting historical prices from the existing market API...</p>}
       {!chartBusy && chartData.length > 1 && (() => {
@@ -1493,12 +1539,12 @@ function PlanPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}><div><h3 style={{ margin: "0 0 5px" }}>{editingId ? "Edit financial goal" : "Create a financial goal"}</h3><p style={muted}>Your goals are saved to the backend. Enter an amount you have actually saved or allocated; this form does not move money.</p></div>{editingId && <button type="button" className="secondary-button" onClick={resetForm}>Cancel edit</button>}</div>
       <form onSubmit={submitGoal} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: "14px", marginTop: "14px" }}>
         <label style={muted}>Goal name *<input required maxLength={150} value={form.name} onChange={e => updateForm("name", e.target.value)} style={field} placeholder="e.g. Emergency fund" /></label>
-        <label style={muted}>Category<select value={form.category} onChange={e => updateForm("category", e.target.value)} style={field}>{categories.map(c => <option key={c}>{c}</option>)}</select></label>
+        <label style={muted}>Category<StyledSelect value={form.category} onChange={e => updateForm("category", e.target.value)} style={field}>{categories.map(c => <option key={c}>{c}</option>)}</StyledSelect></label>
         <label style={muted}>Target amount (₹) *<input required type="number" min="1" step="0.01" value={form.target_amount} onChange={e => updateForm("target_amount", e.target.value)} style={field} /></label>
         <label style={muted}>Already saved / allocated (₹)<input type="number" min="0" step="0.01" value={form.current_amount} onChange={e => updateForm("current_amount", e.target.value)} style={field} /></label>
         <label style={muted}>Target date<input type="date" min={new Date().toISOString().slice(0,10)} value={form.target_date} onChange={e => updateForm("target_date", e.target.value)} style={field} /></label>
         <label style={muted}>Monthly contribution (₹)<input type="number" min="0" step="0.01" value={form.monthly_contribution} onChange={e => updateForm("monthly_contribution", e.target.value)} style={field} /></label>
-        <label style={muted}>Status<select value={form.status} onChange={e => updateForm("status", e.target.value)} style={field}><option value="active">Active</option><option value="paused">Paused</option><option value="completed">Completed</option></select></label>
+        <label style={muted}>Status<StyledSelect value={form.status} onChange={e => updateForm("status", e.target.value)} style={field}><option value="active">Active</option><option value="paused">Paused</option><option value="completed">Completed</option></StyledSelect></label>
         <label style={{ ...muted, gridColumn: "1 / -1" }}>Notes (optional)<textarea rows="2" value={form.notes} onChange={e => updateForm("notes", e.target.value)} style={{ ...field, resize: "vertical" }} placeholder="Any details about this goal" /></label>
         <div style={{ gridColumn: "1 / -1", display: "flex", gap: "10px", flexWrap: "wrap" }}><button type="submit" disabled={saving} className="primary-button">{saving ? "Saving…" : editingId ? "Save changes" : "Save goal"}</button><button type="button" className="secondary-button" onClick={resetForm}>Clear form</button></div>
       </form>
@@ -2136,7 +2182,7 @@ function InvestmentTransactions() {
           }}
         >
 
-          <select
+          <StyledSelect className="finos-select"
             value={
               filters.instrumentType
             }
@@ -2172,10 +2218,10 @@ function InvestmentTransactions() {
                 </option>
               )
             )}
-          </select>
+          </StyledSelect>
 
 
-          <select
+          <StyledSelect className="finos-select"
             value={
               filters.instrumentName
             }
@@ -2211,10 +2257,10 @@ function InvestmentTransactions() {
                 </option>
               )
             )}
-          </select>
+          </StyledSelect>
 
 
-          <select
+          <StyledSelect className="finos-select"
             value={
               filters.transactionType
             }
@@ -2247,10 +2293,10 @@ function InvestmentTransactions() {
             <option value="SELL">
               SELL
             </option>
-          </select>
+          </StyledSelect>
 
 
-          <select
+          <StyledSelect className="finos-select"
             value={filters.sort}
             onChange={(event) =>
               setFilters({
@@ -2283,7 +2329,7 @@ function InvestmentTransactions() {
             <option value="type_asc">
               Instrument Type
             </option>
-          </select>
+          </StyledSelect>
 
         </div>
 
@@ -5122,9 +5168,16 @@ const summaryCards = [
             {/* ASSET CLASS — high-level investment classification */}
             <div>
               <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Asset Class</label>
-              <select
+              <StyledSelect className="finos-select"
                 value={investmentForm.asset_class || "Equity"}
-                onChange={(event) => setInvestmentForm((previous) => ({ ...previous, asset_class: event.target.value }))}
+                onChange={(event) => {
+                  const nextAssetClass = event.target.value;
+                  const nextTypes = PRODUCT_TYPES_BY_ASSET_CLASS[nextAssetClass] || ["Other"];
+                  setInvestmentForm((previous) => ({ ...previous, asset_class: nextAssetClass, investment_type: nextTypes[0], name: "", symbol: "", current_price: "" }));
+                  setInstrumentQuery("");
+                  setInstrumentResults([]);
+                  setInstrumentSearchError("");
+                }}
                 style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "#17172a", color: "#ffffff", fontSize: "12px", outline: "none" }}
               >
                 <option value="Equity">Equity</option>
@@ -5134,13 +5187,13 @@ const summaryCards = [
                 <option value="Digital Assets">Digital Assets</option>
                 <option value="Alternatives">Alternatives</option>
                 <option value="Other">Other</option>
-              </select>
+              </StyledSelect>
             </div>
 
             {/* PRODUCT TYPE — existing investment-type catalogue */}
             <div>
             <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Product Type</label>
-            <select
+            <StyledSelect className="finos-select"
               value={investmentForm.investment_type}
               onChange={(event) => {
                 const nextType = event.target.value;
@@ -5169,38 +5222,10 @@ const summaryCards = [
                 outline: "none",
               }}
             >
-              <option value="Stocks">
-                Stocks
-              </option>
-
-              <option value="Mutual Funds">
-                Mutual Funds
-              </option>
-
-              <option value="ETFs">
-                ETFs
-              </option>
-
-              <option value="Gold">
-                Gold
-              </option>
-
-              <option value="Bonds">
-                Bonds
-              </option>
-
-              <option value="NPS">
-                NPS
-              </option>
-
-              <option value="Fixed Deposits">
-                Fixed Deposits
-              </option>
-
-              <option value="Other">
-                Other
-              </option>
-            </select>
+              {(PRODUCT_TYPES_BY_ASSET_CLASS[investmentForm.asset_class || "Equity"] || ["Other"]).map((productType) => (
+                <option key={productType} value={productType}>{productType}</option>
+              ))}
+            </StyledSelect>
             </div>
 
             {/* Symbol is selected in Add mode and editable in Edit mode. */}
@@ -5330,7 +5355,7 @@ const summaryCards = [
             {/* BROKER — mandatory dropdown, with explicit custom broker option */}
             <div>
               <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Broker / Platform (required)</label>
-              <select
+              <StyledSelect className="finos-select"
                 value={brokerChoice || (investmentForm.broker && !["Zerodha", "Groww", "Upstox", "Angel One", "ICICI Direct", "HDFC Securities", "Kotak Securities", "m.Stock", "Other"].includes(investmentForm.broker) ? "Other" : investmentForm.broker)}
                 onChange={(event) => {
                   const value = event.target.value;
@@ -5343,7 +5368,7 @@ const summaryCards = [
               >
                 <option value="">Select broker…</option>
                 <option value="Zerodha">Zerodha</option><option value="Groww">Groww</option><option value="Upstox">Upstox</option><option value="Angel One">Angel One</option><option value="ICICI Direct">ICICI Direct</option><option value="HDFC Securities">HDFC Securities</option><option value="Kotak Securities">Kotak Securities</option><option value="m.Stock">m.Stock (Mirae Asset)</option><option value="Other">Other (enter broker)</option>
-              </select>
+              </StyledSelect>
               {brokerChoice === "Other" && <input type="text" placeholder="Enter broker name (required)" value={customBroker} onChange={(event) => { setCustomBroker(event.target.value); setInvestmentForm((previous) => ({ ...previous, broker: event.target.value })); }} required style={{ width: "100%", boxSizing: "border-box", marginTop: "8px", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.05)", color: "#ffffff", fontSize: "12px" }} />}
             </div>
 
@@ -7689,7 +7714,7 @@ columnGap: "20px",
                   <label key={field.key} style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: 0, color: "#d1d5db", fontSize: "13px", fontWeight: 600 }}>
                     <span>{field.label}</span>
                     {field.type === "select" ? (
-                      <select
+                      <StyledSelect className="finos-select"
                         value={accountForm.account_type}
                         onChange={(event) => setAccountForm({ ...accountForm, account_type: event.target.value })}
                         style={{ width: "100%", minHeight: "44px", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(148,163,184,0.28)", background: "#151b2d", color: "#f3f4f6", outlineColor: "#a855f7", fontSize: "14px" }}
@@ -7705,7 +7730,7 @@ columnGap: "20px",
                         <option value="payable">Payable</option>
                         <option value="investment">Investment / Broker Cash</option>
                         <option value="other">Other</option>
-                      </select>
+                      </StyledSelect>
                     ) : (
                       <input
                         type={field.type}
@@ -7976,11 +8001,32 @@ async function loadTransactions() {
         throw new Error("Unable to load categories.");
       }
 
-      const data = await response.json();
+      let data = await response.json();
+      data = Array.isArray(data) ? data : [];
 
-      setCategories(
-        Array.isArray(data) ? data : []
-      );
+      // Seed missing defaults once per user; never overwrite or delete user data.
+      const existingNames = new Set(data.map((item) => String(item.name || "").trim().toLowerCase()));
+      const missingDefaults = TAX_READY_DEFAULT_CATEGORIES.filter(([, name]) => !existingNames.has(name.toLowerCase()));
+      if (missingDefaults.length) {
+        for (const [category_type, name, description] of missingDefaults) {
+          try {
+            const seedResponse = await fetch(`${API_BASE_URL}/api/categories/`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ user_id: USER_ID, name, category_type, description }),
+            });
+            if (seedResponse.ok) {
+              const created = await seedResponse.json();
+              data.push(created);
+              existingNames.add(name.toLowerCase());
+            }
+          } catch (seedError) {
+            console.warn("Could not seed starter category:", name, seedError);
+          }
+        }
+      }
+
+      setCategories(data);
 
     } catch (err) {
 
@@ -8808,7 +8854,7 @@ function getActualSpending(categoryId, month) {
                 Category
               </label>
 
-              <select
+              <StyledSelect className="finos-select"
                 value={formData.category_id}
                 onChange={(event) =>
                   updateForm(
@@ -8839,7 +8885,7 @@ function getActualSpending(categoryId, month) {
 
                 ))}
 
-              </select>
+              </StyledSelect>
 
             </div>
 
@@ -9066,6 +9112,14 @@ const isLoanDisbursement = categories.some((category) =>
   String(category.id) === String(formData.category_id) &&
   String(category.name || "").trim().toLowerCase() === "loan disbursement"
 ) || formData.category_id === "__loan_disbursement__";
+
+  // Only show categories that match the selected transaction type.
+  const transactionCategories = categories.filter((category) => {
+    const type = String(category.category_type || "").trim().toLowerCase();
+    if (formData.transaction_type === "income") return type === "income";
+    if (formData.transaction_type === "expense") return type === "expense";
+    return false;
+  });
   // ----------------------------------------------------------
   // API CONFIGURATION
   // ----------------------------------------------------------
@@ -9172,6 +9226,7 @@ const isLoanDisbursement = categories.some((category) =>
     setFormData((previous) => ({
       ...previous,
       [name]: value,
+      ...(name === "transaction_type" ? { category_id: "" } : {}),
     }));
   };
 
@@ -9206,8 +9261,26 @@ const isLoanDisbursement = categories.some((category) =>
       const accountsData =
         await accountsResponse.json();
 
-      const categoriesData =
-        await categoriesResponse.json();
+      let categoriesData = await categoriesResponse.json();
+      categoriesData = Array.isArray(categoriesData) ? categoriesData : [];
+      const existingNames = new Set(categoriesData.map((item) => String(item.name || "").trim().toLowerCase()));
+      for (const [category_type, name, description] of TAX_READY_DEFAULT_CATEGORIES) {
+        if (existingNames.has(name.toLowerCase())) continue;
+        try {
+          const seedResponse = await fetch(`${API_BASE_URL}/api/categories/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: USER_ID, name, category_type, description }),
+          });
+          if (seedResponse.ok) {
+            const created = await seedResponse.json();
+            categoriesData.push(created);
+            existingNames.add(name.toLowerCase());
+          }
+        } catch (seedError) {
+          console.warn("Could not seed starter category:", name, seedError);
+        }
+      }
 
       setAccounts(
         Array.isArray(accountsData)
@@ -9645,7 +9718,7 @@ const transactionFormModal = showForm && (
           Account
         </label>
 
-        <select
+        <StyledSelect className="finos-select"
           name="account_id"
           value={formData.account_id}
           onChange={handleFormChange}
@@ -9669,16 +9742,16 @@ const transactionFormModal = showForm && (
     {account.name}
   </option>
 ))}
-        </select>
+        </StyledSelect>
       </div>
 
       {formData.transaction_type === "transfer" && (
         <div style={{ marginBottom: "16px" }}>
           <label style={{ display: "block", marginBottom: "7px", fontSize: "13px", color: "rgba(255,255,255,0.70)" }}>To Account</label>
-          <select name="transfer_to_account_id" value={formData.transfer_to_account_id} onChange={handleFormChange} style={{ width: "100%", padding: "13px 14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", background: "#151525", color: "#fff", outline: "none", boxSizing: "border-box" }}>
+          <StyledSelect name="transfer_to_account_id" value={formData.transfer_to_account_id} onChange={handleFormChange} style={{ width: "100%", padding: "13px 14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", background: "#151525", color: "#fff", outline: "none", boxSizing: "border-box" }}>
             <option value="">Select destination account</option>
             {accounts.filter((account) => String(account.id) !== String(formData.account_id)).map((account) => <option key={account.id} value={account.id}>{account.name} ({account.account_type})</option>)}
-          </select>
+          </StyledSelect>
         </div>
       )}
 
@@ -9696,7 +9769,7 @@ const transactionFormModal = showForm && (
           Category
         </label>
 
-        <select
+        <StyledSelect className="finos-select"
           name="category_id"
           value={formData.category_id}
           onChange={handleFormChange}
@@ -9712,11 +9785,11 @@ const transactionFormModal = showForm && (
           }}
         >
           <option value="">Select category</option>
-          {!categories.some((category) => String(category.name || "").trim().toLowerCase() === "loan disbursement") && (
-            <option value="__loan_disbursement__">Loan Disbursement</option>
+          {formData.transaction_type === "income" && !categories.some((category) => String(category.name || "").trim().toLowerCase() === "loan disbursement" && String(category.category_type || "").toLowerCase() === "income") && (
+            <option value="__loan_disbursement__">Loan Disbursement (non-taxable loan proceeds)</option>
           )}
 
-{categories.map((category) => (
+{transactionCategories.map((category) => (
   <option
     key={category.id}
     value={category.id}
@@ -9724,7 +9797,7 @@ const transactionFormModal = showForm && (
     {category.name}
   </option>
 ))}
-        </select>
+        </StyledSelect>
       </div>}
 
       {/* AMOUNT + DATE */}
@@ -9810,7 +9883,7 @@ const transactionFormModal = showForm && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
             <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Loan Name *<input required value={formData.loan_name} name="loan_name" onChange={handleFormChange} placeholder="e.g. HDFC Personal Loan" style={loanInputStyle} /></label>
             <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Lender Name *<input required value={formData.lender_name} name="lender_name" onChange={handleFormChange} placeholder="e.g. HDFC Bank" style={loanInputStyle} /></label>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Loan Type *<select required name="loan_type" value={formData.loan_type} onChange={handleFormChange} style={loanInputStyle}>{["Personal Loan","Home Loan","Car Loan","Education Loan","Business Loan","Gold Loan","Loan Against Property","Other"].map((x) => <option key={x} value={x}>{x}</option>)}</select></label>
+            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Loan Type *<StyledSelect required name="loan_type" value={formData.loan_type} onChange={handleFormChange} style={loanInputStyle}>{["Personal Loan","Home Loan","Car Loan","Education Loan","Business Loan","Gold Loan","Loan Against Property","Other"].map((x) => <option key={x} value={x}>{x}</option>)}</StyledSelect></label>
             <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Gross Principal (₹) *<input required type="number" min="0.01" step="0.01" name="principal_amount" value={formData.principal_amount} onChange={handleFormChange} placeholder="500000" style={loanInputStyle} /></label>
             <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Interest Rate (% p.a.)<input type="number" min="0" max="100" step="0.01" name="interest_rate" value={formData.interest_rate} onChange={handleFormChange} placeholder="12" style={loanInputStyle} /></label>
             <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Tenure (months)<input type="number" min="1" max="600" name="tenure_months" value={formData.tenure_months} onChange={handleFormChange} placeholder="36" style={loanInputStyle} /></label>
@@ -10375,7 +10448,51 @@ const transactionFormModal = showForm && (
 // CATEGORIES
 // ============================================================
 
+// India-focused starter categories. Parent/subcategory paths are stored in the
+  // existing category name field so this update remains compatible with the live API.
+const TAX_READY_DEFAULT_CATEGORIES = [
+  ["income", "Salary", "Salary and employment income"],
+  ["income", "Business or Profession", "Business/professional income; tax treatment requires classification"],
+  ["income", "House Property Rent", "Rental income from house property"],
+  ["income", "Interest > Savings Account Interest", "Interest income; review applicable tax treatment"],
+  ["income", "Interest > Fixed Deposit Interest", "Bank/post office deposit interest"],
+  ["income", "Interest > Other Interest", "Other interest income"],
+  ["income", "Dividends", "Dividend income"],
+  ["income", "Capital Gains > Equity Shares", "Sale of equity shares; classify STCG/LTCG separately"],
+  ["income", "Capital Gains > Equity Mutual Funds", "Sale/redemption of equity mutual funds"],
+  ["income", "Capital Gains > Debt Funds and Bonds", "Sale/redemption; tax rules depend on asset and acquisition date"],
+  ["income", "Capital Gains > Property", "Sale of land/building; review cost and holding period"],
+  ["income", "Capital Gains > Digital Assets", "Virtual digital assets; special rules may apply"],
+  ["income", "Other Sources > Gifts", "Gift receipt; exemptions and reporting depend on circumstances"],
+  ["income", "Other Sources > Cashback and Rewards", "Classify based on nature; not automatically taxable"],
+  ["income", "Other Sources > Other Taxable Income", "Review before tax filing"],
+  ["income", "Loan Disbursement", "Liability proceeds; not taxable income by default"],
+  ["expense", "Food & Dining", "Personal spending"],
+  ["expense", "Housing > Rent", "Rent paid"],
+  ["expense", "Housing > Repairs and Maintenance", "Repairs/maintenance; deductibility depends on context"],
+  ["expense", "Utilities > Electricity", "Electricity and power"],
+  ["expense", "Utilities > Internet and Phone", "Connectivity"],
+  ["expense", "Transport > Fuel", "Fuel and charging"],
+  ["expense", "Transport > Public Transport and Taxi", "Public transport and rides"],
+  ["expense", "Healthcare > Medical Expenses", "Healthcare spending"],
+  ["expense", "Education", "Education spending"],
+  ["expense", "Insurance > Life Insurance Premium", "Potential tax deduction; verify eligibility and limits"],
+  ["expense", "Insurance > Health Insurance Premium", "Potential tax deduction; verify eligibility and limits"],
+  ["expense", "Tax Payments > Advance Tax", "Income-tax payment"],
+  ["expense", "Tax Payments > Self Assessment Tax", "Income-tax payment"],
+  ["expense", "Tax Payments > TDS/TCS Adjustment", "Record/reconcile withholding; do not treat as an ordinary expense automatically"],
+  ["expense", "Investment Purchase", "Asset acquisition; not an ordinary expense for tax purposes by default"],
+  ["expense", "Loan Repayment > Principal", "Principal repayment reduces liability; not interest expense"],
+  ["expense", "Loan Repayment > Interest", "Interest component; deductibility depends on purpose and applicable rules"],
+  ["expense", "Bank Charges and Fees", "Banking fees"],
+  ["expense", "Other Expense", "Other spending; classify before tax reporting"],
+  ["other", "Transfer Between Own Accounts", "Internal transfer; not income or expense"],
+  ["other", "Credit Card Settlement", "Settlement of recorded credit-card liability; avoid double-counting expenses"],
+];
+
+
 function Category() {
+
 
   // ----------------------------------------------------------
   // STATE
@@ -10396,6 +10513,7 @@ function Category() {
   const [formData, setFormData] = useState({
     name: "",
     category_type: "expense",
+    parent_category: "",
     description: "",
   });
 
@@ -10429,11 +10547,27 @@ function Category() {
         );
       }
 
-      const data = await response.json();
-
-      setCategories(
-        Array.isArray(data) ? data : []
-      );
+      let data = await response.json();
+      data = Array.isArray(data) ? data : [];
+      const existingNames = new Set(data.map((item) => String(item.name || "").trim().toLowerCase()));
+      for (const [category_type, name, description] of TAX_READY_DEFAULT_CATEGORIES) {
+        if (existingNames.has(name.toLowerCase())) continue;
+        try {
+          const seedResponse = await fetch(`${API_BASE_URL}/api/categories/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: USER_ID, name, category_type, description }),
+          });
+          if (seedResponse.ok) {
+            const created = await seedResponse.json();
+            data.push(created);
+            existingNames.add(name.toLowerCase());
+          }
+        } catch (seedError) {
+          console.warn("Could not seed starter category:", name, seedError);
+        }
+      }
+      setCategories(data);
 
     } catch (err) {
 
@@ -10475,6 +10609,7 @@ function Category() {
     setFormData({
       name: "",
       category_type: "expense",
+      parent_category: "",
       description: "",
     });
 
@@ -10492,12 +10627,12 @@ function Category() {
 
     setEditingCategory(category);
 
+    const pathParts = String(category.name || "").split(" > ");
     setFormData({
-      name: category.name || "",
-      category_type:
-        category.category_type || "expense",
-      description:
-        category.description || "",
+      name: pathParts.pop() || "",
+      category_type: category.category_type || "expense",
+      parent_category: pathParts.join(" > "),
+      description: category.description || "",
     });
 
     setMessage("");
@@ -10531,8 +10666,10 @@ function Category() {
     setMessage("");
     setError("");
 
-    const name =
-      formData.name.trim();
+    const leafName = formData.name.trim();
+    const name = formData.parent_category
+      ? `${formData.parent_category} > ${leafName}`
+      : leafName;
 
     if (!name) {
 
@@ -10628,6 +10765,7 @@ function Category() {
       setFormData({
         name: "",
         category_type: "expense",
+        parent_category: "",
         description: "",
       });
 
@@ -11114,7 +11252,7 @@ function Category() {
                 Category Type
               </label>
 
-              <select
+              <StyledSelect className="finos-select"
                 value={
                   formData.category_type
                 }
@@ -11144,10 +11282,27 @@ function Category() {
                   Other
                 </option>
 
-              </select>
+              </StyledSelect>
 
             </div>
 
+
+            {/* OPTIONAL PARENT: selecting one creates a subcategory path */}
+            <div style={{ marginBottom: "16px" }}>
+              <label>Parent Category (optional)</label>
+              <StyledSelect className="finos-select"
+                value={formData.parent_category}
+                onChange={(event) => updateForm("parent_category", event.target.value)}
+                className="finos-select"
+                style={{ width: "100%", marginTop: "8px", padding: "12px", borderRadius: "12px" }}
+              >
+                <option value="">None — create a main category</option>
+                {categories
+                  .filter((category) => category.category_type === formData.category_type && !String(category.name || "").includes(" > ") && (!editingCategory || category.id !== editingCategory.id))
+                  .map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}
+              </StyledSelect>
+              <p style={{ marginTop: "6px", fontSize: "11px", color: "rgba(255,255,255,.5)" }}>Choose a parent to create a subcategory. Existing categories and transaction records are preserved.</p>
+            </div>
 
             {/* DESCRIPTION */}
 
@@ -12787,7 +12942,7 @@ function Bills() {
       Category
     </label>
 
-    <select
+    <StyledSelect className="finos-select"
       value={formData.category_id}
       onChange={(event) =>
         handleChange(
@@ -12829,7 +12984,7 @@ function Bills() {
             {category.name}
           </option>
         ))}
-    </select>
+    </StyledSelect>
   </div>
 
   {/* PAYMENT ACCOUNT */}
@@ -12852,7 +13007,7 @@ function Bills() {
       Payment Account
     </label>
 
-    <select
+    <StyledSelect className="finos-select"
       value={formData.account_id}
       onChange={(event) =>
         handleChange(
@@ -12891,7 +13046,7 @@ function Bills() {
             {account.name}
           </option>
         ))}
-    </select>
+    </StyledSelect>
   </div>
 
   {/* FREQUENCY */}
@@ -12914,7 +13069,7 @@ function Bills() {
       Frequency
     </label>
 
-    <select
+    <StyledSelect className="finos-select"
       value={formData.frequency}
       onChange={(event) =>
         handleChange(
@@ -12945,7 +13100,7 @@ function Bills() {
       </option>
       <option value="yearly">Yearly</option>
       <option value="custom">Custom</option>
-    </select>
+    </StyledSelect>
   </div>
 
   {/* NEXT DUE DATE */}
@@ -13013,7 +13168,7 @@ function Bills() {
       Status
     </label>
 
-    <select
+    <StyledSelect className="finos-select"
       value={formData.status}
       onChange={(event) =>
         handleChange(
@@ -13040,7 +13195,7 @@ function Bills() {
       <option value="cancelled">
         Cancelled
       </option>
-    </select>
+    </StyledSelect>
   </div>
 
   {/* NOTES */}

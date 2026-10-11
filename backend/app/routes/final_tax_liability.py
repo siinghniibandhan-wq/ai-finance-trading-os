@@ -118,29 +118,32 @@ def decimal(value):
 # CAPITAL-GAINS CLASSIFICATION SAFETY
 # ============================================================
 
-def split_capital_gains_tax_bases(stcg, ltcg, stt_confirmed):
-    """Return the special-rate and ordinary-slab gain bases.
+def split_capital_gains_tax_bases(
+    stcg,
+    ltcg,
+    stt_confirmed,
+    ltcg_112a_confirmed=False,
+):
+    """Split gains only when eligibility for the special section is confirmed.
 
-    STCG is only taxed under Section 111A when the required STT
-    conditions are confirmed. If confirmation is absent, keep the gain
-    in ordinary slab income and mark the assessment conditional; never
-    drop it from both tax bases. LTCG is handled by the existing Section
-    112A path in this engine.
+    These confirmation flags are user-supplied facts, not independent proof.
+    Unconfirmed gains stay in the ordinary slab base so they cannot disappear
+    from both tax bases. The assessment must remain conditional until the
+    relevant asset/transaction eligibility has been checked.
     """
     stcg_amount = max(decimal(stcg), Decimal("0"))
     ltcg_amount = max(decimal(ltcg), Decimal("0"))
 
-    if stt_confirmed:
-        return {
-            "stcg_special_rate": stcg_amount,
-            "stcg_ordinary_slab": Decimal("0"),
-            "ltcg_special_rate": ltcg_amount,
-        }
+    stcg_special = stcg_amount if stt_confirmed else Decimal("0")
+    stcg_ordinary = Decimal("0") if stt_confirmed else stcg_amount
+    ltcg_special = ltcg_amount if ltcg_112a_confirmed else Decimal("0")
+    ltcg_ordinary = Decimal("0") if ltcg_112a_confirmed else ltcg_amount
 
     return {
-        "stcg_special_rate": Decimal("0"),
-        "stcg_ordinary_slab": stcg_amount,
-        "ltcg_special_rate": ltcg_amount,
+        "stcg_special_rate": stcg_special,
+        "stcg_ordinary_slab": stcg_ordinary,
+        "ltcg_special_rate": ltcg_special,
+        "ltcg_ordinary_slab": ltcg_ordinary,
     }
 
 
@@ -973,6 +976,9 @@ def get_final_tax_liability(
     stt_confirmed: bool = Query(
         False
     ),
+    # This confirms the taxpayer's classification input only; it is not
+    # independent evidence that Section 112A eligibility has been verified.
+    ltcg_112a_confirmed: bool = Query(False),
     # Optional self-reported credits. None means unknown, not zero.
     tds_credit: float | None = Query(None, ge=0),
     advance_tax_credit: float | None = Query(None, ge=0),
@@ -1103,6 +1109,7 @@ def get_final_tax_liability(
         stcg,
         ltcg,
         stt_confirmed,
+        ltcg_112a_confirmed=ltcg_112a_confirmed,
     )
 
     if stt_confirmed:
@@ -1118,14 +1125,14 @@ def get_final_tax_liability(
     # LTCG 112A
     # --------------------------------------------------------
 
+    ltcg_112a_gain = capital_gain_bases["ltcg_special_rate"]
     ltcg_excess = max(
-        ltcg - LTCG_112A_EXEMPTION,
+        ltcg_112a_gain - LTCG_112A_EXEMPTION,
         Decimal("0"),
     )
 
     ltcg_tax = money(
-        ltcg_excess
-        * LTCG_112A_RATE
+        ltcg_excess * LTCG_112A_RATE
     )
 
     special_rate_tax = money(
@@ -1300,13 +1307,13 @@ def get_final_tax_liability(
 
     elif not stt_confirmed and stcg > 0:
 
-        engine_status = (
-            "requires_stt_confirmation"
-        )
+        engine_status = "requires_stt_confirmation"
+        liability_status = "conditional"
 
-        liability_status = (
-            "conditional"
-        )
+    elif not ltcg_112a_confirmed and ltcg > 0:
+
+        engine_status = "requires_ltcg_112a_eligibility_confirmation"
+        liability_status = "conditional"
 
     else:
 
@@ -1498,6 +1505,12 @@ def get_final_tax_liability(
                 "stt_confirmed":
                     stt_confirmed,
 
+                "eligibility_note": (
+                    "Self-reported confirmation; verify asset and transaction conditions."
+                    if stt_confirmed else
+                    "Eligibility not confirmed; gain remains in ordinary slab income."
+                ),
+
                 "tax":
                     money(stcg_tax),
             },
@@ -1506,6 +1519,15 @@ def get_final_tax_liability(
 
                 "gain":
                     money(ltcg),
+
+                "eligibility_confirmed":
+                    ltcg_112a_confirmed,
+
+                "eligibility_note": (
+                    "Self-reported confirmation; verify asset, acquisition/transfer dates, and statutory conditions."
+                    if ltcg_112a_confirmed else
+                    "Section 112A eligibility not confirmed; gain remains in ordinary slab income."
+                ),
 
                 "section":
                     "112A",

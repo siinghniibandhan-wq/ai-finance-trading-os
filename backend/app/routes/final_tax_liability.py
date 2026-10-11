@@ -803,6 +803,126 @@ def summarize_verified_tax_credits(entries):
 
 
 # ============================================================
+# OLD VS NEW REGIME COMPARISON
+# ============================================================
+
+def build_regime_comparison(old_result, new_result):
+    """Compare two liability results without pretending incomplete
+    assessments are final. Tax-credit balances are deliberately excluded
+    from this comparison because the comparison is based on tax before
+    TDS/advance-tax credits.
+    """
+    results = {"old": old_result, "new": new_result}
+    summaries = {}
+    incomplete_reasons = {}
+
+    for regime, result in results.items():
+        if result.get("status") != "success":
+            incomplete_reasons[regime] = [
+                result.get("message", "Tax engine did not return a successful result.")
+            ]
+            summaries[regime] = {"status": "unavailable", "tax_before_credits": None}
+            continue
+
+        reasons = []
+        if result.get("liability_status") != "calculated":
+            reasons.append(result.get("engine_status", "liability_not_final"))
+        taxable = result.get("taxable_income", {})
+        if taxable.get("final_taxable_income") is None:
+            reasons.append("final_taxable_income_unavailable")
+
+        tax_value = result.get("final_tax", {}).get("total_tax_payable")
+        if tax_value is None:
+            reasons.append("tax_amount_unavailable")
+
+        summaries[regime] = {
+            "status": "incomplete" if reasons else "calculated",
+            "tax_before_credits": tax_value,
+            "taxable_income": taxable.get("final_taxable_income"),
+            "tax_credits_applied": False,
+        }
+        if reasons:
+            incomplete_reasons[regime] = sorted(set(reasons))
+
+    if incomplete_reasons:
+        return {
+            "status": "incomplete",
+            "message": "Both regimes must have complete, calculated assessments before a lower-tax comparison is shown.",
+            "regimes": summaries,
+            "missing_or_conditional_items": incomplete_reasons,
+            "comparison": None,
+        }
+
+    old_tax = decimal(summaries["old"]["tax_before_credits"])
+    new_tax = decimal(summaries["new"]["tax_before_credits"])
+    difference = money(abs(old_tax - new_tax))
+    if old_tax == new_tax:
+        lower_regime = "tie"
+    else:
+        lower_regime = "old" if old_tax < new_tax else "new"
+
+    return {
+        "status": "calculated",
+        "message": "Indicative comparison of calculated tax before TDS, advance-tax, and self-assessment-tax credits.",
+        "regimes": summaries,
+        "missing_or_conditional_items": {},
+        "comparison": {
+            "lower_tax_regime": lower_regime,
+            "estimated_difference": difference,
+            "is_final_regime_recommendation": False,
+            "note": "Confirm eligibility, all income heads, special-rate rules, and applicable financial-year law before choosing a regime.",
+        },
+    }
+
+
+@router.get("/compare-regimes")
+def compare_tax_regimes(
+    user_id: int = Query(..., ge=1),
+    financial_year: str = Query("2026-27"),
+    residential_status: str = Query("resident"),
+    stt_confirmed: bool = Query(False),
+    db: Session = Depends(get_db),
+):
+    """Run the existing income/liability engines for old and new regimes.
+
+    This endpoint is read-only. It intentionally does not copy income data,
+    create records, or apply user-entered provisional credit overrides.
+    """
+    old_result = get_final_tax_liability(
+        user_id=user_id,
+        financial_year=financial_year,
+        tax_regime="old",
+        residential_status=residential_status,
+        stt_confirmed=stt_confirmed,
+        tds_credit=None,
+        advance_tax_credit=None,
+        self_assessment_tax_credit=None,
+        db=db,
+    )
+    new_result = get_final_tax_liability(
+        user_id=user_id,
+        financial_year=financial_year,
+        tax_regime="new",
+        residential_status=residential_status,
+        stt_confirmed=stt_confirmed,
+        tds_credit=None,
+        advance_tax_credit=None,
+        self_assessment_tax_credit=None,
+        db=db,
+    )
+    comparison = build_regime_comparison(old_result, new_result)
+    return {
+        "status": comparison["status"],
+        "user_id": user_id,
+        "financial_year": financial_year,
+        "residential_status": residential_status,
+        "engine": "Old vs New Regime Comparison",
+        "read_only": True,
+        **{key: value for key, value in comparison.items() if key != "status"},
+    }
+
+
+# ============================================================
 # ENDPOINT
 # ============================================================
 

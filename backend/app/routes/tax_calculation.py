@@ -99,6 +99,18 @@ def lot_has_section_111a_confirmation(lot, transaction):
     )
 
 
+def capital_gains_response_status(engine_status):
+    """Do not label an unreconciled capital-gains result as a success."""
+    if engine_status == "requires_review":
+        return "review_required"
+    if engine_status in {
+        "requires_stt_confirmation",
+        "requires_section_112a_eligibility_confirmation",
+    }:
+        return "conditional"
+    return "success"
+
+
 def requires_capital_gains_review(
     *, has_unclassified_lot, unclassified_amount, has_unmatched_lots,
     unmatched_quantity,
@@ -615,7 +627,9 @@ def tax_calculation(
     # --------------------------------------------------------
 
     return {
-        "status": "success",
+        # An HTTP-successful calculation request may still be incomplete.
+        # Expose that distinction in the top-level response for API clients.
+        "status": capital_gains_response_status(engine_status),
 
         "user_id": user_id,
 

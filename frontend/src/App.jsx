@@ -6856,6 +6856,7 @@ function Accounts() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   // ----------------------------------------------------------
   // ACCOUNT FORM STATE
@@ -6887,50 +6888,36 @@ function Accounts() {
 
   // ----------------------------------------------------------
   // LOAD ACCOUNTS
+  // Keep this function in component scope so deleteAccount can
+  // refresh the list after a successful deactivation.
   // ----------------------------------------------------------
 
-  useEffect(() => {
+  const loadAccounts = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-    const loadAccounts = async () => {
+      const response = await fetch(
+        `${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`
+      );
 
-      try {
-
-        setLoading(true);
-        setError("");
-
-        const response = await fetch(
-          `${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Accounts API error: ${response.status}`
-          );
-        }
-
-        const data = await response.json();
-
-        setAccounts(data);
-
-      } catch (err) {
-
-        console.error("Accounts API error:", err);
-
-        setError(
-          "Unable to load accounts."
-        );
-
-      } finally {
-
-        setLoading(false);
-
+      if (!response.ok) {
+        throw new Error(`Accounts API error: ${response.status}`);
       }
-    };
 
+      const data = await response.json();
+      setAccounts(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Accounts API error:", err);
+      setError("Unable to load accounts.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadAccounts();
-
   }, []);
-
 
 // ----------------------------------------------------------
 // SAVE ACCOUNT
@@ -7285,13 +7272,6 @@ const deleteAccount = async () => {
 
       </section>
 
-
-      {/* INCOME / EXPENSE / TRANSFER TABS */}
-      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", margin: "18px 0" }}>
-        {[ ["income", "Income"], ["expense", "Expense"], ["transfer", "Transfer"] ].map(([type, label]) => (
-          <button key={type} type="button" onClick={() => setActiveTransactionTab(type)} style={{ padding: "10px 16px", borderRadius: "12px", border: activeTransactionTab === type ? "1px solid rgba(96,165,250,0.65)" : "1px solid rgba(255,255,255,0.1)", background: activeTransactionTab === type ? "rgba(96,165,250,0.14)" : "rgba(255,255,255,0.04)", color: "#fff", cursor: "pointer", fontWeight: 700 }}>{label}</button>
-        ))}
-      </div>
 
       {/* ====================================================
           ERROR

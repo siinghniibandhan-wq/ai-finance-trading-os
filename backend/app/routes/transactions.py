@@ -242,17 +242,22 @@ def get_transactions(
 
 
 # ============================================================
-# GET SINGLE TRANSACTION
+# GET SINGLE TRANSACTION — AUTHENTICATED OWNER ONLY
 # ============================================================
 
 @router.get("/{transaction_id}", response_model=TransactionResponse)
 def get_transaction(
     transaction_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    # Retrieve the transaction only if it belongs to this user.
     transaction = (
         db.query(Transaction)
-        .filter(Transaction.id == transaction_id)
+        .filter(
+            Transaction.id == transaction_id,
+            Transaction.user_id == current_user.id,
+        )
         .first()
     )
 
@@ -263,7 +268,6 @@ def get_transaction(
         )
 
     return transaction
-
 
 # ============================================================
 # UPDATE TRANSACTION

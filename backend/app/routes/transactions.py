@@ -10,6 +10,7 @@ from app.models import (
     User, Account, Category, Transaction, Loan, Liability,
     LoanMovement, LoanReceivable,
 )
+from app.routes.auth import get_current_user
 from app.schemas import (
     TransactionCreate,
     TransactionUpdate,
@@ -57,7 +58,14 @@ def _reverse_balance_effect(account: Account, transaction_type: str, amount):
 def create_transaction(
     transaction_data: TransactionCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+        # SECURITY: Prevent creating transactions for another user.
+    if transaction_data.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You cannot create transactions for another user.",
+        )
     # --------------------------------------------------------
     # Check user
     # --------------------------------------------------------

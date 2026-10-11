@@ -163,7 +163,16 @@ const navigation = [
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [activePage, setActivePage] = useState("Wealth Manager");
+  // Restore the last selected page after refresh; fall back safely for invalid stored values.
+  const validPages = new Set(["Wealth Manager", "Accounts", "Transactions", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Playground", "Finance Diary", "Settings", "Dashboard"]);
+  const [activePage, setActivePage] = useState(() => {
+    try {
+      const savedPage = window.localStorage.getItem("financial-os-active-page");
+      return savedPage && validPages.has(savedPage) ? savedPage : "Wealth Manager";
+    } catch {
+      return "Wealth Manager";
+    }
+  });
 
   // ----------------------------------------------------------
   // NAVIGATION HANDLER
@@ -171,6 +180,8 @@ export default function App() {
 
   const handleNavigation = (page) => {
     setActivePage(page);
+    // Persist only the selected page name, not financial or account data.
+    try { window.localStorage.setItem("financial-os-active-page", page); } catch { /* storage may be disabled */ }
     setSidebarOpen(false);
   };
 
@@ -3936,6 +3947,8 @@ function Portfolio() {
   const [investmentForm, setInvestmentForm] = useState({
     name: "",
     investment_type: "Stocks",
+    asset_class: "Equity",
+    product_type: "Stocks",
     symbol: "",
     quantity: "",
     buy_price: "",
@@ -3955,7 +3968,7 @@ function Portfolio() {
 
   // Reset every add/edit field so the two form modes never leak into each other.
   const resetInvestmentForm = () => {
-    setInvestmentForm({ name: "", investment_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: "", broker: "", fees: "", notes: "" });
+    setInvestmentForm({ name: "", investment_type: "Stocks", asset_class: "Equity", product_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: "", broker: "", fees: "", notes: "" });
     setInstrumentQuery("");
     setInstrumentResults([]);
     setInstrumentSearchError("");
@@ -4228,6 +4241,8 @@ const handleEditInvestment = (investment) => {
     name: investment.name || "",
     investment_type:
       investment.investment_type || "Stocks",
+    asset_class: investment.asset_class || "Equity",
+    product_type: investment.product_type || investment.investment_type || "Stocks",
     symbol: investment.symbol || "",
     quantity: investment.quantity || "",
     buy_price: investment.buy_price || "",
@@ -4630,8 +4645,8 @@ const handleInvestmentTransactionSubmit =
         investment_type:
           investmentForm.investment_type,
 
-        asset_class: ["Stocks", "ETFs", "Mutual Funds"].includes(investmentForm.investment_type) ? "Equity" : (["Bonds", "Fixed Deposits"].includes(investmentForm.investment_type) ? "Fixed Income" : (["Gold", "Silver"].includes(investmentForm.investment_type) ? "Commodities" : "Other")),
-        product_type: investmentForm.investment_type,
+        asset_class: investmentForm.asset_class || "Other",
+        product_type: investmentForm.product_type || investmentForm.investment_type,
         instrument_id: investmentForm.symbol.trim() || investmentForm.name.trim().toUpperCase(),
 
         symbol:
@@ -5094,7 +5109,23 @@ const summaryCards = [
               </div>
             )}
 
-            {/* INVESTMENT TYPE */}
+            {/* ASSET CLASS — first level of the investment hierarchy */}
+            <div>
+              <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Asset Class</label>
+              <select value={investmentForm.asset_class || "Equity"} onChange={(event) => setInvestmentForm((previous) => ({ ...previous, asset_class: event.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "#151525", color: "#ffffff", fontSize: "12px" }}>
+                <option value="Equity">Equity</option><option value="Fixed Income">Fixed Income</option><option value="Commodities">Commodities</option><option value="Real Estate">Real Estate</option><option value="Digital Assets">Digital Assets</option><option value="Alternatives">Alternatives</option><option value="Other">Other</option>
+              </select>
+            </div>
+
+            {/* PRODUCT TYPE — second level; retained independently from instrument identity */}
+            <div>
+              <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Product Type</label>
+              <select value={investmentForm.product_type || investmentForm.investment_type} onChange={(event) => setInvestmentForm((previous) => ({ ...previous, product_type: event.target.value, investment_type: event.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "#151525", color: "#ffffff", fontSize: "12px" }}>
+                <option value="Stocks">Stocks</option><option value="ETFs">ETFs</option><option value="Mutual Funds">Mutual Funds</option><option value="Bonds">Bonds</option><option value="Government Securities">Government Securities</option><option value="Fixed Deposits">Fixed Deposits</option><option value="Gold">Gold</option><option value="Silver">Silver</option><option value="REITs">REITs</option><option value="InvITs">InvITs</option><option value="Cryptocurrency">Cryptocurrency</option><option value="Other">Other</option>
+              </select>
+            </div>
+
+            {/* INVESTMENT TYPE (existing compatibility field) */}
 
             <select
               value={investmentForm.investment_type}
@@ -5103,6 +5134,7 @@ const summaryCards = [
                 setInvestmentForm((previous) => ({
                   ...previous,
                   investment_type: nextType,
+                  product_type: nextType,
                   name: "",
                   symbol: "",
                   current_price: "",

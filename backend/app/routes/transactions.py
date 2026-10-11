@@ -212,18 +212,28 @@ def create_transaction(
 
     return transaction
 
+
 # ============================================================
-# GET ALL TRANSACTIONS
+# GET TRANSACTIONS — AUTHENTICATED USER ONLY
 # ============================================================
 
 @router.get("/", response_model=list[TransactionResponse])
 def get_transactions(
-    user_id: int,
+    user_id: int | None = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    # Reject attempts to access another user's transactions.
+    if user_id is not None and user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You cannot access another user's transactions.",
+        )
+
+    # Return only the logged-in user's transactions.
     transactions = (
         db.query(Transaction)
-        .filter(Transaction.user_id == user_id)
+        .filter(Transaction.user_id == current_user.id)
         .order_by(Transaction.transaction_date.desc())
         .all()
     )

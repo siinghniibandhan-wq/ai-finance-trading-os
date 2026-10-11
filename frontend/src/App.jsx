@@ -163,25 +163,37 @@ const navigation = [
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Restore the last selected page after refresh; fall back safely for invalid stored values.
-  const validPages = new Set(["Wealth Manager", "Accounts", "Transactions", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Playground", "Finance Diary", "Settings", "Dashboard"]);
-  const [activePage, setActivePage] = useState(() => {
-    try {
-      const savedPage = window.localStorage.getItem("financial-os-active-page");
-      return savedPage && validPages.has(savedPage) ? savedPage : "Wealth Manager";
-    } catch {
-      return "Wealth Manager";
-    }
-  });
+  // Keep navigation in the URL so the current section survives refreshes,
+  // direct links, and browser Back/Forward throughout the application.
+  const validPages = new Set([
+    "Dashboard", "Wealth Manager", "Accounts", "Transactions",
+    "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio",
+    "Holdings", "Investment Transactions", "Markets", "Goals",
+    "AI Assistant", "Tax", "Playground", "Settings", "Finance Diary"
+  ]);
+  const getPageFromLocation = () => {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get("page");
+    return page && validPages.has(page) ? page : "Wealth Manager";
+  };
+  const [activePage, setActivePage] = useState(getPageFromLocation);
+
+  useEffect(() => {
+    const restoreLocation = () => setActivePage(getPageFromLocation());
+    window.addEventListener("popstate", restoreLocation);
+    return () => window.removeEventListener("popstate", restoreLocation);
+  }, []);
 
   // ----------------------------------------------------------
   // NAVIGATION HANDLER
   // ----------------------------------------------------------
 
   const handleNavigation = (page) => {
-    setActivePage(page);
-    // Persist only the selected page name, not financial or account data.
-    try { window.localStorage.setItem("financial-os-active-page", page); } catch { /* storage may be disabled */ }
+    const nextPage = validPages.has(page) ? page : "Wealth Manager";
+    const url = new URL(window.location.href);
+    url.searchParams.set("page", nextPage);
+    window.history.pushState({ page: nextPage }, "", `${url.pathname}${url.search}${url.hash}`);
+    setActivePage(nextPage);
     setSidebarOpen(false);
   };
 
@@ -3946,9 +3958,8 @@ function Portfolio() {
 
   const [investmentForm, setInvestmentForm] = useState({
     name: "",
-    investment_type: "Stocks",
     asset_class: "Equity",
-    product_type: "Stocks",
+    investment_type: "Stocks",
     symbol: "",
     quantity: "",
     buy_price: "",
@@ -3968,7 +3979,7 @@ function Portfolio() {
 
   // Reset every add/edit field so the two form modes never leak into each other.
   const resetInvestmentForm = () => {
-    setInvestmentForm({ name: "", investment_type: "Stocks", asset_class: "Equity", product_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: "", broker: "", fees: "", notes: "" });
+    setInvestmentForm({ name: "", asset_class: "Equity", investment_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: "", broker: "", fees: "", notes: "" });
     setInstrumentQuery("");
     setInstrumentResults([]);
     setInstrumentSearchError("");
@@ -4239,10 +4250,9 @@ const handleEditInvestment = (investment) => {
   setCustomBroker(standardBrokers.includes(investment.broker) ? "" : (investment.broker || ""));
   setInvestmentForm({
     name: investment.name || "",
+    asset_class: investment.asset_class || (["Stocks", "ETFs", "Mutual Funds"].includes(investment.investment_type) ? "Equity" : (["Bonds", "Fixed Deposits"].includes(investment.investment_type) ? "Fixed Income" : (["Gold", "Silver"].includes(investment.investment_type) ? "Commodities" : "Other"))),
     investment_type:
       investment.investment_type || "Stocks",
-    asset_class: investment.asset_class || "Equity",
-    product_type: investment.product_type || investment.investment_type || "Stocks",
     symbol: investment.symbol || "",
     quantity: investment.quantity || "",
     buy_price: investment.buy_price || "",
@@ -4646,7 +4656,7 @@ const handleInvestmentTransactionSubmit =
           investmentForm.investment_type,
 
         asset_class: investmentForm.asset_class || "Other",
-        product_type: investmentForm.product_type || investmentForm.investment_type,
+        product_type: investmentForm.investment_type,
         instrument_id: investmentForm.symbol.trim() || investmentForm.name.trim().toUpperCase(),
 
         symbol:
@@ -5109,24 +5119,27 @@ const summaryCards = [
               </div>
             )}
 
-            {/* ASSET CLASS — first level of the investment hierarchy */}
+            {/* ASSET CLASS — high-level investment classification */}
             <div>
               <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Asset Class</label>
-              <select value={investmentForm.asset_class || "Equity"} onChange={(event) => setInvestmentForm((previous) => ({ ...previous, asset_class: event.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "#151525", color: "#ffffff", fontSize: "12px" }}>
-                <option value="Equity">Equity</option><option value="Fixed Income">Fixed Income</option><option value="Commodities">Commodities</option><option value="Real Estate">Real Estate</option><option value="Digital Assets">Digital Assets</option><option value="Alternatives">Alternatives</option><option value="Other">Other</option>
+              <select
+                value={investmentForm.asset_class || "Equity"}
+                onChange={(event) => setInvestmentForm((previous) => ({ ...previous, asset_class: event.target.value }))}
+                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "#17172a", color: "#ffffff", fontSize: "12px", outline: "none" }}
+              >
+                <option value="Equity">Equity</option>
+                <option value="Fixed Income">Fixed Income</option>
+                <option value="Commodities">Commodities</option>
+                <option value="Real Estate">Real Estate</option>
+                <option value="Digital Assets">Digital Assets</option>
+                <option value="Alternatives">Alternatives</option>
+                <option value="Other">Other</option>
               </select>
             </div>
 
-            {/* PRODUCT TYPE — second level; retained independently from instrument identity */}
+            {/* PRODUCT TYPE — existing investment-type catalogue */}
             <div>
-              <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Product Type</label>
-              <select value={investmentForm.product_type || investmentForm.investment_type} onChange={(event) => setInvestmentForm((previous) => ({ ...previous, product_type: event.target.value, investment_type: event.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "#151525", color: "#ffffff", fontSize: "12px" }}>
-                <option value="Stocks">Stocks</option><option value="ETFs">ETFs</option><option value="Mutual Funds">Mutual Funds</option><option value="Bonds">Bonds</option><option value="Government Securities">Government Securities</option><option value="Fixed Deposits">Fixed Deposits</option><option value="Gold">Gold</option><option value="Silver">Silver</option><option value="REITs">REITs</option><option value="InvITs">InvITs</option><option value="Cryptocurrency">Cryptocurrency</option><option value="Other">Other</option>
-              </select>
-            </div>
-
-            {/* INVESTMENT TYPE (existing compatibility field) */}
-
+            <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Product Type</label>
             <select
               value={investmentForm.investment_type}
               onChange={(event) => {
@@ -5134,7 +5147,6 @@ const summaryCards = [
                 setInvestmentForm((previous) => ({
                   ...previous,
                   investment_type: nextType,
-                  product_type: nextType,
                   name: "",
                   symbol: "",
                   current_price: "",
@@ -5189,7 +5201,7 @@ const summaryCards = [
                 Other
               </option>
             </select>
-
+            </div>
 
             {/* Symbol is selected in Add mode and editable in Edit mode. */}
             <input

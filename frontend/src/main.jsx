@@ -556,7 +556,7 @@ function RootRouter() {
 
   // Existing dashboard.
   if (path === "/app" || path.startsWith("/app/")) {
-    return <App />;
+  return <ProtectedApp />;
   }
 
   // Login.

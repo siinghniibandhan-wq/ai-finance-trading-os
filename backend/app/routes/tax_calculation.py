@@ -41,7 +41,7 @@
 from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -59,6 +59,7 @@ from app.routes.asset_classification import (
 from app.routes.capital_gains_classification import (
     classify_gain_by_dates,
 )
+from app.routes.final_tax_liability import get_tax_rule_set
 
 
 # ============================================================
@@ -193,6 +194,10 @@ def calculate_tax(
     stcg,
     ltcg,
     stt_confirmed,
+    stcg_rate=STCG_RATE_111A,
+    ltcg_rate=LTCG_RATE_112A,
+    ltcg_exemption_limit=LTCG_112A_EXEMPTION_LIMIT,
+    cess_rate=CESS_RATE,
 ):
     """
     Calculate indicative special-rate capital-gain tax.
@@ -228,7 +233,7 @@ def calculate_tax(
 
         stcg_tax = money(
             stcg_taxable
-            * STCG_RATE_111A
+            * stcg_rate
         )
 
         stcg_status = (
@@ -248,11 +253,11 @@ def calculate_tax(
     # LTCG SECTION 112A
     # --------------------------------------------------------
 
-    if ltcg > LTCG_112A_EXEMPTION_LIMIT:
+    if ltcg > ltcg_exemption_limit:
 
         ltcg_taxable = (
             ltcg
-            - LTCG_112A_EXEMPTION_LIMIT
+            - ltcg_exemption_limit
         )
 
     else:
@@ -261,7 +266,7 @@ def calculate_tax(
 
     ltcg_tax = money(
         ltcg_taxable
-        * LTCG_RATE_112A
+        * ltcg_rate
     )
 
     # --------------------------------------------------------
@@ -279,7 +284,7 @@ def calculate_tax(
 
     cess = money(
         base_tax
-        * CESS_RATE
+        * cess_rate
     )
 
     total_tax_with_cess = money(
@@ -297,7 +302,7 @@ def calculate_tax(
                 stcg_taxable
             ),
             "rate": (
-                STCG_RATE_111A
+                stcg_rate
             ),
             "tax": stcg_tax,
             "status": stcg_status,
@@ -307,20 +312,20 @@ def calculate_tax(
             "gross_gain": ltcg,
             "section": "112A",
             "threshold": (
-                LTCG_112A_EXEMPTION_LIMIT
+                ltcg_exemption_limit
             ),
             "taxable_gain": (
                 ltcg_taxable
             ),
             "rate": (
-                LTCG_RATE_112A
+                ltcg_rate
             ),
             "tax": ltcg_tax,
         },
 
         "summary": {
             "base_tax": base_tax,
-            "cess_rate": CESS_RATE,
+            "cess_rate": cess_rate,
             "health_education_cess": cess,
             "tax_plus_cess": (
                 total_tax_with_cess
@@ -349,8 +354,18 @@ def tax_calculation(
     """
 
     # --------------------------------------------------------
-    # FINANCIAL YEAR
+    # FINANCIAL YEAR RULES — fail closed for unsupported years
     # --------------------------------------------------------
+    try:
+        rule_set = get_tax_rule_set(financial_year)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    capital_gains_rules = rule_set["capital_gains"]
+    stcg_rate = Decimal(str(capital_gains_rules["section_111a_rate"]))
+    ltcg_rate = Decimal(str(capital_gains_rules["section_112a_rate"]))
+    ltcg_exemption_limit = Decimal(str(capital_gains_rules["section_112a_annual_exemption"]))
+    cess_rate = Decimal(str(rule_set["cess_rate"]))
 
     (
         resolved_financial_year,
@@ -521,17 +536,20 @@ def tax_calculation(
         stt_confirmed=(
             stt_confirmed
         ),
+        stcg_rate=stcg_rate,
+        ltcg_rate=ltcg_rate,
+        ltcg_exemption_limit=ltcg_exemption_limit,
+        cess_rate=cess_rate,
     )
 
     # --------------------------------------------------------
     # ENGINE STATUS
     # --------------------------------------------------------
 
-    if unclassified != 0:
+    unmatched_quantity = Decimal(str(gains.get("summary", {}).get("unmatched_quantity", 0)))
 
-        engine_status = (
-            "requires_review"
-        )
+    if unclassified != 0 or unmatched_quantity != 0:
+        engine_status = "requires_review"
 
     elif (
         stcg != 0
@@ -588,15 +606,15 @@ def tax_calculation(
 
         "tax_rules": {
             "stcg_111a_rate": (
-                STCG_RATE_111A
+                stcg_rate
             ),
             "ltcg_112a_rate": (
-                LTCG_RATE_112A
+                ltcg_rate
             ),
             "ltcg_112a_threshold": (
-                LTCG_112A_EXEMPTION_LIMIT
+                ltcg_exemption_limit
             ),
-            "cess_rate": CESS_RATE,
+            "cess_rate": cess_rate,
             "stt_confirmed": (
                 stt_confirmed
             ),
@@ -605,9 +623,8 @@ def tax_calculation(
         "capital_gains": {
             "stcg": money(stcg),
             "ltcg": money(ltcg),
-            "unclassified": (
-                money(unclassified)
-            ),
+            "unclassified": money(unclassified),
+            "unmatched_quantity": unmatched_quantity,
         },
 
         "tax": tax,
@@ -636,6 +653,14 @@ def tax_calculation(
                 "STT eligibility must be "
                 "confirmed before Section "
                 "111A STCG tax is calculated."
+            ),
+            (
+                "This endpoint currently supports only financial years "
+                "registered in the Final Tax Liability rule registry."
+            ),
+            (
+                "Any unmatched FIFO sale quantity requires review and is "
+                "not silently treated as a fully reconciled gain."
             ),
         ],
     }

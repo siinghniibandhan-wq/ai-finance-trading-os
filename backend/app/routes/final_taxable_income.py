@@ -44,7 +44,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database.database import get_db
-from app.models import Transaction, Category, LoanMovement
+from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim
+from app.routes.deductions_exempt_income import DEDUCTION_CATALOG, regime_available
 
 # ============================================================
 # ROUTER
@@ -1156,7 +1157,46 @@ def get_final_taxable_income(
     #
     # ========================================================
 
+    # Only explicitly verified claims for this user, FY, and regime
+    # can reduce taxable income. Pending/rejected claims are excluded.
+    verified_claims = (
+        db.query(TaxDeductionClaim)
+        .filter(
+            TaxDeductionClaim.user_id == user_id,
+            TaxDeductionClaim.financial_year == financial_year,
+            TaxDeductionClaim.tax_regime == tax_regime,
+            TaxDeductionClaim.status == "verified",
+        )
+        .all()
+    )
+
+    # Aggregate by deduction key and cap where the catalogue defines
+    # a limit. Unknown/unavailable deductions never reduce income.
+    verified_by_key = {}
+    for claim in verified_claims:
+        item = DEDUCTION_CATALOG.get(claim.deduction_key)
+        if not item or not regime_available(item, tax_regime):
+            continue
+        verified_by_key[claim.deduction_key] = (
+            verified_by_key.get(claim.deduction_key, Decimal("0"))
+            + decimal(claim.claimed_amount)
+        )
+
     verified_deductions = Decimal("0")
+    applied_verified_deductions = []
+    for deduction_key, amount in verified_by_key.items():
+        item = DEDUCTION_CATALOG[deduction_key]
+        regime_limits = item.get("maximum_amount_by_regime", {})
+        limit = regime_limits.get(tax_regime, item.get("maximum_amount"))
+        applied_amount = min(amount, Decimal(str(limit))) if limit is not None else amount
+        verified_deductions += applied_amount
+        applied_verified_deductions.append({
+            "deduction_key": deduction_key,
+            "section": item.get("section"),
+            "verified_claimed_amount": str(amount),
+            "applied_amount": str(applied_amount),
+            "limit_applied": limit is not None,
+        })
 
     # ========================================================
     # VERIFIED EXEMPT INCOME
@@ -1467,13 +1507,15 @@ def get_final_taxable_income(
                 ),
 
             "status":
-                "no_verified_claims",
+                "verified_claims_applied" if verified_deductions > 0 else "no_verified_claims",
+
+            "verified_claims": applied_verified_deductions,
 
             "source":
-                "Deductions & Exempt Income Engine",
+                "tax_deduction_claims (status=verified), regime-eligible catalogue",
 
             "data_available":
-                False,
+                True,
 
             "database_write":
                 False,
@@ -1491,13 +1533,15 @@ def get_final_taxable_income(
                 ),
 
             "status":
-                "no_verified_claims",
+                "verified_claims_applied" if verified_deductions > 0 else "no_verified_claims",
+
+            "verified_claims": applied_verified_deductions,
 
             "source":
-                "Deductions & Exempt Income Engine",
+                "tax_deduction_claims (status=verified), regime-eligible catalogue",
 
             "data_available":
-                False,
+                True,
 
             "database_write":
                 False,

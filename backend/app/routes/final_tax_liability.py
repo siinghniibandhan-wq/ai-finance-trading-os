@@ -44,6 +44,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.final_taxable_income import get_final_taxable_income
 
 
 # ============================================================
@@ -582,79 +583,49 @@ def get_final_tax_liability(
         }
 
     # ========================================================
-    # CURRENT LIMITATION
+    # AUTHORITATIVE TAXABLE-INCOME ENGINE
     # ========================================================
-    #
-    # Module 11 is the authoritative source for final
-    # taxable-income completeness.
-    #
-    # Because this new engine must not duplicate its logic,
-    # we use the same current data structure here.
-    #
-    # At present the known taxable-income components are:
-    #
-    #   Other-source income
-    #   STCG after set-off
-    #   LTCG after set-off
-    #
-    # Salary / house property / business income remain
-    # unavailable.
-    #
-    # Therefore final liability cannot honestly be marked
-    # complete until those income heads are available.
-    #
-    # ========================================================
+    # Reuse the existing engine instead of maintaining a second,
+    # divergent copy of income, capital-gain, and deduction logic.
+    # This is a direct in-process call; it does not make an HTTP request
+    # and does not write to the database.
 
-    salary_income_available = False
-    house_property_available = False
-    business_income_available = False
-
-    # --------------------------------------------------------
-    # CURRENT VERIFIED COMPONENTS
-    # --------------------------------------------------------
-
-    other_source_income = Decimal("0")
-
-    stcg = Decimal("0.42")
-
-    ltcg = Decimal("0")
-
-    verified_deductions = Decimal("0")
-
-    # --------------------------------------------------------
-    # AVAILABLE TAXABLE INCOME
-    # --------------------------------------------------------
-
-    available_taxable_income = (
-        other_source_income
-        + stcg
-        + ltcg
-        - verified_deductions
+    income_result = get_final_taxable_income(
+        user_id=user_id,
+        financial_year=financial_year,
+        tax_regime=tax_regime,
+        db=db,
     )
 
-    if available_taxable_income < 0:
-        available_taxable_income = Decimal("0")
+    if income_result.get("status") != "success":
+        return {
+            "status": "error",
+            "message": "The taxable-income engine could not produce a result.",
+            "taxable_income_engine": income_result,
+        }
 
-    # ========================================================
-    # COMPLETENESS
-    # ========================================================
+    income_heads = income_result.get("income_heads", {})
+    other_head = income_heads.get("other_sources", {})
+    capital_head = income_heads.get("capital_gains", {})
+    deductions_head = income_result.get("deductions", {})
+    taxable_head = income_result.get("taxable_income", {})
 
-    missing_income_heads = []
+    other_source_income = decimal(other_head.get("total"))
+    stcg = decimal(capital_head.get("stcg_after_setoff"))
+    ltcg = decimal(capital_head.get("ltcg_after_setoff"))
+    verified_deductions = decimal(deductions_head.get("verified_amount"))
+    verified_exempt_income = decimal(
+        income_result.get("exempt_income", {}).get("verified_amount")
+    )
 
-    if not salary_income_available:
-        missing_income_heads.append(
-            "salary"
-        )
+    available_taxable_income = decimal(
+        taxable_head.get("provisional_taxable_income")
+    )
 
-    if not house_property_available:
-        missing_income_heads.append(
-            "house_property"
-        )
-
-    if not business_income_available:
-        missing_income_heads.append(
-            "business_or_profession"
-        )
+    missing_income_heads = [
+        head for head in ("salary", "house_property", "business_or_profession")
+        if not income_heads.get(head, {}).get("available", False)
+    ]
 
     # ========================================================
     # SPECIAL-RATE TAX
@@ -699,9 +670,7 @@ def get_final_tax_liability(
     # ========================================================
 
     normal_taxable_income = max(
-        available_taxable_income
-        - stcg
-        - ltcg,
+        available_taxable_income - stcg - ltcg,
         Decimal("0"),
     )
 
@@ -865,6 +834,9 @@ def get_final_tax_liability(
 
         "liability_status":
             liability_status,
+
+        "taxable_income_engine_status": income_result.get("engine_status"),
+        "taxable_income_source": "final-taxable-income engine",
 
         # ----------------------------------------------------
         # TAXABLE INCOME

@@ -313,6 +313,8 @@ def calculate_surcharge(
     normal_tax,
     special_rate_tax,
     tax_regime,
+    age_category="under_60",
+    residential_status="resident",
 ):
     """
     Calculate surcharge using the applicable income thresholds.
@@ -351,33 +353,52 @@ def calculate_surcharge(
         else:
             rate = Decimal("0.37")
 
-    normal_surcharge = money(
-        normal_tax * rate
-    )
+    normal_surcharge = money(normal_tax * rate)
 
-    # Special-rate income has a maximum surcharge rate
-    # of 15% under the applicable rules.
-    special_surcharge_rate = min(
-        rate,
-        Decimal("0.15"),
-    )
+    # Special-rate income has a maximum surcharge rate of 15% under
+    # the configured rules. Keep it separate from ordinary slab tax.
+    special_surcharge_rate = min(rate, Decimal("0.15"))
+    special_surcharge = money(special_rate_tax * special_surcharge_rate)
 
-    special_surcharge = money(
-        special_rate_tax
-        * special_surcharge_rate
-    )
+    surcharge_marginal_relief = Decimal("0.00")
+    relief_threshold = None
+    relief_review_required = False
+
+    # Marginal relief at surcharge thresholds is safely calculated here
+    # only when no special-rate tax is present. With special-rate gains,
+    # the income composition at the threshold is needed for an exact
+    # comparison; do not guess or silently apply an approximate relief.
+    thresholds = [Decimal("5000000"), Decimal("10000000"), Decimal("20000000"), Decimal("50000000")]
+    crossed = next((t for t in thresholds if income > t), None)
+    if crossed is not None and (normal_surcharge + special_surcharge) > 0:
+        if decimal(special_rate_tax) > 0:
+            relief_review_required = True
+        else:
+            threshold_tax = (
+                calculate_new_regime_slab_tax(crossed)
+                if tax_regime == "new"
+                else calculate_old_regime_slab_tax(
+                    crossed, age_category=age_category,
+                    residential_status=residential_status
+                )
+            )
+            tax_plus_surcharge = decimal(normal_tax) + normal_surcharge
+            permitted_tax = threshold_tax + (income - crossed)
+            surcharge_marginal_relief = min(
+                normal_surcharge,
+                max(tax_plus_surcharge - permitted_tax, Decimal("0")),
+            )
+            normal_surcharge = money(normal_surcharge - surcharge_marginal_relief)
+            relief_threshold = int(crossed)
 
     return {
         "rate": rate,
-        "normal_income_surcharge":
-            normal_surcharge,
-        "special_rate_surcharge":
-            special_surcharge,
-        "total":
-            money(
-                normal_surcharge
-                + special_surcharge
-            ),
+        "normal_income_surcharge": normal_surcharge,
+        "special_rate_surcharge": special_surcharge,
+        "marginal_relief": money(surcharge_marginal_relief),
+        "marginal_relief_threshold": relief_threshold,
+        "marginal_relief_review_required": relief_review_required,
+        "total": money(normal_surcharge + special_surcharge),
     }
 
 
@@ -1141,6 +1162,8 @@ def get_final_tax_liability(
         tax_after_rebate,
         special_rate_tax,
         tax_regime,
+        age_category=age_category or "under_60",
+        residential_status=residential_status,
     )
 
     # ========================================================
@@ -1534,6 +1557,15 @@ def get_final_tax_liability(
                         "special_rate_surcharge"
                     ]
                 ),
+
+            "marginal_relief":
+                money(surcharge.get("marginal_relief", 0)),
+
+            "marginal_relief_threshold":
+                surcharge.get("marginal_relief_threshold"),
+
+            "marginal_relief_review_required":
+                surcharge.get("marginal_relief_review_required", False),
 
             "total":
                 money(

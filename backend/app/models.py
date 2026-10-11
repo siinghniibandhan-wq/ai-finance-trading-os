@@ -491,3 +491,31 @@ class TaxDeductionClaim(Base):
     status: Mapped[str] = mapped_column(String(24), default="pending_review", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+# ============================================================
+# TAX CREDIT ENTRIES (SELF-REPORTED UNTIL VERIFIED)
+# ============================================================
+
+class TaxCreditEntry(Base):
+    __tablename__ = "tax_credit_entries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    financial_year: Mapped[str] = mapped_column(String(9), nullable=False, index=True)
+    credit_type: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    source_reference: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(24), default="pending_review", nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+

@@ -557,6 +557,79 @@ def list_tax_credit_entries(
 
 
 # ============================================================
+# VERIFIED CREDIT RECONCILIATION
+# ============================================================
+
+def summarize_verified_tax_credits(entries):
+    """
+    Count only verified entries with a source reference that is unique
+    within this user's financial-year credit set.
+
+    If the same reference appears more than once (even under different
+    credit types), exclude every matching row pending reconciliation.
+    Verified rows without a reference are also excluded from the payable
+    calculation because they cannot be matched to a source record.
+    """
+    verified = [entry for entry in entries if entry.status == "verified"]
+
+    reference_rows = {}
+    for entry in verified:
+        reference = (entry.source_reference or "").strip().casefold()
+        if reference:
+            reference_rows.setdefault(reference, []).append(entry)
+
+    duplicate_references = sorted(
+        reference for reference, rows in reference_rows.items()
+        if len(rows) > 1
+    )
+
+    totals = {
+        credit_type: {
+            "verified_amount": Decimal("0.00"),
+            "eligible_entry_count": 0,
+            "excluded_duplicate_count": 0,
+            "excluded_missing_reference_count": 0,
+        }
+        for credit_type in ("tds", "advance_tax", "self_assessment_tax")
+    }
+
+    included_entry_ids = []
+    excluded_entry_ids = []
+
+    for entry in verified:
+        summary = totals.get(entry.credit_type)
+        if summary is None:
+            excluded_entry_ids.append(entry.id)
+            continue
+
+        reference = (entry.source_reference or "").strip().casefold()
+        if not reference:
+            summary["excluded_missing_reference_count"] += 1
+            excluded_entry_ids.append(entry.id)
+            continue
+
+        if reference in duplicate_references:
+            summary["excluded_duplicate_count"] += 1
+            excluded_entry_ids.append(entry.id)
+            continue
+
+        summary["verified_amount"] += decimal(entry.amount)
+        summary["eligible_entry_count"] += 1
+        included_entry_ids.append(entry.id)
+
+    for summary in totals.values():
+        summary["verified_amount"] = money(summary["verified_amount"])
+
+    return {
+        "by_type": totals,
+        "duplicate_source_references": duplicate_references,
+        "included_entry_ids": included_entry_ids,
+        "excluded_entry_ids": excluded_entry_ids,
+        "excluded_entries_require_review": bool(excluded_entry_ids),
+    }
+
+
+# ============================================================
 # ENDPOINT
 # ============================================================
 
@@ -851,18 +924,20 @@ def get_final_tax_liability(
             TaxCreditEntry.user_id == user_id,
             TaxCreditEntry.financial_year == financial_year,
         ).all()
-        verified_entries = [entry for entry in entries if entry.status == "verified"]
+        reconciliation = summarize_verified_tax_credits(entries)
         required_types = ("tds", "advance_tax", "self_assessment_tax")
         for credit_type in required_types:
-            typed_entries = [e for e in verified_entries if e.credit_type == credit_type]
+            summary = reconciliation["by_type"][credit_type]
             persisted_credit_summary[credit_type] = {
-                "verified_amount": money(sum((decimal(e.amount) for e in typed_entries), Decimal("0"))),
-                "verified_entry_count": len(typed_entries),
+                "verified_amount": summary["verified_amount"],
+                "verified_entry_count": summary["eligible_entry_count"],
+                "excluded_duplicate_count": summary["excluded_duplicate_count"],
+                "excluded_missing_reference_count": summary["excluded_missing_reference_count"],
             }
         credits_complete = all(
             persisted_credit_summary[key]["verified_entry_count"] > 0
             for key in required_types
-        )
+        ) and not reconciliation["excluded_entries_require_review"]
         credit_breakdown = {
             key: persisted_credit_summary[key]["verified_amount"]
             if persisted_credit_summary[key]["verified_entry_count"] > 0 else None
@@ -974,6 +1049,15 @@ def get_final_tax_liability(
             "verified": credits_verified,
             "source": "query_parameters_self_reported" if manual_credit_mode else "persisted_verified_entries",
             "persisted_verified_summary": persisted_credit_summary if not manual_credit_mode else None,
+            "reconciliation": (
+                {
+                    "duplicate_source_references": reconciliation["duplicate_source_references"],
+                    "included_entry_ids": reconciliation["included_entry_ids"],
+                    "excluded_entry_ids": reconciliation["excluded_entry_ids"],
+                    "excluded_entries_require_review": reconciliation["excluded_entries_require_review"],
+                }
+                if not manual_credit_mode else None
+            ),
         },
         "balance_after_credits": {
             "amount": balance_after_credits,

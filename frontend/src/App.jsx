@@ -1024,7 +1024,7 @@ function TaxPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_BASE_URL}/api/deductions-exempt-income/hra-cities`, { cache: "no-store" })
+    fetch(`${API_BASE_URL}/api/deductions-exempt-income/hra-cities?financial_year=${encodeURIComponent(financialYear)}`, { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data?.detail || `City catalogue returned ${response.status}`);
@@ -1033,7 +1033,7 @@ function TaxPage() {
       .then((data) => { if (!cancelled) { setHraCityCatalog({ metro: data.metro || [], non_metro: data.non_metro || [] }); setHraCityCatalogError(""); } })
       .catch((error) => { if (!cancelled) setHraCityCatalogError(error?.message || "City suggestions are unavailable; you can still enter a city."); });
     return () => { cancelled = true; };
-  }, []);
+  }, [financialYear]);
 
   useEffect(() => {
     // Do not request tax calculations until the user chooses a regime.

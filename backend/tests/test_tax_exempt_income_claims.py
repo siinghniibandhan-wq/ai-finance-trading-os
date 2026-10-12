@@ -117,10 +117,23 @@ def test_hra_calculation_rejects_zero_eligible_salary():
 
 
 def test_hra_city_classification_is_automatic_and_alias_aware():
-    assert classify_hra_city("Mumbai") == "metro"
-    assert classify_hra_city(" New Delhi ") == "metro"
-    assert classify_hra_city("Dhanbad") == "non_metro"
-    assert classify_hra_city("An Unlisted City") == "non_metro"
+    assert classify_hra_city("Mumbai", "2025-26") == "metro"
+    assert classify_hra_city(" New Delhi ", "2025-26") == "metro"
+    assert classify_hra_city("Dhanbad", "2026-27") == "non_metro"
+    assert classify_hra_city("An Unlisted City", "2026-27") == "non_metro"
+
+
+def test_hra_city_rules_change_by_financial_year():
+    # FY 2025-26 uses the traditional four-city list.
+    assert classify_hra_city("Bengaluru", "2025-26") == "non_metro"
+    assert classify_hra_city("Hyderabad", "2025-26") == "non_metro"
+    # Rule 279 from FY 2026-27 extends the 50% limit to four more cities.
+    for city in ("Bengaluru", "Bangalore", "Hyderabad", "Pune", "Ahmedabad"):
+        assert classify_hra_city(city, "2026-27") == "metro"
+
+
+def test_unknown_financial_year_does_not_grant_expanded_city_limit():
+    assert classify_hra_city("Bengaluru", "invalid") == "non_metro"
 
 
 def test_hra_calculation_ignores_client_supplied_city_classification():
@@ -131,7 +144,7 @@ def test_hra_calculation_ignores_client_supplied_city_classification():
         city="Patna",
         city_classification="metro",
     )
-    result = calculate_hra_exemption(inputs, "old")
+    result = calculate_hra_exemption(inputs, "old", "2026-27")
     assert result["city_classification"] == "non_metro"
     assert result["metro_city_for_hra"] is False
     assert result["limits"]["salary_percentage_limit"] == "240000.00"

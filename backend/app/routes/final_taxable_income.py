@@ -45,7 +45,9 @@ from sqlalchemy import func
 
 from app.database.database import get_db
 from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim
-from app.routes.deductions_exempt_income import DEDUCTION_CATALOG, regime_available
+from app.routes.deductions_exempt_income import (
+    DEDUCTION_CATALOG, EXEMPT_INCOME_CATALOG, regime_available,
+)
 
 # ============================================================
 # ROUTER
@@ -1031,6 +1033,39 @@ def load_other_source_income(
     }
 
 
+def aggregate_verified_exempt_claims(claims, tax_regime):
+    """Aggregate only verified, known, regime-eligible exemption claims.
+
+    Amounts are user-confirmed claims, not independently validated tax advice.
+    """
+    by_key = {}
+    for claim in claims:
+        item = EXEMPT_INCOME_CATALOG.get(claim.deduction_key)
+        if not item or not regime_available(item, tax_regime):
+            continue
+        by_key[claim.deduction_key] = (
+            by_key.get(claim.deduction_key, Decimal("0"))
+            + decimal(claim.claimed_amount)
+        )
+
+    details = []
+    for key, amount in by_key.items():
+        item = EXEMPT_INCOME_CATALOG[key]
+        details.append({
+            "deduction_key": key,
+            "section": item.get("section"),
+            "verified_claimed_amount": str(amount),
+            "applied_amount": str(amount),
+            "user_confirmed_not_independently_validated": True,
+            "calculation_note": (
+                "HRA amount is user-entered and evidence-referenced; the app does not calculate the statutory HRA limit or independently verify documents."
+                if key == "hra_exemption" else
+                "Exempt amount is user-confirmed and evidence-referenced; confirm eligibility under the applicable law before filing."
+            ),
+        })
+    return sum(by_key.values(), Decimal("0")), details
+
+
 # ============================================================
 # ENDPOINT
 # ============================================================
@@ -1211,7 +1246,9 @@ def get_final_taxable_income(
     #
     # ========================================================
 
-    verified_exempt_income = Decimal("0")
+    verified_exempt_income, verified_exempt_claims = aggregate_verified_exempt_claims(
+        verified_claims, tax_regime
+    )
 
     # ========================================================
     # MISSING INCOME HEADS
@@ -1512,7 +1549,7 @@ def get_final_taxable_income(
             "verified_claims": applied_verified_deductions,
 
             "source":
-                "tax_deduction_claims (status=verified), regime-eligible catalogue",
+                "tax_deduction_claims (status=verified), regime-eligible deduction catalogue",
 
             "data_available":
                 True,
@@ -1533,12 +1570,12 @@ def get_final_taxable_income(
                 ),
 
             "status":
-                "verified_claims_applied" if verified_deductions > 0 else "no_verified_claims",
+                "verified_claims_applied" if verified_exempt_income > 0 else "no_verified_claims",
 
-            "verified_claims": applied_verified_deductions,
+            "verified_claims": verified_exempt_claims,
 
             "source":
-                "tax_deduction_claims (status=verified), regime-eligible catalogue",
+                "tax_deduction_claims (status=verified), regime-eligible exempt-income catalogue; user-confirmed amounts are not independently validated",
 
             "data_available":
                 True,

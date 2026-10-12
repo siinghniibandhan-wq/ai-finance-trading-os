@@ -16,10 +16,10 @@ Purpose:
 - Do NOT calculate final tax liability.
 
 Important:
-- Read-only.
-- No database writes.
-- Current Financial OS does not yet contain a dedicated
-  verified deduction/exemption ledger.
+- Claim endpoints write user-entered claims to the existing claim table.
+- Claims start pending and do not affect taxable income until user-confirmed
+  with an evidence reference.
+- The app does not independently inspect evidence or determine legal eligibility.
 ============================================================
 """
 
@@ -270,41 +270,57 @@ EXEMPT_INCOME_CATALOG = {
     "agricultural_income": {
         "category": "Agricultural income",
         "section": "10(1)",
+        "old_regime_available": True,
+        "new_regime_available": True,
     },
 
     "share_of_huf_income": {
         "category": "Share of income received by member of HUF",
         "section": "10(2)",
+        "old_regime_available": True,
+        "new_regime_available": True,
     },
 
     "certain_partner_share": {
         "category": "Certain share of profit from partnership firm",
         "section": "10(2A)",
+        "old_regime_available": True,
+        "new_regime_available": True,
     },
 
     "life_insurance_receipts": {
         "category": "Eligible life insurance receipts",
         "section": "10(10D)",
+        "old_regime_available": True,
+        "new_regime_available": True,
     },
 
     "specified_allowances": {
         "category": "Specified exempt allowances",
         "section": "10",
+        "old_regime_available": True,
+        "new_regime_available": False,
     },
 
     "hra_exemption": {
         "category": "House Rent Allowance exemption (where eligible)",
         "section": "10(13A)",
+        "old_regime_available": True,
+        "new_regime_available": False,
     },
 
     "lta_exemption": {
         "category": "Leave Travel Allowance exemption (where eligible)",
         "section": "10(5)",
+        "old_regime_available": True,
+        "new_regime_available": False,
     },
 
     "other_exempt_income": {
         "category": "Other legally exempt income",
         "section": "10 / applicable provision",
+        "old_regime_available": True,
+        "new_regime_available": True,
     },
 }
 
@@ -336,6 +352,12 @@ def regime_available(
 # API
 # ============================================================
 
+def claim_is_regime_eligible(claim):
+    """Safely check persisted claims, including unknown legacy keys."""
+    item = DEDUCTION_CATALOG.get(claim.deduction_key) or EXEMPT_INCOME_CATALOG.get(claim.deduction_key)
+    return bool(item and regime_available(item, claim.tax_regime))
+
+
 class TaxDeductionClaimInput(BaseModel):
     user_id: int = Field(ge=1)
     financial_year: str = Field(pattern=r"^\d{4}-\d{2}$")
@@ -353,10 +375,14 @@ def create_deduction_claim(payload: TaxDeductionClaimInput, db: Session = Depend
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     item = DEDUCTION_CATALOG.get(payload.deduction_key)
+    claim_type = "deduction"
     if not item:
-        raise HTTPException(status_code=400, detail="Unknown deduction_key")
+        item = EXEMPT_INCOME_CATALOG.get(payload.deduction_key)
+        claim_type = "exempt_income"
+    if not item:
+        raise HTTPException(status_code=400, detail="Unknown deduction_key or exempt-income key")
     if not regime_available(item, payload.tax_regime):
-        raise HTTPException(status_code=400, detail="Deduction is not available under the selected regime")
+        raise HTTPException(status_code=400, detail=f"This {claim_type.replace('_', '-')} claim is not available under the selected regime")
     claim = TaxDeductionClaim(
         user_id=payload.user_id, financial_year=payload.financial_year,
         tax_regime=payload.tax_regime, deduction_key=payload.deduction_key,
@@ -370,7 +396,8 @@ def create_deduction_claim(payload: TaxDeductionClaimInput, db: Session = Depend
             "tax_regime": claim.tax_regime, "deduction_key": claim.deduction_key,
             "claimed_amount": str(claim.claimed_amount), "status": claim.status,
             "affects_taxable_income": False,
-            "message": "Claim saved for review. It does not reduce taxable income until separately verified."}
+            "claim_type": claim_type,
+            "message": "Claim saved for review. It does not affect taxable income until you verify it with an evidence reference. Exempt amounts are user-claimed and are not independently checked by this app."}
 
 
 @router.get("/claims")
@@ -384,10 +411,12 @@ def list_deduction_claims(user_id: int = Query(..., ge=1),
               .order_by(TaxDeductionClaim.created_at.desc()).all())
     return {"user_id": user_id, "financial_year": financial_year, "claims": [
         {"id": c.id, "tax_regime": c.tax_regime, "deduction_key": c.deduction_key,
-         "section": DEDUCTION_CATALOG.get(c.deduction_key, {}).get("section"),
+         "claim_type": "deduction" if c.deduction_key in DEDUCTION_CATALOG else "exempt_income",
+         "section": (DEDUCTION_CATALOG.get(c.deduction_key) or EXEMPT_INCOME_CATALOG.get(c.deduction_key) or {}).get("section"),
          "claimed_amount": str(c.claimed_amount), "status": c.status,
          "evidence_reference": c.evidence_reference, "notes": c.notes,
-         "affects_taxable_income": False} for c in claims]}
+         "affects_taxable_income": c.status == "verified" and claim_is_regime_eligible(c)
+         } for c in claims]}
 
 
 # ============================================================
@@ -428,14 +457,17 @@ def _get_owned_claim(db, claim_id, user_id):
 
 
 def _claim_summary(claim):
+    is_exempt_income = claim.deduction_key in EXEMPT_INCOME_CATALOG
     return {
         "id": claim.id,
         "tax_regime": claim.tax_regime,
         "deduction_key": claim.deduction_key,
+        "claim_type": "exempt_income" if is_exempt_income else "deduction",
         "claimed_amount": str(claim.claimed_amount),
         "status": claim.status,
         "evidence_reference": claim.evidence_reference,
         "affects_taxable_income": claim.status == "verified",
+        "calculation_note": "User-confirmed amount; the app does not independently validate supporting documents or calculate HRA eligibility." if claim.deduction_key == "hra_exemption" else None,
     }
 
 

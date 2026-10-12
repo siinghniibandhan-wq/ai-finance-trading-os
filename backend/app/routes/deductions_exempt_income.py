@@ -353,7 +353,35 @@ def regime_available(
 # HRA EXEMPTION CALCULATOR (SECTION 10(13A))
 # ============================================================
 
+# One authoritative city classification map for the HRA calculator. Under the
+# traditional HRA rules, the 50% salary limit applies to Delhi, Mumbai,
+# Kolkata and Chennai; all other cities use 40%. Keep aliases here so the UI
+# and calculation endpoint share the same source.
 HRA_METRO_CITIES = {"delhi", "mumbai", "kolkata", "chennai"}
+HRA_CITY_ALIASES = {
+    "new delhi": "delhi",
+    "nct of delhi": "delhi",
+    "bombay": "mumbai",
+    "calcutta": "kolkata",
+    "madras": "chennai",
+}
+HRA_NON_METRO_CITY_SUGGESTIONS = [
+    "Ahmedabad", "Bengaluru", "Bhopal", "Bhubaneswar", "Chandigarh",
+    "Coimbatore", "Dehradun", "Dhanbad", "Faridabad", "Ghaziabad",
+    "Guwahati", "Gurugram", "Gurgaon", "Hyderabad", "Indore",
+    "Jaipur", "Jabalpur", "Jamshedpur", "Kanpur", "Kochi", "Kota",
+    "Lucknow", "Ludhiana", "Madurai", "Mangaluru", "Mysuru", "Nagpur",
+    "Nashik", "Noida", "Patna", "Pune", "Raipur", "Rajkot", "Ranchi",
+    "Surat", "Thiruvananthapuram", "Udaipur", "Vadodara", "Varanasi",
+    "Visakhapatnam",
+]
+
+
+def classify_hra_city(city: str) -> str:
+    """Return the authoritative HRA city class; unknown cities default non-metro."""
+    key = " ".join((city or "").strip().casefold().split())
+    key = HRA_CITY_ALIASES.get(key, key)
+    return "metro" if key in HRA_METRO_CITIES else "non_metro"
 
 
 class HRAInputs(BaseModel):
@@ -393,13 +421,10 @@ def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str):
     if salary <= 0:
         raise ValueError("Enter a positive annual basic salary and eligible DA for HRA calculation.")
 
-    city_key = inputs.city.strip().casefold()
-    # Use the user's explicit selection when supplied; otherwise retain the
-    # previous automatic classification for existing clients.
-    if inputs.city_classification is not None:
-        is_metro = inputs.city_classification == "metro"
-    else:
-        is_metro = city_key in HRA_METRO_CITIES
+    # The backend is authoritative: never trust a client-supplied classification.
+    # City name determines the class; unlisted cities default to non-metro.
+    city_classification = classify_hra_city(inputs.city)
+    is_metro = city_classification == "metro"
     rent_less_ten_percent = max(inputs.annual_rent_paid - (salary * Decimal("0.10")), Decimal("0"))
     salary_percentage_limit = salary * (Decimal("0.50") if is_metro else Decimal("0.40"))
     candidates = {
@@ -413,7 +438,8 @@ def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str):
         "section": "10(13A)",
         "tax_regime": "old",
         "city": inputs.city.strip(),
-        "city_classification": "metro" if is_metro else "non_metro",
+        "city_classification": city_classification,
+        "city_classification_source": "server_tax_rules",
         "metro_city_for_hra": is_metro,
         "annual_salary_for_hra": str(salary),
         "limits": {key: str(value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)) for key, value in candidates.items()},
@@ -426,6 +452,27 @@ def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str):
 class HRACalculatorRequest(HRAInputs):
     financial_year: str = Field(pattern=r"^\d{4}-\d{2}$")
     tax_regime: str = Field(pattern=r"^(old|new)$")
+
+
+@router.get("/hra-cities")
+def hra_city_catalog():
+    """Return searchable suggestions and classifications from the same rules map."""
+    metro = [
+        {"name": "Delhi", "classification": "metro"},
+        {"name": "New Delhi", "classification": "metro"},
+        {"name": "Mumbai", "classification": "metro"},
+        {"name": "Bombay", "classification": "metro"},
+        {"name": "Kolkata", "classification": "metro"},
+        {"name": "Calcutta", "classification": "metro"},
+        {"name": "Chennai", "classification": "metro"},
+        {"name": "Madras", "classification": "metro"},
+    ]
+    non_metro = [
+        {"name": name, "classification": "non_metro"}
+        for name in HRA_NON_METRO_CITY_SUGGESTIONS
+        if classify_hra_city(name) == "non_metro"
+    ]
+    return {"metro": metro, "non_metro": non_metro, "unknown_city_default": "non_metro"}
 
 
 @router.post("/hra-calculator")

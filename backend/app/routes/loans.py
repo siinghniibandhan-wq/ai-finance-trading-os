@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.auth import get_current_user
 from app.models import (
     Account, Liability, Loan, LoanMovement, LoanReceivable,
     Transaction, User,
@@ -164,24 +165,27 @@ def _owned_user(db: Session, user_id: int):
 # ============================================================
 
 @router.get("/api/loans")
-def list_loans(user_id: int = Query(default=1, ge=1), db: Session = Depends(get_db)):
-    items = db.query(Loan).filter(Loan.user_id == user_id).order_by(Loan.created_at.desc()).all()
+def list_loans(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    items = db.query(Loan).filter(Loan.user_id == current_user.id).order_by(Loan.created_at.desc()).all()
     return {"status": "success", "loans": [_loan_dict(x) for x in items]}
 
 
 @router.post("/api/loans")
-def create_loan(payload: LoanPayload, db: Session = Depends(get_db)):
-    _owned_user(db, payload.user_id)
+def create_loan(payload: LoanPayload, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _owned_user(db, current_user.id)
     if payload.amount_disbursed > payload.principal_amount:
         raise HTTPException(status_code=400, detail="Amount disbursed cannot exceed principal amount")
     if payload.deposit_account_id is not None:
-        _owned_account(db, payload.user_id, payload.deposit_account_id, lock=False)
+        _owned_account(db, current_user.id, payload.deposit_account_id, lock=False)
     try:
-        loan = Loan(**payload.model_dump(), outstanding_principal=payload.principal_amount)
+        loan = Loan(**payload.model_dump(exclude={'user_id'}), user_id=current_user.id, outstanding_principal=payload.principal_amount)
         db.add(loan)
         db.flush()
         liability = Liability(
-            user_id=payload.user_id, name=payload.name,
+            user_id=current_user.id, name=payload.name,
             liability_type=payload.loan_type,
             original_amount=payload.principal_amount,
             outstanding_amount=payload.principal_amount, loan_id=loan.id,
@@ -196,27 +200,27 @@ def create_loan(payload: LoanPayload, db: Session = Depends(get_db)):
 
 
 @router.post("/api/loans/{loan_id}/repayments")
-def repay_loan(loan_id: int, payload: LoanMovementCreate, db: Session = Depends(get_db)):
+def repay_loan(loan_id: int, payload: LoanMovementCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Record one cash repayment, splitting principal, interest and fees."""
-    _owned_user(db, payload.user_id)
+    _owned_user(db, current_user.id)
     total = payload.principal_amount + payload.interest_amount + payload.fee_amount
     if total <= 0:
         raise HTTPException(status_code=422, detail="Repayment total must be greater than zero")
 
     loan = (
-        db.query(Loan).filter(Loan.id == loan_id, Loan.user_id == payload.user_id)
+        db.query(Loan).filter(Loan.id == loan_id, Loan.user_id == current_user.id)
         .with_for_update().first()
     )
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
     if payload.principal_amount > loan.outstanding_principal:
         raise HTTPException(status_code=422, detail="Principal repayment exceeds outstanding principal")
-    account = _owned_account(db, payload.user_id, payload.account_id)
-    liability = db.query(Liability).filter(Liability.loan_id == loan.id).with_for_update().first()
+    account = _owned_account(db, current_user.id, payload.account_id)
+    liability = db.query(Liability).filter(Liability.loan_id == loan.id, Liability.user_id == current_user.id).with_for_update().first()
 
     try:
         tx = Transaction(
-            user_id=payload.user_id, account_id=account.id, category_id=None,
+            user_id=current_user.id, account_id=account.id, category_id=None,
             transaction_type="loan_repayment", amount=total,
             description=payload.notes or f"Loan repayment: {loan.name}",
             transaction_date=payload.transaction_date, reference=payload.reference,
@@ -224,7 +228,7 @@ def repay_loan(loan_id: int, payload: LoanMovementCreate, db: Session = Depends(
         db.add(tx)
         db.flush()
         movement = LoanMovement(
-            user_id=payload.user_id, loan_id=loan.id, receivable_id=None,
+            user_id=current_user.id, loan_id=loan.id, receivable_id=None,
             transaction_id=tx.id, movement_type="repayment",
             principal_amount=payload.principal_amount,
             interest_amount=payload.interest_amount, fee_amount=payload.fee_amount,
@@ -249,22 +253,25 @@ def repay_loan(loan_id: int, payload: LoanMovementCreate, db: Session = Depends(
 # ============================================================
 
 @router.get("/api/loan-receivables")
-def list_loan_receivables(user_id: int = Query(default=1, ge=1), db: Session = Depends(get_db)):
-    items = db.query(LoanReceivable).filter(LoanReceivable.user_id == user_id).order_by(LoanReceivable.created_at.desc()).all()
+def list_loan_receivables(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    items = db.query(LoanReceivable).filter(LoanReceivable.user_id == current_user.id).order_by(LoanReceivable.created_at.desc()).all()
     return {"status": "success", "loan_receivables": [_receivable_dict(x) for x in items]}
 
 
 @router.post("/api/loan-receivables")
-def create_loan_receivable(payload: LoanReceivableCreate, db: Session = Depends(get_db)):
+def create_loan_receivable(payload: LoanReceivableCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Disburse a loan to a borrower: cash decreases, receivable asset increases."""
-    _owned_user(db, payload.user_id)
-    account = _owned_account(db, payload.user_id, payload.source_account_id)
+    _owned_user(db, current_user.id)
+    account = _owned_account(db, current_user.id, payload.source_account_id)
     if account.balance is not None and account.balance < payload.principal_amount:
         raise HTTPException(status_code=422, detail="Insufficient account balance for this loan disbursement")
 
     try:
         tx = Transaction(
-            user_id=payload.user_id, account_id=account.id, category_id=None,
+            user_id=current_user.id, account_id=account.id, category_id=None,
             transaction_type="withdrawal", amount=payload.principal_amount,
             description=f"Loan given to {payload.borrower_name}: {payload.name}",
             transaction_date=payload.start_date, reference=payload.reference_number,
@@ -272,7 +279,7 @@ def create_loan_receivable(payload: LoanReceivableCreate, db: Session = Depends(
         db.add(tx)
         db.flush()
         receivable = LoanReceivable(
-            user_id=payload.user_id, borrower_name=payload.borrower_name,
+            user_id=current_user.id, borrower_name=payload.borrower_name,
             name=payload.name, original_principal=payload.principal_amount,
             outstanding_principal=payload.principal_amount, source_account_id=account.id,
             disbursement_transaction_id=tx.id, interest_rate=payload.interest_rate,
@@ -282,7 +289,7 @@ def create_loan_receivable(payload: LoanReceivableCreate, db: Session = Depends(
         db.add(receivable)
         db.flush()
         movement = LoanMovement(
-            user_id=payload.user_id, loan_id=None, receivable_id=receivable.id,
+            user_id=current_user.id, loan_id=None, receivable_id=receivable.id,
             transaction_id=tx.id, movement_type="disbursement",
             principal_amount=payload.principal_amount,
             interest_amount=Decimal("0"), fee_amount=Decimal("0"),
@@ -298,27 +305,27 @@ def create_loan_receivable(payload: LoanReceivableCreate, db: Session = Depends(
 
 
 @router.post("/api/loan-receivables/{receivable_id}/recoveries")
-def recover_loan(receivable_id: int, payload: LoanMovementCreate, db: Session = Depends(get_db)):
+def recover_loan(receivable_id: int, payload: LoanMovementCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Record cash received from a borrower; principal is not income."""
-    _owned_user(db, payload.user_id)
+    _owned_user(db, current_user.id)
     total = payload.principal_amount + payload.interest_amount + payload.fee_amount
     if total <= 0:
         raise HTTPException(status_code=422, detail="Recovery total must be greater than zero")
 
     receivable = (
         db.query(LoanReceivable)
-        .filter(LoanReceivable.id == receivable_id, LoanReceivable.user_id == payload.user_id)
+        .filter(LoanReceivable.id == receivable_id, LoanReceivable.user_id == current_user.id)
         .with_for_update().first()
     )
     if not receivable:
         raise HTTPException(status_code=404, detail="Loan receivable not found")
     if payload.principal_amount > receivable.outstanding_principal:
         raise HTTPException(status_code=422, detail="Principal recovery exceeds outstanding principal")
-    account = _owned_account(db, payload.user_id, payload.account_id)
+    account = _owned_account(db, current_user.id, payload.account_id)
 
     try:
         tx = Transaction(
-            user_id=payload.user_id, account_id=account.id, category_id=None,
+            user_id=current_user.id, account_id=account.id, category_id=None,
             transaction_type="income", amount=total,
             description=payload.notes or f"Loan recovery: {receivable.borrower_name} - {receivable.name}",
             transaction_date=payload.transaction_date, reference=payload.reference,
@@ -326,7 +333,7 @@ def recover_loan(receivable_id: int, payload: LoanMovementCreate, db: Session = 
         db.add(tx)
         db.flush()
         movement = LoanMovement(
-            user_id=payload.user_id, loan_id=None, receivable_id=receivable.id,
+            user_id=current_user.id, loan_id=None, receivable_id=receivable.id,
             transaction_id=tx.id, movement_type="recovery",
             principal_amount=payload.principal_amount,
             interest_amount=payload.interest_amount, fee_amount=payload.fee_amount,
@@ -348,8 +355,11 @@ def recover_loan(receivable_id: int, payload: LoanMovementCreate, db: Session = 
 # ============================================================
 
 @router.get("/api/liabilities")
-def list_liabilities(user_id: int = Query(default=1, ge=1), db: Session = Depends(get_db)):
-    items = db.query(Liability).filter(Liability.user_id == user_id).order_by(Liability.created_at.desc()).all()
+def list_liabilities(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    items = db.query(Liability).filter(Liability.user_id == current_user.id).order_by(Liability.created_at.desc()).all()
     return {
         "status": "success", "liabilities": [_liability_dict(x) for x in items],
         "total_outstanding": float(sum((x.outstanding_amount for x in items if x.status == "active"), Decimal("0"))),
@@ -357,11 +367,11 @@ def list_liabilities(user_id: int = Query(default=1, ge=1), db: Session = Depend
 
 
 @router.post("/api/liabilities")
-def create_liability(payload: LiabilityPayload, db: Session = Depends(get_db)):
-    _owned_user(db, payload.user_id)
+def create_liability(payload: LiabilityPayload, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _owned_user(db, current_user.id)
     if payload.outstanding_amount > payload.original_amount:
         raise HTTPException(status_code=400, detail="Outstanding amount cannot exceed original amount")
-    item = Liability(**payload.model_dump())
+    item = Liability(**payload.model_dump(exclude={'user_id'}), user_id=current_user.id)
     db.add(item)
     db.commit()
     db.refresh(item)
@@ -386,12 +396,12 @@ class LoanMovementCorrection(BaseModel):
 
 
 @router.put("/api/loan-movements/{movement_id}")
-def correct_loan_movement(movement_id: int, payload: LoanMovementCorrection, db: Session = Depends(get_db)):
+def correct_loan_movement(movement_id: int, payload: LoanMovementCorrection, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Correct repayment/recovery values without duplicating its transaction."""
-    _owned_user(db, payload.user_id)
+    _owned_user(db, current_user.id)
     movement = (
         db.query(LoanMovement)
-        .filter(LoanMovement.id == movement_id, LoanMovement.user_id == payload.user_id)
+        .filter(LoanMovement.id == movement_id, LoanMovement.user_id == current_user.id)
         .with_for_update().first()
     )
     if not movement:
@@ -399,10 +409,10 @@ def correct_loan_movement(movement_id: int, payload: LoanMovementCorrection, db:
     if movement.movement_type not in {"repayment", "recovery"}:
         raise HTTPException(status_code=409, detail="Only repayment and recovery movements can be corrected here")
 
-    tx = db.query(Transaction).filter(Transaction.id == movement.transaction_id, Transaction.user_id == payload.user_id).with_for_update().first()
+    tx = db.query(Transaction).filter(Transaction.id == movement.transaction_id, Transaction.user_id == current_user.id).with_for_update().first()
     if not tx:
         raise HTTPException(status_code=409, detail="Linked transaction is missing; correction stopped")
-    account = _owned_account(db, payload.user_id, tx.account_id)
+    account = _owned_account(db, current_user.id, tx.account_id)
     if payload.account_id != tx.account_id:
         # Account switching is intentionally disallowed until both accounts can be
         # locked and ownership verified in a dedicated transfer-safe workflow.
@@ -412,7 +422,7 @@ def correct_loan_movement(movement_id: int, payload: LoanMovementCorrection, db:
     new_total = payload.principal_amount + payload.interest_amount + payload.fee_amount
     try:
         if movement.movement_type == "repayment":
-            loan = db.query(Loan).filter(Loan.id == movement.loan_id, Loan.user_id == payload.user_id).with_for_update().first()
+            loan = db.query(Loan).filter(Loan.id == movement.loan_id, Loan.user_id == current_user.id).with_for_update().first()
             if not loan:
                 raise HTTPException(status_code=409, detail="Linked loan is missing")
             available_principal = Decimal(loan.outstanding_principal) + Decimal(movement.principal_amount)
@@ -420,7 +430,7 @@ def correct_loan_movement(movement_id: int, payload: LoanMovementCorrection, db:
                 raise HTTPException(status_code=422, detail="Corrected principal exceeds available outstanding principal")
             loan.outstanding_principal = available_principal - payload.principal_amount
             loan.status = "closed" if loan.outstanding_principal == 0 else "active"
-            liability = db.query(Liability).filter(Liability.loan_id == loan.id).with_for_update().first()
+            liability = db.query(Liability).filter(Liability.loan_id == loan.id, Liability.user_id == current_user.id).with_for_update().first()
             if liability:
                 liability.outstanding_amount = loan.outstanding_principal
                 liability.status = "closed" if liability.outstanding_amount == 0 else "active"
@@ -428,7 +438,7 @@ def correct_loan_movement(movement_id: int, payload: LoanMovementCorrection, db:
             account.balance = (account.balance or Decimal("0")) + old_total - new_total
             tx.transaction_type = "loan_repayment"
         else:
-            receivable = db.query(LoanReceivable).filter(LoanReceivable.id == movement.receivable_id, LoanReceivable.user_id == payload.user_id).with_for_update().first()
+            receivable = db.query(LoanReceivable).filter(LoanReceivable.id == movement.receivable_id, LoanReceivable.user_id == current_user.id).with_for_update().first()
             if not receivable:
                 raise HTTPException(status_code=409, detail="Linked loan receivable is missing")
             available_principal = Decimal(receivable.outstanding_principal) + Decimal(movement.principal_amount)
@@ -460,34 +470,38 @@ def correct_loan_movement(movement_id: int, payload: LoanMovementCorrection, db:
 
 
 @router.delete("/api/loan-movements/{movement_id}")
-def cancel_loan_movement(movement_id: int, user_id: int = Query(default=1, ge=1), db: Session = Depends(get_db)):
+def cancel_loan_movement(
+    movement_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Cancel a repayment/recovery and reverse all linked balances atomically."""
-    _owned_user(db, user_id)
-    movement = db.query(LoanMovement).filter(LoanMovement.id == movement_id, LoanMovement.user_id == user_id).with_for_update().first()
+    _owned_user(db, current_user.id)
+    movement = db.query(LoanMovement).filter(LoanMovement.id == movement_id, LoanMovement.user_id == current_user.id).with_for_update().first()
     if not movement:
         raise HTTPException(status_code=404, detail="Loan movement not found")
     if movement.movement_type not in {"repayment", "recovery"}:
         raise HTTPException(status_code=409, detail="Disbursement cancellation requires the dedicated loan cancellation workflow")
-    tx = db.query(Transaction).filter(Transaction.id == movement.transaction_id, Transaction.user_id == user_id).with_for_update().first()
+    tx = db.query(Transaction).filter(Transaction.id == movement.transaction_id, Transaction.user_id == current_user.id).with_for_update().first()
     if not tx:
         raise HTTPException(status_code=409, detail="Linked transaction is missing; cancellation stopped")
-    account = _owned_account(db, user_id, tx.account_id)
+    account = _owned_account(db, current_user.id, tx.account_id)
     principal = Decimal(movement.principal_amount)
     total = Decimal(tx.amount)
     try:
         if movement.movement_type == "repayment":
-            loan = db.query(Loan).filter(Loan.id == movement.loan_id, Loan.user_id == user_id).with_for_update().first()
+            loan = db.query(Loan).filter(Loan.id == movement.loan_id, Loan.user_id == current_user.id).with_for_update().first()
             if not loan:
                 raise HTTPException(status_code=409, detail="Linked loan is missing")
             loan.outstanding_principal = Decimal(loan.outstanding_principal) + principal
             loan.status = "active"
-            liability = db.query(Liability).filter(Liability.loan_id == loan.id).with_for_update().first()
+            liability = db.query(Liability).filter(Liability.loan_id == loan.id, Liability.user_id == current_user.id).with_for_update().first()
             if liability:
                 liability.outstanding_amount = loan.outstanding_principal
                 liability.status = "active"
             account.balance = (account.balance or Decimal("0")) + total
         else:
-            receivable = db.query(LoanReceivable).filter(LoanReceivable.id == movement.receivable_id, LoanReceivable.user_id == user_id).with_for_update().first()
+            receivable = db.query(LoanReceivable).filter(LoanReceivable.id == movement.receivable_id, LoanReceivable.user_id == current_user.id).with_for_update().first()
             if not receivable:
                 raise HTTPException(status_code=409, detail="Linked loan receivable is missing")
             receivable.outstanding_principal = Decimal(receivable.outstanding_principal) + principal
@@ -516,13 +530,13 @@ def cancel_loan_movement(movement_id: int, user_id: int = Query(default=1, ge=1)
 
 @router.delete("/api/loans/{loan_id}/disbursement")
 def cancel_borrowed_loan_disbursement(
-    loan_id: int, user_id: int = Query(default=1, ge=1), db: Session = Depends(get_db)
+    loan_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Cancel a borrowed-loan disbursement before any repayment was recorded."""
-    _owned_user(db, user_id)
+    _owned_user(db, current_user.id)
     loan = (
         db.query(Loan)
-        .filter(Loan.id == loan_id, Loan.user_id == user_id)
+        .filter(Loan.id == loan_id, Loan.user_id == current_user.id)
         .with_for_update()
         .first()
     )
@@ -538,7 +552,7 @@ def cancel_borrowed_loan_disbursement(
     # A loan can only be cancelled at its origin if no repayments exist.
     movements = (
         db.query(LoanMovement.id)
-        .filter(LoanMovement.loan_id == loan.id)
+        .filter(LoanMovement.loan_id == loan.id, LoanMovement.user_id == current_user.id)
         .first()
     )
     if movements:
@@ -551,7 +565,7 @@ def cancel_borrowed_loan_disbursement(
         db.query(Transaction)
         .filter(
             Transaction.id == loan.disbursement_transaction_id,
-            Transaction.user_id == user_id,
+            Transaction.user_id == current_user.id,
         )
         .with_for_update()
         .first()
@@ -564,11 +578,11 @@ def cancel_borrowed_loan_disbursement(
             detail="Linked disbursement is not an income transaction; automatic reversal was stopped.",
         )
 
-    account = _owned_account(db, user_id, tx.account_id)
+    account = _owned_account(db, current_user.id, tx.account_id)
     try:
         # Reverse the original cash-in before deleting linked records.
         account.balance = (account.balance or Decimal("0")) - Decimal(tx.amount)
-        liability = db.query(Liability).filter(Liability.loan_id == loan.id).with_for_update().first()
+        liability = db.query(Liability).filter(Liability.loan_id == loan.id, Liability.user_id == current_user.id).with_for_update().first()
         if liability:
             db.delete(liability)
             db.flush()
@@ -593,13 +607,13 @@ def cancel_borrowed_loan_disbursement(
 
 @router.delete("/api/loan-receivables/{receivable_id}/disbursement")
 def cancel_loan_given_disbursement(
-    receivable_id: int, user_id: int = Query(default=1, ge=1), db: Session = Depends(get_db)
+    receivable_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Cancel a loan given to another person before any recovery exists."""
-    _owned_user(db, user_id)
+    _owned_user(db, current_user.id)
     receivable = (
         db.query(LoanReceivable)
-        .filter(LoanReceivable.id == receivable_id, LoanReceivable.user_id == user_id)
+        .filter(LoanReceivable.id == receivable_id, LoanReceivable.user_id == current_user.id)
         .with_for_update()
         .first()
     )
@@ -613,7 +627,7 @@ def cancel_loan_given_disbursement(
 
     movement_rows = (
         db.query(LoanMovement)
-        .filter(LoanMovement.receivable_id == receivable.id)
+        .filter(LoanMovement.receivable_id == receivable.id, LoanMovement.user_id == current_user.id)
         .with_for_update()
         .all()
     )
@@ -633,7 +647,7 @@ def cancel_loan_given_disbursement(
         db.query(Transaction)
         .filter(
             Transaction.id == receivable.disbursement_transaction_id,
-            Transaction.user_id == user_id,
+            Transaction.user_id == current_user.id,
         )
         .with_for_update()
         .first()
@@ -646,7 +660,7 @@ def cancel_loan_given_disbursement(
             detail="Linked disbursement is not a withdrawal; automatic reversal was stopped.",
         )
 
-    account = _owned_account(db, user_id, tx.account_id)
+    account = _owned_account(db, current_user.id, tx.account_id)
     try:
         # Reverse the original cash-out and remove its linked movement first
         # because LoanMovement.transaction_id uses ON DELETE RESTRICT.

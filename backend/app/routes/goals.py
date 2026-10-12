@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.models import FinancialGoal, User
+from app.routes.auth import get_current_user
 
 router = APIRouter(prefix="/api/goals", tags=["Financial Goals"])
 
@@ -42,34 +43,34 @@ def serialize(goal: FinancialGoal):
     }
 
 @router.get("/")
-def list_goals(user_id: int = Query(default=1, ge=1), db: Session = Depends(get_db)):
-    goals = db.query(FinancialGoal).filter(FinancialGoal.user_id == user_id).order_by(FinancialGoal.created_at.desc()).all()
+def list_goals(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    goals = db.query(FinancialGoal).filter(FinancialGoal.user_id == current_user.id).order_by(FinancialGoal.created_at.desc()).all()
     return {"status": "success", "goals": [serialize(g) for g in goals]}
 
 @router.post("/")
-def create_goal(payload: GoalPayload, db: Session = Depends(get_db)):
-    if not db.query(User).filter(User.id == payload.user_id).first():
-        raise HTTPException(status_code=404, detail=f"User {payload.user_id} was not found")
+def create_goal(payload: GoalPayload, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Bind the goal to the authenticated user, not payload.user_id.
     if payload.current_amount > payload.target_amount:
         # Valid use case (goal already exceeded) is allowed; progress caps at 100%.
         pass
-    goal = FinancialGoal(**payload.model_dump())
+    values = payload.model_dump(exclude={"user_id"})
+    goal = FinancialGoal(user_id=current_user.id, **values)
     db.add(goal); db.commit(); db.refresh(goal)
     return {"status": "success", "goal": serialize(goal)}
 
 @router.put("/{goal_id}")
-def update_goal(goal_id: int, payload: GoalPayload, db: Session = Depends(get_db)):
-    goal = db.query(FinancialGoal).filter(FinancialGoal.id == goal_id, FinancialGoal.user_id == payload.user_id).first()
+def update_goal(goal_id: int, payload: GoalPayload, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    goal = db.query(FinancialGoal).filter(FinancialGoal.id == goal_id, FinancialGoal.user_id == current_user.id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
-    for key, value in payload.model_dump().items():
+    for key, value in payload.model_dump(exclude={"user_id"}).items():
         if key != "user_id": setattr(goal, key, value)
     db.commit(); db.refresh(goal)
     return {"status": "success", "goal": serialize(goal)}
 
 @router.delete("/{goal_id}")
-def delete_goal(goal_id: int, user_id: int = Query(default=1, ge=1), db: Session = Depends(get_db)):
-    goal = db.query(FinancialGoal).filter(FinancialGoal.id == goal_id, FinancialGoal.user_id == user_id).first()
+def delete_goal(goal_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    goal = db.query(FinancialGoal).filter(FinancialGoal.id == goal_id, FinancialGoal.user_id == current_user.id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
     db.delete(goal); db.commit()

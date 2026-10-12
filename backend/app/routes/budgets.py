@@ -7,7 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.models import Budget
+from app.models import Budget, User
+from app.routes.auth import get_current_user
 from app.schemas import (
     BudgetCreate,
     BudgetUpdate,
@@ -36,9 +37,11 @@ router = APIRouter(
 def create_budget(
     budget_data: BudgetCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    # Never trust a user_id supplied by the client.
     budget = Budget(
-        user_id=budget_data.user_id,
+        user_id=current_user.id,
         month=budget_data.month,
         category_id=budget_data.category_id,
         amount=budget_data.amount,
@@ -60,12 +63,12 @@ def create_budget(
     response_model=list[BudgetResponse],
 )
 def list_budgets(
-    user_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return (
         db.query(Budget)
-        .filter(Budget.user_id == user_id)
+        .filter(Budget.user_id == current_user.id)
         .order_by(Budget.month.desc(), Budget.id.desc())
         .all()
     )
@@ -82,10 +85,11 @@ def list_budgets(
 def get_budget(
     budget_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     budget = (
         db.query(Budget)
-        .filter(Budget.id == budget_id)
+        .filter(Budget.id == budget_id, Budget.user_id == current_user.id)
         .first()
     )
 
@@ -110,10 +114,11 @@ def update_budget(
     budget_id: int,
     budget_data: BudgetUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     budget = (
         db.query(Budget)
-        .filter(Budget.id == budget_id)
+        .filter(Budget.id == budget_id, Budget.user_id == current_user.id)
         .first()
     )
 
@@ -148,10 +153,11 @@ def update_budget(
 def delete_budget(
     budget_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     budget = (
         db.query(Budget)
-        .filter(Budget.id == budget_id)
+        .filter(Budget.id == budget_id, Budget.user_id == current_user.id)
         .first()
     )
 

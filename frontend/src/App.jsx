@@ -864,6 +864,7 @@ function TaxPage() {
     annual_hra_received: "",
     annual_rent_paid: "",
     city: "",
+    city_classification: "non_metro",
   });
   const [hraResult, setHraResult] = useState(null);
   const [hraLoading, setHraLoading] = useState(false);
@@ -1003,6 +1004,7 @@ function TaxPage() {
         annual_hra_received: Number(hraInputs.annual_hra_received),
         annual_rent_paid: Number(hraInputs.annual_rent_paid),
         city: hraInputs.city.trim(),
+        city_classification: hraInputs.city_classification,
       };
       const response = await fetch(`${API_BASE_URL}/api/deductions-exempt-income/hra-calculator`, {
         method: "POST",
@@ -1179,7 +1181,6 @@ function TaxPage() {
       ["annual_commission_on_turnover_at_fixed_percentage", "Eligible fixed-percentage commission (₹)", "number", false],
       ["annual_hra_received", "Annual HRA received (₹)", "number", true],
       ["annual_rent_paid", "Annual rent paid (₹)", "number", true],
-      ["city", "City of residence", "text", true],
     ];
     return <div style={panelStyle}>
       <h3 style={{ marginTop: 0 }}>HRA exemption calculator</h3>
@@ -1188,10 +1189,19 @@ function TaxPage() {
       <form onSubmit={calculateHra} style={{ display: "grid", gap: "14px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
           {fields.map(([key, label, type, required]) => <label key={key} style={fieldStyle}>{label}<input aria-label={label} type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "0.01" : undefined} required={required} value={hraInputs[key]} onChange={(event) => setHraInputs((current) => ({ ...current, [key]: event.target.value }))} style={inputStyle} /></label>)}
+          <label style={fieldStyle}>Metro / Non-metro classification
+            <select aria-label="Metro / Non-metro classification" value={hraInputs.city_classification} onChange={(event) => setHraInputs((current) => ({ ...current, city_classification: event.target.value }))} style={inputStyle}>
+              <option value="metro">Metro</option>
+              <option value="non_metro">Non-metro</option>
+            </select>
+          </label>
+          <label style={fieldStyle}>City name
+            <input aria-label="City name" type="text" minLength={2} maxLength={100} required value={hraInputs.city} placeholder="Enter your rented home's city" onChange={(event) => setHraInputs((current) => ({ ...current, city: event.target.value }))} style={inputStyle} />
+          </label>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
           <button type="submit" className="primary-button" disabled={hraLoading || taxRegime !== "old"}>{hraLoading ? "Calculating…" : "Calculate HRA exemption"}</button>
-          <button type="button" className="secondary-button" onClick={() => { setHraInputs({ annual_basic_salary: "", annual_da_forming_retirement_benefits: "0", annual_commission_on_turnover_at_fixed_percentage: "0", annual_hra_received: "", annual_rent_paid: "", city: "" }); setHraResult(null); setHraError(""); }}>Clear inputs</button>
+          <button type="button" className="secondary-button" onClick={() => { setHraInputs({ annual_basic_salary: "", annual_da_forming_retirement_benefits: "0", annual_commission_on_turnover_at_fixed_percentage: "0", annual_hra_received: "", annual_rent_paid: "", city: "", city_classification: "non_metro" }); setHraResult(null); setHraError(""); }}>Clear inputs</button>
         </div>
       </form>
       {hraError && <div role="alert" style={{ marginTop: "14px", padding: "12px", borderRadius: "10px", color: "#fca5a5", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12px" }}>{hraError}</div>}

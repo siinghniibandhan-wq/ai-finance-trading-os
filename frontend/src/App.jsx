@@ -1495,6 +1495,7 @@ function MarketsPage() {
   const [chartError, setChartError] = useState("");
   // Selected-stock research tabs; data is derived from available instrument and chart responses only.
   const [researchTab, setResearchTab] = useState("overview");
+  const [expandedMetric, setExpandedMetric] = useState("");
   // Personal watchlist persists in this browser; no backend writes are made.
   const [watchlist, setWatchlist] = useState(() => {
     try { return JSON.parse(localStorage.getItem("financial-os-market-watchlist") || "[]"); }
@@ -1551,14 +1552,15 @@ function MarketsPage() {
   // Fetch historical daily candles from the existing Market Charts API.
   const loadChart = async (symbol = chartSymbol, marketExchange = chartExchange, range = chartRange) => {
     if (!symbol) { setChartError("Choose a stock before loading its chart."); return; }
-    const daysByRange = { "1M": 30, "3M": 90, "6M": 180, "1Y": 365 };
+    const daysByRange = { "1D": 1, "1W": 7, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825 };
+    const intervalByRange = { "1D": "minute", "1W": "day", "1M": "day", "3M": "day", "6M": "day", "1Y": "day", "5Y": "day" };
     const toDate = new Date();
     const fromDate = new Date(toDate);
     fromDate.setDate(fromDate.getDate() - (daysByRange[range] || 30));
     const isoDate = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     setChartBusy(true); setChartError(""); setChartData([]); setChartInfo(null);
     try {
-      const url = `${API}/api/market-charts/?symbol=${encodeURIComponent(symbol)}&exchange=${encodeURIComponent(marketExchange)}&interval=day&from=${isoDate(fromDate)}&to=${isoDate(toDate)}`;
+      const url = `${API}/api/market-charts/?symbol=${encodeURIComponent(symbol)}&exchange=${encodeURIComponent(marketExchange)}&interval=${encodeURIComponent(intervalByRange[range] || "day")}&from=${isoDate(fromDate)}&to=${isoDate(toDate)}`;
       const response = await fetch(url);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Historical data returned ${response.status}`);
@@ -1656,7 +1658,7 @@ function MarketsPage() {
     {selectedInstrument && <section style={card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
         <div><h3 style={{ margin: "0 0 4px" }}>Historical price chart</h3><p style={{ ...muted, margin: 0 }}>{chartInfo ? `${chartInfo.symbol || chartSymbol} · ${chartInfo.exchange || chartExchange} · Daily close` : "Choose a stock and period to load daily closing prices."}</p></div>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>{["1M", "3M", "6M", "1Y"].map((range) => <button key={range} type="button" className={chartRange === range ? "primary-button" : "secondary-button"} style={{ padding: "8px 10px", fontSize: "11px" }} onClick={() => { setChartRange(range); loadChart(chartSymbol, chartExchange, range); }}>{range}</button>)}</div>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>{["1D", "1W", "1M", "3M", "6M", "1Y", "5Y"].map((range) => <button key={range} type="button" className={chartRange === range ? "primary-button" : "secondary-button"} style={{ padding: "8px 10px", fontSize: "11px" }} onClick={() => { setChartRange(range); loadChart(chartSymbol, chartExchange, range); }}>{range}</button>)}</div>
       </div>
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}><input aria-label="Chart stock symbol" style={{ ...input, maxWidth: "220px" }} value={chartSymbol} onChange={(e) => setChartSymbol(e.target.value.toUpperCase())} placeholder="e.g. RELIANCE"/><StyledSelect aria-label="Chart exchange" style={{ ...input, width: "100px" }} value={chartExchange} onChange={(e) => setChartExchange(e.target.value)}><option value="NSE">NSE</option><option value="BSE">BSE</option></StyledSelect><button type="button" className="secondary-button" disabled={chartBusy} onClick={() => loadChart()}>{chartBusy ? "Loading chart..." : "Load chart"}</button></div>
       {chartError && <p role="status" style={{ color: "#fcd34d", fontSize: "12px", lineHeight: 1.6, marginBottom: 0 }}>{chartError}</p>}
@@ -1667,7 +1669,7 @@ function MarketsPage() {
         const width = 720; const height = 240; const pad = 18;
         const points = values.map((value, i) => `${pad + i * (width - pad * 2) / Math.max(values.length - 1, 1)},${height - pad - ((value - min) / span) * (height - pad * 2)}`).join(" ");
         const first = values[0]; const last = values[values.length - 1]; const change = last - first; const percent = first ? (change / first) * 100 : 0;
-        return <div style={{ marginTop: "14px" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "8px" }}><div><div style={muted}>Latest close</div><strong style={{ fontSize: "22px" }}>{money(last)}</strong></div><div style={{ textAlign: "right" }}><div style={muted}>Change over period</div><strong style={{ color: change >= 0 ? "#86efac" : "#fca5a5" }}>{change >= 0 ? "+" : ""}{money(change)} ({percent >= 0 ? "+" : ""}{percent.toFixed(2)}%)</strong></div></div><div style={{ width: "100%", overflow: "hidden" }}><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${chartSymbol} historical daily closing-price chart`} style={{ display: "block", width: "100%", minHeight: "150px" }}><line x1={pad} y1={height-pad} x2={width-pad} y2={height-pad} stroke="rgba(255,255,255,0.18)" strokeWidth="1"/><line x1={pad} y1={height/2} x2={width-pad} y2={height/2} stroke="rgba(255,255,255,0.08)" strokeWidth="1"/><polyline points={points} fill="none" stroke="#c084fc" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round"/></svg></div><div style={{ display: "flex", justifyContent: "space-between", ...muted }}><span>{String(chartData[0].timestamp || "").slice(0, 10)}</span><span>{chartData.length} daily records</span><span>{String(chartData[chartData.length - 1].timestamp || "").slice(0, 10)}</span></div></div>;
+        return <div style={{ marginTop: "14px" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "8px" }}><div><div style={muted}>Last price in selected chart</div><strong style={{ fontSize: "22px" }}>{money(last)}</strong></div><div style={{ textAlign: "right" }}><div style={muted}>Period return</div><strong style={{ color: change >= 0 ? "#86efac" : "#fca5a5" }}>{change >= 0 ? "+" : ""}{money(change)} ({percent >= 0 ? "+" : ""}{percent.toFixed(2)}%)</strong></div></div><div style={{ width: "100%", overflow: "hidden" }}><svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${chartSymbol} historical daily closing-price chart`} style={{ display: "block", width: "100%", minHeight: "150px" }}><line x1={pad} y1={height-pad} x2={width-pad} y2={height-pad} stroke="rgba(255,255,255,0.18)" strokeWidth="1"/><line x1={pad} y1={height/2} x2={width-pad} y2={height/2} stroke="rgba(255,255,255,0.08)" strokeWidth="1"/><polyline points={points} fill="none" stroke="#c084fc" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round"/></svg></div><div style={{ display: "flex", justifyContent: "space-between", ...muted }}><span>{String(chartData[0].timestamp || "").slice(0, 10)}</span><span>{chartData.length} prices</span><span>{String(chartData[chartData.length - 1].timestamp || "").slice(0, 10)}</span></div></div>;
       })()}
       {!chartBusy && !chartError && chartData.length === 1 && <p style={muted}>Only one historical price was returned; at least two points are needed to draw a chart.</p>}
       {!chartBusy && !chartData.length && !chartError && <p style={muted}>No chart loaded yet. Select a period and tap Load chart.</p>}
@@ -1692,7 +1694,23 @@ function MarketsPage() {
         : latestClose > sma20 && rsi >= 50 ? "Positive momentum"
         : latestClose < sma20 && rsi < 50 ? "Negative momentum" : "Mixed / neutral";
       const tabButton = (id, label) => <button key={id} type="button" onClick={() => setResearchTab(id)} aria-pressed={researchTab === id} className={researchTab === id ? "primary-button" : "secondary-button"} style={{ padding: "9px 12px", fontSize: "12px", whiteSpace: "nowrap" }}>{label}</button>;
-      const metric = (label, value, hint = "") => <div key={label} style={{ ...card, padding: "13px" }}><div style={muted}>{label}</div><strong style={{ display: "block", fontSize: "18px", marginTop: "5px" }}>{value}</strong>{hint ? <div style={{ ...muted, marginTop: "4px" }}>{hint}</div> : null}</div>;
+      const metricExplanations = {
+        "Latest Traded Price (LTP)": "The most recent traded price reported by the quote provider. It may be delayed depending on the data subscription.",
+        "Previous Closing Price": "The official closing price from the previous trading session. It is the reference used to calculate today's change.",
+        "Today's Change": "The latest traded price minus the previous closing price. The percentage shows that difference relative to the previous close.",
+        "Today's High": "The highest traded price reported for the current trading session.",
+        "Today's Low": "The lowest traded price reported for the current trading session.",
+        "52-Week High": "The highest price found in the available 52-week historical dataset. This is shown only when a full-year history is loaded.",
+        "52-Week Low": "The lowest price found in the available 52-week historical dataset. This is shown only when a full-year history is loaded.",
+        "Period Return": "The percentage difference between the first and last prices in the selected chart period. It is not necessarily today's change.",
+        "20-day Average Price": "The average of the last 20 available daily closing prices. Traders often compare the current price with this average to assess trend direction.",
+        "RSI (14)": "The Relative Strength Index ranges from 0 to 100 and measures recent price momentum. Around 70 is commonly considered overbought and around 30 oversold; neither is a guaranteed signal.",
+        "Market Capitalization": "The market value of a company's outstanding shares. It is generally calculated as share price multiplied by shares outstanding.",
+        "P/E Ratio": "Share price divided by earnings per share. It is one way investors compare a company's price with its earnings.",
+        "EPS": "Earnings per share: the company's profit allocated to each ordinary share over the stated reporting period.",
+        "Dividend Yield": "Annual dividend per share divided by the share price, expressed as a percentage. It can change as price or dividends change.",
+      };
+      const metric = (label, value, hint = "") => <button key={label} type="button" onClick={() => setExpandedMetric((current) => current === label ? "" : label)} aria-expanded={expandedMetric === label} style={{ ...card, padding: "13px", textAlign: "left", color: "inherit", cursor: "pointer", width: "100%" }}><div style={muted}>{label}</div><strong style={{ display: "block", fontSize: "18px", marginTop: "5px" }}>{value}</strong>{hint ? <div style={{ ...muted, marginTop: "4px" }}>{hint}</div> : null}<div style={{ ...muted, marginTop: "7px", color: "#c4b5fd" }}>{expandedMetric === label ? "Tap to hide explanation" : "Tap to understand this metric"}</div>{expandedMetric === label && <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,.1)", fontSize: "12px", lineHeight: 1.6, color: "rgba(255,255,255,.8)" }}>{metricExplanations[label] || hint || "This value is provided by the connected data source when available. Check the reporting period and source before making a decision."}</div>}</button>;
       return <section style={{ ...card, padding: "16px" }}>
         <div style={{ marginBottom: "12px" }}>
           <p className="card-label" style={{ margin: "0 0 4px" }}>INSTRUMENT RESEARCH</p>
@@ -1710,13 +1728,30 @@ function MarketsPage() {
         <div role="tabpanel" style={{ paddingTop: "15px" }}>
           {researchTab === "overview" && <>
             <h4 style={{ margin: "0 0 10px" }}>Price overview</h4>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
-              {metric("Latest traded price", quote?.quote?.last_price != null ? money(quote.quote.last_price) : "Unavailable", "From the current quote response")}
-              {metric("Latest historical close", latestClose != null ? money(latestClose) : "Unavailable", "From loaded historical candles")}
-              {metric("Loaded-period change", periodChange != null ? `${periodChange >= 0 ? "+" : ""}${money(periodChange)}` : "Unavailable", periodChangePct != null ? `${periodChangePct >= 0 ? "+" : ""}${periodChangePct.toFixed(2)}% over loaded period` : "Load historical data to calculate")}
-              {metric("Historical records", String(closes.length), "Records returned by the chart API")}
-            </div>
-            <p style={{ ...muted, marginBottom: 0, marginTop: "12px" }}>Use the tabs above to inspect technical indicators, company information, fundamentals, dividends and news. Unavailable data is not estimated or fabricated.</p>
+            {(() => {
+              const q = quote?.quote || quote || {};
+              const quoteValue = (...keys) => { for (const key of keys) { const n = Number(q?.[key]); if (q?.[key] !== undefined && q?.[key] !== null && q?.[key] !== "" && Number.isFinite(n)) return n; } return null; };
+              const ltp = quoteValue("last_price", "ltp", "lastPrice");
+              const prev = quoteValue("previous_close", "prev_close", "close", "previousClose");
+              const dayHigh = quoteValue("high", "day_high", "high_price");
+              const dayLow = quoteValue("low", "day_low", "low_price");
+              const dayChange = ltp != null && prev != null ? ltp - prev : null;
+              const dayPct = dayChange != null && prev ? dayChange / prev * 100 : null;
+              const hasYearHistory = ["1Y", "5Y"].includes(chartRange) && chartData.length > 1;
+              const yearHigh = hasYearHistory ? Math.max(...closes) : null;
+              const yearLow = hasYearHistory ? Math.min(...closes) : null;
+              return <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+                {metric("Latest Traded Price (LTP)", ltp != null ? money(ltp) : "Unavailable", "Most recent price returned by the quote provider")}
+                {metric("Previous Closing Price", prev != null ? money(prev) : "Unavailable", "Previous trading session's close")}
+                {metric("Today's Change", dayChange != null ? `${dayChange >= 0 ? "+" : "−"}${money(Math.abs(dayChange))}` : "Unavailable", dayPct != null ? `${dayPct >= 0 ? "+" : ""}${dayPct.toFixed(2)}% vs previous close` : "Provider must return LTP and previous close")}
+                {metric("Today's High", dayHigh != null ? money(dayHigh) : "Unavailable", "Highest price in today's session, if returned")}
+                {metric("Today's Low", dayLow != null ? money(dayLow) : "Unavailable", "Lowest price in today's session, if returned")}
+                {metric("52-Week High", yearHigh != null ? money(yearHigh) : "Load 1Y chart", hasYearHistory ? "Highest price in loaded year history" : "Load one year of history to calculate")}
+                {metric("52-Week Low", yearLow != null ? money(yearLow) : "Load 1Y chart", hasYearHistory ? "Lowest price in loaded year history" : "Load one year of history to calculate")}
+                {metric("Period Return", periodChangePct != null ? `${periodChangePct >= 0 ? "+" : ""}${periodChangePct.toFixed(2)}%` : "Unavailable", `Change across the selected ${chartRange} chart period`)}
+              </div>;
+            })()}
+            <p style={{ ...muted, marginBottom: 0, marginTop: "12px" }}>Tap any metric card to learn what it means. Values that the current quote or history API does not provide are marked unavailable rather than guessed.</p>
           </>}
           {researchTab === "fundamental" && <>
             <h4 style={{ margin: "0 0 6px" }}>Fundamental Analysis</h4>
@@ -1730,10 +1765,10 @@ function MarketsPage() {
             <h4 style={{ margin: "0 0 6px" }}>Technical Analysis</h4>
             <p style={muted}>Indicators below are calculated only from the historical closing prices currently loaded.</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
-              {metric("20-period SMA", sma20 != null ? money(sma20) : "Insufficient data", "Requires at least 20 closing prices")}
+              {metric("20-day Average Price", sma20 != null ? money(sma20) : "Insufficient data", "Average of the last 20 available closes")}
               {metric("RSI (14)", rsi != null ? rsi.toFixed(2) : "Insufficient data", "Simple 14-period gain/loss calculation")}
-              {metric("Latest historical close", latestClose != null ? money(latestClose) : "Unavailable")}
-              {metric("Loaded-period return", periodChangePct != null ? `${periodChangePct >= 0 ? "+" : ""}${periodChangePct.toFixed(2)}%` : "Unavailable")}
+              {metric("Last Price in Chart", latestClose != null ? money(latestClose) : "Unavailable", "Last close in the selected chart period")}
+              {metric("Period Return", periodChangePct != null ? `${periodChangePct >= 0 ? "+" : ""}${periodChangePct.toFixed(2)}%` : "Unavailable", `Price change across selected ${chartRange} period`)}
             </div>
             <div style={{ ...card, marginTop: "12px" }}>
               <h4 style={{ margin: "0 0 6px" }}>Technical / Buy-Sell Summary</h4>

@@ -8,6 +8,7 @@ from sqlalchemy import inspect, text
 from uuid import uuid4
 
 from app.database.database import get_db
+from app.routes.auth import get_current_user
 from app.models import (
     User, Account, Category, Transaction, Loan, Liability,
     LoanMovement, LoanReceivable,
@@ -95,6 +96,7 @@ def _reverse_transfer_effect(source: Account, destination: Account, amount):
 def create_transaction(
     transaction_data: TransactionCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     _ensure_transfer_columns(db)
 
@@ -103,7 +105,7 @@ def create_transaction(
     # --------------------------------------------------------
     user = (
         db.query(User)
-        .filter(User.id == transaction_data.user_id)
+        .filter(User.id == current_user.id)
         .first()
     )
 
@@ -120,7 +122,7 @@ def create_transaction(
         db.query(Account)
         .filter(
             Account.id == transaction_data.account_id,
-            Account.user_id == transaction_data.user_id,
+            Account.user_id == current_user.id,
         )
         .first()
     )
@@ -141,7 +143,7 @@ def create_transaction(
             db.query(Category)
             .filter(
                 Category.id == transaction_data.category_id,
-                Category.user_id == transaction_data.user_id,
+                Category.user_id == current_user.id,
             )
             .first()
         )
@@ -158,12 +160,12 @@ def create_transaction(
         destination_id = transaction_data.transfer_to_account_id
         if destination_id is None or destination_id == account.id:
             raise HTTPException(status_code=422, detail="Choose a different destination account")
-        destination = (db.query(Account).filter(Account.id == destination_id, Account.user_id == transaction_data.user_id).with_for_update().first())
+        destination = (db.query(Account).filter(Account.id == destination_id, Account.user_id == current_user.id).with_for_update().first())
         if destination is None:
             raise HTTPException(status_code=404, detail="Destination account not found for this user")
         transfer_group_id = str(uuid4())
         transaction = Transaction(
-            user_id=transaction_data.user_id, account_id=account.id, category_id=None,
+            user_id=current_user.id, account_id=account.id, category_id=None,
             transaction_type="transfer", amount=transaction_data.amount,
             description=transaction_data.description, transaction_date=transaction_data.transaction_date,
             reference=transaction_data.reference, transfer_group_id=transfer_group_id,
@@ -173,7 +175,7 @@ def create_transaction(
             _apply_transfer_effect(account, destination, transaction_data.amount)
             db.add(transaction)
             db.flush()
-            record_finance_event(db, user_id=transaction_data.user_id, event_type="created", entity_type="transfer", entity_id=transaction.id, description=f"Transfer {transaction_data.amount} from {account.name} to {destination.name}", snapshot={"transaction_id": transaction.id, "transfer_group_id": transfer_group_id, "from_account_id": account.id, "from_account_name": account.name, "to_account_id": destination.id, "to_account_name": destination.name, "amount": transaction_data.amount, "date": transaction_data.transaction_date, "reference": transaction_data.reference})
+            record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="transfer", entity_id=transaction.id, description=f"Transfer {transaction_data.amount} from {account.name} to {destination.name}", snapshot={"transaction_id": transaction.id, "transfer_group_id": transfer_group_id, "from_account_id": account.id, "from_account_name": account.name, "to_account_id": destination.id, "to_account_name": destination.name, "amount": transaction_data.amount, "date": transaction_data.transaction_date, "reference": transaction_data.reference})
             db.commit()
             db.refresh(transaction)
         except Exception:
@@ -195,11 +197,11 @@ def create_transaction(
         if category is None:
             category = (
                 db.query(Category)
-                .filter(Category.user_id == transaction_data.user_id, Category.name.ilike("loan disbursement"))
+                .filter(Category.user_id == current_user.id, Category.name.ilike("loan disbursement"))
                 .first()
             )
             if category is None:
-                category = Category(user_id=transaction_data.user_id, name="Loan Disbursement", category_type="income", description="Loan proceeds; not earned income")
+                category = Category(user_id=current_user.id, name="Loan Disbursement", category_type="income", description="Loan proceeds; not earned income")
                 db.add(category)
                 db.flush()
         elif (category.category_type or "").lower() != "income":
@@ -218,7 +220,7 @@ def create_transaction(
         raise HTTPException(status_code=422, detail="Destination account is only valid for Transfer transactions")
 
     transaction = Transaction(
-        user_id=transaction_data.user_id,
+        user_id=current_user.id,
         account_id=transaction_data.account_id,
         category_id=category.id if category else None,
         transaction_type=transaction_data.transaction_type,
@@ -234,7 +236,7 @@ def create_transaction(
         if is_loan_disbursement:
             details = transaction_data.loan_details
             loan = Loan(
-                user_id=transaction_data.user_id,
+                user_id=current_user.id,
                 name=details.name,
                 lender_name=details.lender_name,
                 loan_type=details.loan_type,
@@ -257,7 +259,7 @@ def create_transaction(
             db.add(loan)
             db.flush()
             liability = Liability(
-                user_id=transaction_data.user_id,
+                user_id=current_user.id,
                 name=details.name,
                 liability_type=details.loan_type,
                 original_amount=details.principal_amount,
@@ -271,7 +273,7 @@ def create_transaction(
         # Income transaction increases the receiving account by the actual
         # amount received, not by the gross principal owed to the lender.
         _apply_balance_effect(account, transaction_data.transaction_type.lower(), transaction_data.amount)
-        record_finance_event(db, user_id=transaction_data.user_id, event_type="created", entity_type="transaction", entity_id=transaction.id, description=f"Transaction created: {transaction.transaction_type} {transaction.amount}", snapshot={"id": transaction.id, "account_id": transaction.account_id, "category_id": transaction.category_id, "transaction_type": transaction.transaction_type, "amount": transaction.amount, "description": transaction.description, "transaction_date": transaction.transaction_date, "reference": transaction.reference})
+        record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="transaction", entity_id=transaction.id, description=f"Transaction created: {transaction.transaction_type} {transaction.amount}", snapshot={"id": transaction.id, "account_id": transaction.account_id, "category_id": transaction.category_id, "transaction_type": transaction.transaction_type, "amount": transaction.amount, "description": transaction.description, "transaction_date": transaction.transaction_date, "reference": transaction.reference})
         db.commit()
         db.refresh(transaction)
     except Exception:
@@ -286,13 +288,13 @@ def create_transaction(
 
 @router.get("/", response_model=list[TransactionResponse])
 def get_transactions(
-    user_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     _ensure_transfer_columns(db)
     transactions = (
         db.query(Transaction)
-        .filter(Transaction.user_id == user_id)
+        .filter(Transaction.user_id == current_user.id)
         .order_by(Transaction.transaction_date.desc())
         .all()
     )
@@ -308,11 +310,12 @@ def get_transactions(
 def get_transaction(
     transaction_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     _ensure_transfer_columns(db)
     transaction = (
         db.query(Transaction)
-        .filter(Transaction.id == transaction_id)
+        .filter(Transaction.id == transaction_id, Transaction.user_id == current_user.id)
         .first()
     )
 
@@ -334,11 +337,12 @@ def update_transaction(
     transaction_id: int,
     transaction_data: TransactionUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     _ensure_transfer_columns(db)
     transaction = (
         db.query(Transaction)
-        .filter(Transaction.id == transaction_id)
+        .filter(Transaction.id == transaction_id, Transaction.user_id == current_user.id)
         .with_for_update()
         .first()
     )
@@ -381,6 +385,7 @@ def update_transaction(
         )
 
     update_data = transaction_data.model_dump(exclude_unset=True)
+    update_data.pop("user_id", None)  # Ownership is determined by the authenticated session.
     new_account_id = update_data.get("account_id", transaction.account_id)
     new_category_id = update_data.get("category_id", transaction.category_id)
     new_type = update_data.get("transaction_type", transaction.transaction_type)
@@ -449,11 +454,12 @@ def update_transaction(
 def delete_transaction(
     transaction_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     _ensure_transfer_columns(db)
     transaction = (
         db.query(Transaction)
-        .filter(Transaction.id == transaction_id)
+        .filter(Transaction.id == transaction_id, Transaction.user_id == current_user.id)
         .with_for_update()
         .first()
     )

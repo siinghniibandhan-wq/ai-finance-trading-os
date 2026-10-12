@@ -834,7 +834,7 @@ class TaxSectionErrorBoundary extends React.Component {
 
 // ============================================================
 // TAX CENTRE
-// Six sections powered by the existing read-only tax APIs.
+// Tax Centre sections use existing tax APIs; HRA calculator is estimate-only.
 // ============================================================
 
 function TaxPage() {
@@ -857,12 +857,24 @@ function TaxPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [hraInputs, setHraInputs] = useState({
+    annual_basic_salary: "",
+    annual_da_forming_retirement_benefits: "0",
+    annual_commission_on_turnover_at_fixed_percentage: "0",
+    annual_hra_received: "",
+    annual_rent_paid: "",
+    city: "",
+  });
+  const [hraResult, setHraResult] = useState(null);
+  const [hraLoading, setHraLoading] = useState(false);
+  const [hraError, setHraError] = useState("");
 
   const sections = [
     "Overview",
     "Income",
     "Capital Gains",
     "Deductions",
+    "HRA Calculator",
     "Tax Calculation",
     "Tax Report",
   ];
@@ -970,6 +982,40 @@ function TaxPage() {
       setError(err?.message || "Unable to load tax data.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // HRA calculator is estimate-only: it calls the existing backend endpoint and does not save a claim.
+  const calculateHra = async (event) => {
+    event.preventDefault();
+    setHraLoading(true);
+    setHraError("");
+    setHraResult(null);
+    try {
+      if (!taxRegime) throw new Error("Choose a tax regime before calculating HRA.");
+      if (taxRegime !== "old") throw new Error("HRA exemption is not available under the selected New Regime.");
+      const payload = {
+        financial_year: financialYear,
+        tax_regime: taxRegime,
+        annual_basic_salary: Number(hraInputs.annual_basic_salary),
+        annual_da_forming_retirement_benefits: Number(hraInputs.annual_da_forming_retirement_benefits || 0),
+        annual_commission_on_turnover_at_fixed_percentage: Number(hraInputs.annual_commission_on_turnover_at_fixed_percentage || 0),
+        annual_hra_received: Number(hraInputs.annual_hra_received),
+        annual_rent_paid: Number(hraInputs.annual_rent_paid),
+        city: hraInputs.city.trim(),
+      };
+      const response = await fetch(`${API_BASE_URL}/api/deductions-exempt-income/hra-calculator`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.detail || `HRA calculator returned ${response.status}`);
+      setHraResult(result);
+    } catch (err) {
+      setHraError(err?.message || "Unable to calculate HRA exemption.");
+    } finally {
+      setHraLoading(false);
     }
   };
 
@@ -1123,6 +1169,41 @@ function TaxPage() {
       )}
     </div>
   );
+
+  const renderHraCalculator = () => {
+    const inputStyle = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(12,16,30,0.72)", color: "inherit" };
+    const fieldStyle = { display: "grid", gap: "7px", color: "rgba(255,255,255,0.72)", fontSize: "12px" };
+    const fields = [
+      ["annual_basic_salary", "Annual basic salary (₹)", "number", true],
+      ["annual_da_forming_retirement_benefits", "Eligible DA (₹)", "number", false],
+      ["annual_commission_on_turnover_at_fixed_percentage", "Eligible fixed-percentage commission (₹)", "number", false],
+      ["annual_hra_received", "Annual HRA received (₹)", "number", true],
+      ["annual_rent_paid", "Annual rent paid (₹)", "number", true],
+      ["city", "City of residence", "text", true],
+    ];
+    return <div style={panelStyle}>
+      <h3 style={{ marginTop: 0 }}>HRA exemption calculator</h3>
+      <p style={{ color: "rgba(255,255,255,0.62)", fontSize: "13px", lineHeight: 1.7 }}>Estimate the potential exemption under section 10(13A) using the statutory least-of-three method. This calculator does not save a claim, verify documents, or change taxable income.</p>
+      {taxRegime !== "old" && <div role="status" style={{ padding: "12px 14px", borderRadius: "10px", marginBottom: "14px", background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.28)", color: "#fcd34d", fontSize: "12px" }}>Select Old Regime above to calculate HRA exemption. HRA exemption is not available under the New Regime.</div>}
+      <form onSubmit={calculateHra} style={{ display: "grid", gap: "14px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
+          {fields.map(([key, label, type, required]) => <label key={key} style={fieldStyle}>{label}<input aria-label={label} type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "0.01" : undefined} required={required} value={hraInputs[key]} onChange={(event) => setHraInputs((current) => ({ ...current, [key]: event.target.value }))} style={inputStyle} /></label>)}
+        </div>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+          <button type="submit" className="primary-button" disabled={hraLoading || taxRegime !== "old"}>{hraLoading ? "Calculating…" : "Calculate HRA exemption"}</button>
+          <button type="button" className="secondary-button" onClick={() => { setHraInputs({ annual_basic_salary: "", annual_da_forming_retirement_benefits: "0", annual_commission_on_turnover_at_fixed_percentage: "0", annual_hra_received: "", annual_rent_paid: "", city: "" }); setHraResult(null); setHraError(""); }}>Clear inputs</button>
+        </div>
+      </form>
+      {hraError && <div role="alert" style={{ marginTop: "14px", padding: "12px", borderRadius: "10px", color: "#fca5a5", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12px" }}>{hraError}</div>}
+      {hraResult && <div aria-live="polite" style={{ marginTop: "18px", display: "grid", gap: "12px" }}>
+        <div style={{ ...cardStyle, borderColor: "rgba(34,197,94,0.25)" }}><div style={labelStyle}>Indicative HRA exemption</div><div style={valueStyle}>{formatCurrency(hraResult.calculated_exemption)}</div><div style={{ color: "rgba(255,255,255,0.52)", fontSize: "11px", marginTop: "8px" }}>FY {safeText(hraResult.financial_year)} · Old Regime · Estimate only</div></div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "10px" }}>
+          {Object.entries(hraResult.limits || {}).map(([key, value]) => <div key={key} style={{ ...cardStyle, padding: "13px" }}><div style={labelStyle}>{key.replaceAll("_", " ")}</div><div style={{ fontWeight: 750, marginTop: "7px" }}>{formatCurrency(value)}</div></div>)}
+        </div>
+        <p style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", lineHeight: 1.6, marginBottom: 0 }}>{safeText(hraResult.verification_notice, "Verify salary components, residence and rent evidence before filing.")} The result is not saved as a claim and does not change taxable income.</p>
+      </div>}
+    </div>;
+  };
 
   const renderTaxCalculation = () => (
     <>
@@ -1341,6 +1422,7 @@ function TaxPage() {
         {section === "Income" && renderIncome()}
         {section === "Capital Gains" && renderCapitalGains()}
         {section === "Deductions" && renderDeductions()}
+        {section === "HRA Calculator" && renderHraCalculator()}
         {section === "Tax Calculation" && renderTaxCalculation()}
         {section === "Tax Report" && renderReport()}
       </TaxSectionErrorBoundary>

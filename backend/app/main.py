@@ -98,14 +98,37 @@ app = FastAPI(
 
 # ============================================================
 # CORS
+# Set CORS_ALLOWED_ORIGINS in the backend environment to a
+# comma-separated list of exact trusted frontend origins, e.g.
+# https://your-frontend.onrender.com
+# Do not use "*" with credentialed requests in production.
 # ============================================================
+
+import os
+
+_raw_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").strip()
+if _raw_cors_origins:
+    CORS_ALLOWED_ORIGINS = [
+        origin.strip().rstrip("/")
+        for origin in _raw_cors_origins.split(",")
+        if origin.strip()
+    ]
+else:
+    # Fail closed to local development origins if not configured.
+    # Production deployments must explicitly set CORS_ALLOWED_ORIGINS.
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin"],
 )
 
 

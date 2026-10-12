@@ -40,7 +40,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.models import Account, InstrumentMaster
+from app.models import Account, InstrumentMaster, User
+from app.routes.auth import get_current_user
 from app.finance_diary import record_finance_event
 
 from app.services.market_price import (
@@ -267,9 +268,11 @@ def is_market_investment(
 
 @router.get("/")
 def list_investments(
-    user_id: int,
+    user_id: int | None = None,  # Legacy query parameter is ignored for security.
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    user_id = current_user.id
 
     ensure_investments_table(db)
 
@@ -365,7 +368,10 @@ def list_investments(
 def create_investment(
     data: InvestmentCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    # Never trust user_id supplied in the request body.
+    user_id = current_user.id
 
     # Mandatory broker validation; reject whitespace-only values.
     if not data.broker.strip():
@@ -377,7 +383,7 @@ def create_investment(
     broker_account = None
     broker_name = data.broker.strip()
     broker_account = db.query(Account).filter(
-        Account.user_id == data.user_id,
+        Account.user_id == user_id,
         Account.account_type == "investment",
         (Account.name.ilike(broker_name)) | (Account.institution.ilike(broker_name)),
         Account.is_active.is_(True),
@@ -477,7 +483,7 @@ def create_investment(
             """
         ),
         {
-            "user_id": data.user_id,
+            "user_id": user_id,
 
             "name": data.name.strip(),
 
@@ -527,7 +533,7 @@ def create_investment(
             detail="Unable to create investment.",
         )
 
-    record_finance_event(db, user_id=data.user_id, event_type="created", entity_type="investment", entity_id=investment.id, description=f"Investment position created: {data.name.strip()}", snapshot={"id": investment.id, "name": data.name.strip(), "asset_class": asset_class, "product_type": product_type, "instrument_id": instrument_id, "instrument_master_id": master.id, "broker": broker_name, "investment_account_id": broker_account.id, "quantity": data.quantity, "buy_price": data.buy_price, "fees": data.fees, "cash_deduction_handled_by_initial_buy_ledger": True})
+    record_finance_event(db, user_id=user_id, event_type="created", entity_type="investment", entity_id=investment.id, description=f"Investment position created: {data.name.strip()}", snapshot={"id": investment.id, "name": data.name.strip(), "asset_class": asset_class, "product_type": product_type, "instrument_id": instrument_id, "instrument_master_id": master.id, "broker": broker_name, "investment_account_id": broker_account.id, "quantity": data.quantity, "buy_price": data.buy_price, "fees": data.fees, "cash_deduction_handled_by_initial_buy_ledger": True})
     db.commit()
     return investment_response(investment)
 
@@ -547,9 +553,11 @@ def create_investment(
 
 @router.post("/refresh")
 def refresh_market_prices(
-    user_id: int,
+    user_id: int | None = None,  # Legacy query parameter is ignored for security.
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    user_id = current_user.id
 
     ensure_investments_table(db)
 
@@ -854,6 +862,7 @@ def refresh_market_prices(
 def refresh_single_investment(
     investment_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     ensure_investments_table(db)
@@ -879,12 +888,12 @@ def refresh_single_investment(
 
             FROM investments
 
-            WHERE id = :investment_id
+            WHERE id = :investment_id AND user_id = :user_id
             """
         ),
         {
-            "investment_id":
-                investment_id
+            "investment_id": investment_id,
+            "user_id": current_user.id
         },
     )
 
@@ -1022,6 +1031,7 @@ def refresh_single_investment(
 def get_investment(
     investment_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     ensure_investments_table(db)
@@ -1047,12 +1057,12 @@ def get_investment(
 
             FROM investments
 
-            WHERE id = :investment_id
+            WHERE id = :investment_id AND user_id = :user_id
             """
         ),
         {
-            "investment_id":
-                investment_id
+            "investment_id": investment_id,
+            "user_id": current_user.id
         },
     )
 
@@ -1079,7 +1089,9 @@ def update_investment(
     investment_id: int,
     data: InvestmentCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    user_id = current_user.id
 
     # Existing records may be incomplete, but an edit must supply a valid broker.
     if not data.broker.strip():
@@ -1096,7 +1108,7 @@ def update_investment(
             """
             SELECT id
             FROM investments
-            WHERE id = :investment_id
+            WHERE id = :investment_id AND user_id = :user_id
             """
         ),
         {
@@ -1151,7 +1163,7 @@ def update_investment(
                     CURRENT_TIMESTAMP
 
             WHERE
-                id = :investment_id
+                id = :investment_id AND user_id = :user_id
 
             RETURNING
 
@@ -1172,11 +1184,8 @@ def update_investment(
             """
         ),
         {
-            "investment_id":
-                investment_id,
-
-            "user_id":
-                data.user_id,
+            "investment_id": investment_id,
+            "user_id": user_id,
 
             "name":
                 data.name.strip(),
@@ -1220,7 +1229,7 @@ def update_investment(
         db.rollback()
         raise HTTPException(status_code=500, detail="Unable to update investment.")
 
-    record_finance_event(db, user_id=data.user_id, event_type="updated", entity_type="investment", entity_id=investment.id, description=f"Investment record updated: {data.name.strip()}", snapshot={"id": investment.id, "name": data.name.strip(), "investment_type": data.investment_type, "symbol": data.symbol, "quantity": data.quantity, "buy_price": data.buy_price, "broker": data.broker, "notes": data.notes})
+    record_finance_event(db, user_id=user_id, event_type="updated", entity_type="investment", entity_id=investment.id, description=f"Investment record updated: {data.name.strip()}", snapshot={"id": investment.id, "name": data.name.strip(), "investment_type": data.investment_type, "symbol": data.symbol, "quantity": data.quantity, "buy_price": data.buy_price, "broker": data.broker, "notes": data.notes})
     db.commit()
     return investment_response(investment)
 
@@ -1232,8 +1241,9 @@ def update_investment(
 @router.delete("/{investment_id}")
 def delete_investment(
     investment_id: int,
-    user_id: int | None = None,
+    user_id: int | None = None,  # Legacy query parameter is ignored for security.
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Safely remove one investment record, never an entire instrument.
 
@@ -1242,24 +1252,14 @@ def delete_investment(
     """
     ensure_investments_table(db)
 
-    # Locate exactly one record by its unique investment ID. When user_id
-    # is supplied by the frontend, also scope the operation to that user.
-    where_sql = "id = :investment_id"
-    params = {"investment_id": investment_id}
-    if user_id is not None:
-        where_sql += " AND user_id = :user_id"
-        params["user_id"] = user_id
-
+    # Always scope deletion to the authenticated user; never trust query user_id.
     investment = db.execute(
-        text(f"SELECT id, user_id, name FROM investments WHERE {where_sql}"),
-        params,
+        text("SELECT id, user_id, name FROM investments WHERE id = :investment_id AND user_id = :user_id"),
+        {"investment_id": investment_id, "user_id": current_user.id},
     ).first()
 
     if not investment:
-        raise HTTPException(
-            status_code=404,
-            detail="Investment not found.",
-        )
+        raise HTTPException(status_code=404, detail="Investment not found.")
 
     # Only check for linked transactions if that ledger table exists.
     transaction_table_exists = db.execute(
@@ -1299,8 +1299,8 @@ def delete_investment(
 
     # Delete only this individual row, never rows matched by name or symbol.
     result = db.execute(
-        text("DELETE FROM investments WHERE id = :investment_id RETURNING id"),
-        {"investment_id": investment_id},
+        text("DELETE FROM investments WHERE id = :investment_id AND user_id = :user_id RETURNING id"),
+        {"investment_id": investment_id, "user_id": current_user.id},
     )
     deleted = result.first()
     if not deleted:

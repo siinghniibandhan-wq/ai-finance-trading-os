@@ -23,6 +23,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.models import User
+from app.routes.auth import get_current_user
 
 
 # ============================================================
@@ -151,10 +153,12 @@ class InvestmentTransactionVoid(BaseModel):
 
 @router.get("/")
 def list_transactions(
-    user_id: int,
+    user_id: int | None = None,  # Legacy query parameter is ignored for security.
     investment_id: int | None = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    user_id = current_user.id
 
     ensure_transaction_table(db)
 
@@ -234,7 +238,10 @@ def list_transactions(
 def create_transaction(
     data: InvestmentTransactionCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    # Ignore any user_id in the request body; derive ownership from the token.
+    user_id = current_user.id
     ensure_transaction_table(db)
 
     # --------------------------------------------------------
@@ -267,7 +274,7 @@ def create_transaction(
         ),
         {
             "investment_id": data.investment_id,
-            "user_id": data.user_id,
+            "user_id": user_id,
         },
     )
 
@@ -306,7 +313,7 @@ def create_transaction(
             """
         ),
         {
-            "user_id": data.user_id,
+            "user_id": user_id,
             "investment_id": data.investment_id,
         },
     )
@@ -396,7 +403,7 @@ def create_transaction(
             """
         ),
         {
-            "user_id": data.user_id,
+            "user_id": user_id,
             "investment_id": data.investment_id,
             "transaction_type": transaction_type,
             "quantity": data.quantity,
@@ -435,7 +442,7 @@ def create_transaction(
         {
             "quantity": new_quantity,
             "investment_id": data.investment_id,
-            "user_id": data.user_id,
+            "user_id": user_id,
         },
     )
 
@@ -457,6 +464,7 @@ def create_transaction(
 def get_transaction(
     transaction_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
 
     ensure_transaction_table(db)
@@ -480,11 +488,12 @@ def get_transaction(
                 created_at,
                 updated_at
             FROM investment_transactions
-            WHERE id = :transaction_id
+            WHERE id = :transaction_id AND user_id = :user_id
             """
         ),
         {
             "transaction_id": transaction_id,
+            "user_id": current_user.id,
         },
     )
 
@@ -508,9 +517,11 @@ def get_transaction(
 def update_transaction(
     transaction_id: int,
     data: InvestmentTransactionUpdate,
-    user_id: int,
+    user_id: int | None = None,  # Legacy query parameter is ignored for security.
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    user_id = current_user.id
     ensure_transaction_table(db)
     transaction_type = data.transaction_type.strip().upper()
     if transaction_type not in {"BUY", "SELL"}:
@@ -584,9 +595,11 @@ def update_transaction(
 def void_transaction(
     transaction_id: int,
     data: InvestmentTransactionVoid,
-    user_id: int,
+    user_id: int | None = None,  # Legacy query parameter is ignored for security.
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    user_id = current_user.id
     ensure_transaction_table(db)
     existing = db.execute(text("""
         SELECT * FROM investment_transactions
@@ -643,6 +656,7 @@ def void_transaction(
 def delete_transaction(
     transaction_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     raise HTTPException(
         status_code=405,

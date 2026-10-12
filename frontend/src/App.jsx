@@ -1522,7 +1522,17 @@ function MarketsPage() {
     } catch (e) { setOverviewError(e?.message || "Unable to load market overview."); }
     finally { setBusy(false); }
   };
+  // Initial market load. Manual refresh remains available as a fallback.
   useEffect(() => { refresh(); }, []);
+
+  // Auto-refresh the market overview every 30 seconds while this page is visible.
+  // This is intentionally slower than quote refresh to reduce provider/API load.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") refresh();
+    }, 30000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const search = async (event) => {
     event.preventDefault();
@@ -1537,17 +1547,36 @@ function MarketsPage() {
     } catch (e) { setSearchError(e?.message || "Market search failed."); }
     finally { setSearchBusy(false); }
   };
-  const getQuote = async (symbol) => {
+  // Fetch the selected instrument quote. Keep the previous valid quote visible
+  // during background refreshes to avoid flicker on the price card.
+  const getQuote = async (symbol, options = {}) => {
     if (!symbol) return;
-    setQuoteBusy(true); setQuoteError(""); setQuote(null);
+    const initialLoad = options.initial === true;
+    if (initialLoad) setQuoteBusy(true);
+    setQuoteError("");
     try {
-      const response = await fetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(symbol)}`);
+      const response = await fetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(symbol)}`, { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Quote returned ${response.status}`);
       setQuote(data);
-    } catch (e) { setQuoteError(e?.message || "Quote unavailable."); }
-    finally { setQuoteBusy(false); }
+    } catch (e) {
+      // Don't discard a previously loaded quote just because one refresh fails.
+      setQuoteError(e?.message || "Quote refresh failed; showing the last available price if present.");
+    } finally {
+      if (initialLoad) setQuoteBusy(false);
+    }
   };
+
+  // Automatically refresh selected stock LTP every 10 seconds while visible.
+  // Ten seconds is a safer default than 5 seconds for provider rate limits.
+  useEffect(() => {
+    if (!selectedInstrument?.symbol) return undefined;
+    const symbol = selectedInstrument.symbol;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") getQuote(symbol);
+    }, 10000);
+    return () => window.clearInterval(timer);
+  }, [selectedInstrument?.symbol]);
 
   // Fetch historical daily candles from the existing Market Charts API.
   const loadChart = async (symbol = chartSymbol, marketExchange = chartExchange, range = chartRange) => {
@@ -1592,7 +1621,7 @@ function MarketsPage() {
     setQuery(instrument.symbol);
     setResults([]);
     setSearchError("");
-    getQuote(instrument.symbol);
+    getQuote(instrument.symbol, { initial: true });
     chooseChart(instrument.symbol, instrument.exchange);
   };
 

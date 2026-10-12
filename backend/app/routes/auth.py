@@ -13,7 +13,7 @@ import secrets
 import time
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -172,3 +172,71 @@ def me(user: User = Depends(get_current_user)):
 
 
 
+
+
+# ============================================================
+# ADMIN FOUNDATION
+# Configure ADMIN_EMAIL to the email address of the administrator.
+# Admin status is derived from server configuration, not client input.
+# ============================================================
+
+def get_current_admin(user: User = Depends(get_current_user)) -> User:
+    admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    if not admin_email:
+        raise HTTPException(
+            status_code=503,
+            detail="Admin access is not configured. Set ADMIN_EMAIL on the backend.",
+        )
+    if (user.email or "").strip().lower() != admin_email:
+        raise HTTPException(status_code=403, detail="Administrator access required.")
+    return user
+
+
+class UserStatusRequest(BaseModel):
+    is_active: bool
+
+
+@router.get("/admin/users")
+def admin_list_users(
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+):
+    """List customer accounts for the configured administrator."""
+    users = db.query(User).order_by(User.id.asc()).offset(offset).limit(limit).all()
+    return {
+        "items": [
+            {
+                "id": item.id,
+                "name": item.name,
+                "email": item.email,
+                "currency": item.currency,
+                "is_active": item.is_active,
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+                "is_admin": (item.email or "").strip().lower() == (os.getenv("ADMIN_EMAIL", "").strip().lower()),
+            }
+            for item in users
+        ],
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+@router.patch("/admin/users/{user_id}/status")
+def admin_update_user_status(
+    user_id: int,
+    request: UserStatusRequest,
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Activate/deactivate a customer; prevent admin self-lockout."""
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found.")
+    if target.id == admin.id and not request.is_active:
+        raise HTTPException(status_code=400, detail="The administrator cannot deactivate their own account.")
+    target.is_active = request.is_active
+    db.commit()
+    db.refresh(target)
+    return {"status": "success", "user_id": target.id, "is_active": target.is_active}

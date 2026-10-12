@@ -353,35 +353,60 @@ def regime_available(
 # HRA EXEMPTION CALCULATOR (SECTION 10(13A))
 # ============================================================
 
-# One authoritative city classification map for the HRA calculator. Under the
-# traditional HRA rules, the 50% salary limit applies to Delhi, Mumbai,
-# Kolkata and Chennai; all other cities use 40%. Keep aliases here so the UI
-# and calculation endpoint share the same source.
-HRA_METRO_CITIES = {"delhi", "mumbai", "kolkata", "chennai"}
+# One authoritative, financial-year-aware HRA city rule map. Rule 279 of the
+# Income-tax Rules, 2026 expands the 50% salary limit to eight cities from
+# FY 2026-27. Earlier years retain the four-city list. Verify future amendments
+# before extending this effective-date rule.
+HRA_METRO_CITIES_THROUGH_FY_2025_26 = {"delhi", "mumbai", "kolkata", "chennai"}
+HRA_METRO_CITIES_FROM_FY_2026_27 = HRA_METRO_CITIES_THROUGH_FY_2025_26 | {
+    "hyderabad", "pune", "ahmedabad", "bengaluru"
+}
 HRA_CITY_ALIASES = {
     "new delhi": "delhi",
     "nct of delhi": "delhi",
     "bombay": "mumbai",
     "calcutta": "kolkata",
     "madras": "chennai",
+    "bangalore": "bengaluru",
 }
 HRA_NON_METRO_CITY_SUGGESTIONS = [
-    "Ahmedabad", "Bengaluru", "Bhopal", "Bhubaneswar", "Chandigarh",
-    "Coimbatore", "Dehradun", "Dhanbad", "Faridabad", "Ghaziabad",
-    "Guwahati", "Gurugram", "Gurgaon", "Hyderabad", "Indore",
+    "Bhopal", "Bhubaneswar", "Chandigarh", "Coimbatore", "Dehradun",
+    "Dhanbad", "Faridabad", "Ghaziabad", "Guwahati", "Gurugram", "Gurgaon", "Indore",
     "Jaipur", "Jabalpur", "Jamshedpur", "Kanpur", "Kochi", "Kota",
     "Lucknow", "Ludhiana", "Madurai", "Mangaluru", "Mysuru", "Nagpur",
-    "Nashik", "Noida", "Patna", "Pune", "Raipur", "Rajkot", "Ranchi",
+    "Nashik", "Noida", "Patna", "Raipur", "Rajkot", "Ranchi",
     "Surat", "Thiruvananthapuram", "Udaipur", "Vadodara", "Varanasi",
     "Visakhapatnam",
 ]
 
 
-def classify_hra_city(city: str) -> str:
-    """Return the authoritative HRA city class; unknown cities default non-metro."""
+def _financial_year_start(financial_year: str | None) -> int | None:
+    """Parse FY labels such as 2026-27 without guessing malformed values."""
+    try:
+        start, end = (financial_year or "").split("-", 1)
+        start_year, end_year = int(start), int(end)
+        if end_year != (start_year + 1) % 100:
+            return None
+        return start_year
+    except (ValueError, TypeError):
+        return None
+
+
+def classify_hra_city(city: str, financial_year: str = "2026-27") -> str:
+    """Classify a city under the HRA rule effective for the selected FY.
+
+    Unknown cities default to non-metro. Invalid/unknown FY labels conservatively
+    use the legacy four-city list rather than granting the expanded limit.
+    """
     key = " ".join((city or "").strip().casefold().split())
     key = HRA_CITY_ALIASES.get(key, key)
-    return "metro" if key in HRA_METRO_CITIES else "non_metro"
+    start_year = _financial_year_start(financial_year)
+    metro_cities = (
+        HRA_METRO_CITIES_FROM_FY_2026_27
+        if start_year is not None and start_year >= 2026
+        else HRA_METRO_CITIES_THROUGH_FY_2025_26
+    )
+    return "metro" if key in metro_cities else "non_metro"
 
 
 class HRAInputs(BaseModel):
@@ -400,7 +425,7 @@ class HRAInputs(BaseModel):
     city_classification: str | None = Field(default=None, pattern=r"^(metro|non_metro)$")
 
 
-def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str):
+def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str, financial_year: str = "2026-27"):
     """Calculate HRA exemption as the least of the three statutory limits.
 
     This is a calculation based on user-supplied annual figures. The app does
@@ -423,7 +448,7 @@ def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str):
 
     # The backend is authoritative: never trust a client-supplied classification.
     # City name determines the class; unlisted cities default to non-metro.
-    city_classification = classify_hra_city(inputs.city)
+    city_classification = classify_hra_city(inputs.city, financial_year)
     is_metro = city_classification == "metro"
     rent_less_ten_percent = max(inputs.annual_rent_paid - (salary * Decimal("0.10")), Decimal("0"))
     salary_percentage_limit = salary * (Decimal("0.50") if is_metro else Decimal("0.40"))
@@ -440,12 +465,13 @@ def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str):
         "city": inputs.city.strip(),
         "city_classification": city_classification,
         "city_classification_source": "server_tax_rules",
+        "financial_year": financial_year,
         "metro_city_for_hra": is_metro,
         "annual_salary_for_hra": str(salary),
         "limits": {key: str(value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)) for key, value in candidates.items()},
         "calculated_exemption": str(exemption),
-        "formula": "Least of HRA received, rent paid minus 10% of eligible salary, and 50% of eligible salary for Delhi/Mumbai/Kolkata/Chennai or 40% otherwise.",
-        "verification_notice": "Estimate from user-entered figures only. Verify eligibility and supporting documents before filing. Eligible salary here includes basic salary and DA forming part of retirement benefits; any eligible commission component is not included by this input model.",
+        "formula": "Least of HRA received, rent paid minus 10% of eligible salary, and the salary percentage limit applicable to the selected financial year and city.",
+        "verification_notice": "Estimate from user-entered figures only. Verify eligibility and supporting documents before filing. Eligible salary here includes basic salary and DA forming part of retirement benefits; commission is included only if it meets the statutory fixed-percentage-of-turnover condition.",
     }
 
 
@@ -455,31 +481,33 @@ class HRACalculatorRequest(HRAInputs):
 
 
 @router.get("/hra-cities")
-def hra_city_catalog():
-    """Return searchable suggestions and classifications from the same rules map."""
-    metro = [
-        {"name": "Delhi", "classification": "metro"},
-        {"name": "New Delhi", "classification": "metro"},
-        {"name": "Mumbai", "classification": "metro"},
-        {"name": "Bombay", "classification": "metro"},
-        {"name": "Kolkata", "classification": "metro"},
-        {"name": "Calcutta", "classification": "metro"},
-        {"name": "Chennai", "classification": "metro"},
-        {"name": "Madras", "classification": "metro"},
+def hra_city_catalog(financial_year: str = "2026-27"):
+    """Return unique searchable city suggestions for the requested financial year."""
+    candidates = [
+        "Delhi", "New Delhi", "Mumbai", "Bombay", "Kolkata", "Calcutta", "Chennai", "Madras",
+        "Ahmedabad", "Bengaluru", "Hyderabad", "Pune", *HRA_NON_METRO_CITY_SUGGESTIONS,
     ]
-    non_metro = [
-        {"name": name, "classification": "non_metro"}
-        for name in HRA_NON_METRO_CITY_SUGGESTIONS
-        if classify_hra_city(name) == "non_metro"
-    ]
-    return {"metro": metro, "non_metro": non_metro, "unknown_city_default": "non_metro"}
+    metro, non_metro, seen = [], [], set()
+    for name in candidates:
+        key = " ".join(name.casefold().split())
+        if key in seen:
+            continue
+        seen.add(key)
+        item = {"name": name, "classification": classify_hra_city(name, financial_year)}
+        (metro if item["classification"] == "metro" else non_metro).append(item)
+    return {
+        "financial_year": financial_year,
+        "metro": metro,
+        "non_metro": non_metro,
+        "unknown_city_default": "non_metro",
+    }
 
 
 @router.post("/hra-calculator")
 def hra_calculator(payload: HRACalculatorRequest):
     """Calculate an indicative HRA exemption without writing to the database."""
     try:
-        result = calculate_hra_exemption(payload, payload.tax_regime)
+        result = calculate_hra_exemption(payload, payload.tax_regime, payload.financial_year)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     result["financial_year"] = payload.financial_year
@@ -530,7 +558,7 @@ def create_deduction_claim(payload: TaxDeductionClaimInput, db: Session = Depend
         if payload.hra_inputs is None:
             raise HTTPException(status_code=400, detail="HRA claims require hra_inputs so the statutory exemption limit can be calculated.")
         try:
-            hra_result = calculate_hra_exemption(payload.hra_inputs, payload.tax_regime)
+            hra_result = calculate_hra_exemption(payload.hra_inputs, payload.tax_regime, payload.financial_year)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         claimed_amount = Decimal(hra_result["calculated_exemption"])

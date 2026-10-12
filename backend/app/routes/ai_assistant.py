@@ -3,7 +3,9 @@
 # Keeps the Gemini API key on the backend only.
 # ============================================================
 import os
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from app.models import User
+from app.routes.auth import get_current_user
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/api/ai", tags=["AI Assistant"])
@@ -15,7 +17,7 @@ class ChatRequest(BaseModel):
 def ai_status():
     return {"provider": "Google Gemini", "configured": bool(os.getenv("GEMINI_API_KEY"))}
 
-@router.post("/chat")
+@router.post("/chat", dependencies=[Depends(get_current_user)])
 def ai_chat(request: ChatRequest):
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:

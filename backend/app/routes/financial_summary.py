@@ -40,6 +40,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 from app.models import Category, Account, Transaction, LoanMovement
 
 from app.routes.holdings import (
@@ -138,7 +139,7 @@ def normalized_income_query(db, user_id, start_date=None, end_date=None):
 # FINANCIAL SUMMARY
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def get_financial_summary(
     user_id: int,
     start_date: date | None = None,
@@ -587,7 +588,7 @@ def get_financial_summary(
 # LOAN MOVEMENTS FOR WEALTH MANAGER CHART NORMALIZATION
 # ============================================================
 
-@router.get("/loan-movements")
+@router.get("/loan-movements", dependencies=[Depends(require_matching_user_id)])
 def get_loan_movements_for_summary(
     user_id: int,
     db: Session = Depends(get_db),

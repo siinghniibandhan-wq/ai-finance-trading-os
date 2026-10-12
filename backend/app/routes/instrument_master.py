@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from app.database.database import get_db
+from app.routes.auth import get_current_admin
 from app.models import InstrumentMaster
 
 router = APIRouter(prefix="/api/instrument-master", tags=["Instrument Master"])
@@ -23,7 +24,7 @@ def search_instruments(q: str = Query("", max_length=120), limit: int = Query(50
         query = query.filter(InstrumentMaster.name.ilike(pattern) | InstrumentMaster.symbol.ilike(pattern) | InstrumentMaster.isin.ilike(pattern))
     return [dict(id=row.id, canonical_key=row.canonical_key, name=row.name, symbol=row.symbol, exchange=row.exchange, isin=row.isin, asset_class=row.asset_class, product_type=row.product_type) for row in query.order_by(InstrumentMaster.name).limit(limit).all()]
 
-@router.post("/", status_code=201)
+@router.post("/", status_code=201, dependencies=[Depends(get_current_admin)])
 def create_instrument(data: InstrumentCreate, db: Session = Depends(get_db)):
     symbol = (data.symbol or "").strip().upper() or None
     exchange = (data.exchange or "").strip().upper() or None

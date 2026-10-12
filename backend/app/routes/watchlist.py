@@ -19,6 +19,9 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.models import User
+from app.routes.auth import get_current_user
+from app.routes.ownership import require_matching_user_id
 
 
 # ============================================================
@@ -116,7 +119,7 @@ class WatchlistCreate(BaseModel):
 # LIST WATCHLIST
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def list_watchlist(
     user_id: int,
     db: Session = Depends(get_db),
@@ -172,11 +175,15 @@ def list_watchlist(
 @router.post("/", status_code=201)
 def add_to_watchlist(
     data: WatchlistCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
     Add a market instrument to the user's watchlist.
     """
+
+    if data.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="The requested user_id does not match the authenticated user.")
 
     ensure_watchlist_table(db)
 
@@ -217,7 +224,7 @@ def add_to_watchlist(
             """
         ),
         {
-            "user_id": data.user_id,
+            "user_id": current_user.id,
             "exchange": exchange,
             "symbol": symbol,
         },
@@ -261,7 +268,7 @@ def add_to_watchlist(
             """
         ),
         {
-            "user_id": data.user_id,
+            "user_id": current_user.id,
             "symbol": symbol,
             "exchange": exchange,
             "name": (
@@ -299,7 +306,7 @@ def add_to_watchlist(
 # REMOVE FROM WATCHLIST
 # ============================================================
 
-@router.delete("/{watchlist_id}")
+@router.delete("/{watchlist_id}", dependencies=[Depends(require_matching_user_id)])
 def remove_from_watchlist(
     watchlist_id: int,
     user_id: int,

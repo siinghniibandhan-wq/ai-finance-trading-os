@@ -10,6 +10,7 @@ from sqlalchemy import func, extract
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 from app.models import User, Account, Transaction, Category, Budget, LoanMovement
 
 
@@ -51,7 +52,7 @@ def _dashboard_income_amount(transaction, movements_by_transaction):
 # DASHBOARD SUMMARY
 # ============================================================
 
-@router.get("/summary")
+@router.get("/summary", dependencies=[Depends(require_matching_user_id)])
 def get_dashboard_summary(
     user_id: int,
     db: Session = Depends(get_db),

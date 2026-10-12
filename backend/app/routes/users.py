@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.models import User
+from app.routes.auth import get_current_admin
 from app.schemas import UserCreate, UserResponse
 
 
@@ -25,7 +26,7 @@ router = APIRouter(
 # CREATE USER
 # ============================================================
 
-@router.post("/", response_model=UserResponse)
+@router.post("/", response_model=UserResponse, dependencies=[Depends(get_current_admin)])
 def create_user(
     user_data: UserCreate,
     db: Session = Depends(get_db),
@@ -61,7 +62,7 @@ def create_user(
 # LIST USERS
 # ============================================================
 
-@router.get("/", response_model=list[UserResponse])
+@router.get("/", response_model=list[UserResponse], dependencies=[Depends(get_current_admin)])
 def list_users(
     db: Session = Depends(get_db),
 ):
@@ -72,7 +73,7 @@ def list_users(
 # GET USER
 # ============================================================
 
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get("/{user_id}", response_model=UserResponse, dependencies=[Depends(get_current_admin)])
 def get_user(
     user_id: int,
     db: Session = Depends(get_db),

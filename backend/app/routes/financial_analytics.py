@@ -45,6 +45,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 from app.models import (
     Category,
     LoanMovement,
@@ -125,7 +126,7 @@ def validate_dates(
 # EXPENSE BY CATEGORY
 # ============================================================
 
-@router.get("/expenses-by-category")
+@router.get("/expenses-by-category", dependencies=[Depends(require_matching_user_id)])
 def expenses_by_category(
     user_id: int,
     start_date: date | None = None,
@@ -265,7 +266,7 @@ def expenses_by_category(
 # MONTHLY CASH FLOW
 # ============================================================
 
-@router.get("/monthly-cash-flow")
+@router.get("/monthly-cash-flow", dependencies=[Depends(require_matching_user_id)])
 def monthly_cash_flow(
     user_id: int,
     start_date: date | None = None,
@@ -435,7 +436,7 @@ _ordinary_income_expression()
 # PERIOD SUMMARY
 # ============================================================
 
-@router.get("/period-summary")
+@router.get("/period-summary", dependencies=[Depends(require_matching_user_id)])
 def period_summary(
     user_id: int,
     start_date: date | None = None,

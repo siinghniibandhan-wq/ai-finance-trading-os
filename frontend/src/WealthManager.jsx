@@ -329,6 +329,8 @@ function ChartLegend({ series }) {
 
 export default function WealthManager({ onNavigate = () => {} }) {
   const [data, setData] = useState({ summary: null, liabilities: null, taxLiability: null });
+  // Keep the Wealth Manager estimate aligned with the user's explicit regime selection.
+  const [taxRegime, setTaxRegime] = useState("new");
   const [goals, setGoals] = useState([]);
   const [goalsLoading, setGoalsLoading] = useState(true);
   const [goalsError, setGoalsError] = useState("");
@@ -355,7 +357,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
     const requests = await Promise.allSettled([
       getJson(`/api/financial-summary/?user_id=${USER_ID}`),
       getJson(`/api/liabilities?user_id=${USER_ID}`),
-      getJson(`/api/final-tax-liability/?user_id=${USER_ID}&financial_year=${FINANCIAL_YEAR}&tax_regime=new&residential_status=resident&stt_confirmed=false`),
+      getJson(`/api/final-tax-liability/?user_id=${USER_ID}&financial_year=${FINANCIAL_YEAR}&tax_regime=${encodeURIComponent(taxRegime)}&residential_status=resident&stt_confirmed=false`),
       getJson(`/api/transactions/?user_id=${USER_ID}`),
       getJson(`/api/categories/?user_id=${USER_ID}`),
       getJson(`/api/financial-summary/loan-movements?user_id=${USER_ID}`),
@@ -386,7 +388,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
     setLastUpdated(new Date());
     setLoading(false);
     setRefreshing(false);
-  }, []);
+  }, [taxRegime]);
 
   useEffect(() => {
     loadWealthData();
@@ -639,9 +641,21 @@ export default function WealthManager({ onNavigate = () => {} }) {
         <article className="glass-card wc-info-panel">
           <div className="wc-panel-heading"><div><p className="card-label">TAX SNAPSHOT</p><h3>Tax estimate status</h3></div><ReceiptText size={19} /></div>
           <DetailRow label="Financial year" value={FINANCIAL_YEAR} />
+          <label className="wc-tax-regime-control" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, margin: "12px 0", color: "inherit" }}>
+            <span>Tax regime</span>
+            <select
+              value={taxRegime}
+              onChange={(event) => setTaxRegime(event.target.value)}
+              aria-label="Wealth Manager tax regime"
+              style={{ maxWidth: 180, padding: "8px 10px", borderRadius: 8, background: "var(--surface, #171827)", color: "inherit", border: "1px solid rgba(148,163,184,.35)" }}
+            >
+              <option value="new">New Regime</option>
+              <option value="old">Old Regime</option>
+            </select>
+          </label>
           <DetailRow label="Tax engine response" value={data.taxLiability ? "Available" : loading ? "Loading…" : "Unavailable"} />
           <DetailRow label="Tax estimate" value={taxAmount === undefined ? "Not available" : money(taxAmount)} />
-          <p className="wc-note">This amount is shown only when the existing tax engine returns a recognized total field. Review the tax calculation scope before treating it as final tax payable.</p>
+          <p className="wc-note">Estimate requested using the {taxRegime === "old" ? "Old" : "New"} Regime. This amount is shown only when the existing tax engine returns a recognized total field. Review the tax calculation scope before treating it as final tax payable.</p>
           <div className="wc-tax-status"><CheckCircle2 size={15} /><span>Existing Tax Centre remains unchanged and available in the sidebar.</span></div>
         </article>
       </section>

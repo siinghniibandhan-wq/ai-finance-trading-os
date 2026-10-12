@@ -500,6 +500,33 @@ class TaxDeductionClaim(Base):
 
 
 # ============================================================
+# TAX SALARY INCOME SOURCE (USER-ENTERED, NOT AUTO-VERIFIED)
+# One annual record per user and financial year. HRA inputs are retained
+# alongside gross salary so an exemption can only be applied against a
+# salary source the user has explicitly verified with evidence.
+# ============================================================
+
+class TaxSalaryIncomeRecord(Base):
+    __tablename__ = "tax_salary_income_records"
+    __table_args__ = (UniqueConstraint("user_id", "financial_year", name="uq_tax_salary_user_fy"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    financial_year: Mapped[str] = mapped_column(String(9), nullable=False, index=True)
+    gross_salary: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    annual_basic_salary: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    annual_da_forming_retirement_benefits: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=0)
+    annual_commission_on_turnover_at_fixed_percentage: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=0)
+    annual_hra_received: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    annual_rent_paid: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    city: Mapped[str] = mapped_column(String(100), nullable=False)
+    evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(24), default="pending_review", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+# ============================================================
 # TAX CREDIT ENTRIES (SELF-REPORTED UNTIL VERIFIED)
 # ============================================================
 

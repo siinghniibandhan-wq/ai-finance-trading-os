@@ -1058,7 +1058,7 @@ def aggregate_verified_exempt_claims(claims, tax_regime):
             "applied_amount": str(amount),
             "user_confirmed_not_independently_validated": True,
             "calculation_note": (
-                "HRA amount is user-entered and evidence-referenced; the app does not calculate the statutory HRA limit or independently verify documents."
+                "HRA claims should be created through the HRA calculator; the app does not independently verify supporting documents or legal eligibility."
                 if key == "hra_exemption" else
                 "Exempt amount is user-confirmed and evidence-referenced; confirm eligibility under the applicable law before filing."
             ),
@@ -1237,18 +1237,28 @@ def get_final_taxable_income(
     # VERIFIED EXEMPT INCOME
     # ========================================================
     #
-    # Module 10 currently reports:
-    #
-    #   verified exempt income = 0
-    #
-    # because there is no dedicated verified exempt-income
-    # source yet.
+    # Verified exempt claims are surfaced separately. They are not applied
+    # to taxable income until the matching income head is available.
     #
     # ========================================================
 
-    verified_exempt_income, verified_exempt_claims = aggregate_verified_exempt_claims(
+    verified_exempt_claimed_amount, verified_exempt_claims = aggregate_verified_exempt_claims(
         verified_claims, tax_regime
     )
+
+    # ========================================================
+    # SAFE APPLICATION GUARD
+    # ========================================================
+    # Salary is not yet an available, calculated income head in this engine.
+    # Therefore exemptions such as HRA can be calculated and reviewed, but
+    # must not be subtracted from unrelated income (e.g. interest/capital gains).
+    # Keep the applied amount at zero until the salary head is integrated.
+    verified_exempt_income = Decimal("0")
+    for exempt_claim in verified_exempt_claims:
+        exempt_claim["eligible_verified_claimed_amount"] = exempt_claim.get("applied_amount", "0")
+        exempt_claim["applied_amount"] = "0"
+        exempt_claim["application_status"] = "not_applied_salary_income_source_unavailable"
+        exempt_claim["calculation_note"] += " The current taxable-income engine does not yet have a calculated salary income head, so this claim is not deducted from other income."
 
     # ========================================================
     # MISSING INCOME HEADS
@@ -1569,8 +1579,13 @@ def get_final_taxable_income(
                     verified_exempt_income
                 ),
 
-            "status":
-                "verified_claims_applied" if verified_exempt_income > 0 else "no_verified_claims",
+            "status": (
+                "verified_claims_applied" if verified_exempt_income > 0
+                else "verified_claims_not_applied_missing_salary_source" if verified_exempt_claimed_amount > 0
+                else "no_verified_claims"
+            ),
+
+            "verified_claimed_amount": money(verified_exempt_claimed_amount),
 
             "verified_claims": verified_exempt_claims,
 

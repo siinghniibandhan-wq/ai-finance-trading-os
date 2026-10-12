@@ -23,7 +23,8 @@ Important:
 ============================================================
 """
 
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -349,6 +350,89 @@ def regime_available(
 
 
 # ============================================================
+# HRA EXEMPTION CALCULATOR (SECTION 10(13A))
+# ============================================================
+
+HRA_METRO_CITIES = {"delhi", "mumbai", "kolkata", "chennai"}
+
+
+class HRAInputs(BaseModel):
+    """Annual inputs for the statutory least-of-three HRA calculation.
+
+    annual_basic_salary and annual_da_forming_retirement_benefits must cover
+    the same period as rent/HRA and should only include eligible salary.
+    """
+    annual_basic_salary: Decimal = Field(ge=0, max_digits=18, decimal_places=2)
+    annual_da_forming_retirement_benefits: Decimal = Field(default=Decimal("0"), ge=0, max_digits=18, decimal_places=2)
+    annual_commission_on_turnover_at_fixed_percentage: Decimal = Field(default=Decimal("0"), ge=0, max_digits=18, decimal_places=2)
+    annual_hra_received: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    annual_rent_paid: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    city: str = Field(min_length=2, max_length=100)
+
+
+def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str):
+    """Calculate HRA exemption as the least of the three statutory limits.
+
+    This is a calculation based on user-supplied annual figures. The app does
+    not independently verify salary slips, rent receipts, landlord details,
+    or legal eligibility. HRA exemption is not available under the new regime.
+    """
+    regime = (tax_regime or "").strip().lower()
+    if regime not in {"old", "new"}:
+        raise ValueError("tax_regime must be 'old' or 'new'.")
+    if regime == "new":
+        raise ValueError("HRA exemption under section 10(13A) is not available under the selected new tax regime.")
+
+    salary = (
+        inputs.annual_basic_salary
+        + inputs.annual_da_forming_retirement_benefits
+        + inputs.annual_commission_on_turnover_at_fixed_percentage
+    ).quantize(Decimal("0.01"))
+    if salary <= 0:
+        raise ValueError("Enter a positive annual basic salary and eligible DA for HRA calculation.")
+
+    city_key = inputs.city.strip().casefold()
+    is_metro = city_key in HRA_METRO_CITIES
+    rent_less_ten_percent = max(inputs.annual_rent_paid - (salary * Decimal("0.10")), Decimal("0"))
+    salary_percentage_limit = salary * (Decimal("0.50") if is_metro else Decimal("0.40"))
+    candidates = {
+        "hra_received": inputs.annual_hra_received,
+        "rent_paid_minus_10_percent_salary": rent_less_ten_percent,
+        "salary_percentage_limit": salary_percentage_limit,
+    }
+    exemption = min(candidates.values()).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return {
+        "status": "calculated",
+        "section": "10(13A)",
+        "tax_regime": "old",
+        "city": inputs.city.strip(),
+        "metro_city_for_hra": is_metro,
+        "annual_salary_for_hra": str(salary),
+        "limits": {key: str(value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)) for key, value in candidates.items()},
+        "calculated_exemption": str(exemption),
+        "formula": "Least of HRA received, rent paid minus 10% of eligible salary, and 50% of eligible salary for Delhi/Mumbai/Kolkata/Chennai or 40% otherwise.",
+        "verification_notice": "Estimate from user-entered figures only. Verify eligibility and supporting documents before filing. Eligible salary here includes basic salary and DA forming part of retirement benefits; any eligible commission component is not included by this input model.",
+    }
+
+
+class HRACalculatorRequest(HRAInputs):
+    financial_year: str = Field(pattern=r"^\d{4}-\d{2}$")
+    tax_regime: str = Field(pattern=r"^(old|new)$")
+
+
+@router.post("/hra-calculator")
+def hra_calculator(payload: HRACalculatorRequest):
+    """Calculate an indicative HRA exemption without writing to the database."""
+    try:
+        result = calculate_hra_exemption(payload, payload.tax_regime)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    result["financial_year"] = payload.financial_year
+    result["database_write"] = False
+    return result
+
+
+# ============================================================
 # API
 # ============================================================
 
@@ -363,7 +447,8 @@ class TaxDeductionClaimInput(BaseModel):
     financial_year: str = Field(pattern=r"^\d{4}-\d{2}$")
     tax_regime: str = Field(pattern=r"^(old|new)$")
     deduction_key: str = Field(min_length=1, max_length=60)
-    claimed_amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    claimed_amount: Decimal | None = Field(default=None, gt=0, max_digits=18, decimal_places=2)
+    hra_inputs: HRAInputs | None = None
     evidence_reference: str | None = Field(default=None, max_length=2000)
     notes: str | None = Field(default=None, max_length=4000)
 
@@ -383,11 +468,32 @@ def create_deduction_claim(payload: TaxDeductionClaimInput, db: Session = Depend
         raise HTTPException(status_code=400, detail="Unknown deduction_key or exempt-income key")
     if not regime_available(item, payload.tax_regime):
         raise HTTPException(status_code=400, detail=f"This {claim_type.replace('_', '-')} claim is not available under the selected regime")
+
+    claimed_amount = payload.claimed_amount
+    notes = payload.notes
+    if payload.deduction_key == "hra_exemption":
+        if payload.hra_inputs is None:
+            raise HTTPException(status_code=400, detail="HRA claims require hra_inputs so the statutory exemption limit can be calculated.")
+        try:
+            hra_result = calculate_hra_exemption(payload.hra_inputs, payload.tax_regime)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        claimed_amount = Decimal(hra_result["calculated_exemption"])
+        if claimed_amount <= 0:
+            raise HTTPException(status_code=400, detail="The calculated HRA exemption is zero; no positive HRA claim can be created.")
+        notes = json.dumps({
+            "user_notes": payload.notes,
+            "hra_calculation": hra_result,
+            "hra_inputs": payload.hra_inputs.model_dump(mode="json"),
+        }, default=str)
+    elif claimed_amount is None:
+        raise HTTPException(status_code=400, detail="claimed_amount is required for this claim type.")
+
     claim = TaxDeductionClaim(
         user_id=payload.user_id, financial_year=payload.financial_year,
         tax_regime=payload.tax_regime, deduction_key=payload.deduction_key,
-        claimed_amount=payload.claimed_amount, evidence_reference=payload.evidence_reference,
-        notes=payload.notes, status="pending_review",
+        claimed_amount=claimed_amount, evidence_reference=payload.evidence_reference,
+        notes=notes, status="pending_review",
     )
     db.add(claim)
     db.commit()
@@ -415,7 +521,16 @@ def list_deduction_claims(user_id: int = Query(..., ge=1),
          "section": (DEDUCTION_CATALOG.get(c.deduction_key) or EXEMPT_INCOME_CATALOG.get(c.deduction_key) or {}).get("section"),
          "claimed_amount": str(c.claimed_amount), "status": c.status,
          "evidence_reference": c.evidence_reference, "notes": c.notes,
-         "affects_taxable_income": c.status == "verified" and claim_is_regime_eligible(c)
+         "affects_taxable_income": (
+             c.status == "verified"
+             and claim_is_regime_eligible(c)
+             and c.deduction_key in DEDUCTION_CATALOG
+         ),
+         "application_note": (
+             "Deduction may be applied by the taxable-income engine when regime eligible."
+             if c.deduction_key in DEDUCTION_CATALOG
+             else "Verified exemption claim is recorded, but it is not currently deducted because the corresponding income head is not yet integrated."
+         )
          } for c in claims]}
 
 

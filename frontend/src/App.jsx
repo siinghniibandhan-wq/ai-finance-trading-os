@@ -6,6 +6,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import WealthManager from "./WealthManager";
 import LoanManagement from "./LoanManagement";
+import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession } from "./api";
 
 import {
   LayoutDashboard,
@@ -68,7 +69,7 @@ function StyledSelect({ children, value, onChange, className = "", style = {}, d
 }
 
 // ============================================================
-// API REQUESTS — no global authentication-token wrapper
+// API REQUESTS — centralized authenticated API wrapper
 // ============================================================
 
 // ============================================================
@@ -409,15 +410,28 @@ export default function App() {
             <div className="profile">
 
               <div className="profile-avatar">
-                NS
+                {(getCurrentUser()?.name || "U").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}
               </div>
 
               <div className="profile-info">
-                <strong>User</strong>
-                <span>Personal</span>
+                <strong>{getCurrentUser()?.name || "User"}</strong>
+                <span>{getCurrentUser()?.email || "Personal workspace"}</span>
               </div>
 
             </div>
+
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="Sign out"
+              title="Sign out"
+              onClick={() => {
+                clearSession();
+                window.location.replace("/login");
+              }}
+            >
+              Sign out
+            </button>
 
           </div>
 
@@ -493,7 +507,7 @@ function Dashboard() {
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const API_BASE_URL = "https://ai-finance-trading-os-api.onrender.com";
-  const USER_ID = 1;
+  const USER_ID = getCurrentUserId();
 
 
   const loadDashboard = async () => {
@@ -501,8 +515,8 @@ function Dashboard() {
     setError("");
     try {
       const [dashboardResponse, goalsResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/dashboard/summary?user_id=${USER_ID}`, { cache: "no-store" }),
-        fetch(`${API_BASE_URL}/api/goals/?user_id=${USER_ID}`, { cache: "no-store" }).catch(() => null),
+        apiFetch(`${API_BASE_URL}/api/dashboard/summary?user_id=${USER_ID}`, { cache: "no-store" }),
+        apiFetch(`${API_BASE_URL}/api/goals/?user_id=${USER_ID}`, { cache: "no-store" }).catch(() => null),
       ]);
       if (!dashboardResponse.ok) {
         throw new Error(`Dashboard API error: ${dashboardResponse.status}`);
@@ -840,7 +854,7 @@ class TaxSectionErrorBoundary extends React.Component {
 function TaxPage() {
   const API_BASE_URL =
     "https://ai-finance-trading-os-api.onrender.com";
-  const USER_ID = 1;
+  const USER_ID = getCurrentUserId();
 
   const [section, setSection] = useState("Overview");
   const [financialYear, setFinancialYear] = useState("2026-27");
@@ -906,7 +920,7 @@ function TaxPage() {
   };
 
   const readApi = async (path) => {
-    const response = await fetch(`${API_BASE_URL}${path}`);
+    const response = await apiFetch(`${API_BASE_URL}${path}`);
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(
@@ -1007,7 +1021,7 @@ function TaxPage() {
         annual_rent_paid: Number(hraInputs.annual_rent_paid),
         city: hraInputs.city.trim(),
       };
-      const response = await fetch(`${API_BASE_URL}/api/deductions-exempt-income/hra-calculator`, {
+      const response = await apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/hra-calculator`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -1024,7 +1038,7 @@ function TaxPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_BASE_URL}/api/deductions-exempt-income/hra-cities?financial_year=${encodeURIComponent(financialYear)}`, { cache: "no-store" })
+    apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/hra-cities?financial_year=${encodeURIComponent(financialYear)}`, { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data?.detail || `City catalogue returned ${response.status}`);
@@ -1513,7 +1527,7 @@ function MarketsPage() {
   const refresh = async () => {
     setBusy(true); setOverviewError("");
     try {
-      const response = await fetch(`${API}/api/market-overview/`);
+      const response = await apiFetch(`${API}/api/market-overview/`);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Market overview returned ${response.status}`);
       setOverview(data); setUpdated(new Date().toLocaleString("en-IN"));
@@ -1539,7 +1553,7 @@ function MarketsPage() {
     if (!query.trim()) { setSearchError("Enter a company name or symbol."); return; }
     setSearchBusy(true); setSearchError(""); setResults([]); setQuote(null); setQuoteError(""); setSelectedInstrument(null);
     try {
-      const response = await fetch(`${API}/api/market-search/?query=${encodeURIComponent(query.trim())}&exchange=${encodeURIComponent(exchange)}&limit=20`);
+      const response = await apiFetch(`${API}/api/market-search/?query=${encodeURIComponent(query.trim())}&exchange=${encodeURIComponent(exchange)}&limit=20`);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Search returned ${response.status}`);
       const rows = Array.isArray(data?.results) ? data.results : [];
@@ -1555,7 +1569,7 @@ function MarketsPage() {
     if (initialLoad) setQuoteBusy(true);
     setQuoteError("");
     try {
-      const response = await fetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(symbol)}`, { cache: "no-store" });
+      const response = await apiFetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(symbol)}`, { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Quote returned ${response.status}`);
       setQuote(data);
@@ -1590,7 +1604,7 @@ function MarketsPage() {
     setChartBusy(true); setChartError(""); setChartData([]); setChartInfo(null);
     try {
       const url = `${API}/api/market-charts/?symbol=${encodeURIComponent(symbol)}&exchange=${encodeURIComponent(marketExchange)}&interval=${encodeURIComponent(intervalByRange[range] || "day")}&from=${isoDate(fromDate)}&to=${isoDate(toDate)}`;
-      const response = await fetch(url);
+      const response = await apiFetch(url);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Historical data returned ${response.status}`);
       const rows = Array.isArray(data?.data) ? data.data : [];
@@ -1847,7 +1861,7 @@ function MarketsPage() {
 function PlanPage() {
   // Persistent financial goals API. Keep USER_ID consistent with existing app.
   const API_BASE_URL = "https://ai-finance-trading-os-api.onrender.com";
-  const USER_ID = 1;
+  const USER_ID = getCurrentUserId();
   const categories = ["Emergency Fund", "Savings", "House", "Car", "Education", "Financial Independence", "Retirement", "Major Purchase", "Other"];
   const [goals, setGoals] = useState([]);
   const [plan, setPlan] = useState(null);
@@ -1865,7 +1879,7 @@ function PlanPage() {
   const field = { width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(5,10,22,0.75)", color: "inherit", marginTop: "7px" };
 
   const loadGoals = async () => {
-    const response = await fetch(`${API_BASE_URL}/api/goals/?user_id=${USER_ID}`);
+    const response = await apiFetch(`${API_BASE_URL}/api/goals/?user_id=${USER_ID}`);
     if (!response.ok) throw new Error(`Goals API returned ${response.status}`);
     const data = await response.json();
     if (data.status !== "success") throw new Error("Could not load saved goals.");
@@ -1873,7 +1887,7 @@ function PlanPage() {
   };
   const loadPlan = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/financial-plan/?user_id=${USER_ID}`);
+      const response = await apiFetch(`${API_BASE_URL}/api/financial-plan/?user_id=${USER_ID}`);
       if (response.ok) { const data = await response.json(); if (data.status === "success") setPlan(data); }
     } catch (e) { console.warn("Planning assumptions unavailable", e); }
   };
@@ -1893,7 +1907,7 @@ function PlanPage() {
     if (!(Number(form.target_amount) > 0)) { setError("Target amount must be greater than zero."); setSaving(false); return; }
     const payload = { user_id: USER_ID, name: form.name.trim(), category: form.category, target_amount: Number(form.target_amount), current_amount: Number(form.current_amount || 0), target_date: form.target_date || null, monthly_contribution: Number(form.monthly_contribution || 0), notes: form.notes.trim() || null, status: form.status };
     try {
-      const response = await fetch(`${API_BASE_URL}/api/goals/${editingId ? `${editingId}` : ""}`, { method: editingId ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const response = await apiFetch(`${API_BASE_URL}/api/goals/${editingId ? `${editingId}` : ""}`, { method: editingId ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail || `Save failed (${response.status})`);
       await loadGoals(); resetForm(); setSuccess(editingId ? "Goal updated successfully." : "Goal saved successfully. It will remain available after refresh.");
@@ -1904,7 +1918,7 @@ function PlanPage() {
   const removeGoal = async (goal) => {
     if (!window.confirm(`Delete goal “${goal.name}”? This will not change any account balance or transaction.`)) return;
     setError(""); setSuccess("");
-    try { const response = await fetch(`${API_BASE_URL}/api/goals/${goal.id}?user_id=${USER_ID}`, { method: "DELETE" }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.detail || `Delete failed (${response.status})`); setGoals(prev => prev.filter(g => g.id !== goal.id)); if (editingId === goal.id) resetForm(); setSuccess("Goal deleted."); }
+    try { const response = await apiFetch(`${API_BASE_URL}/api/goals/${goal.id}?user_id=${USER_ID}`, { method: "DELETE" }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.detail || `Delete failed (${response.status})`); setGoals(prev => prev.filter(g => g.id !== goal.id)); if (editingId === goal.id) resetForm(); setSuccess("Goal deleted."); }
     catch (e) { setError(e.message || "Could not delete goal."); }
   };
 
@@ -1974,7 +1988,7 @@ function AIAssistantPage() {
     event.preventDefault(); const text = message.trim(); if (!text || busy) return;
     setMessages(old => [...old, { role: "you", text }]); setMessage(""); setError(""); setBusy(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ai/chat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
+      const response = await apiFetch(`${API_BASE_URL}/api/ai/chat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
       setMessages(old => [...old, { role: "gemini", text: data.answer || "Gemini returned an empty response." }]);
@@ -2012,9 +2026,9 @@ function PlaygroundPage() {
   const [riskPercent, setRiskPercent] = useState(1);
   const [notice, setNotice] = useState("");
   const symbols = () => [...new Set(symbolsText.split(/[\s,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean))].slice(0, 20);
-  useEffect(() => { let cancelled=false; fetch(`${API}/api/vibe-trading/status`).then(async r=>{const d=await r.json(); if(!r.ok) throw new Error(d.detail||`Status ${r.status}`); return d;}).then(d=>{if(!cancelled)setStatus(d);}).catch(e=>{if(!cancelled)setError(`API status unavailable: ${e.message}`);}); return ()=>{cancelled=true;}; }, []);
-  const loadQuotes = async (e) => { if(e)e.preventDefault(); const list=symbols(); if(!list.length){setError("Enter at least one symbol.");return;} setBusy(true);setError("");setNotice("");try{const r=await fetch(`${API}/api/vibe-trading/quotes`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({symbols:list})});const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||`Request failed (${r.status})`));setQuotes(Array.isArray(d.quotes)?d.quotes:[]);setUpdatedAt(new Date().toLocaleString());if(!d.quotes?.length)setError("No quote rows were returned.");}catch(e){setError(e.message||"Unable to load quotes.");}finally{setBusy(false);} };
-  const runResearch = async (e) => { if(e)e.preventDefault();setBusy(true);setError("");setResearch("");try{const r=await fetch(`${API}/api/vibe-trading/research`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({question,symbols:symbols()})});const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||`Research failed (${r.status})`));setResearch(d.answer||"The research service returned no answer.");}catch(e){setError(e.message||"Research request failed.");}finally{setBusy(false);} };
+  useEffect(() => { let cancelled=false; apiFetch(`${API}/api/vibe-trading/status`).then(async r=>{const d=await r.json(); if(!r.ok) throw new Error(d.detail||`Status ${r.status}`); return d;}).then(d=>{if(!cancelled)setStatus(d);}).catch(e=>{if(!cancelled)setError(`API status unavailable: ${e.message}`);}); return ()=>{cancelled=true;}; }, []);
+  const loadQuotes = async (e) => { if(e)e.preventDefault(); const list=symbols(); if(!list.length){setError("Enter at least one symbol.");return;} setBusy(true);setError("");setNotice("");try{const r=await apiFetch(`${API}/api/vibe-trading/quotes`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({symbols:list})});const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||`Request failed (${r.status})`));setQuotes(Array.isArray(d.quotes)?d.quotes:[]);setUpdatedAt(new Date().toLocaleString());if(!d.quotes?.length)setError("No quote rows were returned.");}catch(e){setError(e.message||"Unable to load quotes.");}finally{setBusy(false);} };
+  const runResearch = async (e) => { if(e)e.preventDefault();setBusy(true);setError("");setResearch("");try{const r=await apiFetch(`${API}/api/vibe-trading/research`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({question,symbols:symbols()})});const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||`Research failed (${r.status})`));setResearch(d.answer||"The research service returned no answer.");}catch(e){setError(e.message||"Research request failed.");}finally{setBusy(false);} };
   const panel={background:"rgba(255,255,255,.035)",border:"1px solid rgba(255,255,255,.10)",borderRadius:14,padding:16,minWidth:0};
   const muted={color:"rgba(255,255,255,.65)",fontSize:13,lineHeight:1.65};
   const input={width:"100%",minWidth:0,padding:"12px 13px",borderRadius:10,color:"inherit",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.16)",marginTop:6};
@@ -2086,7 +2100,7 @@ function InvestmentTransactions() {
   const API_BASE_URL =
     "https://ai-finance-trading-os-api.onrender.com";
 
-  const USER_ID = 1;
+  const USER_ID = getCurrentUserId();
 
   // ----------------------------------------------------------
   // STATE
@@ -2135,10 +2149,10 @@ function InvestmentTransactions() {
         transactionResponse,
         investmentResponse,
       ] = await Promise.all([
-        fetch(
+        apiFetch(
           `${API_BASE_URL}/api/investment-transactions/?user_id=${USER_ID}`
         ),
-        fetch(
+        apiFetch(
           `${API_BASE_URL}/api/investments/?user_id=${USER_ID}`
         ),
       ]);
@@ -2276,7 +2290,7 @@ function InvestmentTransactions() {
     setSavingEdit(true);
     setEditError("");
     try {
-      const response = await fetch(`${API_BASE_URL}/api/investment-transactions/${editingTransaction.id}?user_id=${USER_ID}`, {
+      const response = await apiFetch(`${API_BASE_URL}/api/investment-transactions/${editingTransaction.id}?user_id=${USER_ID}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2311,7 +2325,7 @@ function InvestmentTransactions() {
       return;
     }
     if (!window.confirm(`Void transaction #${transaction.id}? It will be excluded from active calculations, but its audit record will be preserved.`)) return;
-    const response = await fetch(`${API_BASE_URL}/api/investment-transactions/${transaction.id}/void?user_id=${USER_ID}`, {
+    const response = await apiFetch(`${API_BASE_URL}/api/investment-transactions/${transaction.id}/void?user_id=${USER_ID}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reason }),
@@ -3287,7 +3301,7 @@ function Holdings() {
   const API_BASE_URL =
     "https://ai-finance-trading-os-api.onrender.com";
 
-  const USER_ID = 1;
+  const USER_ID = getCurrentUserId();
 
   const [holdings, setHoldings] = useState([]);
   const [summary, setSummary] = useState({});
@@ -3332,10 +3346,10 @@ function Holdings() {
 
       const [holdingsResponse, investmentsResponse] =
         await Promise.all([
-          fetch(
+          apiFetch(
             `${API_BASE_URL}/api/holdings/?user_id=${USER_ID}`
           ),
-          fetch(
+          apiFetch(
             `${API_BASE_URL}/api/investments/?user_id=${USER_ID}`
           ),
         ]);
@@ -3406,7 +3420,7 @@ function Holdings() {
       setRefreshing(true);
       setError("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/investments/refresh?user_id=${USER_ID}`,
         {
           method: "POST",
@@ -4431,6 +4445,8 @@ function Holdings() {
 
 function Portfolio() {
 
+  const USER_ID = getCurrentUserId();
+
   // Shared muted text style used by Portfolio and the investment form.
   // Keep this local to Portfolio so it does not depend on MarketsPage state.
   const muted = { color: "rgba(255,255,255,0.55)", fontSize: "12px", lineHeight: 1.6 };
@@ -4489,7 +4505,7 @@ function Portfolio() {
       const endpoint = isMutualFund
         ? `https://ai-finance-trading-os-api.onrender.com/api/mutual-funds/search/?query=${encodeURIComponent(value.trim())}&limit=12`
         : `https://ai-finance-trading-os-api.onrender.com/api/market-search/?query=${encodeURIComponent(value.trim())}&exchange=NSE&limit=12`;
-      const response = await fetch(endpoint);
+      const response = await apiFetch(endpoint);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const detail = typeof data?.detail === "string" ? data.detail : `Instrument search failed (${response.status})`;
@@ -4590,8 +4606,8 @@ const [transactionMessage, setTransactionMessage] =
   useState("");
   const loadInvestments = async () => {
     try {
-      const response = await fetch(
-        "https://ai-finance-trading-os-api.onrender.com/api/investments/?user_id=1"
+      const response = await apiFetch(
+        `${API_BASE_URL}/api/investments/?user_id=${USER_ID}`
       );
 
       if (!response.ok) {
@@ -4630,8 +4646,8 @@ const [transactionMessage, setTransactionMessage] =
     if (!confirmed) return;
 
     try {
-      const response = await fetch(
-        `https://ai-finance-trading-os-api.onrender.com/api/investments/${encodeURIComponent(investment.id)}?user_id=1`,
+      const response = await apiFetch(
+        `${API_BASE_URL}/api/investments/${encodeURIComponent(investment.id)}?user_id=${USER_ID}`,
         { method: "DELETE", headers: { Accept: "application/json" } }
       );
       const data = await response.json().catch(() => ({}));
@@ -4666,8 +4682,8 @@ const refreshMarketPrices = async () => {
     setRefreshingPrices(true);
     setRefreshMessage("");
 
-    const response = await fetch(
-      "https://ai-finance-trading-os-api.onrender.com/api/investments/refresh?user_id=1",
+    const response = await apiFetch(
+      `${API_BASE_URL}/api/investments/refresh?user_id=${USER_ID}`,
       {
         method: "POST",
         headers: {
@@ -4768,8 +4784,8 @@ const loadInvestmentTransactions = async (
     setTransactionHistoryLoading(true);
     setTransactionMessage("");
 
-    const response = await fetch(
-      `https://ai-finance-trading-os-api.onrender.com/api/investment-transactions/?user_id=1&investment_id=${investmentId}`
+    const response = await apiFetch(
+      `${API_BASE_URL}/api/investment-transactions/?user_id=${USER_ID}&investment_id=${investmentId}`
     );
 
     const data = await response.json();
@@ -4946,7 +4962,7 @@ const handleInvestmentTransactionSubmit =
 
       const payload = {
 
-        user_id: 1,
+        user_id: USER_ID,
 
         investment_id:
           investment.id,
@@ -4982,7 +4998,7 @@ const handleInvestmentTransactionSubmit =
       // CREATE TRANSACTION
       // ------------------------------------------------------
 
-      const response = await fetch(
+      const response = await apiFetch(
         "https://ai-finance-trading-os-api.onrender.com/api/investment-transactions/",
         {
           method: "POST",
@@ -5135,7 +5151,7 @@ const handleInvestmentTransactionSubmit =
       // --------------------------------------------------------
 
       const payload = {
-        user_id: 1,
+        user_id: USER_ID,
 
         name:
           investmentForm.name.trim(),
@@ -5183,7 +5199,7 @@ const handleInvestmentTransactionSubmit =
         ? `https://ai-finance-trading-os-api.onrender.com/api/investments/${editingInvestmentId}`
         : "https://ai-finance-trading-os-api.onrender.com/api/investments/";
 
-      const response = await fetch(
+      const response = await apiFetch(
         url,
         {
           method: editingInvestmentId
@@ -5220,7 +5236,7 @@ const handleInvestmentTransactionSubmit =
       if (!editingInvestmentId) {
 
         const transactionPayload = {
-          user_id: 1,
+          user_id: USER_ID,
 
           investment_id:
             data.id,
@@ -5246,7 +5262,7 @@ const handleInvestmentTransactionSubmit =
         };
 
         const transactionResponse =
-          await fetch(
+          await apiFetch(
             "https://ai-finance-trading-os-api.onrender.com/api/investment-transactions/",
             {
               method: "POST",
@@ -5277,7 +5293,7 @@ const handleInvestmentTransactionSubmit =
           // incomplete investment record.
 
           try {
-            await fetch(
+            await apiFetch(
               `https://ai-finance-trading-os-api.onrender.com/api/investments/${data.id}`,
               {
                 method: "DELETE",
@@ -7291,7 +7307,7 @@ function SettingsPage({ onNavigate }) {
 
 function FinanceDiaryPage() {
   const API_BASE_URL = "https://ai-finance-trading-os-api.onrender.com";
-  const USER_ID = 1;
+  const USER_ID = getCurrentUserId();
   const [entries, setEntries] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -7301,7 +7317,7 @@ function FinanceDiaryPage() {
     (async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/api/finance-diary/?user_id=${USER_ID}&limit=500`);
+        const response = await apiFetch(`${API_BASE_URL}/api/finance-diary/?user_id=${USER_ID}&limit=500`);
         const data = await response.json().catch(() => []);
         if (!response.ok) throw new Error(data?.detail || "Unable to load Finance Diary.");
         if (active) setEntries(Array.isArray(data) ? data : []);
@@ -7351,7 +7367,7 @@ function Accounts() {
   const API_BASE_URL =
     "https://ai-finance-trading-os-api.onrender.com";
 
-  const USER_ID = 1;
+  const USER_ID = getCurrentUserId();
 
   // ----------------------------------------------------------
   // LOAD ACCOUNTS
@@ -7364,7 +7380,7 @@ function Accounts() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`
       );
 
@@ -7440,7 +7456,7 @@ const handleAccountSubmit = async () => {
           balance: Number(accountForm.balance),
         };
 
-    const response = await fetch(
+    const response = await apiFetch(
       isEditing
         ? `${API_BASE_URL}/api/accounts/${editingAccount.id}`
         : `${API_BASE_URL}/api/accounts/`,
@@ -7518,7 +7534,7 @@ const handleToggleAccountStatus = async (account) => {
     setAccountStatusSaving(true);
     setError("");
 
-    const response = await fetch(
+    const response = await apiFetch(
       `${API_BASE_URL}/api/accounts/${account.id}`,
       {
         method: "PUT",
@@ -7601,7 +7617,7 @@ const deleteAccount = async () => {
   setError("");
 
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${API_BASE_URL}/api/accounts/${accountToDelete.id}`,
       {
         method: "DELETE",
@@ -8348,7 +8364,7 @@ function Budget() {
   const API_BASE_URL =
     "https://ai-finance-trading-os-api.onrender.com";
 
-  const USER_ID = 1;
+  const USER_ID = getCurrentUserId();
 
   // ----------------------------------------------------------
   // LOAD BUDGETS
@@ -8361,7 +8377,7 @@ function Budget() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/budgets/?user_id=${USER_ID}`
       );
 
@@ -8398,7 +8414,7 @@ async function loadTransactions() {
 
   try {
 
-    const response = await fetch(
+    const response = await apiFetch(
       `${API_BASE_URL}/api/transactions/?user_id=${USER_ID}`
     );
 
@@ -8435,7 +8451,7 @@ async function loadTransactions() {
 
     try {
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/categories/?user_id=${USER_ID}`
       );
 
@@ -8452,7 +8468,7 @@ async function loadTransactions() {
       if (missingDefaults.length) {
         for (const [category_type, name, description] of missingDefaults) {
           try {
-            const seedResponse = await fetch(`${API_BASE_URL}/api/categories/`, {
+            const seedResponse = await apiFetch(`${API_BASE_URL}/api/categories/`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ user_id: USER_ID, name, category_type, description }),
@@ -8575,7 +8591,7 @@ function openEditBudgetForm(budget) {
 
       setSaving(true);
 
-      const response = await fetch(
+      const response = await apiFetch(
   editingBudget
     ? `${API_BASE_URL}/api/budgets/${editingBudget.id}`
     : `${API_BASE_URL}/api/budgets/`,
@@ -8645,7 +8661,7 @@ async function deleteBudget() {
   setError("");
 
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${API_BASE_URL}/api/budgets/${budgetToDelete.id}`,
       {
         method: "DELETE",
@@ -9571,7 +9587,7 @@ const isLoanDisbursement = categories.some((category) =>
   const API_BASE_URL =
     "https://ai-finance-trading-os-api.onrender.com";
 
-  const USER_ID = 1;
+  const USER_ID = getCurrentUserId();
 
   const loanInputStyle = { width: "100%", boxSizing: "border-box", display: "block", marginTop: "6px", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "#151525", color: "#fff", outline: "none" };
 
@@ -9588,7 +9604,7 @@ const isLoanDisbursement = categories.some((category) =>
         setLoading(true);
         setError("");
 
-        const response = await fetch(
+        const response = await apiFetch(
           `${API_BASE_URL}/api/transactions/?user_id=${USER_ID}`
         );
 
@@ -9600,7 +9616,7 @@ const isLoanDisbursement = categories.some((category) =>
 
         const data = await response.json();
         setTransactions(data);
-        const accountsResponse = await fetch(`${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`);
+        const accountsResponse = await apiFetch(`${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`);
         if (accountsResponse.ok) {
           const accountsData = await accountsResponse.json();
           setAccounts(Array.isArray(accountsData) ? accountsData : []);
@@ -9688,10 +9704,10 @@ const isLoanDisbursement = categories.some((category) =>
     try {
       const [accountsResponse, categoriesResponse] =
         await Promise.all([
-          fetch(
+          apiFetch(
             `${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`
           ),
-          fetch(
+          apiFetch(
             `${API_BASE_URL}/api/categories/?user_id=${USER_ID}`
           ),
         ]);
@@ -9717,7 +9733,7 @@ const isLoanDisbursement = categories.some((category) =>
       for (const [category_type, name, description] of TAX_READY_DEFAULT_CATEGORIES) {
         if (existingNames.has(name.toLowerCase())) continue;
         try {
-          const seedResponse = await fetch(`${API_BASE_URL}/api/categories/`, {
+          const seedResponse = await apiFetch(`${API_BASE_URL}/api/categories/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: USER_ID, name, category_type, description }),
@@ -9898,7 +9914,7 @@ const handleTransactionSubmit = async () => {
 
   const isEditing = Boolean(editingTransaction);
 
-const response = await fetch(
+const response = await apiFetch(
   isEditing
     ? `${API_BASE_URL}/api/transactions/${editingTransaction.id}`
     : `${API_BASE_URL}/api/transactions/`,
@@ -9921,7 +9937,7 @@ const response = await fetch(
     }
 
     // Refresh transaction list
-    const refreshResponse = await fetch(
+    const refreshResponse = await apiFetch(
       `${API_BASE_URL}/api/transactions/?user_id=${USER_ID}`
     );
 
@@ -9980,7 +9996,7 @@ const response = await fetch(
     setError("");
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/transactions/${transactionId}`,
         {
           method: "DELETE",
@@ -10000,7 +10016,7 @@ const response = await fetch(
       setDeletingTransaction(null);
 
 
-      const transactionsResponse = await fetch(
+      const transactionsResponse = await apiFetch(
         `${API_BASE_URL}/api/transactions/?user_id=${USER_ID}`
       );
 
@@ -11073,7 +11089,7 @@ function Category() {
   const API_BASE_URL =
     "https://ai-finance-trading-os-api.onrender.com";
 
-  const USER_ID = 1;
+  const USER_ID = getCurrentUserId();
 
   // ----------------------------------------------------------
   // LOAD CATEGORIES
@@ -11086,7 +11102,7 @@ function Category() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/categories/?user_id=${USER_ID}`
       );
 
@@ -11102,7 +11118,7 @@ function Category() {
       for (const [category_type, name, description] of TAX_READY_DEFAULT_CATEGORIES) {
         if (existingNames.has(name.toLowerCase())) continue;
         try {
-          const seedResponse = await fetch(`${API_BASE_URL}/api/categories/`, {
+          const seedResponse = await apiFetch(`${API_BASE_URL}/api/categories/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: USER_ID, name, category_type, description }),
@@ -11257,7 +11273,7 @@ function Category() {
       const isEditing =
         Boolean(editingCategory);
 
-      const response = await fetch(
+      const response = await apiFetch(
 
         isEditing
           ? `${API_BASE_URL}/api/categories/${editingCategory.id}`
@@ -11369,7 +11385,7 @@ function Category() {
       setDeleting(true);
       setError("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_BASE_URL}/api/categories/${categoryToDelete.id}`,
         {
           method: "DELETE",
@@ -12176,7 +12192,7 @@ function Bills() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${BILLS_API}/`
       );
 
@@ -12226,8 +12242,8 @@ function Bills() {
 
     try {
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/categories/?user_id=1`
+      const response = await apiFetch(
+        `${API_BASE_URL}/api/categories/?user_id=${USER_ID}`
       );
 
       const data = await response.json();
@@ -12265,8 +12281,8 @@ function Bills() {
 
     try {
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/accounts/?user_id=1`
+      const response = await apiFetch(
+        `${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`
       );
 
       const data = await response.json();
@@ -12499,7 +12515,7 @@ function Bills() {
       };
 
 
-      const response = await fetch(
+      const response = await apiFetch(
 
         isEditing
           ? `${BILLS_API}/${editingBill.id}`
@@ -12588,7 +12604,7 @@ function Bills() {
       setError("");
       setMessage("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${BILLS_API}/${billToDelete.id}`,
         {
           method: "DELETE",

@@ -5,6 +5,7 @@
 // ============================================================
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { apiFetch, getCurrentUserId } from "./api";
 import {
   Wallet,
   TrendingUp,
@@ -32,7 +33,7 @@ import {
 } from "lucide-react";
 
 const API_BASE_URL = "https://ai-finance-trading-os-api.onrender.com";
-const USER_ID = 1;
+const USER_ID = getCurrentUserId();
 const FINANCIAL_YEAR = "2026-27";
 
 const money = (value) => new Intl.NumberFormat("en-IN", {
@@ -47,7 +48,7 @@ const numberValue = (value) => {
 };
 
 async function getJson(path) {
-  const response = await fetch(`${API_BASE_URL}${path}`, { cache: "no-store" });
+  const response = await apiFetch(`${API_BASE_URL}${path}`, { cache: "no-store" });
   if (!response.ok) {
     const message = await response.text().catch(() => "");
     throw new Error(message || `Request failed (${response.status})`);

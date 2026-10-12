@@ -4,9 +4,10 @@
 // ============================================================
 import React, { useCallback, useEffect, useState } from "react";
 import { RefreshCw, Pencil, Ban, Landmark, HandCoins, AlertTriangle } from "lucide-react";
+import { apiFetch, getCurrentUserId } from "./api";
 
 const API_BASE_URL = "https://ai-finance-trading-os-api.onrender.com";
-const USER_ID = 1;
+const USER_ID = getCurrentUserId();
 const money = (value) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value || 0));
 const inputStyle = { width: "100%", boxSizing: "border-box", padding: "10px", borderRadius: 9, border: "1px solid rgba(255,255,255,.16)", background: "#171729", color: "#fff" };
 const buttonStyle = { display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 11px", borderRadius: 9, border: "1px solid rgba(255,255,255,.15)", background: "rgba(139,92,246,.16)", color: "#fff", cursor: "pointer" };
@@ -21,7 +22,7 @@ export default function LoanManagement() {
   const [message, setMessage] = useState("");
 
   const request = async (path, options = {}) => {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
+    const response = await apiFetch(`${API_BASE_URL}${path}`, {
       ...options,
       headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     });

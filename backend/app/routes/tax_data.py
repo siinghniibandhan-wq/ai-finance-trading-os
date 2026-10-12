@@ -49,6 +49,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 
 from app.models import Transaction
 
@@ -159,7 +160,7 @@ def get_financial_year_dates(
 # TAX DATA
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def get_tax_data(
     user_id: int,
     financial_year: str = "2026-27",

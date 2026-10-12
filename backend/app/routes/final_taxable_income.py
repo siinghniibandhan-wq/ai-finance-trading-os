@@ -44,6 +44,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim
 from app.routes.deductions_exempt_income import (
     DEDUCTION_CATALOG, EXEMPT_INCOME_CATALOG, regime_available,
@@ -1070,7 +1071,7 @@ def aggregate_verified_exempt_claims(claims, tax_regime):
 # ENDPOINT
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def get_final_taxable_income(
     user_id: int = Query(
         ...,

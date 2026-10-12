@@ -37,6 +37,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 
 from app.routes.tax_liability import (
     get_financial_year_dates,
@@ -411,7 +412,7 @@ def calculate_capital_loss_setoff(
 # ENDPOINT
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def get_income_tax_loss_setoff(
     user_id: int,
     financial_year: str = "2026-27",

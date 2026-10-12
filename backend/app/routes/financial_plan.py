@@ -51,6 +51,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 
 from app.models import (
     Account,
@@ -114,7 +115,7 @@ def calculate_percentage(
 # FINANCIAL PLAN
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def get_financial_plan(
     user_id: int,
     db: Session = Depends(get_db),

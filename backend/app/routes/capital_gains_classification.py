@@ -41,6 +41,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 
 from app.routes.capital_gains import (
     get_financial_year_dates,
@@ -263,7 +264,7 @@ def load_asset_classes(
 # API
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def capital_gains_classification(
     user_id: int,
     financial_year: str = "2026-27",

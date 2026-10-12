@@ -31,6 +31,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.auth import get_current_user
+from app.routes.ownership import require_matching_user_id
 from app.models import TaxDeductionClaim, User
 
 
@@ -537,9 +539,9 @@ class TaxDeductionClaimInput(BaseModel):
 
 
 @router.post("/claims", status_code=201)
-def create_deduction_claim(payload: TaxDeductionClaimInput, db: Session = Depends(get_db)):
+def create_deduction_claim(payload: TaxDeductionClaimInput, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Save a user claim for review; never marks a claim verified automatically."""
-    user = db.query(User).filter(User.id == payload.user_id).first()
+    user = db.query(User).filter(User.id == current_user.id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     item = DEDUCTION_CATALOG.get(payload.deduction_key)
@@ -573,7 +575,7 @@ def create_deduction_claim(payload: TaxDeductionClaimInput, db: Session = Depend
         raise HTTPException(status_code=400, detail="claimed_amount is required for this claim type.")
 
     claim = TaxDeductionClaim(
-        user_id=payload.user_id, financial_year=payload.financial_year,
+        user_id=current_user.id, financial_year=payload.financial_year,
         tax_regime=payload.tax_regime, deduction_key=payload.deduction_key,
         claimed_amount=claimed_amount, evidence_reference=payload.evidence_reference,
         notes=notes, status="pending_review",
@@ -589,7 +591,7 @@ def create_deduction_claim(payload: TaxDeductionClaimInput, db: Session = Depend
             "message": "Claim saved for review. It does not affect taxable income until you verify it with an evidence reference. Exempt amounts are user-claimed and are not independently checked by this app."}
 
 
-@router.get("/claims")
+@router.get("/claims", dependencies=[Depends(require_matching_user_id)])
 def list_deduction_claims(user_id: int = Query(..., ge=1),
                           financial_year: str = Query("2026-27"),
                           db: Session = Depends(get_db)):
@@ -673,10 +675,11 @@ def _claim_summary(claim):
 def verify_deduction_claim(
     claim_id: int,
     payload: TaxClaimActionInput,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Mark the owner's claim verified. Requires an evidence reference."""
-    claim = _get_owned_claim(db, claim_id, payload.user_id)
+    claim = _get_owned_claim(db, claim_id, current_user.id)
     evidence = (payload.evidence_reference or claim.evidence_reference or "").strip()
     problem = claim_verification_problem(evidence)
     if problem:
@@ -697,10 +700,11 @@ def verify_deduction_claim(
 def unverify_deduction_claim(
     claim_id: int,
     payload: TaxClaimActionInput,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Return a claim to pending review so it stops reducing taxable income."""
-    claim = _get_owned_claim(db, claim_id, payload.user_id)
+    claim = _get_owned_claim(db, claim_id, current_user.id)
     claim.status = "pending_review"
     db.commit()
     db.refresh(claim)
@@ -709,7 +713,7 @@ def unverify_deduction_claim(
     return result
 
 
-@router.delete("/claims/{claim_id}")
+@router.delete("/claims/{claim_id}", dependencies=[Depends(require_matching_user_id)])
 def delete_deduction_claim(
     claim_id: int,
     user_id: int = Query(..., ge=1),
@@ -722,7 +726,7 @@ def delete_deduction_claim(
     return {"id": claim_id, "deleted": True}
 
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def deductions_exempt_income(
     user_id: int = Query(
         ...,

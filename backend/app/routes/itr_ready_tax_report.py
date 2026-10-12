@@ -20,6 +20,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 
 
 router = APIRouter(
@@ -672,7 +673,7 @@ def calculate_old_regime_slab_tax(
 # FINAL REPORT
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def get_itr_ready_tax_report(
     user_id: int = Query(1),
     financial_year: str = Query("2026-27"),

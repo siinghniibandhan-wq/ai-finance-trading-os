@@ -36,6 +36,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 
 
 # ============================================================
@@ -958,7 +959,7 @@ def load_income_transactions(
 # API ENDPOINT
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def income_tax_aggregation(
     user_id: int = Query(
         ...,

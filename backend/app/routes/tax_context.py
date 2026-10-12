@@ -23,6 +23,8 @@
 # ============================================================
 
 from fastapi import APIRouter, HTTPException
+from fastapi import Depends
+from app.routes.ownership import require_matching_user_id
 
 
 # ============================================================
@@ -59,7 +61,7 @@ SUPPORTED_TAX_REGIMES = {
 # TAX CONTEXT
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def get_tax_context(
     user_id: int,
     financial_year: str = "2026-27",

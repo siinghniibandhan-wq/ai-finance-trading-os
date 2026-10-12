@@ -45,6 +45,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.auth import get_current_user
+from app.routes.ownership import require_matching_user_id
 from app.models import User, TaxCreditEntry
 from app.routes.final_taxable_income import get_final_taxable_income
 
@@ -605,20 +607,20 @@ class TaxCreditEntryInput(BaseModel):
 
 
 @router.post("/credits", status_code=201)
-def create_tax_credit_entry(payload: TaxCreditEntryInput, db: Session = Depends(get_db)):
+def create_tax_credit_entry(payload: TaxCreditEntryInput, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Save a self-reported credit; it does not become verified automatically."""
-    if not db.query(User).filter(User.id == payload.user_id).first():
+    if not db.query(User).filter(User.id == current_user.id).first():
         raise HTTPException(status_code=404, detail="User not found")
     reference = payload.source_reference.strip() if payload.source_reference else None
     if reference and db.query(TaxCreditEntry).filter(
-        TaxCreditEntry.user_id == payload.user_id,
+        TaxCreditEntry.user_id == current_user.id,
         TaxCreditEntry.financial_year == payload.financial_year,
         TaxCreditEntry.credit_type == payload.credit_type,
         TaxCreditEntry.source_reference == reference,
     ).first():
         raise HTTPException(status_code=409, detail="Duplicate tax credit source reference")
     entry = TaxCreditEntry(
-        user_id=payload.user_id, financial_year=payload.financial_year,
+        user_id=current_user.id, financial_year=payload.financial_year,
         credit_type=payload.credit_type, amount=payload.amount,
         source_reference=reference, notes=payload.notes, status="pending_review",
     )
@@ -633,7 +635,7 @@ def create_tax_credit_entry(payload: TaxCreditEntryInput, db: Session = Depends(
     }
 
 
-@router.get("/credits")
+@router.get("/credits", dependencies=[Depends(require_matching_user_id)])
 def list_tax_credit_entries(
     user_id: int = Query(..., ge=1),
     financial_year: str = Query("2026-27", pattern=r"^\d{4}-\d{2}$"),
@@ -680,6 +682,7 @@ def normalize_credit_reference(value):
 @router.post("/credits/reconcile-preview")
 def preview_official_tax_credit_reconciliation(
     payload: TaxCreditReconciliationPreviewInput,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -688,11 +691,11 @@ def preview_official_tax_credit_reconciliation(
     This is a reconciliation preview only. It does not fetch official records,
     verify their authenticity, update entry statuses, or change tax liability.
     """
-    if not db.query(User).filter(User.id == payload.user_id).first():
+    if not db.query(User).filter(User.id == current_user.id).first():
         raise HTTPException(status_code=404, detail="User not found")
 
     saved_entries = db.query(TaxCreditEntry).filter(
-        TaxCreditEntry.user_id == payload.user_id,
+        TaxCreditEntry.user_id == current_user.id,
         TaxCreditEntry.financial_year == payload.financial_year,
     ).order_by(TaxCreditEntry.id.asc()).all()
 
@@ -802,7 +805,7 @@ def preview_official_tax_credit_reconciliation(
     )
     return {
         "status": "review_required" if has_issues else "matched_pending_verification",
-        "user_id": payload.user_id,
+        "user_id": current_user.id,
         "financial_year": payload.financial_year,
         "source": "user_supplied_official_statement_rows",
         "official_source_authenticity_verified": False,
@@ -973,7 +976,7 @@ def build_regime_comparison(old_result, new_result):
     }
 
 
-@router.get("/compare-regimes")
+@router.get("/compare-regimes", dependencies=[Depends(require_matching_user_id)])
 def compare_tax_regimes(
     user_id: int = Query(..., ge=1),
     financial_year: str = Query("2026-27"),
@@ -1094,10 +1097,11 @@ def _credit_summary(entry):
 def verify_tax_credit_entry(
     credit_id: int,
     payload: TaxCreditActionInput,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Mark the owner's credit verified. Needs a unique source reference."""
-    entry = _get_owned_credit(db, credit_id, payload.user_id)
+    entry = _get_owned_credit(db, credit_id, current_user.id)
     reference = (payload.source_reference or entry.source_reference or "").strip()
     others = db.query(TaxCreditEntry).filter(
         TaxCreditEntry.user_id == entry.user_id,
@@ -1127,10 +1131,11 @@ def verify_tax_credit_entry(
 def unverify_tax_credit_entry(
     credit_id: int,
     payload: TaxCreditActionInput,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Return a credit to pending review so it stops being counted."""
-    entry = _get_owned_credit(db, credit_id, payload.user_id)
+    entry = _get_owned_credit(db, credit_id, current_user.id)
     entry.status = "pending_review"
     db.commit()
     db.refresh(entry)
@@ -1139,7 +1144,7 @@ def unverify_tax_credit_entry(
     return result
 
 
-@router.delete("/credits/{credit_id}")
+@router.delete("/credits/{credit_id}", dependencies=[Depends(require_matching_user_id)])
 def delete_tax_credit_entry(
     credit_id: int,
     user_id: int = Query(..., ge=1),
@@ -1153,7 +1158,7 @@ def delete_tax_credit_entry(
 
 
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def get_final_tax_liability(
     user_id: int = Query(
         ...,

@@ -41,6 +41,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 
 
 # ============================================================
@@ -917,7 +918,7 @@ def classify_sale(
 # TAX LIABILITY ENDPOINT
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def get_tax_liability(
     user_id: int,
     financial_year: str = "2026-27",

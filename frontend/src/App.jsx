@@ -869,6 +869,8 @@ function TaxPage() {
   const [hraResult, setHraResult] = useState(null);
   const [hraLoading, setHraLoading] = useState(false);
   const [hraError, setHraError] = useState("");
+  const [hraCityIsOther, setHraCityIsOther] = useState(false);
+  const [hraCitySearchOpen, setHraCitySearchOpen] = useState(false);
 
   const sections = [
     "Overview",
@@ -1189,19 +1191,55 @@ function TaxPage() {
       <form onSubmit={calculateHra} style={{ display: "grid", gap: "14px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
           {fields.map(([key, label, type, required]) => <label key={key} style={fieldStyle}>{label}<input aria-label={label} type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "0.01" : undefined} required={required} value={hraInputs[key]} onChange={(event) => setHraInputs((current) => ({ ...current, [key]: event.target.value }))} style={inputStyle} /></label>)}
-          <label style={fieldStyle}>Metro / Non-metro classification
-            <select aria-label="Metro / Non-metro classification" value={hraInputs.city_classification} onChange={(event) => setHraInputs((current) => ({ ...current, city_classification: event.target.value }))} style={inputStyle}>
-              <option value="metro">Metro</option>
-              <option value="non_metro">Non-metro</option>
-            </select>
-          </label>
-          <label style={fieldStyle}>City name
-            <input aria-label="City name" type="text" minLength={2} maxLength={100} required value={hraInputs.city} placeholder="Enter your rented home's city" onChange={(event) => setHraInputs((current) => ({ ...current, city: event.target.value }))} style={inputStyle} />
-          </label>
+          <div style={{ ...fieldStyle, position: "relative" }}>
+            <label htmlFor="hra-city-search">Search city</label>
+            <input
+              id="hra-city-search"
+              aria-label="Search city"
+              aria-autocomplete="list"
+              aria-expanded={hraCitySearchOpen}
+              type="text"
+              autoComplete="off"
+              placeholder="Type to search metro or non-metro cities"
+              value={hraCityIsOther ? "Other city (enter below)" : hraInputs.city}
+              onFocus={() => { if (!hraCityIsOther) setHraCitySearchOpen(true); }}
+              onChange={(event) => {
+                setHraCityIsOther(false);
+                setHraInputs((current) => ({ ...current, city: event.target.value, city_classification: "non_metro" }));
+                setHraCitySearchOpen(true);
+              }}
+              onKeyDown={(event) => { if (event.key === "Escape") setHraCitySearchOpen(false); }}
+              style={inputStyle}
+            />
+            {hraCitySearchOpen && !hraCityIsOther && (() => {
+              // Canonical lists are disjoint: a city must appear in only one group.
+              const metroCities = ["Delhi", "Mumbai", "Kolkata", "Chennai"];
+              const nonMetroCities = ["Dhanbad", "Patna", "Ranchi", "Bengaluru", "Hyderabad", "Pune", "Ahmedabad", "Jaipur", "Lucknow", "Bhopal", "Bhubaneswar", "Chandigarh", "Coimbatore", "Dehradun", "Guwahati", "Indore", "Jamshedpur", "Kanpur", "Kochi", "Kozhikode", "Ludhiana", "Madurai", "Mangaluru", "Mysuru", "Nagpur", "Nashik", "Noida", "Raipur", "Rajkot", "Surat", "Thiruvananthapuram", "Vadodara", "Varanasi", "Visakhapatnam"];
+              const query = hraInputs.city.trim().toLocaleLowerCase();
+              const metroMatches = metroCities.filter((city) => city.toLocaleLowerCase().includes(query));
+              const nonMetroMatches = nonMetroCities.filter((city) => city.toLocaleLowerCase().includes(query) && !metroCities.some((metro) => metro.toLocaleLowerCase() === city.toLocaleLowerCase()));
+              const optionStyle = { display: "block", width: "100%", textAlign: "left", padding: "9px 11px", border: 0, background: "transparent", color: "inherit", cursor: "pointer" };
+              const chooseCity = (city, classification) => {
+                setHraInputs((current) => ({ ...current, city, city_classification: classification }));
+                setHraCityIsOther(false);
+                setHraCitySearchOpen(false);
+              };
+              return <div role="listbox" aria-label="City search results" style={{ position: "absolute", zIndex: 20, top: "100%", left: 0, right: 0, maxHeight: "240px", overflowY: "auto", marginTop: "4px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.18)", background: "#111827", boxShadow: "0 12px 28px rgba(0,0,0,0.35)" }}>
+                {metroMatches.length > 0 && <><div style={{ padding: "8px 11px", fontSize: "11px", fontWeight: 800, color: "#c4b5fd", background: "rgba(139,92,246,0.12)" }}>METRO</div>{metroMatches.map((city) => <button type="button" role="option" key={`metro-${city}`} onClick={() => chooseCity(city, "metro")} style={optionStyle}>{city}</button>)}</>}
+                {nonMetroMatches.length > 0 && <><div style={{ padding: "8px 11px", fontSize: "11px", fontWeight: 800, color: "#93c5fd", background: "rgba(59,130,246,0.12)" }}>NON-METRO</div>{nonMetroMatches.map((city) => <button type="button" role="option" key={`nonmetro-${city}`} onClick={() => chooseCity(city, "non_metro")} style={optionStyle}>{city}</button>)}</>}
+                <button type="button" role="option" onClick={() => { setHraInputs((current) => ({ ...current, city: "", city_classification: "non_metro" })); setHraCityIsOther(true); setHraCitySearchOpen(false); }} style={{ ...optionStyle, borderTop: "1px solid rgba(255,255,255,0.12)", fontWeight: 700 }}>Other city… (Non-metro)</button>
+                {metroMatches.length === 0 && nonMetroMatches.length === 0 && <div style={{ padding: "9px 11px", color: "rgba(255,255,255,0.55)" }}>No listed match. Choose Other city.</div>}
+              </div>;
+            })()}
+            {hraCityIsOther && <label style={{ ...fieldStyle, marginTop: "8px" }}>Enter city name (classified as non-metro)
+              <input aria-label="Other city name" type="text" minLength={2} maxLength={100} required value={hraInputs.city} placeholder="Enter your rented home's city" onChange={(event) => setHraInputs((current) => ({ ...current, city: event.target.value, city_classification: "non_metro" }))} style={inputStyle} />
+            </label>}
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.48)" }}>Selected classification: {hraInputs.city_classification === "metro" ? "Metro" : "Non-metro"}. Unlisted cities default to non-metro.</div>
+          </div>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
           <button type="submit" className="primary-button" disabled={hraLoading || taxRegime !== "old"}>{hraLoading ? "Calculating…" : "Calculate HRA exemption"}</button>
-          <button type="button" className="secondary-button" onClick={() => { setHraInputs({ annual_basic_salary: "", annual_da_forming_retirement_benefits: "0", annual_commission_on_turnover_at_fixed_percentage: "0", annual_hra_received: "", annual_rent_paid: "", city: "", city_classification: "non_metro" }); setHraResult(null); setHraError(""); }}>Clear inputs</button>
+          <button type="button" className="secondary-button" onClick={() => { setHraInputs({ annual_basic_salary: "", annual_da_forming_retirement_benefits: "0", annual_commission_on_turnover_at_fixed_percentage: "0", annual_hra_received: "", annual_rent_paid: "", city: "", city_classification: "non_metro" }); setHraCityIsOther(false); setHraCitySearchOpen(false); setHraResult(null); setHraError(""); }}>Clear inputs</button>
         </div>
       </form>
       {hraError && <div role="alert" style={{ marginTop: "14px", padding: "12px", borderRadius: "10px", color: "#fca5a5", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12px" }}>{hraError}</div>}

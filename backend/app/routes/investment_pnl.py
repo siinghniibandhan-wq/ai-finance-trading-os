@@ -28,6 +28,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.auth import get_current_user
+from app.models import User
 
 
 router = APIRouter(
@@ -141,9 +143,11 @@ def ensure_transaction_status(db: Session):
 @router.get("/{investment_id}")
 def get_investment_pnl(
     investment_id: int,
-    user_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # Always derive ownership from the verified token, never a request parameter.
+    user_id = current_user.id
     """
     Calculate WEIGHTED-AVERAGE cost basis and P&L
     for one investment.
@@ -392,8 +396,11 @@ def get_investment_pnl(
 @router.get("/")
 def get_all_investment_pnl(
     user_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # Always derive ownership from the verified token, never a request parameter.
+    user_id = current_user.id
     """
     Calculate P&L for every investment
     belonging to the user.

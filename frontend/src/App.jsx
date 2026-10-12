@@ -1477,6 +1477,8 @@ function MarketsPage() {
   const [query, setQuery] = useState("RELIANCE");
   const [exchange, setExchange] = useState("NSE");
   const [results, setResults] = useState([]);
+  // Selected instrument controls a focused, single-stock view.
+  const [selectedInstrument, setSelectedInstrument] = useState(null);
   const [searchBusy, setSearchBusy] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [quote, setQuote] = useState(null);
@@ -1517,7 +1519,7 @@ function MarketsPage() {
   const search = async (event) => {
     event.preventDefault();
     if (!query.trim()) { setSearchError("Enter a company name or symbol."); return; }
-    setSearchBusy(true); setSearchError(""); setResults([]); setQuote(null); setQuoteError("");
+    setSearchBusy(true); setSearchError(""); setResults([]); setQuote(null); setQuoteError(""); setSelectedInstrument(null);
     try {
       const response = await fetch(`${API}/api/market-search/?query=${encodeURIComponent(query.trim())}&exchange=${encodeURIComponent(exchange)}&limit=20`);
       const data = await response.json().catch(() => ({}));
@@ -1567,6 +1569,23 @@ function MarketsPage() {
     loadChart(symbol || "RELIANCE", marketExchange || "NSE", chartRange);
   };
 
+  // Selecting a search result closes the match list and focuses the page
+  // on that instrument's quote and historical prices.
+  const selectInstrument = (row) => {
+    if (!row?.symbol) return;
+    const instrument = {
+      ...row,
+      symbol: String(row.symbol).toUpperCase(),
+      exchange: row.exchange || exchange,
+    };
+    setSelectedInstrument(instrument);
+    setQuery(instrument.symbol);
+    setResults([]);
+    setSearchError("");
+    getQuote(instrument.symbol);
+    chooseChart(instrument.symbol, instrument.exchange);
+  };
+
   const indices = Array.isArray(overview?.indices) ? overview.indices : [];
   const movers = overview?.market_movers || {};
   const gainers = Array.isArray(movers.gainers) ? movers.gainers : [];
@@ -1575,15 +1594,16 @@ function MarketsPage() {
     <section style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}><div><p className="card-label">FINANCIAL OS / MARKETS</p><h2 style={{ margin: "4px 0 6px", fontSize: "28px", fontWeight: 800 }}>Market Workspace</h2><p style={{ ...muted, margin: 0 }}>Indian market overview, stock search and quotes.</p></div><button className="secondary-button" type="button" onClick={refresh} disabled={busy}>{busy ? "Refreshing..." : "Refresh market data"}</button></section>
     <p style={{ ...muted, margin: 0 }}>Existing m.Stock gateway via Financial OS API · Read-only · No database writes{updated ? ` · Updated ${updated}` : ""}</p>
     {overviewError && <div role="status" style={{ padding: "12px 14px", borderRadius: "12px", color: "#fcd34d", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", fontSize: "12px" }}>{overviewError}</div>}
-    <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+    {!selectedInstrument && <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
       {busy && !indices.length ? <div style={card}>Loading market indices...</div> : indices.length ? indices.map((row, i) => <div key={`${row.name || row.symbol || "index"}-${i}`} style={card}><div style={muted}>{row.name || row.symbol || "Index"}</div><div style={{ fontSize: "23px", fontWeight: 800, marginTop: "7px" }}>{row.last_price == null || !Number.isFinite(Number(row.last_price)) ? "Unavailable" : Number(row.last_price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</div><div style={{ ...muted, marginTop: "6px" }}>{row.exchange || "Exchange"} · {row.status || "Latest available"}</div></div>) : <div style={card}><strong>Indices unavailable</strong><p style={muted}>Refresh later or check the market gateway.</p></div>}
       <div style={card}><div style={muted}>Gainers returned</div><div style={{ fontSize: "23px", fontWeight: 800, marginTop: "7px" }}>{gainers.length}</div></div><div style={card}><div style={muted}>Losers returned</div><div style={{ fontSize: "23px", fontWeight: 800, marginTop: "7px" }}>{losers.length}</div></div>
-    </section>
+    </section>}
     <section style={card}><h3 style={{ margin: "0 0 5px" }}>Find a stock or instrument</h3><p style={{ ...muted, marginTop: 0 }}>Search the existing instrument master, then request a quote for a result.</p><form onSubmit={search} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 100px auto", gap: "9px", alignItems: "center" }}><input aria-label="Company name or symbol" style={input} value={query} onChange={e => setQuery(e.target.value)} placeholder="Company or symbol"/><StyledSelect aria-label="Exchange" style={input} value={exchange} onChange={e => setExchange(e.target.value)}><option value="NSE">NSE</option><option value="BSE">BSE</option></StyledSelect><button className="primary-button" type="submit" disabled={searchBusy}>{searchBusy ? "Searching..." : "Search"}</button></form>
+      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || exchange}</div></div><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Clear selection</button></div>}
       {searchError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px" }}>{searchError}</p>}
-      {results.map((row, i) => <div key={`${row.exchange || exchange}-${row.symbol || row.instrument_token || i}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}><div><strong>{row.symbol || "Unknown symbol"}</strong><div style={muted}>{row.name || "Company name unavailable"} · {row.exchange || exchange}</div></div><div style={{ display: "flex", gap: "10px", alignItems: "center" }}><strong style={{ fontSize: "12px" }}>{money(row.last_price)}</strong><button type="button" className="secondary-button" onClick={() => getQuote(row.symbol)}>Get quote</button><button type="button" className="secondary-button" onClick={() => chooseChart(row.symbol, row.exchange || exchange)}>Chart</button></div></div>)}
+      {results.map((row, i) => <div key={`${row.exchange || exchange}-${row.symbol || row.instrument_token || i}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}><button type="button" onClick={() => selectInstrument(row)} aria-label={`Select ${row.name || row.symbol}`} style={{ flex: "1 1 180px", textAlign: "left", padding: "4px 0", border: 0, background: "transparent", color: "inherit", cursor: "pointer" }}><strong>{row.symbol || "Unknown symbol"}</strong><div style={muted}>{row.name || "Company name unavailable"} · {row.exchange || exchange}</div><div style={{ ...muted, marginTop: "3px" }}>Tap to select this instrument</div></button><div style={{ display: "flex", gap: "10px", alignItems: "center" }}><strong style={{ fontSize: "12px" }}>{money(row.last_price)}</strong><button type="button" className="secondary-button" onClick={() => selectInstrument(row)}>Select</button><button type="button" className="secondary-button" onClick={() => selectInstrument(row)}>Chart</button></div></div>)}
     </section>
-    {(quote || quoteBusy || quoteError) && <section style={card}><h3 style={{ marginTop: 0 }}>Latest quote</h3>{quoteBusy && <p style={muted}>Fetching quote...</p>}{quoteError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px" }}>{quoteError}</p>}{quote && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}><div><div style={muted}>{quote.symbol} · {quote.source?.provider || "Market provider"}</div><div style={{ fontSize: "28px", fontWeight: 850, marginTop: "5px" }}>{money(quote.quote?.last_price)}</div></div><div style={muted}>Updated: {quote.last_updated ? new Date(quote.last_updated).toLocaleString("en-IN") : "Timestamp unavailable"}</div></div>}</section>}
+    {(selectedInstrument || quote || quoteBusy || quoteError) && <section style={card}><h3 style={{ marginTop: 0 }}>Latest price</h3>{quoteBusy && <p style={muted}>Fetching quote...</p>}{quoteError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px" }}>{quoteError}</p>}{quote && <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}><div><div style={muted}>{selectedInstrument?.name || quote.symbol} · {quote.symbol} · {quote.source?.provider || "Market provider"}</div><div style={{ fontSize: "28px", fontWeight: 850, marginTop: "5px" }}>{money(quote.quote?.last_price)}</div></div><div style={muted}>Updated: {quote.last_updated ? new Date(quote.last_updated).toLocaleString("en-IN") : "Timestamp unavailable"}</div></div>}</section>}
     {/* Historical price chart — read-only, powered by /api/market-charts/ */}
     <section style={card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
@@ -1605,7 +1625,7 @@ function MarketsPage() {
       {!chartBusy && !chartData.length && !chartError && <p style={muted}>No chart loaded yet. Select a period and tap Load chart.</p>}
       <p style={{ ...muted, marginBottom: 0, marginTop: "12px" }}>Historical prices may be delayed or unavailable. This chart uses daily closing prices and is for research only; it does not place trades.</p>
     </section>
-    <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "14px" }}>{[{ title: "Top gainers", rows: gainers }, { title: "Top losers", rows: losers }].map(group => <div key={group.title} style={card}><h3 style={{ margin: "0 0 12px" }}>{group.title}</h3>{!group.rows.length ? <p style={muted}>No rows returned by the provider.</p> : group.rows.slice(0, 8).map((row, i) => <div key={`${row.symbol || "item"}-${i}`} style={{ display: "flex", justifyContent: "space-between", gap: "12px", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}><div><strong style={{ fontSize: "12px" }}>{row.symbol || row.name || "Instrument"}</strong><div style={muted}>{row.name || row.exchange || ""}</div></div><div style={{ textAlign: "right", whiteSpace: "nowrap" }}><div style={{ fontSize: "12px", fontWeight: 700 }}>{money(row.ltp)}</div><div style={{ color: Number(row.percent_change) < 0 ? "#fca5a5" : "#86efac", fontSize: "11px" }}>{row.percent_change == null ? "Change unavailable" : `${row.percent_change}%`}</div></div></div>)}</div>)}</section>
+    {!selectedInstrument && <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "14px" }}>{[{ title: "Top gainers", rows: gainers }, { title: "Top losers", rows: losers }].map(group => <div key={group.title} style={card}><h3 style={{ margin: "0 0 12px" }}>{group.title}</h3>{!group.rows.length ? <p style={muted}>No rows returned by the provider.</p> : group.rows.slice(0, 8).map((row, i) => <div key={`${row.symbol || "item"}-${i}`} style={{ display: "flex", justifyContent: "space-between", gap: "12px", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}><div><strong style={{ fontSize: "12px" }}>{row.symbol || row.name || "Instrument"}</strong><div style={muted}>{row.name || row.exchange || ""}</div></div><div style={{ textAlign: "right", whiteSpace: "nowrap" }}><div style={{ fontSize: "12px", fontWeight: 700 }}>{money(row.ltp)}</div><div style={{ color: Number(row.percent_change) < 0 ? "#fca5a5" : "#86efac", fontSize: "11px" }}>{row.percent_change == null ? "Change unavailable" : `${row.percent_change}%`}</div></div></div>)}</div>)}</section>}
     <p style={{ ...muted, margin: 0 }}>Data may be delayed or unavailable when the provider or exchange is closed. Verify quotes with your broker before making investment decisions. This workspace does not place trades.</p>
   </div>;
 }

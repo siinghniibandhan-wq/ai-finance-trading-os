@@ -871,6 +871,19 @@ function TaxPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [salaryProfile, setSalaryProfile] = useState({
+    employer_name: "",
+    gross_salary: "",
+    basic_salary: "",
+    hra: "",
+    da: "0",
+    other_allowances: "",
+    employee_pf: "0",
+    professional_tax: "0",
+    tds: "0",
+  });
+  const [salaryComponentsTouched, setSalaryComponentsTouched] = useState(false);
+
   const [hraInputs, setHraInputs] = useState({
     gross_salary: "",
     annual_basic_salary: "",
@@ -1276,6 +1289,30 @@ function TaxPage() {
     </div>
   );
 
+  const updateSalaryProfile = (key, value) => {
+    setSalaryProfile((current) => {
+      const next = { ...current, [key]: value };
+      if (key === "gross_salary") {
+        const gross = Math.max(0, Number(value) || 0);
+        const basic = Math.round(gross * 0.40 * 100) / 100;
+        const hra = Math.round(basic * 0.40 * 100) / 100;
+        next.basic_salary = String(basic);
+        next.hra = String(hra);
+        next.other_allowances = String(Math.round((gross - basic - hra - (Number(next.da) || 0)) * 100) / 100);
+        setHraInputs((hraCurrent) => ({ ...hraCurrent, gross_salary: String(gross), annual_basic_salary: String(basic), annual_hra_received: String(hra), annual_da_forming_retirement_benefits: String(Number(next.da) || 0) }));
+      } else if (["basic_salary", "hra", "da", "other_allowances"].includes(key)) {
+        const gross = Math.max(0, Number(next.gross_salary) || 0);
+        const basic = Math.max(0, Number(next.basic_salary) || 0);
+        const hra = Math.max(0, Number(next.hra) || 0);
+        const da = Math.max(0, Number(next.da) || 0);
+        if (key !== "other_allowances") next.other_allowances = String(Math.round((gross - basic - hra - da) * 100) / 100);
+        setHraInputs((hraCurrent) => ({ ...hraCurrent, gross_salary: String(gross), annual_basic_salary: String(basic), annual_hra_received: String(hra), annual_da_forming_retirement_benefits: String(da) }));
+      }
+      return next;
+    });
+    setSalaryComponentsTouched(true);
+  };
+
   const renderHraCalculator = () => {
     const inputStyle = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(12,16,30,0.72)", color: "inherit" };
     const fieldStyle = { display: "grid", gap: "7px", color: "rgba(255,255,255,0.72)", fontSize: "12px" };
@@ -1291,9 +1328,22 @@ function TaxPage() {
       <h3 style={{ marginTop: 0 }}>HRA exemption calculator</h3>
       <p style={{ color: "rgba(255,255,255,0.62)", fontSize: "13px", lineHeight: 1.7 }}>Calculate the potential exemption under section 10(13A). To connect salary to the taxable-income engine, enter gross salary from your salary statement/Form 16 and save a salary-source evidence reference below. Bank deposits are not treated as gross salary.</p>
       {taxRegime !== "old" && <div role="status" style={{ padding: "12px 14px", borderRadius: "10px", marginBottom: "14px", background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.28)", color: "#fcd34d", fontSize: "12px" }}>Select Old Regime above to calculate HRA exemption. HRA exemption is not available under the New Regime.</div>}
+      <div style={{ ...panelStyle, marginBottom: "16px", border: "1px solid rgba(168,85,247,0.24)" }}>
+        <h3 style={{ marginTop: 0 }}>Salary components</h3>
+        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", lineHeight: 1.6 }}>Enter employer and gross salary. A suggested breakdown is generated using editable defaults (Basic 40% of gross; HRA 40% of Basic; DA 0%; other allowances balance). These percentages are not statutory Indian salary limits. Adjust figures to match actual payroll/Form 16. The actual net salary remains the existing Money income transaction; this form does not create or change a transaction.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "12px" }}>
+          {[["employer_name", "Company / employer name", "text"], ["gross_salary", "Gross salary (₹)", "number"], ["basic_salary", "Basic salary (₹)", "number"], ["hra", "HRA received (₹)", "number"], ["da", "DA (₹)", "number"], ["other_allowances", "Other allowances (₹)", "number"], ["employee_pf", "Employee PF (₹)", "number"], ["professional_tax", "Professional tax (₹)", "number"], ["tds", "TDS (₹)", "number"]].map(([key, label, type]) => <label key={key} style={fieldStyle}>{label}<input type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "0.01" : undefined} value={salaryProfile[key]} onChange={(event) => updateSalaryProfile(key, event.target.value)} placeholder={key === "employer_name" ? "Employer name" : "0.00"} style={inputStyle} /></label>)}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px", marginTop: "14px" }}>
+          <div style={cardStyle}><div style={labelStyle}>Component total</div><div style={valueStyle}>{formatCurrency(["basic_salary", "hra", "da", "other_allowances"].reduce((sum, key) => sum + (Number(salaryProfile[key]) || 0), 0))}</div></div>
+          <div style={cardStyle}><div style={labelStyle}>Gross less components</div><div style={valueStyle}>{formatCurrency((Number(salaryProfile.gross_salary) || 0) - ["basic_salary", "hra", "da", "other_allowances"].reduce((sum, key) => sum + (Number(salaryProfile[key]) || 0), 0))}</div></div>
+          <div style={cardStyle}><div style={labelStyle}>Gross less entered deductions</div><div style={valueStyle}>{formatCurrency((Number(salaryProfile.gross_salary) || 0) - ["employee_pf", "professional_tax", "tds"].reduce((sum, key) => sum + (Number(salaryProfile[key]) || 0), 0))}</div></div>
+        </div>
+        <p style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px", lineHeight: 1.5, marginBottom: 0 }}>PF, professional tax and TDS are not automatically assumed from gross salary because eligibility and rates depend on applicable rules and payroll facts. Enter verified amounts. Unreconciled differences are shown, not silently classified as deductions. Actual salary received must remain the amount of the existing Money income transaction; this tax panel does not create or change that transaction.</p>
+      </div>
       <form onSubmit={calculateHra} style={{ display: "grid", gap: "14px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
-          {fields.map(([key, label, type, required]) => <label key={key} style={fieldStyle}>{label}<input aria-label={label} type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "0.01" : undefined} required={required} value={hraInputs[key]} onChange={(event) => setHraInputs((current) => ({ ...current, [key]: event.target.value }))} style={inputStyle} /></label>)}
+          {fields.map(([key, label, type, required]) => <label key={key} style={fieldStyle}>{label}<input aria-label={label} type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "0.01" : undefined} required={required} value={hraInputs[key]} onChange={(event) => { const value = event.target.value; setHraInputs((current) => ({ ...current, [key]: value })); const profileKey = ({ gross_salary: "gross_salary", annual_basic_salary: "basic_salary", annual_da_forming_retirement_benefits: "da", annual_hra_received: "hra" })[key]; if (profileKey) setSalaryProfile((current) => ({ ...current, [profileKey]: value })); }} style={inputStyle} /></label>)}
           <label style={fieldStyle}>City of residence (search or type)
             <input aria-label="City of residence" list="hra-city-suggestions" type="text" minLength={2} maxLength={100} required value={hraInputs.city} placeholder="Search city or choose Other City" onChange={(event) => { const city = event.target.value; const normalized = city.trim().toLocaleLowerCase(); const known = [...hraCityCatalog.metro, ...hraCityCatalog.non_metro].find((item) => item.name.toLocaleLowerCase() === normalized); setHraInputs((current) => ({ ...current, city, city_classification: known?.classification || "non_metro" })); setHraResult(null); }} style={inputStyle} />
             <datalist id="hra-city-suggestions">

@@ -556,7 +556,27 @@ def create_deduction_claim(payload: TaxDeductionClaimInput, current_user: User =
 
     claimed_amount = payload.claimed_amount
     notes = payload.notes
+    existing_hra_claim = None
     if payload.deduction_key == "hra_exemption":
+        # Avoid parallel active HRA claims for the same user/FY. A pending
+        # claim can be refreshed from the latest calculator inputs; a verified
+        # claim must be explicitly unverified/deleted before replacement.
+        existing_hra_claim = (
+            db.query(TaxDeductionClaim)
+            .filter(
+                TaxDeductionClaim.user_id == current_user.id,
+                TaxDeductionClaim.financial_year == payload.financial_year,
+                TaxDeductionClaim.deduction_key == "hra_exemption",
+                TaxDeductionClaim.status.in_(["pending_review", "verified"]),
+            )
+            .order_by(TaxDeductionClaim.created_at.desc())
+            .first()
+        )
+        if existing_hra_claim and existing_hra_claim.status == "verified":
+            raise HTTPException(
+                status_code=409,
+                detail="A verified HRA claim already exists for this financial year. Unverify or delete that claim before replacing it; duplicate HRA claims are not allowed.",
+            )
         if payload.hra_inputs is None:
             raise HTTPException(status_code=400, detail="HRA claims require hra_inputs so the statutory exemption limit can be calculated.")
         try:
@@ -574,13 +594,21 @@ def create_deduction_claim(payload: TaxDeductionClaimInput, current_user: User =
     elif claimed_amount is None:
         raise HTTPException(status_code=400, detail="claimed_amount is required for this claim type.")
 
-    claim = TaxDeductionClaim(
-        user_id=current_user.id, financial_year=payload.financial_year,
-        tax_regime=payload.tax_regime, deduction_key=payload.deduction_key,
-        claimed_amount=claimed_amount, evidence_reference=payload.evidence_reference,
-        notes=notes, status="pending_review",
-    )
-    db.add(claim)
+    if existing_hra_claim is not None:
+        claim = existing_hra_claim
+        claim.tax_regime = payload.tax_regime
+        claim.claimed_amount = claimed_amount
+        claim.evidence_reference = payload.evidence_reference
+        claim.notes = notes
+        claim.status = "pending_review"
+    else:
+        claim = TaxDeductionClaim(
+            user_id=current_user.id, financial_year=payload.financial_year,
+            tax_regime=payload.tax_regime, deduction_key=payload.deduction_key,
+            claimed_amount=claimed_amount, evidence_reference=payload.evidence_reference,
+            notes=notes, status="pending_review",
+        )
+        db.add(claim)
     db.commit()
     db.refresh(claim)
     return {"id": claim.id, "user_id": claim.user_id, "financial_year": claim.financial_year,

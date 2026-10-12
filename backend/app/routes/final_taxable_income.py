@@ -38,16 +38,18 @@
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field
 from sqlalchemy import func
 
 from app.database.database import get_db
 from app.routes.ownership import require_matching_user_id
-from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim
+from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim, TaxSalaryIncomeRecord, User
+from app.routes.auth import get_current_user
 from app.routes.deductions_exempt_income import (
-    DEDUCTION_CATALOG, EXEMPT_INCOME_CATALOG, regime_available,
+    DEDUCTION_CATALOG, EXEMPT_INCOME_CATALOG, HRAInputs, calculate_hra_exemption, regime_available,
 )
 
 # ============================================================
@@ -1068,6 +1070,89 @@ def aggregate_verified_exempt_claims(claims, tax_regime):
 
 
 # ============================================================
+# SALARY INCOME SOURCE — CREATE / UPDATE / VERIFY
+# ============================================================
+
+class TaxSalaryIncomeInput(BaseModel):
+    financial_year: str = Field(pattern=r"^\d{4}-\d{2}$")
+    gross_salary: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    annual_basic_salary: Decimal = Field(ge=0, max_digits=18, decimal_places=2)
+    annual_da_forming_retirement_benefits: Decimal = Field(default=Decimal("0"), ge=0, max_digits=18, decimal_places=2)
+    annual_commission_on_turnover_at_fixed_percentage: Decimal = Field(default=Decimal("0"), ge=0, max_digits=18, decimal_places=2)
+    annual_hra_received: Decimal = Field(ge=0, max_digits=18, decimal_places=2)
+    annual_rent_paid: Decimal = Field(ge=0, max_digits=18, decimal_places=2)
+    city: str = Field(min_length=2, max_length=100)
+    evidence_reference: str | None = Field(default=None, max_length=2000)
+
+
+def _salary_record_summary(record):
+    return {
+        "id": record.id,
+        "user_id": record.user_id,
+        "financial_year": record.financial_year,
+        "gross_salary": str(record.gross_salary),
+        "annual_basic_salary": str(record.annual_basic_salary),
+        "annual_da_forming_retirement_benefits": str(record.annual_da_forming_retirement_benefits),
+        "annual_commission_on_turnover_at_fixed_percentage": str(record.annual_commission_on_turnover_at_fixed_percentage),
+        "annual_hra_received": str(record.annual_hra_received),
+        "annual_rent_paid": str(record.annual_rent_paid),
+        "city": record.city,
+        "evidence_reference": record.evidence_reference,
+        "status": record.status,
+        "affects_taxable_income": record.status == "verified",
+        "verification_notice": "Verification is the user's confirmation that the figures reconcile to supporting records; the app does not independently inspect documents.",
+    }
+
+
+@router.put("/salary-income", status_code=200)
+def upsert_tax_salary_income(payload: TaxSalaryIncomeInput, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Create/update annual gross salary separately from bank deposits; starts pending."""
+    eligible_salary = payload.annual_basic_salary + payload.annual_da_forming_retirement_benefits + payload.annual_commission_on_turnover_at_fixed_percentage
+    if eligible_salary <= 0 and payload.annual_hra_received > 0:
+        raise HTTPException(status_code=400, detail="Eligible basic salary/DA/commission must be positive when recording HRA.")
+    if eligible_salary > payload.gross_salary:
+        raise HTTPException(status_code=400, detail="Eligible basic salary, DA and commission cannot exceed recorded gross salary.")
+    if payload.annual_hra_received > payload.gross_salary:
+        raise HTTPException(status_code=400, detail="HRA received cannot exceed recorded gross salary.")
+    record = db.query(TaxSalaryIncomeRecord).filter_by(user_id=current_user.id, financial_year=payload.financial_year).first()
+    if record is None:
+        record = TaxSalaryIncomeRecord(user_id=current_user.id, financial_year=payload.financial_year)
+        db.add(record)
+    for field, value in payload.model_dump().items():
+        setattr(record, field, value)
+    record.status = "pending_review"
+    db.commit()
+    db.refresh(record)
+    result = _salary_record_summary(record)
+    result["message"] = "Salary record saved as pending. It will not affect taxable income until you confirm it with an evidence reference."
+    return result
+
+
+@router.get("/salary-income")
+def get_tax_salary_income(financial_year: str = Query("2026-27", pattern=r"^\d{4}-\d{2}$"), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    record = db.query(TaxSalaryIncomeRecord).filter_by(user_id=current_user.id, financial_year=financial_year).first()
+    if record is None:
+        return {"status": "missing", "financial_year": financial_year, "salary_income_available": False}
+    return _salary_record_summary(record)
+
+
+@router.post("/salary-income/verify")
+def verify_tax_salary_income(financial_year: str = Query(..., pattern=r"^\d{4}-\d{2}$"), evidence_reference: str = Query(..., min_length=1, max_length=2000), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """User-confirm verification after reconciling the annual salary statement/Form 16."""
+    record = db.query(TaxSalaryIncomeRecord).filter_by(user_id=current_user.id, financial_year=financial_year).first()
+    if record is None:
+        raise HTTPException(status_code=404, detail="Salary income record not found for this financial year.")
+    evidence = evidence_reference.strip()
+    if not evidence:
+        raise HTTPException(status_code=400, detail="An evidence reference is required.")
+    record.evidence_reference = evidence
+    record.status = "verified"
+    db.commit()
+    db.refresh(record)
+    return _salary_record_summary(record)
+
+
+# ============================================================
 # ENDPOINT
 # ============================================================
 
@@ -1254,12 +1339,40 @@ def get_final_taxable_income(
     # Therefore exemptions such as HRA can be calculated and reviewed, but
     # must not be subtracted from unrelated income (e.g. interest/capital gains).
     # Keep the applied amount at zero until the salary head is integrated.
+    salary_record = db.query(TaxSalaryIncomeRecord).filter_by(
+        user_id=user_id, financial_year=financial_year, status="verified"
+    ).first()
+    salary_income = decimal(salary_record.gross_salary) if salary_record else None
     verified_exempt_income = Decimal("0")
+    hra_applied = False
     for exempt_claim in verified_exempt_claims:
-        exempt_claim["eligible_verified_claimed_amount"] = exempt_claim.get("applied_amount", "0")
-        exempt_claim["applied_amount"] = "0"
-        exempt_claim["application_status"] = "not_applied_salary_income_source_unavailable"
-        exempt_claim["calculation_note"] += " The current taxable-income engine does not yet have a calculated salary income head, so this claim is not deducted from other income."
+        claimed = decimal(exempt_claim.get("applied_amount", "0"))
+        exempt_claim["eligible_verified_claimed_amount"] = str(claimed)
+        if exempt_claim.get("deduction_key") == "hra_exemption" and salary_record and tax_regime == "old":
+            hra_inputs = HRAInputs(
+                annual_basic_salary=salary_record.annual_basic_salary,
+                annual_da_forming_retirement_benefits=salary_record.annual_da_forming_retirement_benefits,
+                annual_commission_on_turnover_at_fixed_percentage=salary_record.annual_commission_on_turnover_at_fixed_percentage,
+                annual_hra_received=salary_record.annual_hra_received,
+                annual_rent_paid=salary_record.annual_rent_paid,
+                city=salary_record.city,
+            )
+            try:
+                allowed_hra = decimal(calculate_hra_exemption(hra_inputs, "old", financial_year)["calculated_exemption"])
+            except ValueError:
+                allowed_hra = Decimal("0")
+            applied = min(claimed, allowed_hra)
+            exempt_claim["applied_amount"] = str(applied)
+            exempt_claim["application_status"] = "applied_to_verified_salary_capped_by_salary_record_calculation" if applied > 0 else "not_applied_salary_record_calculation_zero"
+            exempt_claim["salary_record_calculated_limit"] = str(allowed_hra)
+            if applied < claimed:
+                exempt_claim["calculation_note"] += " Applied amount capped to the HRA exemption recalculated from the verified salary-income record."
+            verified_exempt_income += applied
+            hra_applied = hra_applied or applied > 0
+        else:
+            exempt_claim["applied_amount"] = "0"
+            exempt_claim["application_status"] = "not_applied_salary_income_source_unavailable" if not salary_record else "not_applied_claim_not_eligible_for_salary_source"
+            exempt_claim["calculation_note"] += " This claim was not deducted because a verified matching salary source is required."
 
     # ========================================================
     # MISSING INCOME HEADS
@@ -1269,8 +1382,6 @@ def get_final_taxable_income(
     # transaction structure.
     #
     # ========================================================
-
-    salary_income = None
 
     house_property_income = None
 
@@ -1306,6 +1417,7 @@ def get_final_taxable_income(
     available_gross_income = (
         available_other_income
         + available_capital_gains
+        + (salary_income if salary_income is not None else Decimal("0"))
     )
 
     # ========================================================
@@ -1429,13 +1541,10 @@ def get_final_taxable_income(
         "income_heads": {
 
             "salary": {
-                "available":
-                    False,
-                "amount":
-                    None,
-                "reason":
-                    "No dedicated salary-income "
-                    "source is currently available.",
+                "available": salary_income is not None,
+                "amount": money(salary_income) if salary_income is not None else None,
+                "source": "tax_salary_income_records (status=verified)",
+                "reason": None if salary_income is not None else "No verified dedicated salary-income record is available for this financial year.",
             },
 
             "house_property": {
@@ -1582,7 +1691,8 @@ def get_final_taxable_income(
 
             "status": (
                 "verified_claims_applied" if verified_exempt_income > 0
-                else "verified_claims_not_applied_missing_salary_source" if verified_exempt_claimed_amount > 0
+                else "verified_claims_not_applied_missing_salary_source" if verified_exempt_claimed_amount > 0 and salary_record is None
+                else "verified_claims_not_applied_or_zero" if verified_exempt_claimed_amount > 0
                 else "no_verified_claims"
             ),
 
@@ -1591,7 +1701,7 @@ def get_final_taxable_income(
             "verified_claims": verified_exempt_claims,
 
             "source":
-                "tax_deduction_claims (status=verified), regime-eligible exempt-income catalogue; user-confirmed amounts are not independently validated",
+                "verified tax_salary_income_records plus tax_deduction_claims; HRA is recalculated against the verified salary record and capped before application",
 
             "data_available":
                 True,

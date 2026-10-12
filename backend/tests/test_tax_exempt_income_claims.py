@@ -3,7 +3,7 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 from app.routes.deductions_exempt_income import (
-    EXEMPT_INCOME_CATALOG, HRAInputs, calculate_hra_exemption, regime_available,
+    EXEMPT_INCOME_CATALOG, HRAInputs, calculate_hra_exemption, classify_hra_city, regime_available,
 )
 from app.routes.final_taxable_income import aggregate_verified_exempt_claims
 
@@ -114,3 +114,24 @@ def test_hra_calculation_rejects_zero_eligible_salary():
         assert "positive annual basic salary" in str(exc)
     else:
         raise AssertionError("Zero eligible salary must be rejected")
+
+
+def test_hra_city_classification_is_automatic_and_alias_aware():
+    assert classify_hra_city("Mumbai") == "metro"
+    assert classify_hra_city(" New Delhi ") == "metro"
+    assert classify_hra_city("Dhanbad") == "non_metro"
+    assert classify_hra_city("An Unlisted City") == "non_metro"
+
+
+def test_hra_calculation_ignores_client_supplied_city_classification():
+    inputs = HRAInputs(
+        annual_basic_salary=Decimal("600000"),
+        annual_hra_received=Decimal("300000"),
+        annual_rent_paid=Decimal("500000"),
+        city="Patna",
+        city_classification="metro",
+    )
+    result = calculate_hra_exemption(inputs, "old")
+    assert result["city_classification"] == "non_metro"
+    assert result["metro_city_for_hra"] is False
+    assert result["limits"]["salary_percentage_limit"] == "240000.00"

@@ -872,6 +872,7 @@ function TaxPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [hraInputs, setHraInputs] = useState({
+    gross_salary: "",
     annual_basic_salary: "",
     annual_da_forming_retirement_benefits: "0",
     annual_commission_on_turnover_at_fixed_percentage: "0",
@@ -885,6 +886,11 @@ function TaxPage() {
   const [hraResult, setHraResult] = useState(null);
   const [hraLoading, setHraLoading] = useState(false);
   const [hraError, setHraError] = useState("");
+  const [hraSalaryEvidence, setHraSalaryEvidence] = useState("");
+  const [hraRentEvidence, setHraRentEvidence] = useState("");
+  const [hraSalarySaving, setHraSalarySaving] = useState(false);
+  const [hraSalaryMessage, setHraSalaryMessage] = useState("");
+  const [hraSalaryError, setHraSalaryError] = useState("");
 
   const sections = [
     "Overview",
@@ -1033,6 +1039,76 @@ function TaxPage() {
       setHraError(err?.message || "Unable to calculate HRA exemption.");
     } finally {
       setHraLoading(false);
+    }
+  };
+
+  const saveAndVerifyHraSalary = async () => {
+    setHraSalarySaving(true);
+    setHraSalaryError("");
+    setHraSalaryMessage("");
+    try {
+      if (taxRegime !== "old") throw new Error("Select Old Regime to save an HRA salary source.");
+      if (!hraResult) throw new Error("Calculate HRA first so the salary and rent inputs are complete.");
+      if (!String(hraInputs.gross_salary || "").trim() || Number(hraInputs.gross_salary) <= 0) throw new Error("Enter annual gross salary from your salary statement/Form 16.");
+      if (!hraSalaryEvidence.trim()) throw new Error("Enter a reference for your salary statement/Form 16 before verification.");
+      if (!hraRentEvidence.trim()) throw new Error("Enter a separate reference for rent receipts, rental agreement, or other HRA evidence.");
+      const payload = {
+        financial_year: financialYear,
+        gross_salary: Number(hraInputs.gross_salary),
+        annual_basic_salary: Number(hraInputs.annual_basic_salary),
+        annual_da_forming_retirement_benefits: Number(hraInputs.annual_da_forming_retirement_benefits || 0),
+        annual_commission_on_turnover_at_fixed_percentage: Number(hraInputs.annual_commission_on_turnover_at_fixed_percentage || 0),
+        annual_hra_received: Number(hraInputs.annual_hra_received),
+        annual_rent_paid: Number(hraInputs.annual_rent_paid),
+        city: hraInputs.city.trim(),
+        evidence_reference: hraSalaryEvidence.trim(),
+      };
+      let response = await apiFetch(`${API_BASE_URL}/api/final-taxable-income/salary-income`, {
+        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+      });
+      let result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.detail || `Salary source save returned ${response.status}`);
+      response = await apiFetch(`${API_BASE_URL}/api/final-taxable-income/salary-income/verify?financial_year=${encodeURIComponent(financialYear)}&evidence_reference=${encodeURIComponent(hraSalaryEvidence.trim())}`, { method: "POST" });
+      result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.detail || `Salary source verification returned ${response.status}`);
+
+      // Save/update the HRA claim from the same calculator inputs, then mark
+      // it verified only after the user provides a separate HRA/rent evidence reference.
+      response = await apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/claims`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: USER_ID,
+          financial_year: financialYear,
+          tax_regime: "old",
+          deduction_key: "hra_exemption",
+          evidence_reference: hraRentEvidence.trim(),
+          hra_inputs: {
+            annual_basic_salary: Number(hraInputs.annual_basic_salary),
+            annual_da_forming_retirement_benefits: Number(hraInputs.annual_da_forming_retirement_benefits || 0),
+            annual_commission_on_turnover_at_fixed_percentage: Number(hraInputs.annual_commission_on_turnover_at_fixed_percentage || 0),
+            annual_hra_received: Number(hraInputs.annual_hra_received),
+            annual_rent_paid: Number(hraInputs.annual_rent_paid),
+            city: hraInputs.city.trim(),
+          },
+        }),
+      });
+      result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.detail || `HRA claim save returned ${response.status}`);
+      const hraClaimId = result.id;
+      response = await apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/claims/${hraClaimId}/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: USER_ID, evidence_reference: hraRentEvidence.trim() }),
+      });
+      result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.detail || `HRA claim verification returned ${response.status}`);
+      setHraSalaryMessage("Salary source and HRA claim saved. Both are marked verified based on your confirmation; the app does not inspect documents. Refreshing tax calculations.");
+      await loadTaxData();
+    } catch (err) {
+      setHraSalaryError(err?.message || "Unable to save the salary source.");
+    } finally {
+      setHraSalarySaving(false);
     }
   };
 
@@ -1204,6 +1280,7 @@ function TaxPage() {
     const inputStyle = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(12,16,30,0.72)", color: "inherit" };
     const fieldStyle = { display: "grid", gap: "7px", color: "rgba(255,255,255,0.72)", fontSize: "12px" };
     const fields = [
+      ["gross_salary", "Annual gross salary (₹) — before deductions", "number", true],
       ["annual_basic_salary", "Annual basic salary (₹)", "number", true],
       ["annual_da_forming_retirement_benefits", "Eligible DA (₹)", "number", false],
       ["annual_commission_on_turnover_at_fixed_percentage", "Eligible fixed-percentage commission (₹)", "number", false],
@@ -1212,7 +1289,7 @@ function TaxPage() {
     ];
     return <div style={panelStyle}>
       <h3 style={{ marginTop: 0 }}>HRA exemption calculator</h3>
-      <p style={{ color: "rgba(255,255,255,0.62)", fontSize: "13px", lineHeight: 1.7 }}>Estimate the potential exemption under section 10(13A) using the statutory least-of-three method. This calculator does not save a claim, verify documents, or change taxable income.</p>
+      <p style={{ color: "rgba(255,255,255,0.62)", fontSize: "13px", lineHeight: 1.7 }}>Calculate the potential exemption under section 10(13A). To connect salary to the taxable-income engine, enter gross salary from your salary statement/Form 16 and save a salary-source evidence reference below. Bank deposits are not treated as gross salary.</p>
       {taxRegime !== "old" && <div role="status" style={{ padding: "12px 14px", borderRadius: "10px", marginBottom: "14px", background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.28)", color: "#fcd34d", fontSize: "12px" }}>Select Old Regime above to calculate HRA exemption. HRA exemption is not available under the New Regime.</div>}
       <form onSubmit={calculateHra} style={{ display: "grid", gap: "14px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
@@ -1235,7 +1312,7 @@ function TaxPage() {
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
           <button type="submit" className="primary-button" disabled={hraLoading || taxRegime !== "old"}>{hraLoading ? "Calculating…" : "Calculate HRA exemption"}</button>
-          <button type="button" className="secondary-button" onClick={() => { setHraInputs({ annual_basic_salary: "", annual_da_forming_retirement_benefits: "0", annual_commission_on_turnover_at_fixed_percentage: "0", annual_hra_received: "", annual_rent_paid: "", city: "", city_classification: "non_metro" }); setHraResult(null); setHraError(""); }}>Clear inputs</button>
+          <button type="button" className="secondary-button" onClick={() => { setHraInputs({ gross_salary: "", annual_basic_salary: "", annual_da_forming_retirement_benefits: "0", annual_commission_on_turnover_at_fixed_percentage: "0", annual_hra_received: "", annual_rent_paid: "", city: "", city_classification: "non_metro" }); setHraResult(null); setHraError(""); setHraSalaryMessage(""); setHraSalaryError(""); }}>Clear inputs</button>
         </div>
       </form>
       {hraError && <div role="alert" style={{ marginTop: "14px", padding: "12px", borderRadius: "10px", color: "#fca5a5", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12px" }}>{hraError}</div>}
@@ -1244,7 +1321,18 @@ function TaxPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "10px" }}>
           {Object.entries(hraResult.limits || {}).map(([key, value]) => <div key={key} style={{ ...cardStyle, padding: "13px" }}><div style={labelStyle}>{key.replaceAll("_", " ")}</div><div style={{ fontWeight: 750, marginTop: "7px" }}>{formatCurrency(value)}</div></div>)}
         </div>
-        <p style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", lineHeight: 1.6, marginBottom: 0 }}>{safeText(hraResult.verification_notice, "Verify salary components, residence and rent evidence before filing.")} The result is not saved as a claim and does not change taxable income.</p>
+        <p style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", lineHeight: 1.6, marginBottom: 0 }}>{safeText(hraResult.verification_notice, "Verify salary components, residence and rent evidence before filing.")} The calculator result alone does not change taxable income.</p>
+        <label style={fieldStyle}>Salary statement / Form 16 evidence reference
+          <input aria-label="Salary statement or Form 16 evidence reference" type="text" maxLength={2000} value={hraSalaryEvidence} onChange={(event) => setHraSalaryEvidence(event.target.value)} placeholder="e.g. Form 16 FY 2026-27, employer statement reference" style={inputStyle} />
+          <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Your confirmation marks this salary record verified; the app does not inspect the document.</span>
+        </label>
+        <label style={fieldStyle}>Separate HRA / rent evidence reference
+          <input aria-label="HRA rent evidence reference" type="text" maxLength={2000} value={hraRentEvidence} onChange={(event) => setHraRentEvidence(event.target.value)} placeholder="e.g. rent receipts and rental agreement reference" style={inputStyle} />
+          <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Keep this separate from the salary statement reference. Verification records your confirmation; the app does not inspect documents.</span>
+        </label>
+        <button type="button" className="primary-button" disabled={hraSalarySaving || taxRegime !== "old"} onClick={saveAndVerifyHraSalary}>{hraSalarySaving ? "Saving salary and HRA claim…" : "Save salary & verify HRA claim"}</button>
+        {hraSalaryError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px" }}>{hraSalaryError}</div>}
+        {hraSalaryMessage && <div role="status" style={{ color: "#86efac", fontSize: "12px" }}>{hraSalaryMessage}</div>}
       </div>}
     </div>;
   };

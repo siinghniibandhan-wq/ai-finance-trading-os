@@ -148,6 +148,9 @@ class TransactionCreate(BaseModel):
     description: str | None = None
     transaction_date: date
     reference: str | None = None
+    # Destination account is required for transfers and rejected for other types.
+    # Optional at schema level so ordinary income/expense transactions remain compatible.
+    transfer_to_account_id: int | None = Field(default=None, gt=0)
     loan_details: LoanDisbursementDetails | None = None
 
 

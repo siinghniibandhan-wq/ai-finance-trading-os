@@ -1493,6 +1493,8 @@ function MarketsPage() {
   const [chartInfo, setChartInfo] = useState(null);
   const [chartBusy, setChartBusy] = useState(false);
   const [chartError, setChartError] = useState("");
+  // Selected-stock research tabs; data is derived from available instrument and chart responses only.
+  const [researchTab, setResearchTab] = useState("overview");
   // Personal watchlist persists in this browser; no backend writes are made.
   const [watchlist, setWatchlist] = useState(() => {
     try { return JSON.parse(localStorage.getItem("financial-os-market-watchlist") || "[]"); }
@@ -1584,6 +1586,7 @@ function MarketsPage() {
       exchange: row.exchange || exchange,
     };
     setSelectedInstrument(instrument);
+    setResearchTab("overview");
     setQuery(instrument.symbol);
     setResults([]);
     setSearchError("");
@@ -1670,6 +1673,101 @@ function MarketsPage() {
       {!chartBusy && !chartData.length && !chartError && <p style={muted}>No chart loaded yet. Select a period and tap Load chart.</p>}
       <p style={{ ...muted, marginBottom: 0, marginTop: "12px" }}>Historical prices may be delayed or unavailable. This chart uses daily closing prices and is for research only; it does not place trades.</p>
     </section>}
+
+    {/* Stock research tabs appear only after an instrument is selected. */}
+    {selectedInstrument && (() => {
+      const closes = chartData.map((row) => Number(row.close)).filter((value) => Number.isFinite(value) && value > 0);
+      const latestClose = closes.length ? closes[closes.length - 1] : null;
+      const previousClose = closes.length > 1 ? closes[closes.length - 2] : null;
+      const sma20 = closes.length >= 20 ? closes.slice(-20).reduce((sum, value) => sum + value, 0) / 20 : null;
+      const changes = closes.slice(1).map((value, index) => value - closes[index]);
+      const recentChanges = changes.slice(-14);
+      const gains = recentChanges.reduce((sum, value) => sum + Math.max(value, 0), 0);
+      const losses = recentChanges.reduce((sum, value) => sum + Math.max(-value, 0), 0);
+      const rsi = recentChanges.length === 14 ? (losses === 0 ? 100 : 100 - (100 / (1 + (gains / 14) / (losses / 14)))) : null;
+      const periodChange = closes.length > 1 ? closes[closes.length - 1] - closes[0] : null;
+      const periodChangePct = closes.length > 1 && closes[0] ? (periodChange / closes[0]) * 100 : null;
+      const technicalSignal = sma20 == null || rsi == null || latestClose == null
+        ? "Insufficient historical data"
+        : latestClose > sma20 && rsi >= 50 ? "Positive momentum"
+        : latestClose < sma20 && rsi < 50 ? "Negative momentum" : "Mixed / neutral";
+      const tabButton = (id, label) => <button key={id} type="button" onClick={() => setResearchTab(id)} aria-pressed={researchTab === id} className={researchTab === id ? "primary-button" : "secondary-button"} style={{ padding: "9px 12px", fontSize: "12px", whiteSpace: "nowrap" }}>{label}</button>;
+      const metric = (label, value, hint = "") => <div key={label} style={{ ...card, padding: "13px" }}><div style={muted}>{label}</div><strong style={{ display: "block", fontSize: "18px", marginTop: "5px" }}>{value}</strong>{hint ? <div style={{ ...muted, marginTop: "4px" }}>{hint}</div> : null}</div>;
+      return <section style={{ ...card, padding: "16px" }}>
+        <div style={{ marginBottom: "12px" }}>
+          <p className="card-label" style={{ margin: "0 0 4px" }}>INSTRUMENT RESEARCH</p>
+          <h3 style={{ margin: "0 0 4px", fontSize: "20px" }}>{selectedInstrument.name || selectedInstrument.symbol}</h3>
+          <p style={{ ...muted, margin: 0 }}>{selectedInstrument.symbol} · {selectedInstrument.exchange || exchange} · Research workspace</p>
+        </div>
+        <div role="tablist" aria-label="Stock research sections" style={{ display: "flex", gap: "7px", flexWrap: "wrap", paddingBottom: "14px", borderBottom: "1px solid rgba(255,255,255,.09)" }}>
+          {tabButton("overview", "Overview")}
+          {tabButton("fundamental", "Fundamental Analysis")}
+          {tabButton("technical", "Technical Analysis")}
+          {tabButton("company", "Company Details")}
+          {tabButton("dividends", "Dividends & Actions")}
+          {tabButton("news", "News")}
+        </div>
+        <div role="tabpanel" style={{ paddingTop: "15px" }}>
+          {researchTab === "overview" && <>
+            <h4 style={{ margin: "0 0 10px" }}>Price overview</h4>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+              {metric("Latest traded price", quote?.quote?.last_price != null ? money(quote.quote.last_price) : "Unavailable", "From the current quote response")}
+              {metric("Latest historical close", latestClose != null ? money(latestClose) : "Unavailable", "From loaded historical candles")}
+              {metric("Loaded-period change", periodChange != null ? `${periodChange >= 0 ? "+" : ""}${money(periodChange)}` : "Unavailable", periodChangePct != null ? `${periodChangePct >= 0 ? "+" : ""}${periodChangePct.toFixed(2)}% over loaded period` : "Load historical data to calculate")}
+              {metric("Historical records", String(closes.length), "Records returned by the chart API")}
+            </div>
+            <p style={{ ...muted, marginBottom: 0, marginTop: "12px" }}>Use the tabs above to inspect technical indicators, company information, fundamentals, dividends and news. Unavailable data is not estimated or fabricated.</p>
+          </>}
+          {researchTab === "fundamental" && <>
+            <h4 style={{ margin: "0 0 6px" }}>Fundamental Analysis</h4>
+            <p style={muted}>Company financial statements and valuation data are not yet connected to the current market API.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+              {["Revenue", "Net profit", "Earnings per share (EPS)", "Price-to-earnings (P/E)", "Return on equity (ROE)", "Debt-to-equity", "Market capitalization", "Dividend yield"].map((name) => metric(name, "Not available", "Requires a verified fundamentals data source"))}
+            </div>
+            <p style={{ ...muted, marginBottom: 0, marginTop: "12px" }}>These metrics will populate after a fundamentals provider is integrated. No sample financial figures are shown.</p>
+          </>}
+          {researchTab === "technical" && <>
+            <h4 style={{ margin: "0 0 6px" }}>Technical Analysis</h4>
+            <p style={muted}>Indicators below are calculated only from the historical closing prices currently loaded.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+              {metric("20-period SMA", sma20 != null ? money(sma20) : "Insufficient data", "Requires at least 20 closing prices")}
+              {metric("RSI (14)", rsi != null ? rsi.toFixed(2) : "Insufficient data", "Simple 14-period gain/loss calculation")}
+              {metric("Latest historical close", latestClose != null ? money(latestClose) : "Unavailable")}
+              {metric("Loaded-period return", periodChangePct != null ? `${periodChangePct >= 0 ? "+" : ""}${periodChangePct.toFixed(2)}%` : "Unavailable")}
+            </div>
+            <div style={{ ...card, marginTop: "12px" }}>
+              <h4 style={{ margin: "0 0 6px" }}>Technical / Buy-Sell Summary</h4>
+              <strong style={{ color: technicalSignal === "Positive momentum" ? "#86efac" : technicalSignal === "Negative momentum" ? "#fca5a5" : "#fcd34d" }}>{technicalSignal}</strong>
+              <p style={{ ...muted, margin: "6px 0 0" }}>{technicalSignal === "Positive momentum" ? "The latest loaded close is above its 20-period SMA and RSI is at least 50." : technicalSignal === "Negative momentum" ? "The latest loaded close is below its 20-period SMA and RSI is below 50." : "More historical data may be needed, or the available indicators do not agree. This is a basic technical rule, not a personalized investment recommendation."}</p>
+            </div>
+            <p style={{ ...muted, marginBottom: 0, marginTop: "10px" }}>This rule-based indicator is educational and does not account for fundamentals, risk tolerance, costs or investment objectives. It is not a guaranteed Buy/Sell recommendation.</p>
+          </>}
+          {researchTab === "company" && <>
+            <h4 style={{ margin: "0 0 10px" }}>Company / Instrument Details</h4>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "10px" }}>
+              {metric("Instrument name", selectedInstrument.name || "Not provided")}
+              {metric("Trading symbol", selectedInstrument.symbol || "Not provided")}
+              {metric("Exchange", selectedInstrument.exchange || exchange)}
+              {metric("Instrument type", selectedInstrument.instrument_type || selectedInstrument.type || "Not provided")}
+              {metric("Instrument token", selectedInstrument.instrument_token || selectedInstrument.token || "Not provided")}
+              {metric("ISIN", selectedInstrument.isin || "Not provided")}
+            </div>
+            <p style={{ ...muted, marginBottom: 0, marginTop: "10px" }}>Only fields supplied by the instrument search response are shown. Additional company profile details require a verified company-data source.</p>
+          </>}
+          {researchTab === "dividends" && <>
+            <h4 style={{ margin: "0 0 6px" }}>Dividends & Corporate Actions</h4>
+            <p style={muted}>Dividend history, splits, bonuses and ex-dates are not provided by the currently connected market endpoints.</p>
+            <div style={{ ...card }}><strong>Corporate actions data source required</strong><p style={{ ...muted, marginBottom: 0, marginTop: "6px" }}>This section is ready for verified dividend and corporate-action records once a suitable provider is connected.</p></div>
+          </>}
+          {researchTab === "news" && <>
+            <h4 style={{ margin: "0 0 6px" }}>{selectedInstrument.symbol} News</h4>
+            <p style={muted}>Company-specific news has not been connected to the current market API.</p>
+            <div style={{ ...card }}><strong>News source required</strong><p style={{ ...muted, marginBottom: 0, marginTop: "6px" }}>Verified headlines, publisher, publication time and original article links will appear here after a news provider is integrated. No fabricated headlines are displayed.</p></div>
+          </>}
+        </div>
+      </section>;
+    })()}
+
     {!selectedInstrument && <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "14px" }}>{[{ title: "Top gainers", rows: gainers }, { title: "Top losers", rows: losers }].map(group => <div key={group.title} style={card}><h3 style={{ margin: "0 0 12px" }}>{group.title}</h3>{!group.rows.length ? <p style={muted}>No rows returned by the provider.</p> : group.rows.slice(0, 8).map((row, i) => <div key={`${row.symbol || "item"}-${i}`} style={{ display: "flex", justifyContent: "space-between", gap: "12px", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}><div><strong style={{ fontSize: "12px" }}>{row.symbol || row.name || "Instrument"}</strong><div style={muted}>{row.name || row.exchange || ""}</div></div><div style={{ textAlign: "right", whiteSpace: "nowrap" }}><div style={{ fontSize: "12px", fontWeight: 700 }}>{money(row.ltp)}</div><div style={{ color: Number(row.percent_change) < 0 ? "#fca5a5" : "#86efac", fontSize: "11px" }}>{row.percent_change == null ? "Change unavailable" : `${row.percent_change}%`}</div></div></div>)}</div>)}</section>}
     <p style={{ ...muted, margin: 0 }}>Data may be delayed or unavailable when the provider or exchange is closed. Verify quotes with your broker before making investment decisions. This workspace does not place trades.</p>
   </div>;

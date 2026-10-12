@@ -368,6 +368,8 @@ class HRAInputs(BaseModel):
     annual_hra_received: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     annual_rent_paid: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     city: str = Field(min_length=2, max_length=100)
+    # Optional for backward compatibility with older clients that send city only.
+    city_classification: str | None = Field(default=None, pattern=r"^(metro|non_metro)$")
 
 
 def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str):
@@ -392,7 +394,12 @@ def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str):
         raise ValueError("Enter a positive annual basic salary and eligible DA for HRA calculation.")
 
     city_key = inputs.city.strip().casefold()
-    is_metro = city_key in HRA_METRO_CITIES
+    # Use the user's explicit selection when supplied; otherwise retain the
+    # previous automatic classification for existing clients.
+    if inputs.city_classification is not None:
+        is_metro = inputs.city_classification == "metro"
+    else:
+        is_metro = city_key in HRA_METRO_CITIES
     rent_less_ten_percent = max(inputs.annual_rent_paid - (salary * Decimal("0.10")), Decimal("0"))
     salary_percentage_limit = salary * (Decimal("0.50") if is_metro else Decimal("0.40"))
     candidates = {
@@ -406,6 +413,7 @@ def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str):
         "section": "10(13A)",
         "tax_regime": "old",
         "city": inputs.city.strip(),
+        "city_classification": "metro" if is_metro else "non_metro",
         "metro_city_for_hra": is_metro,
         "annual_salary_for_hra": str(salary),
         "limits": {key: str(value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)) for key, value in candidates.items()},

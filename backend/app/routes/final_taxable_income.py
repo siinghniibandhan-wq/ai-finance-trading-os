@@ -1314,16 +1314,13 @@ def get_final_taxable_income(
     # A tax receipt is included only when it is verified and explicitly linked
     # to the user's matching Money transaction. Require matching date and
     # amount so a stale/mismatched link cannot inflate taxable income.
-    # Any transaction linked to a business record is excluded from Other
-    # Sources to prevent the same receipt being counted under two heads.
+    # Only exclude a Money transaction from Other Sources after its business
+    # receipt has passed every eligibility check below. Pending, unlinked, or
+    # mismatched records must not suppress otherwise eligible transaction income.
     business_records_for_year = db.query(TaxBusinessIncomeRecord).filter_by(
         user_id=user_id, financial_year=financial_year, record_type="receipt"
     ).all()
-    linked_business_transaction_ids = {
-        record.source_transaction_id
-        for record in business_records_for_year
-        if record.source_transaction_id is not None
-    }
+    linked_business_transaction_ids = set()
     verified_business_receipts = []
     for record in business_records_for_year:
         if record.status != "verified" or record.source_transaction_id is None:
@@ -1340,6 +1337,7 @@ def get_final_taxable_income(
         if not (start_date <= record.transaction_date <= end_date):
             continue
         verified_business_receipts.append(record)
+        linked_business_transaction_ids.add(transaction.id)
 
     business_profession_income = sum(
         (decimal(record.amount) for record in verified_business_receipts),

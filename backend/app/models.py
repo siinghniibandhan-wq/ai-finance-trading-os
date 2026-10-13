@@ -589,3 +589,18 @@ class InstrumentMaster(Base):
     asset_class: Mapped[str] = mapped_column(String(80), nullable=False, default="Other")
     product_type: Mapped[str] = mapped_column(String(80), nullable=False, default="Other")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+# ============================================================
+# USER ACCOUNT COMPLETION PROFILE
+# One private profile document per authenticated user. Sensitive
+# identity verification is NOT inferred from matching text fields.
+# ============================================================
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+    __table_args__ = (UniqueConstraint("user_id", name="uq_user_profiles_user_id"),)
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, index=True)
+    profile_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

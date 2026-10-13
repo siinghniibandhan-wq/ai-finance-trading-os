@@ -540,6 +540,11 @@ function Dashboard() {
   // Dashboard uses real API data; missing module data is shown as unavailable.
   const [dashboardData, setDashboardData] = useState(null);
   const [goalsData, setGoalsData] = useState([]);
+  const [receivablePayable, setReceivablePayable] = useState({ total_receivable: 0, total_payable: 0, items: [] });
+  const [settlementAccounts, setSettlementAccounts] = useState([]);
+  const [settlementDraft, setSettlementDraft] = useState(null);
+  const [settlementError, setSettlementError] = useState("");
+  const [settlementSaving, setSettlementSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -552,9 +557,11 @@ function Dashboard() {
     setLoading(true);
     setError("");
     try {
-      const [dashboardResponse, goalsResponse] = await Promise.all([
+      const [dashboardResponse, goalsResponse, receivablePayableResponse, accountsResponse] = await Promise.all([
         apiFetch(`${API_BASE_URL}/api/dashboard/summary?user_id=${USER_ID}`, { cache: "no-store" }),
         apiFetch(`${API_BASE_URL}/api/goals/?user_id=${USER_ID}`, { cache: "no-store" }).catch(() => null),
+        apiFetch(`${API_BASE_URL}/api/transactions/receivables-payables`, { cache: "no-store" }).catch(() => null),
+        apiFetch(`${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`, { cache: "no-store" }).catch(() => null),
       ]);
       if (!dashboardResponse.ok) {
         throw new Error(`Dashboard API error: ${dashboardResponse.status}`);
@@ -566,6 +573,25 @@ function Dashboard() {
         setGoalsData(Array.isArray(goalPayload.goals) ? goalPayload.goals : []);
       } else {
         setGoalsData([]);
+      }
+      if (receivablePayableResponse?.ok) {
+        const rpPayload = await receivablePayableResponse.json();
+        setReceivablePayable({
+          total_receivable: Number(rpPayload.total_receivable || 0),
+          total_payable: Number(rpPayload.total_payable || 0),
+          items: Array.isArray(rpPayload.items) ? rpPayload.items : [],
+        });
+      } else {
+        setReceivablePayable({ total_receivable: 0, total_payable: 0, items: [] });
+      }
+      if (accountsResponse?.ok) {
+        const accountPayload = await accountsResponse.json();
+        setSettlementAccounts(Array.isArray(accountPayload) ? accountPayload.filter((account) => {
+          const type = String(account.account_type || "").toLowerCase();
+          return account.is_active !== false && !/(receivable|payable|loan|investment|broker|credit.?card|credit.?line)/.test(type);
+        }) : []);
+      } else {
+        setSettlementAccounts([]);
       }
       setLastUpdated(new Date());
     } catch (err) {
@@ -588,6 +614,38 @@ function Dashboard() {
   const formatCurrency = (value) => new Intl.NumberFormat("en-IN", {
     style: "currency", currency: "INR", maximumFractionDigits: 0,
   }).format(Number(value) || 0);
+  const dashboardInputStyle = { width: "100%", boxSizing: "border-box", display: "block", marginTop: "6px", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "#151525", color: "#fff", outline: "none" };
+
+  const submitOutstandingSettlement = async (event) => {
+    event.preventDefault();
+    if (!settlementDraft?.transaction_id || !settlementDraft.account_id || Number(settlementDraft.amount) <= 0) {
+      setSettlementError("Choose a bank/cash account and enter a valid settlement amount.");
+      return;
+    }
+    setSettlementSaving(true);
+    setSettlementError("");
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/transactions/${settlementDraft.transaction_id}/settle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          account_id: Number(settlementDraft.account_id),
+          amount: Number(settlementDraft.amount),
+          transaction_date: settlementDraft.transaction_date,
+          description: settlementDraft.description || null,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.detail || "Unable to settle this outstanding amount.");
+      setSettlementDraft(null);
+      await loadDashboard();
+      window.dispatchEvent(new Event("financial-os:transactions-changed"));
+    } catch (err) {
+      setSettlementError(err?.message || "Unable to settle this outstanding amount.");
+    } finally {
+      setSettlementSaving(false);
+    }
+  };
 
   const summary = dashboardData?.summary || {};
   const trend = dashboardData?.monthly_trend || [];
@@ -667,6 +725,65 @@ function Dashboard() {
         <MetricCard title="Avg. Monthly Expenses" value={loading ? "Loading…" : formatCurrency(avgExpense)} change="Last 90 days ÷ 3" positive={false} icon={ArrowDownRight} />
         <MetricCard title="Estimated Monthly Savings" value={loading ? "Loading…" : formatCurrency(monthlySavings)} change="Income minus expenses" positive={monthlySavings >= 0} icon={WalletCards} />
         <MetricCard title="Savings Rate" value={loading ? "Loading…" : `${savingsRate.toFixed(1)}%`} change={avgIncome > 0 ? "90-day average" : "Add income records"} positive={savingsRate >= 0} icon={PieChart} />
+      </section>
+
+      <section className="metrics-grid" aria-label="Outstanding balances">
+        <div role="button" tabIndex={0} onClick={() => goTo("Transactions")} onKeyDown={(event) => event.key === "Enter" && goTo("Transactions")} style={{cursor:"pointer"}}>
+          <MetricCard title="Receivable" value={loading ? "Loading…" : formatCurrency(receivablePayable.total_receivable)} change="Money owed to you" positive icon={ArrowDownRight} />
+        </div>
+        <div role="button" tabIndex={0} onClick={() => goTo("Transactions")} onKeyDown={(event) => event.key === "Enter" && goTo("Transactions")} style={{cursor:"pointer"}}>
+          <MetricCard title="Payable" value={loading ? "Loading…" : formatCurrency(receivablePayable.total_payable)} change="Money you owe" positive={false} icon={ArrowUpRight} />
+        </div>
+      </section>
+
+      <section className="glass-card" style={{ marginBottom: "24px" }}>
+        <div className="card-header">
+          <div><p className="card-label">MONEY • OUTSTANDING</p><h3>Receivables & Payables</h3></div>
+          <span className="small-button">{receivablePayable.items.length} open items</span>
+        </div>
+        {settlementError && <p role="alert" style={{ color: "#fca5a5" }}>{settlementError}</p>}
+        {receivablePayable.items.length === 0 ? (
+          <p className="chart-footnote">No outstanding receivables or payables. Add one from Money → Transactions → Add Transaction.</p>
+        ) : (
+          <div style={{ display: "grid", gap: "10px" }}>
+            {receivablePayable.items.map((item) => (
+              <div key={item.id} style={{ border: "1px solid rgba(255,255,255,0.10)", borderRadius: "12px", padding: "12px 14px" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+                  <div>
+                    <strong>{item.type === "receivable" ? "To receive" : "To pay"} · {item.party_name || item.description || `Transaction #${item.id}`}</strong>
+                    <div className="chart-footnote">Due: {item.due_date || "Not specified"} · Outstanding: {formatCurrency(item.outstanding_amount)}</div>
+                  </div>
+                  <button className="small-button" type="button" onClick={() => { setSettlementError(""); setSettlementDraft({ transaction_id: item.id, amount: String(item.outstanding_amount), account_id: "", transaction_date: new Date().toISOString().slice(0, 10), description: "" }); }}>
+                    {item.type === "receivable" ? "Receive payment" : "Make payment"}
+                  </button>
+                </div>
+                {settlementDraft?.transaction_id === item.id && (
+                  <form onSubmit={submitOutstandingSettlement} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginTop: "12px" }}>
+                    <label style={{ fontSize: "12px" }}>Bank / Cash account
+                      <select required value={settlementDraft.account_id} onChange={(e) => setSettlementDraft((draft) => ({ ...draft, account_id: e.target.value }))} style={{ ...dashboardInputStyle, colorScheme: "dark" }}>
+                        <option value="">Select account</option>
+                        {settlementAccounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}
+                      </select>
+                    </label>
+                    <label style={{ fontSize: "12px" }}>Amount
+                      <input required type="number" min="0.01" max={Number(item.outstanding_amount)} step="0.01" value={settlementDraft.amount} onChange={(e) => setSettlementDraft((draft) => ({ ...draft, amount: e.target.value }))} style={dashboardInputStyle} />
+                    </label>
+                    <label style={{ fontSize: "12px" }}>Settlement date
+                      <input required type="date" value={settlementDraft.transaction_date} onChange={(e) => setSettlementDraft((draft) => ({ ...draft, transaction_date: e.target.value }))} style={dashboardInputStyle} />
+                    </label>
+                    <label style={{ fontSize: "12px" }}>Note (optional)
+                      <input value={settlementDraft.description} onChange={(e) => setSettlementDraft((draft) => ({ ...draft, description: e.target.value }))} style={dashboardInputStyle} />
+                    </label>
+                    <div style={{ display: "flex", alignItems: "end", gap: "8px" }}>
+                      <button className="primary-button" type="submit" disabled={settlementSaving}>{settlementSaving ? "Saving…" : "Confirm settlement"}</button>
+                      <button className="small-button" type="button" onClick={() => setSettlementDraft(null)}>Cancel</button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Cash-flow graph: real monthly values from dated transactions. */}
@@ -9985,6 +10102,8 @@ function Transactions() {
     transaction_date: new Date().toISOString().split("T")[0],
     description: "",
     reference: "",
+    party_name: "",
+    due_date: "",
     loan_name: "",
     lender_name: "",
     loan_type: "Personal Loan",
@@ -10014,8 +10133,8 @@ const isLoanDisbursement = categories.some((category) =>
   // Only show categories that match the selected transaction type.
   const transactionCategories = categories.filter((category) => {
     const type = String(category.category_type || "").trim().toLowerCase();
-    if (formData.transaction_type === "income") return type === "income";
-    if (formData.transaction_type === "expense") return type === "expense";
+    if (formData.transaction_type === "income" || formData.transaction_type === "receivable") return type === "income";
+    if (formData.transaction_type === "expense" || formData.transaction_type === "payable") return type === "expense";
     return false;
   });
   // ----------------------------------------------------------
@@ -10110,7 +10229,7 @@ const isLoanDisbursement = categories.some((category) =>
   const mainTransactionTab = (transaction) => {
     const type = String(transaction.transaction_type || "").toLowerCase();
     if (type === "transfer") return "transfer";
-    if (["income", "refund", "interest", "dividend"].includes(type)) return "income";
+    if (["income", "refund", "interest", "dividend", "receivable"].includes(type)) return "income";
     return "expense";
   };
 
@@ -10234,6 +10353,8 @@ const isLoanDisbursement = categories.some((category) =>
       new Date().toISOString().split("T")[0],
     description: "",
     reference: "",
+    party_name: "",
+    due_date: "",
     loan_name: "",
     lender_name: "",
     loan_type: "Personal Loan",
@@ -10271,6 +10392,8 @@ const isLoanDisbursement = categories.some((category) =>
         new Date().toISOString().split("T")[0],
       description: transaction.description || "",
       reference: transaction.reference || "",
+      party_name: transaction.party_name || "",
+      due_date: transaction.due_date || "",
     });
 
     setError("");
@@ -10369,6 +10492,10 @@ const handleTransactionSubmit = async () => {
       description: formData.description.trim(),
       transaction_date: formData.transaction_date,
       reference: formData.reference.trim(),
+      ...(["receivable", "payable"].includes(formData.transaction_type) ? {
+        party_name: (formData.party_name || "").trim() || null,
+        due_date: formData.due_date || null,
+      } : {}),
       ...(loanDisbursement ? {
         loan_details: {
           name: formData.loan_name.trim(),
@@ -10594,8 +10721,8 @@ const transactionFormModal = showForm && (
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          gap: "12px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(95px, 1fr))",
+          gap: "8px",
           marginBottom: "18px",
         }}
       >
@@ -10652,10 +10779,12 @@ const transactionFormModal = showForm && (
         >
           Income
         </button>
+        <button type="button" onClick={() => setFormData((previous) => ({ ...previous, transaction_type: "receivable", category_id: "" }))} style={{ padding: "12px 6px", borderRadius: "14px", border: formData.transaction_type === "receivable" ? "1px solid rgba(234,179,8,0.8)" : "1px solid rgba(255,255,255,0.10)", background: formData.transaction_type === "receivable" ? "rgba(234,179,8,0.16)" : "rgba(255,255,255,0.05)", color: "#fff", cursor: "pointer", fontWeight: 700 }}>Receivable</button>
+        <button type="button" onClick={() => setFormData((previous) => ({ ...previous, transaction_type: "payable", category_id: "" }))} style={{ padding: "12px 6px", borderRadius: "14px", border: formData.transaction_type === "payable" ? "1px solid rgba(249,115,22,0.8)" : "1px solid rgba(255,255,255,0.10)", background: formData.transaction_type === "payable" ? "rgba(249,115,22,0.16)" : "rgba(255,255,255,0.05)", color: "#fff", cursor: "pointer", fontWeight: 700 }}>Payable</button>
         <button
           type="button"
           onClick={() => setFormData((previous) => ({ ...previous, transaction_type: "transfer", category_id: "" }))}
-          style={{ padding: "14px", borderRadius: "14px", border: formData.transaction_type === "transfer" ? "1px solid rgba(96,165,250,0.8)" : "1px solid rgba(255,255,255,0.10)", background: formData.transaction_type === "transfer" ? "rgba(96,165,250,0.16)" : "rgba(255,255,255,0.05)", color: "#fff", cursor: "pointer", fontWeight: 700 }}
+          style={{ padding: "12px 6px", borderRadius: "14px", border: formData.transaction_type === "transfer" ? "1px solid rgba(96,165,250,0.8)" : "1px solid rgba(255,255,255,0.10)", background: formData.transaction_type === "transfer" ? "rgba(96,165,250,0.16)" : "rgba(255,255,255,0.05)", color: "#fff", cursor: "pointer", fontWeight: 700 }}
         >Transfer</button>
       </div>
 
@@ -10670,7 +10799,7 @@ const transactionFormModal = showForm && (
             color: "rgba(255,255,255,0.70)",
           }}
         >
-          Account
+          {["receivable", "payable"].includes(formData.transaction_type) ? "Related account (no cash movement yet)" : "Account"}
         </label>
 
         <StyledSelect className="finos-select"
@@ -10754,6 +10883,19 @@ const transactionFormModal = showForm && (
 ))}
         </StyledSelect>
       </div>}
+
+      {(formData.transaction_type === "receivable" || formData.transaction_type === "payable") && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "16px" }}>
+          <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>
+            {formData.transaction_type === "receivable" ? "Who owes you? (optional)" : "Who do you owe? (optional)"}
+            <input name="party_name" value={formData.party_name || ""} onChange={handleFormChange} maxLength={150} placeholder={formData.transaction_type === "receivable" ? "Customer / person" : "Supplier / person"} style={loanInputStyle} />
+          </label>
+          <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>
+            Due date (optional)
+            <input type="date" name="due_date" value={formData.due_date || ""} onChange={handleFormChange} style={loanInputStyle} />
+          </label>
+        </div>
+      )}
 
       {/* AMOUNT + DATE */}
 

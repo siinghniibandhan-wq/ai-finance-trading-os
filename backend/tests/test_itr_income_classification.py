@@ -47,9 +47,17 @@ class FakeDB:
 
 
 class TaxIncomeClassificationTests(unittest.TestCase):
-    def test_salary_keyword_classifies_generic_income(self):
+    def test_salary_keyword_without_gross_metadata_is_flagged_not_taxed_as_net(self):
         result = load_other_income(FakeDB(), 1, date(2026, 4, 1), date(2027, 3, 31))
-        self.assertEqual(result["salary"], 50000)
+        # The transaction is a net receipt; tax must use saved gross salary
+        # metadata rather than silently treating the bank credit as gross pay.
+        self.assertEqual(result["salary"], 0)
+        salary_reviews = [
+            item for item in result["classification_review"]
+            if item["transaction_id"] == 1
+        ]
+        self.assertEqual(len(salary_reviews), 1)
+        self.assertIn("Gross salary metadata", salary_reviews[0]["reason"])
 
     def test_loan_disbursement_is_excluded_from_income(self):
         result = load_other_income(FakeDB(), 1, date(2026, 4, 1), date(2027, 3, 31))
@@ -60,8 +68,12 @@ class TaxIncomeClassificationTests(unittest.TestCase):
     def test_explicit_interest_type_conflict_is_flagged(self):
         result = load_other_income(FakeDB(), 1, date(2026, 4, 1), date(2027, 3, 31))
         self.assertEqual(result["interest"], 1200)
-        self.assertEqual(len(result["classification_review"]), 1)
-        self.assertEqual(result["classification_review"][0]["suggested_head"], "salary")
+        conflict_reviews = [
+            item for item in result["classification_review"]
+            if item["transaction_id"] == 3
+        ]
+        self.assertEqual(len(conflict_reviews), 1)
+        self.assertEqual(conflict_reviews[0]["suggested_head"], "salary")
 
     def test_dividend_is_separately_classified(self):
         result = load_other_income(FakeDB(), 1, date(2026, 4, 1), date(2027, 3, 31))

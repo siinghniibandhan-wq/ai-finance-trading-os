@@ -101,14 +101,14 @@ const navigation = [
         icon: ArrowLeftRight
       },
       {
+        name: "Ledger",
+        icon: Receipt
+      },
+      {
         name: "Loans & Liabilities",
         icon: Landmark
       },
       {
-  name: "Budget",
-  icon: PieChart
-},
-{
   name: "Categories",
   icon: CircleDollarSign
 },
@@ -145,6 +145,10 @@ const navigation = [
   {
     section: "Plan",
     items: [
+      {
+        name: "Budget",
+        icon: PieChart
+      },
       {
         name: "Goals",
         icon: Target
@@ -213,7 +217,7 @@ export default function App() {
   // Keep navigation in the URL so the current section survives refreshes,
   // direct links, and browser Back/Forward throughout the application.
   const validPages = new Set([
-    "Dashboard", "Wealth Manager", "Accounts", "Account Profile", "Transactions",
+    "Dashboard", "Wealth Manager", "Accounts", "Account Profile", "Transactions", "Ledger",
     "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio",
     "Holdings", "Investment Transactions", "Markets", "Goals",
     "AI Assistant", "Tax", "Playground", "Settings", "Finance Diary"
@@ -477,6 +481,8 @@ export default function App() {
   <AccountCompletionPage />
 ) : activePage === "Transactions" ? (
   <Transactions />
+) : activePage === "Ledger" ? (
+  <LedgerPage />
 ) : activePage === "Budget" ? (
   <Budget />
 ) : activePage === "Categories" ? (
@@ -7612,6 +7618,89 @@ function FinanceDiaryPage() {
   }, []);
   const filtered = entries.filter((entry) => `${entry.event_type} ${entry.entity_type} ${entry.entity_id} ${entry.description} ${entry.snapshot_json || ""}`.toLowerCase().includes(search.toLowerCase()));
   return <div className="dashboard"><section className="welcome-section"><div><p className="welcome-label">PERMANENT HISTORY</p><h2>Finance Diary</h2><p className="welcome-description">Read-only activity history. Existing entries are never edited or deleted through this interface.</p></div></section><section className="glass-card" style={{ padding: "20px" }}><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." style={{ width: "100%", boxSizing: "border-box", padding: "12px", borderRadius: "10px", marginBottom: "16px" }} />{loading ? <p>Loading history…</p> : error ? <p>{error}</p> : filtered.length === 0 ? <p>No diary entries found. New account and transaction activity will appear here when recorded by the backend.</p> : <div style={{ display: "grid", gap: "10px" }}>{filtered.map((entry) => <article key={entry.id} style={{ padding: "14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.09)", background: "rgba(255,255,255,0.025)" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}><strong>{entry.event_type} · {entry.entity_type} #{entry.entity_id || "—"}</strong><span style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px" }}>{entry.created_at ? new Date(entry.created_at).toLocaleString() : "—"}</span></div><p style={{ margin: "8px 0", color: "rgba(255,255,255,0.72)" }}>{entry.description}</p>{entry.snapshot_json && <details><summary style={{ cursor: "pointer" }}>View event details</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "11px" }}>{(() => { try { return JSON.stringify(JSON.parse(entry.snapshot_json), null, 2); } catch { return entry.snapshot_json; } })()}</pre></details>}</article>)}</div>}</section></div>;
+}
+
+function LedgerPage() {
+  const API_BASE_URL = "https://ai-finance-trading-os-api.onrender.com";
+  const USER_ID = getCurrentUserId();
+  const [transactions, setTransactions] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true); setError("");
+      try {
+        const [txResponse, accountResponse, categoryResponse] = await Promise.all([
+          apiFetch(`${API_BASE_URL}/api/transactions/?user_id=${USER_ID}`),
+          apiFetch(`${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`),
+          apiFetch(`${API_BASE_URL}/api/categories/?user_id=${USER_ID}`),
+        ]);
+        if (!txResponse.ok) throw new Error(`Transactions API returned ${txResponse.status}`);
+        if (!accountResponse.ok) throw new Error(`Accounts API returned ${accountResponse.status}`);
+        const [txData, accountData, categoryData] = await Promise.all([
+          txResponse.json(), accountResponse.json(),
+          categoryResponse.ok ? categoryResponse.json() : Promise.resolve([]),
+        ]);
+        if (!cancelled) {
+          setTransactions(Array.isArray(txData) ? txData : []);
+          setAccounts(Array.isArray(accountData) ? accountData : []);
+          setCategories(Array.isArray(categoryData) ? categoryData : []);
+        }
+      } catch (e) {
+        if (!cancelled) setError(e.message || "Unable to load ledger data.");
+      } finally { if (!cancelled) setLoading(false); }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const accountName = (id) => accounts.find((a) => String(a.id) === String(id))?.name || `Account #${id ?? "—"}`;
+  const categoryName = (id) => categories.find((c) => String(c.id) === String(id))?.name || "Unclassified";
+  const money = (value) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value || 0));
+  const entries = transactions.flatMap((tx) => {
+    const type = String(tx.transaction_type || "").toLowerCase();
+    const amount = Number(tx.amount || 0);
+    const date = tx.transaction_date || "";
+    const description = tx.description || tx.reference || `${type.charAt(0).toUpperCase()}${type.slice(1)} transaction #${tx.id}`;
+    if (type === "transfer") {
+      const destinationId = tx.transfer_to_account_id;
+      return [
+        { key: `${tx.id}-debit`, id: tx.id, date, description, account: accountName(destinationId), debit: amount, credit: 0, reference: tx.reference || `TX-${tx.id}` },
+        { key: `${tx.id}-credit`, id: tx.id, date, description, account: accountName(tx.account_id), debit: 0, credit: amount, reference: tx.reference || `TX-${tx.id}` },
+      ];
+    }
+    if (["income", "refund", "interest", "dividend"].includes(type)) return [
+      { key: `${tx.id}-debit`, id: tx.id, date, description, account: accountName(tx.account_id), debit: amount, credit: 0, reference: tx.reference || `TX-${tx.id}` },
+      { key: `${tx.id}-credit`, id: tx.id, date, description, account: categoryName(tx.category_id), debit: 0, credit: amount, reference: tx.reference || `TX-${tx.id}` },
+    ];
+    return [
+      { key: `${tx.id}-debit`, id: tx.id, date, description, account: categoryName(tx.category_id), debit: amount, credit: 0, reference: tx.reference || `TX-${tx.id}` },
+      { key: `${tx.id}-credit`, id: tx.id, date, description, account: accountName(tx.account_id), debit: 0, credit: amount, reference: tx.reference || `TX-${tx.id}` },
+    ];
+  }).sort((a, b) => String(b.date).localeCompare(String(a.date)) || b.id - a.id);
+  const totalDebit = entries.reduce((sum, row) => sum + row.debit, 0);
+  const totalCredit = entries.reduce((sum, row) => sum + row.credit, 0);
+  const card = { border: "1px solid rgba(255,255,255,.1)", borderRadius: "16px", background: "rgba(255,255,255,.035)", padding: "18px" };
+  const muted = { color: "rgba(255,255,255,.62)", fontSize: "12px" };
+
+  return <div className="dashboard" style={{ display: "grid", gap: "18px" }}>
+    <section className="welcome-section"><div><p className="welcome-label">MONEY / ACCOUNTING</p><h2>Ledger</h2><p className="welcome-description">A read-only accounting view derived from your existing transactions.</p></div></section>
+    <section className="metrics-grid">
+      <div style={card}><div style={muted}>Ledger entries</div><strong style={{ display: "block", fontSize: "25px", marginTop: "8px" }}>{loading ? "Loading…" : entries.length}</strong></div>
+      <div style={card}><div style={muted}>Total debits</div><strong style={{ display: "block", fontSize: "25px", marginTop: "8px" }}>{loading ? "Loading…" : money(totalDebit)}</strong></div>
+      <div style={card}><div style={muted}>Total credits</div><strong style={{ display: "block", fontSize: "25px", marginTop: "8px" }}>{loading ? "Loading…" : money(totalCredit)}</strong></div>
+    </section>
+    {error && <div role="alert" style={{ ...card, color: "#fca5a5" }}>{error}</div>}
+    <section className="glass-card" style={{ overflowX: "auto" }}>
+      <div className="card-header"><div><p className="card-label">AUTOMATIC REGISTER</p><h3>Ledger Entries</h3></div><span className="score">{entries.length}</span></div>
+      <p style={{ ...muted, margin: "0 0 14px" }}>This initial view projects debit/credit rows from existing transactions. It does not yet persist formal journal entries or calculate account-level running balances.</p>
+      {loading ? <div className="empty-chart">Loading ledger…</div> : entries.length === 0 ? <div className="empty-chart">No transactions available to display.</div> : <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "720px", fontSize: "13px" }}><thead><tr>{["Date", "Account", "Description", "Reference", "Debit", "Credit"].map((label) => <th key={label} style={{ textAlign: label === "Debit" || label === "Credit" ? "right" : "left", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.12)", color: "rgba(255,255,255,.65)" }}>{label}</th>)}</tr></thead><tbody>{entries.map((row) => <tr key={row.key}>{[row.date, row.account, row.description, row.reference].map((value, i) => <td key={i} style={{ padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{value || "—"}</td>)}<td style={{ textAlign: "right", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{row.debit ? money(row.debit) : "—"}</td><td style={{ textAlign: "right", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{row.credit ? money(row.credit) : "—"}</td></tr>)}</tbody><tfoot><tr><th colSpan="4" style={{ textAlign: "right", padding: "12px 10px" }}>Totals</th><th style={{ textAlign: "right", padding: "12px 10px" }}>{money(totalDebit)}</th><th style={{ textAlign: "right", padding: "12px 10px" }}>{money(totalCredit)}</th></tr></tfoot></table>}
+    </section>
+  </div>;
 }
 
 function Accounts() {

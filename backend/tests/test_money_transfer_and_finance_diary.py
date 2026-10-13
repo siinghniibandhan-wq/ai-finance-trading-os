@@ -31,7 +31,7 @@ def test_transfer_moves_money_between_accounts_without_income_or_expense():
         user_id=user.id, account_id=source.id, transfer_to_account_id=destination.id,
         transaction_type="transfer", amount=Decimal("2500"), transaction_date=date(2026, 10, 12),
         description="Fund broker account",
-    ), db)
+    ), db, current_user=user)
 
     db.refresh(source)
     db.refresh(destination)
@@ -40,7 +40,7 @@ def test_transfer_moves_money_between_accounts_without_income_or_expense():
     assert transaction.transaction_type == "transfer"
     assert db.query(FinanceDiaryEntry).filter_by(entity_type="transfer", entity_id=str(transaction.id)).count() == 1
 
-    delete_transaction(transaction.id, db)
+    delete_transaction(transaction.id, db, current_user=user)
     db.refresh(source)
     db.refresh(destination)
     assert source.balance == Decimal("10000.00")

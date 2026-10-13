@@ -594,7 +594,7 @@ def load_other_income(
           AND t.transaction_date >= :start_date
           AND t.transaction_date <= :end_date
           AND LOWER(COALESCE(t.transaction_type, '')) IN (
-              'income', 'interest', 'dividend'
+              'income', 'interest', 'dividend', 'receivable'
           )
         ORDER BY t.transaction_date, t.id
         """
@@ -617,6 +617,7 @@ def load_other_income(
     details = []
     excluded_loan_proceeds = []
     classification_review = []
+    receivable_review = []
 
     loan_terms = (
         "loan disbursement", "loan disbursed", "loan received", "loan proceeds",
@@ -649,6 +650,26 @@ def load_other_income(
             "category": row["category_name"] or None,
             "description": row["description"],
         }
+
+        # Receivables represent earned/claimed amounts not yet collected. The
+        # accounting entry alone does not establish the applicable tax head or
+        # the taxpayer's accounting method. Surface them for reconciliation,
+        # rather than silently omitting them or treating every receivable as
+        # taxable Other Sources income. Settlement transfers are intentionally
+        # excluded by this query, so collection cannot double-count income.
+        if transaction_type == "receivable":
+            receivable_review.append({
+                **original,
+                "tax_head": None,
+                "included_in_taxable_totals": False,
+                "reason": (
+                    "Receivable needs tax-head/accounting-method reconciliation. "
+                    "Classify as business/professional, house property, other "
+                    "source, or another applicable head before including it in "
+                    "the tax computation. Settlement transfers are not income."
+                ),
+            })
+            continue
 
         # Loan proceeds are not income, even when entered through Money > Income.
         if category_looks_like_borrowing or any(term in searchable for term in loan_terms):
@@ -709,6 +730,7 @@ def load_other_income(
         "details": details,
         "excluded_loan_proceeds": excluded_loan_proceeds,
         "classification_review": classification_review,
+        "receivable_review": receivable_review,
         "transaction_count": len(details),
     }
 
@@ -1339,6 +1361,7 @@ def get_itr_ready_tax_report(
             "money_transaction_details": other_income["details"],
             "excluded_loan_proceeds": other_income["excluded_loan_proceeds"],
             "classification_review": other_income["classification_review"],
+            "receivable_review": other_income["receivable_review"],
         },
 
         "capital_gains": {

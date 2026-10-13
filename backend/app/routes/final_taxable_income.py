@@ -1040,8 +1040,17 @@ def load_other_source_income(
             Transaction.transaction_type.in_(INCOME_TRANSACTION_TYPES),
             Transaction.transaction_date >= start_date,
             Transaction.transaction_date <= end_date,
-            # Borrowed money is not income.
-            (Category.id.is_(None)) | (func.lower(Category.name) != "loan disbursement"),
+            # Borrowed money is not income. Salary-category transactions are
+            # handled exclusively by load_salary_income_from_transactions(),
+            # which reads gross salary from the saved salary details. Excluding
+            # them here prevents the net bank receipt being counted as a second
+            # taxable income amount.
+            (Category.id.is_(None))
+            | (
+                func.lower(func.trim(func.coalesce(Category.name, ""))).notin_(
+                    ("loan disbursement", "salary")
+                )
+            ),
         )
         .all()
     )

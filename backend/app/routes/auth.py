@@ -16,6 +16,7 @@ from collections import defaultdict, deque
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -24,6 +25,10 @@ from datetime import datetime
 from app.models import User, UserCredential, AuthSession
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+
+# Adds the "Authorize" button to /docs (Swagger ignores plain "authorization" header boxes).
+# auto_error=False keeps our own 401 message below.
+bearer_scheme = HTTPBearer(auto_error=False, description="Paste only the token from /api/auth/login (no word Bearer).")
 
 # Basic process-local login throttling. For multi-instance production deployments,
 # replace this store with a shared Redis/database limiter so limits apply globally.
@@ -126,7 +131,8 @@ def _decode_token(token: str) -> dict[str, Any]:
 
 
 def get_current_user(
-    authorization: str | None = Header(default=None),
+    authorization: str | None = Header(default=None, include_in_schema=False),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
     if not authorization or not authorization.startswith("Bearer "):
@@ -199,7 +205,7 @@ def me(user: User = Depends(get_current_user)):
 
 @router.post("/logout")
 def logout(
-    authorization: str | None = Header(default=None),
+    authorization: str | None = Header(default=None, include_in_schema=False),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -301,3 +307,4 @@ def admin_update_user_status(
     db.commit()
     db.refresh(target)
     return {"status": "success", "user_id": target.id, "is_active": target.is_active}
+    

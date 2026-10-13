@@ -1112,8 +1112,8 @@ def update_investment(
             """
         ),
         {
-            "investment_id":
-                investment_id
+            "investment_id": investment_id,
+            "user_id": user_id,
         },
     ).first()
 

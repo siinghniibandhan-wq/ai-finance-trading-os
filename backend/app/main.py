@@ -153,6 +153,27 @@ def _apply_receivable_payable_schema_migration():
 _apply_receivable_payable_schema_migration()
 
 
+def _apply_tax_business_source_link_migration():
+    """Add an optional explicit Money-transaction link to tax business records."""
+    table_name = "tax_business_income_records"
+    inspector = inspect(engine)
+    if not inspector.has_table(table_name):
+        return
+    existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+    with engine.begin() as connection:
+        if "source_transaction_id" not in existing_columns:
+            connection.execute(text(
+                f"ALTER TABLE {table_name} ADD COLUMN source_transaction_id INTEGER"
+            ))
+        connection.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_tax_business_income_records_source_transaction_id "
+            "ON tax_business_income_records (source_transaction_id)"
+        ))
+
+
+_apply_tax_business_source_link_migration()
+
+
 # ============================================================
 # CREATE APPLICATION
 # ============================================================

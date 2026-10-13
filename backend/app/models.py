@@ -610,6 +610,11 @@ class TaxBusinessIncomeRecord(Base):
     amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     transaction_date: Mapped[date] = mapped_column(Date, nullable=False)
     evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Optional explicit link to the Money transaction representing this record.
+    # Unlinked tax-only records are not automatically included in final taxable income.
+    source_transaction_id: Mapped[int | None] = mapped_column(
+        ForeignKey("transactions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     status: Mapped[str] = mapped_column(String(24), nullable=False, default="pending_review")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 

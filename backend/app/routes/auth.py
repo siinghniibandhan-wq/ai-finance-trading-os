@@ -11,9 +11,11 @@ import json
 import os
 import secrets
 import time
+import threading
+from collections import defaultdict, deque
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -21,6 +23,31 @@ from app.database.database import get_db
 from app.models import User, UserCredential
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+
+# Basic process-local login throttling. For multi-instance production deployments,
+# replace this store with a shared Redis/database limiter so limits apply globally.
+_LOGIN_WINDOW_SECONDS = 15 * 60
+_LOGIN_MAX_ATTEMPTS = 5
+_login_attempts: dict[str, deque[float]] = defaultdict(deque)
+_login_attempts_lock = threading.Lock()
+
+def _login_rate_limit_key(request: Request, email: str) -> str:
+    client_ip = request.client.host if request.client else "unknown"
+    return f"{client_ip}:{email.strip().lower()}"
+
+def _check_login_rate_limit(key: str) -> None:
+    now = time.monotonic()
+    with _login_attempts_lock:
+        attempts = _login_attempts[key]
+        while attempts and now - attempts[0] >= _LOGIN_WINDOW_SECONDS:
+            attempts.popleft()
+        if len(attempts) >= _LOGIN_MAX_ATTEMPTS:
+            raise HTTPException(status_code=429, detail="Too many login attempts. Try again in 15 minutes.")
+        attempts.append(now)
+
+def _clear_login_rate_limit(key: str) -> None:
+    with _login_attempts_lock:
+        _login_attempts.pop(key, None)
 
 
 class RegisterRequest(BaseModel):
@@ -134,12 +161,15 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-def login(request: LoginRequest, db: Session = Depends(get_db)):
+def login(request: LoginRequest, http_request: Request, db: Session = Depends(get_db)):
     email = str(request.email).strip().lower()
+    rate_limit_key = _login_rate_limit_key(http_request, email)
+    _check_login_rate_limit(rate_limit_key)
     user = db.query(User).filter(User.email == email, User.is_active.is_(True)).first()
     credential = db.query(UserCredential).filter(UserCredential.user_id == user.id).first() if user else None
     if not user or not credential or not _verify_password(request.password, credential.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password.")
+    _clear_login_rate_limit(rate_limit_key)
     return {
         "status": "success",
         "token_type": "Bearer",

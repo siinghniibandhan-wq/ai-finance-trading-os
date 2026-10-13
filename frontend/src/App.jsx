@@ -917,6 +917,8 @@ function TaxPage() {
     annual_commission_on_turnover_at_fixed_percentage: "0",
     annual_hra_received: "",
     annual_rent_paid: "",
+    accommodation_owned_by_taxpayer: false,
+    rent_actually_paid: false,
     city: "",
     city_classification: "non_metro",
   });
@@ -1064,6 +1066,8 @@ function TaxPage() {
         annual_commission_on_turnover_at_fixed_percentage: Number(hraInputs.annual_commission_on_turnover_at_fixed_percentage || 0),
         annual_hra_received: Number(hraInputs.annual_hra_received),
         annual_rent_paid: Number(hraInputs.annual_rent_paid),
+        accommodation_owned_by_taxpayer: hraInputs.accommodation_owned_by_taxpayer,
+        rent_actually_paid: hraInputs.rent_actually_paid,
         city: hraInputs.city.trim(),
       };
       const response = await apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/hra-calculator`, {
@@ -1099,6 +1103,8 @@ function TaxPage() {
         annual_commission_on_turnover_at_fixed_percentage: Number(hraInputs.annual_commission_on_turnover_at_fixed_percentage || 0),
         annual_hra_received: Number(hraInputs.annual_hra_received),
         annual_rent_paid: Number(hraInputs.annual_rent_paid),
+        accommodation_owned_by_taxpayer: hraInputs.accommodation_owned_by_taxpayer,
+        rent_actually_paid: hraInputs.rent_actually_paid,
         city: hraInputs.city.trim(),
         evidence_reference: hraSalaryEvidence.trim(),
       };
@@ -1128,6 +1134,8 @@ function TaxPage() {
             annual_commission_on_turnover_at_fixed_percentage: Number(hraInputs.annual_commission_on_turnover_at_fixed_percentage || 0),
             annual_hra_received: Number(hraInputs.annual_hra_received),
             annual_rent_paid: Number(hraInputs.annual_rent_paid),
+            accommodation_owned_by_taxpayer: hraInputs.accommodation_owned_by_taxpayer,
+            rent_actually_paid: hraInputs.rent_actually_paid,
             city: hraInputs.city.trim(),
           },
         }),
@@ -1370,6 +1378,8 @@ function TaxPage() {
       <form onSubmit={calculateHra} style={{ display: "grid", gap: "14px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
           {fields.map(([key, label, type, required]) => <label key={key} style={fieldStyle}>{label}<input aria-label={label} type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "0.01" : undefined} required={required} value={hraInputs[key]} onChange={(event) => { const value = event.target.value; setHraInputs((current) => ({ ...current, [key]: value })); const profileKey = ({ gross_salary: "gross_salary", annual_basic_salary: "basic_salary", annual_da_forming_retirement_benefits: "da", annual_hra_received: "hra" })[key]; if (profileKey) setSalaryProfile((current) => ({ ...current, [profileKey]: value })); }} style={inputStyle} /></label>)}
+          <label style={{ ...fieldStyle, display: "flex", alignItems: "center", flexDirection: "row", gap: "9px" }}><input type="checkbox" checked={hraInputs.accommodation_owned_by_taxpayer} onChange={(event) => { setHraInputs((current) => ({ ...current, accommodation_owned_by_taxpayer: event.target.checked })); setHraResult(null); }} /> I own the accommodation for which I am entering rent</label>
+          <label style={{ ...fieldStyle, display: "flex", alignItems: "center", flexDirection: "row", gap: "9px" }}><input type="checkbox" checked={hraInputs.rent_actually_paid} onChange={(event) => { setHraInputs((current) => ({ ...current, rent_actually_paid: event.target.checked })); setHraResult(null); }} /> I confirm that rent was actually paid for this period</label>
           <label style={fieldStyle}>City of residence (search or type)
             <input aria-label="City of residence" list="hra-city-suggestions" type="text" minLength={2} maxLength={100} required value={hraInputs.city} placeholder="Search city or choose Other City" onChange={(event) => { const city = event.target.value; const normalized = city.trim().toLocaleLowerCase(); const known = [...hraCityCatalog.metro, ...hraCityCatalog.non_metro].find((item) => item.name.toLocaleLowerCase() === normalized); setHraInputs((current) => ({ ...current, city, city_classification: known?.classification || "non_metro" })); setHraResult(null); }} style={inputStyle} />
             <datalist id="hra-city-suggestions">

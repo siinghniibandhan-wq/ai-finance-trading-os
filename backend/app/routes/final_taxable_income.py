@@ -1400,18 +1400,17 @@ def get_final_taxable_income(
     # ========================================================
     # SAFE APPLICATION GUARD
     # ========================================================
-    # Salary is not yet an available, calculated income head in this engine.
-    # Therefore exemptions such as HRA can be calculated and reviewed, but
-    # must not be subtracted from unrelated income (e.g. interest/capital gains).
-    # Keep the applied amount at zero until the salary head is integrated.
-    # Salary income must come from live salary transactions for this FY.
-    # Legacy verified annual records remain available as supporting tax/HRA
-    # inputs, but must never manufacture taxable salary when transactions are absent.
+    # A verified annual salary record is the authoritative tax source for this
+    # user/FY. Net salary bank transactions remain cash-flow records and must
+    # not be added again as taxable salary. Legacy transaction metadata is only
+    # a fallback when no verified annual record exists.
     salary_record = db.query(TaxSalaryIncomeRecord).filter_by(
         user_id=user_id, financial_year=financial_year, status="verified"
     ).first()
-    salary_income = load_salary_income_from_transactions(
-        db, user_id, start_date, end_date
+    salary_income = (
+        decimal(salary_record.gross_salary)
+        if salary_record is not None
+        else load_salary_income_from_transactions(db, user_id, start_date, end_date)
     )
     standard_deduction = Decimal("0")
     if salary_income is not None and salary_income > 0:
@@ -1631,7 +1630,7 @@ def get_final_taxable_income(
                 "available": salary_income is not None,
                 "amount": money(salary_income) if salary_income is not None else None,
                 "source": "Salary-category or salary-metadata transactions with saved gross-salary details; net receipt excluded from other-source income",
-                "reason": None if salary_income is not None else "No salary transaction with saved gross-salary details exists for this financial year; legacy salary snapshots are not counted as income.",
+                "reason": None if salary_income is not None else "No verified annual salary record or salary transaction with saved gross-salary details exists for this financial year.",
             },
 
             "house_property": {

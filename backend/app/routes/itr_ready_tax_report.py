@@ -94,6 +94,43 @@ def money(value) -> float:
     )
 
 
+def apply_verified_annual_salary_record(other_income: dict, salary_record):
+    """Use one verified annual gross salary amount without counting bank credits twice."""
+    if salary_record is None:
+        return other_income
+
+    gross_salary = decimal(salary_record.gross_salary)
+    other_income["salary"] = gross_salary
+    other_income["details"] = [
+        item for item in other_income["details"] if item.get("tax_head") != "salary"
+    ]
+    other_income["details"].append({
+        "transaction_id": None,
+        "type": "annual_salary_record",
+        "amount": money(gross_salary),
+        "date": None,
+        "category": "Verified annual salary",
+        "description": "Gross salary from verified annual salary record; linked bank credits are not counted again.",
+        "tax_head": "salary",
+        "tax_amount": money(gross_salary),
+        "classification_source": "verified_annual_salary_record",
+    })
+    other_income["classification_review"] = [
+        item for item in other_income["classification_review"]
+        if "Salary receipt has no saved Gross salary metadata" not in str(item.get("reason", ""))
+        and "Saved gross salary is lower than the transaction receipt" not in str(item.get("reason", ""))
+    ]
+    other_income["total"] = sum(
+        (decimal(other_income[key]) for key in ("salary", "income", "interest", "dividend")),
+        Decimal("0"),
+    )
+    other_income["other_sources_total"] = sum(
+        (decimal(other_income[key]) for key in ("income", "interest", "dividend")),
+        Decimal("0"),
+    )
+    return other_income
+
+
 def get_financial_year_dates(financial_year: str):
     """
     Convert:
@@ -758,12 +795,18 @@ def get_itr_ready_tax_report(
     # 1. OTHER SOURCE INCOME
     # --------------------------------------------------------
 
+    # The verified annual salary record is authoritative for the selected FY.
+    # Bank salary credits are cash-flow entries, not additional taxable salary.
+    salary_record = db.query(TaxSalaryIncomeRecord).filter_by(
+        user_id=user_id, financial_year=financial_year, status="verified"
+    ).first()
     other_income = load_other_income(
         db,
         user_id,
         start_date,
         end_date,
     )
+    other_income = apply_verified_annual_salary_record(other_income, salary_record)
 
     # --------------------------------------------------------
     # 2. CAPITAL GAINS

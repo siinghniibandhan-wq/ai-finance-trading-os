@@ -53,6 +53,7 @@ def test_hra_calculation_uses_least_of_three_metro_limits():
         annual_da_forming_retirement_benefits=Decimal("0"),
         annual_hra_received=Decimal("240000"),
         annual_rent_paid=Decimal("240000"),
+        rent_actually_paid=True,
         city="Delhi",
     )
     result = calculate_hra_exemption(inputs, "old")
@@ -68,6 +69,7 @@ def test_hra_calculation_uses_non_metro_40_percent_limit():
         annual_basic_salary=Decimal("600000"),
         annual_hra_received=Decimal("300000"),
         annual_rent_paid=Decimal("500000"),
+        rent_actually_paid=True,
         city="Patna",
     )
     result = calculate_hra_exemption(inputs, "old")
@@ -80,6 +82,7 @@ def test_hra_calculation_rejects_new_regime():
         annual_basic_salary=Decimal("600000"),
         annual_hra_received=Decimal("200000"),
         annual_rent_paid=Decimal("180000"),
+        rent_actually_paid=True,
         city="Delhi",
     )
     try:
@@ -95,6 +98,7 @@ def test_hra_calculation_returns_zero_when_rent_does_not_exceed_ten_percent_sala
         annual_basic_salary=Decimal("600000"),
         annual_hra_received=Decimal("100000"),
         annual_rent_paid=Decimal("50000"),
+        rent_actually_paid=True,
         city="Patna",
     )
     result = calculate_hra_exemption(inputs, "old")
@@ -106,6 +110,7 @@ def test_hra_calculation_rejects_zero_eligible_salary():
         annual_basic_salary=Decimal("0"),
         annual_hra_received=Decimal("100000"),
         annual_rent_paid=Decimal("120000"),
+        rent_actually_paid=True,
         city="Patna",
     )
     try:
@@ -141,6 +146,7 @@ def test_hra_calculation_ignores_client_supplied_city_classification():
         annual_basic_salary=Decimal("600000"),
         annual_hra_received=Decimal("300000"),
         annual_rent_paid=Decimal("500000"),
+        rent_actually_paid=True,
         city="Patna",
         city_classification="metro",
     )
@@ -148,3 +154,35 @@ def test_hra_calculation_ignores_client_supplied_city_classification():
     assert result["city_classification"] == "non_metro"
     assert result["metro_city_for_hra"] is False
     assert result["limits"]["salary_percentage_limit"] == "240000.00"
+
+
+def test_hra_calculation_requires_confirmation_rent_was_actually_paid():
+    inputs = HRAInputs(
+        annual_basic_salary=Decimal("600000"),
+        annual_hra_received=Decimal("200000"),
+        annual_rent_paid=Decimal("180000"),
+        city="Delhi",
+    )
+    try:
+        calculate_hra_exemption(inputs, "old")
+    except ValueError as exc:
+        assert "rent was actually paid" in str(exc)
+    else:
+        raise AssertionError("HRA calculation must require rent-paid confirmation")
+
+
+def test_hra_calculation_rejects_taxpayer_owned_accommodation():
+    inputs = HRAInputs(
+        annual_basic_salary=Decimal("600000"),
+        annual_hra_received=Decimal("200000"),
+        annual_rent_paid=Decimal("180000"),
+        accommodation_owned_by_taxpayer=True,
+        rent_actually_paid=True,
+        city="Delhi",
+    )
+    try:
+        calculate_hra_exemption(inputs, "old")
+    except ValueError as exc:
+        assert "accommodation owned" in str(exc)
+    else:
+        raise AssertionError("HRA calculation must reject taxpayer-owned accommodation")

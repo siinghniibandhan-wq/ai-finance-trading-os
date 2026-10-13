@@ -124,6 +124,35 @@ def _apply_hra_eligibility_schema_migration():
 _apply_hra_eligibility_schema_migration()
 
 
+def _apply_receivable_payable_schema_migration():
+    """Add receivable/payable tracking fields to existing transactions safely."""
+    table_name = "transactions"
+    inspector = inspect(engine)
+    if not inspector.has_table(table_name):
+        return
+    existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+    additions = {
+        "party_name": "VARCHAR(150)",
+        "due_date": "DATE",
+        "settled_amount": "NUMERIC(18, 2) NOT NULL DEFAULT 0",
+        "status": "VARCHAR(20) NOT NULL DEFAULT 'open'",
+        "settles_transaction_id": "INTEGER",
+    }
+    with engine.begin() as connection:
+        for column_name, column_definition in additions.items():
+            if column_name not in existing_columns:
+                connection.execute(text(
+                    f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}"
+                ))
+        connection.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_transactions_settles_transaction_id "
+            "ON transactions (settles_transaction_id)"
+        ))
+
+
+_apply_receivable_payable_schema_migration()
+
+
 # ============================================================
 # CREATE APPLICATION
 # ============================================================

@@ -329,6 +329,15 @@ class Transaction(Base):
         nullable=True,
     )
 
+    # Receivable/payable tracking fields. Settlements are separate transfer rows.
+    party_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    settled_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0.00"), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="open", nullable=False)
+    settles_transaction_id: Mapped[int | None] = mapped_column(
+        ForeignKey("transactions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+
     # Transfer rows are paired by this opaque group ID. The transfer target
     # is stored on the source row without creating a dependency on the diary.
     transfer_group_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)

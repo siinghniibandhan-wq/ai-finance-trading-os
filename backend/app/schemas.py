@@ -148,6 +148,8 @@ class TransactionCreate(BaseModel):
     description: str | None = None
     transaction_date: date
     reference: str | None = None
+    party_name: str | None = Field(default=None, max_length=150)
+    due_date: date | None = None
     # Destination account is required for transfers and rejected for other types.
     # Optional at schema level so ordinary income/expense transactions remain compatible.
     transfer_to_account_id: int | None = Field(default=None, gt=0)
@@ -162,6 +164,8 @@ class TransactionUpdate(BaseModel):
     description: str | None = None
     transaction_date: date | None = None
     reference: str | None = None
+    party_name: str | None = Field(default=None, max_length=150)
+    due_date: date | None = None
 
 
 class TransactionResponse(BaseModel):
@@ -176,3 +180,8 @@ class TransactionResponse(BaseModel):
     description: str | None
     transaction_date: date
     reference: str | None
+    party_name: str | None = None
+    due_date: date | None = None
+    settled_amount: Decimal = Decimal("0.00")
+    status: str = "open"
+    settles_transaction_id: int | None = None

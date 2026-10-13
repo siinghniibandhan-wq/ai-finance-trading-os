@@ -116,6 +116,26 @@ def _counter_account_code(tx_type: str, category: Category | None) -> str:
         return "5030"
     return "5010"
 
+def _get_control_account(db: Session, user_id: int, kind: str) -> Account:
+    """Return a stable user-scoped control account for receivables/payables."""
+    is_receivable = kind == "receivable"
+    name = "Receivables Control" if is_receivable else "Payables Control"
+    account_type = "receivable" if is_receivable else "payable"
+    row = db.query(Account).filter(
+        Account.user_id == user_id,
+        Account.name == name,
+        Account.account_type == account_type,
+    ).first()
+    if row is None:
+        row = Account(
+            user_id=user_id, name=name, account_type=account_type,
+            currency="INR", balance=Decimal("0.00"), is_active=True,
+        )
+        db.add(row)
+        db.flush()
+    return row
+
+
 def sync_transaction_journal(db: Session, transaction: Transaction) -> JournalEntry:
     """Replace the journal projection for one transaction with two balanced lines."""
     old_entry_ids = [
@@ -159,7 +179,18 @@ def sync_transaction_journal(db: Session, transaction: Transaction) -> JournalEn
             debit=debit, credit=credit, entry_order=order,
         ))
 
-    if tx_type == "transfer":
+    if tx_type in {"receivable", "payable"}:
+        control = _get_control_account(db, transaction.user_id, tx_type)
+        contra_code = _counter_account_code("income" if tx_type == "receivable" else "expense", category)
+        if tx_type == "receivable":
+            # Money is owed to the user; no cash/bank account balance changes yet.
+            line("1110", control.id, debit=amount, order=1)
+            line(contra_code, None, credit=amount, order=2)
+        else:
+            # The user owes money; recognize the obligation without paying yet.
+            line(contra_code, None, debit=amount, order=1)
+            line("2010", control.id, credit=amount, order=2)
+    elif tx_type == "transfer":
         destination = db.query(Account).filter_by(
             id=transaction.transfer_to_account_id, user_id=transaction.user_id
         ).first()

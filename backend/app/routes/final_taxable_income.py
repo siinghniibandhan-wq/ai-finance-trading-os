@@ -46,7 +46,7 @@ from sqlalchemy import func
 
 from app.database.database import get_db
 from app.routes.ownership import require_matching_user_id
-from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim, TaxSalaryIncomeRecord, User
+from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim, TaxSalaryIncomeRecord, TaxBusinessIncomeRecord, User
 from app.routes.auth import get_current_user
 from app.routes.deductions_exempt_income import (
     DEDUCTION_CATALOG, EXEMPT_INCOME_CATALOG, HRAInputs, calculate_hra_exemption, regime_available,
@@ -1043,6 +1043,15 @@ def load_other_source_income(
             Transaction.transaction_type.in_(INCOME_TRANSACTION_TYPES),
             Transaction.transaction_date >= start_date,
             Transaction.transaction_date <= end_date,
+            ~Transaction.id.in_(
+                db.query(TaxBusinessIncomeRecord.source_transaction_id).filter(
+                    TaxBusinessIncomeRecord.user_id == user_id,
+                    TaxBusinessIncomeRecord.financial_year == f"{start_date.year}-{str(end_date.year)[-2:]}",
+                    TaxBusinessIncomeRecord.record_type == "receipt",
+                    TaxBusinessIncomeRecord.status == "verified",
+                    TaxBusinessIncomeRecord.source_transaction_id.is_not(None),
+                )
+            ),
             # Borrowed money is not income. Salary-category transactions are
             # handled exclusively by load_salary_income_from_transactions(),
             # which reads gross salary from the saved salary details. Excluding
@@ -1491,7 +1500,22 @@ def get_final_taxable_income(
 
     house_property_income = None
 
-    business_profession_income = None
+    # Only verified business receipts explicitly linked to a Money transaction
+    # are included here. The same transaction is excluded from Other Sources
+    # by load_other_source_income(), preventing double counting. Unlinked tax-only
+    # records remain visible in their own module but cannot safely enter this total.
+    verified_business_records = db.query(TaxBusinessIncomeRecord).filter(
+        TaxBusinessIncomeRecord.user_id == user_id,
+        TaxBusinessIncomeRecord.financial_year == financial_year,
+        TaxBusinessIncomeRecord.record_type == "receipt",
+        TaxBusinessIncomeRecord.status == "verified",
+        TaxBusinessIncomeRecord.source_transaction_id.is_not(None),
+        TaxBusinessIncomeRecord.transaction_date >= start_date,
+        TaxBusinessIncomeRecord.transaction_date <= end_date,
+    ).all()
+    business_profession_income = sum(
+        (decimal(record.amount) for record in verified_business_records), Decimal("0")
+    ) if verified_business_records else None
 
     # ========================================================
     # AVAILABLE GROSS INCOME
@@ -1524,6 +1548,7 @@ def get_final_taxable_income(
         available_other_income
         + available_capital_gains
         + (salary_income if salary_income is not None else Decimal("0"))
+        + (business_profession_income if business_profession_income is not None else Decimal("0"))
     )
 
     # ========================================================
@@ -1664,13 +1689,11 @@ def get_final_taxable_income(
             },
 
             "business_or_profession": {
-                "available":
-                    False,
-                "amount":
-                    None,
-                "reason":
-                    "No dedicated business/profession "
-                    "income source is currently available.",
+                "available": business_profession_income is not None,
+                "amount": money(business_profession_income) if business_profession_income is not None else None,
+                "verified_linked_receipt_count": len(verified_business_records),
+                "source": "Verified tax business receipts explicitly linked to Money transactions; linked transactions are excluded from Other Sources.",
+                "reason": None if business_profession_income is not None else "No verified business/profession receipt linked to a Money transaction is available for this financial year. Unlinked records are not included to avoid double counting.",
             },
 
             "other_sources": {

@@ -118,8 +118,12 @@ class TaxIncomeClassificationTests(unittest.TestCase):
         self.assertEqual(result["income"], Decimal("0"))
         self.assertEqual(result["total"], Decimal("0"))
         self.assertEqual(len(result["receivable_review"]), 1)
-        self.assertEqual(result["receivable_review"][0]["transaction_id"], 10)
-        self.assertFalse(result["receivable_review"][0]["included_in_taxable_totals"])
+        review = result["receivable_review"][0]
+        self.assertEqual(review["transaction_id"], 10)
+        self.assertFalse(review["included_in_taxable_totals"])
+        self.assertEqual(review["suggested_tax_head"], "business_profession")
+        self.assertEqual(review["outstanding_amount"], 5000.0)
+        self.assertEqual(review["settled_amount"], 0.0)
 
     def test_business_profit_uses_only_verified_receipts_and_expenses(self):
         class Record:
@@ -150,6 +154,25 @@ class TaxIncomeClassificationTests(unittest.TestCase):
             Record("receipt", "10000"), Record("expense", "15000")
         ])
         self.assertEqual(summary["net_profit_before_tax_rules"], Decimal("-5000"))
+
+    def test_receivable_review_reports_outstanding_balance_after_partial_settlement(self):
+            class ReceivableDB:
+                def execute(self, _query, _params):
+                    return FakeResult([{
+                        "id": 11, "transaction_type": "receivable", "amount": "5000",
+                        "transaction_date": date(2026, 10, 10), "description": "Customer invoice",
+                        "category_name": "Business and Professional Income",
+                        "category_description": "", "party_name": "Customer A",
+                        "due_date": date(2026, 10, 31), "settled_amount": "2000",
+                        "receivable_status": "partial",
+                    }])
+
+            result = load_other_income(ReceivableDB(), 1, date(2026, 4, 1), date(2027, 3, 31))
+            review = result["receivable_review"][0]
+            self.assertEqual(review["settled_amount"], 2000.0)
+            self.assertEqual(review["outstanding_amount"], 3000.0)
+            self.assertEqual(review["party_name"], "Customer A")
+            self.assertEqual(review["due_date"], "2026-10-31")
 
 
 if __name__ == "__main__":

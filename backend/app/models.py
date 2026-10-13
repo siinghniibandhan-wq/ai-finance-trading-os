@@ -519,6 +519,10 @@ class TaxSalaryIncomeRecord(Base):
     annual_commission_on_turnover_at_fixed_percentage: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=0)
     annual_hra_received: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     annual_rent_paid: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    # Explicit user confirmations; legacy rows migrate to False and cannot
+    # qualify for HRA until the user re-confirms these facts.
+    accommodation_owned_by_taxpayer: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    rent_actually_paid: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     city: Mapped[str] = mapped_column(String(100), nullable=False)
     evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(24), default="pending_review", nullable=False)

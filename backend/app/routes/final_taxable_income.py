@@ -1314,13 +1314,16 @@ def get_final_taxable_income(
     # A tax receipt is included only when it is verified and explicitly linked
     # to the user's matching Money transaction. Require matching date and
     # amount so a stale/mismatched link cannot inflate taxable income.
-    # Only exclude a Money transaction from Other Sources after its business
-    # receipt has passed every eligibility check below. Pending, unlinked, or
-    # mismatched records must not suppress otherwise eligible transaction income.
+    # Any transaction linked to a business record is excluded from Other
+    # Sources to prevent the same receipt being counted under two heads.
     business_records_for_year = db.query(TaxBusinessIncomeRecord).filter_by(
         user_id=user_id, financial_year=financial_year, record_type="receipt"
     ).all()
-    linked_business_transaction_ids = set()
+    linked_business_transaction_ids = {
+        record.source_transaction_id
+        for record in business_records_for_year
+        if record.source_transaction_id is not None
+    }
     verified_business_receipts = []
     for record in business_records_for_year:
         if record.status != "verified" or record.source_transaction_id is None:
@@ -1330,6 +1333,24 @@ def get_final_taxable_income(
         ).first()
         if transaction is None:
             continue
+        # Fail closed even for legacy/directly-imported rows: verification and
+        # matching date/amount alone do not make a salary, loan, interest, or
+        # dividend transaction a business receipt. The POST endpoint validates
+        # this too, but the read-only tax engine must defend its own boundary.
+        if str(transaction.transaction_type or "").strip().lower() != "income":
+            continue
+        category = (
+            db.query(Category).filter_by(id=transaction.category_id).first()
+            if transaction.category_id else None
+        )
+        normalized_category = str(category.name if category else "").strip().lower()
+        if normalized_category in {
+            "salary", "salary & wages", "salaries", "loan disbursement",
+            "interest", "dividend",
+        }:
+            continue
+        if "gross salary:" in str(transaction.description or "").lower():
+            continue
         if transaction.transaction_date != record.transaction_date:
             continue
         if decimal(transaction.amount) != decimal(record.amount):
@@ -1337,7 +1358,6 @@ def get_final_taxable_income(
         if not (start_date <= record.transaction_date <= end_date):
             continue
         verified_business_receipts.append(record)
-        linked_business_transaction_ids.add(transaction.id)
 
     business_profession_income = sum(
         (decimal(record.amount) for record in verified_business_receipts),

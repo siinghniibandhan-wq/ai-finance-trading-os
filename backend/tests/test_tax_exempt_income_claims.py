@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from app.routes.deductions_exempt_income import (
     EXEMPT_INCOME_CATALOG, HRAInputs, calculate_hra_exemption, classify_hra_city, regime_available,
 )
-from app.routes.final_taxable_income import aggregate_verified_exempt_claims
+from app.routes.final_taxable_income import aggregate_verified_exempt_claims, calculate_salary_record_hra_exemption
 
 
 def claim(key, amount, status="verified"):
@@ -186,3 +186,48 @@ def test_hra_calculation_rejects_taxpayer_owned_accommodation():
         assert "accommodation owned" in str(exc)
     else:
         raise AssertionError("HRA calculation must reject taxpayer-owned accommodation")
+
+
+
+def salary_record(**overrides):
+    values = {
+        "annual_basic_salary": Decimal("600000"),
+        "annual_da_forming_retirement_benefits": Decimal("0"),
+        "annual_commission_on_turnover_at_fixed_percentage": Decimal("0"),
+        "annual_hra_received": Decimal("240000"),
+        "annual_rent_paid": Decimal("240000"),
+        "accommodation_owned_by_taxpayer": False,
+        "rent_actually_paid": True,
+        "city": "Delhi",
+    }
+    values.update(overrides)
+    return SimpleNamespace(**values)
+
+
+def test_verified_salary_record_hra_uses_rent_and_ownership_confirmations():
+    result = calculate_salary_record_hra_exemption(salary_record(), "2026-27")
+    assert result["calculated_exemption"] == "180000.00"
+    assert result["rent_actually_paid"] is True
+    assert result["accommodation_owned_by_taxpayer"] is False
+
+
+def test_salary_record_hra_is_blocked_when_rent_confirmation_is_missing():
+    try:
+        calculate_salary_record_hra_exemption(
+            salary_record(rent_actually_paid=False), "2026-27"
+        )
+    except ValueError as exc:
+        assert "rent was actually paid" in str(exc)
+    else:
+        raise AssertionError("HRA must require explicit rent-paid confirmation")
+
+
+def test_salary_record_hra_is_blocked_when_taxpayer_owns_accommodation():
+    try:
+        calculate_salary_record_hra_exemption(
+            salary_record(accommodation_owned_by_taxpayer=True), "2026-27"
+        )
+    except ValueError as exc:
+        assert "accommodation owned" in str(exc)
+    else:
+        raise AssertionError("HRA must reject taxpayer-owned accommodation")

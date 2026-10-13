@@ -12,9 +12,10 @@ from app.database.database import get_db
 from app.routes.auth import get_current_user
 from app.models import (
     User, Account, Category, Transaction, Loan, Liability,
-    LoanMovement, LoanReceivable, TaxSalaryIncomeRecord,
+    LoanMovement, LoanReceivable, TaxSalaryIncomeRecord, JournalEntry, JournalLine,
 )
 from app.finance_diary import record_finance_event
+from app.accounting import sync_transaction_journal
 from app.schemas import (
     TransactionCreate,
     TransactionUpdate,
@@ -212,6 +213,7 @@ def create_transaction(
             _apply_transfer_effect(account, destination, transaction_data.amount)
             db.add(transaction)
             db.flush()
+            sync_transaction_journal(db, transaction)
             record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="transfer", entity_id=transaction.id, description=f"Transfer {transaction_data.amount} from {account.name} to {destination.name}", snapshot={"transaction_id": transaction.id, "transfer_group_id": transfer_group_id, "from_account_id": account.id, "from_account_name": account.name, "to_account_id": destination.id, "to_account_name": destination.name, "amount": transaction_data.amount, "date": transaction_data.transaction_date, "reference": transaction_data.reference})
             db.commit()
             db.refresh(transaction)
@@ -270,6 +272,7 @@ def create_transaction(
     try:
         db.add(transaction)
         db.flush()
+        sync_transaction_journal(db, transaction)
         if is_loan_disbursement:
             details = transaction_data.loan_details
             loan = Loan(
@@ -477,6 +480,7 @@ def update_transaction(
             setattr(transaction, field, value)
 
         _apply_balance_effect(new_account, str(new_type).lower(), new_amount)
+        sync_transaction_journal(db, transaction)
         if old_was_salary:
             _invalidate_verified_salary_record(db, transaction.user_id, old_date)
         if new_category_is_salary:
@@ -565,6 +569,18 @@ def delete_transaction(
             else:
                 _reverse_balance_effect(account, str(transaction.transaction_type).lower(), transaction.amount)
                 record_finance_event(db, user_id=transaction.user_id, event_type="deleted", entity_type="transaction", entity_id=transaction.id, description="Transaction deleted; original details retained in Finance Diary", snapshot={"id": transaction.id, "account_id": transaction.account_id, "category_id": transaction.category_id, "transaction_type": transaction.transaction_type, "amount": transaction.amount, "description": transaction.description, "transaction_date": transaction.transaction_date, "reference": transaction.reference})
+        journal_ids = [
+            row[0] for row in db.query(JournalEntry.id).filter_by(
+                user_id=transaction.user_id, transaction_id=transaction.id
+            ).all()
+        ]
+        if journal_ids:
+            db.query(JournalLine).filter(
+                JournalLine.journal_entry_id.in_(journal_ids)
+            ).delete(synchronize_session=False)
+            db.query(JournalEntry).filter(
+                JournalEntry.id.in_(journal_ids), JournalEntry.user_id == transaction.user_id
+            ).delete(synchronize_session=False)
         db.delete(transaction)
         db.commit()
     except Exception:

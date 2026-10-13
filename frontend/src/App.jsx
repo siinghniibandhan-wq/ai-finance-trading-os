@@ -105,6 +105,10 @@ const navigation = [
         icon: Receipt
       },
       {
+        name: "Chart of Accounts",
+        icon: CircleDollarSign
+      },
+      {
         name: "Loans & Liabilities",
         icon: Landmark
       },
@@ -483,6 +487,8 @@ export default function App() {
   <Transactions />
 ) : activePage === "Ledger" ? (
   <LedgerPage />
+) : activePage === "Chart of Accounts" ? (
+  <ChartOfAccountsPage />
 ) : activePage === "Budget" ? (
   <Budget />
 ) : activePage === "Categories" ? (
@@ -7618,6 +7624,60 @@ function FinanceDiaryPage() {
   }, []);
   const filtered = entries.filter((entry) => `${entry.event_type} ${entry.entity_type} ${entry.entity_id} ${entry.description} ${entry.snapshot_json || ""}`.toLowerCase().includes(search.toLowerCase()));
   return <div className="dashboard"><section className="welcome-section"><div><p className="welcome-label">PERMANENT HISTORY</p><h2>Finance Diary</h2><p className="welcome-description">Read-only activity history. Existing entries are never edited or deleted through this interface.</p></div></section><section className="glass-card" style={{ padding: "20px" }}><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." style={{ width: "100%", boxSizing: "border-box", padding: "12px", borderRadius: "10px", marginBottom: "16px" }} />{loading ? <p>Loading history…</p> : error ? <p>{error}</p> : filtered.length === 0 ? <p>No diary entries found. New account and transaction activity will appear here when recorded by the backend.</p> : <div style={{ display: "grid", gap: "10px" }}>{filtered.map((entry) => <article key={entry.id} style={{ padding: "14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.09)", background: "rgba(255,255,255,0.025)" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}><strong>{entry.event_type} · {entry.entity_type} #{entry.entity_id || "—"}</strong><span style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px" }}>{entry.created_at ? new Date(entry.created_at).toLocaleString() : "—"}</span></div><p style={{ margin: "8px 0", color: "rgba(255,255,255,0.72)" }}>{entry.description}</p>{entry.snapshot_json && <details><summary style={{ cursor: "pointer" }}>View event details</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "11px" }}>{(() => { try { return JSON.stringify(JSON.parse(entry.snapshot_json), null, 2); } catch { return entry.snapshot_json; } })()}</pre></details>}</article>)}</div>}</section></div>;
+}
+
+
+
+function ChartOfAccountsPage() {
+  const API_BASE_URL = "https://ai-finance-trading-os-api.onrender.com";
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showDisabled, setShowDisabled] = useState(false);
+
+  const loadAccounts = async () => {
+    setLoading(true); setError("");
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/chart-of-accounts/?include_disabled=${showDisabled}`);
+      if (!response.ok) throw new Error(`Chart of Accounts API returned ${response.status}`);
+      const data = await response.json();
+      setRows(Array.isArray(data) ? data : []);
+    } catch (e) { setError(e.message || "Unable to load Chart of Accounts."); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { loadAccounts(); }, [showDisabled]);
+
+  const toggleAccount = async (row) => {
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/chart-of-accounts/${row.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_enabled: !row.is_enabled }),
+      });
+      if (!response.ok) throw new Error(`Update failed (${response.status})`);
+      await loadAccounts();
+    } catch (e) { setError(e.message || "Unable to update account."); }
+  };
+  const grouped = rows.reduce((acc, row) => { (acc[row.account_type] ||= []).push(row); return acc; }, {});
+  const card = { background: "var(--card-bg, #fff)", border: "1px solid var(--border-color, #e5e7eb)", borderRadius: 14, padding: 18, marginBottom: 14 };
+  const cell = { textAlign: "left", padding: "11px 10px", borderBottom: "1px solid var(--border-color, #e5e7eb)", fontSize: 13 };
+  return <section>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+      <div><h2 style={{ margin: 0 }}>Chart of Accounts</h2><p style={{ margin: "6px 0 0", opacity: .72 }}>Your accounting account catalogue. Stable account codes support consistent reporting.</p></div>
+      <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13 }}><input type="checkbox" checked={showDisabled} onChange={(e) => setShowDisabled(e.target.checked)} /> Show disabled</label>
+    </div>
+    {error && <div role="alert" style={{ ...card, color: "#b91c1c" }}>{error}</div>}
+    {loading ? <div style={card}>Loading Chart of Accounts…</div> : Object.entries(grouped).map(([kind, accounts]) => <div key={kind} style={card}>
+      <h3 style={{ margin: "0 0 12px" }}>{kind === "Asset" ? "Assets" : kind === "Liability" ? "Liabilities" : `${kind}s`} <span style={{ fontSize: 12, fontWeight: 400, opacity: .65 }}>({accounts.length})</span></h3>
+      <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}><thead><tr>
+        {["Code", "Account", "Parent", "Tax mapping", "Status", ""].map((label) => <th key={label} style={cell}>{label}</th>)}
+      </tr></thead><tbody>{accounts.map((row) => <tr key={row.id}>
+        <td style={cell}>{row.code}</td><td style={cell}>{row.name}{row.is_system ? <span style={{ marginLeft: 8, opacity: .55, fontSize: 11 }}>Standard</span> : null}</td>
+        <td style={cell}>{rows.find((candidate) => candidate.id === row.parent_id)?.name || "—"}</td><td style={cell}>{row.tax_mapping_key || "—"}</td>
+        <td style={cell}>{row.is_enabled ? "Enabled" : "Disabled"}</td><td style={cell}><button type="button" onClick={() => toggleAccount(row)}>{row.is_enabled ? "Disable" : "Enable"}</button></td>
+      </tr>)}</tbody></table></div>
+    </div>)}
+    {!loading && !rows.length && <div style={card}>No accounts found.</div>}
+  </section>;
 }
 
 function LedgerPage() {

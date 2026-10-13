@@ -1148,6 +1148,21 @@ class TaxSalaryIncomeInput(BaseModel):
     evidence_reference: str | None = Field(default=None, max_length=2000)
 
 
+def calculate_salary_record_hra_exemption(record, financial_year: str):
+    """Calculate HRA from the verified salary record, including explicit eligibility confirmations."""
+    hra_inputs = HRAInputs(
+        annual_basic_salary=record.annual_basic_salary,
+        annual_da_forming_retirement_benefits=record.annual_da_forming_retirement_benefits,
+        annual_commission_on_turnover_at_fixed_percentage=record.annual_commission_on_turnover_at_fixed_percentage,
+        annual_hra_received=record.annual_hra_received,
+        annual_rent_paid=record.annual_rent_paid,
+        accommodation_owned_by_taxpayer=bool(record.accommodation_owned_by_taxpayer),
+        rent_actually_paid=bool(record.rent_actually_paid),
+        city=record.city,
+    )
+    return calculate_hra_exemption(hra_inputs, "old", financial_year)
+
+
 def _salary_record_summary(record):
     return {
         "id": record.id,
@@ -1443,18 +1458,15 @@ def get_final_taxable_income(
         claimed = decimal(exempt_claim.get("applied_amount", "0"))
         exempt_claim["eligible_verified_claimed_amount"] = str(claimed)
         if exempt_claim.get("deduction_key") == "hra_exemption" and salary_record and salary_income is not None and tax_regime == "old":
-            hra_inputs = HRAInputs(
-                annual_basic_salary=salary_record.annual_basic_salary,
-                annual_da_forming_retirement_benefits=salary_record.annual_da_forming_retirement_benefits,
-                annual_commission_on_turnover_at_fixed_percentage=salary_record.annual_commission_on_turnover_at_fixed_percentage,
-                annual_hra_received=salary_record.annual_hra_received,
-                annual_rent_paid=salary_record.annual_rent_paid,
-                city=salary_record.city,
-            )
             try:
-                allowed_hra = decimal(calculate_hra_exemption(hra_inputs, "old", financial_year)["calculated_exemption"])
-            except ValueError:
+                allowed_hra = decimal(
+                    calculate_salary_record_hra_exemption(
+                        salary_record, financial_year
+                    )["calculated_exemption"]
+                )
+            except ValueError as exc:
                 allowed_hra = Decimal("0")
+                exempt_claim["eligibility_block_reason"] = str(exc)
             applied = min(claimed, allowed_hra)
             exempt_claim["applied_amount"] = str(applied)
             exempt_claim["application_status"] = "applied_to_verified_salary_capped_by_salary_record_calculation" if applied > 0 else "not_applied_salary_record_calculation_zero"

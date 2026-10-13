@@ -1436,6 +1436,9 @@ def get_final_taxable_income(
     # user/FY. Net salary bank transactions remain cash-flow records and must
     # not be added again as taxable salary. Legacy transaction metadata is only
     # a fallback when no verified annual record exists.
+    salary_record_for_review = db.query(TaxSalaryIncomeRecord).filter_by(
+        user_id=user_id, financial_year=financial_year
+    ).first()
     salary_record = db.query(TaxSalaryIncomeRecord).filter_by(
         user_id=user_id, financial_year=financial_year, status="verified"
     ).first()
@@ -1674,8 +1677,14 @@ def get_final_taxable_income(
             "salary": {
                 "available": salary_income is not None,
                 "amount": money(salary_income) if salary_income is not None else None,
-                "source": "Salary-category or salary-metadata transactions with saved gross-salary details; net receipt excluded from other-source income",
-                "reason": None if salary_income is not None else "No verified annual salary record or salary transaction with saved gross-salary details exists for this financial year.",
+                "record_status": salary_record_for_review.status if salary_record_for_review is not None else None,
+                "source": "Verified annual gross-salary record, or legacy salary transactions with saved gross-salary details; net receipt excluded from other-source income",
+                "reason": (
+                    None if salary_income is not None else
+                    "A salary record exists but is pending review; confirm its figures against Form 16/annual salary statement and verify it before it affects taxable income."
+                    if salary_record_for_review is not None and salary_record_for_review.status != "verified" else
+                    "No verified annual salary record or salary transaction with saved gross-salary details exists for this financial year."
+                ),
             },
 
             "house_property": {

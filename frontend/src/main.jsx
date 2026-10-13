@@ -30,20 +30,46 @@ class AppRenderBoundary extends React.Component {
 
 function ProtectedApp() {
   const [status, setStatus] = useState("checking");
+
   useEffect(() => {
     let cancelled = false;
-    let checking = false;
+    let verificationInFlight = false;
+
+    // Add a synchronous curtain before async session verification. This is
+    // important when Safari/Chrome restores this document from the BFCache.
+    const showSecurityCurtain = () => {
+      let curtain = document.getElementById("financial-os-session-curtain");
+      if (!curtain) {
+        curtain = document.createElement("div");
+        curtain.id = "financial-os-session-curtain";
+        curtain.setAttribute("role", "status");
+        curtain.setAttribute("aria-live", "polite");
+        curtain.textContent = "Verifying secure session…";
+        Object.assign(curtain.style, {
+          position: "fixed", inset: "0", zIndex: "2147483647",
+          display: "grid", placeItems: "center", background: "#090b16",
+          color: "#f4f5ff", font: "16px system-ui, sans-serif"
+        });
+        document.body.appendChild(curtain);
+      }
+    };
+    const hideSecurityCurtain = () => {
+      document.getElementById("financial-os-session-curtain")?.remove();
+    };
 
     const verify = async () => {
-      // Back/Forward can restore a page from browser cache without remounting React.
-      if (checking) return;
-      checking = true;
+      if (verificationInFlight || cancelled) return;
+      verificationInFlight = true;
+      showSecurityCurtain();
+      setStatus("checking");
+
       if (!getAccessToken()) {
         clearSession();
         if (!cancelled) setStatus("signed-out");
-        checking = false;
+        verificationInFlight = false;
         return;
       }
+
       try {
         const response = await apiFetch(`${API_BASE_URL}/api/auth/me`, {
           cache: "no-store",
@@ -51,28 +77,35 @@ function ProtectedApp() {
         });
         if (!response.ok) throw new Error("Session expired or revoked");
         const user = await response.json();
-        let stored = null;
-        try { stored = JSON.parse(sessionStorage.getItem("financial_os_user") || "null"); } catch { /* clear malformed cached identity below */ }
-        if (!stored || Number(stored.id) !== Number(user.id) || stored.name !== user.name || stored.email !== user.email) {
-          sessionStorage.setItem("financial_os_user", JSON.stringify(user));
-        }
+        if (!user?.id) throw new Error("Backend did not return a verified user");
+        sessionStorage.setItem("financial_os_user", JSON.stringify(user));
         if (!cancelled) setStatus("authenticated");
       } catch {
         clearSession();
         if (!cancelled) setStatus("signed-out");
       } finally {
-        checking = false;
+        verificationInFlight = false;
+        // Remove only after a valid session was confirmed. Invalid sessions
+        // remain covered until the redirect to login occurs.
+        if (!cancelled && getAccessToken()) hideSecurityCurtain();
       }
     };
 
-    const onPageShow = () => { verify(); };
+    const onPageShow = (event) => {
+      // pageshow fires on normal navigation and BFCache restoration. Cover
+      // immediately rather than leaving previously rendered modules visible.
+      showSecurityCurtain();
+      verify();
+    };
+    const onFocus = () => verify();
     verify();
     window.addEventListener("pageshow", onPageShow);
-    window.addEventListener("focus", onPageShow);
+    window.addEventListener("focus", onFocus);
     return () => {
       cancelled = true;
       window.removeEventListener("pageshow", onPageShow);
-      window.removeEventListener("focus", onPageShow);
+      window.removeEventListener("focus", onFocus);
+      hideSecurityCurtain();
     };
   }, []);
 

@@ -586,7 +586,11 @@ def load_other_income(
             t.transaction_date,
             t.description,
             COALESCE(c.name, '') AS category_name,
-            COALESCE(c.description, '') AS category_description
+            COALESCE(c.description, '') AS category_description,
+            t.party_name,
+            t.due_date,
+            COALESCE(t.settled_amount, 0) AS settled_amount,
+            COALESCE(t.status, 'open') AS receivable_status
         FROM transactions AS t
         LEFT JOIN categories AS c
           ON c.id = t.category_id AND c.user_id = t.user_id
@@ -658,15 +662,39 @@ def load_other_income(
         # taxable Other Sources income. Settlement transfers are intentionally
         # excluded by this query, so collection cannot double-count income.
         if transaction_type == "receivable":
+            # Category mapping is a review hint only. It must not independently
+            # determine taxability: the taxpayer's accounting method, source
+            # documents, and applicable tax rules still need confirmation.
+            suggested_head = None
+            if any(term in searchable for term in (
+                "business", "professional", "freelance", "gig", "customer invoice",
+                "service income", "business revenue",
+            )):
+                suggested_head = "business_profession"
+            elif any(term in searchable for term in ("rental", "rent", "house property")):
+                suggested_head = "house_property"
+            elif any(term in searchable for term in ("salary", "payroll", "wages")):
+                suggested_head = "salary"
+            elif any(term in searchable for term in ("interest", "dividend", "other sources")):
+                suggested_head = "other_sources"
+
+            settled_amount = max(decimal(row.get("settled_amount", 0)), Decimal("0"))
+            outstanding_amount = max(amount - settled_amount, Decimal("0"))
             receivable_review.append({
                 **original,
+                "party_name": row.get("party_name"),
+                "due_date": str(row.get("due_date")) if row.get("due_date") else None,
+                "settled_amount": money(settled_amount),
+                "outstanding_amount": money(outstanding_amount),
+                "status": row.get("receivable_status") or "open",
                 "tax_head": None,
+                "suggested_tax_head": suggested_head,
                 "included_in_taxable_totals": False,
                 "reason": (
-                    "Receivable needs tax-head/accounting-method reconciliation. "
-                    "Classify as business/professional, house property, other "
-                    "source, or another applicable head before including it in "
-                    "the tax computation. Settlement transfers are not income."
+                    "Suggested tax head is based on the category/description only. "
+                    "Confirm source documents and the applicable accounting method "
+                    "before including this receivable in taxable income. Collections "
+                    "against this receivable must not be counted as income a second time."
                 ),
             })
             continue

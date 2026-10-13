@@ -1,12 +1,16 @@
 """Regression tests for read-only tax classification of Money transactions."""
 import os
 import unittest
+from decimal import Decimal
 from datetime import date
 
 # The application database module requires this variable at import time.
 os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/financialos_tax_tests.db")
 
-from app.routes.itr_ready_tax_report import load_other_income  # noqa: E402
+from app.routes.itr_ready_tax_report import (  # noqa: E402
+    apply_verified_annual_salary_record,
+    load_other_income,
+)
 
 
 class FakeResult:
@@ -58,6 +62,21 @@ class TaxIncomeClassificationTests(unittest.TestCase):
         ]
         self.assertEqual(len(salary_reviews), 1)
         self.assertIn("Gross salary metadata", salary_reviews[0]["reason"])
+
+
+    def test_verified_annual_salary_record_is_authoritative_and_not_double_counted(self):
+        result = load_other_income(FakeDB(), 1, date(2026, 4, 1), date(2027, 3, 31))
+
+        class SalaryRecord:
+            gross_salary = "720000.00"
+
+        merged = apply_verified_annual_salary_record(result, SalaryRecord())
+        self.assertEqual(merged["salary"], Decimal("720000.00"))
+        self.assertEqual(merged["total"], Decimal("721500.00"))
+        salary_details = [item for item in merged["details"] if item.get("tax_head") == "salary"]
+        self.assertEqual(len(salary_details), 1)
+        self.assertEqual(salary_details[0]["classification_source"], "verified_annual_salary_record")
+        self.assertFalse(any("Gross salary metadata" in item.get("reason", "") for item in merged["classification_review"]))
 
     def test_loan_disbursement_is_excluded_from_income(self):
         result = load_other_income(FakeDB(), 1, date(2026, 4, 1), date(2027, 3, 31))

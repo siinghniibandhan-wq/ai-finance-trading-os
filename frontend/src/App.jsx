@@ -7682,83 +7682,88 @@ function ChartOfAccountsPage() {
 
 function LedgerPage() {
   const API_BASE_URL = "https://ai-finance-trading-os-api.onrender.com";
-  const USER_ID = getCurrentUserId();
-  const [transactions, setTransactions] = useState([]);
-  const [accounts, setAccounts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [entries, setEntries] = useState([]);
+  const [totalDebit, setTotalDebit] = useState(0);
+  const [totalCredit, setTotalCredit] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [backfilling, setBackfilling] = useState(false);
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true); setError("");
-      try {
-        const [txResponse, accountResponse, categoryResponse] = await Promise.all([
-          apiFetch(`${API_BASE_URL}/api/transactions/?user_id=${USER_ID}`),
-          apiFetch(`${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`),
-          apiFetch(`${API_BASE_URL}/api/categories/?user_id=${USER_ID}`),
-        ]);
-        if (!txResponse.ok) throw new Error(`Transactions API returned ${txResponse.status}`);
-        if (!accountResponse.ok) throw new Error(`Accounts API returned ${accountResponse.status}`);
-        const [txData, accountData, categoryData] = await Promise.all([
-          txResponse.json(), accountResponse.json(),
-          categoryResponse.ok ? categoryResponse.json() : Promise.resolve([]),
-        ]);
-        if (!cancelled) {
-          setTransactions(Array.isArray(txData) ? txData : []);
-          setAccounts(Array.isArray(accountData) ? accountData : []);
-          setCategories(Array.isArray(categoryData) ? categoryData : []);
-        }
-      } catch (e) {
-        if (!cancelled) setError(e.message || "Unable to load ledger data.");
-      } finally { if (!cancelled) setLoading(false); }
-    };
-    load();
-    return () => { cancelled = true; };
-  }, []);
-
-  const accountName = (id) => accounts.find((a) => String(a.id) === String(id))?.name || `Account #${id ?? "—"}`;
-  const categoryName = (id) => categories.find((c) => String(c.id) === String(id))?.name || "Unclassified";
-  const money = (value) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value || 0));
-  const entries = transactions.flatMap((tx) => {
-    const type = String(tx.transaction_type || "").toLowerCase();
-    const amount = Number(tx.amount || 0);
-    const date = tx.transaction_date || "";
-    const description = tx.description || tx.reference || `${type.charAt(0).toUpperCase()}${type.slice(1)} transaction #${tx.id}`;
-    if (type === "transfer") {
-      const destinationId = tx.transfer_to_account_id;
-      return [
-        { key: `${tx.id}-debit`, id: tx.id, date, description, account: accountName(destinationId), debit: amount, credit: 0, reference: tx.reference || `TX-${tx.id}` },
-        { key: `${tx.id}-credit`, id: tx.id, date, description, account: accountName(tx.account_id), debit: 0, credit: amount, reference: tx.reference || `TX-${tx.id}` },
-      ];
+  const loadLedger = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/ledger/`);
+      if (!response.ok) throw new Error(`Ledger API returned ${response.status}`);
+      const data = await response.json();
+      setEntries(Array.isArray(data.entries) ? data.entries : []);
+      setTotalDebit(Number(data.total_debit || 0));
+      setTotalCredit(Number(data.total_credit || 0));
+    } catch (e) {
+      setError(e.message || "Unable to load the accounting ledger.");
+    } finally {
+      setLoading(false);
     }
-    if (["income", "refund", "interest", "dividend"].includes(type)) return [
-      { key: `${tx.id}-debit`, id: tx.id, date, description, account: accountName(tx.account_id), debit: amount, credit: 0, reference: tx.reference || `TX-${tx.id}` },
-      { key: `${tx.id}-credit`, id: tx.id, date, description, account: categoryName(tx.category_id), debit: 0, credit: amount, reference: tx.reference || `TX-${tx.id}` },
-    ];
-    return [
-      { key: `${tx.id}-debit`, id: tx.id, date, description, account: categoryName(tx.category_id), debit: amount, credit: 0, reference: tx.reference || `TX-${tx.id}` },
-      { key: `${tx.id}-credit`, id: tx.id, date, description, account: accountName(tx.account_id), debit: 0, credit: amount, reference: tx.reference || `TX-${tx.id}` },
-    ];
-  }).sort((a, b) => String(b.date).localeCompare(String(a.date)) || b.id - a.id);
-  const totalDebit = entries.reduce((sum, row) => sum + row.debit, 0);
-  const totalCredit = entries.reduce((sum, row) => sum + row.credit, 0);
+  };
+
+  useEffect(() => { loadLedger(); }, []);
+
+  const backfillLedger = async () => {
+    setBackfilling(true);
+    setMessage("");
+    setError("");
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/ledger/backfill`, { method: "POST" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || `Ledger backfill returned ${response.status}`);
+      setMessage(`${data.posted || 0} historical transactions posted; ${data.skipped_count || 0} skipped for review.`);
+      await loadLedger();
+    } catch (e) {
+      setError(e.message || "Unable to backfill historical ledger entries.");
+    } finally {
+      setBackfilling(false);
+    }
+  };
+
+  const money = (value) => new Intl.NumberFormat("en-IN", {
+    style: "currency", currency: "INR", maximumFractionDigits: 2,
+  }).format(Number(value || 0));
   const card = { border: "1px solid rgba(255,255,255,.1)", borderRadius: "16px", background: "rgba(255,255,255,.035)", padding: "18px" };
   const muted = { color: "rgba(255,255,255,.62)", fontSize: "12px" };
+  const isBalanced = Math.abs(totalDebit - totalCredit) < 0.005;
 
   return <div className="dashboard" style={{ display: "grid", gap: "18px" }}>
-    <section className="welcome-section"><div><p className="welcome-label">MONEY / ACCOUNTING</p><h2>Ledger</h2><p className="welcome-description">A read-only accounting view derived from your existing transactions.</p></div></section>
+    <section className="welcome-section">
+      <div>
+        <p className="welcome-label">MONEY / ACCOUNTING</p>
+        <h2>Ledger</h2>
+        <p className="welcome-description">Persistent double-entry records generated from Money transactions.</p>
+      </div>
+      <button className="primary-button" onClick={backfillLedger} disabled={backfilling || loading}>
+        {backfilling ? "Posting historical records…" : "Post Historical Transactions"}
+      </button>
+    </section>
     <section className="metrics-grid">
-      <div style={card}><div style={muted}>Ledger entries</div><strong style={{ display: "block", fontSize: "25px", marginTop: "8px" }}>{loading ? "Loading…" : entries.length}</strong></div>
+      <div style={card}><div style={muted}>Ledger lines</div><strong style={{ display: "block", fontSize: "25px", marginTop: "8px" }}>{loading ? "Loading…" : entries.length}</strong></div>
       <div style={card}><div style={muted}>Total debits</div><strong style={{ display: "block", fontSize: "25px", marginTop: "8px" }}>{loading ? "Loading…" : money(totalDebit)}</strong></div>
       <div style={card}><div style={muted}>Total credits</div><strong style={{ display: "block", fontSize: "25px", marginTop: "8px" }}>{loading ? "Loading…" : money(totalCredit)}</strong></div>
+      <div style={card}><div style={muted}>Ledger status</div><strong style={{ display: "block", fontSize: "20px", marginTop: "8px", color: isBalanced ? "#86efac" : "#fca5a5" }}>{loading ? "Checking…" : isBalanced ? "Balanced" : "Needs review"}</strong></div>
     </section>
+    {message && <div role="status" style={{ ...card, color: "#86efac" }}>{message}</div>}
     {error && <div role="alert" style={{ ...card, color: "#fca5a5" }}>{error}</div>}
     <section className="glass-card" style={{ overflowX: "auto" }}>
-      <div className="card-header"><div><p className="card-label">AUTOMATIC REGISTER</p><h3>Ledger Entries</h3></div><span className="score">{entries.length}</span></div>
-      <p style={{ ...muted, margin: "0 0 14px" }}>This initial view projects debit/credit rows from existing transactions. It does not yet persist formal journal entries or calculate account-level running balances.</p>
-      {loading ? <div className="empty-chart">Loading ledger…</div> : entries.length === 0 ? <div className="empty-chart">No transactions available to display.</div> : <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "720px", fontSize: "13px" }}><thead><tr>{["Date", "Account", "Description", "Reference", "Debit", "Credit"].map((label) => <th key={label} style={{ textAlign: label === "Debit" || label === "Credit" ? "right" : "left", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.12)", color: "rgba(255,255,255,.65)" }}>{label}</th>)}</tr></thead><tbody>{entries.map((row) => <tr key={row.key}>{[row.date, row.account, row.description, row.reference].map((value, i) => <td key={i} style={{ padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{value || "—"}</td>)}<td style={{ textAlign: "right", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{row.debit ? money(row.debit) : "—"}</td><td style={{ textAlign: "right", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{row.credit ? money(row.credit) : "—"}</td></tr>)}</tbody><tfoot><tr><th colSpan="4" style={{ textAlign: "right", padding: "12px 10px" }}>Totals</th><th style={{ textAlign: "right", padding: "12px 10px" }}>{money(totalDebit)}</th><th style={{ textAlign: "right", padding: "12px 10px" }}>{money(totalCredit)}</th></tr></tfoot></table>}
+      <div className="card-header"><div><p className="card-label">DOUBLE-ENTRY ACCOUNTING</p><h3>Ledger Entries</h3></div><span className="score">{entries.length}</span></div>
+      <p style={{ ...muted, margin: "0 0 14px" }}>Each source transaction is represented by balanced debit and credit lines. Historical transactions can be posted once using the button above; unsupported legacy records are reported for review.</p>
+      {loading ? <div className="empty-chart">Loading ledger…</div> : entries.length === 0 ? <div className="empty-chart">No posted ledger entries yet. Use “Post Historical Transactions” to create entries for existing transactions.</div> : <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px", fontSize: "13px" }}>
+        <thead><tr>{["Date", "Account", "Financial Account", "Description", "Transaction", "Debit", "Credit"].map((label) => <th key={label} style={{ textAlign: label === "Debit" || label === "Credit" ? "right" : "left", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.12)", color: "rgba(255,255,255,.65)" }}>{label}</th>)}</tr></thead>
+        <tbody>{entries.map((row) => <tr key={row.id}>
+          {[row.date, `${row.account_code} · ${row.account_name}`, row.financial_account_name || "—", row.description, `TX-${row.transaction_id}`].map((value, i) => <td key={i} style={{ padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{value || "—"}</td>)}
+          <td style={{ textAlign: "right", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{Number(row.debit) ? money(row.debit) : "—"}</td>
+          <td style={{ textAlign: "right", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{Number(row.credit) ? money(row.credit) : "—"}</td>
+        </tr>)}</tbody>
+        <tfoot><tr><th colSpan="5" style={{ textAlign: "right", padding: "12px 10px" }}>Totals</th><th style={{ textAlign: "right", padding: "12px 10px" }}>{money(totalDebit)}</th><th style={{ textAlign: "right", padding: "12px 10px" }}>{money(totalCredit)}</th></tr></tfoot>
+      </table>}
     </section>
   </div>;
 }

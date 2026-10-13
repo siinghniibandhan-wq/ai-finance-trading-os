@@ -4,6 +4,8 @@
 
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect, text
 from uuid import uuid4
@@ -15,7 +17,7 @@ from app.models import (
     LoanMovement, LoanReceivable, TaxSalaryIncomeRecord, JournalEntry, JournalLine,
 )
 from app.finance_diary import record_finance_event
-from app.accounting import sync_transaction_journal
+from app.accounting import sync_transaction_journal, _get_control_account
 from app.schemas import (
     TransactionCreate,
     TransactionUpdate,
@@ -76,6 +78,20 @@ def _ensure_transfer_columns(db: Session):
         db.execute(text("ALTER TABLE transactions ADD COLUMN transfer_to_account_id INTEGER"))
     if dialect == "postgresql":
         db.execute(text("CREATE INDEX IF NOT EXISTS ix_transactions_transfer_group_id ON transactions (transfer_group_id)"))
+    # Additive migration for receivable/payable tracking; safe for existing data.
+    columns = {column["name"] for column in inspect(bind).get_columns("transactions")}
+    additions = {
+        "party_name": "VARCHAR(150)",
+        "due_date": "DATE",
+        "settled_amount": "NUMERIC(18, 2) NOT NULL DEFAULT 0",
+        "status": "VARCHAR(20) NOT NULL DEFAULT 'open'",
+        "settles_transaction_id": "INTEGER",
+    }
+    for name, definition in additions.items():
+        if name not in columns:
+            db.execute(text(f"ALTER TABLE transactions ADD COLUMN {name} {definition}"))
+    if dialect == "postgresql":
+        db.execute(text("CREATE INDEX IF NOT EXISTS ix_transactions_settles_transaction_id ON transactions (settles_transaction_id)"))
     db.commit()
 
 
@@ -124,6 +140,14 @@ def _reverse_transfer_effect(source: Account, destination: Account, amount):
     destination_is_liability = destination_type in LIABILITY_ACCOUNT_TYPES
     source.balance = (source.balance or 0) - amount if source_is_liability else (source.balance or 0) + amount
     destination.balance = (destination.balance or 0) + amount if destination_is_liability else (destination.balance or 0) - amount
+
+
+class SettlementCreate(BaseModel):
+    account_id: int = Field(gt=0, description="Bank/cash account receiving or making payment")
+    amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    transaction_date: date
+    description: str | None = None
+    reference: str | None = None
 
 
 # ============================================================
@@ -249,6 +273,18 @@ def create_transaction(
     elif transaction_data.loan_details is not None:
         raise HTTPException(status_code=422, detail="Loan details are only allowed for Loan Disbursement")
 
+    tx_type = transaction_data.transaction_type.strip().lower()
+    if tx_type not in {"income", "expense", "transfer", "receivable", "payable", "refund", "interest", "dividend", "withdrawal", "tax", "loan_repayment"}:
+        raise HTTPException(status_code=422, detail="Unsupported transaction type")
+    if tx_type in {"receivable", "payable"}:
+        if category is None:
+            raise HTTPException(status_code=422, detail="Choose an income category for a receivable or an expense category for a payable")
+        expected = "income" if tx_type == "receivable" else "expense"
+        if (category.category_type or "").strip().lower() != expected:
+            raise HTTPException(status_code=422, detail=f"{tx_type.title()} requires a {expected} category")
+        if transaction_data.transfer_to_account_id is not None:
+            raise HTTPException(status_code=422, detail="Transfer destination is not valid for receivable/payable records")
+
     # --------------------------------------------------------
     # Create transaction; when this is a loan disbursement, also
     # create its loan and linked liability in the same DB commit.
@@ -267,11 +303,18 @@ def create_transaction(
         description=transaction_data.description,
         transaction_date=transaction_data.transaction_date,
         reference=transaction_data.reference,
+        party_name=transaction_data.party_name,
+        due_date=transaction_data.due_date,
+        settled_amount=Decimal("0.00"),
+        status="open",
     )
 
     try:
         db.add(transaction)
         db.flush()
+        if tx_type in {"receivable", "payable"}:
+            control = _get_control_account(db, current_user.id, tx_type)
+            control.balance = (control.balance or Decimal("0.00")) + transaction_data.amount
         sync_transaction_journal(db, transaction)
         if is_loan_disbursement:
             details = transaction_data.loan_details
@@ -342,6 +385,52 @@ def get_transactions(
     return transactions
 
 
+@router.get("/receivables-payables")
+def list_receivables_payables(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return outstanding receivable/payable source records and totals."""
+    _ensure_transfer_columns(db)
+    rows = (
+        db.query(Transaction)
+        .filter(
+            Transaction.user_id == current_user.id,
+            Transaction.transaction_type.in_(["receivable", "payable"]),
+        )
+        .order_by(Transaction.due_date.asc().nullslast(), Transaction.transaction_date.desc())
+        .all()
+    )
+    items = []
+    totals = {"receivable": Decimal("0.00"), "payable": Decimal("0.00")}
+    for row in rows:
+        outstanding = max(Decimal("0.00"), Decimal(str(row.amount)) - Decimal(str(row.settled_amount or 0)))
+        if outstanding <= 0:
+            continue
+        kind = row.transaction_type.lower()
+        totals[kind] += outstanding
+        items.append({
+            "id": row.id,
+            "type": kind,
+            "amount": Decimal(str(row.amount)),
+            "settled_amount": Decimal(str(row.settled_amount or 0)),
+            "outstanding_amount": outstanding,
+            "party_name": row.party_name,
+            "due_date": row.due_date,
+            "transaction_date": row.transaction_date,
+            "description": row.description,
+            "status": row.status or ("partial" if row.settled_amount else "open"),
+            "account_id": row.account_id,
+            "category_id": row.category_id,
+        })
+    return {
+        "items": items,
+        "total_receivable": totals["receivable"],
+        "total_payable": totals["payable"],
+    }
+
+
+
 # ============================================================
 # GET SINGLE TRANSACTION
 # ============================================================
@@ -392,6 +481,8 @@ def update_transaction(
 
     if (transaction.transaction_type or "").lower() == "transfer":
         raise HTTPException(status_code=409, detail="Transfers cannot be edited in place. Record a correcting transfer so the full audit history remains intact.")
+    if (transaction.transaction_type or "").lower() in {"receivable", "payable"}:
+        raise HTTPException(status_code=409, detail="Receivable/payable records cannot be edited in place. Create a correcting entry or manage settlement from the outstanding balance.")
 
     linked_loan = db.query(Loan).filter(Loan.disbursement_transaction_id == transaction.id).first()
     if linked_loan:
@@ -544,6 +635,9 @@ def delete_transaction(
             detail="This transaction is linked to a loan given to another person. Manage it through Loan Management so the receivable balance remains consistent.",
         )
 
+    if (transaction.transaction_type or "").lower() in {"receivable", "payable"} and Decimal(str(transaction.settled_amount or 0)) > 0:
+        raise HTTPException(status_code=409, detail="This receivable/payable has settlements. It cannot be deleted because that would break the audit trail.")
+
     account = (
         db.query(Account)
         .filter(Account.id == transaction.account_id, Account.user_id == transaction.user_id)
@@ -556,6 +650,10 @@ def delete_transaction(
     try:
         if was_salary_transaction:
             _invalidate_verified_salary_record(db, transaction.user_id, transaction.transaction_date)
+        tx_type = (transaction.transaction_type or "").lower()
+        if tx_type in {"receivable", "payable"}:
+            control = _get_control_account(db, transaction.user_id, tx_type)
+            control.balance = (control.balance or Decimal("0.00")) - Decimal(str(transaction.amount))
         if account:
             if (transaction.transaction_type or "").lower() == "transfer":
                 destination = db.query(Account).filter(Account.id == transaction.transfer_to_account_id, Account.user_id == transaction.user_id).with_for_update().first()
@@ -588,3 +686,88 @@ def delete_transaction(
         raise
 
     return {"message": "Transaction deleted successfully"}
+
+
+@router.post("/{transaction_id}/settle")
+def settle_receivable_or_payable(
+    transaction_id: int,
+    settlement: SettlementCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Record a partial/full settlement as a transfer; never create new income/expense."""
+    _ensure_transfer_columns(db)
+    source = (
+        db.query(Transaction)
+        .filter(
+            Transaction.id == transaction_id,
+            Transaction.user_id == current_user.id,
+            Transaction.transaction_type.in_(["receivable", "payable"]),
+        )
+        .with_for_update()
+        .first()
+    )
+    if source is None:
+        raise HTTPException(status_code=404, detail="Receivable/payable record not found")
+    outstanding = Decimal(str(source.amount)) - Decimal(str(source.settled_amount or 0))
+    amount = Decimal(str(settlement.amount)).quantize(Decimal("0.01"))
+    if amount <= 0 or amount > outstanding:
+        raise HTTPException(status_code=422, detail=f"Settlement must be greater than zero and no more than the outstanding amount ({outstanding})")
+
+    cash_account = (
+        db.query(Account)
+        .filter(Account.id == settlement.account_id, Account.user_id == current_user.id, Account.is_active.is_(True))
+        .with_for_update()
+        .first()
+    )
+    if cash_account is None:
+        raise HTTPException(status_code=404, detail="Selected bank/cash account not found for this user")
+
+    control = _get_control_account(db, current_user.id, source.transaction_type.lower())
+    if source.transaction_type.lower() == "receivable":
+        from_account, to_account = control, cash_account
+    else:
+        from_account, to_account = cash_account, control
+
+    settlement_tx = Transaction(
+        user_id=current_user.id,
+        account_id=from_account.id,
+        category_id=None,
+        transaction_type="transfer",
+        amount=amount,
+        description=settlement.description or f"Settlement for {source.party_name or source.description or source.transaction_type.title()}",
+        transaction_date=settlement.transaction_date,
+        reference=settlement.reference,
+        transfer_group_id=str(uuid4()),
+        transfer_to_account_id=to_account.id,
+        settles_transaction_id=source.id,
+        party_name=source.party_name,
+        status="settled",
+    )
+    try:
+        _apply_transfer_effect(from_account, to_account, amount)
+        source.settled_amount = Decimal(str(source.settled_amount or 0)) + amount
+        source.status = "settled" if source.settled_amount >= Decimal(str(source.amount)) else "partial"
+        db.add(settlement_tx)
+        db.flush()
+        sync_transaction_journal(db, settlement_tx)
+        record_finance_event(
+            db, user_id=current_user.id, event_type="created", entity_type="receivable_payable_settlement",
+            entity_id=settlement_tx.id,
+            description=f"{source.transaction_type.title()} settlement of {amount}",
+            snapshot={"source_transaction_id": source.id, "settlement_transaction_id": settlement_tx.id, "amount": str(amount), "outstanding_amount": str(Decimal(str(source.amount)) - source.settled_amount)},
+        )
+        db.commit()
+        db.refresh(source)
+        db.refresh(settlement_tx)
+    except Exception:
+        db.rollback()
+        raise
+
+    return {
+        "source_transaction_id": source.id,
+        "settlement_transaction_id": settlement_tx.id,
+        "settled_amount": source.settled_amount,
+        "outstanding_amount": Decimal(str(source.amount)) - source.settled_amount,
+        "status": source.status,
+    }

@@ -75,6 +75,7 @@ from app.routes import (
 
     # Module 13
     itr_ready_tax_report,
+    tax_business_income,
 )
 
 
@@ -307,3 +308,4 @@ app.include_router(final_tax_liability.router)
 # ITR READY TAX REPORT
 # ------------------------------------------------------------
 app.include_router(itr_ready_tax_report.router)
+app.include_router(tax_business_income.router)

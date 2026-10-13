@@ -531,6 +531,27 @@ class TaxSalaryIncomeRecord(Base):
 
 
 # ============================================================
+# BUSINESS / PROFESSIONAL INCOME RECORDS
+# ============================================================
+
+class TaxBusinessIncomeRecord(Base):
+    __tablename__ = "tax_business_income_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    financial_year: Mapped[str] = mapped_column(String(9), nullable=False, index=True)
+    record_type: Mapped[str] = mapped_column(String(16), nullable=False)  # receipt or expense
+    income_type: Mapped[str] = mapped_column(String(24), nullable=False)  # business, profession, freelance
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    transaction_date: Mapped[date] = mapped_column(Date, nullable=False)
+    evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="pending_review")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+# ============================================================
 # TAX CREDIT ENTRIES (SELF-REPORTED UNTIL VERIFIED)
 # ============================================================
 

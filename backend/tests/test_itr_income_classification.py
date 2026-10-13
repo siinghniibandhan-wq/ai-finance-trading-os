@@ -100,6 +100,27 @@ class TaxIncomeClassificationTests(unittest.TestCase):
         self.assertEqual(result["dividend"], 300)
         self.assertEqual(result["other_sources_total"], 1500)
 
+
+
+    def test_receivable_is_flagged_for_tax_head_review_and_not_double_counted_as_other_income(self):
+        class ReceivableDB:
+            def execute(self, _query, _params):
+                return FakeResult([
+                    {
+                        "id": 10, "transaction_type": "receivable", "amount": "5000",
+                        "transaction_date": date(2026, 10, 10), "description": "Customer invoice",
+                        "category_name": "Business and Professional Income",
+                        "category_description": "",
+                    },
+                ])
+
+        result = load_other_income(ReceivableDB(), 1, date(2026, 4, 1), date(2027, 3, 31))
+        self.assertEqual(result["income"], Decimal("0"))
+        self.assertEqual(result["total"], Decimal("0"))
+        self.assertEqual(len(result["receivable_review"]), 1)
+        self.assertEqual(result["receivable_review"][0]["transaction_id"], 10)
+        self.assertFalse(result["receivable_review"][0]["included_in_taxable_totals"])
+
     def test_business_profit_uses_only_verified_receipts_and_expenses(self):
         class Record:
             def __init__(self, record_type, amount, status):

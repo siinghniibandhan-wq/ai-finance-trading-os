@@ -2,6 +2,7 @@
 # TRANSACTIONS API
 # ============================================================
 
+from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect, text
@@ -11,7 +12,7 @@ from app.database.database import get_db
 from app.routes.auth import get_current_user
 from app.models import (
     User, Account, Category, Transaction, Loan, Liability,
-    LoanMovement, LoanReceivable,
+    LoanMovement, LoanReceivable, TaxSalaryIncomeRecord,
 )
 from app.finance_diary import record_finance_event
 from app.schemas import (
@@ -25,6 +26,42 @@ router = APIRouter(
     prefix="/api/transactions",
     tags=["Transactions"],
 )
+
+
+def _financial_year_for_date(value):
+    """Return Indian financial year label for a date."""
+    if not value:
+        return None
+    start_year = value.year if value.month >= 4 else value.year - 1
+    return f"{start_year}-{str(start_year + 1)[-2:]}"
+
+
+def _is_salary_category(db, category_id):
+    if not category_id:
+        return False
+    category = db.query(Category).filter(Category.id == category_id).first()
+    return bool(category and (category.name or "").strip().lower() == "salary")
+
+
+def _invalidate_verified_salary_record(db, user_id, transaction_date):
+    """Stop a separately verified salary snapshot overriding live transactions.
+
+    Tax calculations prefer salary-category transactions. If one is edited or
+    deleted, a verified standalone annual record can otherwise keep stale salary
+    in the Tax Centre. Keep the record for audit, but return it to review.
+    """
+    financial_year = _financial_year_for_date(transaction_date)
+    if not financial_year:
+        return
+    record = (
+        db.query(TaxSalaryIncomeRecord)
+        .filter_by(user_id=user_id, financial_year=financial_year, status="verified")
+        .with_for_update()
+        .first()
+    )
+    if record:
+        record.status = "pending_review"
+
 
 
 def _ensure_transfer_columns(db: Session):
@@ -425,9 +462,12 @@ def update_transaction(
         if not category:
             raise HTTPException(status_code=404, detail="Category not found for this user")
 
-    # Snapshot the old values before mutating the transaction.
+    # Snapshot old salary linkage before mutating the transaction.
     old_type = transaction.transaction_type
     old_amount = transaction.amount
+    old_date = transaction.transaction_date
+    old_was_salary = _is_salary_category(db, transaction.category_id) and str(old_type).lower() == "income"
+    new_category_is_salary = _is_salary_category(db, new_category_id) and str(new_type).lower() == "income"
 
     try:
         # Reverse the old transaction first, then apply the new transaction.
@@ -437,6 +477,10 @@ def update_transaction(
             setattr(transaction, field, value)
 
         _apply_balance_effect(new_account, str(new_type).lower(), new_amount)
+        if old_was_salary:
+            _invalidate_verified_salary_record(db, transaction.user_id, old_date)
+        if new_category_is_salary:
+            _invalidate_verified_salary_record(db, transaction.user_id, transaction.transaction_date)
         record_finance_event(db, user_id=transaction.user_id, event_type="updated", entity_type="transaction", entity_id=transaction.id, description=f"Transaction updated: {transaction.id}", snapshot={"before": {"account_id": old_account.id, "transaction_type": old_type, "amount": old_amount}, "after": update_data})
         db.commit()
         db.refresh(transaction)
@@ -503,7 +547,11 @@ def delete_transaction(
         .first()
     )
 
+    was_salary_transaction = _is_salary_category(db, transaction.category_id) and str(transaction.transaction_type).lower() == "income"
+
     try:
+        if was_salary_transaction:
+            _invalidate_verified_salary_record(db, transaction.user_id, transaction.transaction_date)
         if account:
             if (transaction.transaction_type or "").lower() == "transfer":
                 destination = db.query(Account).filter(Account.id == transaction.transfer_to_account_id, Account.user_id == transaction.user_id).with_for_update().first()

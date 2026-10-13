@@ -25,6 +25,7 @@ IMPORTANT:
 
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
+import re
 
 from fastapi import (
     APIRouter,
@@ -924,22 +925,20 @@ def load_income_transactions(
         text(
             """
             SELECT
-                id,
-                transaction_date,
-                transaction_type,
-                amount
-            FROM transactions
-            WHERE user_id = :user_id
-              AND transaction_date >= :start_date
-              AND transaction_date <= :end_date
-              AND transaction_type IN (
-                  'income',
-                  'interest',
-                  'dividend'
-              )
-            ORDER BY
-                transaction_date ASC,
-                id ASC
+                t.id,
+                t.transaction_date,
+                t.transaction_type,
+                t.amount,
+                COALESCE(c.name, '') AS category_name,
+                t.description
+            FROM transactions AS t
+            LEFT JOIN categories AS c ON c.id = t.category_id
+            WHERE t.user_id = :user_id
+              AND t.transaction_date >= :start_date
+              AND t.transaction_date <= :end_date
+              AND t.transaction_type IN ('income', 'interest', 'dividend')
+              AND LOWER(TRIM(COALESCE(c.name, ''))) <> 'salary'
+            ORDER BY t.transaction_date ASC, t.id ASC
             """
         ),
         {
@@ -953,6 +952,43 @@ def load_income_transactions(
         dict(row._mapping)
         for row in result
     ]
+
+
+def load_salary_transactions(db, user_id, start_date, end_date):
+    """Return gross salary totals from Salary-category transaction metadata."""
+    rows = db.execute(
+        text("""
+            SELECT t.id, t.transaction_date, t.description
+            FROM transactions AS t
+            JOIN categories AS c ON c.id = t.category_id
+            WHERE t.user_id = :user_id
+              AND t.transaction_type = 'income'
+              AND t.transaction_date >= :start_date
+              AND t.transaction_date <= :end_date
+              AND LOWER(TRIM(c.name)) = 'salary'
+            ORDER BY t.transaction_date ASC, t.id ASC
+        """),
+        {"user_id": user_id, "start_date": start_date, "end_date": end_date},
+    ).fetchall()
+    total = Decimal("0")
+    details = []
+    for row in rows:
+        description = row.description or ""
+        match = re.search(
+            r"Gross salary\s*:\s*(?:₹|INR)?\s*([0-9,]+(?:\.[0-9]{1,2})?)",
+            description,
+            re.IGNORECASE,
+        )
+        if not match:
+            continue
+        amount = Decimal(match.group(1).replace(",", ""))
+        total += amount
+        details.append({
+            "transaction_id": row.id,
+            "transaction_date": row.transaction_date.isoformat() if hasattr(row.transaction_date, "isoformat") else (str(row.transaction_date) if row.transaction_date else None),
+            "gross_salary": money(amount),
+        })
+    return total, details, len(rows)
 
 
 # ============================================================
@@ -996,6 +1032,10 @@ def income_tax_aggregation(
             start_date,
             end_date,
         )
+    )
+
+    salary_total, salary_details, salary_transaction_count = load_salary_transactions(
+        db, user_id, start_date, end_date
     )
 
     income_total = Decimal("0")
@@ -1111,6 +1151,7 @@ def income_tax_aggregation(
 
     provisional_total = (
         verified_non_capital_income
+        + salary_total
         + capital_gains_after_setoff
     )
 
@@ -1118,7 +1159,7 @@ def income_tax_aggregation(
     # CURRENTLY UNAVAILABLE INCOME HEADS
     # ========================================================
 
-    salary_available = False
+    salary_available = bool(salary_details)
     business_available = False
     house_property_available = False
 
@@ -1135,7 +1176,8 @@ def income_tax_aggregation(
         aggregation_status = "complete"
 
     elif (
-        verified_non_capital_income != 0
+        salary_total != 0
+        or verified_non_capital_income != 0
         or capital_gains_after_setoff != 0
     ):
 
@@ -1186,16 +1228,11 @@ def income_tax_aggregation(
         "income_heads": {
 
             "salary": {
-                "available":
-                    salary_available,
-
-                "amount":
-                    None,
-
-                "reason":
-                    "No verified salary-income "
-                    "source is currently available "
-                    "in the Financial OS.",
+                "available": bool(salary_details),
+                "amount": money(salary_total) if salary_details else None,
+                "source": "Salary-category transactions; gross salary parsed from saved salary details",
+                "transactions": salary_details,
+                "reason": None if salary_details else ("Salary transactions exist but gross-salary details are missing." if salary_transaction_count else "No salary transaction with saved gross-salary details is available for this financial year."),
             },
 
             "business_profession": {

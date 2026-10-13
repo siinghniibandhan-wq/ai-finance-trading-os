@@ -14,6 +14,7 @@ It prepares structured tax data for further ITR filing/review.
 from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
 from collections import defaultdict
+import re
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
@@ -21,6 +22,15 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.routes.ownership import require_matching_user_id
+from app.routes.final_tax_liability import calculate_surcharge
+from app.models import TaxDeductionClaim, TaxCreditEntry, TaxSalaryIncomeRecord
+from app.routes.deductions_exempt_income import (
+    DEDUCTION_CATALOG,
+    EXEMPT_INCOME_CATALOG,
+    HRAInputs,
+    calculate_hra_exemption,
+    regime_available,
+)
 
 
 router = APIRouter(
@@ -58,6 +68,21 @@ def decimal(value) -> Decimal:
         return Decimal(str(value))
     except Exception:
         return Decimal("0")
+
+
+def extract_gross_salary(description) -> Decimal | None:
+    """Extract the gross salary saved alongside a net salary transaction."""
+    match = re.search(
+        r"gross\s+salary\s*:\s*(?:₹|INR)?\s*([0-9,]+(?:\.[0-9]{1,2})?)",
+        str(description or ""),
+        re.IGNORECASE,
+    )
+    if not match:
+        return None
+    try:
+        return Decimal(match.group(1).replace(",", ""))
+    except Exception:
+        return None
 
 
 def money(value) -> float:
@@ -583,8 +608,36 @@ def load_other_income(
         else:
             selected_head = "income"
 
-        totals[selected_head] += amount
-        details.append({**original, "tax_head": selected_head, "classification_source": "keyword/category" if detected else "transaction_type"})
+        # Salary is taxable on gross salary, not the net bank credit. The
+        # Money transaction remains the actual net receipt; salary metadata
+        # supplies gross salary as the tax-reporting amount.
+        gross_salary = extract_gross_salary(row["description"]) if selected_head == "salary" else None
+        if selected_head == "salary":
+            if gross_salary is None:
+                classification_review.append({
+                    **original,
+                    "suggested_head": "salary",
+                    "reason": "Salary receipt has no saved Gross salary metadata. Net receipt was not treated as taxable gross salary; add salary components/Form 16 data.",
+                })
+                continue
+            if gross_salary < 0 or gross_salary < amount:
+                classification_review.append({
+                    **original,
+                    "suggested_head": "salary",
+                    "reason": "Saved gross salary is lower than the transaction receipt or invalid; review salary metadata before using it for tax.",
+                })
+                continue
+            tax_amount = gross_salary
+        else:
+            tax_amount = amount
+
+        totals[selected_head] += tax_amount
+        details.append({
+            **original,
+            "tax_head": selected_head,
+            "tax_amount": money(tax_amount),
+            "classification_source": "salary_metadata" if selected_head == "salary" else ("keyword/category" if detected else "transaction_type"),
+        })
 
     return {
         **totals,
@@ -797,10 +850,55 @@ def get_itr_ready_tax_report(
     # 4. DEDUCTIONS / EXEMPT INCOME
     # --------------------------------------------------------
 
-    # Existing Module 10 confirms that there are currently
-    # no verified deduction claims or exempt-income claims.
+    # Only verified claims for this user/FY/regime may reduce taxable income.
+    # The statutory salary standard deduction is applied automatically when
+    # there is a live gross-salary source; it is not a user-entered expense.
+    verified_claims = (
+        db.query(TaxDeductionClaim)
+        .filter(
+            TaxDeductionClaim.user_id == user_id,
+            TaxDeductionClaim.financial_year == financial_year,
+            TaxDeductionClaim.tax_regime == regime.lower(),
+            TaxDeductionClaim.status == "verified",
+        )
+        .all()
+    )
+    exempt_keys = set(EXEMPT_INCOME_CATALOG)
+    claims_by_key = {}
+    for claim in verified_claims:
+        if claim.deduction_key in exempt_keys:
+            continue
+        item = DEDUCTION_CATALOG.get(claim.deduction_key)
+        if not item or not regime_available(item, regime.lower()):
+            continue
+        claims_by_key[claim.deduction_key] = claims_by_key.get(
+            claim.deduction_key, Decimal("0")
+        ) + decimal(claim.claimed_amount)
+
     verified_deductions = Decimal("0")
+    deduction_details = []
+    for key, claimed in claims_by_key.items():
+        item = DEDUCTION_CATALOG[key]
+        limits = item.get("maximum_amount_by_regime", {})
+        limit = limits.get(regime.lower(), item.get("maximum_amount"))
+        applied = min(claimed, Decimal(str(limit))) if limit is not None else claimed
+        # Standard deduction is statutory/automatic and calculated below.
+        if key == "STANDARD_DEDUCTION_SALARY":
+            continue
+        verified_deductions += applied
+        deduction_details.append({
+            "deduction_key": key,
+            "section": item.get("section"),
+            "claimed_amount": money(claimed),
+            "applied_amount": money(applied),
+        })
+
+    salary_record = db.query(TaxSalaryIncomeRecord).filter_by(
+        user_id=user_id, financial_year=financial_year, status="verified"
+    ).first()
+    standard_deduction = Decimal("0")
     verified_exempt_income = Decimal("0")
+    exempt_claim_details = []
 
     # --------------------------------------------------------
     # 5. INCOME HEAD AVAILABILITY
@@ -811,8 +909,66 @@ def get_itr_ready_tax_report(
     business_available = False
 
     salary_income = other_income["salary"]
+    # Statutory standard deduction for salary/pension, based on the current
+    # regime's catalogue limit. It applies only when gross salary was parsed
+    # from a linked transaction; it is never manufactured from a net receipt.
+    if salary_income > 0:
+        standard_item = DEDUCTION_CATALOG.get("STANDARD_DEDUCTION_SALARY", {})
+        standard_limits = standard_item.get("maximum_amount_by_regime", {})
+        standard_deduction = min(
+            salary_income,
+            Decimal(str(standard_limits.get(regime.lower(), 0))),
+        )
+        verified_deductions += standard_deduction
+        deduction_details.append({
+            "deduction_key": "STANDARD_DEDUCTION_SALARY",
+            "section": standard_item.get("section", "Section 16(ia)"),
+            "claimed_amount": money(standard_deduction),
+            "applied_amount": money(standard_deduction),
+            "automatic": True,
+        })
     house_property_income = Decimal("0")
     business_income = Decimal("0")
+
+    # HRA exemption is applied only against transaction-backed gross salary,
+    # with a verified annual salary/HRA record, and only under the old regime.
+    for claim in verified_claims:
+        if claim.deduction_key not in EXEMPT_INCOME_CATALOG:
+            continue
+        item = EXEMPT_INCOME_CATALOG[claim.deduction_key]
+        if not regime_available(item, regime.lower()):
+            continue
+        claimed_amount = max(decimal(claim.claimed_amount), Decimal("0"))
+        applied_amount = Decimal("0")
+        application_status = "disclosed_not_applied_without_matching_income_source"
+        if (
+            claim.deduction_key == "hra_exemption"
+            and regime.lower() == "old"
+            and salary_income > 0
+            and salary_record is not None
+        ):
+            try:
+                hra_inputs = HRAInputs(
+                    annual_basic_salary=salary_record.annual_basic_salary,
+                    annual_da_forming_retirement_benefits=salary_record.annual_da_forming_retirement_benefits,
+                    annual_commission_on_turnover_at_fixed_percentage=salary_record.annual_commission_on_turnover_at_fixed_percentage,
+                    annual_hra_received=salary_record.annual_hra_received,
+                    annual_rent_paid=salary_record.annual_rent_paid,
+                    city=salary_record.city,
+                )
+                hra_limit = decimal(calculate_hra_exemption(hra_inputs, "old", financial_year)["calculated_exemption"])
+                applied_amount = min(claimed_amount, hra_limit, salary_income)
+                application_status = "applied_to_salary_capped_by_verified_hra_calculation" if applied_amount > 0 else "not_applied_calculated_limit_zero"
+            except (ValueError, TypeError):
+                application_status = "not_applied_hra_inputs_invalid"
+        verified_exempt_income += applied_amount
+        exempt_claim_details.append({
+            "exemption_key": claim.deduction_key,
+            "section": item.get("section"),
+            "claimed_amount": money(claimed_amount),
+            "applied_amount": money(applied_amount),
+            "application_status": application_status,
+        })
 
     # --------------------------------------------------------
     # 6. PROVISIONAL TAXABLE INCOME
@@ -880,7 +1036,7 @@ def get_itr_ready_tax_report(
     # normal-rate income before calculating slab tax; do not calculate slab
     # tax on gross normal income and report a different taxable-income figure.
     normal_taxable_income = max(
-        normal_income - verified_deductions,
+        normal_income - verified_deductions - verified_exempt_income,
         Decimal("0"),
     )
 
@@ -924,15 +1080,17 @@ def get_itr_ready_tax_report(
     # 9. SURCHARGE
     # --------------------------------------------------------
 
-    # Current taxpayer data is far below surcharge thresholds.
-    # Keep surcharge zero unless taxable income crosses the
-    # applicable thresholds in a future data set.
-    surcharge = Decimal("0")
-
-    tax_after_surcharge = (
-        tax_before_surcharge
-        + surcharge
+    # Use the shared surcharge/marginal-relief rules rather than assuming
+    # surcharge is always zero. Keep the breakdown visible for review.
+    surcharge_calculation = calculate_surcharge(
+        provisional_taxable_income,
+        tax_after_rebate,
+        special_rate_tax,
+        regime.lower(),
     )
+    surcharge = decimal(surcharge_calculation.get("total", 0))
+
+    tax_after_surcharge = tax_before_surcharge + surcharge
 
     # --------------------------------------------------------
     # 10. CESS
@@ -947,6 +1105,48 @@ def get_itr_ready_tax_report(
         tax_after_surcharge
         + cess
     )
+
+    # --------------------------------------------------------
+    # TAX CREDITS: TDS/TCS/advance/self-assessment tax
+    # --------------------------------------------------------
+    credit_rows = (
+        db.query(TaxCreditEntry)
+        .filter(
+            TaxCreditEntry.user_id == user_id,
+            TaxCreditEntry.financial_year == financial_year,
+        )
+        .all()
+    )
+    credit_aliases = {
+        "tds": "tds",
+        "tax_deducted_at_source": "tds",
+        "tcs": "tcs",
+        "tax_collected_at_source": "tcs",
+        "advance_tax": "advance_tax",
+        "self_assessment_tax": "self_assessment_tax",
+    }
+    verified_credits = {key: Decimal("0") for key in ("tds", "tcs", "advance_tax", "self_assessment_tax")}
+    pending_credits = {key: Decimal("0") for key in verified_credits}
+    credit_details = []
+    for entry in credit_rows:
+        raw_type = str(entry.credit_type or "").strip().lower().replace(" ", "_").replace("-", "_")
+        normalized_type = credit_aliases.get(raw_type)
+        amount = decimal(entry.amount)
+        status = str(entry.status or "pending_review").lower()
+        if normalized_type and amount > 0:
+            if status == "verified":
+                verified_credits[normalized_type] += amount
+            else:
+                pending_credits[normalized_type] += amount
+        credit_details.append({
+            "id": entry.id,
+            "credit_type": entry.credit_type,
+            "amount": money(amount),
+            "status": status,
+            "source_reference": entry.source_reference,
+        })
+    total_verified_credits = sum(verified_credits.values(), Decimal("0"))
+    balance_after_verified_credits = total_tax_payable - total_verified_credits
 
     # --------------------------------------------------------
     # 11. COMPLETENESS CHECK
@@ -1084,25 +1284,19 @@ def get_itr_ready_tax_report(
 
         "deductions": {
             "regime": regime.lower(),
-            "verified_amount": money(
-                verified_deductions
-            ),
-            "data_available": False,
-            "status": (
-                "catalogue_available_claim_ledger_missing"
-            ),
-            "automatic_adjustment": False,
-            "reason": "Eligible claim amounts and evidence are not stored in a verified claims ledger; do not infer them from ordinary expenses.",
+            "verified_amount": money(verified_deductions),
+            "data_available": True,
+            "status": "verified_claims_and_automatic_standard_deduction_applied",
+            "automatic_adjustment": True,
+            "items": deduction_details,
+            "reason": "Only verified claims are applied. Salary standard deduction is applied automatically when transaction-backed gross salary is available. Ordinary expenses are not inferred as deductions.",
         },
 
         "exempt_income": {
-            "verified_amount": money(
-                verified_exempt_income
-            ),
-            "data_available": False,
-            "status": (
-                "framework_ready_no_verified_claims"
-            ),
+            "verified_amount": money(verified_exempt_income),
+            "data_available": bool(exempt_claim_details),
+            "status": "verified_hra_applied_where_supported_other_claims_disclosed",
+            "items": exempt_claim_details,
         },
 
         "taxable_income": {
@@ -1143,9 +1337,15 @@ def get_itr_ready_tax_report(
             "rebate_87a": money(
                 rebate_87a
             ),
-            "surcharge": money(
-                surcharge
-            ),
+            "surcharge": money(surcharge),
+            "surcharge_details": {
+                "rate": str(surcharge_calculation.get("rate", 0)),
+                "normal_income_surcharge": money(surcharge_calculation.get("normal_income_surcharge", 0)),
+                "special_rate_surcharge": money(surcharge_calculation.get("special_rate_surcharge", 0)),
+                "marginal_relief": money(surcharge_calculation.get("marginal_relief", 0)),
+                "marginal_relief_threshold": surcharge_calculation.get("marginal_relief_threshold"),
+                "marginal_relief_review_required": bool(surcharge_calculation.get("marginal_relief_review_required", False)),
+            },
             "cess": money(cess),
             "total_tax_payable": money(
                 total_tax_payable
@@ -1153,12 +1353,16 @@ def get_itr_ready_tax_report(
         },
 
         "tax_credits": {
-            "tds": None,
-            "advance_tax": None,
-            "self_assessment_tax": None,
-            "data_available": False,
-            "balance_payable_or_refund": None,
-            "status": "tax_credit_data_not_connected",
+            "tds": money(verified_credits["tds"]),
+            "tcs": money(verified_credits["tcs"]),
+            "advance_tax": money(verified_credits["advance_tax"]),
+            "self_assessment_tax": money(verified_credits["self_assessment_tax"]),
+            "verified_total": money(total_verified_credits),
+            "pending_review": {key: money(value) for key, value in pending_credits.items()},
+            "entries": credit_details,
+            "data_available": bool(credit_rows),
+            "balance_payable_or_refund": money(balance_after_verified_credits),
+            "status": "verified_credits_applied_pending_credits_disclosed" if credit_rows else "no_tax_credit_entries",
         },
 
         "deduction_rules": {

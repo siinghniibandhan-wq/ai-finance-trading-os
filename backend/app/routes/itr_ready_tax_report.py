@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.routes.ownership import require_matching_user_id
 from app.routes.final_tax_liability import calculate_surcharge
-from app.models import TaxDeductionClaim, TaxCreditEntry, TaxSalaryIncomeRecord
+from app.models import TaxBusinessIncomeRecord, TaxDeductionClaim, TaxCreditEntry, TaxSalaryIncomeRecord
 from app.routes.deductions_exempt_income import (
     DEDUCTION_CATALOG,
     EXEMPT_INCOME_CATALOG,
@@ -68,6 +68,32 @@ def decimal(value) -> Decimal:
         return Decimal(str(value))
     except Exception:
         return Decimal("0")
+
+
+
+
+def summarize_verified_business_records(records):
+    """Summarize reviewed business records without treating pending claims as taxable profit."""
+    receipts = Decimal("0")
+    expenses = Decimal("0")
+    count = 0
+    for record in records:
+        if getattr(record, "status", None) != "verified":
+            continue
+        amount = max(decimal(getattr(record, "amount", 0)), Decimal("0"))
+        record_type = getattr(record, "record_type", None)
+        if record_type == "receipt":
+            receipts += amount
+            count += 1
+        elif record_type == "expense":
+            expenses += amount
+            count += 1
+    return {
+        "verified_receipts": receipts,
+        "verified_expenses": expenses,
+        "net_profit_before_tax_rules": receipts - expenses,
+        "verified_record_count": count,
+    }
 
 
 def extract_gross_salary(description) -> Decimal | None:
@@ -972,6 +998,20 @@ def get_itr_ready_tax_report(
         })
     house_property_income = Decimal("0")
     business_income = Decimal("0")
+    business_summary = summarize_verified_business_records(
+        db.query(TaxBusinessIncomeRecord).filter_by(
+            user_id=user_id, financial_year=financial_year
+        ).all()
+    )
+    # Only reviewed records are included. Pending/self-reported records remain
+    # disclosed but do not affect taxable income. A positive net profit is added
+    # to the provisional total; a loss is not silently set off without the
+    # applicable business-loss rules and supporting schedules.
+    if business_summary["verified_record_count"] > 0:
+        business_available = True
+        business_income = max(
+            business_summary["net_profit_before_tax_rules"], Decimal("0")
+        )
 
     # HRA exemption is applied only against transaction-backed gross salary,
     # with a verified annual salary/HRA record, and only under the old regime.
@@ -1284,6 +1324,11 @@ def get_itr_ready_tax_report(
             "business_or_profession": {
                 "amount": money(business_income),
                 "available": business_available,
+                "verified_receipts": money(business_summary["verified_receipts"]),
+                "verified_expenses": money(business_summary["verified_expenses"]),
+                "net_profit_before_tax_rules": money(business_summary["net_profit_before_tax_rules"]),
+                "verified_record_count": business_summary["verified_record_count"],
+                "note": "Only verified business records are included. Loss set-off and presumptive taxation require separate validated schedules.",
             },
             "other_sources": {
                 "income": money(other_income["income"]),

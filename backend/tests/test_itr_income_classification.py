@@ -10,6 +10,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/financialos_tax_tests.db")
 from app.routes.itr_ready_tax_report import (  # noqa: E402
     apply_verified_annual_salary_record,
     load_other_income,
+    summarize_verified_business_records,
 )
 
 
@@ -98,6 +99,36 @@ class TaxIncomeClassificationTests(unittest.TestCase):
         result = load_other_income(FakeDB(), 1, date(2026, 4, 1), date(2027, 3, 31))
         self.assertEqual(result["dividend"], 300)
         self.assertEqual(result["other_sources_total"], 1500)
+
+    def test_business_profit_uses_only_verified_receipts_and_expenses(self):
+        class Record:
+            def __init__(self, record_type, amount, status):
+                self.record_type = record_type
+                self.amount = Decimal(amount)
+                self.status = status
+
+        summary = summarize_verified_business_records([
+            Record("receipt", "100000", "verified"),
+            Record("expense", "25000", "verified"),
+            Record("receipt", "90000", "pending_review"),
+            Record("expense", "5000", "pending_review"),
+        ])
+        self.assertEqual(summary["verified_receipts"], Decimal("100000"))
+        self.assertEqual(summary["verified_expenses"], Decimal("25000"))
+        self.assertEqual(summary["net_profit_before_tax_rules"], Decimal("75000"))
+        self.assertEqual(summary["verified_record_count"], 2)
+
+    def test_business_loss_is_not_silently_treated_as_positive_profit(self):
+        class Record:
+            def __init__(self, record_type, amount):
+                self.record_type = record_type
+                self.amount = Decimal(amount)
+                self.status = "verified"
+
+        summary = summarize_verified_business_records([
+            Record("receipt", "10000"), Record("expense", "15000")
+        ])
+        self.assertEqual(summary["net_profit_before_tax_rules"], Decimal("-5000"))
 
 
 if __name__ == "__main__":

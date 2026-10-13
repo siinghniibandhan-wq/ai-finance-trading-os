@@ -163,6 +163,27 @@ class Account(Base):
 # CATEGORIES
 # ============================================================
 
+# ============================================================
+# CHART OF ACCOUNTS — user-scoped accounting catalogue
+# ============================================================
+class ChartOfAccount(Base):
+    __tablename__ = "chart_of_accounts"
+    __table_args__ = (UniqueConstraint("user_id", "code", name="uq_chart_of_accounts_user_code"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String(40), nullable=False)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    account_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    parent_id: Mapped[int | None] = mapped_column(ForeignKey("chart_of_accounts.id", ondelete="RESTRICT"), nullable=True, index=True)
+    is_system: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    tax_mapping_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    parent = relationship("ChartOfAccount", remote_side=[id], backref="children")
+
+
 class Category(Base):
     __tablename__ = "categories"
 

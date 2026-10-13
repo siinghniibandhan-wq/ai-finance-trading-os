@@ -25,6 +25,7 @@ from app.routes import (
     users,
     loans,
     accounts,
+    chart_of_accounts,
     categories,
     transactions,
     dashboard,
@@ -227,6 +228,7 @@ app.include_router(vibe_trading.router)
 app.include_router(users.router)
 app.include_router(loans.router)
 app.include_router(accounts.router)
+app.include_router(chart_of_accounts.router)
 app.include_router(categories.router)
 app.include_router(transactions.router)
 app.include_router(dashboard.router)

@@ -728,7 +728,7 @@ def calculate_old_regime_slab_tax(
 
 @router.get("/", dependencies=[Depends(require_matching_user_id)])
 def get_itr_ready_tax_report(
-    user_id: int = Query(1),
+    user_id: int = Query(..., ge=1),
     financial_year: str = Query("2026-27"),
     regime: str = Query("new"),
     stt_confirmed: bool = Query(False),

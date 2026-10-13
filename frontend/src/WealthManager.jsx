@@ -5,7 +5,7 @@
 // ============================================================
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { apiFetch, getCurrentUserId } from "./api";
+import { API_BASE_URL, apiFetch, getCurrentUserId } from "./api";
 import {
   Wallet,
   TrendingUp,
@@ -32,7 +32,6 @@ import {
   CircleAlert,
 } from "lucide-react";
 
-const API_BASE_URL = "https://ai-finance-trading-os-api.onrender.com";
 const USER_ID = getCurrentUserId();
 const FINANCIAL_YEAR = "2026-27";
 

@@ -32,23 +32,48 @@ function ProtectedApp() {
   const [status, setStatus] = useState("checking");
   useEffect(() => {
     let cancelled = false;
+    let checking = false;
+
     const verify = async () => {
+      // Back/Forward can restore a page from browser cache without remounting React.
+      if (checking) return;
+      checking = true;
       if (!getAccessToken()) {
+        clearSession();
         if (!cancelled) setStatus("signed-out");
+        checking = false;
         return;
       }
       try {
-        const response = await apiFetch(`${API_BASE_URL}/api/auth/me`, { cache: "no-store" });
-        if (!response.ok) throw new Error("Session expired");
-        await response.json();
+        const response = await apiFetch(`${API_BASE_URL}/api/auth/me`, {
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) throw new Error("Session expired or revoked");
+        const user = await response.json();
+        let stored = null;
+        try { stored = JSON.parse(sessionStorage.getItem("financial_os_user") || "null"); } catch { /* clear malformed cached identity below */ }
+        if (!stored || Number(stored.id) !== Number(user.id) || stored.name !== user.name || stored.email !== user.email) {
+          sessionStorage.setItem("financial_os_user", JSON.stringify(user));
+        }
         if (!cancelled) setStatus("authenticated");
       } catch {
         clearSession();
         if (!cancelled) setStatus("signed-out");
+      } finally {
+        checking = false;
       }
     };
+
+    const onPageShow = () => { verify(); };
     verify();
-    return () => { cancelled = true; };
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("focus", onPageShow);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("focus", onPageShow);
+    };
   }, []);
 
   useEffect(() => {

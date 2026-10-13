@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.models import Budget, User
+from app.models import Budget, Category, User
 from app.routes.auth import get_current_user
 from app.schemas import (
     BudgetCreate,
@@ -39,11 +39,19 @@ def create_budget(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Never trust a user_id supplied by the client.
+    # Never trust a user_id supplied by the client or attach another user's category.
+    category = (
+        db.query(Category)
+        .filter(Category.id == budget_data.category_id, Category.user_id == current_user.id)
+        .first()
+    )
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found.")
+
     budget = Budget(
         user_id=current_user.id,
         month=budget_data.month,
-        category_id=budget_data.category_id,
+        category_id=category.id,
         amount=budget_data.amount,
     )
 
@@ -132,7 +140,14 @@ def update_budget(
         budget.month = budget_data.month
 
     if budget_data.category_id is not None:
-        budget.category_id = budget_data.category_id
+        category = (
+            db.query(Category)
+            .filter(Category.id == budget_data.category_id, Category.user_id == current_user.id)
+            .first()
+        )
+        if not category:
+            raise HTTPException(status_code=404, detail="Category not found.")
+        budget.category_id = category.id
 
     if budget_data.amount is not None:
         budget.amount = budget_data.amount

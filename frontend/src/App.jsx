@@ -432,16 +432,22 @@ export default function App() {
               type="button"
               aria-label="Sign out"
               title="Sign out"
-              onClick={async () => {
-                // Revoke the server-side session before clearing the local token.
-                // Always clear local credentials even if the API is unavailable.
+              onClick={() => {
+                // Capture the token before clearing local credentials. Start a
+                // keepalive revoke request, then immediately remove the local
+                // session and navigate away so the old UI cannot remain visible.
+                const token = sessionStorage.getItem("financial_os_access_token") || "";
                 try {
-                  await apiFetch(`${API_BASE_URL}/api/auth/logout`, {
-                    method: "POST",
-                    headers: { Accept: "application/json" },
-                  });
-                } catch (error) {
-                  console.warn("Server-side logout could not be confirmed.", error);
+                  if (token) {
+                    fetch(`${API_BASE_URL}/api/auth/logout`, {
+                      method: "POST",
+                      keepalive: true,
+                      headers: {
+                        Accept: "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }).catch((error) => console.warn("Server-side logout could not be confirmed.", error));
+                  }
                 } finally {
                   clearSession();
                   window.location.replace("/login");

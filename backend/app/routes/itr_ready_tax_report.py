@@ -997,6 +997,8 @@ def get_itr_ready_tax_report(
                     annual_commission_on_turnover_at_fixed_percentage=salary_record.annual_commission_on_turnover_at_fixed_percentage,
                     annual_hra_received=salary_record.annual_hra_received,
                     annual_rent_paid=salary_record.annual_rent_paid,
+                    accommodation_owned_by_taxpayer=salary_record.accommodation_owned_by_taxpayer,
+                    rent_actually_paid=salary_record.rent_actually_paid,
                     city=salary_record.city,
                 )
                 hra_limit = decimal(calculate_hra_exemption(hra_inputs, "old", financial_year)["calculated_exemption"])

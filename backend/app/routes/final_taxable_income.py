@@ -1142,6 +1142,8 @@ class TaxSalaryIncomeInput(BaseModel):
     annual_commission_on_turnover_at_fixed_percentage: Decimal = Field(default=Decimal("0"), ge=0, max_digits=18, decimal_places=2)
     annual_hra_received: Decimal = Field(ge=0, max_digits=18, decimal_places=2)
     annual_rent_paid: Decimal = Field(ge=0, max_digits=18, decimal_places=2)
+    accommodation_owned_by_taxpayer: bool = False
+    rent_actually_paid: bool = False
     city: str = Field(min_length=2, max_length=100)
     evidence_reference: str | None = Field(default=None, max_length=2000)
 
@@ -1157,6 +1159,8 @@ def _salary_record_summary(record):
         "annual_commission_on_turnover_at_fixed_percentage": str(record.annual_commission_on_turnover_at_fixed_percentage),
         "annual_hra_received": str(record.annual_hra_received),
         "annual_rent_paid": str(record.annual_rent_paid),
+        "accommodation_owned_by_taxpayer": bool(record.accommodation_owned_by_taxpayer),
+        "rent_actually_paid": bool(record.rent_actually_paid),
         "city": record.city,
         "evidence_reference": record.evidence_reference,
         "status": record.status,
@@ -1175,6 +1179,10 @@ def upsert_tax_salary_income(payload: TaxSalaryIncomeInput, current_user: User =
         raise HTTPException(status_code=400, detail="Eligible basic salary, DA and commission cannot exceed recorded gross salary.")
     if payload.annual_hra_received > payload.gross_salary:
         raise HTTPException(status_code=400, detail="HRA received cannot exceed recorded gross salary.")
+    if payload.annual_rent_paid > 0 and payload.accommodation_owned_by_taxpayer:
+        raise HTTPException(status_code=400, detail="HRA cannot be claimed for accommodation you own. Confirm eligible rented accommodation and actual rent paid.")
+    if payload.annual_rent_paid > 0 and not payload.rent_actually_paid:
+        raise HTTPException(status_code=400, detail="Confirm that rent was actually paid before recording HRA rent details.")
     record = db.query(TaxSalaryIncomeRecord).filter_by(user_id=current_user.id, financial_year=payload.financial_year).first()
     if record is None:
         record = TaxSalaryIncomeRecord(user_id=current_user.id, financial_year=payload.financial_year)

@@ -422,6 +422,8 @@ class HRAInputs(BaseModel):
     annual_commission_on_turnover_at_fixed_percentage: Decimal = Field(default=Decimal("0"), ge=0, max_digits=18, decimal_places=2)
     annual_hra_received: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     annual_rent_paid: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    accommodation_owned_by_taxpayer: bool = False
+    rent_actually_paid: bool = False
     city: str = Field(min_length=2, max_length=100)
     # Optional for backward compatibility with older clients that send city only.
     city_classification: str | None = Field(default=None, pattern=r"^(metro|non_metro)$")
@@ -439,6 +441,10 @@ def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str, financial_year: 
         raise ValueError("tax_regime must be 'old' or 'new'.")
     if regime == "new":
         raise ValueError("HRA exemption under section 10(13A) is not available under the selected new tax regime.")
+    if inputs.accommodation_owned_by_taxpayer:
+        raise ValueError("HRA exemption cannot be calculated for accommodation owned by the taxpayer. Use eligible rented accommodation details.")
+    if not inputs.rent_actually_paid:
+        raise ValueError("Confirm that rent was actually paid before calculating HRA exemption.")
 
     salary = (
         inputs.annual_basic_salary
@@ -465,6 +471,8 @@ def calculate_hra_exemption(inputs: HRAInputs, tax_regime: str, financial_year: 
         "section": "10(13A)",
         "tax_regime": "old",
         "city": inputs.city.strip(),
+        "accommodation_owned_by_taxpayer": inputs.accommodation_owned_by_taxpayer,
+        "rent_actually_paid": inputs.rent_actually_paid,
         "city_classification": city_classification,
         "city_classification_source": "server_tax_rules",
         "financial_year": financial_year,

@@ -24,6 +24,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.routes.ownership import require_matching_user_id
 
 
 # ============================================================
@@ -205,7 +206,7 @@ def resolve_asset_class(
 # LIST ASSET CLASSIFICATIONS
 # ============================================================
 
-@router.get("/")
+@router.get("/", dependencies=[Depends(require_matching_user_id)])
 def list_asset_classifications(
     user_id: int,
     db: Session = Depends(get_db),

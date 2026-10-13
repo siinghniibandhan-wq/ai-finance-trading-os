@@ -5,6 +5,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 
 from app.database.database import Base, engine
 
@@ -84,6 +85,40 @@ from app.routes import (
 Base.metadata.create_all(
     bind=engine
 )
+
+
+def _apply_hra_eligibility_schema_migration():
+    """Add HRA eligibility columns to existing databases safely.
+
+    SQLAlchemy create_all() creates missing tables but does not add columns to
+    existing tables. This idempotent startup migration repairs databases that
+    predate the HRA eligibility fields without modifying existing records.
+    """
+    table_name = "tax_salary_income_records"
+    inspector = inspect(engine)
+    if not inspector.has_table(table_name):
+        # The model/table may be unavailable in a minimal test configuration.
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+    missing_columns = {
+        "accommodation_owned_by_taxpayer": "BOOLEAN NOT NULL DEFAULT FALSE",
+        "rent_actually_paid": "BOOLEAN NOT NULL DEFAULT FALSE",
+    }
+
+    with engine.begin() as connection:
+        for column_name, column_definition in missing_columns.items():
+            if column_name not in existing_columns:
+                # Names and definitions are fixed constants, not user input.
+                connection.execute(
+                    text(
+                        f"ALTER TABLE {table_name} "
+                        f"ADD COLUMN {column_name} {column_definition}"
+                    )
+                )
+
+
+_apply_hra_eligibility_schema_migration()
 
 
 # ============================================================

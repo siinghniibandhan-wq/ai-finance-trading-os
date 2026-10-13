@@ -30,76 +30,108 @@ class AppRenderBoundary extends React.Component {
 
 function ProtectedApp() {
   const [status, setStatus] = useState("checking");
+
   useEffect(() => {
     let cancelled = false;
-    let checking = false;
+    let verificationPromise = null;
 
-    const verify = async () => {
-      // Back/Forward can restore a page from browser cache without remounting React.
-      if (checking) return;
-      checking = true;
-      if (!getAccessToken()) {
-        clearSession();
-        if (!cancelled) setStatus("signed-out");
-        checking = false;
-        return;
-      }
-      try {
-        const response = await apiFetch(`${API_BASE_URL}/api/auth/me`, {
-          cache: "no-store",
-          headers: { Accept: "application/json" },
-        });
-        if (!response.ok) throw new Error("Session expired or revoked");
-        const user = await response.json();
-        let stored = null;
-        try { stored = JSON.parse(sessionStorage.getItem("financial_os_user") || "null"); } catch { /* clear malformed cached identity below */ }
-        if (!stored || Number(stored.id) !== Number(user.id) || stored.name !== user.name || stored.email !== user.email) {
-          sessionStorage.setItem("financial_os_user", JSON.stringify(user));
-        }
-        if (!cancelled) setStatus("authenticated");
-      } catch {
-        clearSession();
-        if (!cancelled) setStatus("signed-out");
-      } finally {
-        checking = false;
-      }
-    };
-
-    const onPageShow = () => {
-      // Synchronously cover a BFCache-restored page before making any network
-      // request. The old DOM must not remain visible while /auth/me is pending.
+    const coverProtectedUI = () => {
       const root = document.getElementById("root");
       if (root) root.style.visibility = "hidden";
-      setStatus("checking");
-      if (!getAccessToken()) {
-        clearSession();
-        if (!cancelled) {
-          setStatus("signed-out");
-          window.location.replace("/login");
-        }
-        return;
-      }
-      verify().then(() => {
-        // Only reveal the app if verification succeeded. On failure the effect
-        // changes status to signed-out and navigates to /login.
-        if (!cancelled && getAccessToken()) {
-          // status may still be checking if verify is already in flight; only
-          // the authenticated state is allowed to reveal protected content.
-          setTimeout(() => {
-            if (document.getElementById("root") && getAccessToken()) {
-              document.getElementById("root").style.visibility = "";
-            }
-          }, 0);
-        }
-      });
     };
-    verify();
+
+    const showProtectedUI = () => {
+      const root = document.getElementById("root");
+      if (root) root.style.visibility = "";
+    };
+
+    const verify = () => {
+      // Share one in-flight verification. In particular, pageshow can fire
+      // while the initial mount verification is still running.
+      if (verificationPromise) return verificationPromise;
+
+      verificationPromise = (async () => {
+        const token = getAccessToken();
+        if (!token) {
+          clearSession();
+          if (!cancelled) setStatus("signed-out");
+          return false;
+        }
+
+        try {
+          const response = await apiFetch(`${API_BASE_URL}/api/auth/me`, {
+            cache: "no-store",
+            headers: { Accept: "application/json" },
+          });
+          if (!response.ok) throw new Error("Session expired or revoked");
+
+          const user = await response.json();
+          if (!user || !user.id) throw new Error("Invalid session identity");
+
+          // Refresh cached identity only from the authenticated backend response.
+          sessionStorage.setItem("financial_os_user", JSON.stringify(user));
+          if (!cancelled) setStatus("authenticated");
+          return true;
+        } catch {
+          clearSession();
+          if (!cancelled) setStatus("signed-out");
+          return false;
+        } finally {
+          verificationPromise = null;
+        }
+      })();
+
+      return verificationPromise;
+    };
+
+    const onPageShow = async () => {
+      // pageshow also fires on the first load. Keep the root covered until the
+      // backend verification completes; never reveal it just because a token
+      // still exists in sessionStorage.
+      coverProtectedUI();
+      if (!cancelled) setStatus("checking");
+
+      const valid = await verify();
+      if (cancelled) return;
+
+      if (valid && getAccessToken()) {
+        showProtectedUI();
+      } else {
+        coverProtectedUI();
+        window.location.replace("/login");
+      }
+    };
+
+    const onPageHide = () => {
+      // Prevent a previously rendered protected screen from being displayed
+      // when the browser restores it from the back-forward cache.
+      coverProtectedUI();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") onPageShow();
+    };
+
+    // Cover synchronously before the first async request.
+    coverProtectedUI();
+    verify().then((valid) => {
+      if (cancelled) return;
+      if (valid && getAccessToken()) showProtectedUI();
+      else {
+        coverProtectedUI();
+        window.location.replace("/login");
+      }
+    });
+
     window.addEventListener("pageshow", onPageShow);
-    window.addEventListener("focus", onPageShow);
+    window.addEventListener("pagehide", onPageHide);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
     return () => {
       cancelled = true;
       window.removeEventListener("pageshow", onPageShow);
-      window.removeEventListener("focus", onPageShow);
+      window.removeEventListener("pagehide", onPageHide);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, []);
 

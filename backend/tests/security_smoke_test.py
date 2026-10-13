@@ -91,6 +91,12 @@ def main():
     # Protected endpoints must reject requests without a Bearer token.
     protected_paths = [
         "/api/accounts/",
+        "/api/categories/",
+        "/api/budgets/",
+        "/api/goals/",
+        "/api/finance-diary/",
+        "/api/profile/me",
+        "/api/users/",
         "/api/transactions/",
         "/api/investments/",
         "/api/investment-transactions/",
@@ -116,6 +122,14 @@ def main():
             passes += 1
         else:
             failures.append(f"Unauthenticated GET {path} expected 401/403, got {status}: {body!r}")
+
+    # Ordinary users must not be able to use administrative user-management APIs.
+    status, body = request("GET", "/api/users/", token=token_a)
+    if status == 403:
+        print("PASS non-admin cannot list users: GET /api/users/ -> 403")
+        passes += 1
+    else:
+        failures.append(f"Non-admin GET /api/users/ expected 403, got {status}: {body!r}")
 
     # A valid User A token must not authorize a request scoped to User B.
     # These GET routes explicitly use the shared require_matching_user_id dependency.
@@ -155,6 +169,11 @@ def main():
 
     # User B's own access should still work for their own user-scoped routes.
     own_user_paths = [
+        "/api/profile/me",
+        "/api/finance-diary/",
+        "/api/goals/",
+        "/api/budgets/",
+        "/api/categories/",
         f"/api/dashboard/summary?user_id={id_b}",
         f"/api/financial-summary/?user_id={id_b}",
         f"/api/tax-data/?user_id={id_b}",

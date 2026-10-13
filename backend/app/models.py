@@ -357,6 +357,39 @@ class Transaction(Base):
 
 
 # ============================================================
+# PERSISTENT DOUBLE-ENTRY LEDGER
+# One journal header per source transaction; lines must balance.
+# Existing transactions remain the source records.
+# ============================================================
+
+class JournalEntry(Base):
+    __tablename__ = "journal_entries"
+    __table_args__ = (UniqueConstraint("user_id", "transaction_id", name="uq_journal_user_transaction"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    transaction_id: Mapped[int] = mapped_column(ForeignKey("transactions.id", ondelete="CASCADE"), nullable=False, index=True)
+    entry_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    lines = relationship("JournalLine", back_populates="entry", cascade="all, delete-orphan")
+
+
+class JournalLine(Base):
+    __tablename__ = "journal_lines"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    journal_entry_id: Mapped[int] = mapped_column(ForeignKey("journal_entries.id", ondelete="CASCADE"), nullable=False, index=True)
+    chart_of_account_id: Mapped[int] = mapped_column(ForeignKey("chart_of_accounts.id", ondelete="RESTRICT"), nullable=False, index=True)
+    financial_account_id: Mapped[int | None] = mapped_column(ForeignKey("accounts.id", ondelete="SET NULL"), nullable=True, index=True)
+    description: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    debit: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=Decimal("0.00"))
+    credit: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=Decimal("0.00"))
+    entry_order: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    entry = relationship("JournalEntry", back_populates="lines")
+
+
+# ============================================================
 # FINANCIAL GOALS
 # Persistent user-defined planning goals. These records do not
 # alter account balances or transactions.

@@ -107,6 +107,7 @@ def main():
         f"/api/tax-context/?user_id={id_a}",
         f"/api/capital-gains/?user_id={id_a}",
         f"/api/itr-ready-tax-report/?user_id={id_a}",
+        f"/api/final-taxable-income/?user_id={id_a}",
     ]
     for path in protected_paths:
         status, body = request("GET", path)
@@ -136,9 +137,11 @@ def main():
         f"/api/income-tax-aggregation/?user_id={id_b}",
         f"/api/income-tax-loss-setoff/?user_id={id_b}",
         f"/api/itr-ready-tax-report/?user_id={id_b}",
+        f"/api/final-taxable-income/?user_id={id_b}",
         f"/api/tax-calculation/?user_id={id_b}",
         f"/api/tax-context/?user_id={id_b}",
         f"/api/tax-data/?user_id={id_b}",
+        f"/api/final-taxable-income/?user_id={id_b}",
         f"/api/tax-liability/?user_id={id_b}",
         f"/api/watchlist/?user_id={id_b}",
     ]
@@ -155,6 +158,7 @@ def main():
         f"/api/dashboard/summary?user_id={id_b}",
         f"/api/financial-summary/?user_id={id_b}",
         f"/api/tax-data/?user_id={id_b}",
+        f"/api/final-taxable-income/?user_id={id_b}",
     ]
     for path in own_user_paths:
         status, body = request("GET", path, token=token_b)

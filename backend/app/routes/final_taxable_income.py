@@ -46,7 +46,7 @@ from sqlalchemy import func
 
 from app.database.database import get_db
 from app.routes.ownership import require_matching_user_id
-from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim, TaxSalaryIncomeRecord, User
+from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim, TaxSalaryIncomeRecord, TaxBusinessIncomeRecord, User
 from app.routes.auth import get_current_user
 from app.routes.deductions_exempt_income import (
     DEDUCTION_CATALOG, EXEMPT_INCOME_CATALOG, HRAInputs, calculate_hra_exemption, regime_available,
@@ -1017,6 +1017,7 @@ def load_other_source_income(
     user_id,
     start_date,
     end_date,
+    excluded_transaction_ids=None,
 ):
     """
     Load explicitly classified other-source income while excluding
@@ -1028,6 +1029,7 @@ def load_other_source_income(
     review rather than treating the full recovery as income.
     """
 
+    excluded_transaction_ids = set(excluded_transaction_ids or [])
     rows = (
         db.query(Transaction, LoanMovement)
         .outerjoin(
@@ -1043,6 +1045,7 @@ def load_other_source_income(
             Transaction.transaction_type.in_(INCOME_TRANSACTION_TYPES),
             Transaction.transaction_date >= start_date,
             Transaction.transaction_date <= end_date,
+            *([Transaction.id.notin_(excluded_transaction_ids)] if excluded_transaction_ids else []),
             # Borrowed money is not income. Salary-category transactions are
             # handled exclusively by load_salary_income_from_transactions(),
             # which reads gross salary from the saved salary details. Excluding
@@ -1306,16 +1309,53 @@ def get_final_taxable_income(
         }
 
     # ========================================================
+    # VERIFIED BUSINESS / PROFESSIONAL RECEIPTS
+    # ========================================================
+    # A tax receipt is included only when it is verified and explicitly linked
+    # to the user's matching Money transaction. Require matching date and
+    # amount so a stale/mismatched link cannot inflate taxable income.
+    # Any transaction linked to a business record is excluded from Other
+    # Sources to prevent the same receipt being counted under two heads.
+    business_records_for_year = db.query(TaxBusinessIncomeRecord).filter_by(
+        user_id=user_id, financial_year=financial_year, record_type="receipt"
+    ).all()
+    linked_business_transaction_ids = {
+        record.source_transaction_id
+        for record in business_records_for_year
+        if record.source_transaction_id is not None
+    }
+    verified_business_receipts = []
+    for record in business_records_for_year:
+        if record.status != "verified" or record.source_transaction_id is None:
+            continue
+        transaction = db.query(Transaction).filter_by(
+            id=record.source_transaction_id, user_id=user_id
+        ).first()
+        if transaction is None:
+            continue
+        if transaction.transaction_date != record.transaction_date:
+            continue
+        if decimal(transaction.amount) != decimal(record.amount):
+            continue
+        if not (start_date <= record.transaction_date <= end_date):
+            continue
+        verified_business_receipts.append(record)
+
+    business_profession_income = sum(
+        (decimal(record.amount) for record in verified_business_receipts),
+        Decimal("0"),
+    )
+
+    # ========================================================
     # OTHER SOURCES
     # ========================================================
 
-    other_sources = (
-        load_other_source_income(
-            db,
-            user_id,
-            start_date,
-            end_date,
-        )
+    other_sources = load_other_source_income(
+        db,
+        user_id,
+        start_date,
+        end_date,
+        excluded_transaction_ids=linked_business_transaction_ids,
     )
 
     # ========================================================
@@ -1500,8 +1540,6 @@ def get_final_taxable_income(
 
     house_property_income = None
 
-    business_profession_income = None
-
     # ========================================================
     # AVAILABLE GROSS INCOME
     # ========================================================
@@ -1532,6 +1570,7 @@ def get_final_taxable_income(
     available_gross_income = (
         available_other_income
         + available_capital_gains
+        + business_profession_income
         + (salary_income if salary_income is not None else Decimal("0"))
     )
 
@@ -1680,13 +1719,15 @@ def get_final_taxable_income(
             },
 
             "business_or_profession": {
-                "available":
-                    False,
-                "amount":
-                    None,
-                "reason":
-                    "No dedicated business/profession "
-                    "income source is currently available.",
+                "available": bool(verified_business_receipts),
+                "amount": money(business_profession_income) if verified_business_receipts else None,
+                "verified_linked_receipt_count": len(verified_business_receipts),
+                "linked_receipt_count": len(linked_business_transaction_ids),
+                "source": "Verified tax business receipts explicitly linked to matching Money transactions; linked transactions are excluded from Other Sources.",
+                "reason": (
+                    None if verified_business_receipts else
+                    "No verified business/profession receipt with a matching linked Money transaction, date, and amount exists for this financial year. Unlinked, pending, or mismatched records are excluded."
+                ),
             },
 
             "other_sources": {

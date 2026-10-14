@@ -116,3 +116,22 @@ def test_concurrent_same_symbol_requests_share_one_provider_fetch(monkeypatch):
 
     assert prices == [Decimal("123.45")] * 6
     assert calls == ["RELIANCE"]
+
+
+def test_quote_metadata_keeps_original_gateway_retrieval_timestamp_on_cache_hit(monkeypatch):
+    calls = []
+
+    def fake_fetch(symbol):
+        calls.append(symbol)
+        return Decimal("123.45")
+
+    monkeypatch.setattr(market_price, "_fetch_gateway_quote", fake_fetch)
+    monkeypatch.setattr(market_price, "MARKET_PRICE_CACHE_TTL_SECONDS", 1.0)
+
+    fresh = market_price.get_market_quote("RELIANCE")
+    cached = market_price.get_market_quote("RELIANCE")
+
+    assert fresh["cache_hit"] is False
+    assert cached["cache_hit"] is True
+    assert cached["retrieved_at"] == fresh["retrieved_at"]
+    assert calls == ["RELIANCE"]

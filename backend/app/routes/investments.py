@@ -627,8 +627,16 @@ def refresh_market_prices(
                 instrument_master_id,
                 instrument_master.exchange AS instrument_exchange,
                 instrument_master.symbol AS master_symbol,
-                quantity,
-                buy_price,
+                CASE
+                    WHEN COALESCE(tx.ledger_count, 0) > 0
+                    THEN COALESCE(tx.active_quantity, 0)
+                    ELSE investments.quantity
+                END AS quantity,
+                CASE
+                    WHEN COALESCE(tx.buy_quantity, 0) > 0
+                    THEN tx.weighted_buy_price
+                    ELSE investments.buy_price
+                END AS buy_price,
                 current_price,
                 buy_date,
                 broker,
@@ -639,6 +647,37 @@ def refresh_market_prices(
 
             FROM investments
             LEFT JOIN instrument_master ON instrument_master.id = investments.instrument_master_id
+            LEFT JOIN (
+                SELECT
+                    investment_id,
+                    COUNT(*) AS ledger_count,
+                    COALESCE(SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                             THEN quantity ELSE 0 END
+                    ), 0) - COALESCE(SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'SELL'
+                             THEN quantity ELSE 0 END
+                    ), 0) AS active_quantity,
+                    COALESCE(SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                             THEN quantity ELSE 0 END
+                    ), 0) AS buy_quantity,
+                    CASE WHEN COALESCE(SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                             THEN quantity ELSE 0 END
+                    ), 0) > 0
+                    THEN SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                             THEN quantity * price + COALESCE(fees, 0) ELSE 0 END
+                    ) / SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                             THEN quantity ELSE 0 END
+                    )
+                    ELSE NULL END AS weighted_buy_price
+                FROM investment_transactions
+                WHERE user_id = :user_id
+                GROUP BY investment_id
+            ) tx ON tx.investment_id = investments.id
             WHERE investments.user_id = :user_id
 
             ORDER BY id ASC
@@ -934,8 +973,16 @@ def refresh_single_investment(
                 instrument_master_id,
                 instrument_master.exchange AS instrument_exchange,
                 instrument_master.symbol AS master_symbol,
-                quantity,
-                buy_price,
+                CASE
+                    WHEN COALESCE(tx.ledger_count, 0) > 0
+                    THEN COALESCE(tx.active_quantity, 0)
+                    ELSE investments.quantity
+                END AS quantity,
+                CASE
+                    WHEN COALESCE(tx.buy_quantity, 0) > 0
+                    THEN tx.weighted_buy_price
+                    ELSE investments.buy_price
+                END AS buy_price,
                 current_price,
                 buy_date,
                 broker,
@@ -946,6 +993,37 @@ def refresh_single_investment(
 
             FROM investments
             LEFT JOIN instrument_master ON instrument_master.id = investments.instrument_master_id
+            LEFT JOIN (
+                SELECT
+                    investment_id,
+                    COUNT(*) AS ledger_count,
+                    COALESCE(SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                             THEN quantity ELSE 0 END
+                    ), 0) - COALESCE(SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'SELL'
+                             THEN quantity ELSE 0 END
+                    ), 0) AS active_quantity,
+                    COALESCE(SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                             THEN quantity ELSE 0 END
+                    ), 0) AS buy_quantity,
+                    CASE WHEN COALESCE(SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                             THEN quantity ELSE 0 END
+                    ), 0) > 0
+                    THEN SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                             THEN quantity * price + COALESCE(fees, 0) ELSE 0 END
+                    ) / SUM(
+                        CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                             THEN quantity ELSE 0 END
+                    )
+                    ELSE NULL END AS weighted_buy_price
+                FROM investment_transactions
+                WHERE user_id = :user_id
+                GROUP BY investment_id
+            ) tx ON tx.investment_id = investments.id
             WHERE investments.id = :investment_id AND investments.user_id = :user_id
             """
         ),

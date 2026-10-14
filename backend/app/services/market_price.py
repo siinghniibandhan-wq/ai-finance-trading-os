@@ -21,6 +21,7 @@ IMPORTANT:
 
 import json
 import os
+from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from threading import Event, Lock
 from time import monotonic
@@ -52,7 +53,7 @@ def _read_cache_ttl() -> float:
 
 MARKET_PRICE_CACHE_TTL_SECONDS = _read_cache_ttl()
 MARKET_PRICE_CACHE_MAX_ENTRIES = 1000
-# symbol -> (monotonic insertion time, Decimal price)
+# symbol -> (monotonic insertion time, Decimal price, gateway retrieval timestamp)
 _MARKET_PRICE_CACHE = {}
 _MARKET_PRICE_CACHE_LOCK = Lock()
 # Coalesce concurrent cache misses for the same symbol without blocking other symbols.
@@ -275,39 +276,40 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
 # PUBLIC MARKET PRICE FUNCTION
 # ============================================================
 
-def get_market_price(
+def get_market_quote(
     symbol: str,
-) -> Decimal:
+) -> dict:
     """
-    Return the latest market price.
+    Return quote data with the original gateway-retrieval timestamp.
 
-    The investment API can call this function without
-    knowing anything about m.Stock authentication.
-
-    Authentication remains inside the AWS gateway.
+    ``retrieved_at`` records when this backend successfully obtained the quote
+    from the gateway. It is deliberately not labelled as the exchange/provider
+    market timestamp, which this gateway response does not currently expose.
     """
-
     if not MSTOCK_GATEWAY_URL:
-
-        raise MarketPriceError(
-            "MSTOCK_GATEWAY_URL is not configured."
-        )
+        raise MarketPriceError("MSTOCK_GATEWAY_URL is not configured.")
 
     normalized_symbol = normalize_symbol(symbol)
     ttl = MARKET_PRICE_CACHE_TTL_SECONDS
-    now = monotonic()
 
     if ttl <= 0:
-        return _fetch_gateway_quote(normalized_symbol)
+        price = _fetch_gateway_quote(normalized_symbol)
+        return {
+            "price": price,
+            "retrieved_at": datetime.now(timezone.utc).isoformat(),
+            "cache_hit": False,
+        }
 
-    # A single in-flight request per symbol prevents simultaneous cache misses
-    # from multiplying provider calls. Other symbols remain free to fetch concurrently.
     while True:
         with _MARKET_PRICE_CACHE_LOCK:
             now = monotonic()
             cached = _MARKET_PRICE_CACHE.get(normalized_symbol)
             if cached and now - cached[0] <= ttl:
-                return cached[1]
+                return {
+                    "price": cached[1],
+                    "retrieved_at": cached[2],
+                    "cache_hit": True,
+                }
 
             event = _MARKET_PRICE_INFLIGHT.get(normalized_symbol)
             if event is None:
@@ -318,13 +320,12 @@ def get_market_price(
                 is_fetcher = False
 
         if not is_fetcher:
-            # The request owner will populate the cache on success. If it fails,
-            # wake-up causes this caller to retry and receive its own provider error.
             event.wait()
             continue
 
         try:
             price = _fetch_gateway_quote(normalized_symbol)
+            retrieved_at = datetime.now(timezone.utc).isoformat()
 
             with _MARKET_PRICE_CACHE_LOCK:
                 cutoff = monotonic() - ttl
@@ -342,10 +343,21 @@ def get_market_price(
                     )
                     _MARKET_PRICE_CACHE.pop(oldest_key, None)
 
-                _MARKET_PRICE_CACHE[normalized_symbol] = (monotonic(), price)
+                _MARKET_PRICE_CACHE[normalized_symbol] = (
+                    monotonic(), price, retrieved_at
+                )
 
-            return price
+            return {
+                "price": price,
+                "retrieved_at": retrieved_at,
+                "cache_hit": False,
+            }
         finally:
             with _MARKET_PRICE_CACHE_LOCK:
                 _MARKET_PRICE_INFLIGHT.pop(normalized_symbol, None)
                 event.set()
+
+
+def get_market_price(symbol: str) -> Decimal:
+    """Backward-compatible price-only interface for existing callers."""
+    return get_market_quote(symbol)["price"]

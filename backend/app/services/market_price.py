@@ -258,9 +258,7 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
 
     try:
 
-        return Decimal(
-            str(raw_price)
-        )
+        price = Decimal(str(raw_price))
 
     except (
         InvalidOperation,
@@ -270,6 +268,16 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
         raise MarketPriceError(
             f"Invalid market price returned for {symbol}."
         ) from exc
+
+    # Reject provider values that cannot represent a usable market quote.
+    # Decimal accepts NaN and Infinity as valid Decimal objects, so conversion
+    # alone is not sufficient validation.
+    if not price.is_finite() or price <= 0:
+        raise MarketPriceError(
+            f"Invalid market price returned for {symbol}."
+        )
+
+    return price
 
 
 # ============================================================

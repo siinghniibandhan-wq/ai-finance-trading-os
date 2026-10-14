@@ -68,3 +68,19 @@ def test_create_transaction_locks_investment_row_before_validating_ledger():
 
     assert "FROM investments" in create_route
     assert "FOR UPDATE" in create_route
+
+@pytest.mark.parametrize("route_name", ["update_transaction", "void_transaction"])
+def test_edit_and_void_lock_parent_investment_before_reading_active_timeline(route_name):
+    from pathlib import Path
+
+    source = Path(__file__).parents[1].joinpath(
+        "app", "routes", "investment_transactions.py"
+    ).read_text()
+    route_start = source.index(f"def {route_name}(")
+    route_end = source.find("\n@router.", route_start + 1)
+    route_source = source[route_start:route_end if route_end != -1 else None]
+
+    parent_lock = route_source.index("SELECT id FROM investments")
+    lock_clause = route_source.index("FOR UPDATE", parent_lock)
+    ledger_timeline = route_source.index("SELECT id, transaction_type, quantity, transaction_date")
+    assert parent_lock < lock_clause < ledger_timeline

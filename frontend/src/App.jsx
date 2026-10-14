@@ -1067,6 +1067,11 @@ function TaxPage() {
   const [creditBusy, setCreditBusy] = useState(false);
   const [creditMessage, setCreditMessage] = useState("");
   const [creditError, setCreditError] = useState("");
+  const [hpRecords, setHpRecords] = useState([]);
+  const [hpForm, setHpForm] = useState({ property_type: "let_out", property_label: "", annual_rent_received: "", municipal_taxes_paid: "", interest_on_housing_loan: "" });
+  const [hpBusy, setHpBusy] = useState(false);
+  const [hpMessage, setHpMessage] = useState("");
+  const [hpError, setHpError] = useState("");
 
   const sections = [
     "Overview",
@@ -1360,6 +1365,106 @@ function TaxPage() {
     }
   };
 
+  // House property income (let-out, self-occupied, or "none"). Entries are saved
+  // as pending and count in taxable income only after the person verifies them.
+  const loadHouseProperty = async () => {
+    try {
+      const r = await apiFetch(`${API_BASE_URL}/api/tax-house-property/?financial_year=${encodeURIComponent(financialYear)}`);
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) setHpRecords(Array.isArray(d?.entries) ? d.entries : []);
+    } catch (err) { /* list stays as it was */ }
+  };
+  useEffect(() => { loadHouseProperty(); }, [financialYear]);
+
+  const hpCall = async (url, options, doneMessage) => {
+    setHpBusy(true); setHpError(""); setHpMessage("");
+    try {
+      const r = await apiFetch(url, options);
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(typeof d?.detail === "string" ? d.detail : `Request failed (${r.status}).`);
+      setHpMessage(doneMessage);
+      await loadHouseProperty();
+      await loadTaxData();
+      return true;
+    } catch (err) {
+      setHpError(err?.message || "Unable to update the house property record.");
+      return false;
+    } finally { setHpBusy(false); }
+  };
+  const hpPost = (body) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const addHouseProperty = async () => {
+    const isNone = hpForm.property_type === "none";
+    const isLetOut = hpForm.property_type === "let_out";
+    if (isLetOut && !(Number(hpForm.annual_rent_received) > 0)) { setHpError("Enter the yearly rent received for a let-out property."); return; }
+    const ok = await hpCall(`${API_BASE_URL}/api/tax-house-property/`, hpPost({
+      financial_year: financialYear,
+      property_type: hpForm.property_type,
+      property_label: hpForm.property_label.trim() || null,
+      annual_rent_received: isLetOut ? Number(hpForm.annual_rent_received) || 0 : 0,
+      municipal_taxes_paid: isLetOut ? Number(hpForm.municipal_taxes_paid) || 0 : 0,
+      interest_on_housing_loan: isNone ? 0 : Number(hpForm.interest_on_housing_loan) || 0,
+    }), "Saved as pending. It does not affect your taxable income until you verify it.");
+    if (ok) setHpForm((f) => ({ ...f, property_label: "", annual_rent_received: "", municipal_taxes_paid: "", interest_on_housing_loan: "" }));
+  };
+  const verifyHouseProperty = (id) => {
+    const reference = window.prompt("Enter an evidence reference you can find later (for example: rent agreement, loan interest certificate). The app does not check documents.");
+    if (!reference || reference.trim().length < 3) return;
+    hpCall(`${API_BASE_URL}/api/tax-house-property/${id}/verify`, hpPost({ evidence_reference: reference.trim() }), "Marked verified on your confirmation. Keep the supporting documents.");
+  };
+  const unverifyHouseProperty = (id) => hpCall(`${API_BASE_URL}/api/tax-house-property/${id}/unverify`, hpPost({}), "Returned to pending review. It no longer affects taxable income.");
+  const deleteHouseProperty = (id) => { if (window.confirm("Delete this house property record?")) hpCall(`${API_BASE_URL}/api/tax-house-property/${id}`, { method: "DELETE" }, "Record deleted."); };
+
+  const renderHouseProperty = () => {
+    const box = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(12,16,30,0.72)", color: "inherit" };
+    const head = incomeData?.income_heads?.house_property || {};
+    const typeNames = { let_out: "Let-out property", self_occupied: "Self-occupied property", none: "No house property income" };
+    const isNone = hpForm.property_type === "none";
+    const isLetOut = hpForm.property_type === "let_out";
+    return (
+      <div style={{ ...panelStyle, marginTop: 18 }}>
+        <h3 style={{ marginTop: 0 }}>House property income</h3>
+        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: 12, lineHeight: 1.6 }}>Add each property for {financialYear}, or confirm that you have none. A record counts in your taxable income only after you verify it. Rent receipts in Money are never counted automatically. The app does not inspect documents.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "10px", marginBottom: "12px" }}>
+          <div style={cardStyle}><div style={labelStyle}>House property income counted</div><div style={valueStyle}>{head.available ? formatCurrency(head.amount) : "Not available"}</div>{!head.available && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", marginTop: 4 }}>{safeText(head.reason, "No verified record yet.")}</div>}</div>
+          {head.available && Number(head.loss_not_set_off) > 0 && <div style={cardStyle}><div style={labelStyle}>Loss not set off</div><div style={valueStyle}>{formatCurrency(head.loss_not_set_off)}</div><div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", marginTop: 4 }}>Above the allowed limit, or not allowed in this regime. Carry-forward is not calculated here.</div></div>}
+        </div>
+        {Number(head.money_rent_transactions_detected) > 0 && <div style={{ color: "#fbbf24", fontSize: 12, marginBottom: 12 }}>{head.money_rent_transactions_detected} rent receipt(s) totalling {formatCurrency(head.money_rent_total_detected)} are recorded in Money under House Property. They are not counted until you add and verify a house property record.</div>}
+        <div style={{ display: "grid", gap: "8px" }}>
+          <select aria-label="Property type" style={box} value={hpForm.property_type} onChange={(e) => setHpForm((f) => ({ ...f, property_type: e.target.value }))}>
+            <option value="let_out">Let-out property (rented to someone)</option>
+            <option value="self_occupied">Self-occupied property</option>
+            <option value="none">I have no house property income</option>
+          </select>
+          {!isNone && <input aria-label="Property name" style={box} type="text" maxLength={120} placeholder="Property name (optional)" value={hpForm.property_label} onChange={(e) => setHpForm((f) => ({ ...f, property_label: e.target.value }))} />}
+          {isLetOut && <input aria-label="Yearly rent received" style={box} type="number" min="0" step="0.01" placeholder="Rent received in the year (₹)" value={hpForm.annual_rent_received} onChange={(e) => setHpForm((f) => ({ ...f, annual_rent_received: e.target.value }))} />}
+          {isLetOut && <input aria-label="Municipal taxes paid" style={box} type="number" min="0" step="0.01" placeholder="Municipal taxes paid by you (₹, optional)" value={hpForm.municipal_taxes_paid} onChange={(e) => setHpForm((f) => ({ ...f, municipal_taxes_paid: e.target.value }))} />}
+          {!isNone && <input aria-label="Home loan interest" style={box} type="number" min="0" step="0.01" placeholder="Home loan interest paid in the year (₹, optional)" value={hpForm.interest_on_housing_loan} onChange={(e) => setHpForm((f) => ({ ...f, interest_on_housing_loan: e.target.value }))} />}
+          <button type="button" className="primary-button" disabled={hpBusy} onClick={addHouseProperty}>Add house property record</button>
+          {hpError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px" }}>{hpError}</div>}
+          {hpMessage && <div role="status" style={{ color: "#86efac", fontSize: "12px" }}>{hpMessage}</div>}
+        </div>
+        <div style={{ display: "grid", gap: "10px", marginTop: "14px" }}>
+          {hpRecords.length === 0 && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>No house property records for this year.</div>}
+          {hpRecords.map((r) => (
+            <div key={r.id} style={{ ...cardStyle, padding: "13px" }}>
+              <div style={labelStyle}>{typeNames[r.property_type] || r.property_type}{r.property_label ? ` · ${r.property_label}` : ""} · {r.status === "verified" ? "Verified" : "Pending review"}</div>
+              {r.property_type !== "none" && <div style={{ color: "rgba(255,255,255,0.62)", fontSize: "12px", margin: "6px 0" }}>
+                {r.property_type === "let_out" && <>Rent {formatCurrency(r.annual_rent_received)} · Municipal taxes {formatCurrency(r.municipal_taxes_paid)} · </>}Loan interest {formatCurrency(r.interest_on_housing_loan)}
+              </div>}
+              {r.property_type !== "none" && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", marginBottom: "8px" }}>Estimated income from this property (old regime): {formatCurrency(r.estimated_income_old_regime)}</div>}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {r.status === "verified"
+                  ? <button type="button" className="secondary-button" disabled={hpBusy} onClick={() => unverifyHouseProperty(r.id)}>Set back to pending</button>
+                  : <button type="button" className="secondary-button" disabled={hpBusy} onClick={() => verifyHouseProperty(r.id)}>Verify</button>}
+                <button type="button" className="secondary-button" disabled={hpBusy} onClick={() => deleteHouseProperty(r.id)}>Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   // Tax credits (TDS, advance tax, self-assessment tax). Entries are saved as
   // pending and only count once verified on the person's own confirmation.
   const loadTaxCredits = async () => {
@@ -1559,6 +1664,7 @@ function TaxPage() {
           </div>
         )}
       </div>
+      {renderHouseProperty()}
     </div>
   );
 

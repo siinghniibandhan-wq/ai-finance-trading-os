@@ -22,6 +22,8 @@ IMPORTANT:
 import json
 import os
 from decimal import Decimal, InvalidOperation
+from threading import Lock
+from time import monotonic
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -35,6 +37,24 @@ MSTOCK_GATEWAY_URL = os.getenv(
     "MSTOCK_GATEWAY_URL",
     "http://54.153.201.74:8000",
 ).rstrip("/")
+
+
+def _read_cache_ttl() -> float:
+    """Read the shared quote-cache TTL; zero disables service-level caching."""
+    try:
+        configured = float(os.getenv("MARKET_PRICE_CACHE_TTL_SECONDS", "1.0"))
+    except (TypeError, ValueError):
+        configured = 1.0
+    if configured != configured:  # NaN
+        return 1.0
+    return max(0.0, min(configured, 10.0))
+
+
+MARKET_PRICE_CACHE_TTL_SECONDS = _read_cache_ttl()
+MARKET_PRICE_CACHE_MAX_ENTRIES = 1000
+# symbol -> (monotonic insertion time, Decimal price)
+_MARKET_PRICE_CACHE = {}
+_MARKET_PRICE_CACHE_LOCK = Lock()
 
 
 # ============================================================
@@ -271,6 +291,37 @@ def get_market_price(
             "MSTOCK_GATEWAY_URL is not configured."
         )
 
-    return _fetch_gateway_quote(
-        symbol
-    )
+    normalized_symbol = normalize_symbol(symbol)
+    ttl = MARKET_PRICE_CACHE_TTL_SECONDS
+    now = monotonic()
+
+    if ttl > 0:
+        with _MARKET_PRICE_CACHE_LOCK:
+            cached = _MARKET_PRICE_CACHE.get(normalized_symbol)
+            if cached and now - cached[0] <= ttl:
+                return cached[1]
+
+    # Do not hold the cache lock during gateway I/O. Different symbols can
+    # still fetch concurrently; this cache is shared by all routes in this process.
+    price = _fetch_gateway_quote(normalized_symbol)
+
+    if ttl > 0:
+        with _MARKET_PRICE_CACHE_LOCK:
+            cutoff = monotonic() - ttl
+            expired = [
+                key for key, value in _MARKET_PRICE_CACHE.items()
+                if value[0] < cutoff
+            ]
+            for key in expired:
+                _MARKET_PRICE_CACHE.pop(key, None)
+
+            if len(_MARKET_PRICE_CACHE) >= MARKET_PRICE_CACHE_MAX_ENTRIES:
+                oldest_key = min(
+                    _MARKET_PRICE_CACHE,
+                    key=lambda key: _MARKET_PRICE_CACHE[key][0],
+                )
+                _MARKET_PRICE_CACHE.pop(oldest_key, None)
+
+            _MARKET_PRICE_CACHE[normalized_symbol] = (monotonic(), price)
+
+    return price

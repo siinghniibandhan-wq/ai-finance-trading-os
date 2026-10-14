@@ -192,12 +192,19 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
             response_symbol
         )
 
-    # Fallback: use the first quote returned.
-    if raw_quote is None and gateway_data:
+    # A single returned quote can be used when the gateway omits or
+    # normalizes its symbol key. Never select the first quote from a
+    # multi-symbol payload: that can silently return another instrument's price.
+    if raw_quote is None and len(gateway_data) == 1:
 
         raw_quote = next(
             iter(gateway_data.values()),
             None,
+        )
+
+    if raw_quote is None and len(gateway_data) > 1:
+        raise MarketPriceError(
+            f"Gateway response did not contain an exact quote for {symbol}."
         )
 
     if not isinstance(

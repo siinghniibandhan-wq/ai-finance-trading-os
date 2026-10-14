@@ -158,3 +158,26 @@ def test_concurrent_provider_failure_is_shared_without_repeated_gateway_calls(mo
         list(executor.map(lambda _: request_quote(), range(6)))
 
     assert calls == ["RELIANCE"]
+
+
+def test_unexpected_fetch_error_is_shared_as_market_price_error(monkeypatch):
+    calls = []
+
+    def fake_fetch(symbol):
+        calls.append(symbol)
+        sleep(0.05)
+        raise RuntimeError("unexpected transport failure")
+
+    monkeypatch.setattr(market_price, "_fetch_gateway_quote", fake_fetch)
+    monkeypatch.setattr(market_price, "MARKET_PRICE_CACHE_TTL_SECONDS", 1.0)
+    start = Barrier(6)
+
+    def request_quote():
+        start.wait()
+        with pytest.raises(market_price.MarketPriceError, match="Unable to fetch a valid market quote"):
+            market_price.get_market_price("RELIANCE")
+
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        list(executor.map(lambda _: request_quote(), range(6)))
+
+    assert calls == ["RELIANCE"]

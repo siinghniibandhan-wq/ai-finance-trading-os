@@ -89,17 +89,22 @@ def holding_key(investment):
     Instrument Master will provide canonical identity later.
     """
 
+    master_id = investment.get("instrument_master_id")
+    exchange = str(investment.get("exchange") or "").strip().upper() or None
     symbol = (
         str(investment.get("symbol") or "")
         .strip()
         .upper()
     )
 
+    # Prefer the canonical Instrument Master identity. Exchange is part of
+    # the fallback identity so NSE and BSE listings never merge by symbol only.
+    if master_id is not None:
+        return ("MASTER", str(master_id))
+
     if symbol:
-        return (
-            "SYMBOL",
-            symbol,
-        )
+        return ("SYMBOL", symbol, exchange or "UNSPECIFIED",
+                str(investment.get("product_type") or "").strip().lower())
 
     return (
         "INVESTMENT",
@@ -123,6 +128,10 @@ def create_holding(investment):
             .upper()
             or None
         ),
+        "exchange": str(investment.get("exchange") or "").strip().upper() or None,
+        "instrument_master_id": investment.get("instrument_master_id"),
+        "price_updated_at": investment.get("updated_at"),
+        "price_conflict": False,
         "name": (
             investment.get("name")
             or "Unknown"
@@ -139,9 +148,7 @@ def create_holding(investment):
         "realised_cost_basis": Decimal("0"),
         "sell_value": Decimal("0"),
         "fees": Decimal("0"),
-        "current_price": to_decimal(
-            investment.get("current_price")
-        ),
+        "current_price": to_decimal(investment.get("current_price")),
     }
 
 
@@ -327,6 +334,9 @@ def serialize_holding(holding, include_closed=False):
     return {
         "name": holding["name"],
         "symbol": holding["symbol"],
+        "exchange": holding.get("exchange"),
+        "instrument_master_id": holding.get("instrument_master_id"),
+        "price_conflict": holding.get("price_conflict", False),
         "investment_type": holding[
             "investment_type"
         ],
@@ -376,15 +386,21 @@ def load_investments(
                 user_id,
                 name,
                 investment_type,
-                symbol,
-                quantity,
-                buy_price,
-                current_price,
-                broker,
-                fees
+                COALESCE(investments.symbol, instrument_master.symbol) AS symbol,
+                investments.instrument_master_id,
+                instrument_master.exchange AS exchange,
+                instrument_master.symbol AS master_symbol,
+                investments.product_type,
+                investments.quantity,
+                investments.buy_price,
+                investments.current_price,
+                investments.broker,
+                investments.fees,
+                investments.updated_at
             FROM investments
-            WHERE user_id = :user_id
-            ORDER BY id ASC
+            LEFT JOIN instrument_master ON instrument_master.id = investments.instrument_master_id
+            WHERE investments.user_id = :user_id
+            ORDER BY investments.id ASC
             """
         ),
         {
@@ -496,6 +512,21 @@ def build_holdings(
             )
 
         holding = grouped[key]
+
+        # Use the freshest stored quote among records for the same canonical
+        # instrument/listing. Do not silently trust the first row's stale price.
+        candidate_price = to_decimal(investment.get("current_price"))
+        candidate_updated = investment.get("updated_at")
+        existing_updated = holding.get("price_updated_at")
+        existing_price = to_decimal(holding.get("current_price"))
+        if candidate_price > 0:
+            if existing_price > 0 and candidate_price != existing_price:
+                holding["price_conflict"] = True
+            if (existing_price <= 0 or
+                (candidate_updated is not None and
+                 (existing_updated is None or candidate_updated > existing_updated))):
+                holding["current_price"] = candidate_price
+                holding["price_updated_at"] = candidate_updated
 
         holding["investment_ids"].add(
             investment["id"]
@@ -646,6 +677,21 @@ def build_holdings(
             )
 
         holding = grouped[key]
+
+        # Legacy records also participate in price selection. When stored
+        # prices conflict, use the latest updated record and flag the conflict.
+        candidate_price = to_decimal(investment.get("current_price"))
+        candidate_updated = investment.get("updated_at")
+        existing_updated = holding.get("price_updated_at")
+        existing_price = to_decimal(holding.get("current_price"))
+        if candidate_price > 0:
+            if existing_price > 0 and candidate_price != existing_price:
+                holding["price_conflict"] = True
+            if (existing_price <= 0 or
+                (candidate_updated is not None and
+                 (existing_updated is None or candidate_updated > existing_updated))):
+                holding["current_price"] = candidate_price
+                holding["price_updated_at"] = candidate_updated
 
         holding["investment_ids"].add(
             investment["id"]

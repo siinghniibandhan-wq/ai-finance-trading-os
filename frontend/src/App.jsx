@@ -1318,6 +1318,43 @@ function TaxPage() {
     }
   };
 
+  // Undo: puts the salary record and any verified HRA claim back to "pending
+  // review" so they stop affecting taxable income. Saved figures are kept.
+  const undoHraSalaryVerification = async () => {
+    if (!window.confirm(`This sets your verified salary record and verified HRA claim for ${financialYear} back to pending review. They will stop counting in your taxable income until you verify them again. Your saved figures are kept. Continue?`)) return;
+    setHraSalarySaving(true);
+    setHraSalaryError("");
+    setHraSalaryMessage("");
+    try {
+      const claimsResponse = await apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/claims?user_id=${USER_ID}&financial_year=${encodeURIComponent(financialYear)}`);
+      const claimsResult = await claimsResponse.json().catch(() => ({}));
+      if (!claimsResponse.ok) throw new Error(claimsResult?.detail || `Could not read HRA claims (${claimsResponse.status}). Nothing was changed.`);
+      const verifiedHra = (Array.isArray(claimsResult?.claims) ? claimsResult.claims : []).filter((c) => c.deduction_key === "hra_exemption" && c.status === "verified");
+      for (const claim of verifiedHra) {
+        const r = await apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/claims/${claim.id}/unverify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: USER_ID }),
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d?.detail || `Could not set the HRA claim back to pending (${r.status}).`);
+      }
+      const salaryResponse = await apiFetch(`${API_BASE_URL}/api/final-taxable-income/salary-income/unverify?financial_year=${encodeURIComponent(financialYear)}`, { method: "POST" });
+      const salaryResult = await salaryResponse.json().catch(() => ({}));
+      if (salaryResponse.status === 404) {
+        // No salary record exists: nothing to undo for salary.
+      } else if (!salaryResponse.ok) {
+        throw new Error(salaryResult?.detail || `Could not set the salary record back to pending (${salaryResponse.status}).`);
+      }
+      setHraSalaryMessage("Salary record and HRA claim are back to pending review and no longer affect taxable income. Refreshing tax calculations.");
+      await loadTaxData();
+    } catch (err) {
+      setHraSalaryError(err?.message || "Unable to undo verification.");
+    } finally {
+      setHraSalarySaving(false);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/hra-cities?financial_year=${encodeURIComponent(financialYear)}`, { cache: "no-store" })
@@ -1603,6 +1640,7 @@ function TaxPage() {
           <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Keep this separate from the salary statement reference. Verification records your confirmation; the app does not inspect documents.</span>
         </label>
         <button type="button" className="primary-button" disabled={hraSalarySaving || taxRegime !== "old"} onClick={saveAndVerifyHraSalary}>{hraSalarySaving ? "Saving salary and HRA claim…" : "Save salary & verify HRA claim"}</button>
+        <button type="button" className="secondary-button" disabled={hraSalarySaving} onClick={undoHraSalaryVerification}>Undo verification (salary &amp; HRA)</button>
         {hraSalaryError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px" }}>{hraSalaryError}</div>}
         {hraSalaryMessage && <div role="status" style={{ color: "#86efac", fontSize: "12px" }}>{hraSalaryMessage}</div>}
       </div>}

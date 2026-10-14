@@ -221,7 +221,7 @@ export default function App() {
   // Keep navigation in the URL so the current section survives refreshes,
   // direct links, and browser Back/Forward throughout the application.
   const validPages = new Set([
-    "Dashboard", "Wealth Manager", "Accounts", "Account Profile", "Transactions", "Ledger",
+    "Dashboard", "Wealth Manager", "Accounts", "Account Profile", "Transactions", "Ledger", "Chart of Accounts",
     "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio",
     "Holdings", "Investment Transactions", "Markets", "Goals",
     "AI Assistant", "Tax", "Playground", "Settings", "Finance Diary"
@@ -1970,31 +1970,36 @@ function MarketsPage() {
   const getQuote = async (symbol, options = {}) => {
     if (!symbol) return;
     const cleanedSymbol = String(symbol).trim().toUpperCase();
+    const cleanedExchange = String(options.exchange || "NSE").trim().toUpperCase();
+    const qualifiedSymbol = cleanedSymbol.includes(":")
+      ? cleanedSymbol
+      : `${cleanedExchange}:${cleanedSymbol}`;
+    const requestKey = qualifiedSymbol;
     const requestState = quoteRequestRef.current;
     // The 10-second timer must not start another request if the same symbol's
     // previous request is still waiting on the gateway.
-    if (requestState.inFlightSymbols.has(cleanedSymbol)) return;
-    requestState.activeSymbol = cleanedSymbol;
-    requestState.inFlightSymbols.add(cleanedSymbol);
+    if (requestState.inFlightSymbols.has(requestKey)) return;
+    requestState.activeSymbol = requestKey;
+    requestState.inFlightSymbols.add(requestKey);
     const initialLoad = options.initial === true;
     if (initialLoad) setQuoteBusy(true);
     setQuoteError("");
     try {
-      const response = await apiFetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(cleanedSymbol)}`, { cache: "no-store" });
+      const response = await apiFetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(cleanedSymbol)}&exchange=${encodeURIComponent(cleanedExchange)}`, { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Quote returned ${response.status}`);
       // Only the most recently requested instrument may update the visible card.
-      if (quoteRequestRef.current.activeSymbol === cleanedSymbol) {
+      if (quoteRequestRef.current.activeSymbol === requestKey) {
         setQuote(data);
       }
     } catch (e) {
       // A stale request must not overwrite the selected instrument's error state.
-      if (quoteRequestRef.current.activeSymbol === cleanedSymbol) {
+      if (quoteRequestRef.current.activeSymbol === requestKey) {
         setQuoteError(e?.message || "Quote refresh failed; showing the last available price if present.");
       }
     } finally {
-      requestState.inFlightSymbols.delete(cleanedSymbol);
-      if (quoteRequestRef.current.activeSymbol === cleanedSymbol && initialLoad) setQuoteBusy(false);
+      requestState.inFlightSymbols.delete(requestKey);
+      if (quoteRequestRef.current.activeSymbol === requestKey && initialLoad) setQuoteBusy(false);
     }
   };
 
@@ -2003,16 +2008,17 @@ function MarketsPage() {
   useEffect(() => {
     if (!selectedInstrument?.symbol) return undefined;
     const symbol = selectedInstrument.symbol;
+    const marketExchange = selectedInstrument.exchange || exchange;
     const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") getQuote(symbol);
+      if (document.visibilityState === "visible") getQuote(symbol, { exchange: marketExchange });
     }, 10000);
     return () => window.clearInterval(timer);
-  }, [selectedInstrument?.symbol]);
+  }, [selectedInstrument?.symbol, selectedInstrument?.exchange, exchange]);
 
   // Watchlist quote refresh: use the existing quote API, preserve the last
   // successful value during refresh, and limit concurrency to three requests.
-  // The current quote endpoint does not accept an exchange parameter, so BSE
-  // entries are explicitly not quoted rather than risking an NSE/BSE mismatch.
+  // Exchange is sent explicitly for each eligible instrument; until bulk quote
+  // support is available, BSE entries remain unsupported rather than guessed.
   useEffect(() => {
     let cancelled = false;
     let refreshing = false;
@@ -2043,7 +2049,7 @@ function MarketsPage() {
             const symbol = String(item.symbol).trim().toUpperCase();
             const key = `${String(item.exchange || "NSE").toUpperCase()}:${symbol}`;
             try {
-              const response = await apiFetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(symbol)}`, { cache: "no-store" });
+              const response = await apiFetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(symbol)}&exchange=NSE`, { cache: "no-store" });
               const data = await response.json().catch(() => ({}));
               if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Quote returned ${response.status}`);
               const price = Number(data?.quote?.last_price);
@@ -2130,7 +2136,7 @@ function MarketsPage() {
     setQuery(instrument.symbol);
     setResults([]);
     setSearchError("");
-    getQuote(instrument.symbol, { initial: true });
+    getQuote(instrument.symbol, { initial: true, exchange: instrument.exchange });
     chooseChart(instrument.symbol, instrument.exchange);
   };
 

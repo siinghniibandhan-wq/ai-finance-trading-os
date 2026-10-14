@@ -7973,8 +7973,10 @@ function ChartOfAccountsPage() {
     } catch (e) { setError(e.message || "Unable to update account."); }
   };
   const grouped = rows.reduce((acc, row) => { (acc[row.account_type] ||= []).push(row); return acc; }, {});
-  const card = { background: "var(--card-bg, #fff)", border: "1px solid var(--border-color, #e5e7eb)", borderRadius: 14, padding: 18, marginBottom: 14 };
-  const cell = { textAlign: "left", padding: "11px 10px", borderBottom: "1px solid var(--border-color, #e5e7eb)", fontSize: 13 };
+  // This page uses light cards inside the dark Financial OS shell, so explicitly
+  // set foreground colors instead of inheriting the shell's white text.
+  const card = { background: "#ffffff", color: "#111827", border: "1px solid #e5e7eb", borderRadius: 14, padding: 18, marginBottom: 14 };
+  const cell = { textAlign: "left", padding: "11px 10px", borderBottom: "1px solid #e5e7eb", fontSize: 13, color: "#1f2937" };
   return <section>
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
       <div><h2 style={{ margin: 0 }}>Chart of Accounts</h2><p style={{ margin: "6px 0 0", opacity: .72 }}>Your accounting account catalogue. Stable account codes support consistent reporting.</p></div>
@@ -7983,12 +7985,12 @@ function ChartOfAccountsPage() {
     {error && <div role="alert" style={{ ...card, color: "#b91c1c" }}>{error}</div>}
     {loading ? <div style={card}>Loading Chart of Accounts…</div> : Object.entries(grouped).map(([kind, accounts]) => <div key={kind} style={card}>
       <h3 style={{ margin: "0 0 12px" }}>{kind === "Asset" ? "Assets" : kind === "Liability" ? "Liabilities" : `${kind}s`} <span style={{ fontSize: 12, fontWeight: 400, opacity: .65 }}>({accounts.length})</span></h3>
-      <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}><thead><tr>
+      <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620, background: "#ffffff", color: "#1f2937" }}><thead><tr>
         {["Code", "Account", "Parent", "Tax mapping", "Status", ""].map((label) => <th key={label} style={cell}>{label}</th>)}
       </tr></thead><tbody>{accounts.map((row) => <tr key={row.id}>
         <td style={cell}>{row.code}</td><td style={cell}>{row.name}{row.is_system ? <span style={{ marginLeft: 8, opacity: .55, fontSize: 11 }}>Standard</span> : null}</td>
         <td style={cell}>{rows.find((candidate) => candidate.id === row.parent_id)?.name || "—"}</td><td style={cell}>{row.tax_mapping_key || "—"}</td>
-        <td style={cell}>{row.is_enabled ? "Enabled" : "Disabled"}</td><td style={cell}><button type="button" onClick={() => toggleAccount(row)}>{row.is_enabled ? "Disable" : "Enable"}</button></td>
+        <td style={cell}>{row.is_enabled ? "Enabled" : "Disabled"}</td><td style={cell}><button type="button" onClick={() => toggleAccount(row)} style={{ color: "#111827", background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 8px", cursor: "pointer" }}>{row.is_enabled ? "Disable" : "Enable"}</button></td>
       </tr>)}</tbody></table></div>
     </div>)}
     {!loading && !rows.length && <div style={card}>No accounts found.</div>}

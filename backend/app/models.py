@@ -594,6 +594,28 @@ class TaxSalaryIncomeRecord(Base):
 
 
 # ============================================================
+# HOUSE PROPERTY INCOME RECORDS
+# ============================================================
+
+class TaxHousePropertyRecord(Base):
+    __tablename__ = "tax_house_property_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    financial_year: Mapped[str] = mapped_column(String(9), nullable=False, index=True)
+    property_label: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    # let_out | self_occupied | none (confirms no house property income)
+    property_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    annual_rent_received: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=0)
+    municipal_taxes_paid: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=0)
+    interest_on_housing_loan: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=0)
+    evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(24), default="pending_review", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+# ============================================================
 # BUSINESS / PROFESSIONAL INCOME RECORDS
 # ============================================================
 

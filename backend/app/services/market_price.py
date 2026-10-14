@@ -22,7 +22,7 @@ IMPORTANT:
 import json
 import os
 from decimal import Decimal, InvalidOperation
-from threading import Lock
+from threading import Event, Lock
 from time import monotonic
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -55,6 +55,8 @@ MARKET_PRICE_CACHE_MAX_ENTRIES = 1000
 # symbol -> (monotonic insertion time, Decimal price)
 _MARKET_PRICE_CACHE = {}
 _MARKET_PRICE_CACHE_LOCK = Lock()
+# Coalesce concurrent cache misses for the same symbol without blocking other symbols.
+_MARKET_PRICE_INFLIGHT = {}
 
 
 # ============================================================
@@ -295,33 +297,55 @@ def get_market_price(
     ttl = MARKET_PRICE_CACHE_TTL_SECONDS
     now = monotonic()
 
-    if ttl > 0:
+    if ttl <= 0:
+        return _fetch_gateway_quote(normalized_symbol)
+
+    # A single in-flight request per symbol prevents simultaneous cache misses
+    # from multiplying provider calls. Other symbols remain free to fetch concurrently.
+    while True:
         with _MARKET_PRICE_CACHE_LOCK:
+            now = monotonic()
             cached = _MARKET_PRICE_CACHE.get(normalized_symbol)
             if cached and now - cached[0] <= ttl:
                 return cached[1]
 
-    # Do not hold the cache lock during gateway I/O. Different symbols can
-    # still fetch concurrently; this cache is shared by all routes in this process.
-    price = _fetch_gateway_quote(normalized_symbol)
+            event = _MARKET_PRICE_INFLIGHT.get(normalized_symbol)
+            if event is None:
+                event = Event()
+                _MARKET_PRICE_INFLIGHT[normalized_symbol] = event
+                is_fetcher = True
+            else:
+                is_fetcher = False
 
-    if ttl > 0:
-        with _MARKET_PRICE_CACHE_LOCK:
-            cutoff = monotonic() - ttl
-            expired = [
-                key for key, value in _MARKET_PRICE_CACHE.items()
-                if value[0] < cutoff
-            ]
-            for key in expired:
-                _MARKET_PRICE_CACHE.pop(key, None)
+        if not is_fetcher:
+            # The request owner will populate the cache on success. If it fails,
+            # wake-up causes this caller to retry and receive its own provider error.
+            event.wait()
+            continue
 
-            if len(_MARKET_PRICE_CACHE) >= MARKET_PRICE_CACHE_MAX_ENTRIES:
-                oldest_key = min(
-                    _MARKET_PRICE_CACHE,
-                    key=lambda key: _MARKET_PRICE_CACHE[key][0],
-                )
-                _MARKET_PRICE_CACHE.pop(oldest_key, None)
+        try:
+            price = _fetch_gateway_quote(normalized_symbol)
 
-            _MARKET_PRICE_CACHE[normalized_symbol] = (monotonic(), price)
+            with _MARKET_PRICE_CACHE_LOCK:
+                cutoff = monotonic() - ttl
+                expired = [
+                    key for key, value in _MARKET_PRICE_CACHE.items()
+                    if value[0] < cutoff
+                ]
+                for key in expired:
+                    _MARKET_PRICE_CACHE.pop(key, None)
 
-    return price
+                if len(_MARKET_PRICE_CACHE) >= MARKET_PRICE_CACHE_MAX_ENTRIES:
+                    oldest_key = min(
+                        _MARKET_PRICE_CACHE,
+                        key=lambda key: _MARKET_PRICE_CACHE[key][0],
+                    )
+                    _MARKET_PRICE_CACHE.pop(oldest_key, None)
+
+                _MARKET_PRICE_CACHE[normalized_symbol] = (monotonic(), price)
+
+            return price
+        finally:
+            with _MARKET_PRICE_CACHE_LOCK:
+                _MARKET_PRICE_INFLIGHT.pop(normalized_symbol, None)
+                event.set()

@@ -46,7 +46,8 @@ from sqlalchemy import func
 
 from app.database.database import get_db
 from app.routes.ownership import require_matching_user_id
-from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim, TaxSalaryIncomeRecord, TaxBusinessIncomeRecord, User
+from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim, TaxSalaryIncomeRecord, TaxBusinessIncomeRecord, TaxHousePropertyRecord, User
+from app.house_property_calc import compute_house_property
 from app.routes.auth import get_current_user
 from app.tax_income_safety import non_income_reason, find_duplicates
 from app.routes.deductions_exempt_income import (
@@ -1062,6 +1063,9 @@ def load_other_source_income(
             # user selected a differently named Income category. It is loaded
             # once as gross salary by load_salary_income_from_transactions.
             ~func.lower(func.coalesce(Transaction.description, "")).like("%gross salary:%"),
+            # Rent receipts belong to the house-property head. They are shown for
+            # review there and counted only through a verified house-property record.
+            ~func.lower(func.coalesce(Category.name, "")).like("house property%"),
         )
         .all()
     )
@@ -1608,7 +1612,68 @@ def get_final_taxable_income(
     #
     # ========================================================
 
-    house_property_income = None
+    house_property_records = (
+        db.query(TaxHousePropertyRecord)
+        .filter_by(user_id=user_id, financial_year=financial_year)
+        .all()
+    )
+    verified_house_records = [r for r in house_property_records if r.status == "verified"]
+    house_property_result = (
+        compute_house_property(verified_house_records, tax_regime)
+        if verified_house_records
+        else None
+    )
+    house_property_income = (
+        decimal(house_property_result["counted_amount"])
+        if house_property_result is not None
+        else None
+    )
+    # Money rent receipts are reported for review only; they are never counted
+    # automatically and never inferred as house-property income.
+    detected_rent_rows = (
+        db.query(Transaction)
+        .join(Category, Category.id == Transaction.category_id)
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.transaction_type.in_(INCOME_TRANSACTION_TYPES),
+            Transaction.transaction_date >= start_date,
+            Transaction.transaction_date <= end_date,
+            func.lower(func.coalesce(Category.name, "")).like("house property%"),
+        )
+        .all()
+    )
+    detected_rent_total = sum((decimal(r.amount) for r in detected_rent_rows), Decimal("0"))
+    if house_property_result is not None:
+        house_property_head = {
+            "available": True,
+            "amount": money(house_property_income),
+            "verified_record_count": len(verified_house_records),
+            "record_count": len(house_property_records),
+            "total_before_loss_limit": money(decimal(house_property_result["total_before_loss_limit"])),
+            "loss_not_set_off": money(decimal(house_property_result["loss_not_set_off"])),
+            "properties": [
+                {k: (money(decimal(v)) if k not in ("id", "label", "property_type") else v) for k, v in item.items()}
+                for item in house_property_result["properties"]
+            ],
+            "money_rent_transactions_detected": len(detected_rent_rows),
+            "money_rent_total_detected": money(detected_rent_total),
+            "source": "Verified house-property records. Money rent receipts are never counted automatically.",
+        }
+    else:
+        if house_property_records:
+            house_reason = "House property records exist but none is verified yet. Pending records are excluded from taxable income."
+        else:
+            house_reason = "No verified house-property record. Add one, or confirm that you have none, in the Tax Centre Income tab."
+        house_property_head = {
+            "available": False,
+            "amount": None,
+            "verified_record_count": 0,
+            "record_count": len(house_property_records),
+            "money_rent_transactions_detected": len(detected_rent_rows),
+            "money_rent_total_detected": money(detected_rent_total),
+            "source": "Verified house-property records. Money rent receipts are never counted automatically.",
+            "reason": house_reason,
+        }
 
     # ========================================================
     # AVAILABLE GROSS INCOME
@@ -1642,6 +1707,7 @@ def get_final_taxable_income(
         + available_capital_gains
         + business_profession_income
         + (salary_income if salary_income is not None else Decimal("0"))
+        + (house_property_income if house_property_income is not None else Decimal("0"))
     )
 
     # ========================================================
@@ -1778,15 +1844,7 @@ def get_final_taxable_income(
                 ),
             },
 
-            "house_property": {
-                "available":
-                    False,
-                "amount":
-                    None,
-                "reason":
-                    "No dedicated house-property "
-                    "income source is currently available.",
-            },
+            "house_property": house_property_head,
 
             "business_or_profession": {
                 "available": bool(verified_business_receipts),
@@ -2016,7 +2074,7 @@ def get_final_taxable_income(
                 False,
 
             "house_property_income":
-                False,
+                house_property_income is not None,
 
             "business_profession_income":
                 False,

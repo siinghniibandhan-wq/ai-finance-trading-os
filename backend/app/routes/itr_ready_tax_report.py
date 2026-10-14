@@ -23,7 +23,8 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.routes.ownership import require_matching_user_id
 from app.routes.final_tax_liability import calculate_surcharge
-from app.models import TaxBusinessIncomeRecord, TaxDeductionClaim, TaxCreditEntry, TaxSalaryIncomeRecord
+from app.models import TaxBusinessIncomeRecord, TaxDeductionClaim, TaxCreditEntry, TaxSalaryIncomeRecord, TaxHousePropertyRecord
+from app.house_property_calc import compute_house_property
 from app.routes.deductions_exempt_income import (
     DEDUCTION_CATALOG,
     EXEMPT_INCOME_CATALOG,
@@ -704,6 +705,13 @@ def load_other_income(
             excluded_loan_proceeds.append({**original, "reason": "Likely loan/borrowing proceeds; excluded from taxable income and flagged for review."})
             continue
 
+        # Rent receipts belong to the house-property head, which is computed only
+        # from verified house-property records. Show them for review and never
+        # count them as other-source income.
+        if "house property" in category:
+            classification_review.append({**original, "suggested_head": "house_property", "reason": "Rent receipt belongs to house property income. It is counted only through a verified house property record."})
+            continue
+
         detected = None
         for head, terms in keyword_heads.items():
             if any(term in searchable for term in terms):
@@ -1024,7 +1032,15 @@ def get_itr_ready_tax_report(
     # --------------------------------------------------------
 
     salary_available = other_income["salary"] > 0
-    house_property_available = False
+    house_property_records_verified = db.query(TaxHousePropertyRecord).filter_by(
+        user_id=user_id, financial_year=financial_year, status="verified"
+    ).all()
+    house_property_result = (
+        compute_house_property(house_property_records_verified, regime)
+        if house_property_records_verified
+        else None
+    )
+    house_property_available = house_property_result is not None
     business_available = False
 
     salary_income = other_income["salary"]
@@ -1046,7 +1062,11 @@ def get_itr_ready_tax_report(
             "applied_amount": money(standard_deduction),
             "automatic": True,
         })
-    house_property_income = Decimal("0")
+    house_property_income = (
+        Decimal(str(house_property_result["counted_amount"]))
+        if house_property_result is not None
+        else Decimal("0")
+    )
     business_income = Decimal("0")
     business_summary = summarize_verified_business_records(
         db.query(TaxBusinessIncomeRecord).filter_by(

@@ -66,7 +66,7 @@ def _is_business_receipt_candidate(db: Session, transaction: Transaction) -> boo
     leaf_category = category_path.replace("/", ">").split(">")[-1].strip()
     if leaf_category in EXCLUDED_RECEIPT_CATEGORIES:
         return False
-    if any(term in category_path for term in ("loan disbursement", "salary", "interest", "dividend")):
+    if any(term in category_path for term in ("loan disbursement", "salary", "interest", "dividend", "house property")):
         return False
     if "gross salary:" in str(transaction.description or "").lower():
         return False

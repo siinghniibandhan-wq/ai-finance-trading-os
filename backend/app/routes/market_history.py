@@ -21,6 +21,7 @@ m.Stock Historical Market Data
 """
 
 import json
+from datetime import date
 from urllib.error import HTTPError, URLError
 import os
 from urllib.parse import urlencode
@@ -137,10 +138,19 @@ def get_market_history(
     # Basic date validation
     # --------------------------------------------------------
 
-    if len(cleaned_from) != 10 or len(cleaned_to) != 10:
+    try:
+        parsed_from = date.fromisoformat(cleaned_from)
+        parsed_to = date.fromisoformat(cleaned_to)
+    except (TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=400,
-            detail="Dates must use YYYY-MM-DD format.",
+            detail="Dates must be valid calendar dates in YYYY-MM-DD format.",
+        ) from exc
+
+    if parsed_from > parsed_to:
+        raise HTTPException(
+            status_code=400,
+            detail="The start date must be on or before the end date.",
         )
 
     # --------------------------------------------------------

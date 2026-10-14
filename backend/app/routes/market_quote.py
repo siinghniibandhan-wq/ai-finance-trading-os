@@ -49,6 +49,10 @@ def get_market_quote(
         ...,
         description="Market symbol, for example RELIANCE",
     ),
+    exchange: str | None = Query(
+        None,
+        description="Listing exchange: NSE or BSE (defaults to NSE for unqualified symbols)",
+    ),
 ):
     """
     Fetch the latest market price for a symbol.
@@ -68,13 +72,34 @@ def get_market_quote(
             detail="Market symbol is required.",
         )
 
+    requested_exchange = exchange.strip().upper() if exchange else None
+    if requested_exchange is not None and requested_exchange not in {"NSE", "BSE"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported exchange. Use NSE or BSE.",
+        )
+
+    # Respect an already-qualified symbol, but reject an explicit exchange conflict.
+    if ":" in cleaned_symbol:
+        prefix, _ = cleaned_symbol.split(":", 1)
+        if prefix in {"NSE", "BSE"} and requested_exchange and prefix != requested_exchange:
+            raise HTTPException(
+                status_code=400,
+                detail="Symbol exchange conflicts with the exchange parameter.",
+            )
+        quote_symbol = cleaned_symbol
+        cleaned_exchange = prefix if prefix in {"NSE", "BSE"} else (requested_exchange or "NSE")
+    else:
+        cleaned_exchange = requested_exchange or "NSE"
+        quote_symbol = f"{cleaned_exchange}:{cleaned_symbol}"
+
     # --------------------------------------------------------
     # FETCH LIVE PRICE
     # --------------------------------------------------------
 
     try:
 
-        quote_data = fetch_market_quote(cleaned_symbol)
+        quote_data = fetch_market_quote(quote_symbol)
         price = quote_data["price"]
 
     except MarketPriceError as exc:
@@ -102,6 +127,7 @@ def get_market_quote(
         "read_only": True,
 
         "symbol": cleaned_symbol,
+        "exchange": cleaned_exchange,
 
         "quote": {
             "last_price": float(price),

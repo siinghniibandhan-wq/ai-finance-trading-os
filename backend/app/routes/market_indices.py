@@ -6,6 +6,7 @@ Read-only: does not write to the database.
 
 import json
 import os
+import math
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -86,11 +87,18 @@ def fetch_index(index):
     if price is None:
         raise ValueError("Index price was not present in the response.")
 
+    try:
+        numeric_price = float(price)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Index price was not numeric.") from exc
+    if not math.isfinite(numeric_price) or numeric_price <= 0:
+        raise ValueError("Index price was not a valid positive finite number.")
+
     return {
         "name": index["name"],
         "exchange": index["exchange"],
         "symbol": index["symbol"],
-        "last_price": price,
+        "last_price": numeric_price,
         "status": "success",
     }
 

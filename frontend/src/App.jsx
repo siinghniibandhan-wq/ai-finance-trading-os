@@ -2076,6 +2076,7 @@ function MarketsPage() {
   const [busy, setBusy] = useState(true);
   const [overviewError, setOverviewError] = useState("");
   const [query, setQuery] = useState("RELIANCE");
+  const [marketSearchExchange, setMarketSearchExchange] = useState("NSE");
   const [results, setResults] = useState([]);
   // Selected instrument controls a focused, single-stock view.
   const [selectedInstrument, setSelectedInstrument] = useState(null);
@@ -2145,7 +2146,7 @@ function MarketsPage() {
     if (!query.trim()) { setSearchError("Enter a company name or symbol."); return; }
     setSearchBusy(true); setSearchError(""); setResults([]); setQuote(null); setQuoteError(""); setSelectedInstrument(null);
     try {
-      const response = await apiFetch(`${API}/api/market-search/?query=${encodeURIComponent(query.trim())}&exchange=ALL&limit=20`);
+      const response = await apiFetch(`${API}/api/market-search/?query=${encodeURIComponent(query.trim())}&exchange=${encodeURIComponent(marketSearchExchange)}&limit=20`);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Search returned ${response.status}`);
       const rows = Array.isArray(data?.results) ? data.results : [];
@@ -2380,7 +2381,7 @@ function MarketsPage() {
       </section>
       <section style={{ ...card, background: "linear-gradient(120deg, rgba(124,58,237,.10), rgba(255,255,255,.02))" }}><div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}><div><h3 style={{ margin: "0 0 5px" }}>Market News</h3><p style={{ ...muted, margin: 0 }}>A news feed has not been connected to the current market API yet.</p></div><span style={{ ...muted, border: "1px solid rgba(255,255,255,.12)", padding: "5px 9px", borderRadius: "99px" }}>Source required</span></div><p style={{ ...muted, marginBottom: 0, marginTop: "10px" }}>We’ll show sourced headlines here once a reliable news provider is configured; no sample or fabricated headlines are displayed.</p></section>
     </>}
-    <section style={card}><h3 style={{ margin: "0 0 5px" }}>Find a stock or instrument</h3><p style={{ ...muted, marginTop: 0 }}>Search the existing instrument master, then request a quote for a result.</p><form onSubmit={search} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: "9px", alignItems: "center" }}><input aria-label="Company name or symbol" style={input} value={query} onChange={e => setQuery(e.target.value)} placeholder="Company or symbol"/><button className="primary-button" type="submit" disabled={searchBusy}>{searchBusy ? "Searching..." : "Search"}</button></form>
+    <section style={card}><h3 style={{ margin: "0 0 5px" }}>Find a stock or instrument</h3><p style={{ ...muted, marginTop: 0 }}>Search the existing instrument master, then request a quote for a result.</p><form onSubmit={search} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 90px auto", gap: "9px", alignItems: "center" }}><input aria-label="Company name or symbol" style={input} value={query} onChange={e => setQuery(e.target.value)} placeholder="Company or symbol"/><select aria-label="Search exchange" style={{ ...input, width: "90px" }} value={marketSearchExchange} onChange={e => setMarketSearchExchange(e.target.value)}><option value="NSE">NSE</option><option value="BSE">BSE</option></select><button className="primary-button" type="submit" disabled={searchBusy}>{searchBusy ? "Searching..." : "Search"}</button></form>
       {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
       {searchError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px" }}>{searchError}</p>}
       {results.map((row, i) => <div key={`${row.exchange || "NSE"}-${row.symbol || row.instrument_token || i}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}><button type="button" onClick={() => selectInstrument(row)} aria-label={`Select ${row.name || row.symbol}`} style={{ flex: "1 1 180px", textAlign: "left", padding: "4px 0", border: 0, background: "transparent", color: "inherit", cursor: "pointer" }}><strong>{row.symbol || "Unknown symbol"}</strong><div style={muted}>{row.name || "Company name unavailable"} · {row.exchange || "Exchange unavailable"}{(row.series || row.instrument_type) ? ` ${row.series || row.instrument_type}` : ""}</div><div style={{ ...muted, marginTop: "3px" }}>Tap to select this instrument</div></button><div style={{ display: "flex", gap: "10px", alignItems: "center" }}><strong style={{ fontSize: "12px" }}>{money(row.last_price)}</strong><button type="button" className="secondary-button" onClick={() => selectInstrument(row)}>Select</button><button type="button" className="secondary-button" onClick={() => selectInstrument(row)}>Chart</button></div></div>)}
@@ -5194,7 +5195,7 @@ function Portfolio() {
       const isMutualFund = investmentForm.investment_type === "Mutual Funds";
       const endpoint = isMutualFund
         ? `${API_BASE_URL}/api/mutual-funds/search/?query=${encodeURIComponent(value.trim())}&limit=12`
-        : `${API_BASE_URL}/api/market-search/?query=${encodeURIComponent(value.trim())}&exchange=ALL&limit=12`;
+        : `${API_BASE_URL}/api/market-search/?query=${encodeURIComponent(value.trim())}&exchange=NSE&limit=12`;
       const response = await apiFetch(endpoint);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -5227,7 +5228,7 @@ function Portfolio() {
         : [];
       setInstrumentResults(safeResults);
       // Only show the empty-state message when the latest response has no results.
-      setInstrumentSearchError(safeResults.length ? "" : (isMutualFund ? "No matching mutual fund schemes found." : "No matching market instruments found."));
+      setInstrumentSearchError(safeResults.length ? "" : (isMutualFund ? "No matching mutual fund schemes found." : "No matching NSE instruments found."));
     } catch (error) {
       setInstrumentResults([]);
       setInstrumentSearchError(error?.message || "Instrument search is unavailable.");
@@ -6292,7 +6293,7 @@ const summaryCards = [
               <div style={{ gridColumn: "1 / -1", position: "relative" }}>
                 <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Investment Instrument (required)</label>
                 <input type="text" autoComplete="off" placeholder={investmentForm.investment_type === "Mutual Funds" ? "Search mutual fund scheme, e.g. HDFC Flexi Cap" : "Search instrument name or symbol, e.g. HDFC Bank"} value={instrumentQuery || investmentForm.name} onChange={(event) => searchInvestmentInstruments(event.target.value)} style={investmentFieldStyle} />
-                {instrumentSearchBusy && <div style={{ ...muted, marginTop: "5px" }}>{investmentForm.investment_type === "Mutual Funds" ? "Searching mutual fund schemes…" : "Searching NSE and BSE instruments…"}</div>}
+                {instrumentSearchBusy && <div style={{ ...muted, marginTop: "5px" }}>{investmentForm.investment_type === "Mutual Funds" ? "Searching mutual fund schemes…" : "Searching NSE instruments…"}</div>}
                 {instrumentSearchError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px", marginTop: "5px" }}>{instrumentSearchError}</div>}
                 {instrumentResults.length > 0 && <div style={{ position: "absolute", zIndex: 20, top: "100%", left: 0, right: 0, maxHeight: "240px", overflowY: "auto", background: "#17172a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px", boxShadow: "0 12px 30px rgba(0,0,0,0.4)" }}>
                   {instrumentResults.map((instrument, index) => {

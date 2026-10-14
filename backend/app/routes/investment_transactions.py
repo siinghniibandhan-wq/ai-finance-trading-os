@@ -134,6 +134,42 @@ class InvestmentTransactionCreate(BaseModel):
     notes: str | None = None
 
 
+def validate_transaction_timeline(rows, candidate_type: str, candidate_quantity: Decimal, candidate_date: date):
+    """Validate a proposed transaction against the complete active, date-ordered ledger.
+
+    Returns (quantity_available_before_candidate, final_active_quantity). Raises
+    ValueError if the candidate would make holdings negative at any point.
+    """
+    timeline = []
+    max_id = 0
+    for row in rows:
+        row_id = int(row["id"] if isinstance(row, dict) else row.id)
+        row_type = row["transaction_type"] if isinstance(row, dict) else row.transaction_type
+        row_quantity = Decimal(str(row["quantity"] if isinstance(row, dict) else row.quantity))
+        row_date = row["transaction_date"] if isinstance(row, dict) else row.transaction_date
+        timeline.append((row_date, row_id, row_type, row_quantity, False))
+        max_id = max(max_id, row_id)
+
+    # A newly created row receives a higher ID than existing rows on the same date.
+    timeline.append((candidate_date, max_id + 1, candidate_type, candidate_quantity, True))
+    timeline.sort(key=lambda item: (item[0], item[1]))
+
+    running = Decimal("0")
+    available_before_candidate = Decimal("0")
+    for tx_date, _, tx_type, quantity, is_candidate in timeline:
+        if is_candidate:
+            available_before_candidate = running
+        running += quantity if tx_type == "BUY" else -quantity
+        if running < 0:
+            if is_candidate:
+                raise ValueError(f"Insufficient holding quantity on {tx_date}. Available: {available_before_candidate}")
+            raise ValueError(
+                f"This transaction would make holdings negative on {tx_date}. "
+                "Review later SELL transactions first."
+            )
+    return available_before_candidate, running
+
+
 class InvestmentTransactionUpdate(BaseModel):
     transaction_type: str = Field(min_length=3, max_length=4)
     quantity: Decimal = Field(gt=0)
@@ -287,79 +323,35 @@ def create_transaction(
         )
 
     # --------------------------------------------------------
-    # CHECK CURRENT LEDGER HOLDING
+    # VALIDATE THE COMPLETE ACTIVE LEDGER IN DATE ORDER
     # --------------------------------------------------------
 
-    balance_result = db.execute(
+    active_rows = db.execute(
         text(
             """
-            SELECT
-                COALESCE(
-                    SUM(
-                        CASE
-                            WHEN transaction_type = 'BUY'
-                            THEN quantity
-                            WHEN transaction_type = 'SELL'
-                            THEN -quantity
-                            ELSE 0
-                        END
-                    ),
-                    0
-                ) AS available_quantity
+            SELECT id, transaction_type, quantity, transaction_date
             FROM investment_transactions
             WHERE user_id = :user_id
               AND investment_id = :investment_id
               AND status = 'ACTIVE'
+            ORDER BY transaction_date ASC, id ASC
             """
         ),
         {
             "user_id": user_id,
             "investment_id": data.investment_id,
         },
-    )
+    ).fetchall()
 
-    balance_row = balance_result.first()
-
-    available_quantity = Decimal(
-        str(
-            balance_row.available_quantity
-            if balance_row
-            else 0
+    try:
+        _, new_quantity = validate_transaction_timeline(
+            active_rows,
+            transaction_type,
+            data.quantity,
+            data.transaction_date,
         )
-    )
-
-    # --------------------------------------------------------
-    # SELL VALIDATION
-    # --------------------------------------------------------
-
-    if transaction_type == "SELL":
-
-        if data.quantity > available_quantity:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Insufficient holding quantity. "
-                    f"Available: {available_quantity}"
-                ),
-            )
-
-    # --------------------------------------------------------
-    # CALCULATE NEW HOLDING
-    # --------------------------------------------------------
-
-    if transaction_type == "BUY":
-
-        new_quantity = (
-            available_quantity
-            + data.quantity
-        )
-
-    else:
-
-        new_quantity = (
-            available_quantity
-            - data.quantity
-        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # --------------------------------------------------------
     # INSERT TRANSACTION

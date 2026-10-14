@@ -31,10 +31,15 @@ GATEWAY_URL = os.getenv(
     "http://54.153.201.74:8000",
 ).rstrip("/")
 
-# Only include indices verified during our earlier tests.
+# Request the four benchmarks required by the Market Workspace.
+# The gateway is queried independently per index; unsupported symbols are
+# reported in `errors` and do not prevent the other indices from loading.
+# Provider support for NIFTY BANK and INDIA VIX must be confirmed by live tests.
 SUPPORTED_INDICES = [
     {"name": "NIFTY 50", "exchange": "NSE", "symbol": "NIFTY 50"},
     {"name": "SENSEX", "exchange": "BSE", "symbol": "SENSEX"},
+    {"name": "NIFTY BANK", "exchange": "NSE", "symbol": "NIFTY BANK"},
+    {"name": "INDIA VIX", "exchange": "NSE", "symbol": "INDIA VIX"},
 ]
 
 

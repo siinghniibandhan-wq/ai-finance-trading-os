@@ -1896,6 +1896,9 @@ function MarketsPage() {
   const [quote, setQuote] = useState(null);
   const [quoteBusy, setQuoteBusy] = useState(false);
   const [quoteError, setQuoteError] = useState("");
+  // Prevent overlapping refreshes for the same symbol and ignore stale responses
+  // when the user switches instruments before a previous request completes.
+  const quoteRequestRef = useRef({ activeSymbol: null, inFlightSymbols: new Set() });
   const [updated, setUpdated] = useState("");
   // Historical chart state — uses the existing read-only backend route.
   const [chartSymbol, setChartSymbol] = useState("RELIANCE");
@@ -1963,19 +1966,32 @@ function MarketsPage() {
   // during background refreshes to avoid flicker on the price card.
   const getQuote = async (symbol, options = {}) => {
     if (!symbol) return;
+    const cleanedSymbol = String(symbol).trim().toUpperCase();
+    const requestState = quoteRequestRef.current;
+    // The 10-second timer must not start another request if the same symbol's
+    // previous request is still waiting on the gateway.
+    if (requestState.inFlightSymbols.has(cleanedSymbol)) return;
+    requestState.activeSymbol = cleanedSymbol;
+    requestState.inFlightSymbols.add(cleanedSymbol);
     const initialLoad = options.initial === true;
     if (initialLoad) setQuoteBusy(true);
     setQuoteError("");
     try {
-      const response = await apiFetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(symbol)}`, { cache: "no-store" });
+      const response = await apiFetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(cleanedSymbol)}`, { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Quote returned ${response.status}`);
-      setQuote(data);
+      // Only the most recently requested instrument may update the visible card.
+      if (quoteRequestRef.current.activeSymbol === cleanedSymbol) {
+        setQuote(data);
+      }
     } catch (e) {
-      // Don't discard a previously loaded quote just because one refresh fails.
-      setQuoteError(e?.message || "Quote refresh failed; showing the last available price if present.");
+      // A stale request must not overwrite the selected instrument's error state.
+      if (quoteRequestRef.current.activeSymbol === cleanedSymbol) {
+        setQuoteError(e?.message || "Quote refresh failed; showing the last available price if present.");
+      }
     } finally {
-      if (initialLoad) setQuoteBusy(false);
+      requestState.inFlightSymbols.delete(cleanedSymbol);
+      if (quoteRequestRef.current.activeSymbol === cleanedSymbol && initialLoad) setQuoteBusy(false);
     }
   };
 

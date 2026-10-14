@@ -54,3 +54,17 @@ def test_backdated_buy_reconciles_existing_future_sell():
     )
     assert available == Decimal("0")
     assert final_quantity == Decimal("6")
+
+
+def test_create_transaction_locks_investment_row_before_validating_ledger():
+    from pathlib import Path
+
+    source = Path(__file__).parents[1].joinpath(
+        "app", "routes", "investment_transactions.py"
+    ).read_text()
+    create_route = source.split("# FIND INVESTMENT", 1)[1].split(
+        "# VALIDATE THE COMPLETE ACTIVE LEDGER IN DATE ORDER", 1
+    )[0]
+
+    assert "FROM investments" in create_route
+    assert "FOR UPDATE" in create_route

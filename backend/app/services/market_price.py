@@ -400,6 +400,12 @@ def get_market_quote(
         except MarketPriceError as exc:
             flight["error"] = exc
             raise
+        except Exception as exc:
+            # Ensure all waiters receive a defined failure if the provider
+            # client raises an unexpected exception outside normal HTTP errors.
+            wrapped = MarketPriceError("Unable to fetch a valid market quote.")
+            flight["error"] = wrapped
+            raise wrapped from exc
         finally:
             with _MARKET_PRICE_CACHE_LOCK:
                 _MARKET_PRICE_INFLIGHT.pop(normalized_symbol, None)

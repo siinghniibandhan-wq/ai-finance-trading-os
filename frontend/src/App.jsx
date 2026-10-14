@@ -1236,6 +1236,24 @@ function TaxPage() {
       if (!String(hraInputs.gross_salary || "").trim() || Number(hraInputs.gross_salary) <= 0) throw new Error("Enter annual gross salary from your salary statement/Form 16.");
       if (!hraSalaryEvidence.trim()) throw new Error("Enter a reference for your salary statement/Form 16 before verification.");
       if (!hraRentEvidence.trim()) throw new Error("Enter a separate reference for rent receipts, rental agreement, or other HRA evidence.");
+      // Pre-flight, before anything is saved: the backend refuses to replace a
+      // verified HRA claim, which used to leave the salary half-saved. Check
+      // first, ask the person, and only then continue.
+      const claimsResponse = await apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/claims?user_id=${USER_ID}&financial_year=${encodeURIComponent(financialYear)}`);
+      const claimsResult = await claimsResponse.json().catch(() => ({}));
+      if (!claimsResponse.ok) throw new Error(claimsResult?.detail || `Could not check existing HRA claims (${claimsResponse.status}). Nothing was saved.`);
+      const existingVerifiedHra = (Array.isArray(claimsResult?.claims) ? claimsResult.claims : []).find((c) => c.deduction_key === "hra_exemption" && c.status === "verified");
+      if (existingVerifiedHra) {
+        const proceed = window.confirm(`A verified HRA claim of ${formatCurrency(existingVerifiedHra.claimed_amount)} already exists for ${financialYear}. Continue? It will be set back to pending and replaced by this new claim.`);
+        if (!proceed) throw new Error("Cancelled. Nothing was saved and your existing verified HRA claim is unchanged.");
+        const unverifyResponse = await apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/claims/${existingVerifiedHra.id}/unverify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: USER_ID, evidence_reference: hraRentEvidence.trim() }),
+        });
+        const unverifyResult = await unverifyResponse.json().catch(() => ({}));
+        if (!unverifyResponse.ok) throw new Error(unverifyResult?.detail || `Could not set the old HRA claim back to pending (${unverifyResponse.status}). Nothing else was saved.`);
+      }
       const payload = {
         financial_year: financialYear,
         gross_salary: Number(hraInputs.gross_salary),

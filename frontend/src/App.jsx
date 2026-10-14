@@ -1457,7 +1457,7 @@ function TaxPage() {
       <div style={{ ...panelStyle, marginTop: 18 }}>
         <h3 style={{ marginTop: 0 }}>Money transactions awaiting business-income review</h3>
         <p style={{ color: "rgba(255,255,255,0.58)", fontSize: 12, lineHeight: 1.6 }}>
-          These are unlinked Money transactions that may need classification. They are not business income, do not affect taxable income, and are not saved or verified automatically.
+          These are unlinked Money transactions that may be business or professional income. Being listed here does not make them business income, and nothing is saved or verified automatically. Only verified records count as business income. An entry filed under an Other Sources category may already be counted above as other-source income.
         </p>
         {businessIncomeData?.status === "unavailable" ? (
           <p role="status" style={{ color: "#fbbf24", fontSize: 12 }}>Review candidates could not be loaded: {safeText(businessIncomeData.message, "endpoint unavailable")}</p>

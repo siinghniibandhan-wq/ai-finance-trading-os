@@ -2017,8 +2017,7 @@ function MarketsPage() {
 
   // Watchlist quote refresh: use the existing quote API, preserve the last
   // successful value during refresh, and limit concurrency to three requests.
-  // Exchange is sent explicitly for each eligible instrument; until bulk quote
-  // support is available, BSE entries remain unsupported rather than guessed.
+  // The quote route supports NSE and BSE, so pass each instrument's real exchange.
   useEffect(() => {
     let cancelled = false;
     let refreshing = false;
@@ -2027,14 +2026,14 @@ function MarketsPage() {
       if (cancelled || refreshing || document.visibilityState !== "visible") return;
       refreshing = true;
       try {
-        const eligible = watchlist.filter((item) => String(item.exchange || "NSE").toUpperCase() === "NSE");
-        const unsupported = watchlist.filter((item) => String(item.exchange || "NSE").toUpperCase() !== "NSE");
+        const eligible = watchlist.filter((item) => ["NSE", "BSE"].includes(String(item.exchange || "NSE").toUpperCase()));
+        const unsupported = watchlist.filter((item) => !["NSE", "BSE"].includes(String(item.exchange || "NSE").toUpperCase()));
         if (unsupported.length) {
           setWatchlistQuotes((previous) => {
             const next = { ...previous };
             unsupported.forEach((item) => {
               const key = `${String(item.exchange || "NSE").toUpperCase()}:${String(item.symbol).toUpperCase()}`;
-              next[key] = { ...(next[key] || {}), error: "Live quote is unavailable because the quote API does not yet accept an exchange." };
+              next[key] = { ...(next[key] || {}), error: "Live quotes are supported only for NSE and BSE instruments." };
             });
             return next;
           });
@@ -2047,9 +2046,10 @@ function MarketsPage() {
             if (index >= eligible.length) return;
             const item = eligible[index];
             const symbol = String(item.symbol).trim().toUpperCase();
-            const key = `${String(item.exchange || "NSE").toUpperCase()}:${symbol}`;
+            const itemExchange = String(item.exchange || "NSE").toUpperCase();
+            const key = `${itemExchange}:${symbol}`;
             try {
-              const response = await apiFetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(symbol)}&exchange=NSE`, { cache: "no-store" });
+              const response = await apiFetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(symbol)}&exchange=${encodeURIComponent(itemExchange)}`, { cache: "no-store" });
               const data = await response.json().catch(() => ({}));
               if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Quote returned ${response.status}`);
               const price = Number(data?.quote?.last_price);

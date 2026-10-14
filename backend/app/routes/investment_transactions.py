@@ -520,6 +520,24 @@ def update_transaction(
     if transaction_type not in {"BUY", "SELL"}:
         raise HTTPException(status_code=400, detail="Transaction type must be BUY or SELL.")
 
+    # Resolve the parent investment first, then acquire the same parent-row
+    # lock used by create_transaction. All ledger mutations for one investment
+    # must serialize on this row before reading/validating the active timeline.
+    locator = db.execute(text("""
+        SELECT investment_id FROM investment_transactions
+        WHERE id = :id AND user_id = :user_id
+    """), {"id": transaction_id, "user_id": user_id}).first()
+    if not locator:
+        raise HTTPException(status_code=404, detail="Investment transaction not found.")
+
+    locked_investment = db.execute(text("""
+        SELECT id FROM investments
+        WHERE id = :investment_id AND user_id = :user_id
+        FOR UPDATE
+    """), {"investment_id": locator.investment_id, "user_id": user_id}).first()
+    if not locked_investment:
+        raise HTTPException(status_code=404, detail="Investment not found for this user.")
+
     existing = db.execute(text("""
         SELECT * FROM investment_transactions
         WHERE id = :id AND user_id = :user_id
@@ -594,6 +612,24 @@ def void_transaction(
 ):
     user_id = current_user.id
     ensure_transaction_table(db)
+    # Resolve the parent investment first, then acquire the same parent-row
+    # lock used by create_transaction. All ledger mutations for one investment
+    # must serialize on this row before reading/validating the active timeline.
+    locator = db.execute(text("""
+        SELECT investment_id FROM investment_transactions
+        WHERE id = :id AND user_id = :user_id
+    """), {"id": transaction_id, "user_id": user_id}).first()
+    if not locator:
+        raise HTTPException(status_code=404, detail="Investment transaction not found.")
+
+    locked_investment = db.execute(text("""
+        SELECT id FROM investments
+        WHERE id = :investment_id AND user_id = :user_id
+        FOR UPDATE
+    """), {"investment_id": locator.investment_id, "user_id": user_id}).first()
+    if not locked_investment:
+        raise HTTPException(status_code=404, detail="Investment not found for this user.")
+
     existing = db.execute(text("""
         SELECT * FROM investment_transactions
         WHERE id = :id AND user_id = :user_id

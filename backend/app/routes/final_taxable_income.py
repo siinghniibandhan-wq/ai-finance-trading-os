@@ -1272,6 +1272,23 @@ def verify_tax_salary_income(financial_year: str = Query(..., pattern=r"^\d{4}-\
     return _salary_record_summary(record)
 
 
+@router.post("/salary-income/unverify")
+def unverify_tax_salary_income(financial_year: str = Query(..., pattern=r"^\d{4}-\d{2}$"), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Return the owner's salary record to pending review so it stops counting as taxable income.
+
+    The saved figures are kept; only the verified status is removed.
+    """
+    record = db.query(TaxSalaryIncomeRecord).filter_by(user_id=current_user.id, financial_year=financial_year).first()
+    if record is None:
+        raise HTTPException(status_code=404, detail="Salary income record not found for this financial year.")
+    record.status = "pending_review"
+    db.commit()
+    db.refresh(record)
+    result = _salary_record_summary(record)
+    result["message"] = "Salary record returned to pending review. It no longer affects taxable income until verified again."
+    return result
+
+
 # ============================================================
 # ENDPOINT
 # ============================================================

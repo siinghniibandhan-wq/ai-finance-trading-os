@@ -21,6 +21,7 @@ AWS m.Stock Gateway
 m.Stock Gainer/Loser API
 """
 
+import os
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
@@ -39,7 +40,10 @@ router = APIRouter(
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = "http://54.153.201.74:8000"
+MSTOCK_GATEWAY_URL = os.getenv(
+    "MSTOCK_GATEWAY_URL",
+    "http://54.153.201.74:8000",
+).rstrip("/")
 
 
 # ============================================================

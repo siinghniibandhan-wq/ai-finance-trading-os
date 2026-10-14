@@ -21,6 +21,7 @@ m.Stock Script Master
 """
 
 import csv
+import os
 from io import StringIO
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -32,7 +33,10 @@ from fastapi import APIRouter, HTTPException, Query
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = "http://54.153.201.74:8000"
+MSTOCK_GATEWAY_URL = os.getenv(
+    "MSTOCK_GATEWAY_URL",
+    "http://54.153.201.74:8000",
+).rstrip("/")
 
 
 # ============================================================

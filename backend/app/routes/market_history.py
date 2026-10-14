@@ -22,6 +22,7 @@ m.Stock Historical Market Data
 
 import json
 from urllib.error import HTTPError, URLError
+import os
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -32,7 +33,10 @@ from fastapi import APIRouter, HTTPException, Query
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = "http://54.153.201.74:8000"
+MSTOCK_GATEWAY_URL = os.getenv(
+    "MSTOCK_GATEWAY_URL",
+    "http://54.153.201.74:8000",
+).rstrip("/")
 
 
 # ============================================================

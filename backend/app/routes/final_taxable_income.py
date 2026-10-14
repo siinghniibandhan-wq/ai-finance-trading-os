@@ -48,6 +48,7 @@ from app.database.database import get_db
 from app.routes.ownership import require_matching_user_id
 from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim, TaxSalaryIncomeRecord, TaxBusinessIncomeRecord, User
 from app.routes.auth import get_current_user
+from app.tax_income_safety import non_income_reason, find_duplicates
 from app.routes.deductions_exempt_income import (
     DEDUCTION_CATALOG, EXEMPT_INCOME_CATALOG, HRAInputs, calculate_hra_exemption, regime_available,
 )
@@ -1069,10 +1070,40 @@ def load_other_source_income(
     interest = Decimal("0")
     dividend = Decimal("0")
     included_transaction_count = 0
+    excluded_for_review = []
+
+    # Exact duplicates (same account/date/type/amount/reference) count once;
+    # look-alikes without a reference are only flagged, never dropped.
+    exact_duplicate_ids, possible_duplicate_ids = find_duplicates(
+        [row for row, _movement in rows]
+    )
 
     for row, movement in rows:
         amount = decimal(row.amount)
         transaction_type = str(row.transaction_type or "").lower()
+
+        if row.id in exact_duplicate_ids:
+            excluded_for_review.append({
+                "transaction_id": row.id,
+                "amount": money(amount),
+                "reason": "exact duplicate (same account, date, amount and reference)",
+            })
+            continue
+
+        # A refund, reversal, transfer or loan principal saved as "income" is
+        # not earned income. Keep it out of the total and show why.
+        if transaction_type == "income":
+            reason = non_income_reason(
+                row.category.name if row.category is not None else "",
+                row.description,
+            )
+            if reason:
+                excluded_for_review.append({
+                    "transaction_id": row.id,
+                    "amount": money(amount),
+                    "reason": reason,
+                })
+                continue
 
         # A loan recovery transaction contains principal + interest + fees.
         # Remove only the principal portion from ordinary income totals.
@@ -1097,6 +1128,8 @@ def load_other_source_income(
         "dividend": money(dividend),
         "total": money(income + interest + dividend),
         "transaction_count": included_transaction_count,
+        "excluded_for_review": excluded_for_review,
+        "possible_duplicate_ids": sorted(possible_duplicate_ids),
     }
 
 
@@ -1350,6 +1383,8 @@ def get_final_taxable_income(
         }:
             continue
         if "gross salary:" in str(transaction.description or "").lower():
+            continue
+        if non_income_reason(normalized_category, transaction.description):
             continue
         if transaction.transaction_date != record.transaction_date:
             continue

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models import TaxBusinessIncomeRecord, Transaction, Category, User
 from app.routes.auth import get_current_user
+from app.tax_income_safety import non_income_reason, find_duplicates
 
 router = APIRouter(prefix="/api/tax-business-income", tags=["Tax Business Income"])
 
@@ -68,6 +69,8 @@ def _is_business_receipt_candidate(db: Session, transaction: Transaction) -> boo
     if any(term in category_path for term in ("loan disbursement", "salary", "interest", "dividend")):
         return False
     if "gross salary:" in str(transaction.description or "").lower():
+        return False
+    if non_income_reason(category_path, transaction.description):
         return False
     return True
 
@@ -170,8 +173,9 @@ def list_records(
         .all()
     )
     candidates = []
+    exact_duplicate_ids, possible_duplicate_ids = find_duplicates(money_rows)
     for transaction in money_rows:
-        if transaction.id in linked_ids:
+        if transaction.id in linked_ids or transaction.id in exact_duplicate_ids:
             continue
         tx_type = str(transaction.transaction_type or "").strip().lower()
         if tx_type == "income" and not _is_business_receipt_candidate(db, transaction):
@@ -186,6 +190,7 @@ def list_records(
             "category": _normalized_category(db, transaction) or None,
             "description": transaction.description,
             "review_required": True,
+            "possible_duplicate": transaction.id in possible_duplicate_ids,
             "taxable_until_verified": False,
         })
 

@@ -195,7 +195,7 @@ def add_broker_position(
 # SERIALIZE HOLDING
 # ============================================================
 
-def serialize_holding(holding):
+def serialize_holding(holding, include_closed=False):
     """
     Convert internal Decimal/set structures into API-safe data.
 
@@ -208,7 +208,7 @@ def serialize_holding(holding):
 
     quantity = holding["quantity"]
 
-    if quantity <= 0:
+    if quantity <= 0 and not include_closed:
         return None
 
     # --------------------------------------------------------
@@ -453,6 +453,7 @@ def load_transactions(
 def build_holdings(
     investments,
     transactions,
+    include_closed=False,
 ):
     """
     Build consolidated Holdings without modifying the database.
@@ -693,7 +694,8 @@ def build_holdings(
     for holding in grouped.values():
 
         serialized = serialize_holding(
-            holding
+            holding,
+            include_closed=include_closed,
         )
 
         if serialized is not None:
@@ -747,10 +749,17 @@ def get_holdings(
         user_id,
     )
 
-    holdings = build_holdings(
+    # Keep closed positions out of the current-holdings list, but include
+    # their realised P&L in portfolio-level performance totals.
+    all_positions = build_holdings(
         investments,
         transactions,
+        include_closed=True,
     )
+    holdings = [
+        item for item in all_positions
+        if to_decimal(item.get("quantity_held")) > 0
+    ]
 
     # --------------------------------------------------------
     # SUMMARY
@@ -790,7 +799,7 @@ def get_holdings(
     total_realised_gain_loss = sum(
         (
             item["realised_gain_loss"]
-            for item in holdings
+            for item in all_positions
         ),
         Decimal("0"),
     )
@@ -798,7 +807,7 @@ def get_holdings(
     total_realised_cost_basis = sum(
         (
             item["realised_cost_basis"]
-            for item in holdings
+            for item in all_positions
         ),
         Decimal("0"),
     )
@@ -836,7 +845,7 @@ def get_holdings(
     total_sell_proceeds = sum(
         (
             item["sell_proceeds"]
-            for item in holdings
+            for item in all_positions
         ),
         Decimal("0"),
     )
@@ -844,7 +853,7 @@ def get_holdings(
     total_fees = sum(
         (
             item["total_fees"]
-            for item in holdings
+            for item in all_positions
         ),
         Decimal("0"),
     )
@@ -854,6 +863,10 @@ def get_holdings(
         "user_id": user_id,
         "count": len(holdings),
         "holdings": holdings,
+        "closed_position_count": sum(
+            1 for item in all_positions
+            if to_decimal(item.get("quantity_held")) <= 0
+        ),
         "summary": {
             "holding_count": len(
                 holdings

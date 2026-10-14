@@ -61,8 +61,8 @@ def search_market(
         description="Search symbol or company name",
     ),
     exchange: str = Query(
-        "NSE",
-        description="Exchange filter",
+        "ALL",
+        description="Exchange filter: ALL, NSE, or BSE",
     ),
     limit: int = Query(
         20,
@@ -73,6 +73,8 @@ def search_market(
 ):
     cleaned_query = query.strip().upper()
     cleaned_exchange = exchange.strip().upper()
+    if cleaned_exchange not in {"ALL", "NSE", "BSE"}:
+        raise HTTPException(status_code=422, detail="Exchange must be ALL, NSE, or BSE.")
 
     if not cleaned_query:
         raise HTTPException(
@@ -150,7 +152,9 @@ def search_market(
                 .upper()
             )
 
-            if row_exchange != cleaned_exchange:
+            if row_exchange not in {"NSE", "BSE"}:
+                continue
+            if cleaned_exchange != "ALL" and row_exchange != cleaned_exchange:
                 continue
 
             symbol = (
@@ -212,24 +216,44 @@ def search_market(
             # Add result
             # ------------------------------------------------
 
+            instrument_type = (row.get("instrument_type") or "").strip()
+            segment = (row.get("segment") or "").strip()
+            expiry = (row.get("expiry") or "").strip() or None
+            strike = (row.get("strike") or "").strip() or None
+            lot_size = (row.get("lot_size") or "").strip() or None
+            # Exchange series is commonly encoded in the trading symbol (e.g. -EQ)
+            # or provided separately by a provider-specific master.
+            symbol_suffix = symbol.rsplit("-", 1)[-1].upper() if "-" in symbol else ""
+            series = (row.get("series") or "").strip().upper() or (symbol_suffix if symbol_suffix in {"EQ", "BE", "BZ", "SM", "ST", "A", "B", "T"} else "")
+            base_symbol = symbol.rsplit("-", 1)[0].upper() if symbol_suffix in {"EQ", "BE", "BZ", "SM", "ST", "A", "B", "T"} else symbol.upper()
+            query_symbol = cleaned_query.replace(" ", "")
+            normalized_name = "".join(name_upper.split())
+            exact_symbol = base_symbol.replace(" ", "") == query_symbol or symbol_upper.replace(" ", "") == query_symbol
+            exact_name = normalized_name == "".join(cleaned_query.split())
+            starts_match = base_symbol.startswith(cleaned_query) or symbol_upper.startswith(cleaned_query) or name_upper.startswith(cleaned_query)
             results.append({
                 "instrument_token": instrument_token,
+                "exchange_token": (row.get("exchange_token") or "").strip() or None,
                 "symbol": symbol or None,
+                "tradingsymbol": symbol or None,
                 "name": name or None,
                 "exchange": row_exchange or None,
-                "instrument_type": (
-                    row.get("instrument_type")
-                    or None
-                ),
+                "series": series or None,
+                "segment": segment or None,
+                "instrument_type": instrument_type or None,
+                "expiry": expiry,
+                "strike": strike,
+                "lot_size": lot_size,
                 "last_price": last_price,
+                "_rank": (0 if exact_symbol else 1 if exact_name else 2 if starts_match else 3),
             })
 
-            # ------------------------------------------------
-            # Stop once requested limit is reached
-            # ------------------------------------------------
-
-            if len(results) >= limit:
-                break
+        # Exact symbol/company matches from both exchanges come first, followed
+        # by other prefix matches and then broader partial matches.
+        results.sort(key=lambda item: (item["_rank"], 0 if item["exchange"] == "NSE" else 1, item["symbol"] or ""))
+        results = results[:limit]
+        for item in results:
+            item.pop("_rank", None)
 
     except Exception as exc:
         raise HTTPException(

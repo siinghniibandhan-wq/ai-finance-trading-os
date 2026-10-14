@@ -109,3 +109,19 @@ def test_quote_rejects_non_object_gateway_data(monkeypatch):
     _mock_gateway(monkeypatch, {"status": "success", "symbol": "RELIANCE", "data": []})
     with pytest.raises(market_price.MarketPriceError, match="invalid quote data"):
         market_price._fetch_gateway_quote("RELIANCE")
+
+
+def test_exchange_qualified_equity_adds_mstock_eq_suffix(monkeypatch):
+    captured = {}
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        return FakeResponse({
+            "status": "success",
+            "symbol": "NSE:RELIANCE-EQ",
+            "data": {"NSE:RELIANCE-EQ": {"last_price": "123.45"}},
+        })
+
+    monkeypatch.setattr(market_price, "urlopen", fake_urlopen)
+    assert market_price._fetch_gateway_quote("NSE:RELIANCE") == Decimal("123.45")
+    assert "symbol=NSE%3ARELIANCE-EQ" in captured["url"]

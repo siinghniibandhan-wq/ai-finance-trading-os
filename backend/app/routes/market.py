@@ -32,6 +32,7 @@ from fastapi import APIRouter, HTTPException
 from app.services.market_price import (
     MarketPriceError,
     get_market_price,
+    get_market_quote,
 )
 
 
@@ -105,9 +106,8 @@ def market_quote(symbol: str):
 
     try:
 
-        price = get_market_price(
-            symbol
-        )
+        quote_data = get_market_quote(symbol)
+        price = quote_data["price"]
 
     except MarketPriceError as exc:
 
@@ -126,4 +126,7 @@ def market_quote(symbol: str):
         "price": price,
         "provider": "m.Stock",
         "source": "AWS m.Stock Gateway",
+        "retrieved_at": quote_data["retrieved_at"],
+        "cache_hit": quote_data["cache_hit"],
+        "provider_market_timestamp": None,
     }

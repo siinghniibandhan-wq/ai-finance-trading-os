@@ -21,12 +21,10 @@ AWS m.Stock Gateway
 Live Quote
 """
 
-from datetime import datetime, timezone
-
 from fastapi import APIRouter, HTTPException, Query
 
-from app.routes.market import (
-    get_market_price,
+from app.services.market_price import (
+    get_market_quote,
     MarketPriceError,
 )
 
@@ -76,9 +74,8 @@ def get_market_quote(
 
     try:
 
-        price = get_market_price(
-            cleaned_symbol
-        )
+        quote_data = get_market_quote(cleaned_symbol)
+        price = quote_data["price"]
 
     except MarketPriceError as exc:
 
@@ -116,9 +113,15 @@ def get_market_quote(
             "service": "market.py",
         },
 
-        "last_updated": datetime.now(
-            timezone.utc
-        ).isoformat(),
+        # Original gateway retrieval time, not this response's time.
+        "last_updated": quote_data["retrieved_at"],
+        "retrieved_at": quote_data["retrieved_at"],
+        "cache_hit": quote_data["cache_hit"],
+        "provider_market_timestamp": None,
+        "freshness_note": (
+            "Timestamp indicates backend gateway retrieval time; the provider's "
+            "original market timestamp is not available from the current gateway response."
+        ),
 
         "database_write": False,
 

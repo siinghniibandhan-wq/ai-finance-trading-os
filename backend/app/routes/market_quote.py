@@ -24,7 +24,7 @@ Live Quote
 from fastapi import APIRouter, HTTPException, Query
 
 from app.services.market_price import (
-    get_market_quote,
+    get_market_quote as fetch_market_quote,
     MarketPriceError,
 )
 
@@ -74,7 +74,7 @@ def get_market_quote(
 
     try:
 
-        quote_data = get_market_quote(cleaned_symbol)
+        quote_data = fetch_market_quote(cleaned_symbol)
         price = quote_data["price"]
 
     except MarketPriceError as exc:

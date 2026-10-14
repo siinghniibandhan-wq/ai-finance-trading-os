@@ -99,6 +99,27 @@ def normalize_symbol(symbol: str) -> str:
 # AWS m.STOCK GATEWAY REQUEST
 # ============================================================
 
+def _canonical_quote_symbol(symbol: str) -> tuple[str | None, str]:
+    """Return exchange and base symbol without the common NSE ``-EQ`` suffix."""
+    cleaned = normalize_symbol(symbol)
+    exchange = None
+    if ":" in cleaned:
+        prefix, remainder = cleaned.split(":", 1)
+        if prefix in {"NSE", "BSE"}:
+            exchange, cleaned = prefix, remainder
+    if cleaned.endswith("-EQ"):
+        cleaned = cleaned[:-3]
+    return exchange, cleaned
+
+def _quote_symbols_match(requested: str, returned: str) -> bool:
+    requested_exchange, requested_base = _canonical_quote_symbol(requested)
+    returned_exchange, returned_base = _canonical_quote_symbol(returned)
+    if requested_base != returned_base:
+        return False
+    # Reject explicit exchange conflicts. An unqualified request may be
+    # normalized by the gateway to its default exchange symbol.
+    return not (requested_exchange and returned_exchange and requested_exchange != returned_exchange)
+
 def _fetch_gateway_quote(symbol: str) -> Decimal:
     """
     Fetch latest market price from the AWS m.Stock gateway.
@@ -186,6 +207,11 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
     # PROVIDER RESPONSE VALIDATION
     # ========================================================
 
+    if not isinstance(payload, dict):
+        raise MarketPriceError(
+            "m.Stock market gateway returned an invalid response."
+        )
+
     if payload.get("status") != "success":
 
         raise MarketPriceError(
@@ -195,9 +221,13 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
             )
         )
 
-    gateway_data = payload.get(
-        "data"
-    ) or {}
+    gateway_data = payload.get("data")
+    if gateway_data is None:
+        gateway_data = {}
+    if not isinstance(gateway_data, dict):
+        raise MarketPriceError(
+            "m.Stock market gateway returned invalid quote data."
+        )
 
     # ========================================================
     # FIND QUOTE
@@ -206,26 +236,25 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
     raw_quote = None
 
     # First try the exact symbol returned by gateway.
-    response_symbol = payload.get(
-        "symbol"
-    )
+    response_symbol = payload.get("symbol")
 
     if response_symbol:
-        raw_quote = gateway_data.get(
-            response_symbol
-        )
+        if not _quote_symbols_match(normalized_symbol, str(response_symbol)):
+            raise MarketPriceError(
+                f"Gateway returned {response_symbol} while {symbol} was requested."
+            )
+        raw_quote = gateway_data.get(response_symbol)
 
-    # A single returned quote can be used when the gateway omits or
-    # normalizes its symbol key. Never select the first quote from a
-    # multi-symbol payload: that can silently return another instrument's price.
-    if raw_quote is None and len(gateway_data) == 1:
+        # Some gateway responses key data differently from the top-level symbol.
+        # A one-quote fallback is safe only when the top-level symbol was matched.
+        if raw_quote is None and len(gateway_data) == 1:
+            raw_quote = next(iter(gateway_data.values()), None)
+    elif len(gateway_data) == 1:
+        # Older gateway responses may omit the symbol field entirely. In that
+        # case, a single returned quote is the only unambiguous result.
+        raw_quote = next(iter(gateway_data.values()), None)
 
-        raw_quote = next(
-            iter(gateway_data.values()),
-            None,
-        )
-
-    if raw_quote is None and len(gateway_data) > 1:
+    if raw_quote is None:
         raise MarketPriceError(
             f"Gateway response did not contain an exact quote for {symbol}."
         )
@@ -319,17 +348,23 @@ def get_market_quote(
                     "cache_hit": True,
                 }
 
-            event = _MARKET_PRICE_INFLIGHT.get(normalized_symbol)
-            if event is None:
-                event = Event()
-                _MARKET_PRICE_INFLIGHT[normalized_symbol] = event
+            flight = _MARKET_PRICE_INFLIGHT.get(normalized_symbol)
+            if flight is None:
+                flight = {"event": Event(), "price": None, "retrieved_at": None, "error": None}
+                _MARKET_PRICE_INFLIGHT[normalized_symbol] = flight
                 is_fetcher = True
             else:
                 is_fetcher = False
 
         if not is_fetcher:
-            event.wait()
-            continue
+            flight["event"].wait()
+            if flight["error"] is not None:
+                raise flight["error"]
+            return {
+                "price": flight["price"],
+                "retrieved_at": flight["retrieved_at"],
+                "cache_hit": True,
+            }
 
         try:
             price = _fetch_gateway_quote(normalized_symbol)
@@ -354,16 +389,21 @@ def get_market_quote(
                 _MARKET_PRICE_CACHE[normalized_symbol] = (
                     monotonic(), price, retrieved_at
                 )
+                flight["price"] = price
+                flight["retrieved_at"] = retrieved_at
 
             return {
                 "price": price,
                 "retrieved_at": retrieved_at,
                 "cache_hit": False,
             }
+        except MarketPriceError as exc:
+            flight["error"] = exc
+            raise
         finally:
             with _MARKET_PRICE_CACHE_LOCK:
                 _MARKET_PRICE_INFLIGHT.pop(normalized_symbol, None)
-                event.set()
+                flight["event"].set()
 
 
 def get_market_price(symbol: str) -> Decimal:

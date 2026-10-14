@@ -1,4 +1,7 @@
 from decimal import Decimal
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
+from time import sleep
 
 import pytest
 
@@ -9,9 +12,11 @@ from app.services import market_price
 def clear_shared_cache():
     with market_price._MARKET_PRICE_CACHE_LOCK:
         market_price._MARKET_PRICE_CACHE.clear()
+        market_price._MARKET_PRICE_INFLIGHT.clear()
     yield
     with market_price._MARKET_PRICE_CACHE_LOCK:
         market_price._MARKET_PRICE_CACHE.clear()
+        market_price._MARKET_PRICE_INFLIGHT.clear()
 
 
 def test_shared_cache_reuses_recent_quote_across_calls(monkeypatch):
@@ -87,3 +92,27 @@ def test_shared_cache_does_not_cache_provider_errors(monkeypatch):
     with pytest.raises(market_price.MarketPriceError):
         market_price.get_market_price("RELIANCE")
     assert calls == ["RELIANCE", "RELIANCE"]
+
+
+
+def test_concurrent_same_symbol_requests_share_one_provider_fetch(monkeypatch):
+    calls = []
+    start = Barrier(6)
+
+    def fake_fetch(symbol):
+        calls.append(symbol)
+        sleep(0.05)
+        return Decimal("123.45")
+
+    monkeypatch.setattr(market_price, "_fetch_gateway_quote", fake_fetch)
+    monkeypatch.setattr(market_price, "MARKET_PRICE_CACHE_TTL_SECONDS", 1.0)
+
+    def request_quote():
+        start.wait()
+        return market_price.get_market_price("RELIANCE")
+
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        prices = list(executor.map(lambda _: request_quote(), range(6)))
+
+    assert prices == [Decimal("123.45")] * 6
+    assert calls == ["RELIANCE"]

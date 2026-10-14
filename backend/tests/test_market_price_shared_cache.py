@@ -135,3 +135,26 @@ def test_quote_metadata_keeps_original_gateway_retrieval_timestamp_on_cache_hit(
     assert cached["cache_hit"] is True
     assert cached["retrieved_at"] == fresh["retrieved_at"]
     assert calls == ["RELIANCE"]
+
+
+def test_concurrent_provider_failure_is_shared_without_repeated_gateway_calls(monkeypatch):
+    calls = []
+    start = Barrier(6)
+
+    def fake_fetch(symbol):
+        calls.append(symbol)
+        sleep(0.05)
+        raise market_price.MarketPriceError("provider unavailable")
+
+    monkeypatch.setattr(market_price, "_fetch_gateway_quote", fake_fetch)
+    monkeypatch.setattr(market_price, "MARKET_PRICE_CACHE_TTL_SECONDS", 1.0)
+
+    def request_quote():
+        start.wait()
+        with pytest.raises(market_price.MarketPriceError, match="provider unavailable"):
+            market_price.get_market_price("RELIANCE")
+
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        list(executor.map(lambda _: request_quote(), range(6)))
+
+    assert calls == ["RELIANCE"]

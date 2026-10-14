@@ -79,3 +79,33 @@ def test_quote_rejects_non_finite_or_non_positive_prices(monkeypatch, raw_price)
         match="Invalid market price",
     ):
         market_price._fetch_gateway_quote("RELIANCE")
+
+
+def test_quote_rejects_single_quote_when_gateway_identifies_a_different_symbol(monkeypatch):
+    _mock_gateway(monkeypatch, {
+        "status": "success",
+        "symbol": "TCS",
+        "data": {"TCS": {"last_price": "999.00"}},
+    })
+    with pytest.raises(market_price.MarketPriceError, match="while RELIANCE was requested"):
+        market_price._fetch_gateway_quote("RELIANCE")
+
+
+def test_quote_allows_exchange_qualified_symbol_normalization(monkeypatch):
+    _mock_gateway(monkeypatch, {
+        "status": "success",
+        "symbol": "NSE:RELIANCE-EQ",
+        "data": {"RELIANCE-EQ": {"last_price": "123.45"}},
+    })
+    assert market_price._fetch_gateway_quote("NSE:RELIANCE") == Decimal("123.45")
+
+
+def test_quote_rejects_non_object_gateway_payload(monkeypatch):
+    _mock_gateway(monkeypatch, ["not", "an", "object"])
+    with pytest.raises(market_price.MarketPriceError, match="invalid response"):
+        market_price._fetch_gateway_quote("RELIANCE")
+
+def test_quote_rejects_non_object_gateway_data(monkeypatch):
+    _mock_gateway(monkeypatch, {"status": "success", "symbol": "RELIANCE", "data": []})
+    with pytest.raises(market_price.MarketPriceError, match="invalid quote data"):
+        market_price._fetch_gateway_quote("RELIANCE")

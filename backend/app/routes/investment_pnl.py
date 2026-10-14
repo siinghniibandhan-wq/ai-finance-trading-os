@@ -12,7 +12,8 @@
 # - Include transaction fees
 #
 # Accounting method:
-# WEIGHTED-AVERAGE = First In, First Out
+# Uses moving weighted-average cost for portfolio performance.
+# FIFO must be calculated separately where tax reporting requires it.
 #
 # IMPORTANT:
 # - Does NOT modify investment records

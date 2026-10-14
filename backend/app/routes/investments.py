@@ -169,6 +169,7 @@ class InvestmentCreate(BaseModel):
     instrument_id: str | None = None
     investment_account_id: int | None = None
     instrument_master_id: int | None = None
+    exchange: str | None = None
 
 
 # ============================================================
@@ -260,6 +261,36 @@ def is_market_investment(
         "stocks",
         "etf",
     }
+
+
+def build_market_quote_symbol(
+    symbol: str,
+    exchange: str | None = None,
+) -> str:
+    """Qualify a quote symbol with its known exchange without guessing listings."""
+    cleaned = symbol.strip().upper()
+    if not cleaned:
+        raise MarketPriceError("Investment symbol is missing.")
+
+    if ":" in cleaned:
+        prefix, remainder = cleaned.split(":", 1)
+        if prefix in {"NSE", "BSE"} and remainder:
+            if exchange and exchange.strip().upper() in {"NSE", "BSE"} and prefix != exchange.strip().upper():
+                raise MarketPriceError(
+                    f"Investment symbol exchange {prefix} conflicts with instrument exchange {exchange.strip().upper()}."
+                )
+            return cleaned
+
+    if exchange is None or not exchange.strip():
+        # Legacy records without exchange metadata retain their existing symbol behavior.
+        return cleaned
+
+    normalized_exchange = exchange.strip().upper()
+    if normalized_exchange not in {"NSE", "BSE"}:
+        raise MarketPriceError(
+            f"Unsupported instrument exchange: {normalized_exchange}."
+        )
+    return f"{normalized_exchange}:{cleaned}"
 
 
 # ============================================================
@@ -406,13 +437,39 @@ def create_investment(
     else:
         asset_class = data.asset_class or "Other"
     product_type = data.product_type or data.investment_type.strip()
-    instrument_id = data.instrument_id or (data.symbol.strip().upper() if data.symbol else data.name.strip().upper())
-    canonical_key = f"{instrument_id}::NSE::{product_type.strip().lower()}"
-    master = db.query(InstrumentMaster).filter(InstrumentMaster.canonical_key == canonical_key).first()
-    if master is None:
-        master = InstrumentMaster(canonical_key=canonical_key, name=data.name.strip(), symbol=(data.symbol.strip().upper() if data.symbol else None), exchange="NSE" if data.symbol else None, asset_class=asset_class, product_type=product_type)
-        db.add(master)
-        db.flush()
+    master = None
+    if data.instrument_master_id is not None:
+        master = db.query(InstrumentMaster).filter(
+            InstrumentMaster.id == data.instrument_master_id
+        ).first()
+        if master is None:
+            raise HTTPException(status_code=422, detail="Selected instrument does not exist.")
+        exchange = (master.exchange or data.exchange or "").strip().upper() or None
+        symbol = (data.symbol or master.symbol or "").strip().upper() or None
+        if data.symbol and master.symbol and data.symbol.strip().upper() != master.symbol.strip().upper():
+            raise HTTPException(status_code=422, detail="Symbol does not match the selected instrument.")
+        if data.exchange and exchange and data.exchange.strip().upper() != exchange:
+            raise HTTPException(status_code=422, detail="Exchange does not match the selected instrument.")
+    else:
+        exchange = (data.exchange or ("NSE" if data.symbol else "")).strip().upper() or None
+        symbol = data.symbol.strip().upper() if data.symbol else None
+        if exchange and exchange not in {"NSE", "BSE"}:
+            raise HTTPException(status_code=422, detail="Exchange must be NSE or BSE.")
+        instrument_id = data.instrument_id or (symbol if symbol else data.name.strip().upper())
+        canonical_key = f"{instrument_id}::{exchange or 'UNSPECIFIED'}::{product_type.strip().lower()}"
+        master = db.query(InstrumentMaster).filter(InstrumentMaster.canonical_key == canonical_key).first()
+        if master is None:
+            master = InstrumentMaster(
+                canonical_key=canonical_key,
+                name=data.name.strip(),
+                symbol=symbol,
+                exchange=exchange,
+                asset_class=asset_class,
+                product_type=product_type,
+            )
+            db.add(master)
+            db.flush()
+    instrument_id = data.instrument_id or (symbol if symbol else data.name.strip().upper())
 
     result = db.execute(
         text(
@@ -490,10 +547,7 @@ def create_investment(
             "investment_type":
                 data.investment_type.strip(),
 
-            "symbol":
-                data.symbol.strip().upper()
-                if data.symbol
-                else None,
+            "symbol": symbol,
 
             "quantity": data.quantity,
 
@@ -570,6 +624,9 @@ def refresh_market_prices(
                 name,
                 investment_type,
                 symbol,
+                instrument_master_id,
+                instrument_master.exchange AS instrument_exchange,
+                instrument_master.symbol AS master_symbol,
                 quantity,
                 buy_price,
                 current_price,
@@ -581,8 +638,8 @@ def refresh_market_prices(
                 updated_at
 
             FROM investments
-
-            WHERE user_id = :user_id
+            LEFT JOIN instrument_master ON instrument_master.id = investments.instrument_master_id
+            WHERE investments.user_id = :user_id
 
             ORDER BY id ASC
             """
@@ -616,9 +673,8 @@ def refresh_market_prices(
             )
         )
 
-        symbol = investment.get(
-            "symbol"
-        )
+        symbol = investment.get("symbol") or investment.get("master_symbol")
+        exchange = investment.get("instrument_exchange")
 
         # ----------------------------------------------------
         # Skip unsupported investment types
@@ -674,9 +730,8 @@ def refresh_market_prices(
 
         try:
 
-            market_price = get_market_price(
-                symbol
-            )
+            quote_symbol = build_market_quote_symbol(symbol, exchange)
+            market_price = get_market_price(quote_symbol)
 
         except MarketPriceError as exc:
 
@@ -876,6 +931,9 @@ def refresh_single_investment(
                 name,
                 investment_type,
                 symbol,
+                instrument_master_id,
+                instrument_master.exchange AS instrument_exchange,
+                instrument_master.symbol AS master_symbol,
                 quantity,
                 buy_price,
                 current_price,
@@ -887,8 +945,8 @@ def refresh_single_investment(
                 updated_at
 
             FROM investments
-
-            WHERE id = :investment_id AND user_id = :user_id
+            LEFT JOIN instrument_master ON instrument_master.id = investments.instrument_master_id
+            WHERE investments.id = :investment_id AND investments.user_id = :user_id
             """
         ),
         {
@@ -924,9 +982,8 @@ def refresh_single_investment(
             ),
         )
 
-    symbol = investment.get(
-        "symbol"
-    )
+    symbol = investment.get("symbol") or investment.get("master_symbol")
+    exchange = investment.get("instrument_exchange")
 
     if not symbol:
 
@@ -943,9 +1000,8 @@ def refresh_single_investment(
 
     try:
 
-        market_price = get_market_price(
-            symbol
-        )
+        quote_symbol = build_market_quote_symbol(symbol, exchange)
+        market_price = get_market_price(quote_symbol)
 
     except MarketPriceError as exc:
 
@@ -969,14 +1025,13 @@ def refresh_single_investment(
 
             WHERE
                 id = :investment_id
+                AND user_id = :user_id
             """
         ),
         {
-            "current_price":
-                market_price,
-
-            "investment_id":
-                investment_id,
+            "current_price": market_price,
+            "investment_id": investment_id,
+            "user_id": current_user.id,
         },
     )
 

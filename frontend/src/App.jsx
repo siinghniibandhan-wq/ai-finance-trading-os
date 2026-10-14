@@ -1913,9 +1913,12 @@ function MarketsPage() {
   const [expandedMetric, setExpandedMetric] = useState("");
   // Personal watchlist persists in this browser; no backend writes are made.
   const [watchlist, setWatchlist] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("financial-os-market-watchlist") || "[]"); }
-    catch { return []; }
+    try {
+      const saved = JSON.parse(localStorage.getItem("financial-os-market-watchlist") || "[]");
+      return Array.isArray(saved) ? saved.filter((item) => item && item.symbol) : [];
+    } catch { return []; }
   });
+  const [watchlistQuotes, setWatchlistQuotes] = useState({});
 
   const card = { padding: "16px", borderRadius: "15px", border: "1px solid rgba(255,255,255,0.09)", background: "linear-gradient(135deg, rgba(255,255,255,0.065), rgba(255,255,255,0.02))", minWidth: 0 };
   const muted = { color: "rgba(255,255,255,0.55)", fontSize: "12px", lineHeight: 1.6 };
@@ -2005,6 +2008,84 @@ function MarketsPage() {
     }, 10000);
     return () => window.clearInterval(timer);
   }, [selectedInstrument?.symbol]);
+
+  // Watchlist quote refresh: use the existing quote API, preserve the last
+  // successful value during refresh, and limit concurrency to three requests.
+  // The current quote endpoint does not accept an exchange parameter, so BSE
+  // entries are explicitly not quoted rather than risking an NSE/BSE mismatch.
+  useEffect(() => {
+    let cancelled = false;
+    let refreshing = false;
+
+    const loadWatchlistQuotes = async () => {
+      if (cancelled || refreshing || document.visibilityState !== "visible") return;
+      refreshing = true;
+      try {
+        const eligible = watchlist.filter((item) => String(item.exchange || "NSE").toUpperCase() === "NSE");
+        const unsupported = watchlist.filter((item) => String(item.exchange || "NSE").toUpperCase() !== "NSE");
+        if (unsupported.length) {
+          setWatchlistQuotes((previous) => {
+            const next = { ...previous };
+            unsupported.forEach((item) => {
+              const key = `${String(item.exchange || "NSE").toUpperCase()}:${String(item.symbol).toUpperCase()}`;
+              next[key] = { ...(next[key] || {}), error: "Live quote is unavailable because the quote API does not yet accept an exchange." };
+            });
+            return next;
+          });
+        }
+
+        let cursor = 0;
+        const workers = Array.from({ length: Math.min(3, eligible.length) }, async () => {
+          while (!cancelled) {
+            const index = cursor++;
+            if (index >= eligible.length) return;
+            const item = eligible[index];
+            const symbol = String(item.symbol).trim().toUpperCase();
+            const key = `${String(item.exchange || "NSE").toUpperCase()}:${symbol}`;
+            try {
+              const response = await apiFetch(`${API}/api/market-quote/?symbol=${encodeURIComponent(symbol)}`, { cache: "no-store" });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Quote returned ${response.status}`);
+              const price = Number(data?.quote?.last_price);
+              if (!Number.isFinite(price) || price <= 0) throw new Error("The quote API returned no valid price.");
+              if (!cancelled) setWatchlistQuotes((previous) => ({
+                ...previous,
+                [key]: {
+                  price,
+                  retrievedAt: data.retrieved_at || data.last_updated || null,
+                  cacheHit: data.cache_hit === true,
+                  error: "",
+                },
+              }));
+            } catch (error) {
+              if (!cancelled) setWatchlistQuotes((previous) => ({
+                ...previous,
+                [key]: {
+                  ...(previous[key] || {}),
+                  error: error?.message || "Unable to load quote.",
+                },
+              }));
+            }
+          }
+        });
+        await Promise.all(workers);
+      } finally {
+        refreshing = false;
+      }
+    };
+
+    loadWatchlistQuotes();
+    const timer = window.setInterval(loadWatchlistQuotes, 30000);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") loadWatchlistQuotes();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [watchlist]);
 
   // Fetch historical daily candles from the existing Market Charts API.
   const loadChart = async (symbol = chartSymbol, marketExchange = chartExchange, range = chartRange) => {
@@ -2101,7 +2182,7 @@ function MarketsPage() {
       </section>
       <section style={card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><h3 style={{ margin: "0 0 4px" }}>My Watchlist</h3><p style={{ ...muted, margin: 0 }}>Your saved instruments on this device.</p></div><span style={muted}>{watchlist.length} saved</span></div>
-        {!watchlist.length ? <p style={{ ...muted, marginBottom: 0 }}>Your watchlist is empty. Search for a stock, select it, then choose “Add to watchlist”.</p> : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px", marginTop: "12px" }}>{watchlist.map((item) => <div key={`${item.exchange}:${item.symbol}`} style={{ padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.025)" }}><button type="button" onClick={() => selectInstrument(item)} style={{ display: "block", width: "100%", textAlign: "left", border: 0, padding: 0, background: "transparent", color: "inherit", cursor: "pointer" }}><strong>{item.symbol}</strong><div style={muted}>{item.name} · {item.exchange}</div><div style={{ ...muted, marginTop: "5px" }}>Tap to open instrument</div></button><button type="button" className="secondary-button" style={{ marginTop: "10px", padding: "6px 9px", fontSize: "11px" }} onClick={() => removeFromWatchlist(item)}>Remove</button></div>)}</div>}
+        {!watchlist.length ? <p style={{ ...muted, marginBottom: 0 }}>Your watchlist is empty. Search for a stock, select it, then choose “Add to watchlist”.</p> : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px", marginTop: "12px" }}>{watchlist.map((item) => { const key = `${String(item.exchange || "NSE").toUpperCase()}:${String(item.symbol).toUpperCase()}`; const liveQuote = watchlistQuotes[key]; return <div key={key} style={{ padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.025)" }}><button type="button" onClick={() => selectInstrument(item)} style={{ display: "block", width: "100%", textAlign: "left", border: 0, padding: 0, background: "transparent", color: "inherit", cursor: "pointer" }}><strong>{item.symbol}</strong><div style={muted}>{item.name} · {item.exchange || "NSE"}</div><div style={{ fontSize: "20px", fontWeight: 800, marginTop: "8px" }}>{liveQuote?.price != null ? money(liveQuote.price) : "—"}</div><div style={{ ...muted, marginTop: "3px" }}>{liveQuote?.retrievedAt ? `Gateway retrieved ${new Date(liveQuote.retrievedAt).toLocaleTimeString("en-IN")}${liveQuote.cacheHit ? " · cached" : ""}` : liveQuote?.error || "Loading latest available quote…"}</div><div style={{ ...muted, marginTop: "5px" }}>Tap to open instrument</div></button>{liveQuote?.error && liveQuote?.price != null && <div style={{ ...muted, color: "#fcd34d", marginTop: "4px" }}>Refresh issue: {liveQuote.error}</div>}<button type="button" className="secondary-button" style={{ marginTop: "10px", padding: "6px 9px", fontSize: "11px" }} onClick={() => removeFromWatchlist(item)}>Remove</button></div>; })}</div>}
       </section>
       <section style={{ ...card, background: "linear-gradient(120deg, rgba(124,58,237,.10), rgba(255,255,255,.02))" }}><div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}><div><h3 style={{ margin: "0 0 5px" }}>Market News</h3><p style={{ ...muted, margin: 0 }}>A news feed has not been connected to the current market API yet.</p></div><span style={{ ...muted, border: "1px solid rgba(255,255,255,.12)", padding: "5px 9px", borderRadius: "99px" }}>Source required</span></div><p style={{ ...muted, marginBottom: 0, marginTop: "10px" }}>We’ll show sourced headlines here once a reliable news provider is configured; no sample or fabricated headlines are displayed.</p></section>
     </>}

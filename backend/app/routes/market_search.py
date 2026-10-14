@@ -138,33 +138,50 @@ def search_market(
     # --------------------------------------------------------
 
     try:
-        # Instrument-master providers may change CSV header names or include a
-        # UTF-8 BOM. Normalize headers once so a valid master does not silently
-        # produce zero search results when it uses exch_seg / symbol / company_name.
+        # Instrument-master exports can use different column labels across
+        # gateway versions. Normalize headers once (including a UTF-8 BOM)
+        # and map provider aliases into the names used below.
         reader = csv.DictReader(StringIO(response_text.lstrip("\ufeff")))
         if not reader.fieldnames:
             raise ValueError("Instrument master CSV has no header row.")
-        reader.fieldnames = [
-            str(field or "").strip().lower().replace(" ", "_")
-            for field in reader.fieldnames
-        ]
 
-        def field_value(row, *names):
-            for field_name in names:
-                value = row.get(field_name)
-                if value is not None and str(value).strip():
-                    return str(value).strip()
-            return ""
+        def normalize_header(value):
+            return "".join(ch for ch in str(value or "").strip().lower() if ch.isalnum())
+
+        header_lookup = {normalize_header(name): name for name in reader.fieldnames}
+        aliases = {
+            "exchange": ("exchange", "exch", "exchseg", "exchangesegment", "marketsegment"),
+            "tradingsymbol": ("tradingsymbol", "tradingsym", "symbol", "tradingcode", "ticker"),
+            "name": ("name", "companyname", "instrumentname", "securityname", "displayname"),
+            "instrument_token": ("instrumenttoken", "token", "securityid", "scripcode"),
+            "exchange_token": ("exchangetoken", "exchtoken"),
+            "last_price": ("lastprice", "ltp", "closeprice", "closingprice"),
+            "instrument_type": ("instrumenttype", "type", "series"),
+            "segment": ("segment", "exchangesegment", "exchseg"),
+            "expiry": ("expiry", "expirydate"),
+            "strike": ("strike", "strikeprice"),
+            "lot_size": ("lotsize", "marketlotsize"),
+        }
+
+        def value_for(row, canonical):
+            for alias in aliases.get(canonical, (canonical,)):
+                actual = header_lookup.get(normalize_header(alias))
+                if actual is not None:
+                    value = row.get(actual)
+                    if value is not None and str(value).strip() != "":
+                        return value
+            return None
 
         results = []
 
-        for row in reader:
-            row_exchange = field_value(
-                row, "exchange", "exch_seg", "exchange_segment", "exchange_name"
-            ).upper()
-            if row_exchange.startswith("NSE"):
+        for raw_row in reader:
+            # Canonicalize aliases so downstream result construction remains
+            # consistent regardless of the gateway's CSV header spelling.
+            row = {key: value_for(raw_row, key) for key in aliases}
+            row_exchange = str(row.get("exchange") or "").strip().upper()
+            if row_exchange in {"NSECM", "NSEFO", "NSECD", "NSE_EQ", "NSE-EQ"}:
                 row_exchange = "NSE"
-            elif row_exchange.startswith("BSE"):
+            elif row_exchange in {"BSECM", "BSEFO", "BSECD", "BSE_EQ", "BSE-EQ"}:
                 row_exchange = "BSE"
 
             if row_exchange not in {"NSE", "BSE"}:
@@ -172,11 +189,14 @@ def search_market(
             if cleaned_exchange != "ALL" and row_exchange != cleaned_exchange:
                 continue
 
-            symbol = field_value(
-                row, "tradingsymbol", "trading_symbol", "symbol", "ticker"
+            symbol = (
+                (row.get("tradingsymbol") or "")
+                .strip()
             )
-            name = field_value(
-                row, "name", "company_name", "company", "instrument_name", "description"
+
+            name = (
+                (row.get("name") or "")
+                .strip()
             )
 
             symbol_upper = symbol.upper()
@@ -196,7 +216,9 @@ def search_market(
             # Instrument token
             # ------------------------------------------------
 
-            instrument_token = field_value(row, "instrument_token", "token", "security_id")
+            instrument_token = row.get(
+                "instrument_token"
+            )
 
             try:
                 instrument_token = (
@@ -211,7 +233,7 @@ def search_market(
             # Last price
             # ------------------------------------------------
 
-            last_price = field_value(row, "last_price", "ltp", "close", "price")
+            last_price = row.get("last_price")
 
             try:
                 last_price = (
@@ -226,15 +248,15 @@ def search_market(
             # Add result
             # ------------------------------------------------
 
-            instrument_type = field_value(row, "instrument_type", "instrumenttype", "type")
-            segment = field_value(row, "segment", "exchange_segment", "exch_seg")
-            expiry = field_value(row, "expiry", "expiry_date") or None
-            strike = field_value(row, "strike", "strike_price") or None
-            lot_size = field_value(row, "lot_size", "lotsize") or None
+            instrument_type = (row.get("instrument_type") or "").strip()
+            segment = (row.get("segment") or "").strip()
+            expiry = (row.get("expiry") or "").strip() or None
+            strike = (row.get("strike") or "").strip() or None
+            lot_size = (row.get("lot_size") or "").strip() or None
             # Exchange series is commonly encoded in the trading symbol (e.g. -EQ)
             # or provided separately by a provider-specific master.
             symbol_suffix = symbol.rsplit("-", 1)[-1].upper() if "-" in symbol else ""
-            series = field_value(row, "series", "security_series").upper() or (symbol_suffix if symbol_suffix in {"EQ", "BE", "BZ", "SM", "ST", "A", "B", "T"} else "")
+            series = (row.get("series") or "").strip().upper() or (symbol_suffix if symbol_suffix in {"EQ", "BE", "BZ", "SM", "ST", "A", "B", "T"} else "")
             base_symbol = symbol.rsplit("-", 1)[0].upper() if symbol_suffix in {"EQ", "BE", "BZ", "SM", "ST", "A", "B", "T"} else symbol.upper()
             query_symbol = cleaned_query.replace(" ", "")
             normalized_name = "".join(name_upper.split())
@@ -243,7 +265,7 @@ def search_market(
             starts_match = base_symbol.startswith(cleaned_query) or symbol_upper.startswith(cleaned_query) or name_upper.startswith(cleaned_query)
             results.append({
                 "instrument_token": instrument_token,
-                "exchange_token": field_value(row, "exchange_token", "exchange_token_id") or None,
+                "exchange_token": (row.get("exchange_token") or "").strip() or None,
                 "symbol": symbol or None,
                 "tradingsymbol": symbol or None,
                 "name": name or None,

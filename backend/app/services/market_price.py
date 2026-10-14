@@ -127,8 +127,22 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
 
     normalized_symbol = normalize_symbol(symbol)
 
+    # The m.Stock gateway expects exchange-qualified cash-equity symbols in
+    # the form NSE:RELIANCE-EQ (rather than NSE:RELIANCE). Preserve an existing
+    # suffix and do not modify unqualified symbols or non-equity instruments.
+    gateway_symbol = normalized_symbol
+    if ":" in normalized_symbol:
+        exchange, instrument = normalized_symbol.split(":", 1)
+        if (
+            exchange in {"NSE", "BSE"}
+            and instrument
+            and not instrument.endswith("-EQ")
+            and not any(char in instrument for char in "/^")
+        ):
+            gateway_symbol = f"{exchange}:{instrument}-EQ"
+
     params = urlencode({
-        "symbol": normalized_symbol,
+        "symbol": gateway_symbol,
     })
 
     url = (

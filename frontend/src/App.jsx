@@ -5193,8 +5193,8 @@ function Portfolio() {
     try {
       const isMutualFund = investmentForm.investment_type === "Mutual Funds";
       const endpoint = isMutualFund
-        ? `https://ai-finance-trading-os-api.onrender.com/api/mutual-funds/search/?query=${encodeURIComponent(value.trim())}&limit=12`
-        : `https://ai-finance-trading-os-api.onrender.com/api/market-search/?query=${encodeURIComponent(value.trim())}&exchange=ALL&limit=12`;
+        ? `${API_BASE_URL}/api/mutual-funds/search/?query=${encodeURIComponent(value.trim())}&limit=12`
+        : `${API_BASE_URL}/api/market-search/?query=${encodeURIComponent(value.trim())}&exchange=ALL&limit=12`;
       const response = await apiFetch(endpoint);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {

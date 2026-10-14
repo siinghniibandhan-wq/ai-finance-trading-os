@@ -65,3 +65,17 @@ def test_quote_allows_single_quote_when_gateway_normalizes_key(monkeypatch):
         },
     })
     assert market_price._fetch_gateway_quote("RELIANCE") == Decimal("123.45")
+
+
+@pytest.mark.parametrize("raw_price", ["NaN", "Infinity", "-Infinity", "0", "-1"])
+def test_quote_rejects_non_finite_or_non_positive_prices(monkeypatch, raw_price):
+    _mock_gateway(monkeypatch, {
+        "status": "success",
+        "symbol": "RELIANCE",
+        "data": {"RELIANCE": {"last_price": raw_price}},
+    })
+    with pytest.raises(
+        market_price.MarketPriceError,
+        match="Invalid market price",
+    ):
+        market_price._fetch_gateway_quote("RELIANCE")

@@ -306,6 +306,7 @@ def create_transaction(
             FROM investments
             WHERE id = :investment_id
               AND user_id = :user_id
+            FOR UPDATE
             """
         ),
         {

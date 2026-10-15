@@ -1000,3 +1000,17 @@ svg { flex-shrink: 0; }
   .wc-balance-value { grid-column: 1 / -1; text-align: left; padding-left: 2px; }
   .wc-balance-equation { gap: 6px; }
 }
+
+
+/* Chart-first wealth sections intentionally avoid enclosing metric-card chrome. */
+.wc-chart-surface {
+  min-width: 0;
+  padding: 18px 0;
+  border: 0;
+  border-top: 1px solid rgba(148,163,184,.14);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.wc-asset-composition .wc-panel-heading,
+.wc-balance-sheet-chart .wc-panel-heading { border-bottom-color: rgba(148,163,184,.10); }

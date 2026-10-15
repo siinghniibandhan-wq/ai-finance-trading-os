@@ -651,3 +651,40 @@ svg { flex-shrink: 0; }
   .plan-workspace > section:nth-of-type(2) { grid-template-columns: minmax(0,1fr) !important; }
   .money-workspace .welcome-section { padding: 16px; }
 }
+
+
+/* Money workspace details: transaction ledger, account tiles and budgets. */
+.money-workspace .empty-chart {
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  padding: 22px;
+  border: 1px dashed rgba(167,139,250,.22);
+  border-radius: 14px;
+  color: #9ba8c2;
+  text-align: center;
+  background: rgba(139,92,246,.035);
+}
+.money-workspace .score {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.money-workspace .metrics-grid > *,
+.money-workspace .dashboard-grid > * { min-width: 0; }
+.money-transactions .welcome-section,
+.money-accounts .welcome-section,
+.money-budget .welcome-section { margin-bottom: 2px; }
+.money-transactions form,
+.money-accounts form,
+.money-budget form { min-width: 0; }
+.money-transactions [role="tablist"] { display: flex; gap: 8px; flex-wrap: wrap; }
+.money-transactions [role="tab"] { min-height: 38px; border-radius: 10px; }
+.money-accounts .glass-card,
+.money-budget .glass-card,
+.money-transactions .glass-card { border-radius: 17px; }
+@media (max-width: 640px) {
+  .money-transactions .metrics-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .money-transactions form { grid-template-columns: minmax(0,1fr) !important; }
+  .money-accounts form,
+  .money-budget form { grid-template-columns: minmax(0,1fr) !important; }
+}

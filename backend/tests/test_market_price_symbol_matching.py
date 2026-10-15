@@ -125,3 +125,40 @@ def test_exchange_qualified_equity_adds_mstock_eq_suffix(monkeypatch):
     monkeypatch.setattr(market_price, "urlopen", fake_urlopen)
     assert market_price._fetch_gateway_quote("NSE:RELIANCE") == Decimal("123.45")
     assert "symbol=NSE%3ARELIANCE-EQ" in captured["url"]
+
+
+def test_market_quote_preserves_year_range_and_trading_metadata(monkeypatch):
+    _mock_gateway(monkeypatch, {
+        "status": "success",
+        "symbol": "NSE:RELIANCE-EQ",
+        "data": {
+            "NSE:RELIANCE-EQ": {
+                "last_price": "123.45",
+                "ohlc": {"open": "120", "high": "125", "low": "119", "close": "121"},
+                "year_high": "160",
+                "year_low": "100",
+                "volume_traded_today": "123456",
+                "average_traded_price": "122.5",
+                "total_buy_qty": "500",
+                "total_sell_qty": "450",
+                "upper_circuit_limit": "130",
+                "lower_circuit_limit": "110",
+            },
+        },
+    })
+    monkeypatch.setattr(market_price, "MARKET_PRICE_CACHE_TTL_SECONDS", 0.0)
+
+    quote = market_price.get_market_quote("NSE:RELIANCE")
+
+    assert quote["price"] == Decimal("123.45")
+    assert quote["details"]["open"] == "120"
+    assert quote["details"]["high"] == "125"
+    assert quote["details"]["previous_close"] == "121"
+    assert quote["details"]["year_high"] == "160"
+    assert quote["details"]["year_low"] == "100"
+    assert quote["details"]["volume"] == "123456"
+    assert quote["details"]["average_price"] == "122.5"
+    assert quote["details"]["total_buy_quantity"] == "500"
+    assert quote["details"]["total_sell_quantity"] == "450"
+    assert quote["details"]["upper_circuit_limit"] == "130"
+    assert quote["details"]["lower_circuit_limit"] == "110"

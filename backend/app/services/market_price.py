@@ -120,7 +120,7 @@ def _quote_symbols_match(requested: str, returned: str) -> bool:
     # normalized by the gateway to its default exchange symbol.
     return not (requested_exchange and returned_exchange and requested_exchange != returned_exchange)
 
-def _fetch_gateway_quote(symbol: str) -> Decimal:
+def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
     """
     Fetch latest market price from the AWS m.Stock gateway.
     """
@@ -320,6 +320,49 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
             f"Invalid market price returned for {symbol}."
         )
 
+    return price, raw_quote
+
+
+def _normalise_quote_details(raw_quote: dict) -> dict:
+    """Preserve provider quote fields and expose stable names for the UI."""
+    details = dict(raw_quote)
+    ohlc = raw_quote.get("ohlc")
+    if isinstance(ohlc, dict):
+        for key in ("open", "high", "low", "close"):
+            if details.get(key) in (None, "") and ohlc.get(key) not in (None, ""):
+                details[key] = ohlc[key]
+    aliases = {
+        "previous_close": ("previous_close", "prev_close", "previousClose", "prevClose", "close"),
+        "average_price": ("average_price", "avg_price", "average_traded_price", "averageTradedPrice", "avgPrice"),
+        "volume": ("volume", "volume_traded_today", "volumeTradedToday", "total_traded_volume"),
+        "last_traded_quantity": ("last_traded_quantity", "last_traded_qty", "lastTradedQty"),
+        "total_buy_quantity": ("total_buy_quantity", "total_buy_qty", "totalBuyQty", "buy_quantity"),
+        "total_sell_quantity": ("total_sell_quantity", "total_sell_qty", "totalSellQty", "sell_quantity"),
+        "upper_circuit_limit": ("upper_circuit_limit", "upper_circuit", "upperCircuit", "upperCircuitLimit"),
+        "lower_circuit_limit": ("lower_circuit_limit", "lower_circuit", "lowerCircuit", "lowerCircuitLimit"),
+        "year_high": ("year_high", "yearHigh", "52_week_high", "52WeekHigh", "high_52_week", "fifty_two_week_high", "week_52_high"),
+        "year_low": ("year_low", "yearLow", "52_week_low", "52WeekLow", "low_52_week", "fifty_two_week_low", "week_52_low"),
+        "last_traded_timestamp": ("last_traded_timestamp", "last_traded_time", "lastTradedTimestamp"),
+        "exchange_timestamp": ("exchange_timestamp", "exchange_time", "exchangeTimestamp"),
+        "market_depth": ("market_depth", "marketDepth", "depth"),
+    }
+    for canonical, candidates in aliases.items():
+        if details.get(canonical) not in (None, ""):
+            continue
+        for candidate in candidates:
+            value = details.get(candidate)
+            if value not in (None, ""):
+                details[canonical] = value
+                break
+    return details
+
+
+_LAST_QUOTE_DETAILS = {}
+
+
+def _fetch_gateway_quote(symbol: str) -> Decimal:
+    price, raw_quote = _fetch_gateway_quote_details(symbol)
+    _LAST_QUOTE_DETAILS[normalize_symbol(symbol)] = _normalise_quote_details(raw_quote)
     return price
 
 
@@ -344,9 +387,12 @@ def get_market_quote(
     ttl = MARKET_PRICE_CACHE_TTL_SECONDS
 
     if ttl <= 0:
+        _LAST_QUOTE_DETAILS.pop(normalized_symbol, None)
         price = _fetch_gateway_quote(normalized_symbol)
+        details = _LAST_QUOTE_DETAILS.pop(normalized_symbol, {})
         return {
             "price": price,
+            "details": details,
             "retrieved_at": datetime.now(timezone.utc).isoformat(),
             "cache_hit": False,
         }
@@ -358,13 +404,14 @@ def get_market_quote(
             if cached and now - cached[0] <= ttl:
                 return {
                     "price": cached[1],
+                    "details": cached[3] if len(cached) > 3 else {},
                     "retrieved_at": cached[2],
                     "cache_hit": True,
                 }
 
             flight = _MARKET_PRICE_INFLIGHT.get(normalized_symbol)
             if flight is None:
-                flight = {"event": Event(), "price": None, "retrieved_at": None, "error": None}
+                flight = {"event": Event(), "price": None, "details": {}, "retrieved_at": None, "error": None}
                 _MARKET_PRICE_INFLIGHT[normalized_symbol] = flight
                 is_fetcher = True
             else:
@@ -376,12 +423,15 @@ def get_market_quote(
                 raise flight["error"]
             return {
                 "price": flight["price"],
+                "details": flight["details"],
                 "retrieved_at": flight["retrieved_at"],
                 "cache_hit": True,
             }
 
         try:
+            _LAST_QUOTE_DETAILS.pop(normalized_symbol, None)
             price = _fetch_gateway_quote(normalized_symbol)
+            details = _LAST_QUOTE_DETAILS.pop(normalized_symbol, {})
             retrieved_at = datetime.now(timezone.utc).isoformat()
 
             with _MARKET_PRICE_CACHE_LOCK:
@@ -401,13 +451,15 @@ def get_market_quote(
                     _MARKET_PRICE_CACHE.pop(oldest_key, None)
 
                 _MARKET_PRICE_CACHE[normalized_symbol] = (
-                    monotonic(), price, retrieved_at
+                    monotonic(), price, retrieved_at, details
                 )
                 flight["price"] = price
+                flight["details"] = details
                 flight["retrieved_at"] = retrieved_at
 
             return {
                 "price": price,
+                "details": details,
                 "retrieved_at": retrieved_at,
                 "cache_hit": False,
             }

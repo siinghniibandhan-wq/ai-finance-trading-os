@@ -131,6 +131,11 @@ def get_market_quote(
 
         "quote": {
             "last_price": float(price),
+            **{
+                key: value
+                for key, value in (quote_data.get("details") or {}).items()
+                if key != "last_price"
+            },
         },
 
         "source": {

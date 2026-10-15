@@ -2273,6 +2273,8 @@ function MarketsPage() {
   const [chartExchange, setChartExchange] = useState("NSE");
   const [chartRange, setChartRange] = useState("1M");
   const [chartData, setChartData] = useState([]);
+  // Keep a full-year daily dataset for 52-week range metrics even when the visible chart is set to 1M/3M.
+  const [yearRangeData, setYearRangeData] = useState([]);
   const [chartInfo, setChartInfo] = useState(null);
   const [chartBusy, setChartBusy] = useState(false);
   const [chartError, setChartError] = useState("");
@@ -2485,6 +2487,31 @@ function MarketsPage() {
     } finally { setChartBusy(false); }
   };
 
+  const loadYearRange = async (symbol, marketExchange) => {
+    if (!symbol) return;
+    const toDate = new Date();
+    const fromDate = new Date(toDate);
+    fromDate.setDate(fromDate.getDate() - 365);
+    const isoDate = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    try {
+      const url = `${API}/api/market-charts/?symbol=${encodeURIComponent(symbol)}&exchange=${encodeURIComponent(marketExchange || "NSE")}&interval=day&from=${isoDate(fromDate)}&to=${isoDate(toDate)}`;
+      const response = await apiFetch(url, { cache: "no-store" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Year history returned ${response.status}`);
+      const rows = Array.isArray(data?.data) ? data.data : [];
+      setYearRangeData(rows.map((row) => ({
+        ...row,
+        high: Number(row.high),
+        low: Number(row.low),
+        close: Number(row.close),
+      })).filter((row) => [row.high, row.low, row.close].some((value) => Number.isFinite(value) && value > 0)));
+    } catch (error) {
+      // Keep the page usable when the history endpoint is unavailable; quote-provided 52-week fields still display.
+      setYearRangeData([]);
+      console.warn("One-year price history unavailable for 52-week range metrics.", error);
+    }
+  };
+
   const chooseChart = (symbol, marketExchange) => {
     setChartSymbol(symbol || "RELIANCE"); setChartExchange(marketExchange || "NSE");
     loadChart(symbol || "RELIANCE", marketExchange || "NSE", chartRange);
@@ -2504,8 +2531,10 @@ function MarketsPage() {
     setQuery(instrument.symbol);
     setResults([]);
     setSearchError("");
+    setYearRangeData([]);
     getQuote(instrument.symbol, { initial: true, exchange: instrument.exchange });
     chooseChart(instrument.symbol, instrument.exchange);
+    loadYearRange(instrument.symbol, instrument.exchange);
   };
 
   const indices = Array.isArray(overview?.indices) ? overview.indices : [];
@@ -2716,21 +2745,40 @@ function MarketsPage() {
               const dayLow = quoteValue("low", "day_low", "low_price");
               const dayChange = ltp != null && prev != null ? ltp - prev : null;
               const dayPct = dayChange != null && prev ? dayChange / prev * 100 : null;
-              const hasYearHistory = ["1Y", "5Y"].includes(chartRange) && chartData.length > 1;
-              const yearHigh = hasYearHistory ? Math.max(...closes) : null;
-              const yearLow = hasYearHistory ? Math.min(...closes) : null;
+              const providerYearHigh = quoteValue("year_high", "yearHigh", "52_week_high", "52WeekHigh", "high_52_week", "fifty_two_week_high", "week_52_high");
+              const providerYearLow = quoteValue("year_low", "yearLow", "52_week_low", "52WeekLow", "low_52_week", "fifty_two_week_low", "week_52_low");
+              const historyHighs = yearRangeData.map((row) => Number(row.high)).filter((value) => Number.isFinite(value) && value > 0);
+              const historyLows = yearRangeData.map((row) => Number(row.low)).filter((value) => Number.isFinite(value) && value > 0);
+              const hasYearHistory = yearRangeData.length > 1 || (["1Y", "5Y"].includes(chartRange) && chartData.length > 1);
+              const yearHigh = providerYearHigh ?? (historyHighs.length ? Math.max(...historyHighs) : (hasYearHistory ? Math.max(...closes) : null));
+              const yearLow = providerYearLow ?? (historyLows.length ? Math.min(...historyLows) : (hasYearHistory ? Math.min(...closes) : null));
+              const averagePrice = quoteValue("average_price", "avg_price", "average_traded_price", "averageTradedPrice", "avgPrice");
+              const volume = quoteValue("volume", "volume_traded_today", "volumeTradedToday", "total_traded_volume");
+              const lastTradedQuantity = quoteValue("last_traded_quantity", "last_traded_qty", "lastTradedQty");
+              const buyQuantity = quoteValue("total_buy_quantity", "total_buy_qty", "totalBuyQty", "buy_quantity");
+              const sellQuantity = quoteValue("total_sell_quantity", "total_sell_qty", "totalSellQty", "sell_quantity");
+              const upperCircuit = quoteValue("upper_circuit_limit", "upper_circuit", "upperCircuit", "upperCircuitLimit");
+              const lowerCircuit = quoteValue("lower_circuit_limit", "lower_circuit", "lowerCircuit", "lowerCircuitLimit");
               return <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
                 {metric("Latest Traded Price (LTP)", ltp != null ? money(ltp) : "Unavailable", "Most recent price returned by the quote provider")}
                 {metric("Previous Closing Price", prev != null ? money(prev) : "Unavailable", "Previous trading session's close")}
                 {metric("Today's Change", dayChange != null ? `${dayChange >= 0 ? "+" : "−"}${money(Math.abs(dayChange))}` : "Unavailable", dayPct != null ? `${dayPct >= 0 ? "+" : ""}${dayPct.toFixed(2)}% vs previous close` : "Provider must return LTP and previous close")}
                 {metric("Today's High", dayHigh != null ? money(dayHigh) : "Unavailable", "Highest price in today's session, if returned")}
                 {metric("Today's Low", dayLow != null ? money(dayLow) : "Unavailable", "Lowest price in today's session, if returned")}
-                {metric("52-Week High", yearHigh != null ? money(yearHigh) : "Load 1Y chart", hasYearHistory ? "Highest price in loaded year history" : "Load one year of history to calculate")}
-                {metric("52-Week Low", yearLow != null ? money(yearLow) : "Load 1Y chart", hasYearHistory ? "Lowest price in loaded year history" : "Load one year of history to calculate")}
+                {metric("52-Week High", yearHigh != null ? money(yearHigh) : "Unavailable", providerYearHigh != null ? "From m.Stock quote data" : hasYearHistory ? "Highest daily high in the automatically loaded one-year history" : "Requires a successful one-year history response")}
+                {metric("52-Week Low", yearLow != null ? money(yearLow) : "Unavailable", providerYearLow != null ? "From m.Stock quote data" : hasYearHistory ? "Lowest daily low in the automatically loaded one-year history" : "Requires a successful one-year history response")}
+                {metric("Average Traded Price", averagePrice != null ? money(averagePrice) : "Unavailable", "Provider quote field when supplied")}
+                {metric("Volume Traded Today", volume != null ? new Intl.NumberFormat("en-IN").format(volume) : "Unavailable", "Shares/units traded during the current session")}
+                {metric("Last Traded Quantity", lastTradedQuantity != null ? new Intl.NumberFormat("en-IN").format(lastTradedQuantity) : "Unavailable", "Quantity in the latest reported trade")}
+                {metric("Total Buy Quantity", buyQuantity != null ? new Intl.NumberFormat("en-IN").format(buyQuantity) : "Unavailable", "Aggregate bid quantity when supplied")}
+                {metric("Total Sell Quantity", sellQuantity != null ? new Intl.NumberFormat("en-IN").format(sellQuantity) : "Unavailable", "Aggregate ask quantity when supplied")}
+                {metric("Upper Circuit Limit", upperCircuit != null ? money(upperCircuit) : "Unavailable", "Exchange-provided upper price band")}
+                {metric("Lower Circuit Limit", lowerCircuit != null ? money(lowerCircuit) : "Unavailable", "Exchange-provided lower price band")}
                 {metric("Period Return", periodChangePct != null ? `${periodChangePct >= 0 ? "+" : ""}${periodChangePct.toFixed(2)}%` : "Unavailable", `Change across the selected ${chartRange} chart period`)}
               </div>;
             })()}
-            <p style={{ ...muted, marginBottom: 0, marginTop: "12px" }}>Tap any metric card to learn what it means. Values that the current quote or history API does not provide are marked unavailable rather than guessed.</p>
+            <p style={{ ...muted, marginBottom: 0, marginTop: "12px" }}>Tap any metric card to learn what it means. 52-week values use m.Stock quote fields when available, otherwise the automatically fetched one-year daily history. Other values appear only when supplied by the connected gateway.</p>
+            <p style={{ ...muted, marginBottom: 0, marginTop: "6px" }}>Quote source: m.Stock via Financial OS gateway · Retrieved: {quote?.retrieved_at || quote?.last_updated || "Not available"}{quote?.cache_hit ? " · Cached response" : ""}</p>
           </>}
           {researchTab === "fundamental" && <>
             <h4 style={{ margin: "0 0 6px" }}>Fundamental Analysis</h4>
@@ -2764,6 +2812,10 @@ function MarketsPage() {
               {metric("Exchange", selectedInstrument.exchange || exchange)}
               {metric("Instrument type", selectedInstrument.instrument_type || selectedInstrument.type || "Not provided")}
               {metric("Instrument token", selectedInstrument.instrument_token || selectedInstrument.token || "Not provided")}
+              {metric("Exchange token", selectedInstrument.exchange_token || "Not provided")}
+              {metric("Segment", selectedInstrument.segment || "Not provided")}
+              {metric("Series", selectedInstrument.series || selectedInstrument.instrument_type || "Not provided")}
+              {metric("Lot size", selectedInstrument.lot_size || "Not applicable")}
               {metric("ISIN", selectedInstrument.isin || "Not provided")}
             </div>
             <p style={{ ...muted, marginBottom: 0, marginTop: "10px" }}>Only fields supplied by the instrument search response are shown. Additional company profile details require a verified company-data source.</p>

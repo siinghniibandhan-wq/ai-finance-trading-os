@@ -119,10 +119,12 @@ def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends
     result = _gateway_request(GATEWAY_ORDER_PLACE_PATH, "POST", payload)
     if result.get("status") in {"error", "failed", "rejected"} or result.get("success") is False:
         raise HTTPException(status_code=502, detail=result.get("message") or result.get("error") or "Gateway did not accept the order.")
+    nested_data = result.get("data") if isinstance(result.get("data"), dict) else {}
+    order_id = result.get("order_id") or result.get("orderid") or nested_data.get("order_id") or nested_data.get("orderid")
     return {
         "status": "submitted",
         "user_id": current_user.id,
-        "order_id": result.get("order_id") or result.get("orderid") or result.get("data", {}).get("order_id") if isinstance(result.get("data", {}), dict) else result.get("order_id"),
+        "order_id": order_id,
         "broker_response": result,
         "portfolio_updated": False,
         "message": "Order was forwarded to the gateway. Holdings update only after confirmed fills are reconciled.",

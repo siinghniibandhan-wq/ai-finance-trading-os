@@ -5465,7 +5465,7 @@ function Portfolio() {
     try {
       const endpoint = isMutualFund
         ? `${API_BASE_URL}/api/mutual-funds/search/?query=${encodeURIComponent(value.trim())}&limit=12`
-        : `${API_BASE_URL}/api/market-search/?query=${encodeURIComponent(value.trim())}&exchange=ALL&limit=12`;
+        : `${API_BASE_URL}/api/market-search/?query=${encodeURIComponent(value.trim())}&exchange=ALL&product_type=${encodeURIComponent(productType)}&limit=12`;
       const response = await apiFetch(endpoint);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {

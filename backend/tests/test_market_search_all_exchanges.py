@@ -165,7 +165,7 @@ def test_search_accepts_mstock_equity_segment_eq(monkeypatch):
 
 PRODUCT_TYPE_CSV = """instrument_token,exchange_token,tradingsymbol,name,last_price,expiry,strike,tick_size,lot_size,instrument_type,segment,exchange
 101,1,RELIANCE-EQ,Reliance Industries,1400,,,0.05,1,EQ,NSECM,NSE
-202,2,HDFCBANK-EQ,HDFC Bank,1600,,,0.05,1,EQ,NSECM,NSE
+202,2,HDFCBANK-EQ,HDFC Bank Limited,1600,,,0.05,1,EQ,NSECM,NSE
 303,3,NIFTYBEES,Nippon India ETF Nifty 50 BeEs,280,,,0.05,1,EQ,NSECM,NSE
 404,4,ICICINIFTY,ICICI Prudential Nifty 50 ETF,250,,,0.05,1,ETF,NSECM,NSE
 505,5,EMBASSY,Embassy Office Parks REIT,400,,,0.05,1,EQ,NSECM,NSE

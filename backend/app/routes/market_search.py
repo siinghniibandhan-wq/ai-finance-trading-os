@@ -99,6 +99,7 @@ def _get_instrument_master_csv():
             raise
         except HTTPError as exc:
             if cached_text is not None:
+                _instrument_master_cache["stale"] = True
                 return cached_text
             if exc.code == 401:
                 raise HTTPException(
@@ -111,6 +112,7 @@ def _get_instrument_master_csv():
             ) from exc
         except URLError as exc:
             if cached_text is not None:
+                _instrument_master_cache["stale"] = True
                 return cached_text
             raise HTTPException(
                 status_code=502,
@@ -118,6 +120,7 @@ def _get_instrument_master_csv():
             ) from exc
         except Exception as exc:
             if cached_text is not None:
+                _instrument_master_cache["stale"] = True
                 return cached_text
             raise HTTPException(
                 status_code=502,

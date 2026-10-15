@@ -85,7 +85,7 @@ def _get_instrument_master_csv():
                 )
             # Reject empty or headerless payloads so a transient bad response
             # cannot replace a previously good cache entry.
-            reader = csv.DictReader(StringIO(response_text.lstrip("\\ufeff")))
+            reader = csv.DictReader(StringIO(response_text.lstrip("\ufeff")))
             if not reader.fieldnames:
                 raise ValueError("Instrument master CSV has no header row.")
             _instrument_master_cache["text"] = response_text

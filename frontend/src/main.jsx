@@ -85,10 +85,11 @@ function ProtectedApp() {
       return verificationPromise;
     };
 
-    const onPageShow = async () => {
-      // pageshow also fires on the first load. Keep the root covered until the
-      // backend verification completes; never reveal it just because a token
-      // still exists in sessionStorage.
+    const onPageShow = async (event) => {
+      // The initial load is verified below. Re-verify only when the browser
+      // restores a page from its back-forward cache, not on ordinary tab focus.
+      if (!event.persisted) return;
+
       coverProtectedUI();
       if (!cancelled) setStatus("checking");
 
@@ -109,10 +110,6 @@ function ProtectedApp() {
       coverProtectedUI();
     };
 
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") onPageShow();
-    };
-
     // Cover synchronously before the first async request.
     coverProtectedUI();
     verify().then((valid) => {
@@ -126,13 +123,10 @@ function ProtectedApp() {
 
     window.addEventListener("pageshow", onPageShow);
     window.addEventListener("pagehide", onPageHide);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
     return () => {
       cancelled = true;
       window.removeEventListener("pageshow", onPageShow);
       window.removeEventListener("pagehide", onPageHide);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, []);
 

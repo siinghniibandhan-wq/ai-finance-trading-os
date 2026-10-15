@@ -2201,7 +2201,7 @@ function TaxPage() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+    <div className="tax-centre" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
       {/* Tax Centre header */}
       <section style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
         <div><p className="card-label">FINANCIAL OS / TAX</p><h2 style={{ margin: "4px 0 6px", fontSize: "28px", fontWeight: 800 }}>Tax Centre</h2><p style={{ margin: 0, color: "rgba(255,255,255,0.55)", fontSize: "13px" }}>Income, capital gains, deductions and tax-report readiness in one place.</p></div>
@@ -2570,7 +2570,7 @@ function MarketsPage() {
   const movers = overview?.market_movers || {};
   const gainers = Array.isArray(movers.gainers) ? movers.gainers : [];
   const losers = Array.isArray(movers.losers) ? movers.losers : [];
-  return <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+  return <div className="markets-workspace" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
     <section aria-label="Market overview" style={{ padding: "4px 0 2px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}>
         <div><p className="card-label" style={{ margin: "0 0 4px" }}>INDIA MARKETS</p><h2 style={{ margin: 0, fontSize: "25px", fontWeight: 850, letterSpacing: "-.035em" }}>Market Pulse</h2></div>
@@ -4485,12 +4485,26 @@ function Holdings() {
     summary?.total_return_percent || 0
   );
 
+  // Allocation is derived only from the current holdings API response.
+  // It is a concentration view, not a recommendation or a second portfolio ledger.
+  const allocationRows = holdings
+    .map((holding, index) => ({
+      key: holding.symbol || holding.instrument_name || `holding-${index}`,
+      name: holding.name || holding.instrument_name || holding.symbol || "Instrument",
+      symbol: holding.symbol || "",
+      value: Number(holding.current_value || 0),
+    }))
+    .filter((holding) => Number.isFinite(holding.value) && holding.value > 0)
+    .sort((a, b) => b.value - a.value);
+  const allocationTotal = allocationRows.reduce((sum, holding) => sum + holding.value, 0);
+
   // ----------------------------------------------------------
   // RENDER
   // ----------------------------------------------------------
 
   return (
     <div
+      className="holdings-workspace"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -4714,6 +4728,42 @@ function Holdings() {
               : ArrowDownRight
           }
         />
+      </section>
+
+      {/* Portfolio concentration: calculated from current API-backed holdings. */}
+      <section className="glass-card holdings-allocation-panel">
+        <div className="card-header">
+          <div>
+            <p className="card-label">PORTFOLIO ANALYTICS</p>
+            <h3>Holdings allocation</h3>
+            <p className="chart-footnote">Share of recorded current market value by holding.</p>
+          </div>
+          <span className="small-button">{allocationRows.length} positions with value</span>
+        </div>
+        {loading ? (
+          <div className="empty-chart">Loading allocation from current holdings…</div>
+        ) : allocationRows.length === 0 || allocationTotal <= 0 ? (
+          <div className="empty-chart">Allocation will appear when holdings have a valid current market value.</div>
+        ) : (
+          <div className="holdings-allocation-list">
+            {allocationRows.slice(0, 8).map((holding) => {
+              const share = (holding.value / allocationTotal) * 100;
+              return (
+                <div className="holdings-allocation-row" key={holding.key}>
+                  <div className="holdings-allocation-label">
+                    <span><strong>{holding.name}</strong>{holding.symbol && holding.symbol !== holding.name ? <small>{holding.symbol}</small> : null}</span>
+                    <strong>{share.toFixed(1)}%</strong>
+                  </div>
+                  <div className="holdings-allocation-track" aria-label={`${holding.name}: ${share.toFixed(1)} percent of portfolio value`}>
+                    <span style={{ width: `${share}%` }} />
+                  </div>
+                  <div className="holdings-allocation-value">{formatCurrency(holding.value)}</div>
+                </div>
+              );
+            })}
+            {allocationRows.length > 8 ? <p className="chart-footnote">Showing the 8 largest positions by current value. Total allocation uses all {allocationRows.length} valued holdings.</p> : null}
+          </div>
+        )}
       </section>
 
       {/* HOLDINGS LIST */}

@@ -111,7 +111,7 @@ function BreakdownPanel({ activeCard, data, onClose, onNavigate, onSelectCard })
 
       {activeCard === "Net Worth" && (
         <>
-          <DetailRow label="Recorded assets currently available" value={money(assets)} note="Cash/account balances plus current investment value" />
+          <DetailRow label="Recorded assets currently available" value={money(assets)} note="Cash/account balances, investments and outstanding receivables" />
           <DetailRow label="Outstanding liabilities" value={money(liabilities)} />
           <div className="wc-total-row"><span>Estimated net worth from available records</span><strong>{money(netWorth)}</strong></div>
           <div className="wc-breakdown-actions">

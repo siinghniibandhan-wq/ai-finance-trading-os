@@ -4975,16 +4975,11 @@ function Holdings() {
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() =>
-                          setExpandedSymbol(
-                            expanded
-                              ? null
-                              : holdingKey
-                          )
-                        }
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "stretch", minWidth: "84px" }}>
+                        <button type="button" className="primary-button" style={{ padding: "7px 12px", minWidth: "78px", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.35)", fontSize: "11px" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "BUY", symbol: holding.symbol || "", name: holding.name || "", exchange: holding.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>BUY</button>
+                        <button type="button" className="secondary-button" style={{ padding: "7px 12px", minWidth: "78px", borderColor: "rgba(248,113,113,0.35)", color: "#fca5a5", fontSize: "11px" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "SELL", symbol: holding.symbol || "", name: holding.name || "", exchange: holding.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>SELL</button>
+                        <button type="button" className="secondary-button" style={{ padding: "7px 12px", minWidth: "78px", fontSize: "11px" }} onClick={() => setExpandedSymbol(expanded ? null : holdingKey)}>{expanded ? "Hide details" : "History / View"}</button>
+                      </div>
                         style={{
                           whiteSpace:
                             "nowrap",
@@ -5807,6 +5802,37 @@ const openInvestmentTransaction = (
 
 
 // ============================================================
+// Consume actions initiated from Holdings or the Market instrument page.
+// Match the existing investment record first so BUY/SELL never creates a duplicate holding.
+useEffect(() => {
+  let raw = null;
+  try { raw = sessionStorage.getItem("financialOS.portfolioAction"); } catch {}
+  if (!raw || !Array.isArray(investments) || investments.length === 0) return;
+  let intent;
+  try { intent = JSON.parse(raw); } catch { try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {} return; }
+  const symbol = String(intent?.symbol || "").trim().toUpperCase();
+  const name = String(intent?.name || "").trim().toUpperCase();
+  if (!symbol && !name) return;
+  const matched = investments.find((item) => {
+    const itemSymbol = String(item?.symbol || item?.tradingsymbol || "").trim().toUpperCase();
+    const itemName = String(item?.name || "").trim().toUpperCase();
+    const sameSecurity = (symbol && itemSymbol === symbol) || (!symbol && name && itemName === name);
+    const requestedExchange = String(intent?.exchange || "").trim().toUpperCase();
+    const itemExchange = String(item?.exchange || "").trim().toUpperCase();
+    return sameSecurity && (!requestedExchange || !itemExchange || requestedExchange === itemExchange);
+  }) || investments.find((item) => {
+    const itemSymbol = String(item?.symbol || item?.tradingsymbol || "").trim().toUpperCase();
+    const itemName = String(item?.name || "").trim().toUpperCase();
+    return (symbol && itemSymbol === symbol) || (!symbol && name && itemName === name);
+  });
+  if (!matched) {
+    // Don't discard the intent while the investment list is still loading.
+    return;
+  }
+  try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {}
+  openInvestmentTransaction(matched, intent.type === "SELL" ? "SELL" : "BUY");
+}, [investments]);
+
 // OPEN TRANSACTION HISTORY
 // ============================================================
 

@@ -382,9 +382,9 @@ def load_investments(
         text(
             """
             SELECT
-                id,
+                investments.id AS id,
                 user_id,
-                name,
+                investments.name AS name,
                 investment_type,
                 COALESCE(investments.symbol, instrument_master.symbol) AS symbol,
                 investments.instrument_master_id,

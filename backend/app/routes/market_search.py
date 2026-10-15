@@ -123,6 +123,48 @@ def _get_instrument_master_csv():
             ) from exc
 
 
+def _classify_listed_product(symbol, name, instrument_type=""):
+    """Classify listed NSE/BSE cash instruments for portfolio product-type filters.
+
+    The provider's instrument master does not expose a consistent product-category
+    field across all versions, so use explicit instrument metadata and well-known
+    listed-product naming patterns. Unknown ordinary cash listings default to stocks.
+    """
+    symbol_text = str(symbol or "").strip().upper()
+    name_text = " " + " ".join(str(name or "").upper().replace("-", " ").split()) + " "
+    instrument_text = str(instrument_type or "").strip().upper()
+
+    # Strip common exchange-series suffixes before checking canonical listed symbols.
+    base_symbol = symbol_text
+    if "-" in symbol_text:
+        prefix, suffix = symbol_text.rsplit("-", 1)
+        if suffix in {"EQ", "BE", "BZ", "SM", "ST", "A", "B", "T"}:
+            base_symbol = prefix
+
+    known_reit_symbols = {"EMBASSY", "MINDSPACE", "BIRET", "NXST", "NEXUS"}
+    if (
+        base_symbol in known_reit_symbols
+        or " REIT " in name_text
+        or " REAL ESTATE TRUST " in name_text
+        or " OFFICE PARKS " in name_text
+        or " BUSINESS PARKS " in name_text
+        or " SELECT TRUST " in name_text
+    ):
+        return "REITS"
+
+    # Cover explicit provider types, scheme names, and common Indian BeES ETF symbols.
+    if (
+        instrument_text in {"ETF", "ETN", "EXCHANGE TRADED FUND"}
+        or " ETF " in name_text
+        or " EXCHANGE TRADED FUND " in name_text
+        or " EXCHANGE TRADED " in name_text
+        or base_symbol.endswith("BEES")
+    ):
+        return "ETFS"
+
+    return "STOCKS"
+
+
 # ============================================================
 # ROUTER
 # ============================================================
@@ -154,11 +196,29 @@ def search_market(
         le=50,
         description="Maximum number of results",
     ),
+    product_type: str = "ALL",
 ):
     cleaned_query = query.strip().upper()
     cleaned_exchange = exchange.strip().upper()
     if cleaned_exchange not in {"ALL", "NSE", "BSE"}:
         raise HTTPException(status_code=422, detail="Exchange must be ALL, NSE, or BSE.")
+
+    requested_product_type = str(product_type or "ALL").strip().upper().replace(" ", "")
+    product_type_aliases = {
+        "ALL": "ALL",
+        "STOCK": "STOCKS",
+        "STOCKS": "STOCKS",
+        "ETF": "ETFS",
+        "ETFS": "ETFS",
+        "REIT": "REITS",
+        "REITS": "REITS",
+    }
+    cleaned_product_type = product_type_aliases.get(requested_product_type)
+    if cleaned_product_type is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Product type must be ALL, Stocks, ETFs, or REITs.",
+        )
 
     if not cleaned_query:
         raise HTTPException(
@@ -316,6 +376,14 @@ def search_market(
             exact_symbol = base_symbol.replace(" ", "") == query_symbol or symbol_upper.replace(" ", "") == query_symbol
             exact_name = normalized_name == "".join(cleaned_query.split())
             starts_match = base_symbol.startswith(cleaned_query) or symbol_upper.startswith(cleaned_query) or name_upper.startswith(cleaned_query)
+            classified_product_type = _classify_listed_product(
+                symbol,
+                name,
+                row.get("instrument_type"),
+            )
+            if cleaned_product_type != "ALL" and classified_product_type != cleaned_product_type:
+                continue
+
             # Group exchange listings for the same security so the NSE/BSE
             # pair stays together instead of showing other company matches
             # between the two listings. The normalized company name is preferred

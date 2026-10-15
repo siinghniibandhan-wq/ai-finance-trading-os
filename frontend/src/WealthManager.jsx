@@ -476,9 +476,9 @@ export default function WealthManager({ onNavigate = () => {} }) {
       {activeCard && <BreakdownPanel activeCard={activeCard} data={data} onClose={() => setActiveCard(null)} onNavigate={onNavigate} onSelectCard={setActiveCard} />}
 
       <section className="wc-wealth-visuals" aria-label="Wealth distribution and balance sheet">
-        <article className="glass-card wc-info-panel wc-asset-composition">
+        <article className="wc-asset-composition wc-chart-surface">
           <div className="wc-panel-heading">
-            <div><p className="card-label">WHERE YOUR WEALTH IS</p><h3>Asset allocation</h3><p className="wc-chart-subtitle">Broad asset classes from recorded holdings, plus cash and receivables. Tap a segment or label to inspect its source module.</p></div>
+            <div><p className="card-label">WHERE YOUR WEALTH IS</p><h3>Asset allocation</h3><p className="wc-chart-subtitle">Broad asset classes from recorded holdings, plus cash and receivables. Tap a category label to inspect its source module.</p></div>
             <PieChart size={19} />
           </div>
           <div className="wc-allocation-layout">
@@ -500,7 +500,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
           <div className="wc-breakdown-actions"><BreakdownAction onClick={() => onNavigate("Portfolio")}>Open portfolio</BreakdownAction><BreakdownAction onClick={() => onNavigate("Holdings")}>Explore holdings</BreakdownAction><BreakdownAction onClick={() => setActiveCard("Total Assets")}>Full asset breakdown</BreakdownAction></div>
         </article>
 
-        <article className="glass-card wc-info-panel wc-balance-sheet-chart">
+        <article className="wc-balance-sheet-chart wc-chart-surface">
           <div className="wc-panel-heading">
             <div><p className="card-label">YOUR BALANCE SHEET</p><h3>Net worth vs assets & liabilities</h3><p className="wc-chart-subtitle">Current recorded snapshot · tap a bar to open its breakdown.</p></div>
             <LineChart size={19} />

@@ -12723,7 +12723,7 @@ function Category() {
 
     setFormData({
       name: "",
-      category_type: "expense",
+      category_type: activeCategoryTab === "income" ? "income" : "expense",
       parent_category: "",
       description: "",
     });
@@ -13514,6 +13514,8 @@ function Category() {
                 style={{ width: "100%", marginTop: "8px", padding: "12px", borderRadius: "12px" }}
               >
                 <option value="">None — create a main category</option>
+                {formData.category_type === "income" && <option value="Business/Profession">Business / Profession</option>}
+                {formData.category_type === "expense" && <option value="Business Expenses">Business Expenses</option>}
                 {categories
                   .filter((category) => category.category_type === formData.category_type && !String(category.name || "").includes(" > ") && (!editingCategory || category.id !== editingCategory.id))
                   .map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}

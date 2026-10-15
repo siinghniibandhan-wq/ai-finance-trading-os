@@ -1,9 +1,16 @@
-from io import BytesIO
+from urllib.error import URLError
 
 import pytest
 from fastapi import HTTPException
 
 from app.routes import market_search
+
+
+@pytest.fixture(autouse=True)
+def reset_instrument_master_cache():
+    market_search._instrument_master_cache.update({"text": None, "loaded_at": 0.0})
+    yield
+    market_search._instrument_master_cache.update({"text": None, "loaded_at": 0.0})
 
 
 class FakeResponse:
@@ -89,3 +96,52 @@ def test_search_excludes_derivative_segments_and_contracts(monkeypatch):
         ("NSE", "RELIANCE-EQ"),
         ("BSE", "RELIANCE-BE"),
     ]
+
+
+def test_instrument_master_is_downloaded_only_once_within_cache_ttl(monkeypatch):
+    calls = []
+
+    def fake_urlopen(*args, **kwargs):
+        calls.append(1)
+        return FakeResponse(CSV)
+
+    monkeypatch.setattr(market_search, "urlopen", fake_urlopen)
+
+    first = market_search.search_market(query="RELIANCE", exchange="ALL", limit=12)
+    second = market_search.search_market(query="TCS", exchange="ALL", limit=12)
+
+    assert first["count"] == 3
+    assert second["count"] == 1
+    assert len(calls) == 1
+
+
+def test_expired_instrument_master_cache_refreshes(monkeypatch):
+    calls = []
+
+    def fake_urlopen(*args, **kwargs):
+        calls.append(1)
+        return FakeResponse(CSV)
+
+    monkeypatch.setattr(market_search, "urlopen", fake_urlopen)
+    monkeypatch.setattr(market_search, "MARKET_INSTRUMENT_CACHE_TTL_SECONDS", 1)
+
+    market_search.search_market(query="RELIANCE", exchange="ALL", limit=12)
+    market_search._instrument_master_cache["loaded_at"] = 0.0
+    market_search.search_market(query="TCS", exchange="ALL", limit=12)
+
+    assert len(calls) == 2
+
+
+def test_expired_cache_is_used_if_gateway_refresh_fails(monkeypatch):
+    market_search._instrument_master_cache.update({"text": CSV, "loaded_at": 0.0})
+    monkeypatch.setattr(market_search, "MARKET_INSTRUMENT_CACHE_TTL_SECONDS", 1)
+
+    def failing_urlopen(*args, **kwargs):
+        raise URLError("gateway unavailable")
+
+    monkeypatch.setattr(market_search, "urlopen", failing_urlopen)
+
+    result = market_search.search_market(query="RELIANCE", exchange="ALL", limit=12)
+
+    assert result["count"] == 3
+    assert result["results"][0]["symbol"] == "RELIANCE-EQ"

@@ -6669,6 +6669,7 @@ const summaryCards = [
  
     return (
     <div
+      className="investment-workspace"
       style={{
         display: "flex",
         flexDirection: "column",

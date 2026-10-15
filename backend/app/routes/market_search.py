@@ -178,13 +178,23 @@ def search_market(
             # Canonicalize aliases so downstream result construction remains
             # consistent regardless of the gateway's CSV header spelling.
             row = {key: value_for(raw_row, key) for key in aliases}
-            row_exchange = str(row.get("exchange") or "").strip().upper()
-            if row_exchange in {"NSECM", "NSEFO", "NSECD", "NSE_EQ", "NSE-EQ"}:
-                row_exchange = "NSE"
-            elif row_exchange in {"BSECM", "BSEFO", "BSECD", "BSE_EQ", "BSE-EQ"}:
-                row_exchange = "BSE"
-
-            if row_exchange not in {"NSE", "BSE"}:
+            raw_exchange = str(row.get("exchange") or "").strip().upper()
+            raw_segment = str(row.get("segment") or "").strip().upper()
+            exchange_aliases = {
+                "NSECM": "NSE", "NSE_EQ": "NSE", "NSE-EQ": "NSE", "NSE": "NSE",
+                "BSECM": "BSE", "BSE_EQ": "BSE", "BSE-EQ": "BSE", "BSE": "BSE",
+            }
+            # Do not collapse derivatives/currency segments (NSEFO, BSEFO, NSECD, etc.)
+            # into cash-equity results. Portfolio search is for listed investment
+            # instruments, not futures/options or currency contracts.
+            row_exchange = exchange_aliases.get(raw_exchange)
+            if row_exchange is None:
+                continue
+            if raw_segment and raw_segment not in {
+                "NSECM", "BSECM", "NSE_EQ", "BSE_EQ", "NSE-EQ", "BSE-EQ", "NSE", "BSE",
+            }:
+                continue
+            if not raw_segment and raw_exchange in {"NSEFO", "BSEFO", "NSECD", "BSECD", "NSECOM", "BSECOM"}:
                 continue
             if cleaned_exchange != "ALL" and row_exchange != cleaned_exchange:
                 continue
@@ -253,6 +263,9 @@ def search_market(
             expiry = (row.get("expiry") or "").strip() or None
             strike = (row.get("strike") or "").strip() or None
             lot_size = (row.get("lot_size") or "").strip() or None
+            # A cash-equity result must not carry derivative contract fields.
+            if expiry or strike:
+                continue
             # Exchange series is commonly encoded in the trading symbol (e.g. -EQ)
             # or provided separately by a provider-specific master.
             symbol_suffix = symbol.rsplit("-", 1)[-1].upper() if "-" in symbol else ""
@@ -263,6 +276,11 @@ def search_market(
             exact_symbol = base_symbol.replace(" ", "") == query_symbol or symbol_upper.replace(" ", "") == query_symbol
             exact_name = normalized_name == "".join(cleaned_query.split())
             starts_match = base_symbol.startswith(cleaned_query) or symbol_upper.startswith(cleaned_query) or name_upper.startswith(cleaned_query)
+            # Group exchange listings for the same security so the NSE/BSE
+            # pair stays together instead of showing other company matches
+            # between the two listings. The normalized company name is preferred
+            # as the cross-exchange identity; the base symbol is the fallback.
+            security_key = "".join(ch for ch in name_upper if ch.isalnum()) or base_symbol
             results.append({
                 "instrument_token": instrument_token,
                 "exchange_token": (row.get("exchange_token") or "").strip() or None,
@@ -278,14 +296,30 @@ def search_market(
                 "lot_size": lot_size,
                 "last_price": last_price,
                 "_rank": (0 if exact_symbol else 1 if exact_name else 2 if starts_match else 3),
+                "_security_key": security_key,
+                "_base_symbol": base_symbol,
             })
 
-        # Exact symbol/company matches from both exchanges come first, followed
-        # by other prefix matches and then broader partial matches.
-        results.sort(key=lambda item: (item["_rank"], 0 if item["exchange"] == "NSE" else 1, item["symbol"] or ""))
+        # Rank each security first, then keep its exchange listings adjacent.
+        # Exact symbol matches outrank exact company-name matches, then prefixes,
+        # then broader partial matches. NSE is the first listing within a pair.
+        group_rank = {}
+        group_label = {}
+        for item in results:
+            key = item["_security_key"]
+            group_rank[key] = min(group_rank.get(key, item["_rank"]), item["_rank"])
+            group_label[key] = min(group_label.get(key, item["_base_symbol"]), item["_base_symbol"])
+        results.sort(key=lambda item: (
+            group_rank[item["_security_key"]],
+            group_label[item["_security_key"]],
+            0 if item["exchange"] == "NSE" else 1,
+            item["symbol"] or "",
+        ))
         results = results[:limit]
         for item in results:
             item.pop("_rank", None)
+            item.pop("_security_key", None)
+            item.pop("_base_symbol", None)
 
     except Exception as exc:
         raise HTTPException(

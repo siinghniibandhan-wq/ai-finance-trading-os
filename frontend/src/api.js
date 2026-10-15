@@ -1,6 +1,6 @@
 // ============================================================
 // FINANCIAL OS — AUTHENTICATED API CLIENT
-// Attaches the current session's Bearer token to backend requests.
+// AWS backend + session management
 // ============================================================
 
 export const API_BASE_URL =
@@ -60,8 +60,8 @@ export function clearSession() {
 
 // ============================================================
 // AUTHENTICATED API REQUEST
-// Automatically attaches the Bearer token to requests sent
-// to the configured backend API.
+// Supports relative URLs, absolute URLs and Request objects.
+// Attaches the Bearer token only to the configured API origin.
 // ============================================================
 
 export async function apiFetch(input, init = {}) {

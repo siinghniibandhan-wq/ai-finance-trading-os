@@ -4491,6 +4491,7 @@ function Holdings() {
 
   return (
     <div
+      className="holdings-workspace"
       style={{
         display: "flex",
         flexDirection: "column",

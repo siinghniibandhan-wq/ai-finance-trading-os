@@ -841,3 +841,176 @@ svg { flex-shrink: 0; }
 .dashboard-overview .dashboard-clickable-card:hover { transform:translateY(-2px); }
 .dashboard-overview .dashboard-clickable-card:focus-visible { outline:2px solid #c4b5fd; outline-offset:3px; }
 .dashboard-overview .dashboard-clickable-card .metric-card { height:100%; }
+
+
+/* Wealth Manager refinements: distinct asset allocation, graph styles and support tools. */
+.wc-mix-clickable { display:flex; width:100%; flex-direction:column; align-items:stretch; gap:8px; padding:10px 0; border:0; border-bottom:1px solid rgba(148,163,184,.13); background:transparent; color:inherit; text-align:left; cursor:pointer; }
+.wc-mix-clickable:hover .wc-mix-action,.wc-mix-clickable:focus-visible .wc-mix-action { color:var(--accent,#c4b5fd); }
+.wc-mix-clickable:focus-visible { outline:2px solid rgba(196,181,253,.7); outline-offset:3px; border-radius:8px; }
+.wc-mix-action { font-size:11px; color:rgba(203,213,225,.75); }
+.wc-investment-performance { display:grid; gap:5px; padding:14px; margin-top:14px; border-radius:12px; background:rgba(148,163,184,.07); border:1px solid rgba(148,163,184,.13); }
+.wc-investment-performance>div { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.wc-investment-performance span,.wc-investment-performance small { color:var(--muted,#a1a1aa); font-size:12px; }
+.wc-investment-performance strong { font-size:14px; }
+.wc-support-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-top:18px; }
+.wc-will-checklist { margin:12px 0 18px; padding-left:20px; color:var(--muted,#a1a1aa); font-size:12px; line-height:1.8; }
+.wc-will-guidance { margin-top:14px; padding:12px; border-radius:10px; background:rgba(148,163,184,.08); font-size:12px; line-height:1.65; }
+.wc-will-guidance p { margin-bottom:0; color:var(--muted,#a1a1aa); }
+.wc-whatsapp-label { display:block; margin:14px 0 7px; font-size:12px; color:var(--muted,#a1a1aa); }
+.wc-whatsapp-input { display:block; box-sizing:border-box; width:100%; margin-bottom:12px; padding:11px 12px; border:1px solid rgba(148,163,184,.28); border-radius:10px; background:rgba(15,23,42,.45); color:inherit; }
+.wc-whatsapp-input:focus { outline:2px solid rgba(196,181,253,.6); outline-offset:1px; }
+.wc-pie-chart-wrap { display:flex; align-items:center; justify-content:center; gap:28px; flex-wrap:wrap; min-height:240px; padding:20px; }
+.wc-asset-pie { display:grid; place-items:center; width:190px; aspect-ratio:1; border-radius:50%; position:relative; }
+.wc-asset-pie:before { content:""; position:absolute; inset:22%; border-radius:50%; background:#111827; border:1px solid rgba(255,255,255,.08); }
+.wc-asset-pie>span { position:relative; z-index:1; display:grid; gap:4px; text-align:center; font-size:14px; font-weight:800; }
+.wc-asset-pie small { font-size:10px; font-weight:500; color:#aebbd3; }
+.wc-pie-legend { display:grid; gap:12px; min-width:200px; }
+.wc-pie-legend span { display:grid; grid-template-columns:10px 1fr auto; align-items:center; gap:8px; font-size:12px; color:#b8c3d8; }
+.wc-pie-legend i { width:9px; height:9px; border-radius:50%; background:#38bdf8; }
+.wc-pie-legend i.investments { background:#a78bfa; }.wc-pie-legend i.receivables { background:#34d399; }
+.wc-line-chart { align-items:stretch; }
+.wc-line-chart .wc-history-column { position:relative; }
+.wc-line-chart .wc-history-bars { opacity:.24; }
+.wc-line-chart .wc-line-point { position:absolute; left:50%; width:7px; height:7px; transform:translate(-50%,50%); border-radius:50%; background:#f0abfc; box-shadow:0 0 0 3px rgba(240,171,252,.15); }
+@media (max-width:760px) { .wc-support-grid { grid-template-columns:minmax(0,1fr); } .wc-investment-performance>div { align-items:flex-start; flex-direction:column; } .wc-pie-chart-wrap { gap:18px; padding:12px 0; } }
+
+.wc-line-chart { position:relative; }
+.wc-line-chart .wc-line-overlay { position:absolute; z-index:2; left:8px; right:8px; top:14px; width:calc(100% - 16px); height:145px; overflow:visible; pointer-events:none; }
+.wc-line-chart .wc-line-overlay polyline { fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+.wc-line-chart .wc-line-income { stroke:#38bdf8; }
+.wc-line-chart .wc-line-expense { stroke:#fb7185; }
+.wc-line-chart .wc-line-net { stroke:#34d399; }
+.wc-line-chart .wc-history-bars { opacity:.08; }
+
+
+/* ============================================================
+   WEALTH MANAGER — interactive allocation and balance sheet
+   ============================================================ */
+.wc-wealth-visuals {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+  gap: 18px;
+  align-items: stretch;
+}
+.wc-wealth-visuals > article { min-width: 0; padding: 20px; }
+.wc-allocation-layout {
+  display: grid;
+  grid-template-columns: minmax(150px, .8fr) minmax(0, 1.2fr);
+  gap: 18px;
+  align-items: center;
+  padding: 18px 0 10px;
+}
+.wc-wealth-pie {
+  width: min(100%, 260px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+  isolation: isolate;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: inset 0 0 0 1px rgba(7,11,20,.2);
+}
+.wc-wealth-pie::before {
+  content: "";
+  position: absolute;
+  inset: 19%;
+  border-radius: 50%;
+  background: #0b1020;
+  border: 1px solid rgba(148,163,184,.15);
+  z-index: -1;
+}
+.wc-wealth-pie > span {
+  max-width: 80%;
+  text-align: center;
+  overflow-wrap: anywhere;
+  font-size: clamp(13px, 1.3vw, 18px);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.wc-wealth-pie small { display: block; margin-top: 5px; color: #9ba8c2; font-size: 11px; font-weight: 500; }
+.wc-allocation-legend { display: grid; gap: 4px; min-width: 0; }
+.wc-allocation-row {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto 12px;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 48px;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #e5eaf5;
+  text-align: left;
+}
+.wc-allocation-row:hover, .wc-allocation-row.selected {
+  border-color: rgba(167,139,250,.28);
+  background: rgba(139,92,246,.08);
+}
+.wc-allocation-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--slice-color); }
+.wc-allocation-name { min-width: 0; font-size: 12px; font-weight: 650; }
+.wc-allocation-name small { display: block; margin-top: 3px; color: #8f9db7; font-size: 10px; font-weight: 450; }
+.wc-allocation-row > strong { font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wc-allocation-arrow { color: #a78bfa; font-size: 13px; }
+.wc-balance-chart { display: grid; gap: 14px; padding-top: 18px; }
+.wc-balance-row {
+  display: grid;
+  grid-template-columns: minmax(100px, .85fr) minmax(55px, 1fr) minmax(100px, auto);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: #e5eaf5;
+  text-align: left;
+}
+.wc-balance-row:hover { border-color: rgba(167,139,250,.26); background: rgba(139,92,246,.07); }
+.wc-balance-label strong { display: block; font-size: 12px; }
+.wc-balance-label small { display: block; margin-top: 4px; color: #8f9db7; font-size: 10px; line-height: 1.4; }
+.wc-balance-track { height: 11px; overflow: hidden; border-radius: 999px; background: rgba(148,163,184,.12); }
+.wc-balance-track > span { display: block; height: 100%; border-radius: inherit; background: #38bdf8; transition: width .25s ease; }
+.wc-balance-row.liabilities .wc-balance-track > span { background: #fb923c; }
+.wc-balance-row.net-worth .wc-balance-track > span { background: #a78bfa; }
+.wc-balance-value { text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.wc-balance-equation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 10px;
+  align-items: baseline;
+  padding: 13px;
+  border: 1px solid rgba(148,163,184,.13);
+  border-radius: 12px;
+  background: rgba(5,9,19,.25);
+  color: #9ba8c2;
+  font-size: 11px;
+}
+.wc-balance-equation strong { color: #f1f5f9; font-size: 12px; font-variant-numeric: tabular-nums; }
+@media (max-width: 1100px) {
+  .wc-wealth-visuals { grid-template-columns: minmax(0, 1fr); }
+  .wc-allocation-layout { grid-template-columns: minmax(150px, .7fr) minmax(0, 1.3fr); }
+}
+@media (max-width: 560px) {
+  .wc-wealth-visuals > article { padding: 15px; }
+  .wc-allocation-layout { grid-template-columns: minmax(0, 1fr); }
+  .wc-wealth-pie { width: min(65%, 230px); }
+  .wc-balance-row { grid-template-columns: minmax(88px, .8fr) minmax(36px, 1fr); gap: 8px; }
+  .wc-balance-value { grid-column: 1 / -1; text-align: left; padding-left: 2px; }
+  .wc-balance-equation { gap: 6px; }
+}
+
+
+/* Chart-first wealth sections intentionally avoid enclosing metric-card chrome. */
+.wc-chart-surface {
+  min-width: 0;
+  padding: 18px 0;
+  border: 0;
+  border-top: 1px solid rgba(148,163,184,.14);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.wc-asset-composition .wc-panel-heading,
+.wc-balance-sheet-chart .wc-panel-heading { border-bottom-color: rgba(148,163,184,.10); }

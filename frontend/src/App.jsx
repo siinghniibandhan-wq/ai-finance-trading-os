@@ -2569,7 +2569,7 @@ function MarketsPage() {
       {searchBusy && <p role="status" style={{ ...muted, marginTop: "12px" }}>Searching the instrument master…</p>}
       {searchError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px", marginTop: "12px" }}>{searchError}</p>}
       {results.length > 0 && <p style={{ ...muted, margin: "12px 0 4px" }}>{results.length} matching instruments · Select a result to open its quote and chart.</p>}
-      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="primary-button" onClick={() => { setOrderModalSide("BUY"); setOrderError(""); setOrderSuccess(null); setOrderDraft({ product_type: "DELIVERY", order_type: "MARKET", validity: "DAY", quantity: "1", limit_price: "" }); }}>BUY</button><button type="button" className="primary-button" onClick={() => { setOrderModalSide("SELL"); setOrderError(""); setOrderSuccess(null); setOrderDraft({ product_type: "DELIVERY", order_type: "MARKET", validity: "DAY", quantity: "1", limit_price: "" }); }}>SELL</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
+      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.4)", boxShadow: "0 6px 18px rgba(16,185,129,0.18)" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "BUY", symbol: selectedInstrument.symbol || "", name: selectedInstrument.name || "", exchange: selectedInstrument.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>BUY</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #b91c1c, #ef4444)", border: "1px solid rgba(248,113,113,0.4)", boxShadow: "0 6px 18px rgba(239,68,68,0.18)" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "SELL", symbol: selectedInstrument.symbol || "", name: selectedInstrument.name || "", exchange: selectedInstrument.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>SELL</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
       {orderModalSide && selectedInstrument && <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !orderSubmitting) setOrderModalSide(""); }} style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(4,5,14,.78)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
         <form onSubmit={async (event) => {
           event.preventDefault();
@@ -4833,15 +4833,28 @@ function Holdings() {
                         </strong>
                       </div>
 
-                      <div>
-                        <div className="card-label">
-                          PRICE
+                      <div
+                        style={{
+                          padding: "10px 12px",
+                          borderRadius: "12px",
+                          border: "1px solid rgba(52, 211, 153, 0.24)",
+                          background: "linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.035))",
+                          minWidth: 0,
+                        }}
+                      >
+                        <div
+                          className="card-label"
+                          style={{ display: "flex", alignItems: "center", gap: "6px", color: "rgba(110, 231, 183, 0.9)" }}
+                        >
+                          <span aria-hidden="true" style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px rgba(52, 211, 153, 0.65)", flexShrink: 0 }} />
+                          CURRENT PRICE
                         </div>
-                        <strong>
-                          {formatCurrency(
-                            holding.current_price
-                          )}
+                        <strong style={{ display: "block", marginTop: "5px", fontSize: "14px", fontVariantNumeric: "tabular-nums", color: "#a7f3d0", overflowWrap: "anywhere" }}>
+                          {formatCurrency(holding.current_price)}
                         </strong>
+                        <div style={{ marginTop: "3px", fontSize: "10px", color: "rgba(255,255,255,0.45)" }}>
+                          Per unit
+                        </div>
                       </div>
 
                       <div>
@@ -4962,16 +4975,12 @@ function Holdings() {
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() =>
-                          setExpandedSymbol(
-                            expanded
-                              ? null
-                              : holdingKey
-                          )
-                        }
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "stretch", minWidth: "84px" }}>
+                        <button type="button" className="primary-button" style={{ padding: "7px 12px", minWidth: "78px", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.35)", fontSize: "11px" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "BUY", symbol: holding.symbol || "", name: holding.name || "", exchange: holding.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>BUY</button>
+                        <button type="button" className="secondary-button" style={{ padding: "7px 12px", minWidth: "78px", borderColor: "rgba(248,113,113,0.35)", color: "#fca5a5", fontSize: "11px" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "SELL", symbol: holding.symbol || "", name: holding.name || "", exchange: holding.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>SELL</button>
+                        <button type="button" className="secondary-button" style={{ padding: "7px 12px", minWidth: "78px", fontSize: "11px" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "EDIT", symbol: holding.symbol || "", name: holding.name || "", exchange: holding.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>EDIT</button>
+                        <button type="button" className="secondary-button" style={{ padding: "7px 12px", minWidth: "78px", fontSize: "11px" }} onClick={() => setExpandedSymbol(expanded ? null : holdingKey)}>{expanded ? "Hide details" : "History / View"}</button>
+                      </div>
                         style={{
                           whiteSpace:
                             "nowrap",
@@ -5794,6 +5803,41 @@ const openInvestmentTransaction = (
 
 
 // ============================================================
+// Consume actions initiated from Holdings or the Market instrument page.
+// Match the existing investment record first so BUY/SELL never creates a duplicate holding.
+useEffect(() => {
+  let raw = null;
+  try { raw = sessionStorage.getItem("financialOS.portfolioAction"); } catch {}
+  if (!raw || !Array.isArray(investments) || investments.length === 0) return;
+  let intent;
+  try { intent = JSON.parse(raw); } catch { try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {} return; }
+  const symbol = String(intent?.symbol || "").trim().toUpperCase();
+  const name = String(intent?.name || "").trim().toUpperCase();
+  if (!symbol && !name) return;
+  const matched = investments.find((item) => {
+    const itemSymbol = String(item?.symbol || item?.tradingsymbol || "").trim().toUpperCase();
+    const itemName = String(item?.name || "").trim().toUpperCase();
+    const sameSecurity = (symbol && itemSymbol === symbol) || (!symbol && name && itemName === name);
+    const requestedExchange = String(intent?.exchange || "").trim().toUpperCase();
+    const itemExchange = String(item?.exchange || "").trim().toUpperCase();
+    return sameSecurity && (!requestedExchange || !itemExchange || requestedExchange === itemExchange);
+  }) || investments.find((item) => {
+    const itemSymbol = String(item?.symbol || item?.tradingsymbol || "").trim().toUpperCase();
+    const itemName = String(item?.name || "").trim().toUpperCase();
+    return (symbol && itemSymbol === symbol) || (!symbol && name && itemName === name);
+  });
+  if (!matched) {
+    // Don't discard the intent while the investment list is still loading.
+    return;
+  }
+  try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {}
+  if (intent.type === "EDIT") {
+    handleEditInvestment(matched);
+  } else {
+    openInvestmentTransaction(matched, intent.type === "SELL" ? "SELL" : "BUY");
+  }
+}, [investments]);
+
 // OPEN TRANSACTION HISTORY
 // ============================================================
 

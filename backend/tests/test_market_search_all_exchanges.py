@@ -8,9 +8,9 @@ from app.routes import market_search
 
 @pytest.fixture(autouse=True)
 def reset_instrument_master_cache():
-    market_search._instrument_master_cache.update({"text": None, "loaded_at": 0.0})
+    market_search._instrument_master_cache.update({"text": None, "loaded_at": 0.0, "parsed_text": None, "fieldnames": None, "rows": None, "stale": False})
     yield
-    market_search._instrument_master_cache.update({"text": None, "loaded_at": 0.0})
+    market_search._instrument_master_cache.update({"text": None, "loaded_at": 0.0, "parsed_text": None, "fieldnames": None, "rows": None, "stale": False})
 
 
 class FakeResponse:
@@ -113,6 +113,8 @@ def test_instrument_master_is_downloaded_only_once_within_cache_ttl(monkeypatch)
     assert first["count"] == 3
     assert second["count"] == 1
     assert len(calls) == 1
+    assert market_search._instrument_master_cache["rows"] is not None
+    assert market_search._instrument_master_cache["parsed_text"] == CSV
 
 
 def test_expired_instrument_master_cache_refreshes(monkeypatch):
@@ -145,3 +147,5 @@ def test_expired_cache_is_used_if_gateway_refresh_fails(monkeypatch):
 
     assert result["count"] == 3
     assert result["results"][0]["symbol"] == "RELIANCE-EQ"
+    assert result["source"]["stale"] is True
+    assert result["source"]["warning"]

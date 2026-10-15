@@ -873,3 +873,11 @@ svg { flex-shrink: 0; }
 .wc-line-chart .wc-history-bars { opacity:.24; }
 .wc-line-chart .wc-line-point { position:absolute; left:50%; width:7px; height:7px; transform:translate(-50%,50%); border-radius:50%; background:#f0abfc; box-shadow:0 0 0 3px rgba(240,171,252,.15); }
 @media (max-width:760px) { .wc-support-grid { grid-template-columns:minmax(0,1fr); } .wc-investment-performance>div { align-items:flex-start; flex-direction:column; } .wc-pie-chart-wrap { gap:18px; padding:12px 0; } }
+
+.wc-line-chart { position:relative; }
+.wc-line-chart .wc-line-overlay { position:absolute; z-index:2; left:8px; right:8px; top:14px; width:calc(100% - 16px); height:145px; overflow:visible; pointer-events:none; }
+.wc-line-chart .wc-line-overlay polyline { fill:none; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+.wc-line-chart .wc-line-income { stroke:#38bdf8; }
+.wc-line-chart .wc-line-expense { stroke:#fb7185; }
+.wc-line-chart .wc-line-net { stroke:#34d399; }
+.wc-line-chart .wc-history-bars { opacity:.08; }

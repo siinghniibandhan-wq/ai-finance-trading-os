@@ -242,6 +242,9 @@ export default function WealthManager({ onNavigate = () => {} }) {
   const [errors, setErrors] = useState([]);
   const [activeCard, setActiveCard] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [supportNumber, setSupportNumber] = useState(() => window.localStorage.getItem("wealth-manager-whatsapp-number") || "");
+  const [showWillGuide, setShowWillGuide] = useState(false);
+  const [analysisVisual, setAnalysisVisual] = useState("bar");
 
   const loadWealthData = useCallback(async ({ quiet = false } = {}) => {
     if (quiet) setRefreshing(true);
@@ -418,81 +421,27 @@ export default function WealthManager({ onNavigate = () => {} }) {
 
       {activeCard && <BreakdownPanel activeCard={activeCard} data={data} onClose={() => setActiveCard(null)} onNavigate={onNavigate} onSelectCard={setActiveCard} />}
 
-      <section className="wc-section-grid">
-        <article className="glass-card wc-info-panel">
-          <div className="wc-panel-heading"><div><p className="card-label">DATA COVERAGE</p><h3>What is included in your wealth?</h3></div><Wallet size={19} /></div>
-          <DetailRow label="Cash and account balances" value={loading ? "Loading…" : money(totals.cash)} />
-          <DetailRow label="Current investments" value={loading ? "Loading…" : money(totals.investments)} />
-          <DetailRow label="Outstanding receivables" value={loading ? "Loading…" : money(totals.receivables)} note="Amounts owed to you, net of recorded settlements" />
-          <DetailRow label="Other asset classes" value="Not yet included" note="FD/RD, property, gold and other assets require verified data sources" />
-          <p className="wc-note"><button type="button" className="wc-inline-link" onClick={() => onNavigate("Accounts")}>Manage accounts</button> · <button type="button" className="wc-inline-link" onClick={() => onNavigate("Portfolio")}>Open portfolio</button> · <button type="button" className="wc-inline-link" onClick={() => onNavigate("Loans & Liabilities")}>Review loans and liabilities</button>.</p>
-        </article>
-        <article className="glass-card wc-info-panel">
-          <div className="wc-panel-heading"><div><p className="card-label">TAX SNAPSHOT</p><h3>Tax estimate status</h3></div><ReceiptText size={19} /></div>
-          <DetailRow label="Financial year" value={FINANCIAL_YEAR} />
-          <label className="wc-tax-regime-control" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, margin: "12px 0", color: "inherit" }}>
-            <span>Tax regime</span>
-            <select
-              value={taxRegime}
-              onChange={(event) => setTaxRegime(event.target.value)}
-              aria-label="Wealth Manager tax regime"
-              style={{ maxWidth: 180, padding: "8px 10px", borderRadius: 8, background: "var(--surface, #171827)", color: "inherit", border: "1px solid rgba(148,163,184,.35)" }}
-            >
-              <option value="new">New Regime</option>
-              <option value="old">Old Regime</option>
-            </select>
-          </label>
-          <DetailRow label="Tax engine response" value={data.taxLiability ? "Available" : loading ? "Loading…" : "Unavailable"} />
-          <DetailRow label="Tax estimate" value={taxAmount === undefined ? "Not available" : money(taxAmount)} />
-          <p className="wc-note">Estimate requested using the {taxRegime === "old" ? "Old" : "New"} Regime. This amount is shown only when the existing tax engine returns a recognized total field. Review the tax calculation scope before treating it as final tax payable.</p>
-          <div className="wc-tax-status"><CheckCircle2 size={15} /><span>Existing Tax Centre remains unchanged and available in the sidebar.</span></div>
-        </article>
-      </section>
-
-      <section className="wc-wealth-analysis-grid" aria-label="Wealth analysis">
-        <article className="glass-card wc-info-panel">
-          <div className="wc-panel-heading">
-            <div><p className="card-label">ASSET MIX</p><h3>Recorded wealth composition</h3></div>
-            <PieChart size={19} />
-          </div>
-          <p className="wc-chart-subtitle">How currently recorded assets are divided between cash, investments and amounts owed to you.</p>
+      <section className="wc-wealth-analysis-grid" aria-label="Recorded wealth composition">
+        <article className="glass-card wc-info-panel wc-asset-composition">
+          <div className="wc-panel-heading"><div><p className="card-label">ASSET ALLOCATION</p><h3>Recorded wealth composition</h3></div><PieChart size={19} /></div>
+          <p className="wc-chart-subtitle">Each amount is shown once. Select a category to open its records.</p>
           <div className="wc-wealth-mix-list">
-            <div className="wc-wealth-mix-row">
-              <div className="wc-wealth-mix-label"><span>Cash &amp; account balances</span><strong>{money(totals.cash)} · {cashShare.toFixed(1)}%</strong></div>
-              <div className="wc-wealth-mix-track"><span className="cash" style={{ width: `${cashShare}%` }} /></div>
-            </div>
-            <div className="wc-wealth-mix-row">
-              <div className="wc-wealth-mix-label"><span>Investments</span><strong>{money(totals.investments)} · {investmentShare.toFixed(1)}%</strong></div>
-              <div className="wc-wealth-mix-track"><span className="investments" style={{ width: `${investmentShare}%` }} /></div>
-            </div>
-            <div className="wc-wealth-mix-row">
-              <div className="wc-wealth-mix-label"><span>Receivables · money owed to you</span><strong>{money(totals.receivables)} · {receivableShare.toFixed(1)}%</strong></div>
-              <div className="wc-wealth-mix-track"><span className="receivables" style={{ width: `${receivableShare}%` }} /></div>
-            </div>
+            <button type="button" className="wc-wealth-mix-row wc-mix-clickable" onClick={() => onNavigate("Accounts")} aria-label={`Open cash and account balances: ${money(totals.cash)}`}>
+              <span className="wc-wealth-mix-label"><span>Cash &amp; accounts</span><strong>{money(totals.cash)} · {cashShare.toFixed(1)}%</strong></span><span className="wc-wealth-mix-track"><span className="cash" style={{ width: `${cashShare}%` }} /></span><span className="wc-mix-action">Manage accounts →</span>
+            </button>
+            <button type="button" className="wc-wealth-mix-row wc-mix-clickable" onClick={() => onNavigate("Portfolio")} aria-label={`Open investments: ${money(totals.investments)}`}>
+              <span className="wc-wealth-mix-label"><span>Investments</span><strong>{money(totals.investments)} · {investmentShare.toFixed(1)}%</strong></span><span className="wc-wealth-mix-track"><span className="investments" style={{ width: `${investmentShare}%` }} /></span><span className="wc-mix-action">Open portfolio →</span>
+            </button>
+            <button type="button" className="wc-wealth-mix-row wc-mix-clickable" onClick={() => onNavigate("Transactions")} aria-label={`Open receivables: ${money(totals.receivables)}`}>
+              <span className="wc-wealth-mix-label"><span>Receivables · owed to you</span><strong>{money(totals.receivables)} · {receivableShare.toFixed(1)}%</strong></span><span className="wc-wealth-mix-track"><span className="receivables" style={{ width: `${receivableShare}%` }} /></span><span className="wc-mix-action">View receivables →</span>
+            </button>
           </div>
           <div className="wc-total-row"><span>Total recorded assets</span><strong>{money(totals.assets)}</strong></div>
-          <p className="wc-note">Receivables are included only from the outstanding receivables/payables API. Settled amounts are excluded by that source. <button type="button" className="wc-inline-link" onClick={() => onNavigate("Transactions")}>Review receivables and settlements</button>. This is a current-value allocation, not historical performance.</p>
-        </article>
-
-        <article className="glass-card wc-info-panel">
-          <div className="wc-panel-heading">
-            <div><p className="card-label">BALANCE SHEET</p><h3>Wealth position</h3></div>
-            <Landmark size={19} />
-          </div>
-          <DetailRow label="Total recorded assets" value={loading ? "Loading…" : money(totals.assets)} />
-          <DetailRow label="Outstanding liabilities" value={loading ? "Loading…" : money(totals.liabilities)} />
-          <div className="wc-total-row"><span>Estimated net worth</span><strong>{loading ? "Loading…" : money(totals.netWorth)}</strong></div>
-          <DetailRow label="Liabilities / assets" value={liabilityRatio === null ? "Unavailable" : `${liabilityRatio.toFixed(1)}%`} note="Based on currently recorded assets and liabilities" />
-          <div className="wc-breakdown-actions">
-            <BreakdownAction onClick={() => setActiveCard("Total Assets")}>Explore assets</BreakdownAction>
-            <BreakdownAction onClick={() => setActiveCard("Total Liabilities")}>Explore liabilities</BreakdownAction>
-            <BreakdownAction onClick={() => onNavigate("Portfolio")}>Analyse investments</BreakdownAction>
-          </div>
-          <p className="wc-note">Net worth is an estimate from the current connected records. It does not imply that all property, deposits, debts or other off-platform assets have been recorded.</p>
+          <div className="wc-investment-performance"><div><span>Investment profit / loss</span><strong>{(() => { const inv = data.summary?.investments || {}; const cost = inv.invested_value ?? inv.total_invested ?? inv.invested_amount ?? inv.cost_basis; return cost === undefined || cost === null ? "Cost basis unavailable" : money(totals.investments - numberValue(cost)); })()}</strong></div><small>Calculated only when the existing summary provides a recorded investment cost basis; no profit is inferred from market value alone.</small></div>
+          <p className="wc-note">Assets include cash/account balances, current investments and outstanding receivables. Loans and other liabilities are shown separately in the Total Liabilities card above, so they are not mixed into asset allocation.</p>
+          <div className="wc-breakdown-actions"><BreakdownAction onClick={() => setActiveCard("Total Assets")}>Detailed asset records</BreakdownAction><BreakdownAction onClick={() => setActiveCard("Total Liabilities")}>Loans &amp; liabilities</BreakdownAction></div>
         </article>
       </section>
-
-
 
       <section className="glass-card wc-info-panel wc-lifetime-analysis" aria-label="Lifetime income and expense analysis">
         <div className="wc-panel-heading">
@@ -503,8 +452,11 @@ export default function WealthManager({ onNavigate = () => {} }) {
           <label>Period <select value={analysisPeriod} onChange={(event) => setAnalysisPeriod(event.target.value)} aria-label="Historical analysis period">
             <option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">1 year</option><option value="36">3 years</option><option value="60">5 years</option><option value="lifetime">Lifetime (up to 5 years)</option>
           </select></label>
-          <label>Chart <select value={analysisChart} onChange={(event) => setAnalysisChart(event.target.value)} aria-label="Cash flow chart type">
-            <option value="income-expense">Income vs expenses</option><option value="net">Net cash flow</option><option value="income">Income trend</option><option value="expenses">Expense trend</option>
+          <label>Data view <select value={analysisChart} onChange={(event) => setAnalysisChart(event.target.value)} aria-label="Income expense or cash flow view">
+            <option value="income-expense">Income vs expenses</option><option value="net">Net cash flow</option><option value="income">Income only</option><option value="expenses">Expenses only</option>
+          </select></label>
+          <label>Graph style <select value={analysisVisual} onChange={(event) => setAnalysisVisual(event.target.value)} aria-label="Graph style">
+            <option value="bar">Bar graph</option><option value="line">Line graph</option><option value="pie">Pie chart · asset mix</option>
           </select></label>
         </div>
         <div className="wc-analysis-summary">
@@ -512,12 +464,20 @@ export default function WealthManager({ onNavigate = () => {} }) {
           <div><span>Total expenses in period</span><strong>{money(analysisMonths.reduce((sum, month) => sum + month.expenses, 0))}</strong></div>
           <div><span>Net cash flow</span><strong>{money(analysisMonths.reduce((sum, month) => sum + month.income - month.expenses, 0))}</strong></div>
         </div>
-        {data.transactions.length === 0 ? <div className="wc-chart-empty">No transaction history was returned by the existing API. Add or review records in <button type="button" className="wc-inline-link" onClick={() => onNavigate("Transactions")}>Transactions</button>.</div> : (
-          <div className="wc-history-chart" role="img" aria-label="Selected period cash flow chart">
+        {analysisVisual === "pie" ? (
+          <div className="wc-pie-chart-wrap">
+            <div className="wc-asset-pie" role="img" aria-label={`Asset mix: cash ${cashShare.toFixed(1)} percent, investments ${investmentShare.toFixed(1)} percent, receivables ${receivableShare.toFixed(1)} percent`} style={{ background: `conic-gradient(#38bdf8 0% ${cashShare}%, #a78bfa ${cashShare}% ${cashShare + investmentShare}%, #34d399 ${cashShare + investmentShare}% 100%)` }}><span>{money(totals.assets)}<small>Total assets</small></span></div>
+            <div className="wc-pie-legend"><span><i className="cash" />Cash &amp; accounts <strong>{money(totals.cash)}</strong></span><span><i className="investments" />Investments <strong>{money(totals.investments)}</strong></span><span><i className="receivables" />Receivables <strong>{money(totals.receivables)}</strong></span></div>
+          </div>
+        ) : data.transactions.length === 0 ? <div className="wc-chart-empty">No transaction history was returned by the existing API. Add or review records in <button type="button" className="wc-inline-link" onClick={() => onNavigate("Transactions")}>Transactions</button>.</div> : (
+          <div className={`wc-history-chart ${analysisVisual === "line" ? "wc-line-chart" : ""}`} role="img" aria-label={`${analysisVisual} chart for selected ${analysisChart} data`}>
             {analysisMonths.map((month) => {
               const values = analysisChart === "income-expense" ? [month.income, month.expenses] : [analysisChart === "income" ? month.income : analysisChart === "expenses" ? month.expenses : Math.abs(month.net)];
+              const pointValue = analysisChart === "income" ? month.income : analysisChart === "expenses" ? month.expenses : month.net;
+              const maxForView = Math.max(1, ...analysisMonths.flatMap((item) => analysisChart === "income-expense" ? [item.income, item.expenses] : [Math.abs(analysisChart === "income" ? item.income : analysisChart === "expenses" ? item.expenses : item.net)]));
               return <button type="button" className="wc-history-column" key={month.key} title={`${month.label}: income ${money(month.income)}, expenses ${money(month.expenses)}, net ${money(month.net)}`} onClick={() => onNavigate("Transactions")} aria-label={`Open transactions for ${month.label}`}>
-                <span className="wc-history-bars">{values.map((value, index) => <i key={index} className={analysisChart === "net" ? (month.net >= 0 ? "net-positive" : "net-negative") : index === 0 ? "income" : "expense"} style={{ height: `${Math.max(value > 0 ? 3 : 0, Math.min(100, value / chartMax * 100))}%` }} />)}</span>
+                <span className="wc-history-bars">{values.map((value, index) => <i key={index} className={analysisChart === "net" ? (month.net >= 0 ? "net-positive" : "net-negative") : index === 0 ? "income" : "expense"} style={{ height: `${Math.max(value > 0 ? 3 : 0, Math.min(100, Math.abs(value) / maxForView * 100))}%` }} />)}</span>
+                <span className="wc-line-point" style={{ bottom: `${Math.max(0, Math.min(100, (pointValue + maxForView) / (2 * maxForView) * 100))}%` }} />
                 <small>{month.label}</small>
               </button>;
             })}
@@ -549,6 +509,22 @@ export default function WealthManager({ onNavigate = () => {} }) {
             <div className="wc-chart-empty">No immediate alerts from the currently loaded records.</div>
           )}
         </article>
+
+      <section className="wc-support-grid" aria-label="Legacy planning and customer support">
+        <article className="glass-card wc-info-panel"><div className="wc-panel-heading"><div><p className="card-label">ESTATE PLANNING</p><h3>Create a will</h3></div><ReceiptText size={19} /></div>
+          <p className="wc-chart-subtitle">Start an organised will-planning checklist. This is preparation support, not a legally executed will.</p>
+          <ul className="wc-will-checklist"><li>List assets, accounts, investments and liabilities.</li><li>Record intended beneficiaries and guardians, where applicable.</li><li>Choose an executor and seek qualified legal advice on signing and witnesses.</li></ul>
+          <button type="button" className="primary-button" onClick={() => setShowWillGuide(!showWillGuide)}>{showWillGuide ? "Hide checklist" : "Start will checklist"} →</button>
+          {showWillGuide && <div className="wc-will-guidance" role="status"><strong>Before you begin</strong><p>Collect asset statements, beneficiary details and your chosen executor details. Requirements vary by jurisdiction; have the final document reviewed by a qualified legal professional. Do not enter sensitive identity details into this overview.</p></div>}
+        </article>
+        <article className="glass-card wc-info-panel"><div className="wc-panel-heading"><div><p className="card-label">CUSTOMER SUPPORT</p><h3>WhatsApp contact</h3></div><WalletCards size={19} /></div>
+          <p className="wc-chart-subtitle">Add your business WhatsApp number once on this device to enable direct contact.</p>
+          <label className="wc-whatsapp-label" htmlFor="wealth-whatsapp-number">WhatsApp number with country code</label>
+          <input id="wealth-whatsapp-number" className="wc-whatsapp-input" type="tel" inputMode="tel" placeholder="e.g. 919876543210" value={supportNumber} onChange={(event) => { const next = event.target.value; setSupportNumber(next); window.localStorage.setItem("wealth-manager-whatsapp-number", next); }} />
+          <button type="button" className="primary-button" disabled={!/^[0-9]{8,15}$/.test(supportNumber.replace(/[^0-9]/g, ""))} onClick={() => window.open(`https://wa.me/${supportNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent("Hello, I would like support with my wealth overview.")}`, "_blank", "noopener,noreferrer")}>Contact on WhatsApp ↗</button>
+          <small className="wc-note">The number is stored in this browser only. It is not sent to the Financial OS backend.</small>
+        </article>
+      </section>
 
       {/* Cross-module navigation remains inside Wealth Manager; no separate Dashboard is created. */}
       <section className="glass-card wc-info-panel wc-accent-card wc-shortcuts-panel">

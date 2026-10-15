@@ -1642,3 +1642,25 @@ svg { flex-shrink: 0; }
 }
 :root[data-finos-theme] .chart-legend .legend-income { background-color: var(--finos-chart-series-1); }
 :root[data-finos-theme] .chart-legend .legend-expense { background-color: var(--finos-chart-series-2); }
+
+
+/* Theme tokens must win over legacy inline colours on form controls. */
+:root[data-finos-theme] select,
+:root[data-finos-theme] input,
+:root[data-finos-theme] textarea,
+:root[data-finos-theme] [role="combobox"] {
+  color: var(--finos-control-text) !important;
+  background-color: var(--finos-control-bg) !important;
+  border-color: var(--finos-control-border) !important;
+  caret-color: var(--finos-control-text);
+}
+:root[data-finos-theme] select option,
+:root[data-finos-theme] optgroup {
+  color: var(--finos-control-text) !important;
+  background-color: var(--finos-control-bg) !important;
+}
+:root[data-finos-theme] input::placeholder,
+:root[data-finos-theme] textarea::placeholder {
+  color: var(--finos-control-muted) !important;
+  opacity: 1;
+}

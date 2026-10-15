@@ -16,6 +16,7 @@ import {
   ChevronUp,
   AlertCircle,
   CheckCircle2,
+  LineChart,
   ArrowUpRight,
   BellRing,
   Target,
@@ -465,7 +466,6 @@ export default function WealthManager({ onNavigate = () => {} }) {
             <div className="wc-chart-empty">No immediate alerts from the currently loaded records.</div>
           )}
         </article>
-      </section>
 
       {/* Cross-module navigation remains inside Wealth Manager; no separate Dashboard is created. */}
       <section className="glass-card wc-info-panel wc-accent-card wc-shortcuts-panel">

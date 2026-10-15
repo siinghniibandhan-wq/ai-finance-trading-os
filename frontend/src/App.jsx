@@ -5657,6 +5657,7 @@ function Portfolio() {
 
   const [investments, setInvestments] = useState([]);
   const [loadingInvestments, setLoadingInvestments] = useState(true);
+  const [investmentsLoadError, setInvestmentsLoadError] = useState("");
 // ----------------------------------------------------------
 // MARKET PRICE REFRESH STATE
 // ----------------------------------------------------------
@@ -5700,6 +5701,7 @@ const [transactionMessage, setTransactionMessage] =
   useState("");
   const loadInvestments = async () => {
     setLoadingInvestments(true);
+    setInvestmentsLoadError("");
     try {
       const response = await apiFetch(
         `${API_BASE_URL}/api/investments/?user_id=${USER_ID}`
@@ -5722,6 +5724,7 @@ const [transactionMessage, setTransactionMessage] =
         "Load investments error:",
         error
       );
+      setInvestmentsLoadError(error?.message || "Unable to load portfolio investments.");
     } finally {
       setLoadingInvestments(false);
     }
@@ -5987,6 +5990,10 @@ useEffect(() => {
   let raw = null;
   try { raw = sessionStorage.getItem("financialOS.portfolioAction"); } catch {}
   if (!raw || !Array.isArray(investments) || loadingInvestments) return;
+  if (investmentsLoadError) {
+    setTransactionMessage("Portfolio could not be loaded. Your Buy/Sell action has been kept pending; refresh the portfolio and try again.");
+    return;
+  }
   let intent;
   try { intent = JSON.parse(raw); } catch { try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {} return; }
   const symbol = String(intent?.symbol || "").trim().toUpperCase();
@@ -6043,7 +6050,7 @@ useEffect(() => {
   } else {
     openInvestmentTransaction(matched, intent.type === "SELL" ? "SELL" : "BUY");
   }
-}, [investments, loadingInvestments]);
+}, [investments, loadingInvestments, investmentsLoadError]);
 
 // OPEN TRANSACTION HISTORY
 // ============================================================

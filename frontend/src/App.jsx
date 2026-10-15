@@ -5656,6 +5656,7 @@ function Portfolio() {
   // ----------------------------------------------------------
 
   const [investments, setInvestments] = useState([]);
+  const [loadingInvestments, setLoadingInvestments] = useState(true);
 // ----------------------------------------------------------
 // MARKET PRICE REFRESH STATE
 // ----------------------------------------------------------
@@ -5698,6 +5699,7 @@ const [transactionHistoryLoading, setTransactionHistoryLoading] =
 const [transactionMessage, setTransactionMessage] =
   useState("");
   const loadInvestments = async () => {
+    setLoadingInvestments(true);
     try {
       const response = await apiFetch(
         `${API_BASE_URL}/api/investments/?user_id=${USER_ID}`
@@ -5720,6 +5722,8 @@ const [transactionMessage, setTransactionMessage] =
         "Load investments error:",
         error
       );
+    } finally {
+      setLoadingInvestments(false);
     }
   };
 
@@ -5982,7 +5986,7 @@ const openInvestmentTransaction = (
 useEffect(() => {
   let raw = null;
   try { raw = sessionStorage.getItem("financialOS.portfolioAction"); } catch {}
-  if (!raw || !Array.isArray(investments) || investments.length === 0) return;
+  if (!raw || !Array.isArray(investments) || loadingInvestments) return;
   let intent;
   try { intent = JSON.parse(raw); } catch { try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {} return; }
   const symbol = String(intent?.symbol || "").trim().toUpperCase();
@@ -6039,7 +6043,7 @@ useEffect(() => {
   } else {
     openInvestmentTransaction(matched, intent.type === "SELL" ? "SELL" : "BUY");
   }
-}, [investments]);
+}, [investments, loadingInvestments]);
 
 // OPEN TRANSACTION HISTORY
 // ============================================================

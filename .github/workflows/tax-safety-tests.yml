@@ -1,26 +1,36 @@
-name: Tax calculation safety tests
+name: Backend financial integrity tests
 
 on:
   pull_request:
     paths:
       - "backend/app/routes/tax_calculation.py"
+      - "backend/app/routes/investment_transactions.py"
+      - "backend/app/routes/investment_pnl.py"
       - "backend/tests/test_tax_calculation_eligibility_safeguards.py"
       - "backend/tests/test_tax_calculation_review_flags.py"
+      - "backend/tests/test_investment_transaction_timeline.py"
+      - "backend/tests/test_investment_pnl_calculation.py"
+      - "backend/tests/test_investment_portfolio_valuation.py"
       - ".github/workflows/tax-safety-tests.yml"
   push:
     branches:
       - main
     paths:
       - "backend/app/routes/tax_calculation.py"
+      - "backend/app/routes/investment_transactions.py"
+      - "backend/app/routes/investment_pnl.py"
       - "backend/tests/test_tax_calculation_eligibility_safeguards.py"
       - "backend/tests/test_tax_calculation_review_flags.py"
+      - "backend/tests/test_investment_transaction_timeline.py"
+      - "backend/tests/test_investment_pnl_calculation.py"
+      - "backend/tests/test_investment_portfolio_valuation.py"
       - ".github/workflows/tax-safety-tests.yml"
 
 permissions:
   contents: read
 
 jobs:
-  tax-safety:
+  financial-integrity:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,8 +46,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest
-      - name: Run capital-gains tax safety tests
+      - name: Run financial integrity regression tests
         env:
           PYTHONPATH: .
           DATABASE_URL: postgresql+psycopg://test:test@localhost:5432/testdb
-        run: pytest -q tests/test_tax_calculation_eligibility_safeguards.py tests/test_tax_calculation_review_flags.py
+        run: |
+          pytest -q \
+            tests/test_tax_calculation_eligibility_safeguards.py \
+            tests/test_tax_calculation_review_flags.py \
+            tests/test_investment_transaction_timeline.py \
+            tests/test_investment_pnl_calculation.py \
+            tests/test_investment_portfolio_valuation.py

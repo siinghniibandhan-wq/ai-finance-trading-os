@@ -16,19 +16,13 @@ import {
   ChevronUp,
   AlertCircle,
   CheckCircle2,
-  LineChart,
-  BarChart3,
-  AreaChart,
   ArrowUpRight,
-  ArrowDownRight,
   BellRing,
-  ArrowLeftRight,
   Target,
   Sparkles,
   PieChart,
   Receipt,
   WalletCards,
-  ExternalLink,
   CircleAlert,
 } from "lucide-react";
 
@@ -225,108 +219,6 @@ function BreakdownPanel({ activeCard, data, onClose, onNavigate, onSelectCard })
 // SVG charts are used so this feature does not add a dependency.
 // ============================================================
 
-const PERIODS = [
-  { key: "1M", months: 1, label: "1 month" },
-  { key: "3M", months: 3, label: "3 months" },
-  { key: "6M", months: 6, label: "6 months" },
-  { key: "1Y", months: 12, label: "1 year" },
-  { key: "2Y", months: 24, label: "2 years" },
-  { key: "3Y", months: 36, label: "3 years" },
-  { key: "5Y", months: 60, label: "5 years" },
-];
-
-const CHART_TYPES = [
-  { key: "line", label: "Line", Icon: LineChart },
-  { key: "bar", label: "Bar", Icon: BarChart3 },
-  { key: "area", label: "Area", Icon: AreaChart },
-];
-
-const dateKey = (date) => {
-  const d = new Date(date);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-};
-
-const monthStart = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
-const addMonths = (date, count) => new Date(date.getFullYear(), date.getMonth() + count, 1);
-const monthLabel = (key, short = true) => {
-  const [year, month] = key.split("-").map(Number);
-  return new Date(year, month - 1, 1).toLocaleDateString("en-IN", {
-    month: short ? "short" : "long",
-    year: "2-digit",
-  });
-};
-
-function WealthChart({ points, type, series, height = 220, emptyText }) {
-  const width = 720;
-  const pad = { top: 18, right: 14, bottom: 38, left: 52 };
-  const plotW = width - pad.left - pad.right;
-  const plotH = height - pad.top - pad.bottom;
-  const values = points.flatMap((p) => series.map((s) => numberValue(p[s.key])));
-  const maxValue = Math.max(1, ...values, 0);
-  const minValue = Math.min(0, ...values);
-  const range = Math.max(1, maxValue - minValue);
-  const x = (i) => pad.left + (points.length <= 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
-  const y = (v) => pad.top + ((maxValue - numberValue(v)) / range) * plotH;
-  const barStep = plotW / Math.max(points.length, 1);
-  const barW = Math.max(3, Math.min(24, barStep * (series.length > 1 ? 0.27 : 0.55)));
-  const grid = [0, 0.25, 0.5, 0.75, 1];
-  const shownLabels = points.length <= 6
-    ? points.map((p, i) => i)
-    : [0, Math.floor((points.length - 1) / 3), Math.floor(2 * (points.length - 1) / 3), points.length - 1];
-
-  if (!points.length) return <div className="wc-chart-empty">{emptyText || "No recorded data for this period."}</div>;
-
-  return (
-    <div className="wc-chart-scroll">
-      <svg className="wc-chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Financial trend chart">
-        {grid.map((fraction) => {
-          const val = maxValue - fraction * range;
-          const yy = pad.top + fraction * plotH;
-          return <g key={fraction}>
-            <line x1={pad.left} y1={yy} x2={width - pad.right} y2={yy} stroke="rgba(226,232,240,.10)" strokeDasharray="3 4" />
-            <text x={pad.left - 8} y={yy + 4} textAnchor="end" fill="rgba(226,232,240,.5)" fontSize="10">{Math.abs(val) >= 100000 ? `${(val / 100000).toFixed(1)}L` : Math.abs(val) >= 1000 ? `${(val / 1000).toFixed(1)}k` : Math.round(val)}</text>
-          </g>;
-        })}
-        {type === "bar" && points.map((point, i) => series.map((s, si) => {
-          const v = numberValue(point[s.key]);
-          const baseline = y(0);
-          const yy = y(v);
-          const h = Math.max(1, Math.abs(baseline - yy));
-          const xx = pad.left + i * barStep + barStep / 2 - (series.length * barW) / 2 + si * barW;
-          return <rect key={`${i}-${s.key}`} x={xx} y={Math.min(yy, baseline)} width={barW - 2} height={h} rx="2" fill={s.color} opacity=".88">
-            <title>{`${point.label}: ${s.label} ${money(v)}`}</title>
-          </rect>;
-        }))}
-        {(type === "line" || type === "area") && series.map((s) => {
-          const coords = points.map((p, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(p[s.key])}`).join(" ");
-          const areaPath = `${coords} L ${x(points.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
-          return <g key={s.key}>
-            {type === "area" && <path d={areaPath} fill={s.color} opacity=".13" />}
-            <path d={coords} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-            {points.length <= 18 && points.map((p, i) => <circle key={i} cx={x(i)} cy={y(p[s.key])} r="3" fill={s.color}><title>{`${p.label}: ${s.label} ${money(p[s.key])}`}</title></circle>)}
-          </g>;
-        })}
-        {shownLabels.map((i) => <text key={i} x={x(i)} y={height - 12} textAnchor="middle" fill="rgba(226,232,240,.58)" fontSize="10">{points[i]?.label}</text>)}
-      </svg>
-    </div>
-  );
-}
-
-function ChartControls({ period, setPeriod, chartType, setChartType }) {
-  return <div className="wc-chart-controls">
-    <div className="wc-periods" aria-label="Chart period">
-      {PERIODS.map((p) => <button key={p.key} type="button" className={period === p.key ? "active" : ""} onClick={() => setPeriod(p.key)}>{p.key}</button>)}
-    </div>
-    <div className="wc-chart-types" aria-label="Chart type">
-      {CHART_TYPES.map(({ key, label, Icon }) => <button key={key} type="button" className={chartType === key ? "active" : ""} onClick={() => setChartType(key)} aria-pressed={chartType === key}><Icon size={14} /> <span>{label}</span></button>)}
-    </div>
-  </div>;
-}
-
-function ChartLegend({ series }) {
-  return <div className="wc-chart-legend">{series.map((s) => <span key={s.key}><i style={{ background: s.color }} />{s.label}</span>)}</div>;
-}
-
 export default function WealthManager({ onNavigate = () => {} }) {
   const [data, setData] = useState({ summary: null, liabilities: null, taxLiability: null });
   // Keep the Wealth Manager estimate aligned with the user's explicit regime selection.
@@ -486,7 +378,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
           <DetailRow label="Cash and account balances" value={loading ? "Loading…" : money(totals.cash)} />
           <DetailRow label="Investment current value" value={loading ? "Loading…" : money(totals.investments)} />
           <div className="wc-total-row"><span>Combined recorded value</span><strong>{loading ? "Loading…" : money(totals.cash + totals.investments)}</strong></div>
-          <p className="wc-note">This is a current snapshot, not historical cash position. Historical charting will be added after we verify transaction-history coverage.</p>
+          <p className="wc-note">These recorded balances feed the total-assets and asset-mix calculations. Open Accounts or Portfolio to inspect the underlying records.</p>
         </article>
         <article className="glass-card wc-info-panel">
           <div className="wc-panel-heading"><div><p className="card-label">TAX SNAPSHOT</p><h3>Tax estimate status</h3></div><ReceiptText size={19} /></div>

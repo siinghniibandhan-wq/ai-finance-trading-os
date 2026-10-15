@@ -5422,12 +5422,16 @@ function Portfolio() {
   const [instrumentSearchBusy, setInstrumentSearchBusy] = useState(false);
   const [instrumentSearchError, setInstrumentSearchError] = useState("");
   const instrumentSearchRequestRef = useRef(0);
+  const selectedInstrumentQuoteRef = useRef("");
+  const transactionQuoteRequestRef = useRef(0);
+  const activeTransactionInstrumentRef = useRef("");
   const [brokerChoice, setBrokerChoice] = useState("");
   const [customBroker, setCustomBroker] = useState("");
 
   // Reset every add/edit field so the two form modes never leak into each other.
   const resetInvestmentForm = () => {
     instrumentSearchRequestRef.current += 1;
+    selectedInstrumentQuoteRef.current = "";
     setInvestmentForm({ name: "", exchange: "", asset_class: "Equity", investment_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: getLocalDateString(), broker: "", fees: "", notes: "" });
     setInstrumentQuery("");
     setInstrumentResults([]);
@@ -5496,21 +5500,42 @@ function Portfolio() {
   const selectInvestmentInstrument = (instrument) => {
     const symbol = instrument?.tradingsymbol || instrument?.symbol || "";
     const name = instrument?.name || instrument?.company_name || symbol;
+    const exchange = instrument?.exchange || "";
     const quotedPrice = instrument?.last_price != null && Number(instrument.last_price) > 0
       ? String(instrument.last_price)
       : "";
+    const quoteKey = isListedProductType(investmentForm.investment_type) && symbol && ["NSE", "BSE"].includes(exchange.toUpperCase())
+      ? exchange.toUpperCase() + ":" + symbol
+      : "";
+    selectedInstrumentQuoteRef.current = quoteKey;
     setInvestmentForm((previous) => ({
       ...previous,
       name,
       symbol,
-      exchange: instrument?.exchange || (["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(previous.investment_type) ? "AMFI" : ""),
+      exchange: exchange || (["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(previous.investment_type) ? "AMFI" : ""),
       current_price: quotedPrice || previous.current_price,
       buy_price: previous.buy_date === getLocalDateString() && quotedPrice
         ? quotedPrice
         : previous.buy_price,
     }));
-    setInstrumentQuery(`${name}${symbol ? ` (${symbol})` : ""}`);
+    setInstrumentQuery(name + (symbol ? " (" + symbol + ")" : ""));
     setInstrumentResults([]);
+
+    // Close the picker immediately, then refresh the displayed quote in the background.
+    if (quoteKey) {
+      apiFetch(API_BASE_URL + "/api/market/quote?symbol=" + encodeURIComponent(quoteKey))
+        .then(async (response) => {
+          const quoteData = await response.json().catch(() => ({}));
+          if (!response.ok || selectedInstrumentQuoteRef.current !== quoteKey || !(Number(quoteData?.price) > 0)) return;
+          const livePrice = String(quoteData.price);
+          setInvestmentForm((previous) => ({
+            ...previous,
+            current_price: livePrice,
+            ...(previous.buy_date === getLocalDateString() ? { buy_price: livePrice } : {}),
+          }));
+        })
+        .catch((error) => console.warn("Live investment quote unavailable; keeping the latest search quote.", error));
+    }
   };
 
   // ----------------------------------------------------------
@@ -5789,6 +5814,8 @@ const openInvestmentTransaction = (
   type
 ) => {
 
+  const quoteRequestId = ++transactionQuoteRequestRef.current;
+  activeTransactionInstrumentRef.current = String(investment?.id) + ":" + type;
   setTransactionType(type);
 
   setTransactionModal({
@@ -5809,6 +5836,26 @@ const openInvestmentTransaction = (
 
   setInvestmentTransactions([]);
   setTransactionMessage("");
+
+  const exchange = String(investment?.exchange || investment?.instrument_exchange || "").toUpperCase();
+  const symbol = String(investment?.symbol || investment?.tradingsymbol || "").trim();
+  const quoteKey = type === "BUY" && isListedProductType(investment?.investment_type) && symbol && ["NSE", "BSE"].includes(exchange)
+    ? exchange + ":" + symbol
+    : "";
+  if (quoteKey) {
+    apiFetch(API_BASE_URL + "/api/market/quote?symbol=" + encodeURIComponent(quoteKey))
+      .then(async (response) => {
+        const quoteData = await response.json().catch(() => ({}));
+        if (!response.ok || quoteRequestId !== transactionQuoteRequestRef.current || activeTransactionInstrumentRef.current !== String(investment?.id) + ":" + type || !(Number(quoteData?.price) > 0)) return;
+        const livePrice = String(quoteData.price);
+        setTransactionForm((previous) => ({
+          ...previous,
+          ...(previous.transaction_date === getLocalDateString() ? { price: livePrice } : {}),
+        }));
+        setInvestments((previous) => previous.map((item) => item.id === investment.id ? { ...item, current_price: livePrice } : item));
+      })
+      .catch((error) => console.warn("Live BUY quote unavailable; keeping the latest stored price.", error));
+  }
 
 };
 
@@ -5878,6 +5925,8 @@ const openInvestmentTransactions = async (
 
 const closeInvestmentTransactionModal = () => {
 
+  transactionQuoteRequestRef.current += 1;
+  activeTransactionInstrumentRef.current = "";
   setTransactionModal(null);
 
   setInvestmentTransactions([]);
@@ -6639,6 +6688,7 @@ const summaryCards = [
                   const nextAssetClass = event.target.value;
                   const nextTypes = PRODUCT_TYPES_BY_ASSET_CLASS[nextAssetClass] || ["Other"];
                   instrumentSearchRequestRef.current += 1;
+                  selectedInstrumentQuoteRef.current = "";
                   setInstrumentSearchBusy(false);
                   setInvestmentForm((previous) => ({ ...previous, asset_class: nextAssetClass, investment_type: nextTypes[0], name: "", symbol: "", buy_price: "", current_price: "" }));
                   setInstrumentQuery("");
@@ -6665,6 +6715,7 @@ const summaryCards = [
               onChange={(event) => {
                 const nextType = event.target.value;
                 instrumentSearchRequestRef.current += 1;
+                selectedInstrumentQuoteRef.current = "";
                 setInstrumentSearchBusy(false);
                 setInvestmentForm((previous) => ({
                   ...previous,

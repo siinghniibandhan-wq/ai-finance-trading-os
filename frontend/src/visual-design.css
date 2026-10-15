@@ -1239,3 +1239,58 @@ svg { flex-shrink: 0; }
 :root[data-finos-theme="brutalism"] .placeholder-card h2,
 :root[data-finos-theme="brutalism"] .placeholder-card p { color: #171717 !important; }
 :root[data-finos-theme="brutalism"] .placeholder-card p:not(.card-label) { color: #404040 !important; }
+
+
+/* ============================================================
+   LIGHT-THEME ACCESSIBILITY FIX
+   Keep each theme's identity, but override legacy dark-only text
+   colours on navigation, tabs, and placeholder pages.
+   ============================================================ */
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .brand-text,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .navigation-title,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .navigation-item {
+  color: #334155 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .brand-text span {
+  color: #64748b !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .navigation-item:hover {
+  color: #0f172a !important;
+  background: #e9edf5 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .navigation-item.active {
+  color: #312e81 !important;
+  background: #ede9fe !important;
+  border-color: #c4b5fd !important;
+  box-shadow: none !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .placeholder-card,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .placeholder-card h2,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .placeholder-card p {
+  color: #172033 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .placeholder-card p:last-child {
+  color: #475569 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) [role="tab"],
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tab,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tab-button {
+  color: #334155;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) [role="tab"][aria-selected="true"],
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tab.active,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tab-button.active {
+  color: #312e81;
+}
+:root[data-finos-theme="brutalism"] .sidebar .brand-text,
+:root[data-finos-theme="brutalism"] .sidebar .navigation-title,
+:root[data-finos-theme="brutalism"] .sidebar .navigation-item,
+:root[data-finos-theme="brutalism"] .placeholder-card,
+:root[data-finos-theme="brutalism"] .placeholder-card h2,
+:root[data-finos-theme="brutalism"] .placeholder-card p {
+  color: #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .sidebar .brand-text span,
+:root[data-finos-theme="brutalism"] .placeholder-card p:last-child {
+  color: #404040 !important;
+}

@@ -4978,6 +4978,7 @@ function Holdings() {
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "stretch", minWidth: "84px" }}>
                         <button type="button" className="primary-button" style={{ padding: "7px 12px", minWidth: "78px", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.35)", fontSize: "11px" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "BUY", symbol: holding.symbol || "", name: holding.name || "", exchange: holding.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>BUY</button>
                         <button type="button" className="secondary-button" style={{ padding: "7px 12px", minWidth: "78px", borderColor: "rgba(248,113,113,0.35)", color: "#fca5a5", fontSize: "11px" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "SELL", symbol: holding.symbol || "", name: holding.name || "", exchange: holding.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>SELL</button>
+                        <button type="button" className="secondary-button" style={{ padding: "7px 12px", minWidth: "78px", fontSize: "11px" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "EDIT", symbol: holding.symbol || "", name: holding.name || "", exchange: holding.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>EDIT</button>
                         <button type="button" className="secondary-button" style={{ padding: "7px 12px", minWidth: "78px", fontSize: "11px" }} onClick={() => setExpandedSymbol(expanded ? null : holdingKey)}>{expanded ? "Hide details" : "History / View"}</button>
                       </div>
                         style={{
@@ -5830,7 +5831,11 @@ useEffect(() => {
     return;
   }
   try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {}
-  openInvestmentTransaction(matched, intent.type === "SELL" ? "SELL" : "BUY");
+  if (intent.type === "EDIT") {
+    handleEditInvestment(matched);
+  } else {
+    openInvestmentTransaction(matched, intent.type === "SELL" ? "SELL" : "BUY");
+  }
 }, [investments]);
 
 // OPEN TRANSACTION HISTORY

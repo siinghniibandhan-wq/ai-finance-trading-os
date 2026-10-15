@@ -23,7 +23,7 @@ from typing import Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app.services.market_price import MarketPriceError, get_market_price
+from app.services.market_price import MarketPriceError, get_market_quote
 
 router = APIRouter(prefix="/api/vibe-trading", tags=["Vibe Trading"])
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ QUOTE_CACHE_TTL_SECONDS = _read_float_setting(
 QUOTE_WORKERS = _read_int_setting("VIBE_QUOTE_WORKERS", 8, 1, 8)
 QUOTE_CACHE_MAX_ENTRIES = 1000
 
-# Cache values: symbol -> (monotonic timestamp, price, retrieved_at ISO timestamp)
+# Cache values: symbol -> (monotonic timestamp, quote payload)
 QUOTE_CACHE: Dict[str, tuple] = {}
 QUOTE_CACHE_LOCK = Lock()
 
@@ -64,8 +64,8 @@ QUOTE_CACHE_LOCK = Lock()
 # ============================================================
 # CACHED MARKET QUOTE
 # ============================================================
-def _get_cached_market_price(symbol: str):
-    """Use a short cache to reduce duplicate calls to the existing gateway."""
+def _get_cached_market_quote(symbol: str):
+    """Cache the complete normalized quote, including provider timestamps when supplied."""
     cleaned = symbol.strip().upper()
     now = monotonic()
 
@@ -73,15 +73,27 @@ def _get_cached_market_price(symbol: str):
         with QUOTE_CACHE_LOCK:
             cached = QUOTE_CACHE.get(cleaned)
             if cached and now - cached[0] <= QUOTE_CACHE_TTL_SECONDS:
-                return cached[1], cached[2], True
+                return {**cached[1], "cache_hit": True}
 
     # Never hold the cache lock during network I/O.
-    price = get_market_price(cleaned)
-    retrieved_at = datetime.now(timezone.utc).isoformat()
+    quote = get_market_quote(cleaned)
+    details = quote.get("details") or {}
+    provider_market_timestamp = (
+        details.get("exchange_timestamp")
+        or details.get("last_traded_timestamp")
+    )
+    payload = {
+        "price": quote["price"],
+        "details": details,
+        "retrieved_at": quote.get("retrieved_at") or datetime.now(timezone.utc).isoformat(),
+        "provider_market_timestamp": provider_market_timestamp,
+        "provider_latency_ms": quote.get("provider_latency_ms"),
+        "cache_hit": bool(quote.get("cache_hit", False)),
+        "cache_age_seconds": quote.get("cache_age_seconds", 0.0),
+    }
 
     if QUOTE_CACHE_TTL_SECONDS > 0:
         with QUOTE_CACHE_LOCK:
-            # Keep the cache bounded and remove expired entries if needed.
             if len(QUOTE_CACHE) >= QUOTE_CACHE_MAX_ENTRIES:
                 cutoff = monotonic() - QUOTE_CACHE_TTL_SECONDS
                 expired = [
@@ -90,15 +102,12 @@ def _get_cached_market_price(symbol: str):
                 ]
                 for key in expired:
                     QUOTE_CACHE.pop(key, None)
-
-                # If all entries are still fresh, evict the oldest entry.
                 if len(QUOTE_CACHE) >= QUOTE_CACHE_MAX_ENTRIES:
                     oldest_key = min(QUOTE_CACHE, key=lambda key: QUOTE_CACHE[key][0])
                     QUOTE_CACHE.pop(oldest_key, None)
+            QUOTE_CACHE[cleaned] = (monotonic(), payload)
 
-            QUOTE_CACHE[cleaned] = (monotonic(), price, retrieved_at)
-
-    return price, retrieved_at, False
+    return payload
 
 
 # ============================================================
@@ -108,22 +117,41 @@ def _quote_result(symbol: str):
     """Return a per-symbol result, allowing batch requests to be partially successful."""
     cleaned = symbol.strip().upper()
     try:
-        price, retrieved_at, cache_hit = _get_cached_market_price(cleaned)
+        market_quote = _get_cached_market_quote(cleaned)
+        details = market_quote.get("details") or {}
+        provider_market_timestamp = market_quote.get("provider_market_timestamp")
+        quote = {
+            "last_price": float(market_quote["price"]),
+        }
+        # Include only known, normalized market fields; never pass raw gateway payloads through.
+        for field in (
+            "open", "high", "low", "close", "volume", "bid", "ask",
+            "bid_quantity", "ask_quantity", "upper_circuit_limit",
+            "lower_circuit_limit", "year_high", "year_low",
+        ):
+            value = details.get(field)
+            if value not in (None, ""):
+                try:
+                    quote[field] = float(value) if field != "volume" else int(float(value))
+                except (TypeError, ValueError, OverflowError):
+                    continue
         return {
             "symbol": cleaned,
             "status": "success",
-            "quote": {"last_price": float(price)},
+            "quote": quote,
             "source": {
                 "provider": "m.Stock",
                 "gateway": "existing AWS m.Stock Gateway",
             },
-            "retrieved_at": retrieved_at,
-            "provider_market_timestamp": None,
+            "retrieved_at": market_quote["retrieved_at"],
+            "provider_market_timestamp": provider_market_timestamp,
+            "provider_latency_ms": market_quote.get("provider_latency_ms"),
+            "cache_age_seconds": market_quote.get("cache_age_seconds", 0.0),
             "freshness_note": (
-                "The current market-price service does not expose the provider's "
-                "original quote timestamp. Retrieval time is not proof of real-time data."
+                "Provider/exchange timestamp is included only when supplied by the gateway. "
+                "Otherwise retrieved_at records backend retrieval time and does not prove real-time freshness."
             ),
-            "cache_hit": cache_hit,
+            "cache_hit": market_quote.get("cache_hit", False),
         }
     except MarketPriceError as exc:
         return {"symbol": cleaned, "status": "error", "error": str(exc)}
@@ -163,6 +191,7 @@ def vibe_trading_status():
             "market_aware_ai_research",
         ],
         "market_provider": "m.Stock via existing AWS m.Stock Gateway",
+        "quote_metadata": ["provider_timestamp_when_available", "provider_latency_ms", "cache_age_seconds"],
         "ai_provider": "Google Gemini",
         "read_only": True,
         "live_order_execution": False,
@@ -279,7 +308,9 @@ def vibe_market_research(request: VibeResearchRequest):
                 "last_price": result["quote"]["last_price"],
                 "provider": "m.Stock via existing AWS m.Stock Gateway",
                 "retrieved_at": result["retrieved_at"],
-                "provider_market_timestamp": None,
+                "provider_market_timestamp": result.get("provider_market_timestamp"),
+                "provider_latency_ms": result.get("provider_latency_ms"),
+                "cache_age_seconds": result.get("cache_age_seconds", 0.0),
                 "cache_hit": result["cache_hit"],
             })
         else:
@@ -298,9 +329,9 @@ def vibe_market_research(request: VibeResearchRequest):
         "quotes": retrieved_quotes,
         "quote_errors": quote_errors,
         "note": (
-            "Only successfully retrieved quote values are supplied. The current service does not "
-            "expose the exchange/provider timestamp. Do not present retrieval time as proof of "
-            "real-time pricing. No quote data was supplied if the symbol list is empty."
+            "Only successfully retrieved quote values are supplied. Provider timestamps are included "
+            "only when the gateway supplies them; retrieved_at alone is not proof of real-time pricing. "
+            "No quote data was supplied if the symbol list is empty."
         ),
     }
 

@@ -264,7 +264,9 @@ def calculate_tax(
 
     if stt_confirmed:
 
-        stcg_taxable = stcg
+        # A net loss must never produce negative tax or negative cess.
+        # Loss set-off/carry-forward is outside this indicative endpoint.
+        stcg_taxable = max(stcg, Decimal("0"))
 
         stcg_tax = money(
             stcg_taxable

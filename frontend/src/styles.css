@@ -2717,3 +2717,230 @@ input, textarea {
   .finos-select-menu { max-height: 42vh; }
   .finos-select-option { min-height: 46px; }
 }
+
+
+/* ============================================================
+   SIX WORKSPACES — CONSISTENT VISUAL HIERARCHY & RESPONSIVENESS
+   Additive layer: styles existing data and controls only.
+   No API, financial calculation, or persistence behavior changes.
+   ============================================================ */
+:root {
+  --finos-border: rgba(196, 181, 253, .16);
+  --finos-border-strong: rgba(196, 181, 253, .30);
+  --finos-panel: rgba(15, 19, 36, .72);
+  --finos-muted: #a5b4c7;
+  --finos-purple: #c4b5fd;
+  --finos-pink: #f9a8d4;
+}
+
+.dashboard-overview,
+.wealth-centre,
+.tax-centre,
+.markets-workspace,
+.holdings-workspace,
+.plan-workspace {
+  min-width: 0;
+  width: 100%;
+}
+
+.dashboard-overview > section,
+.wealth-centre > section,
+.tax-centre > section,
+.markets-workspace > section,
+.holdings-workspace > section,
+.plan-workspace > section {
+  min-width: 0;
+}
+
+.dashboard-overview .glass-card,
+.wealth-centre .glass-card,
+.tax-centre .glass-card,
+.markets-workspace .glass-card,
+.holdings-workspace .glass-card,
+.plan-workspace .glass-card {
+  border-color: var(--finos-border);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .12);
+  backdrop-filter: blur(12px);
+}
+
+.dashboard-overview .card-header,
+.wealth-centre .card-header,
+.tax-centre .card-header,
+.markets-workspace .card-header,
+.holdings-workspace .card-header,
+.plan-workspace .card-header {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-overview .card-label,
+.wealth-centre .card-label,
+.tax-centre .card-label,
+.markets-workspace .card-label,
+.holdings-workspace .card-label,
+.plan-workspace .card-label {
+  color: var(--finos-purple);
+  letter-spacing: .09em;
+}
+
+.dashboard-overview .primary-button,
+.wealth-centre .primary-button,
+.tax-centre .primary-button,
+.markets-workspace .primary-button,
+.holdings-workspace .primary-button,
+.plan-workspace .primary-button,
+.dashboard-overview .secondary-button,
+.wealth-centre .secondary-button,
+.tax-centre .secondary-button,
+.markets-workspace .secondary-button,
+.holdings-workspace .secondary-button,
+.plan-workspace .secondary-button {
+  min-height: 40px;
+  border-radius: 11px;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.dashboard-overview .primary-button:hover:not(:disabled),
+.wealth-centre .primary-button:hover:not(:disabled),
+.tax-centre .primary-button:hover:not(:disabled),
+.markets-workspace .primary-button:hover:not(:disabled),
+.holdings-workspace .primary-button:hover:not(:disabled),
+.plan-workspace .primary-button:hover:not(:disabled),
+.dashboard-overview .secondary-button:hover:not(:disabled),
+.wealth-centre .secondary-button:hover:not(:disabled),
+.tax-centre .secondary-button:hover:not(:disabled),
+.markets-workspace .secondary-button:hover:not(:disabled),
+.holdings-workspace .secondary-button:hover:not(:disabled),
+.plan-workspace .secondary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.dashboard-overview .metrics-grid,
+.dashboard-overview .dashboard-grid,
+.wealth-centre .wc-primary-grid,
+.wealth-centre .wc-section-grid,
+.wealth-centre .wc-chart-grid,
+.wealth-centre .wc-bottom-grid,
+.holdings-workspace .holdings-summary-grid,
+.holdings-workspace .holdings-detail-grid,
+.holdings-workspace .portfolio-summary-grid {
+  min-width: 0;
+}
+
+.dashboard-overview .metric-card,
+.dashboard-overview .module-overview-tile,
+.wealth-centre .wc-card,
+.wealth-centre .wc-goal-card,
+.holdings-workspace .holdings-row {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-overview .metric-card {
+  transition: border-color .18s ease, transform .18s ease;
+}
+.dashboard-overview .metric-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--finos-border-strong);
+}
+
+.plan-workspace > section:first-child h2,
+.tax-centre h2,
+.markets-workspace h2,
+.holdings-workspace h2 {
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+.plan-workspace > section:nth-of-type(2) {
+  scroll-margin-top: 24px;
+}
+.plan-workspace input,
+.plan-workspace textarea,
+.plan-workspace select,
+.plan-workspace .finos-select-trigger {
+  min-height: 42px;
+}
+.plan-workspace label {
+  display: block;
+  min-width: 0;
+}
+.plan-workspace input,
+.plan-workspace textarea {
+  max-width: 100%;
+}
+.plan-workspace [role="alert"],
+.plan-workspace [role="status"] {
+  overflow-wrap: anywhere;
+}
+
+.tax-centre table,
+.holdings-workspace table,
+.markets-workspace table {
+  max-width: 100%;
+}
+.tax-centre th,
+.tax-centre td,
+.holdings-workspace th,
+.holdings-workspace td,
+.markets-workspace th,
+.markets-workspace td {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .dashboard-overview .welcome-section {
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .dashboard-overview .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard-overview .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .plan-workspace > section:nth-of-type(2),
+  .plan-workspace > section:nth-of-type(3) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .plan-workspace form {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .tax-centre .glass-card,
+  .markets-workspace .glass-card,
+  .holdings-workspace .glass-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-overview .metrics-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .plan-workspace > section:nth-of-type(2) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .dashboard-overview .card-header,
+  .wealth-centre .wc-panel-heading {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-overview .metric-card,
+  .dashboard-overview .primary-button,
+  .dashboard-overview .secondary-button,
+  .wealth-centre .primary-button,
+  .wealth-centre .secondary-button,
+  .tax-centre .primary-button,
+  .tax-centre .secondary-button,
+  .markets-workspace .primary-button,
+  .markets-workspace .secondary-button,
+  .holdings-workspace .primary-button,
+  .holdings-workspace .secondary-button,
+  .plan-workspace .primary-button,
+  .plan-workspace .secondary-button {
+    transition: none !important;
+    transform: none !important;
+  }
+}

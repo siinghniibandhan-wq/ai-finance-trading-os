@@ -78,10 +78,12 @@ function StyledSelect({ children, value, onChange, className = "", style = {}, d
 
 const navigation = [
   {
-    section: "Overview",
+    section: "Home",
     items: [
-      // Dashboard is intentionally hidden from the sidebar for Option A.
-      // Its component and route remain in this file so it can be restored later.
+      {
+        name: "Dashboard",
+        icon: LayoutDashboard
+      },
       {
         name: "Wealth Manager",
         icon: Landmark

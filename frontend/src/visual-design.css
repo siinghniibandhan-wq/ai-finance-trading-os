@@ -1348,3 +1348,153 @@ svg { flex-shrink: 0; }
   background: #fff;
   border-color: #525252;
 }
+
+
+/* ============================================================
+   Theme identity: use each theme's own accent instead of the
+   original purple accent bleeding into every design.
+   ============================================================ */
+:root[data-finos-theme="light"],
+:root[data-finos-theme="elegant-plain"],
+:root[data-finos-theme="minimal"] {
+  --finos-accent: #475569;
+  --finos-violet: #64748b;
+  --finos-pink: #94a3b8;
+  --finos-cyan: #cbd5e1;
+}
+:root[data-finos-theme="dark"] {
+  --finos-accent: #94a3b8;
+  --finos-violet: #64748b;
+  --finos-pink: #cbd5e1;
+  --finos-cyan: #7dd3fc;
+}
+:root[data-finos-theme="aurora"] {
+  --finos-accent: #e879f9;
+  --finos-violet: #c084fc;
+  --finos-pink: #f472b6;
+  --finos-cyan: #67e8f9;
+}
+:root[data-finos-theme="emerald"] {
+  --finos-accent: #10b981;
+  --finos-violet: #34d399;
+  --finos-pink: #6ee7b7;
+  --finos-cyan: #a7f3d0;
+}
+:root[data-finos-theme="ocean"] {
+  --finos-accent: #0ea5e9;
+  --finos-violet: #38bdf8;
+  --finos-pink: #7dd3fc;
+  --finos-cyan: #67e8f9;
+}
+:root[data-finos-theme="sunset"] {
+  --finos-accent: #f97316;
+  --finos-violet: #fb923c;
+  --finos-pink: #fb7185;
+  --finos-cyan: #fcd34d;
+}
+:root[data-finos-theme="retro-terminal"] {
+  --finos-accent: #22c55e;
+  --finos-violet: #4ade80;
+  --finos-pink: #86efac;
+  --finos-cyan: #bbf7d0;
+}
+:root[data-finos-theme="glass"],
+:root[data-finos-theme="glassmorphism"],
+:root[data-finos-theme="liquid-glass"] {
+  --finos-accent: #67e8f9;
+  --finos-violet: #a5b4fc;
+  --finos-pink: #c4b5fd;
+  --finos-cyan: #67e8f9;
+}
+:root[data-finos-theme="skeuomorphism"] {
+  --finos-accent: #475569;
+  --finos-violet: #64748b;
+  --finos-pink: #94a3b8;
+  --finos-cyan: #0ea5e9;
+}
+:root[data-finos-theme="neumorphism"] {
+  --finos-accent: #475569;
+  --finos-violet: #64748b;
+  --finos-pink: #94a3b8;
+  --finos-cyan: #0f766e;
+}
+:root[data-finos-theme="claymorphism"] {
+  --finos-accent: #0f766e;
+  --finos-violet: #14b8a6;
+  --finos-pink: #f472b6;
+  --finos-cyan: #67e8f9;
+}
+:root[data-finos-theme="brutalism"] {
+  --finos-accent: #ca8a04;
+  --finos-violet: #eab308;
+  --finos-pink: #f97316;
+  --finos-cyan: #0f766e;
+}
+:root[data-finos-theme="maximalism"] {
+  --finos-accent: #f472b6;
+  --finos-violet: #a78bfa;
+  --finos-pink: #fb7185;
+  --finos-cyan: #22d3ee;
+}
+:root[data-finos-theme="bento-grid"] {
+  --finos-accent: #0f766e;
+  --finos-violet: #0d9488;
+  --finos-pink: #14b8a6;
+  --finos-cyan: #5eead4;
+}
+
+/* Apply the active theme accent to shared interactive components. */
+:root[data-finos-theme]:not([data-finos-theme="default"]) .navigation-item.active {
+  border-color: color-mix(in srgb, var(--finos-accent) 35%, transparent);
+}
+:root[data-finos-theme]:not([data-finos-theme="default"]) .finos-theme-eyebrow,
+:root[data-finos-theme]:not([data-finos-theme="default"]) .placeholder-icon {
+  color: var(--finos-accent) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="default"]) .primary-button,
+:root[data-finos-theme]:not([data-finos-theme="default"]) .button-primary {
+  background: var(--finos-accent) !important;
+  border-color: var(--finos-accent) !important;
+  color: #fff !important;
+}
+:root[data-finos-theme="light"] .primary-button,
+:root[data-finos-theme="elegant-plain"] .primary-button,
+:root[data-finos-theme="minimal"] .primary-button,
+:root[data-finos-theme="skeuomorphism"] .primary-button,
+:root[data-finos-theme="neumorphism"] .primary-button,
+:root[data-finos-theme="claymorphism"] .primary-button,
+:root[data-finos-theme="bento-grid"] .primary-button,
+:root[data-finos-theme="brutalism"] .primary-button {
+  color: #fff !important;
+}
+
+/* Light themes use a light header with matching readable controls. */
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar {
+  background: rgba(255,255,255,.94) !important;
+  border-bottom-color: #dbe2ea !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .eyebrow {
+  color: #64748b !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .page-title h1,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .icon-button,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .menu-button,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .profile {
+  color: #172033 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .icon-button,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .menu-button {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .mobile-close {
+  color: #334155 !important;
+}
+
+/* Mobile: the page's own heading is enough; keep the top bar uncluttered. */
+@media (max-width: 800px) {
+  .topbar .page-title { display: none !important; }
+  .topbar-left { gap: 0; }
+  .menu-button { cursor: pointer; }
+  .mobile-close { cursor: pointer; }
+}

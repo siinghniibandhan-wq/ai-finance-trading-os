@@ -576,3 +576,78 @@ svg { flex-shrink: 0; }
     animation-duration: .01ms !important;
   }
 }
+
+
+/* ============================================================
+   WORKSPACE-SPECIFIC FINISH — Money, Invest and Plan
+   ============================================================ */
+.money-workspace,
+.investment-workspace,
+.plan-workspace { width: 100%; min-width: 0; }
+.money-workspace { gap: 22px; }
+.money-workspace .welcome-section {
+  padding: clamp(18px, 2.5vw, 28px);
+  border: 1px solid rgba(167,139,250,.16);
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 100% 0%, rgba(236,72,153,.09), transparent 42%), rgba(15,23,42,.48);
+}
+.money-workspace .metrics-grid { gap: 12px; }
+.money-workspace .glass-card { min-width: 0; }
+.money-workspace .card-header { gap: 12px; flex-wrap: wrap; }
+.money-workspace table { width: 100%; }
+.money-workspace .primary-button,
+.money-workspace .secondary-button,
+.money-workspace .small-button { min-height: 36px; }
+.money-workspace input,
+.money-workspace select,
+.money-workspace textarea { min-width: 0; }
+.investment-workspace { gap: 18px !important; }
+.investment-workspace > section:first-child {
+  padding: clamp(18px, 2.6vw, 28px);
+  border: 1px solid rgba(167,139,250,.18);
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 100% 0%, rgba(236,72,153,.10), transparent 45%), rgba(15,23,42,.45);
+}
+.investment-workspace .portfolio-summary-grid {
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr));
+}
+.investment-workspace .portfolio-summary-value {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.investment-workspace .glass-card {
+  border-color: rgba(167,139,250,.15);
+  background-image: linear-gradient(145deg, rgba(255,255,255,.025), transparent 62%);
+}
+.plan-workspace { gap: 18px !important; }
+.plan-workspace > section:first-child {
+  padding: clamp(18px, 2.6vw, 28px);
+  border: 1px solid rgba(167,139,250,.18);
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 100% 0%, rgba(236,72,153,.10), transparent 45%), rgba(15,23,42,.45);
+}
+.plan-workspace > section:nth-of-type(2) > div {
+  background: linear-gradient(145deg, rgba(139,92,246,.10), rgba(15,23,42,.70)) !important;
+  border-color: rgba(167,139,250,.18) !important;
+}
+.plan-workspace > section:nth-of-type(3) { background: rgba(15,23,42,.54) !important; }
+.plan-workspace input,
+.plan-workspace select,
+.plan-workspace textarea { min-width: 0; }
+.plan-workspace button { min-height: 36px; }
+@media (max-width: 760px) {
+  .money-workspace { gap: 14px; }
+  .money-workspace .metrics-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .investment-workspace { gap: 14px !important; }
+  .investment-workspace .portfolio-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .plan-workspace { gap: 14px !important; }
+  .plan-workspace > section:nth-of-type(2) { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+  .plan-workspace form { grid-template-columns: minmax(0,1fr) !important; }
+}
+@media (max-width: 420px) {
+  .money-workspace .metrics-grid,
+  .investment-workspace .portfolio-summary-grid,
+  .plan-workspace > section:nth-of-type(2) { grid-template-columns: minmax(0,1fr) !important; }
+  .money-workspace .welcome-section { padding: 16px; }
+}

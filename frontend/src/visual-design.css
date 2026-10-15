@@ -1664,3 +1664,38 @@ svg { flex-shrink: 0; }
   color: var(--finos-control-muted) !important;
   opacity: 1;
 }
+
+
+/* Additional audit fixes for the custom SVG price chart and chart labels. */
+:root[data-finos-theme] .content svg[role="img"] line {
+  stroke: var(--finos-chart-grid) !important;
+}
+:root[data-finos-theme] .content svg[role="img"] polyline {
+  stroke: var(--finos-chart-series-1) !important;
+}
+:root[data-finos-theme] .content svg[role="img"] text {
+  fill: var(--finos-chart-muted) !important;
+}
+:root[data-finos-theme] .content svg[role="img"] circle {
+  stroke: var(--finos-chart-bg) !important;
+}
+:root[data-finos-theme] .wc-chart-stat strong,
+:root[data-finos-theme] .wc-flow-stats strong,
+:root[data-finos-theme] .wc-pie-legend strong {
+  color: var(--finos-chart-text);
+}
+:root[data-finos-theme] .wc-chart-subtitle,
+:root[data-finos-theme] .wc-note,
+:root[data-finos-theme] .wc-chart-empty {
+  background-color: transparent;
+}
+:root[data-finos-theme="light"] .wc-history-chart,
+:root[data-finos-theme="elegant-plain"] .wc-history-chart,
+:root[data-finos-theme="minimal"] .wc-history-chart,
+:root[data-finos-theme="skeuomorphism"] .wc-history-chart,
+:root[data-finos-theme="neumorphism"] .wc-history-chart,
+:root[data-finos-theme="claymorphism"] .wc-history-chart,
+:root[data-finos-theme="bento-grid"] .wc-history-chart,
+:root[data-finos-theme="brutalism"] .wc-history-chart {
+  box-shadow: none;
+}

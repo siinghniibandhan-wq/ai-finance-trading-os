@@ -1067,6 +1067,11 @@ function TaxPage() {
   const [creditBusy, setCreditBusy] = useState(false);
   const [creditMessage, setCreditMessage] = useState("");
   const [creditError, setCreditError] = useState("");
+  const [dedClaims, setDedClaims] = useState([]);
+  const [dedForm, setDedForm] = useState({ deduction_key: "", claimed_amount: "", evidence_reference: "" });
+  const [dedBusy, setDedBusy] = useState(false);
+  const [dedError, setDedError] = useState("");
+  const [dedMessage, setDedMessage] = useState("");
   const [hpRecords, setHpRecords] = useState([]);
   const [hpForm, setHpForm] = useState({ property_type: "let_out", property_label: "", annual_rent_received: "", municipal_taxes_paid: "", interest_on_housing_loan: "" });
   const [hpBusy, setHpBusy] = useState(false);
@@ -1683,6 +1688,130 @@ function TaxPage() {
     </>
   );
 
+
+  // User-managed deduction claims. Claims remain pending until the user explicitly verifies evidence.
+  const loadDedClaims = async () => {
+    try {
+      const r = await apiFetch(`${API_BASE_URL}/api/deductions-exempt-income/claims?user_id=${USER_ID}&financial_year=${encodeURIComponent(financialYear)}`);
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) setDedClaims((Array.isArray(d?.claims) ? d.claims : []).filter((c) => c.claim_type === "deduction" && c.deduction_key !== "hra_exemption"));
+    } catch (err) {
+      setDedError(err?.message || "Could not load deduction claims.");
+    }
+  };
+
+  const dedPost = (body) => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+  const dedCall = async (url, options, doneMessage) => {
+    setDedBusy(true);
+    setDedError("");
+    setDedMessage("");
+    try {
+      const r = await apiFetch(url, options);
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(typeof d?.detail === "string" ? d.detail : `Request failed (${r.status}).`);
+      setDedMessage(doneMessage);
+      await loadDedClaims();
+      await loadTaxData();
+      return true;
+    } catch (err) {
+      setDedError(err?.message || "Unable to update the deduction claim.");
+      return false;
+    } finally {
+      setDedBusy(false);
+    }
+  };
+
+  const addDedClaim = async () => {
+    if (!taxRegime) { setDedError("Choose a tax regime first."); return; }
+    if (!dedForm.deduction_key) { setDedError("Choose a deduction."); return; }
+    if (!(Number(dedForm.claimed_amount) > 0)) { setDedError("Enter an amount greater than zero."); return; }
+    const saved = await dedCall(
+      `${API_BASE_URL}/api/deductions-exempt-income/claims`,
+      dedPost({
+        user_id: USER_ID,
+        financial_year: financialYear,
+        tax_regime: taxRegime,
+        deduction_key: dedForm.deduction_key,
+        claimed_amount: Number(dedForm.claimed_amount),
+        evidence_reference: dedForm.evidence_reference.trim() || null
+      }),
+      "Saved as pending. It does not reduce taxable income until you verify it."
+    );
+    if (saved) setDedForm((f) => ({ ...f, claimed_amount: "", evidence_reference: "" }));
+  };
+
+  const verifyDedClaim = (claim) => {
+    if (!(claim.evidence_reference || "").trim()) {
+      setDedError("Add a receipt, policy or certificate reference before verifying this claim.");
+      return;
+    }
+    dedCall(`${API_BASE_URL}/api/deductions-exempt-income/claims/${claim.id}/verify`,
+      dedPost({ user_id: USER_ID, evidence_reference: claim.evidence_reference.trim() }),
+      "Claim marked verified. Keep the supporting document; the app does not check it.");
+  };
+
+  const unverifyDedClaim = (claimId) => dedCall(
+    `${API_BASE_URL}/api/deductions-exempt-income/claims/${claimId}/unverify`,
+    dedPost({ user_id: USER_ID }),
+    "Claim returned to pending review."
+  );
+
+  const deleteDedClaim = (claimId) => {
+    if (window.confirm("Delete this deduction claim?")) {
+      dedCall(`${API_BASE_URL}/api/deductions-exempt-income/claims/${claimId}?user_id=${USER_ID}`,
+        { method: "DELETE" }, "Deduction claim deleted.");
+    }
+  };
+
+  const renderDeductionClaims = () => {
+    const box = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(12,16,30,0.72)", color: "inherit" };
+    const options = (Array.isArray(deductionData?.applicable_deductions) ? deductionData.applicable_deductions : [])
+      .filter((item) => item.deduction_key && item.deduction_key !== "hra_exemption");
+    return (
+      <div style={{ marginTop: "18px" }}>
+        <h4 style={{ margin: "0 0 8px" }}>Your deduction claims · {financialYear}</h4>
+        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", lineHeight: 1.6, marginTop: 0 }}>
+          Add a receipt, policy or certificate reference. Claims affect taxable income only when verified and eligible under the selected regime. The app does not independently verify documents. HRA is handled in the HRA Calculator.
+        </p>
+        <div style={{ display: "grid", gap: "8px" }}>
+          <select aria-label="Deduction" style={box} value={dedForm.deduction_key} onChange={(e) => setDedForm((f) => ({ ...f, deduction_key: e.target.value }))}>
+            <option value="">Choose a deduction</option>
+            {options.map((item) => <option key={item.deduction_key} value={item.deduction_key}>{item.section} · {item.name}</option>)}
+          </select>
+          <input aria-label="Claim amount" style={box} type="number" min="0.01" step="0.01" placeholder="Amount (₹)" value={dedForm.claimed_amount} onChange={(e) => setDedForm((f) => ({ ...f, claimed_amount: e.target.value }))} />
+          <input aria-label="Evidence reference" style={box} type="text" maxLength={2000} placeholder="Receipt / policy / certificate reference" value={dedForm.evidence_reference} onChange={(e) => setDedForm((f) => ({ ...f, evidence_reference: e.target.value }))} />
+          <button type="button" className="primary-button" disabled={dedBusy} onClick={addDedClaim}>{dedBusy ? "Saving..." : "Add deduction claim"}</button>
+          {dedError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px" }}>{dedError}</div>}
+          {dedMessage && <div role="status" style={{ color: "#86efac", fontSize: "12px" }}>{dedMessage}</div>}
+        </div>
+        <div style={{ overflowX: "auto", marginTop: "14px" }}>
+          {dedClaims.length === 0 ? <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>No deduction claims recorded for this financial year.</p> : (
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead><tr>{["Deduction", "Claimed", "Evidence reference", "Status", "Actions"].map((label) => <th key={label} style={{ ...tableCellStyle, color: "rgba(255,255,255,0.55)", textAlign: "left" }}>{label}</th>)}</tr></thead>
+              <tbody>{dedClaims.map((claim) => (
+                <tr key={claim.id}>
+                  <td style={tableCellStyle}>{safeText(claim.section || claim.deduction_key)}<div style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)" }}>{claim.tax_regime === "old" ? "Old regime" : "New regime"}</div></td>
+                  <td style={tableCellStyle}>{formatCurrency(claim.claimed_amount)}</td>
+                  <td style={tableCellStyle}><input aria-label={`Evidence reference for claim ${claim.id}`} style={{ ...box, minWidth: "160px" }} maxLength={2000} value={claim.evidence_reference || ""} onChange={(e) => setDedClaims((items) => items.map((item) => item.id === claim.id ? { ...item, evidence_reference: e.target.value } : item))} /></td>
+                  <td style={tableCellStyle}><span style={{ color: claim.status === "verified" ? "#86efac" : "#fbbf24" }}>{claim.status === "verified" ? "Verified" : "Pending review"}</span></td>
+                  <td style={tableCellStyle}><div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    {claim.status === "verified"
+                      ? <button type="button" className="secondary-button" disabled={dedBusy} onClick={() => unverifyDedClaim(claim.id)}>Set pending</button>
+                      : <button type="button" className="secondary-button" disabled={dedBusy} onClick={() => verifyDedClaim(claim)}>Verify</button>}
+                    <button type="button" className="secondary-button" disabled={dedBusy} onClick={() => deleteDedClaim(claim.id)}>Delete</button>
+                  </div></td>
+                </tr>
+              ))}</tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  useEffect(() => { loadDedClaims(); }, [financialYear]);
+
   const renderDeductions = () => (
     <div style={panelStyle}>
       <h3 style={{ marginTop: 0 }}>Deductions and exempt income</h3>
@@ -1709,6 +1838,7 @@ function TaxPage() {
           ))}
         </div>
       ) : <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Deduction catalogue is unavailable from the backend. Refresh the tax data or check that the deductions endpoint is deployed.</p>}
+      {renderDeductionClaims()}
       <h4 style={{ margin: "20px 0 10px" }}>Exempt-income / allowance checks</h4>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px" }}>
         {(Array.isArray(deductionData?.exempt_income) ? deductionData.exempt_income : []).map((item) => (
@@ -1891,11 +2021,56 @@ function TaxPage() {
     </>
   );
 
+
+  const printTaxSummary = () => {
+    const esc = (value) => String(value == null || value === "" ? "Unavailable" : value)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const money = (value) => value == null || value === "" ? "Unavailable" : esc(formatCurrency(value));
+    const income = reportData?.income || {};
+    const liability = reportData?.tax_liability || {};
+    const taxpayer = reportData?.taxpayer || {};
+    const rows = [
+      ["Salary", income.salary?.taxable_amount ?? income.salary?.amount],
+      ["House property", income.house_property?.taxable_amount ?? income.house_property?.amount],
+      ["Business / profession", income.business_or_profession?.taxable_amount ?? income.business_or_profession?.amount],
+      ["Other sources", income.other_sources?.taxable_amount ?? income.other_sources?.amount],
+      ["Capital gains", reportData?.capital_gains?.total_taxable_gain],
+      ["Verified deductions", deductions?.verified_amount],
+      ["Tax payable (reported)", liability.total_tax_payable],
+    ];
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Financial OS — Tax Summary</title>
+      <style>
+        @page { size: A4; margin: 14mm; }
+        body { font: 12px Arial, sans-serif; color: #172033; margin: 0; }
+        h1 { font-size: 20px; margin: 0 0 5px; } .muted { color: #5b6475; }
+        .meta { margin: 0 0 18px; line-height: 1.6; }
+        table { border-collapse: collapse; width: 100%; margin: 14px 0; }
+        th, td { padding: 9px; border-bottom: 1px solid #dce1e8; text-align: left; }
+        th { background: #f2f4f8; } td:last-child { text-align: right; }
+        .note { font-size: 10px; line-height: 1.6; color: #596273; margin-top: 20px; }
+      </style></head><body>
+      <h1>Financial OS — Tax Summary</h1>
+      <p class="meta muted">Financial year: ${esc(financialYear)}<br>Regime: ${esc((taxpayer.regime || taxRegime) === "old" ? "Old regime" : "New regime")}<br>Assessment year: ${esc(reportData?.assessment_year || "Unavailable")}</p>
+      <table><thead><tr><th>Summary item</th><th>Amount</th></tr></thead><tbody>
+      ${rows.map(([label, value]) => `<tr><td>${esc(label)}</td><td>${money(value)}</td></tr>`).join("")}
+      </tbody></table>
+      <p class="note">Preliminary summary from information currently available in Financial OS. This is not a filed return or tax advice. Missing or unavailable amounts must be checked against source documents before filing. Verified deduction claims remain subject to eligibility and applicable tax rules.</p>
+      </body></html>`;
+    const w = window.open("", "_blank");
+    if (!w) { window.alert("Please allow pop-ups for this site, then tap Print / save as PDF again."); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { try { w.print(); } catch (err) { /* user can print from the browser menu */ } }, 350);
+  };
+
   const renderReport = () => (
     <div style={panelStyle}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
         <div><h3 style={{ margin: "0 0 6px" }}>ITR readiness report</h3><p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", margin: 0 }}>Financial year {financialYear} · {taxRegime === "new" ? "New" : "Old"} regime framework</p></div>
-        <button className="secondary-button" type="button" onClick={loadTaxData} disabled={loading}>{loading ? "Refreshing..." : "Refresh report"}</button>
+        <button className="secondary-button" type="button" onClick={loadTaxData} disabled={loading}>{loading ? "Refreshing..." : "Refresh report"}</button><button className="secondary-button" type="button" onClick={printTaxSummary}>Print / save as PDF</button>
       </div>
       {reportData && (() => {
         // Safely read the report sections returned by the API.

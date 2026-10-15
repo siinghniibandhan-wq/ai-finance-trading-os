@@ -318,6 +318,8 @@ export default function App() {
       ===================================================== */}
 
       <aside
+        id="financial-os-sidebar"
+        aria-label="Main navigation"
         className={`sidebar ${
           sidebarOpen ? "sidebar-open" : ""
         }`}
@@ -427,11 +429,13 @@ export default function App() {
 
             <button
               className="menu-button"
-              onClick={() =>
-                setSidebarOpen(true)
-              }
+              type="button"
+              aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={sidebarOpen}
+              aria-controls="financial-os-sidebar"
+              onClick={() => setSidebarOpen((open) => !open)}
             >
-              <Menu size={22} />
+              {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
 
             <div className="page-title">

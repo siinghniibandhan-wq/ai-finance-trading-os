@@ -688,3 +688,62 @@ svg { flex-shrink: 0; }
   .money-accounts form,
   .money-budget form { grid-template-columns: minmax(0,1fr) !important; }
 }
+
+/* Final six-workspace polish: chart legibility, investment data and goal cards.
+   Presentation-only rules; no component state, API or financial logic changes. */
+.dashboard-overview .overview-chart {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(167,139,250,.13);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(139,92,246,.055), rgba(8,12,23,.28));
+}
+.dashboard-overview .trend-column { min-width: 0; }
+.dashboard-overview .trend-bars > * { min-width: 0; }
+.dashboard-overview .chart-footnote {
+  color: #8f9db7;
+  font-size: 11px;
+  line-height: 1.55;
+}
+.investment-workspace .portfolio-summary-grid > *,
+.investment-workspace .glass-card,
+.plan-workspace > section {
+  min-width: 0;
+}
+.investment-workspace .portfolio-summary-grid > * {
+  border: 1px solid rgba(167,139,250,.15);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(139,92,246,.09), rgba(12,17,31,.7));
+  padding: 15px;
+}
+.investment-workspace .portfolio-summary-value {
+  line-height: 1.25;
+  letter-spacing: -.025em;
+}
+.investment-workspace [role="progressbar"] {
+  overflow: hidden;
+  border-radius: 999px;
+}
+.plan-workspace article {
+  min-width: 0;
+  border-color: rgba(167,139,250,.16) !important;
+  background: linear-gradient(145deg, rgba(139,92,246,.065), rgba(12,17,31,.66)) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.10);
+  transition: border-color .16s ease, transform .16s ease;
+}
+.plan-workspace article:hover {
+  border-color: rgba(236,72,153,.30) !important;
+}
+.plan-workspace article h4 { overflow-wrap: anywhere; }
+.plan-workspace article button { min-height: 38px; }
+.money-workspace .card-header > * { min-width: 0; }
+.money-workspace .overview-chart,
+.money-workspace .category-track { min-width: 0; }
+@media (max-width: 560px) {
+  .dashboard-overview .overview-chart { padding: 11px; }
+  .investment-workspace .portfolio-summary-grid > * { padding: 12px; }
+  .plan-workspace article { padding: 13px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plan-workspace article { transition: none; }
+}

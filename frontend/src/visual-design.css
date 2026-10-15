@@ -95,3 +95,177 @@ svg { flex-shrink: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+
+/* ============================================================
+   WEALTH MANAGER — data-first visual hierarchy
+   Uses the component's existing API-backed values and SVG charts.
+   ============================================================ */
+.wealth-centre {
+  gap: 22px;
+  max-width: 1680px;
+}
+.wc-welcome {
+  align-items: center;
+  padding: 18px 20px;
+  border: 1px solid rgba(167,139,250,.16);
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(139,92,246,.13), transparent 54%),
+    linear-gradient(130deg, rgba(20,28,48,.72), rgba(11,15,28,.42));
+}
+.wc-welcome h2 { font-size: clamp(30px, 3.2vw, 42px); }
+.wc-welcome p:not(.card-label) { color: #aebbd3; line-height: 1.65; }
+.wc-welcome small { display: inline-block; margin-top: 10px; color: #8997b2; }
+.wc-primary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.wc-primary-card {
+  min-height: 176px;
+  padding: 19px;
+  border-radius: 18px;
+  border-color: rgba(167,139,250,.17);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(167,139,250,.11), transparent 58%),
+    linear-gradient(145deg, rgba(24,32,54,.90), rgba(12,17,31,.94));
+  box-shadow: 0 12px 30px rgba(0,0,0,.14);
+  text-align: left;
+}
+.wc-primary-card:hover, .wc-primary-card.selected {
+  border-color: rgba(167,139,250,.48);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(236,72,153,.12), transparent 58%),
+    linear-gradient(145deg, rgba(29,35,62,.96), rgba(13,18,33,.98));
+  transform: translateY(-2px);
+}
+.wc-card-icon {
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(167,139,250,.18);
+  border-radius: 13px;
+  background: rgba(139,92,246,.12);
+}
+.wc-card-label { margin-top: 17px; color: #aebbd3; font-size: 12px; }
+.wc-card-value { margin-top: 7px; font-size: clamp(21px, 2vw, 28px); letter-spacing: -.7px; font-variant-numeric: tabular-nums; }
+.wc-card-subtitle { margin-top: 6px; color: #8795b0; line-height: 1.45; }
+.wc-card-action { margin-top: 14px; color: #c4b5fd; font-weight: 650; }
+.wc-section-grid, .wc-chart-grid, .wc-breakdown-grid, .wc-bottom-grid {
+  gap: 18px;
+}
+.wc-info-panel, .wc-chart-panel, .wc-breakdown, .wc-next-phase {
+  border-radius: 20px;
+  border-color: rgba(148,163,184,.14);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.035), transparent 48%),
+    rgba(12,17,31,.72);
+  box-shadow: 0 16px 38px rgba(0,0,0,.13);
+}
+.wc-panel-heading {
+  gap: 16px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(148,163,184,.10);
+}
+.wc-panel-heading h3 { font-size: 17px; letter-spacing: -.25px; }
+.wc-chart-subtitle, .wc-note { color: #94a3bd; line-height: 1.6; }
+.wc-chart-controls {
+  gap: 12px;
+  margin: 16px 0 12px;
+}
+.wc-periods, .wc-chart-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.wc-periods button, .wc-chart-types button {
+  min-height: 32px;
+  border: 1px solid rgba(148,163,184,.13);
+  border-radius: 9px;
+  background: rgba(255,255,255,.025);
+  color: #9ba8c2;
+}
+.wc-periods button.active, .wc-chart-types button.active {
+  border-color: rgba(167,139,250,.45);
+  background: linear-gradient(135deg, rgba(139,92,246,.23), rgba(236,72,153,.10));
+  color: #f5f3ff;
+}
+.wc-chart-stat, .wc-flow-stats > div {
+  border: 1px solid rgba(148,163,184,.12);
+  border-radius: 13px;
+  background: rgba(4,8,18,.28);
+}
+.wc-chart-stat { padding: 12px 14px; margin: 14px 0; }
+.wc-chart-stat span, .wc-flow-stats span { color: #9ba8c2; font-size: 11px; }
+.wc-chart-stat strong, .wc-flow-stats strong { font-variant-numeric: tabular-nums; }
+.wc-flow-stats { gap: 10px; margin: 14px 0; }
+.wc-flow-stats > div { padding: 12px; }
+.wc-flow-stats strong { display: block; margin-top: 6px; font-size: clamp(14px, 1.5vw, 19px); }
+.wc-chart-legend { gap: 14px; margin: 12px 0 8px; }
+.wc-chart-legend span { color: #b6c1d5; font-size: 11px; }
+.wc-chart-svg { overflow: visible; }
+.wc-chart-svg circle { stroke: #0b1020; stroke-width: 1.5; transition: r .15s ease; }
+.wc-chart-svg circle:hover { r: 5; }
+.wc-chart-empty {
+  min-height: 170px;
+  background: rgba(5,9,19,.25);
+  border-color: rgba(148,163,184,.15);
+  line-height: 1.6;
+}
+.wc-category-track, .wc-goal-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(148,163,184,.13);
+  overflow: hidden;
+}
+.wc-category-track span, .wc-goal-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width .35s ease;
+}
+.wc-category-row { padding: 11px 0; }
+.wc-category-label { color: #c7d2e5; gap: 12px; }
+.wc-category-label strong { font-variant-numeric: tabular-nums; }
+.wc-latest-row {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(148,163,184,.09);
+}
+.wc-latest-main strong { color: #e5eaf5; }
+.wc-latest-main span { color: #8f9db7; }
+.wc-latest-amount { font-variant-numeric: tabular-nums; }
+.wc-alert-item { border-radius: 13px; }
+.wc-shortcut-tile {
+  border-radius: 14px;
+  border-color: rgba(148,163,184,.14);
+  background: rgba(255,255,255,.025);
+}
+.wc-shortcut-tile:hover {
+  border-color: rgba(167,139,250,.35);
+  background: rgba(139,92,246,.08);
+}
+.wc-detail-row { padding: 13px 0; }
+.wc-detail-row > div > span { color: #aab7cd; }
+.wc-detail-row strong, .wc-total-row strong { font-variant-numeric: tabular-nums; }
+.wc-total-row {
+  border-top-color: rgba(167,139,250,.20);
+  padding-top: 15px;
+}
+.wc-breakdown-category { border-color: rgba(148,163,184,.13); border-radius: 14px; }
+.wc-tax-status { color: #a7f3d0; }
+@media (max-width: 1200px) {
+  .wc-primary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .wc-welcome { padding: 16px; }
+  .wc-primary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .wc-primary-card { min-height: 158px; padding: 14px; }
+  .wc-card-value { font-size: clamp(18px, 5vw, 24px); overflow-wrap: anywhere; }
+  .wc-chart-grid, .wc-breakdown-grid, .wc-bottom-grid, .wc-section-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 420px) {
+  .wc-primary-grid { grid-template-columns: minmax(0, 1fr); }
+  .wc-primary-card { min-height: 140px; }
+  .wc-flow-stats { grid-template-columns: minmax(0, 1fr); }
+}

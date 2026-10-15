@@ -651,7 +651,6 @@ function Dashboard() {
 
   const summary = dashboardData?.summary || {};
   const trend = dashboardData?.monthly_trend || [];
-  const breakdown = dashboardData?.expense_breakdown || [];
   const alerts = dashboardData?.alerts || [];
   const recentTransactions = dashboardData?.recent_transactions || [];
   const totalBalance = Number(summary.total_balance || 0);
@@ -693,7 +692,6 @@ function Dashboard() {
   ];
 
   const maxTrend = Math.max(1, ...trend.flatMap(item => [Number(item.income || 0), Number(item.expenses || 0)]));
-  const maxCategory = Math.max(1, ...breakdown.map(item => Number(item.amount || 0)));
 
   return (
     <div className="dashboard dashboard-overview">
@@ -702,7 +700,7 @@ function Dashboard() {
           <p className="welcome-label">FINANCIAL COMMAND CENTRE</p>
           <h2>Your financial <br /><span>overview.</span></h2>
           <p className="welcome-description">
-            A concise view of Money, Investments, Planning, Markets, AI and Tax—using available recorded data.
+            Your at-a-glance financial status. Open Money for detailed cash-flow analysis, Portfolio for investments, and Wealth Manager for your complete balance sheet.
           </p>
           <p style={{fontSize: "12px", opacity: .7, marginTop: 8}}>
             {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit"})}` : "Loading overview…"}
@@ -814,19 +812,13 @@ function Dashboard() {
           )}
         </div>
 
-        <div className="glass-card">
-          <div className="card-header"><div><p className="card-label">MONEY • SPENDING</p><h3>Expense categories</h3></div></div>
-          {breakdown.length === 0 ? <div className="empty-chart">No expense categories recorded for this month.</div> : (
-            <div className="category-chart">
-              {breakdown.map((item, index) => (
-                <div className="category-row" key={`${item.category}-${index}`}>
-                  <div className="category-row-label"><span>{item.category}</span><strong>{formatCurrency(item.amount)}</strong></div>
-                  <div className="category-track"><div className="category-fill" style={{width:`${Math.min(100, Number(item.amount || 0) / maxCategory * 100)}%`}}/></div>
-                </div>
-              ))}
-              <p className="chart-footnote">Current-month expenses; largest categories shown first.</p>
-            </div>
-          )}
+        <div className="glass-card dashboard-money-drilldown">
+          <div className="card-header">
+            <div><p className="card-label">MONEY / FULL ANALYSIS</p><h3>Explore your cash flow</h3></div>
+            <ArrowUpRight size={18} />
+          </div>
+          <p className="chart-footnote">Detailed spending categories, budgets and transaction analysis belong in the Money workspace. This dashboard keeps the trend summary concise.</p>
+          <button className="primary-button" type="button" onClick={() => goTo("Transactions")}>Open Money analysis</button>
         </div>
       </section>
 
@@ -2932,7 +2924,7 @@ function PlanPage() {
   const requiredMonthly = monthsAvailable > 0 ? remaining / monthsAvailable : (remaining === 0 ? 0 : null);
   const progress = Number(form.target_amount) > 0 ? Math.min(100, Number(form.current_amount || 0) / Number(form.target_amount) * 100) : 0;
 
-  return <div style={{ display: "grid", gap: "18px" }}>
+  return <div className="plan-workspace" style={{ display: "grid", gap: "18px" }}>
     <section style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "14px", flexWrap: "wrap" }}>
       <div><p className="card-label">FINANCIAL OS · PLAN</p><h2 style={{ margin: "6px 0" }}>Plan & Goals</h2><p style={{ ...muted, maxWidth: "680px", fontSize: "13px" }}>Create and save goals, track progress, and calculate the contribution required to reach your target. Goals are stored separately and do not change account balances.</p></div>
       <button type="button" onClick={refreshAll} disabled={loading} className="secondary-button">{loading ? "Refreshing…" : "Refresh goals"}</button>
@@ -6669,6 +6661,7 @@ const summaryCards = [
  
     return (
     <div
+      className="investment-workspace"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -9197,7 +9190,7 @@ const deleteAccount = async () => {
 
   return (
 
-    <div className="dashboard">
+    <div className="dashboard money-workspace money-accounts">
 
       {/* ====================================================
           HEADER
@@ -10280,7 +10273,7 @@ function getActualSpending(categoryId, month) {
 
   return (
 
-    <div className="dashboard">
+    <div className="dashboard money-workspace money-budget">
 
       {/* ====================================================
           HEADER
@@ -12070,7 +12063,7 @@ const transactionFormModal = showForm && (
 
   return (
 
-    <div className="dashboard">
+    <div className="dashboard money-workspace money-transactions">
 
       {/* ====================================================
           HEADER

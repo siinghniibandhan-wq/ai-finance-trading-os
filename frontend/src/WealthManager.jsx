@@ -17,18 +17,13 @@ import {
   AlertCircle,
   CheckCircle2,
   LineChart,
-  BarChart3,
-  AreaChart,
   ArrowUpRight,
-  ArrowDownRight,
   BellRing,
-  ArrowLeftRight,
   Target,
   Sparkles,
   PieChart,
   Receipt,
   WalletCards,
-  ExternalLink,
   CircleAlert,
 } from "lucide-react";
 
@@ -225,129 +220,15 @@ function BreakdownPanel({ activeCard, data, onClose, onNavigate, onSelectCard })
 // SVG charts are used so this feature does not add a dependency.
 // ============================================================
 
-const PERIODS = [
-  { key: "1M", months: 1, label: "1 month" },
-  { key: "3M", months: 3, label: "3 months" },
-  { key: "6M", months: 6, label: "6 months" },
-  { key: "1Y", months: 12, label: "1 year" },
-  { key: "2Y", months: 24, label: "2 years" },
-  { key: "3Y", months: 36, label: "3 years" },
-  { key: "5Y", months: 60, label: "5 years" },
-];
-
-const CHART_TYPES = [
-  { key: "line", label: "Line", Icon: LineChart },
-  { key: "bar", label: "Bar", Icon: BarChart3 },
-  { key: "area", label: "Area", Icon: AreaChart },
-];
-
-const dateKey = (date) => {
-  const d = new Date(date);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-};
-
-const monthStart = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
-const addMonths = (date, count) => new Date(date.getFullYear(), date.getMonth() + count, 1);
-const monthLabel = (key, short = true) => {
-  const [year, month] = key.split("-").map(Number);
-  return new Date(year, month - 1, 1).toLocaleDateString("en-IN", {
-    month: short ? "short" : "long",
-    year: "2-digit",
-  });
-};
-
-function WealthChart({ points, type, series, height = 220, emptyText }) {
-  const width = 720;
-  const pad = { top: 18, right: 14, bottom: 38, left: 52 };
-  const plotW = width - pad.left - pad.right;
-  const plotH = height - pad.top - pad.bottom;
-  const values = points.flatMap((p) => series.map((s) => numberValue(p[s.key])));
-  const maxValue = Math.max(1, ...values, 0);
-  const minValue = Math.min(0, ...values);
-  const range = Math.max(1, maxValue - minValue);
-  const x = (i) => pad.left + (points.length <= 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
-  const y = (v) => pad.top + ((maxValue - numberValue(v)) / range) * plotH;
-  const barStep = plotW / Math.max(points.length, 1);
-  const barW = Math.max(3, Math.min(24, barStep * (series.length > 1 ? 0.27 : 0.55)));
-  const grid = [0, 0.25, 0.5, 0.75, 1];
-  const shownLabels = points.length <= 6
-    ? points.map((p, i) => i)
-    : [0, Math.floor((points.length - 1) / 3), Math.floor(2 * (points.length - 1) / 3), points.length - 1];
-
-  if (!points.length) return <div className="wc-chart-empty">{emptyText || "No recorded data for this period."}</div>;
-
-  return (
-    <div className="wc-chart-scroll">
-      <svg className="wc-chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Financial trend chart">
-        {grid.map((fraction) => {
-          const val = maxValue - fraction * range;
-          const yy = pad.top + fraction * plotH;
-          return <g key={fraction}>
-            <line x1={pad.left} y1={yy} x2={width - pad.right} y2={yy} stroke="rgba(226,232,240,.10)" strokeDasharray="3 4" />
-            <text x={pad.left - 8} y={yy + 4} textAnchor="end" fill="rgba(226,232,240,.5)" fontSize="10">{Math.abs(val) >= 100000 ? `${(val / 100000).toFixed(1)}L` : Math.abs(val) >= 1000 ? `${(val / 1000).toFixed(1)}k` : Math.round(val)}</text>
-          </g>;
-        })}
-        {type === "bar" && points.map((point, i) => series.map((s, si) => {
-          const v = numberValue(point[s.key]);
-          const baseline = y(0);
-          const yy = y(v);
-          const h = Math.max(1, Math.abs(baseline - yy));
-          const xx = pad.left + i * barStep + barStep / 2 - (series.length * barW) / 2 + si * barW;
-          return <rect key={`${i}-${s.key}`} x={xx} y={Math.min(yy, baseline)} width={barW - 2} height={h} rx="2" fill={s.color} opacity=".88">
-            <title>{`${point.label}: ${s.label} ${money(v)}`}</title>
-          </rect>;
-        }))}
-        {(type === "line" || type === "area") && series.map((s) => {
-          const coords = points.map((p, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(p[s.key])}`).join(" ");
-          const areaPath = `${coords} L ${x(points.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
-          return <g key={s.key}>
-            {type === "area" && <path d={areaPath} fill={s.color} opacity=".13" />}
-            <path d={coords} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-            {points.length <= 18 && points.map((p, i) => <circle key={i} cx={x(i)} cy={y(p[s.key])} r="3" fill={s.color}><title>{`${p.label}: ${s.label} ${money(p[s.key])}`}</title></circle>)}
-          </g>;
-        })}
-        {shownLabels.map((i) => <text key={i} x={x(i)} y={height - 12} textAnchor="middle" fill="rgba(226,232,240,.58)" fontSize="10">{points[i]?.label}</text>)}
-      </svg>
-    </div>
-  );
-}
-
-function ChartControls({ period, setPeriod, chartType, setChartType }) {
-  return <div className="wc-chart-controls">
-    <div className="wc-periods" aria-label="Chart period">
-      {PERIODS.map((p) => <button key={p.key} type="button" className={period === p.key ? "active" : ""} onClick={() => setPeriod(p.key)}>{p.key}</button>)}
-    </div>
-    <div className="wc-chart-types" aria-label="Chart type">
-      {CHART_TYPES.map(({ key, label, Icon }) => <button key={key} type="button" className={chartType === key ? "active" : ""} onClick={() => setChartType(key)} aria-pressed={chartType === key}><Icon size={14} /> <span>{label}</span></button>)}
-    </div>
-  </div>;
-}
-
-function ChartLegend({ series }) {
-  return <div className="wc-chart-legend">{series.map((s) => <span key={s.key}><i style={{ background: s.color }} />{s.label}</span>)}</div>;
-}
-
 export default function WealthManager({ onNavigate = () => {} }) {
   const [data, setData] = useState({ summary: null, liabilities: null, taxLiability: null });
   // Keep the Wealth Manager estimate aligned with the user's explicit regime selection.
   const [taxRegime, setTaxRegime] = useState("new");
-  const [goals, setGoals] = useState([]);
-  const [goalsLoading, setGoalsLoading] = useState(true);
-  const [goalsError, setGoalsError] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errors, setErrors] = useState([]);
   const [activeCard, setActiveCard] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [transactions, setTransactions] = useState([]);
-  const [loanMovements, setLoanMovements] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [cashPeriod, setCashPeriod] = useState("6M");
-  const [flowPeriod, setFlowPeriod] = useState("6M");
-  const [cashChartType, setCashChartType] = useState("line");
-  const [flowChartType, setFlowChartType] = useState("bar");
-  const [historyLoading, setHistoryLoading] = useState(true);
-  const [historyError, setHistoryError] = useState("");
 
   const loadWealthData = useCallback(async ({ quiet = false } = {}) => {
     if (quiet) setRefreshing(true);
@@ -358,10 +239,6 @@ export default function WealthManager({ onNavigate = () => {} }) {
       getJson(`/api/financial-summary/?user_id=${USER_ID}`),
       getJson(`/api/liabilities?user_id=${USER_ID}`),
       getJson(`/api/final-tax-liability/?user_id=${USER_ID}&financial_year=${FINANCIAL_YEAR}&tax_regime=${encodeURIComponent(taxRegime)}&residential_status=resident&stt_confirmed=false`),
-      getJson(`/api/transactions/?user_id=${USER_ID}`),
-      getJson(`/api/categories/?user_id=${USER_ID}`),
-      getJson(`/api/financial-summary/loan-movements?user_id=${USER_ID}`),
-      getJson(`/api/goals/?user_id=${USER_ID}`),
     ]);
 
     const nextData = {
@@ -369,18 +246,9 @@ export default function WealthManager({ onNavigate = () => {} }) {
       liabilities: requests[1].status === "fulfilled" ? requests[1].value : null,
       taxLiability: requests[2].status === "fulfilled" ? requests[2].value : null,
     };
-    setTransactions(requests[3].status === "fulfilled" && Array.isArray(requests[3].value) ? requests[3].value : []);
-    setCategories(requests[4].status === "fulfilled" && Array.isArray(requests[4].value) ? requests[4].value : []);
-    setLoanMovements(requests[5].status === "fulfilled" && Array.isArray(requests[5].value) ? requests[5].value : []);
-    const goalsPayload = requests[6].status === "fulfilled" ? requests[6].value : null;
-    setGoals(goalsPayload && Array.isArray(goalsPayload.goals) ? goalsPayload.goals : []);
-    setGoalsLoading(false);
-    setGoalsError(requests[6].status === "rejected" ? (requests[6].reason?.message || "Goals could not be loaded.") : "");
-    setHistoryError(requests[3].status === "rejected" ? "Transaction history could not be loaded. Check the Transactions API." : "");
-    setHistoryLoading(false);
     setData(nextData);
 
-    const labels = ["Financial Summary", "Liabilities", "Tax estimate", "Transactions", "Categories", "Loan movements", "Financial goals"];
+    const labels = ["Financial Summary", "Liabilities", "Tax estimate"];
     const failed = requests
       .map((result, index) => result.status === "rejected" ? `${labels[index]}: ${result.reason?.message || "Unable to load"}` : null)
       .filter(Boolean);
@@ -421,121 +289,6 @@ export default function WealthManager({ onNavigate = () => {} }) {
     { title: "Tax Overview", value: taxAmount === undefined ? null : numberValue(taxAmount), subtitle: taxAmount === undefined ? "Estimate unavailable" : `Tax engine · FY ${FINANCIAL_YEAR}`, icon: ReceiptText, tone: "pink" },
   ];
 
-  const categoryById = useMemo(() => new Map(categories.map((c) => [Number(c.id), String(c.name || "").toLowerCase()])), [categories]);
-  const loanDisbursementIds = useMemo(() => new Set(categories.filter((c) => String(c.name || "").toLowerCase().trim() === "loan disbursement").map((c) => Number(c.id))), [categories]);
-  const currentDate = new Date();
-  const selectedCashMonths = PERIODS.find((p) => p.key === cashPeriod)?.months || 6;
-  const selectedFlowMonths = PERIODS.find((p) => p.key === flowPeriod)?.months || 6;
-  const cashPoints = useMemo(() => {
-    const end = monthStart(currentDate);
-    const start = addMonths(end, -(selectedCashMonths - 1));
-    const points = [];
-    for (let i = 0; i < selectedCashMonths; i += 1) {
-      const date = addMonths(start, i);
-      const key = dateKey(date);
-      const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-      let balance = totals.cash;
-      // Reverse recorded balance effects after each historical month-end.
-      // This is an estimate if transaction history is incomplete.
-      transactions.forEach((tx) => {
-        const txDate = new Date(`${tx.transaction_date}T00:00:00`);
-        if (txDate > endOfMonth) {
-          const amount = numberValue(tx.amount);
-          const type = String(tx.transaction_type || "").toLowerCase();
-          if (["income", "refund", "interest", "dividend"].includes(type)) balance -= amount;
-          else if (["expense", "withdrawal", "tax", "loan_repayment"].includes(type)) balance += amount;
-        }
-      });
-      points.push({ key, label: monthLabel(key, true), balance });
-    }
-    return points;
-  }, [transactions, totals.cash, selectedCashMonths]);
-  const movementsByTransaction = useMemo(() => new Map(loanMovements.map((movement) => [Number(movement.transaction_id), movement])), [loanMovements]);
-  const flowPoints = useMemo(() => {
-    const end = monthStart(currentDate);
-    const start = addMonths(end, -(selectedFlowMonths - 1));
-    const points = [];
-    for (let i = 0; i < selectedFlowMonths; i += 1) {
-      const date = addMonths(start, i);
-      const key = dateKey(date);
-      let income = 0;
-      let expense = 0;
-      transactions.forEach((tx) => {
-        if (dateKey(new Date(`${tx.transaction_date}T00:00:00`)) !== key) return;
-        const type = String(tx.transaction_type || "").toLowerCase();
-        const amount = numberValue(tx.amount);
-        const movement = movementsByTransaction.get(Number(tx.id));
-        if (type === "income" && !loanDisbursementIds.has(Number(tx.category_id))) {
-          // A recovery transaction contains principal + interest + fees; only non-principal is income.
-          income += Math.max(0, amount - (movement && String(movement.movement_type || "").toLowerCase() === "recovery" ? numberValue(movement.principal_amount) : 0));
-        }
-        if (type === "expense") expense += amount;
-        // Repayment is a cash outflow, but not an ordinary expense category.
-        if (type === "loan_repayment") expense += amount;
-      });
-      points.push({ key, label: monthLabel(key, true), income, expense, net: income - expense });
-    }
-    return points;
-  }, [transactions, selectedFlowMonths, loanDisbursementIds, movementsByTransaction]);
-  const flowTotals = useMemo(() => flowPoints.reduce((acc, p) => ({
-    income: acc.income + p.income,
-    expense: acc.expense + p.expense,
-    net: acc.net + p.net,
-  }), { income: 0, expense: 0, net: 0 }), [flowPoints]);
-  // Phase 4: summarize existing saved goals without creating or changing goal records.
-  const activeGoals = useMemo(
-    () => goals.filter((goal) => String(goal.status || "active").toLowerCase() === "active"),
-    [goals]
-  );
-  const goalTotals = useMemo(() => activeGoals.reduce((acc, goal) => ({
-    target: acc.target + numberValue(goal.target_amount),
-    saved: acc.saved + numberValue(goal.current_amount),
-    remaining: acc.remaining + Math.max(0, numberValue(goal.target_amount) - numberValue(goal.current_amount)),
-  }), { target: 0, saved: 0, remaining: 0 }), [activeGoals]);
-  const overallGoalProgress = goalTotals.target > 0
-    ? Math.min(100, (goalTotals.saved / goalTotals.target) * 100)
-    : 0;
-
-  // Phase 3: category-level income and expense breakdowns for the selected flow period.
-  // Amounts use only the transaction types already classified as income/expense by this page.
-  const categoryBreakdowns = useMemo(() => {
-    const income = new Map();
-    const expense = new Map();
-    const end = monthStart(new Date());
-    const start = addMonths(end, -(selectedFlowMonths - 1));
-    transactions.forEach((tx) => {
-      const txDate = new Date(`${tx.transaction_date}T00:00:00`);
-      if (Number.isNaN(txDate.getTime()) || txDate < start || txDate >= addMonths(end, 1)) return;
-      const type = String(tx.transaction_type || "").toLowerCase();
-      const amount = numberValue(tx.amount);
-      const categoryName = categories.find((c) => Number(c.id) === Number(tx.category_id))?.name
-        || tx.category_name
-        || "Uncategorized";
-      if (type === "income" && !loanDisbursementIds.has(Number(tx.category_id))) {
-        income.set(categoryName, (income.get(categoryName) || 0) + amount);
-      } else if (type === "expense") {
-        expense.set(categoryName, (expense.get(categoryName) || 0) + amount);
-      }
-    });
-    const toRows = (map) => [...map.entries()]
-      .map(([name, amount]) => ({ name, amount }))
-      .sort((a, b) => b.amount - a.amount);
-    return { income: toRows(income), expense: toRows(expense) };
-  }, [transactions, categories, selectedFlowMonths, loanDisbursementIds]);
-
-  const cashSeries = [{ key: "balance", label: "Cash balance", color: "#a78bfa" }];
-  const flowSeries = flowChartType === "line"
-    ? [{ key: "net", label: "Net cash flow", color: "#a78bfa" }]
-    : [{ key: "income", label: "Income", color: "#34d399" }, { key: "expense", label: "Expenses", color: "#fb7185" }];
-
-  // Dashboard additions stay inside Wealth Manager and use existing loaded data.
-  const latestTransactions = useMemo(() => [...transactions]
-    .sort((a, b) => {
-      const dateDiff = new Date(b.transaction_date || b.date || 0) - new Date(a.transaction_date || a.date || 0);
-      return dateDiff || numberValue(b.id) - numberValue(a.id);
-    })
-    .slice(0, 6), [transactions]);
-
   const attentionItems = useMemo(() => {
     const items = [];
     if (errors.length) items.push({
@@ -544,20 +297,6 @@ export default function WealthManager({ onNavigate = () => {} }) {
       detail: `${errors.length} data source${errors.length === 1 ? "" : "s"} could not be loaded. Review the message above.`,
       action: "Refresh data",
       onClick: () => loadWealthData({ quiet: true }),
-    });
-    if (!transactions.length && !loading) items.push({
-      tone: "info",
-      title: "Start with your financial data",
-      detail: "Add income and expense records to unlock cash-flow and spending insights.",
-      action: "Open Transactions",
-      destination: "Transactions",
-    });
-    if (activeGoals.length && overallGoalProgress < 25) items.push({
-      tone: "purple",
-      title: "Review your financial goals",
-      detail: `Combined goal progress is ${overallGoalProgress.toFixed(1)}%. Check contributions in Plan & Goals.`,
-      action: "View Goals",
-      destination: "Goals",
     });
     if (numberValue(data.liabilities?.total_outstanding) > 0) items.push({
       tone: "orange",
@@ -574,7 +313,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
       destination: "Tax",
     });
     return items.slice(0, 5);
-  }, [errors, transactions.length, loading, activeGoals.length, overallGoalProgress, data.liabilities, data.taxLiability, loadWealthData]);
+  }, [errors, data.liabilities, data.taxLiability, loadWealthData]);
 
   const quickLinks = [
     { title: "Money", subtitle: "Accounts & transactions", destination: "Accounts", Icon: WalletCards, tone: "purple" },
@@ -584,6 +323,10 @@ export default function WealthManager({ onNavigate = () => {} }) {
     { title: "AI", subtitle: "Assistant & insights", destination: "AI Assistant", Icon: Sparkles, tone: "pink" },
     { title: "Tax", subtitle: "Tax records & reports", destination: "Tax", Icon: Receipt, tone: "blue" },
   ];
+
+  const cashShare = totals.assets > 0 ? Math.min(100, Math.max(0, (totals.cash / totals.assets) * 100)) : 0;
+  const investmentShare = totals.assets > 0 ? Math.min(100, Math.max(0, (totals.investments / totals.assets) * 100)) : 0;
+  const liabilityRatio = totals.assets > 0 ? (totals.liabilities / totals.assets) * 100 : null;
 
   return (
     <div className="wealth-centre">
@@ -636,7 +379,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
           <DetailRow label="Cash and account balances" value={loading ? "Loading…" : money(totals.cash)} />
           <DetailRow label="Investment current value" value={loading ? "Loading…" : money(totals.investments)} />
           <div className="wc-total-row"><span>Combined recorded value</span><strong>{loading ? "Loading…" : money(totals.cash + totals.investments)}</strong></div>
-          <p className="wc-note">This is a current snapshot, not historical cash position. Historical charting will be added after we verify transaction-history coverage.</p>
+          <p className="wc-note">These recorded balances feed the total-assets and asset-mix calculations. Open Accounts or Portfolio to inspect the underlying records.</p>
         </article>
         <article className="glass-card wc-info-panel">
           <div className="wc-panel-heading"><div><p className="card-label">TAX SNAPSHOT</p><h3>Tax estimate status</h3></div><ReceiptText size={19} /></div>
@@ -660,168 +403,47 @@ export default function WealthManager({ onNavigate = () => {} }) {
         </article>
       </section>
 
-      <section className="wc-chart-grid">
-        <article className="glass-card wc-chart-panel">
-          <div className="wc-panel-heading">
-            <div><p className="card-label">CASH POSITION</p><h3>Cash balance over time</h3><p className="wc-chart-subtitle">Estimated historical month-end balances reconstructed from current balances and recorded transactions.</p></div>
-            <Wallet size={19} />
-          </div>
-          <ChartControls period={cashPeriod} setPeriod={setCashPeriod} chartType={cashChartType} setChartType={setCashChartType} />
-          <div className="wc-chart-stat"><span>Latest recorded cash balance</span><strong>{money(totals.cash)}</strong></div>
-          <ChartLegend series={cashSeries} />
-          {historyLoading ? <div className="wc-chart-empty">Loading transaction history…</div> : historyError ? <div className="wc-chart-empty">{historyError}</div> : <WealthChart points={cashPoints} type={cashChartType} series={cashSeries} emptyText="No account history is available for this period." />}
-          <p className="wc-note">Important: the current database does not store monthly balance snapshots. Historical values are reconstructed from available transactions and may be incomplete if transactions were not recorded consistently or account opening balances changed.</p>
-        </article>
-
-        <article className="glass-card wc-chart-panel">
-          <div className="wc-panel-heading">
-            <div><p className="card-label">CASH FLOW</p><h3>Income vs expenses</h3><p className="wc-chart-subtitle">Monthly transaction-based cash flow, excluding loan-disbursement income categories.</p></div>
-            <TrendingUp size={19} />
-          </div>
-          <ChartControls period={flowPeriod} setPeriod={setFlowPeriod} chartType={flowChartType} setChartType={setFlowChartType} />
-          <div className="wc-flow-stats">
-            <div><span>Income</span><strong>{money(flowTotals.income)}</strong></div>
-            <div><span>Expenses</span><strong>{money(flowTotals.expense)}</strong></div>
-            <div><span>Net flow</span><strong className={flowTotals.net >= 0 ? "positive" : "negative"}>{money(flowTotals.net)}</strong></div>
-          </div>
-          <ChartLegend series={flowSeries} />
-          {historyLoading ? <div className="wc-chart-empty">Loading transaction history…</div> : historyError ? <div className="wc-chart-empty">{historyError}</div> : <WealthChart points={flowPoints} type={flowChartType} series={flowSeries} emptyText="No income or expense transactions are recorded for this period." />}
-          <p className="wc-note">Only transaction types classified as income and expense are included, matching the existing Financial Summary convention. Refunds, interest, dividends, taxes, repayments, and other types are not reclassified as income/expense here.</p>
-        </article>
-      </section>
-
-      {/* Phase 3: category breakdowns, using the same selected period as Cash Flow. */}
-      <section className="wc-breakdown-grid">
+      <section className="wc-wealth-analysis-grid" aria-label="Wealth analysis">
         <article className="glass-card wc-info-panel">
           <div className="wc-panel-heading">
-            <div><p className="card-label">INCOME ANALYSIS</p><h3>Income by category</h3></div>
-            <TrendingUp size={19} />
+            <div><p className="card-label">ASSET MIX</p><h3>Recorded wealth composition</h3></div>
+            <PieChart size={19} />
           </div>
-          <p className="wc-chart-subtitle">Recorded income categories for the selected Cash Flow period ({flowPeriod}). Loan-disbursement categories are excluded.</p>
-          {categoryBreakdowns.income.length ? categoryBreakdowns.income.slice(0, 8).map((row) => (
-            <div className="wc-category-row" key={row.name}>
-              <div className="wc-category-label"><span>{row.name}</span><strong>{money(row.amount)}</strong></div>
-              <div className="wc-category-track"><span className="income" style={{ width: `${Math.max(2, (row.amount / Math.max(1, categoryBreakdowns.income[0].amount)) * 100)}%` }} /></div>
+          <p className="wc-chart-subtitle">How your currently recorded assets are divided between cash and investments.</p>
+          <div className="wc-wealth-mix-list">
+            <div className="wc-wealth-mix-row">
+              <div className="wc-wealth-mix-label"><span>Cash &amp; account balances</span><strong>{money(totals.cash)} · {cashShare.toFixed(1)}%</strong></div>
+              <div className="wc-wealth-mix-track"><span className="cash" style={{ width: `${cashShare}%` }} /></div>
             </div>
-          )) : <div className="wc-chart-empty">No classified income transactions are recorded for this period.</div>}
+            <div className="wc-wealth-mix-row">
+              <div className="wc-wealth-mix-label"><span>Investments</span><strong>{money(totals.investments)} · {investmentShare.toFixed(1)}%</strong></div>
+              <div className="wc-wealth-mix-track"><span className="investments" style={{ width: `${investmentShare}%` }} /></div>
+            </div>
+          </div>
+          <div className="wc-total-row"><span>Total recorded assets</span><strong>{money(totals.assets)}</strong></div>
+          <p className="wc-note">This is a current-value allocation, not historical performance. It includes only cash/account balances and investments returned by connected APIs; other assets appear only after their records are supported.</p>
         </article>
 
         <article className="glass-card wc-info-panel">
           <div className="wc-panel-heading">
-            <div><p className="card-label">EXPENSE ANALYSIS</p><h3>Expenses by category</h3></div>
-            <ReceiptText size={19} />
+            <div><p className="card-label">BALANCE SHEET</p><h3>Wealth position</h3></div>
+            <Landmark size={19} />
           </div>
-          <p className="wc-chart-subtitle">Recorded expense categories for the selected Cash Flow period ({flowPeriod}).</p>
-          {categoryBreakdowns.expense.length ? categoryBreakdowns.expense.slice(0, 8).map((row) => (
-            <div className="wc-category-row" key={row.name}>
-              <div className="wc-category-label"><span>{row.name}</span><strong>{money(row.amount)}</strong></div>
-              <div className="wc-category-track"><span className="expense" style={{ width: `${Math.max(2, (row.amount / Math.max(1, categoryBreakdowns.expense[0].amount)) * 100)}%` }} /></div>
-            </div>
-          )) : <div className="wc-chart-empty">No classified expense transactions are recorded for this period.</div>}
+          <DetailRow label="Total recorded assets" value={loading ? "Loading…" : money(totals.assets)} />
+          <DetailRow label="Outstanding liabilities" value={loading ? "Loading…" : money(totals.liabilities)} />
+          <div className="wc-total-row"><span>Estimated net worth</span><strong>{loading ? "Loading…" : money(totals.netWorth)}</strong></div>
+          <DetailRow label="Liabilities / assets" value={liabilityRatio === null ? "Unavailable" : `${liabilityRatio.toFixed(1)}%`} note="Based on currently recorded assets and liabilities" />
+          <div className="wc-breakdown-actions">
+            <BreakdownAction onClick={() => setActiveCard("Total Assets")}>Explore assets</BreakdownAction>
+            <BreakdownAction onClick={() => setActiveCard("Total Liabilities")}>Explore liabilities</BreakdownAction>
+            <BreakdownAction onClick={() => onNavigate("Portfolio")}>Analyse investments</BreakdownAction>
+          </div>
+          <p className="wc-note">Net worth is an estimate from the current connected records. It does not imply that all property, deposits, debts or other off-platform assets have been recorded.</p>
         </article>
       </section>
 
-      {/* Phase 4: Financial Goals summary reads the existing Goals API only. */}
-      <section className="wc-goals-section glass-card">
-        <div className="wc-panel-heading">
-          <div>
-            <p className="card-label">FINANCIAL PLANNING</p>
-            <h3>Financial Goals</h3>
-            <p className="wc-chart-subtitle">Progress from your existing saved goals. This overview does not create or modify goals.</p>
-          </div>
-          <TrendingUp size={19} />
-        </div>
 
-        {goalsLoading ? (
-          <div className="wc-chart-empty">Loading financial goals…</div>
-        ) : goalsError ? (
-          <div className="wc-chart-empty">Goals could not be loaded: {goalsError}</div>
-        ) : activeGoals.length === 0 ? (
-          <div className="wc-chart-empty">No active financial goals found. Create a goal in the existing Goals module to see its progress here.</div>
-        ) : (
-          <>
-            <div className="wc-goal-summary-grid">
-              <div><span>Active goals</span><strong>{activeGoals.length}</strong></div>
-              <div><span>Total target</span><strong>{money(goalTotals.target)}</strong></div>
-              <div><span>Saved toward goals</span><strong>{money(goalTotals.saved)}</strong></div>
-              <div><span>Remaining</span><strong>{money(goalTotals.remaining)}</strong></div>
-            </div>
-            <div className="wc-goal-overall">
-              <div className="wc-goal-overall-label"><span>Combined progress</span><strong>{overallGoalProgress.toFixed(1)}%</strong></div>
-              <div className="wc-goal-track"><span style={{ width: `${overallGoalProgress}%` }} /></div>
-            </div>
-            <div className="wc-goal-list">
-              {activeGoals.map((goal) => {
-                const target = numberValue(goal.target_amount);
-                const saved = numberValue(goal.current_amount);
-                const remaining = Math.max(0, target - saved);
-                const progress = target > 0 ? Math.min(100, (saved / target) * 100) : 0;
-                return (
-                  <article className="wc-goal-card" key={goal.id}>
-                    <div className="wc-goal-card-heading">
-                      <div><span className="wc-goal-category">{goal.category || "Other"}</span><h4>{goal.name || "Untitled goal"}</h4></div>
-                      <strong>{progress.toFixed(0)}%</strong>
-                    </div>
-                    <div className="wc-goal-track"><span style={{ width: `${progress}%` }} /></div>
-                    <div className="wc-goal-amounts">
-                      <span>Saved <strong>{money(saved)}</strong></span>
-                      <span>Target <strong>{money(target)}</strong></span>
-                      <span>Remaining <strong>{money(remaining)}</strong></span>
-                    </div>
-                    {goal.target_date ? <p className="wc-goal-date">Target date: {goal.target_date}</p> : null}
-                    {numberValue(goal.monthly_contribution) > 0 ? <p className="wc-goal-date">Planned monthly contribution: {money(goal.monthly_contribution)}</p> : null}
-                  </article>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </section>
 
-      {/* Latest activity: read-only preview of real transactions from the existing API. */}
-      <section className="wc-bottom-grid">
-        <article className="glass-card wc-info-panel wc-accent-card wc-latest-panel">
-          <div className="wc-panel-heading">
-            <div><p className="card-label">MONEY / RECENT ACTIVITY</p><h3>Latest Transactions</h3><p className="wc-chart-subtitle">Your most recent recorded cash activity.</p></div>
-            <ArrowLeftRight size={19} />
-          </div>
-          {historyLoading ? (
-            <div className="wc-chart-empty">Loading latest transactions…</div>
-          ) : historyError ? (
-            <div className="wc-chart-empty">{historyError}</div>
-          ) : latestTransactions.length ? (
-            <div className="wc-latest-list">
-              {latestTransactions.map((tx) => {
-                const type = String(tx.transaction_type || tx.type || "").toLowerCase();
-                const isInflow = ["income", "refund", "interest", "dividend", "recovery"].includes(type);
-                const label = tx.description || tx.title || tx.name || tx.merchant || tx.reference || "Transaction";
-                const category = categoryById.get(Number(tx.category_id)) || tx.category_name || tx.category || "Uncategorised";
-                const date = tx.transaction_date || tx.date || tx.created_at;
-                return (
-                  <div className="wc-latest-row" key={tx.id ?? `${label}-${date}-${tx.amount}`}>
-                    <span className={`wc-latest-icon ${isInflow ? "inflow" : "outflow"}`}>
-                      {isInflow ? <ArrowDownRight size={17} /> : <ArrowUpRight size={17} />}
-                    </span>
-                    <div className="wc-latest-main">
-                      <strong>{label}</strong>
-                      <span>{category} · {date ? new Date(date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "Date not available"}</span>
-                    </div>
-                    <strong className={`wc-latest-amount ${isInflow ? "positive" : "negative"}`}>
-                      {isInflow ? "+" : "−"}{money(Math.abs(numberValue(tx.amount)))}
-                    </strong>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="wc-chart-empty">No transactions have been recorded yet. Add a transaction to see it here.</div>
-          )}
-          <div className="wc-bottom-actions">
-            <button className="wc-shortcut-button" type="button" onClick={() => onNavigate("Transactions")}>View all transactions <ExternalLink size={14} /></button>
-          </div>
-        </article>
-
-        {/* Alerts are based on loaded records/status, not invented financial events. */}
         <article className="glass-card wc-info-panel wc-accent-card wc-alerts-panel">
           <div className="wc-panel-heading">
             <div><p className="card-label">ALERTS & NOTIFICATIONS</p><h3>Items needing attention</h3><p className="wc-chart-subtitle">Reminders and data-quality notices from your current financial records.</p></div>
@@ -844,7 +466,6 @@ export default function WealthManager({ onNavigate = () => {} }) {
             <div className="wc-chart-empty">No immediate alerts from the currently loaded records.</div>
           )}
         </article>
-      </section>
 
       {/* Cross-module navigation remains inside Wealth Manager; no separate Dashboard is created. */}
       <section className="glass-card wc-info-panel wc-accent-card wc-shortcuts-panel">

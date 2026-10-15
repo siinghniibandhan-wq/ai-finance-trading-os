@@ -5421,6 +5421,7 @@ function Portfolio() {
   const [instrumentResults, setInstrumentResults] = useState([]);
   const [instrumentSearchBusy, setInstrumentSearchBusy] = useState(false);
   const [instrumentSearchError, setInstrumentSearchError] = useState("");
+  const [liveInstrumentQuoteLoading, setLiveInstrumentQuoteLoading] = useState(false);
   const instrumentSearchRequestRef = useRef(0);
   const selectedInstrumentQuoteRef = useRef("");
   const transactionQuoteRequestRef = useRef(0);
@@ -5432,6 +5433,7 @@ function Portfolio() {
   const resetInvestmentForm = () => {
     instrumentSearchRequestRef.current += 1;
     selectedInstrumentQuoteRef.current = "";
+    setLiveInstrumentQuoteLoading(false);
     setInvestmentForm({ name: "", exchange: "", asset_class: "Equity", investment_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: getLocalDateString(), broker: "", fees: "", notes: "" });
     setInstrumentQuery("");
     setInstrumentResults([]);
@@ -5508,6 +5510,7 @@ function Portfolio() {
       ? exchange.toUpperCase() + ":" + symbol
       : "";
     selectedInstrumentQuoteRef.current = quoteKey;
+    setLiveInstrumentQuoteLoading(Boolean(quoteKey));
     setInvestmentForm((previous) => ({
       ...previous,
       name,
@@ -5534,7 +5537,10 @@ function Portfolio() {
             ...(previous.buy_date === getLocalDateString() ? { buy_price: livePrice } : {}),
           }));
         })
-        .catch((error) => console.warn("Live investment quote unavailable; keeping the latest search quote.", error));
+        .catch((error) => console.warn("Live investment quote unavailable; keeping the latest search quote.", error))
+        .finally(() => {
+          if (selectedInstrumentQuoteRef.current === quoteKey) setLiveInstrumentQuoteLoading(false);
+        });
     }
   };
 
@@ -6154,6 +6160,10 @@ const handleInvestmentTransactionSubmit =
       // VALIDATION
       // --------------------------------------------------------
 
+      if (liveInstrumentQuoteLoading) {
+        alert("Please wait while the latest market price is being refreshed.");
+        return;
+      }
       if (!investmentForm.name.trim()) {
         alert("Please enter an investment name.");
         return;
@@ -6694,6 +6704,7 @@ const summaryCards = [
                   const nextTypes = PRODUCT_TYPES_BY_ASSET_CLASS[nextAssetClass] || ["Other"];
                   instrumentSearchRequestRef.current += 1;
                   selectedInstrumentQuoteRef.current = "";
+                  setLiveInstrumentQuoteLoading(false);
                   setInstrumentSearchBusy(false);
                   setInvestmentForm((previous) => ({ ...previous, asset_class: nextAssetClass, investment_type: nextTypes[0], name: "", symbol: "", buy_price: "", current_price: "" }));
                   setInstrumentQuery("");

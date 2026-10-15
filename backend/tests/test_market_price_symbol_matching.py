@@ -162,3 +162,21 @@ def test_market_quote_preserves_year_range_and_trading_metadata(monkeypatch):
     assert quote["details"]["total_sell_quantity"] == "450"
     assert quote["details"]["upper_circuit_limit"] == "130"
     assert quote["details"]["lower_circuit_limit"] == "110"
+
+
+def test_exchange_qualified_bse_series_suffix_is_preserved(monkeypatch):
+    captured = {}
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        return FakeResponse({
+            "status": "success",
+            "symbol": "BSE:RELIANCE-A",
+            "data": {"BSE:RELIANCE-A": {"last_price": "123.45"}},
+        })
+
+    monkeypatch.setattr(market_price, "urlopen", fake_urlopen)
+    monkeypatch.setattr(market_price, "MARKET_PRICE_CACHE_TTL_SECONDS", 0.0)
+    assert market_price._fetch_gateway_quote("BSE:RELIANCE-A") == Decimal("123.45")
+    assert "symbol=BSE%3ARELIANCE-A" in captured["url"]
+    assert "RELIANCE-A-EQ" not in captured["url"]

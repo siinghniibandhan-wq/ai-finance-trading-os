@@ -225,7 +225,12 @@ def search_market(
             row_exchange = exchange_aliases.get(raw_exchange)
             if row_exchange is None:
                 continue
+            # m.Stock instrument masters may identify cash equities with
+            # segment="EQ" while exchange separately identifies NSE/BSE.
+            # Keep the exchange allowlist above as the primary derivatives
+            # guard, and accept documented equity-series segment labels here.
             if raw_segment and raw_segment not in {
+                "EQ", "BE", "BZ", "SM", "ST", "A", "B", "T",
                 "NSECM", "BSECM", "NSE_EQ", "BSE_EQ", "NSE-EQ", "BSE-EQ", "NSE", "BSE",
             }:
                 continue

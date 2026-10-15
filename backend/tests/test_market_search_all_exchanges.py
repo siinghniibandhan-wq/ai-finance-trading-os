@@ -145,3 +145,19 @@ def test_expired_cache_is_used_if_gateway_refresh_fails(monkeypatch):
 
     assert result["count"] == 3
     assert result["results"][0]["symbol"] == "RELIANCE-EQ"
+
+
+def test_search_accepts_mstock_equity_segment_eq(monkeypatch):
+    csv = """instrument_token,exchange_token,tradingsymbol,name,last_price,instrument_type,segment,exchange
+1,1,RELIANCE-EQ,Reliance Industries,1400,EQ,EQ,NSE
+2,2,RELIANCE-A,Reliance Industries,1401,EQ,EQ,BSE
+3,3,RELIANCE-FUT,Reliance Industries Futures,1402,FUT,NSEFO,NSEFO
+"""
+    monkeypatch.setattr(market_search, "urlopen", lambda *args, **kwargs: FakeResponse(csv))
+
+    result = market_search.search_market(query="RELIANCE", exchange="ALL", limit=12)
+
+    assert [(item["exchange"], item["symbol"]) for item in result["results"]] == [
+        ("NSE", "RELIANCE-EQ"),
+        ("BSE", "RELIANCE-A"),
+    ]

@@ -24,7 +24,7 @@ import os
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from threading import Event, Lock
-from time import monotonic
+from time import monotonic, perf_counter
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -111,6 +111,16 @@ def _canonical_quote_symbol(symbol: str) -> tuple[str | None, str]:
         cleaned = cleaned[:-3]
     return exchange, cleaned
 
+
+def _quote_cache_key(symbol: str) -> str:
+    """Canonical cache identity; exchange listings must never share a quote."""
+    exchange, base = _canonical_quote_symbol(symbol)
+    # Unqualified symbols historically use the gateway's default NSE route.
+    # Keep BSE listings separate from NSE aliases.
+    exchange = exchange or "NSE"
+    return f"{exchange}:{base}"
+
+
 def _quote_symbols_match(requested: str, returned: str) -> bool:
     requested_exchange, requested_base = _canonical_quote_symbol(requested)
     returned_exchange, returned_base = _canonical_quote_symbol(returned)
@@ -136,7 +146,7 @@ def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
         if (
             exchange in {"NSE", "BSE"}
             and instrument
-            and not instrument.endswith("-EQ")
+            and not instrument.endswith(("-EQ", "-BE", "-BZ", "-SM", "-ST", "-A", "-B", "-T"))
             and not any(char in instrument for char in "/^")
         ):
             gateway_symbol = f"{exchange}:{instrument}-EQ"
@@ -163,7 +173,7 @@ def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
 
         with urlopen(
             request,
-            timeout=15,
+            timeout=8,
         ) as response:
 
             payload = json.loads(
@@ -384,9 +394,11 @@ def get_market_quote(
         raise MarketPriceError("MSTOCK_GATEWAY_URL is not configured.")
 
     normalized_symbol = normalize_symbol(symbol)
+    cache_key = _quote_cache_key(normalized_symbol)
     ttl = MARKET_PRICE_CACHE_TTL_SECONDS
 
     if ttl <= 0:
+        fetch_started = perf_counter()
         _LAST_QUOTE_DETAILS.pop(normalized_symbol, None)
         price = _fetch_gateway_quote(normalized_symbol)
         details = _LAST_QUOTE_DETAILS.pop(normalized_symbol, {})
@@ -395,24 +407,28 @@ def get_market_quote(
             "details": details,
             "retrieved_at": datetime.now(timezone.utc).isoformat(),
             "cache_hit": False,
+            "cache_age_seconds": 0.0,
+            "provider_latency_ms": round((perf_counter() - fetch_started) * 1000, 2),
         }
 
     while True:
         with _MARKET_PRICE_CACHE_LOCK:
             now = monotonic()
-            cached = _MARKET_PRICE_CACHE.get(normalized_symbol)
+            cached = _MARKET_PRICE_CACHE.get(cache_key)
             if cached and now - cached[0] <= ttl:
                 return {
                     "price": cached[1],
                     "details": cached[3] if len(cached) > 3 else {},
                     "retrieved_at": cached[2],
                     "cache_hit": True,
+                    "cache_age_seconds": round(max(0.0, now - cached[0]), 3),
+                    "provider_latency_ms": cached[4] if len(cached) > 4 else None,
                 }
 
-            flight = _MARKET_PRICE_INFLIGHT.get(normalized_symbol)
+            flight = _MARKET_PRICE_INFLIGHT.get(cache_key)
             if flight is None:
-                flight = {"event": Event(), "price": None, "details": {}, "retrieved_at": None, "error": None}
-                _MARKET_PRICE_INFLIGHT[normalized_symbol] = flight
+                flight = {"event": Event(), "price": None, "details": {}, "retrieved_at": None, "provider_latency_ms": None, "error": None}
+                _MARKET_PRICE_INFLIGHT[cache_key] = flight
                 is_fetcher = True
             else:
                 is_fetcher = False
@@ -426,11 +442,15 @@ def get_market_quote(
                 "details": flight["details"],
                 "retrieved_at": flight["retrieved_at"],
                 "cache_hit": True,
+                "cache_age_seconds": 0.0,
+                "provider_latency_ms": flight["provider_latency_ms"],
             }
 
         try:
+            fetch_started = perf_counter()
             _LAST_QUOTE_DETAILS.pop(normalized_symbol, None)
             price = _fetch_gateway_quote(normalized_symbol)
+            provider_latency_ms = round((perf_counter() - fetch_started) * 1000, 2)
             details = _LAST_QUOTE_DETAILS.pop(normalized_symbol, {})
             retrieved_at = datetime.now(timezone.utc).isoformat()
 
@@ -450,18 +470,21 @@ def get_market_quote(
                     )
                     _MARKET_PRICE_CACHE.pop(oldest_key, None)
 
-                _MARKET_PRICE_CACHE[normalized_symbol] = (
-                    monotonic(), price, retrieved_at, details
+                _MARKET_PRICE_CACHE[cache_key] = (
+                    monotonic(), price, retrieved_at, details, provider_latency_ms
                 )
                 flight["price"] = price
                 flight["details"] = details
                 flight["retrieved_at"] = retrieved_at
+                flight["provider_latency_ms"] = provider_latency_ms
 
             return {
                 "price": price,
                 "details": details,
                 "retrieved_at": retrieved_at,
                 "cache_hit": False,
+                "cache_age_seconds": 0.0,
+                "provider_latency_ms": provider_latency_ms,
             }
         except MarketPriceError as exc:
             flight["error"] = exc
@@ -474,7 +497,7 @@ def get_market_quote(
             raise wrapped from exc
         finally:
             with _MARKET_PRICE_CACHE_LOCK:
-                _MARKET_PRICE_INFLIGHT.pop(normalized_symbol, None)
+                _MARKET_PRICE_INFLIGHT.pop(cache_key, None)
                 flight["event"].set()
 
 

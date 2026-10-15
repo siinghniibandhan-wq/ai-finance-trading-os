@@ -128,5 +128,7 @@ def market_quote(symbol: str):
         "source": "AWS m.Stock Gateway",
         "retrieved_at": quote_data["retrieved_at"],
         "cache_hit": quote_data["cache_hit"],
+        "cache_age_seconds": quote_data["cache_age_seconds"],
+        "provider_latency_ms": quote_data["provider_latency_ms"],
         "provider_market_timestamp": None,
     }

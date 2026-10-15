@@ -2256,6 +2256,7 @@ function MarketsPage() {
   const [selectedInstrument, setSelectedInstrument] = useState(null);
   const [searchBusy, setSearchBusy] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [searchWarning, setSearchWarning] = useState("");
   const [quote, setQuote] = useState(null);
   const [quoteBusy, setQuoteBusy] = useState(false);
   const [quoteError, setQuoteError] = useState("");
@@ -2326,13 +2327,15 @@ function MarketsPage() {
   const search = async (event) => {
     event.preventDefault();
     if (!query.trim()) { setSearchError("Enter a company name or symbol."); return; }
-    setSearchBusy(true); setSearchError(""); setResults([]); setQuote(null); setQuoteError(""); setSelectedInstrument(null);
+    setSearchBusy(true); setSearchError(""); setSearchWarning(""); setResults([]); setQuote(null); setQuoteError(""); setSelectedInstrument(null);
     try {
       const response = await apiFetch(`${API}/api/market-search/?query=${encodeURIComponent(query.trim())}&exchange=ALL&limit=20`);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Search returned ${response.status}`);
       const rows = Array.isArray(data?.results) ? data.results : [];
-      setResults(rows); if (!rows.length) setSearchError("No matching instruments returned.");
+      setResults(rows);
+      setSearchWarning(typeof data?.warning === "string" ? data.warning : (typeof data?.source?.warning === "string" ? data.source.warning : ""));
+      if (!rows.length) setSearchError("No matching instruments returned.");
     } catch (e) { setSearchError(e?.message || "Market search failed."); }
     finally { setSearchBusy(false); }
   };
@@ -2601,6 +2604,7 @@ function MarketsPage() {
       
       {searchBusy && <p role="status" style={{ ...muted, marginTop: "12px" }}>Searching the instrument master…</p>}
       {searchError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px", marginTop: "12px" }}>{searchError}</p>}
+      {searchWarning && <p role="status" style={{ color: "#fcd34d", fontSize: "12px", marginTop: "8px" }}>Data freshness warning: {searchWarning}</p>}
       {results.length > 0 && <p style={{ ...muted, margin: "12px 0 4px" }}>{results.length} matching instruments · Select a result to open its quote and chart.</p>}
       {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.4)", boxShadow: "0 6px 18px rgba(16,185,129,0.18)" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "BUY", symbol: selectedInstrument.symbol || "", name: selectedInstrument.name || "", exchange: selectedInstrument.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>BUY</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #b91c1c, #ef4444)", border: "1px solid rgba(248,113,113,0.4)", boxShadow: "0 6px 18px rgba(239,68,68,0.18)" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "SELL", symbol: selectedInstrument.symbol || "", name: selectedInstrument.name || "", exchange: selectedInstrument.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>SELL</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
       {orderModalSide && selectedInstrument && <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !orderSubmitting) setOrderModalSide(""); }} style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(4,5,14,.78)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
@@ -2665,7 +2669,7 @@ function MarketsPage() {
       </section>
       <section style={{ ...card, background: "linear-gradient(120deg, rgba(124,58,237,.10), rgba(255,255,255,.02))" }}><div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}><div><h3 style={{ margin: "0 0 5px" }}>Market News</h3><p style={{ ...muted, margin: 0 }}>A news feed has not been connected to the current market API yet.</p></div><span style={{ ...muted, border: "1px solid rgba(255,255,255,.12)", padding: "5px 9px", borderRadius: "99px" }}>Source required</span></div><p style={{ ...muted, marginBottom: 0, marginTop: "10px" }}>We’ll show sourced headlines here once a reliable news provider is configured; no sample or fabricated headlines are displayed.</p></section>
     </>}
-    {selectedInstrument && <section style={{ ...card, background: "linear-gradient(135deg, rgba(124,58,237,.15), rgba(255,255,255,.025))" }}><h3 style={{ margin: "0 0 10px", fontSize: "13px", color: "rgba(255,255,255,.65)", fontWeight: 650 }}>Latest Traded Price (LTP)</h3>{quoteBusy && <p style={muted}>Loading price…</p>}{quoteError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px" }}>{quoteError}</p>}{quote && <div style={{ fontSize: "34px", fontWeight: 900, letterSpacing: "-.035em" }}>{money(quote.quote?.last_price)}</div>}{!quoteBusy && !quoteError && !quote && <p style={muted}>Price unavailable.</p>}</section>}
+    {selectedInstrument && <section style={{ ...card, background: "linear-gradient(135deg, rgba(124,58,237,.15), rgba(255,255,255,.025))" }}><h3 style={{ margin: "0 0 10px", fontSize: "13px", color: "rgba(255,255,255,.65)", fontWeight: 650 }}>Latest Traded Price (LTP)</h3>{quoteBusy && <p style={muted}>Loading price…</p>}{quoteError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px" }}>{quoteError}</p>}{quote && <><div style={{ fontSize: "34px", fontWeight: 900, letterSpacing: "-.035em" }}>{money(quote.quote?.last_price)}</div><p style={{ ...muted, marginTop: "6px", marginBottom: 0 }}>Backend retrieved {quote.last_updated ? new Date(quote.last_updated).toLocaleTimeString("en-IN") : "time unavailable"}{quote.cache_hit ? ` · cached (${quote.cache_age_seconds ?? 0}s old)` : " · fetched from gateway"}{quote.provider_latency_ms != null ? ` · ${quote.cache_hit ? "last provider fetch" : "provider"} ${quote.provider_latency_ms}ms` : ""}. Provider market timestamp is not supplied.</p></>}{!quoteBusy && !quoteError && !quote && <p style={muted}>Price unavailable.</p>}</section>}
     {/* Historical chart belongs only to the selected instrument workspace, never the market landing page. */}
     {selectedInstrument && <section style={card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>

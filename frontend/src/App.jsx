@@ -2753,9 +2753,10 @@ function MarketsPage() {
               const providerYearLow = quoteValue("year_low", "yearLow", "52_week_low", "52WeekLow", "low_52_week", "fifty_two_week_low", "week_52_low");
               const historyHighs = yearRangeData.map((row) => Number(row.high)).filter((value) => Number.isFinite(value) && value > 0);
               const historyLows = yearRangeData.map((row) => Number(row.low)).filter((value) => Number.isFinite(value) && value > 0);
+              const historyCloses = yearRangeData.map((row) => Number(row.close)).filter((value) => Number.isFinite(value) && value > 0);
               const hasYearHistory = yearRangeData.length > 1 || (["1Y", "5Y"].includes(chartRange) && chartData.length > 1);
-              const yearHigh = providerYearHigh ?? (historyHighs.length ? Math.max(...historyHighs) : (hasYearHistory ? Math.max(...closes) : null));
-              const yearLow = providerYearLow ?? (historyLows.length ? Math.min(...historyLows) : (hasYearHistory ? Math.min(...closes) : null));
+              const yearHigh = providerYearHigh ?? (historyHighs.length ? Math.max(...historyHighs) : (historyCloses.length ? Math.max(...historyCloses) : (hasYearHistory ? Math.max(...closes) : null)));
+              const yearLow = providerYearLow ?? (historyLows.length ? Math.min(...historyLows) : (historyCloses.length ? Math.min(...historyCloses) : (hasYearHistory ? Math.min(...closes) : null)));
               const averagePrice = quoteValue("average_price", "avg_price", "average_traded_price", "averageTradedPrice", "avgPrice");
               const volume = quoteValue("volume", "volume_traded_today", "volumeTradedToday", "total_traded_volume");
               const lastTradedQuantity = quoteValue("last_traded_quantity", "last_traded_qty", "lastTradedQty");

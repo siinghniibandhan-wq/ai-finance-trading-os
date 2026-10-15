@@ -5382,6 +5382,12 @@ function Holdings() {
 function Portfolio() {
 
   const USER_ID = getCurrentUserId();
+  const getLocalDateString = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 10);
+  };
+  const isListedProductType = (productType) => ["Stocks", "ETFs", "REITs"].includes(productType);
 
   // Shared muted text style used by Portfolio and the investment form.
   // Keep this local to Portfolio so it does not depend on MarketsPage state.
@@ -5405,7 +5411,7 @@ function Portfolio() {
     quantity: "",
     buy_price: "",
     current_price: "",
-    buy_date: "",
+    buy_date: getLocalDateString(),
     broker: "",
     fees: "",
     notes: "",
@@ -5415,12 +5421,14 @@ function Portfolio() {
   const [instrumentResults, setInstrumentResults] = useState([]);
   const [instrumentSearchBusy, setInstrumentSearchBusy] = useState(false);
   const [instrumentSearchError, setInstrumentSearchError] = useState("");
+  const instrumentSearchRequestRef = useRef(0);
   const [brokerChoice, setBrokerChoice] = useState("");
   const [customBroker, setCustomBroker] = useState("");
 
   // Reset every add/edit field so the two form modes never leak into each other.
   const resetInvestmentForm = () => {
-    setInvestmentForm({ name: "", exchange: "", asset_class: "Equity", investment_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: "", broker: "", fees: "", notes: "" });
+    instrumentSearchRequestRef.current += 1;
+    setInvestmentForm({ name: "", exchange: "", asset_class: "Equity", investment_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: getLocalDateString(), broker: "", fees: "", notes: "" });
     setInstrumentQuery("");
     setInstrumentResults([]);
     setInstrumentSearchError("");
@@ -5433,14 +5441,16 @@ function Portfolio() {
   // Search the correct instrument catalogue for the selected asset category.
   // Stocks/ETFs keep using the existing market-search API; Mutual Funds use AMFI.
   const searchInvestmentInstruments = async (value) => {
+    const requestId = ++instrumentSearchRequestRef.current;
     setInstrumentQuery(value);
     setInstrumentSearchError("");
     const productType = investmentForm.investment_type;
     const isMutualFund = ["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(productType);
     const usesListedCatalogue = ["Stocks", "ETFs", "REITs"].includes(productType);
-    if (!value.trim()) { setInstrumentResults([]); return; }
+    if (!value.trim()) { setInstrumentResults([]); setInstrumentSearchBusy(false); return; }
     if (!isMutualFund && !usesListedCatalogue) {
       setInstrumentResults([]);
+      setInstrumentSearchBusy(false);
       setInstrumentSearchError("This product type uses manual entry; no dedicated instrument catalogue is connected.");
       setInvestmentForm((previous) => ({ ...previous, name: value, symbol: "" }));
       return;
@@ -5456,6 +5466,7 @@ function Portfolio() {
         const detail = typeof data?.detail === "string" ? data.detail : `Instrument search failed (${response.status})`;
         throw new Error(detail);
       }
+      if (requestId !== instrumentSearchRequestRef.current) return;
       const safeResults = Array.isArray(data?.results)
         ? data.results.filter((item) => item && typeof item === "object").map((item) => {
             const symbol = typeof item.symbol === "string" ? item.symbol
@@ -5473,20 +5484,30 @@ function Portfolio() {
       setInstrumentResults(safeResults);
       setInstrumentSearchError(safeResults.length ? "" : (isMutualFund ? "No matching mutual fund schemes found." : "No matching listed instruments found."));
     } catch (error) {
-      setInstrumentResults([]);
-      setInstrumentSearchError(error?.message || "Instrument search is unavailable.");
-    } finally { setInstrumentSearchBusy(false); }
+      if (requestId === instrumentSearchRequestRef.current) {
+        setInstrumentResults([]);
+        setInstrumentSearchError(error?.message || "Instrument search is unavailable.");
+      }
+    } finally {
+      if (requestId === instrumentSearchRequestRef.current) setInstrumentSearchBusy(false);
+    }
   };
 
   const selectInvestmentInstrument = (instrument) => {
     const symbol = instrument?.tradingsymbol || instrument?.symbol || "";
     const name = instrument?.name || instrument?.company_name || symbol;
+    const quotedPrice = instrument?.last_price != null && Number(instrument.last_price) > 0
+      ? String(instrument.last_price)
+      : "";
     setInvestmentForm((previous) => ({
       ...previous,
       name,
       symbol,
       exchange: instrument?.exchange || (["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(previous.investment_type) ? "AMFI" : ""),
-      current_price: instrument?.last_price != null && Number(instrument.last_price) > 0 ? String(instrument.last_price) : previous.current_price,
+      current_price: quotedPrice || previous.current_price,
+      buy_price: previous.buy_date === getLocalDateString() && quotedPrice
+        ? quotedPrice
+        : previous.buy_price,
     }));
     setInstrumentQuery(`${name}${symbol ? ` (${symbol})` : ""}`);
     setInstrumentResults([]);
@@ -5782,8 +5803,7 @@ const openInvestmentTransaction = (
       investment.buy_price ??
       "",
     fees: "",
-    transaction_date:
-      new Date().toISOString().split("T")[0],
+    transaction_date: getLocalDateString(),
     notes: "",
   });
 
@@ -6019,8 +6039,7 @@ const handleInvestmentTransactionSubmit =
           investment.buy_price ??
           "",
         fees: "",
-        transaction_date:
-          new Date().toISOString().split("T")[0],
+        transaction_date: getLocalDateString(),
         notes: "",
       });
 
@@ -6104,6 +6123,16 @@ const handleInvestmentTransactionSubmit =
 
       if (!investmentForm.buy_date) {
         alert("Please select a buy date.");
+        return;
+      }
+      if (
+        !editingInvestmentId &&
+        isListedProductType(investmentForm.investment_type) &&
+        investmentForm.buy_date === getLocalDateString() &&
+        Number(investmentForm.current_price) > 0 &&
+        Number(investmentForm.buy_price) !== Number(investmentForm.current_price)
+      ) {
+        alert("For a purchase dated today, the buy price must match the latest available market price.");
         return;
       }
 
@@ -6609,7 +6638,9 @@ const summaryCards = [
                 onChange={(event) => {
                   const nextAssetClass = event.target.value;
                   const nextTypes = PRODUCT_TYPES_BY_ASSET_CLASS[nextAssetClass] || ["Other"];
-                  setInvestmentForm((previous) => ({ ...previous, asset_class: nextAssetClass, investment_type: nextTypes[0], name: "", symbol: "", current_price: "" }));
+                  instrumentSearchRequestRef.current += 1;
+                  setInstrumentSearchBusy(false);
+                  setInvestmentForm((previous) => ({ ...previous, asset_class: nextAssetClass, investment_type: nextTypes[0], name: "", symbol: "", buy_price: "", current_price: "" }));
                   setInstrumentQuery("");
                   setInstrumentResults([]);
                   setInstrumentSearchError("");
@@ -6633,11 +6664,14 @@ const summaryCards = [
               value={investmentForm.investment_type}
               onChange={(event) => {
                 const nextType = event.target.value;
+                instrumentSearchRequestRef.current += 1;
+                setInstrumentSearchBusy(false);
                 setInvestmentForm((previous) => ({
                   ...previous,
                   investment_type: nextType,
                   name: "",
                   symbol: "",
+                  buy_price: "",
                   current_price: "",
                 }));
                 setInstrumentQuery("");
@@ -6709,12 +6743,14 @@ const summaryCards = [
               type="number"
               placeholder="Buy price"
               value={investmentForm.buy_price}
+              readOnly={!editingInvestmentId && isListedProductType(investmentForm.investment_type) && investmentForm.buy_date === getLocalDateString() && Number(investmentForm.current_price) > 0}
               onChange={(event) =>
                 setInvestmentForm({
                   ...investmentForm,
                   buy_price: event.target.value,
                 })
               }
+              title={!editingInvestmentId && isListedProductType(investmentForm.investment_type) && investmentForm.buy_date === getLocalDateString() ? "Today's purchase uses the latest available market price. Select a past date to enter a historical price." : "Enter the actual purchase price."}
               style={{
                 width: "100%",
                 boxSizing: "border-box",
@@ -6765,12 +6801,16 @@ const summaryCards = [
             <input
               type="date"
               value={investmentForm.buy_date}
-              onChange={(event) =>
-                setInvestmentForm({
-                  ...investmentForm,
-                  buy_date: event.target.value,
-                })
-              }
+              onChange={(event) => {
+                const nextDate = event.target.value;
+                setInvestmentForm((previous) => ({
+                  ...previous,
+                  buy_date: nextDate,
+                  ...(nextDate === getLocalDateString() && isListedProductType(previous.investment_type) && Number(previous.current_price) > 0
+                    ? { buy_price: String(previous.current_price) }
+                    : {}),
+                }));
+              }}
               style={{
                 width: "100%",
                 boxSizing: "border-box",
@@ -7931,6 +7971,7 @@ const holdingReturn =
               min="0"
               step="any"
               value={transactionForm.price}
+              readOnly={transactionForm.transaction_date === getLocalDateString() && isListedProductType(investment?.investment_type) && Number(investment?.current_price) > 0}
               onChange={(event) =>
                 setTransactionForm((previous) => ({
                   ...previous,
@@ -7939,6 +7980,7 @@ const holdingReturn =
                 }))
               }
               placeholder="Enter price"
+              title={transactionForm.transaction_date === getLocalDateString() && isListedProductType(investment?.investment_type) ? "Today's purchase uses the latest available market price. Select a past date to enter a historical price." : "Enter the actual transaction price."}
               style={investmentFieldStyle}
             />
 
@@ -7995,13 +8037,16 @@ const holdingReturn =
               value={
                 transactionForm.transaction_date
               }
-              onChange={(event) =>
+              onChange={(event) => {
+                const nextDate = event.target.value;
                 setTransactionForm((previous) => ({
                   ...previous,
-                  transaction_date:
-                    event.target.value,
-                }))
-              }
+                  transaction_date: nextDate,
+                  ...(nextDate === getLocalDateString() && isListedProductType(investment?.investment_type) && Number(investment?.current_price) > 0
+                    ? { price: String(investment.current_price) }
+                    : {}),
+                }));
+              }}
               style={{
                 ...investmentFieldStyle,
                 colorScheme: "dark",

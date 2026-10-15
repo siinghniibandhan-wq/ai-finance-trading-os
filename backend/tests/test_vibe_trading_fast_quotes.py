@@ -12,11 +12,18 @@ def _clear_cache():
 def test_quote_cache_avoids_repeated_gateway_call(monkeypatch):
     calls = []
 
-    def fake_get_market_price(symbol):
+    def fake_get_market_quote(symbol):
         calls.append(symbol)
-        return Decimal("123.45")
+        return {
+            "price": Decimal("123.45"),
+            "details": {"exchange_timestamp": "2026-10-16T09:15:00+05:30", "year_high": 150},
+            "retrieved_at": "2026-10-16T03:45:00+00:00",
+            "provider_latency_ms": 12.5,
+            "cache_hit": False,
+            "cache_age_seconds": 0.0,
+        }
 
-    monkeypatch.setattr(vibe_trading, "get_market_price", fake_get_market_price)
+    monkeypatch.setattr(vibe_trading, "get_market_quote", fake_get_market_quote)
     monkeypatch.setattr(vibe_trading, "QUOTE_CACHE_TTL_SECONDS", 2.0)
     _clear_cache()
 
@@ -27,14 +34,24 @@ def test_quote_cache_avoids_repeated_gateway_call(monkeypatch):
     assert second["status"] == "success"
     assert first["quote"]["last_price"] == 123.45
     assert second["cache_hit"] is True
+    assert first["provider_market_timestamp"] == "2026-10-16T09:15:00+05:30"
+    assert first["provider_latency_ms"] == 12.5
+    assert first["quote"]["year_high"] == 150.0
     assert calls == ["RELIANCE"]
 
 
 def test_batch_quotes_deduplicates_and_preserves_order(monkeypatch):
-    def fake_get_market_price(symbol):
-        return Decimal("100.00") if symbol == "TCS" else Decimal("200.00")
+    def fake_get_market_quote(symbol):
+        return {
+            "price": Decimal("100.00") if symbol == "TCS" else Decimal("200.00"),
+            "details": {},
+            "retrieved_at": "2026-10-16T03:45:00+00:00",
+            "provider_latency_ms": 8.0,
+            "cache_hit": False,
+            "cache_age_seconds": 0.0,
+        }
 
-    monkeypatch.setattr(vibe_trading, "get_market_price", fake_get_market_price)
+    monkeypatch.setattr(vibe_trading, "get_market_quote", fake_get_market_quote)
     monkeypatch.setattr(vibe_trading, "QUOTE_CACHE_TTL_SECONDS", 0.0)
     _clear_cache()
 
@@ -51,11 +68,18 @@ def test_batch_quotes_deduplicates_and_preserves_order(monkeypatch):
 def test_cache_disabled_when_ttl_zero(monkeypatch):
     calls = []
 
-    def fake_get_market_price(symbol):
+    def fake_get_market_quote(symbol):
         calls.append(symbol)
-        return Decimal("42.00")
+        return {
+            "price": Decimal("42.00"),
+            "details": {},
+            "retrieved_at": "2026-10-16T03:45:00+00:00",
+            "provider_latency_ms": 8.0,
+            "cache_hit": False,
+            "cache_age_seconds": 0.0,
+        }
 
-    monkeypatch.setattr(vibe_trading, "get_market_price", fake_get_market_price)
+    monkeypatch.setattr(vibe_trading, "get_market_quote", fake_get_market_quote)
     monkeypatch.setattr(vibe_trading, "QUOTE_CACHE_TTL_SECONDS", 0.0)
     _clear_cache()
 

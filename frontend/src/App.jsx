@@ -2275,6 +2275,7 @@ function MarketsPage() {
   const [chartData, setChartData] = useState([]);
   // Keep a full-year daily dataset for 52-week range metrics even when the visible chart is set to 1M/3M.
   const [yearRangeData, setYearRangeData] = useState([]);
+  const yearRangeRequestRef = useRef(0);
   const [chartInfo, setChartInfo] = useState(null);
   const [chartBusy, setChartBusy] = useState(false);
   const [chartError, setChartError] = useState("");
@@ -2489,6 +2490,7 @@ function MarketsPage() {
 
   const loadYearRange = async (symbol, marketExchange) => {
     if (!symbol) return;
+    const requestId = ++yearRangeRequestRef.current;
     const toDate = new Date();
     const fromDate = new Date(toDate);
     fromDate.setDate(fromDate.getDate() - 365);
@@ -2499,15 +2501,17 @@ function MarketsPage() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Year history returned ${response.status}`);
       const rows = Array.isArray(data?.data) ? data.data : [];
-      setYearRangeData(rows.map((row) => ({
-        ...row,
-        high: Number(row.high),
-        low: Number(row.low),
-        close: Number(row.close),
-      })).filter((row) => [row.high, row.low, row.close].some((value) => Number.isFinite(value) && value > 0)));
+      if (requestId === yearRangeRequestRef.current) {
+        setYearRangeData(rows.map((row) => ({
+          ...row,
+          high: Number(row.high),
+          low: Number(row.low),
+          close: Number(row.close),
+        })).filter((row) => [row.high, row.low, row.close].some((value) => Number.isFinite(value) && value > 0)));
+      }
     } catch (error) {
       // Keep the page usable when the history endpoint is unavailable; quote-provided 52-week fields still display.
-      setYearRangeData([]);
+      if (requestId === yearRangeRequestRef.current) setYearRangeData([]);
       console.warn("One-year price history unavailable for 52-week range metrics.", error);
     }
   };

@@ -4833,15 +4833,28 @@ function Holdings() {
                         </strong>
                       </div>
 
-                      <div>
-                        <div className="card-label">
-                          PRICE
+                      <div
+                        style={{
+                          padding: "10px 12px",
+                          borderRadius: "12px",
+                          border: "1px solid rgba(52, 211, 153, 0.24)",
+                          background: "linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.035))",
+                          minWidth: 0,
+                        }}
+                      >
+                        <div
+                          className="card-label"
+                          style={{ display: "flex", alignItems: "center", gap: "6px", color: "rgba(110, 231, 183, 0.9)" }}
+                        >
+                          <span aria-hidden="true" style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px rgba(52, 211, 153, 0.65)", flexShrink: 0 }} />
+                          CURRENT PRICE
                         </div>
-                        <strong>
-                          {formatCurrency(
-                            holding.current_price
-                          )}
+                        <strong style={{ display: "block", marginTop: "5px", fontSize: "14px", fontVariantNumeric: "tabular-nums", color: "#a7f3d0", overflowWrap: "anywhere" }}>
+                          {formatCurrency(holding.current_price)}
                         </strong>
+                        <div style={{ marginTop: "3px", fontSize: "10px", color: "rgba(255,255,255,0.45)" }}>
+                          Per unit
+                        </div>
                       </div>
 
                       <div>

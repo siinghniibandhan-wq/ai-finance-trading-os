@@ -232,7 +232,7 @@ function BreakdownPanel({ activeCard, data, onClose, onNavigate, onSelectCard })
 // ============================================================
 
 export default function WealthManager({ onNavigate = () => {} }) {
-  const [data, setData] = useState({ summary: null, liabilities: null, taxLiability: null, receivables: null, transactions: [] });
+  const [data, setData] = useState({ summary: null, liabilities: null, taxLiability: null, receivables: null, transactions: [], holdings: [] });
   const [analysisPeriod, setAnalysisPeriod] = useState("12");
   const [analysisChart, setAnalysisChart] = useState("income-expense");
   // Keep the Wealth Manager estimate aligned with the user's explicit regime selection.
@@ -257,6 +257,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
       getJson(`/api/final-tax-liability/?user_id=${USER_ID}&financial_year=${FINANCIAL_YEAR}&tax_regime=${encodeURIComponent(taxRegime)}&residential_status=resident&stt_confirmed=false`),
       getJson(`/api/transactions/receivables-payables`),
       getJson(`/api/transactions/`),
+      getJson(`/api/holdings/?user_id=${USER_ID}`),
     ]);
 
     const nextData = {
@@ -265,12 +266,13 @@ export default function WealthManager({ onNavigate = () => {} }) {
       taxLiability: requests[2].status === "fulfilled" ? requests[2].value : null,
       receivables: requests[3].status === "fulfilled" ? requests[3].value : null,
       transactions: requests[4].status === "fulfilled" && Array.isArray(requests[4].value) ? requests[4].value : [],
+      holdings: requests[5].status === "fulfilled" && Array.isArray(requests[5].value?.holdings) ? requests[5].value.holdings : [],
     };
     setData(nextData);
 
-    const labels = ["Financial Summary", "Liabilities", "Tax estimate", "Receivables", "Transactions"];
+    const labels = ["Financial Summary", "Liabilities", "Tax estimate", "Receivables", "Transactions", "Investment holdings"];
     const failed = requests
-      .map((result, index) => result.status === "rejected" && index < 3 ? `${labels[index]}: ${result.reason?.message || "Unable to load"}` : null)
+      .map((result, index) => result.status === "rejected" && (index < 3 || index === 5) ? `${labels[index]}: ${result.reason?.message || "Unable to load"}` : null)
       .filter(Boolean);
     setErrors(failed);
     setLastUpdated(new Date());
@@ -376,6 +378,58 @@ export default function WealthManager({ onNavigate = () => {} }) {
   const chartMax = Math.max(1, ...analysisMonths.flatMap((month) => [month.income, month.expenses, Math.abs(month.net)]));
   const liabilityRatio = totals.assets > 0 ? (totals.liabilities / totals.assets) * 100 : null;
 
+  // Split the existing portfolio total into broad asset classes using the
+  // authenticated Holdings API. If a category cannot be classified, retain it
+  // under "Other investments"; never invent values or double-count positions.
+  const wealthAllocation = useMemo(() => {
+    const categories = new Map();
+    const classify = (holding) => {
+      const label = `${holding.investment_type || ""} ${holding.product_type || ""} ${holding.name || ""}`.toLowerCase();
+      if (/mutual fund|\bmutual\b|\bmf\b|sip/.test(label)) return "Mutual funds";
+      if (/\betf\b|exchange traded fund/.test(label)) return "ETFs";
+      if (/bond|debenture|\bncd\b|treasury|gilt/.test(label)) return "Bonds";
+      if (/gold|silver|commodity/.test(label)) return "Gold & commodities";
+      if (/stock|equity|share|\bequities\b|\bnse\b|\bbse\b/.test(label)) return "Stocks & equity";
+      if (/deposit|\bfd\b|\brd\b|fixed deposit|recurring deposit/.test(label)) return "Deposits";
+      if (/real estate|property|reit/.test(label)) return "Real estate";
+      return "Other investments";
+    };
+    (data.holdings || []).forEach((holding) => {
+      const value = Math.max(0, numberValue(holding.current_value));
+      if (value <= 0) return;
+      const category = classify(holding);
+      categories.set(category, (categories.get(category) || 0) + value);
+    });
+    const holdingTotal = [...categories.values()].reduce((sum, value) => sum + value, 0);
+    const investmentTotal = Math.max(0, totals.investments);
+    // Financial Summary is the authoritative total. Add only an unexplained
+    // positive residual; if holdings exceed the summary, scale them proportionally.
+    if (holdingTotal > investmentTotal && holdingTotal > 0) {
+      for (const [key, value] of categories.entries()) categories.set(key, value * investmentTotal / holdingTotal);
+    } else if (investmentTotal > holdingTotal) {
+      categories.set("Other / unclassified investments", (categories.get("Other / unclassified investments") || 0) + investmentTotal - holdingTotal);
+    }
+    const rows = [
+      { name: "Cash & accounts", value: Math.max(0, totals.cash), destination: "Accounts", group: "cash" },
+      ...[...categories.entries()].map(([name, value]) => ({ name, value, destination: "Holdings", group: "investment" })),
+      { name: "Receivables", value: Math.max(0, totals.receivables), destination: "Transactions", group: "receivable" },
+    ].filter((item) => item.value > 0);
+    return rows.map((item) => ({ ...item, share: totals.assets > 0 ? item.value / totals.assets * 100 : 0 }));
+  }, [data.holdings, totals]);
+
+  const [selectedWealthSlice, setSelectedWealthSlice] = useState(null);
+  const wealthPieGradient = useMemo(() => {
+    if (!wealthAllocation.length) return "conic-gradient(#334155 0% 100%)";
+    const colors = ["#38bdf8", "#a78bfa", "#34d399", "#fbbf24", "#f472b6", "#818cf8", "#fb923c", "#2dd4bf", "#94a3b8"];
+    let cursor = 0;
+    const slices = wealthAllocation.map((item, index) => {
+      const start = cursor;
+      cursor += item.share;
+      return `${colors[index % colors.length]} ${start}% ${cursor}%`;
+    });
+    return `conic-gradient(${slices.join(", ")})`;
+  }, [wealthAllocation]);
+
   return (
     <div className="wealth-centre">
       <section className="wc-welcome">
@@ -421,25 +475,53 @@ export default function WealthManager({ onNavigate = () => {} }) {
 
       {activeCard && <BreakdownPanel activeCard={activeCard} data={data} onClose={() => setActiveCard(null)} onNavigate={onNavigate} onSelectCard={setActiveCard} />}
 
-      <section className="wc-wealth-analysis-grid" aria-label="Recorded wealth composition">
+      <section className="wc-wealth-visuals" aria-label="Wealth distribution and balance sheet">
         <article className="glass-card wc-info-panel wc-asset-composition">
-          <div className="wc-panel-heading"><div><p className="card-label">ASSET ALLOCATION</p><h3>Recorded wealth composition</h3></div><PieChart size={19} /></div>
-          <p className="wc-chart-subtitle">Each amount is shown once. Select a category to open its records.</p>
-          <div className="wc-wealth-mix-list">
-            <button type="button" className="wc-wealth-mix-row wc-mix-clickable" onClick={() => onNavigate("Accounts")} aria-label={`Open cash and account balances: ${money(totals.cash)}`}>
-              <span className="wc-wealth-mix-label"><span>Cash &amp; accounts</span><strong>{money(totals.cash)} · {cashShare.toFixed(1)}%</strong></span><span className="wc-wealth-mix-track"><span className="cash" style={{ width: `${cashShare}%` }} /></span><span className="wc-mix-action">Manage accounts →</span>
-            </button>
-            <button type="button" className="wc-wealth-mix-row wc-mix-clickable" onClick={() => onNavigate("Portfolio")} aria-label={`Open investments: ${money(totals.investments)}`}>
-              <span className="wc-wealth-mix-label"><span>Investments</span><strong>{money(totals.investments)} · {investmentShare.toFixed(1)}%</strong></span><span className="wc-wealth-mix-track"><span className="investments" style={{ width: `${investmentShare}%` }} /></span><span className="wc-mix-action">Open portfolio →</span>
-            </button>
-            <button type="button" className="wc-wealth-mix-row wc-mix-clickable" onClick={() => onNavigate("Transactions")} aria-label={`Open receivables: ${money(totals.receivables)}`}>
-              <span className="wc-wealth-mix-label"><span>Receivables · owed to you</span><strong>{money(totals.receivables)} · {receivableShare.toFixed(1)}%</strong></span><span className="wc-wealth-mix-track"><span className="receivables" style={{ width: `${receivableShare}%` }} /></span><span className="wc-mix-action">View receivables →</span>
-            </button>
+          <div className="wc-panel-heading">
+            <div><p className="card-label">WHERE YOUR WEALTH IS</p><h3>Asset allocation</h3><p className="wc-chart-subtitle">Broad asset classes from recorded holdings, plus cash and receivables. Tap a segment or label to inspect its source module.</p></div>
+            <PieChart size={19} />
           </div>
-          <div className="wc-total-row"><span>Total recorded assets</span><strong>{money(totals.assets)}</strong></div>
-          <div className="wc-investment-performance"><div><span>Investment profit / loss</span><strong>{(() => { const inv = data.summary?.investments || {}; const cost = inv.invested_value ?? inv.total_invested ?? inv.invested_amount ?? inv.cost_basis; return cost === undefined || cost === null ? "Cost basis unavailable" : money(totals.investments - numberValue(cost)); })()}</strong></div><small>Calculated only when the existing summary provides a recorded investment cost basis; no profit is inferred from market value alone.</small></div>
-          <p className="wc-note">Assets include cash/account balances, current investments and outstanding receivables. Loans and other liabilities are shown separately in the Total Liabilities card above, so they are not mixed into asset allocation.</p>
-          <div className="wc-breakdown-actions"><BreakdownAction onClick={() => setActiveCard("Total Assets")}>Detailed asset records</BreakdownAction><BreakdownAction onClick={() => setActiveCard("Total Liabilities")}>Loans &amp; liabilities</BreakdownAction></div>
+          <div className="wc-allocation-layout">
+            <div className="wc-wealth-pie" role="img" aria-label={wealthAllocation.map((item) => `${item.name} ${item.share.toFixed(1)} percent`).join(", ")} style={{ background: wealthPieGradient }}>
+              <span>{money(totals.assets)}<small>Total assets</small></span>
+            </div>
+            <div className="wc-allocation-legend">
+              {wealthAllocation.length ? wealthAllocation.map((item, index) => (
+                <button type="button" key={item.name} className={`wc-allocation-row ${selectedWealthSlice === item.name ? "selected" : ""}`} onClick={() => { setSelectedWealthSlice(item.name); onNavigate(item.destination); }} aria-label={`Open ${item.name}: ${money(item.value)}, ${item.share.toFixed(1)} percent`}>
+                  <span className="wc-allocation-dot" style={{ "--slice-color": ["#38bdf8", "#a78bfa", "#34d399", "#fbbf24", "#f472b6", "#818cf8", "#fb923c", "#2dd4bf", "#94a3b8"][index % 9] }} />
+                  <span className="wc-allocation-name">{item.name}<small>{item.share.toFixed(1)}% of recorded assets</small></span>
+                  <strong>{money(item.value)}</strong>
+                  <span className="wc-allocation-arrow">↗</span>
+                </button>
+              )) : <div className="wc-chart-empty">No positive asset balances are currently available to chart.</div>}
+            </div>
+          </div>
+          <p className="wc-note">Investment classes use the existing Holdings API. If no holding details are available, the portfolio total is kept under “Other / unclassified investments.” The Financial Summary remains the source of the total investment value; no new backend calculations or records are created.</p>
+          <div className="wc-breakdown-actions"><BreakdownAction onClick={() => onNavigate("Portfolio")}>Open portfolio</BreakdownAction><BreakdownAction onClick={() => onNavigate("Holdings")}>Explore holdings</BreakdownAction><BreakdownAction onClick={() => setActiveCard("Total Assets")}>Full asset breakdown</BreakdownAction></div>
+        </article>
+
+        <article className="glass-card wc-info-panel wc-balance-sheet-chart">
+          <div className="wc-panel-heading">
+            <div><p className="card-label">YOUR BALANCE SHEET</p><h3>Net worth vs assets & liabilities</h3><p className="wc-chart-subtitle">Current recorded snapshot · tap a bar to open its breakdown.</p></div>
+            <LineChart size={19} />
+          </div>
+          <div className="wc-balance-chart" role="group" aria-label="Current net worth, total assets and total liabilities comparison">
+            {[
+              { label: "Total assets", value: totals.assets, color: "assets", detail: "Cash, investments and receivables", action: () => setActiveCard("Total Assets") },
+              { label: "Liabilities", value: totals.liabilities, color: "liabilities", detail: "Recorded outstanding balances", action: () => setActiveCard("Total Liabilities") },
+              { label: "Net worth", value: totals.netWorth, color: "net-worth", detail: "Assets minus liabilities", action: () => setActiveCard("Net Worth") },
+            ].map((item) => {
+              const max = Math.max(1, totals.assets, totals.liabilities, Math.abs(totals.netWorth));
+              const width = Math.max(item.value !== 0 ? 2 : 0, Math.min(100, Math.abs(item.value) / max * 100));
+              return <button type="button" className={`wc-balance-row ${item.color}`} key={item.label} onClick={item.action} aria-label={`${item.label}: ${money(item.value)}. Open breakdown.`}>
+                <span className="wc-balance-label"><strong>{item.label}</strong><small>{item.detail}</small></span>
+                <span className="wc-balance-track"><span style={{ width: `${width}%` }} /></span>
+                <strong className="wc-balance-value">{money(item.value)}</strong>
+              </button>;
+            })}
+          </div>
+          <div className="wc-balance-equation"><span>Assets</span><strong>{money(totals.assets)}</strong><span>− Liabilities</span><strong>{money(totals.liabilities)}</strong><span>= Net worth</span><strong>{money(totals.netWorth)}</strong></div>
+          <p className="wc-note">This compares current totals; it is not a historical trend. Historical net-worth points are not fabricated when the current APIs do not provide dated asset and liability snapshots.</p>
         </article>
       </section>
 

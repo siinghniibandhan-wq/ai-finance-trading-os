@@ -163,7 +163,7 @@ def _fetch_gateway_quote(symbol: str) -> Decimal:
 
         with urlopen(
             request,
-            timeout=15,
+            timeout=8,
         ) as response:
 
             payload = json.loads(
@@ -344,11 +344,14 @@ def get_market_quote(
     ttl = MARKET_PRICE_CACHE_TTL_SECONDS
 
     if ttl <= 0:
+        fetch_started = monotonic()
         price = _fetch_gateway_quote(normalized_symbol)
         return {
             "price": price,
             "retrieved_at": datetime.now(timezone.utc).isoformat(),
             "cache_hit": False,
+            "cache_age_seconds": 0.0,
+            "provider_latency_ms": round((monotonic() - fetch_started) * 1000, 2),
         }
 
     while True:
@@ -360,6 +363,8 @@ def get_market_quote(
                     "price": cached[1],
                     "retrieved_at": cached[2],
                     "cache_hit": True,
+                    "cache_age_seconds": round(max(0.0, now - cached[0]), 3),
+                    "provider_latency_ms": None,
                 }
 
             flight = _MARKET_PRICE_INFLIGHT.get(normalized_symbol)
@@ -378,10 +383,14 @@ def get_market_quote(
                 "price": flight["price"],
                 "retrieved_at": flight["retrieved_at"],
                 "cache_hit": True,
+                "cache_age_seconds": 0.0,
+                "provider_latency_ms": None,
             }
 
         try:
+            fetch_started = monotonic()
             price = _fetch_gateway_quote(normalized_symbol)
+            provider_latency_ms = round((monotonic() - fetch_started) * 1000, 2)
             retrieved_at = datetime.now(timezone.utc).isoformat()
 
             with _MARKET_PRICE_CACHE_LOCK:
@@ -405,11 +414,14 @@ def get_market_quote(
                 )
                 flight["price"] = price
                 flight["retrieved_at"] = retrieved_at
+                flight["provider_latency_ms"] = provider_latency_ms
 
             return {
                 "price": price,
                 "retrieved_at": retrieved_at,
                 "cache_hit": False,
+                "cache_age_seconds": 0.0,
+                "provider_latency_ms": provider_latency_ms,
             }
         except MarketPriceError as exc:
             flight["error"] = exc

@@ -77,7 +77,8 @@ function BreakdownPanel({ activeCard, data, onClose, onNavigate, onSelectCard })
 
   const cash = numberValue(data.summary?.cash?.total_balance);
   const investments = numberValue(data.summary?.investments?.current_value);
-  const assets = cash + investments;
+  const receivables = numberValue(data.receivables?.total_receivable);
+  const assets = cash + investments + receivables;
   const liabilities = numberValue(data.liabilities?.total_outstanding);
   const netWorth = assets - liabilities;
   const tax = data.taxLiability || {};
@@ -221,7 +222,9 @@ function BreakdownPanel({ activeCard, data, onClose, onNavigate, onSelectCard })
 // ============================================================
 
 export default function WealthManager({ onNavigate = () => {} }) {
-  const [data, setData] = useState({ summary: null, liabilities: null, taxLiability: null });
+  const [data, setData] = useState({ summary: null, liabilities: null, taxLiability: null, receivables: null, transactions: [] });
+  const [analysisPeriod, setAnalysisPeriod] = useState("12");
+  const [analysisChart, setAnalysisChart] = useState("income-expense");
   // Keep the Wealth Manager estimate aligned with the user's explicit regime selection.
   const [taxRegime, setTaxRegime] = useState("new");
   const [loading, setLoading] = useState(true);
@@ -239,18 +242,22 @@ export default function WealthManager({ onNavigate = () => {} }) {
       getJson(`/api/financial-summary/?user_id=${USER_ID}`),
       getJson(`/api/liabilities?user_id=${USER_ID}`),
       getJson(`/api/final-tax-liability/?user_id=${USER_ID}&financial_year=${FINANCIAL_YEAR}&tax_regime=${encodeURIComponent(taxRegime)}&residential_status=resident&stt_confirmed=false`),
+      getJson(`/api/transactions/receivables-payables`),
+      getJson(`/api/transactions/`),
     ]);
 
     const nextData = {
       summary: requests[0].status === "fulfilled" ? requests[0].value : null,
       liabilities: requests[1].status === "fulfilled" ? requests[1].value : null,
       taxLiability: requests[2].status === "fulfilled" ? requests[2].value : null,
+      receivables: requests[3].status === "fulfilled" ? requests[3].value : null,
+      transactions: requests[4].status === "fulfilled" && Array.isArray(requests[4].value) ? requests[4].value : [],
     };
     setData(nextData);
 
-    const labels = ["Financial Summary", "Liabilities", "Tax estimate"];
+    const labels = ["Financial Summary", "Liabilities", "Tax estimate", "Receivables", "Transactions"];
     const failed = requests
-      .map((result, index) => result.status === "rejected" ? `${labels[index]}: ${result.reason?.message || "Unable to load"}` : null)
+      .map((result, index) => result.status === "rejected" && index < 3 ? `${labels[index]}: ${result.reason?.message || "Unable to load"}` : null)
       .filter(Boolean);
     setErrors(failed);
     setLastUpdated(new Date());
@@ -268,9 +275,10 @@ export default function WealthManager({ onNavigate = () => {} }) {
   const totals = useMemo(() => {
     const cash = numberValue(data.summary?.cash?.total_balance);
     const investments = numberValue(data.summary?.investments?.current_value);
-    const assets = cash + investments;
+    const receivables = numberValue(data.receivables?.total_receivable);
+    const assets = cash + investments + receivables;
     const liabilities = numberValue(data.liabilities?.total_outstanding);
-    return { cash, investments, assets, liabilities, netWorth: assets - liabilities };
+    return { cash, investments, receivables, assets, liabilities, netWorth: assets - liabilities };
   }, [data]);
 
   const tax = data.taxLiability || {};
@@ -284,7 +292,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
 
   const cards = [
     { title: "Net Worth", value: totals.netWorth, subtitle: "Assets minus liabilities", icon: TrendingUp, tone: "purple" },
-    { title: "Total Assets", value: totals.assets, subtitle: "Cash + recorded investments", icon: Wallet, tone: "blue" },
+    { title: "Total Assets", value: totals.assets, subtitle: "Cash + investments + receivables", icon: Wallet, tone: "blue" },
     { title: "Total Liabilities", value: totals.liabilities, subtitle: "Outstanding recorded balances", icon: Landmark, tone: "orange" },
     { title: "Tax Overview", value: taxAmount === undefined ? null : numberValue(taxAmount), subtitle: taxAmount === undefined ? "Estimate unavailable" : `Tax engine · FY ${FINANCIAL_YEAR}`, icon: ReceiptText, tone: "pink" },
   ];
@@ -326,6 +334,33 @@ export default function WealthManager({ onNavigate = () => {} }) {
 
   const cashShare = totals.assets > 0 ? Math.min(100, Math.max(0, (totals.cash / totals.assets) * 100)) : 0;
   const investmentShare = totals.assets > 0 ? Math.min(100, Math.max(0, (totals.investments / totals.assets) * 100)) : 0;
+  const receivableShare = totals.assets > 0 ? Math.min(100, Math.max(0, (totals.receivables / totals.assets) * 100)) : 0;
+  const analysisMonths = useMemo(() => {
+    const count = analysisPeriod === "lifetime" ? 60 : Number(analysisPeriod);
+    const now = new Date();
+    const months = [];
+    for (let offset = count - 1; offset >= 0; offset -= 1) {
+      const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+      months.push({ key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`, label: date.toLocaleDateString("en-IN", { month: "short", year: count > 12 ? "2-digit" : undefined }), income: 0, expenses: 0, net: 0 });
+    }
+    const lookup = new Map(months.map((month) => [month.key, month]));
+    (data.transactions || []).forEach((tx) => {
+      const dateValue = tx.transaction_date || tx.date;
+      if (!dateValue) return;
+      const date = new Date(dateValue);
+      if (Number.isNaN(date.getTime())) return;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const bucket = lookup.get(key);
+      if (!bucket) return;
+      const type = String(tx.transaction_type || tx.type || "").toLowerCase();
+      const amount = numberValue(tx.amount);
+      if (type === "income") bucket.income += amount;
+      if (type === "expense") bucket.expenses += amount;
+      bucket.net = bucket.income - bucket.expenses;
+    });
+    return months;
+  }, [data.transactions, analysisPeriod]);
+  const chartMax = Math.max(1, ...analysisMonths.flatMap((month) => [month.income, month.expenses, Math.abs(month.net)]));
   const liabilityRatio = totals.assets > 0 ? (totals.liabilities / totals.assets) * 100 : null;
 
   return (
@@ -375,11 +410,12 @@ export default function WealthManager({ onNavigate = () => {} }) {
 
       <section className="wc-section-grid">
         <article className="glass-card wc-info-panel">
-          <div className="wc-panel-heading"><div><p className="card-label">CURRENT SNAPSHOT</p><h3>Cash & investments</h3></div><Wallet size={19} /></div>
+          <div className="wc-panel-heading"><div><p className="card-label">DATA COVERAGE</p><h3>What is included in your wealth?</h3></div><Wallet size={19} /></div>
           <DetailRow label="Cash and account balances" value={loading ? "Loading…" : money(totals.cash)} />
-          <DetailRow label="Investment current value" value={loading ? "Loading…" : money(totals.investments)} />
-          <div className="wc-total-row"><span>Combined recorded value</span><strong>{loading ? "Loading…" : money(totals.cash + totals.investments)}</strong></div>
-          <p className="wc-note">These recorded balances feed the total-assets and asset-mix calculations. Open Accounts or Portfolio to inspect the underlying records.</p>
+          <DetailRow label="Current investments" value={loading ? "Loading…" : money(totals.investments)} />
+          <DetailRow label="Outstanding receivables" value={loading ? "Loading…" : money(totals.receivables)} note="Amounts owed to you, net of recorded settlements" />
+          <DetailRow label="Other asset classes" value="Not yet included" note="FD/RD, property, gold and other assets require verified data sources" />
+          <p className="wc-note"><button type="button" className="wc-inline-link" onClick={() => onNavigate("Accounts")}>Manage accounts</button> · <button type="button" className="wc-inline-link" onClick={() => onNavigate("Portfolio")}>Open portfolio</button> · <button type="button" className="wc-inline-link" onClick={() => onNavigate("Loans & Liabilities")}>Review loans and liabilities</button>.</p>
         </article>
         <article className="glass-card wc-info-panel">
           <div className="wc-panel-heading"><div><p className="card-label">TAX SNAPSHOT</p><h3>Tax estimate status</h3></div><ReceiptText size={19} /></div>
@@ -409,7 +445,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
             <div><p className="card-label">ASSET MIX</p><h3>Recorded wealth composition</h3></div>
             <PieChart size={19} />
           </div>
-          <p className="wc-chart-subtitle">How your currently recorded assets are divided between cash and investments.</p>
+          <p className="wc-chart-subtitle">How currently recorded assets are divided between cash, investments and amounts owed to you.</p>
           <div className="wc-wealth-mix-list">
             <div className="wc-wealth-mix-row">
               <div className="wc-wealth-mix-label"><span>Cash &amp; account balances</span><strong>{money(totals.cash)} · {cashShare.toFixed(1)}%</strong></div>
@@ -419,9 +455,13 @@ export default function WealthManager({ onNavigate = () => {} }) {
               <div className="wc-wealth-mix-label"><span>Investments</span><strong>{money(totals.investments)} · {investmentShare.toFixed(1)}%</strong></div>
               <div className="wc-wealth-mix-track"><span className="investments" style={{ width: `${investmentShare}%` }} /></div>
             </div>
+            <div className="wc-wealth-mix-row">
+              <div className="wc-wealth-mix-label"><span>Receivables · money owed to you</span><strong>{money(totals.receivables)} · {receivableShare.toFixed(1)}%</strong></div>
+              <div className="wc-wealth-mix-track"><span className="receivables" style={{ width: `${receivableShare}%` }} /></div>
+            </div>
           </div>
           <div className="wc-total-row"><span>Total recorded assets</span><strong>{money(totals.assets)}</strong></div>
-          <p className="wc-note">This is a current-value allocation, not historical performance. It includes only cash/account balances and investments returned by connected APIs; other assets appear only after their records are supported.</p>
+          <p className="wc-note">Receivables are included only from the outstanding receivables/payables API. Settled amounts are excluded by that source. <button type="button" className="wc-inline-link" onClick={() => onNavigate("Transactions")}>Review receivables and settlements</button>. This is a current-value allocation, not historical performance.</p>
         </article>
 
         <article className="glass-card wc-info-panel">
@@ -443,6 +483,39 @@ export default function WealthManager({ onNavigate = () => {} }) {
       </section>
 
 
+
+      <section className="glass-card wc-info-panel wc-lifetime-analysis" aria-label="Lifetime income and expense analysis">
+        <div className="wc-panel-heading">
+          <div><p className="card-label">LIFETIME VIEW / CASH FLOW</p><h3>Income, expenses & cash flow</h3><p className="wc-chart-subtitle">Explore available transaction history. Historical periods without recorded transactions remain zero rather than being estimated.</p></div>
+          <LineChart size={19} />
+        </div>
+        <div className="wc-analysis-controls">
+          <label>Period <select value={analysisPeriod} onChange={(event) => setAnalysisPeriod(event.target.value)} aria-label="Historical analysis period">
+            <option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">1 year</option><option value="36">3 years</option><option value="60">5 years</option><option value="lifetime">Lifetime (up to 5 years)</option>
+          </select></label>
+          <label>Chart <select value={analysisChart} onChange={(event) => setAnalysisChart(event.target.value)} aria-label="Cash flow chart type">
+            <option value="income-expense">Income vs expenses</option><option value="net">Net cash flow</option><option value="income">Income trend</option><option value="expenses">Expense trend</option>
+          </select></label>
+        </div>
+        <div className="wc-analysis-summary">
+          <div><span>Total income in period</span><strong>{money(analysisMonths.reduce((sum, month) => sum + month.income, 0))}</strong></div>
+          <div><span>Total expenses in period</span><strong>{money(analysisMonths.reduce((sum, month) => sum + month.expenses, 0))}</strong></div>
+          <div><span>Net cash flow</span><strong>{money(analysisMonths.reduce((sum, month) => sum + month.income - month.expenses, 0))}</strong></div>
+        </div>
+        {data.transactions.length === 0 ? <div className="wc-chart-empty">No transaction history was returned by the existing API. Add or review records in <button type="button" className="wc-inline-link" onClick={() => onNavigate("Transactions")}>Transactions</button>.</div> : (
+          <div className="wc-history-chart" role="img" aria-label="Selected period cash flow chart">
+            {analysisMonths.map((month) => {
+              const values = analysisChart === "income-expense" ? [month.income, month.expenses] : [analysisChart === "income" ? month.income : analysisChart === "expenses" ? month.expenses : Math.abs(month.net)];
+              return <button type="button" className="wc-history-column" key={month.key} title={`${month.label}: income ${money(month.income)}, expenses ${money(month.expenses)}, net ${money(month.net)}`} onClick={() => onNavigate("Transactions")} aria-label={`Open transactions for ${month.label}`}>
+                <span className="wc-history-bars">{values.map((value, index) => <i key={index} className={analysisChart === "net" ? (month.net >= 0 ? "net-positive" : "net-negative") : index === 0 ? "income" : "expense"} style={{ height: `${Math.max(value > 0 ? 3 : 0, Math.min(100, value / chartMax * 100))}%` }} />)}</span>
+                <small>{month.label}</small>
+              </button>;
+            })}
+          </div>
+        )}
+        <p className="wc-note">Tap any month to open transaction records. This is a transaction-based cash-flow view, not historical net worth. Only dated income and expense transactions are included; transfers, receivables, payables and investment valuation changes are not treated as income or expense.</p>
+        <div className="wc-breakdown-actions"><BreakdownAction onClick={() => onNavigate("Transactions")}>Explore transactions</BreakdownAction><BreakdownAction onClick={() => onNavigate("Categories")}>Explore categories</BreakdownAction><BreakdownAction onClick={() => onNavigate("Accounts")}>Explore accounts</BreakdownAction></div>
+      </section>
 
         <article className="glass-card wc-info-panel wc-accent-card wc-alerts-panel">
           <div className="wc-panel-heading">

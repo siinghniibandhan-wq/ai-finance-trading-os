@@ -148,6 +148,8 @@ def get_market_quote(
         "last_updated": quote_data["retrieved_at"],
         "retrieved_at": quote_data["retrieved_at"],
         "cache_hit": quote_data["cache_hit"],
+        "cache_age_seconds": quote_data.get("cache_age_seconds", 0.0),
+        "provider_latency_ms": quote_data.get("provider_latency_ms"),
         "provider_market_timestamp": None,
         "freshness_note": (
             "Timestamp indicates backend gateway retrieval time; the provider's "

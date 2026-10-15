@@ -410,7 +410,7 @@ svg { flex-shrink: 0; }
   border-color: rgba(148,163,184,.14);
   background: linear-gradient(145deg, rgba(255,255,255,.035), transparent 48%), rgba(12,17,31,.74);
 }
-.holdings-workspace .metrics-grid { gap: 13px !important; }
+.holdings-workspace .holdings-summary-grid { gap: 13px !important; }
 .holdings-workspace .metric-card {
   min-height: 136px;
   border-radius: 17px;
@@ -438,14 +438,14 @@ svg { flex-shrink: 0; }
   .holdings-workspace .holdings-row > div:first-child { grid-column: 1 / -1; }
 }
 @media (max-width: 640px) {
-  .holdings-workspace .metrics-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 8px !important; }
+  .holdings-workspace .holdings-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 8px !important; }
   .holdings-workspace .metric-card { min-height: 116px; padding: 13px; }
   .holdings-workspace .metric-value { font-size: clamp(16px,4.5vw,21px); }
   .holdings-workspace .holdings-row { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
   .holdings-workspace .holdings-row > div:first-child { grid-column: 1 / -1; }
 }
 @media (max-width: 380px) {
-  .holdings-workspace .metrics-grid { grid-template-columns: minmax(0,1fr) !important; }
+  .holdings-workspace .holdings-summary-grid { grid-template-columns: minmax(0,1fr) !important; }
   .holdings-workspace .holdings-row { grid-template-columns: minmax(0,1fr) !important; }
 }
 

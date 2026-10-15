@@ -1131,3 +1131,111 @@ svg { flex-shrink: 0; }
 :root[data-finos-theme="maximalism"] { --finos-accent:#f0abfc; --finos-violet:#c4b5fd; --finos-pink:#fb7185; --finos-cyan:#67e8f9; }
 :root[data-finos-theme="maximalism"] body { background:radial-gradient(ellipse at 5% 5%,#7e22ce 0,transparent 34%),radial-gradient(ellipse at 95% 8%,#be123c 0,transparent 32%),radial-gradient(ellipse at 70% 90%,#0369a1 0,transparent 34%),#10051b!important; }
 :root[data-finos-theme="maximalism"] .glass-card,:root[data-finos-theme="maximalism"] .card,:root[data-finos-theme="maximalism"] .panel { border-color:rgba(244,114,182,.38)!important; }
+
+
+/* Accessibility fix: keep navigation, tabs and placeholder pages readable
+   in light-surface themes. Palette/theme identities remain unchanged. */
+:root[data-finos-theme="light"] .navigation-title,
+:root[data-finos-theme="elegant-plain"] .navigation-title,
+:root[data-finos-theme="minimal"] .navigation-title,
+:root[data-finos-theme="skeuomorphism"] .navigation-title,
+:root[data-finos-theme="neumorphism"] .navigation-title,
+:root[data-finos-theme="claymorphism"] .navigation-title,
+:root[data-finos-theme="bento-grid"] .navigation-title {
+  color: #64748b !important;
+}
+:root[data-finos-theme="light"] .navigation-item,
+:root[data-finos-theme="elegant-plain"] .navigation-item,
+:root[data-finos-theme="minimal"] .navigation-item,
+:root[data-finos-theme="skeuomorphism"] .navigation-item,
+:root[data-finos-theme="neumorphism"] .navigation-item,
+:root[data-finos-theme="claymorphism"] .navigation-item,
+:root[data-finos-theme="bento-grid"] .navigation-item {
+  color: #334155 !important;
+  background: transparent;
+}
+:root[data-finos-theme="light"] .navigation-item:hover,
+:root[data-finos-theme="elegant-plain"] .navigation-item:hover,
+:root[data-finos-theme="minimal"] .navigation-item:hover,
+:root[data-finos-theme="skeuomorphism"] .navigation-item:hover,
+:root[data-finos-theme="neumorphism"] .navigation-item:hover,
+:root[data-finos-theme="claymorphism"] .navigation-item:hover,
+:root[data-finos-theme="bento-grid"] .navigation-item:hover {
+  color: #111827 !important;
+  background: #eef2f7 !important;
+}
+:root[data-finos-theme="light"] .navigation-item.active,
+:root[data-finos-theme="elegant-plain"] .navigation-item.active,
+:root[data-finos-theme="minimal"] .navigation-item.active,
+:root[data-finos-theme="skeuomorphism"] .navigation-item.active,
+:root[data-finos-theme="neumorphism"] .navigation-item.active,
+:root[data-finos-theme="claymorphism"] .navigation-item.active,
+:root[data-finos-theme="bento-grid"] .navigation-item.active {
+  color: #ffffff !important;
+  background: #334155 !important;
+}
+:root[data-finos-theme="light"] .placeholder-card,
+:root[data-finos-theme="elegant-plain"] .placeholder-card,
+:root[data-finos-theme="minimal"] .placeholder-card,
+:root[data-finos-theme="skeuomorphism"] .placeholder-card,
+:root[data-finos-theme="neumorphism"] .placeholder-card,
+:root[data-finos-theme="claymorphism"] .placeholder-card,
+:root[data-finos-theme="bento-grid"] .placeholder-card {
+  color: #172033 !important;
+  background: #ffffff !important;
+}
+:root[data-finos-theme="light"] .placeholder-card p,
+:root[data-finos-theme="elegant-plain"] .placeholder-card p,
+:root[data-finos-theme="minimal"] .placeholder-card p,
+:root[data-finos-theme="skeuomorphism"] .placeholder-card p,
+:root[data-finos-theme="neumorphism"] .placeholder-card p,
+:root[data-finos-theme="claymorphism"] .placeholder-card p,
+:root[data-finos-theme="bento-grid"] .placeholder-card p,
+:root[data-finos-theme="light"] .placeholder-card h2,
+:root[data-finos-theme="elegant-plain"] .placeholder-card h2,
+:root[data-finos-theme="minimal"] .placeholder-card h2,
+:root[data-finos-theme="skeuomorphism"] .placeholder-card h2,
+:root[data-finos-theme="neumorphism"] .placeholder-card h2,
+:root[data-finos-theme="claymorphism"] .placeholder-card h2,
+:root[data-finos-theme="bento-grid"] .placeholder-card h2 {
+  color: #172033 !important;
+}
+:root[data-finos-theme="light"] .placeholder-card p:not(.card-label),
+:root[data-finos-theme="elegant-plain"] .placeholder-card p:not(.card-label),
+:root[data-finos-theme="minimal"] .placeholder-card p:not(.card-label),
+:root[data-finos-theme="skeuomorphism"] .placeholder-card p:not(.card-label),
+:root[data-finos-theme="neumorphism"] .placeholder-card p:not(.card-label),
+:root[data-finos-theme="claymorphism"] .placeholder-card p:not(.card-label),
+:root[data-finos-theme="bento-grid"] .placeholder-card p:not(.card-label) {
+  color: #475569 !important;
+}
+/* Keep tab labels and form hints legible on light backgrounds. */
+:root[data-finos-theme="light"] [role="tab"],
+:root[data-finos-theme="elegant-plain"] [role="tab"],
+:root[data-finos-theme="minimal"] [role="tab"],
+:root[data-finos-theme="skeuomorphism"] [role="tab"],
+:root[data-finos-theme="neumorphism"] [role="tab"],
+:root[data-finos-theme="claymorphism"] [role="tab"],
+:root[data-finos-theme="bento-grid"] [role="tab"] {
+  color: #334155;
+}
+:root[data-finos-theme="light"] input::placeholder,
+:root[data-finos-theme="elegant-plain"] input::placeholder,
+:root[data-finos-theme="minimal"] input::placeholder,
+:root[data-finos-theme="skeuomorphism"] input::placeholder,
+:root[data-finos-theme="neumorphism"] input::placeholder,
+:root[data-finos-theme="claymorphism"] input::placeholder,
+:root[data-finos-theme="bento-grid"] input::placeholder {
+  color: #64748b !important;
+  opacity: 1;
+}
+/* Brutalism intentionally keeps its cream/yellow/black identity, with readable
+   navigation and placeholder text instead of washed-out inherited colours. */
+:root[data-finos-theme="brutalism"] .navigation-title { color: #525252 !important; }
+:root[data-finos-theme="brutalism"] .navigation-item { color: #171717 !important; }
+:root[data-finos-theme="brutalism"] .navigation-item:hover { background: #fef08a !important; color: #171717 !important; }
+:root[data-finos-theme="brutalism"] .navigation-item.active { background: #facc15 !important; color: #171717 !important; }
+:root[data-finos-theme="brutalism"] .placeholder-card { color: #171717 !important; background: #fff !important; }
+:root[data-finos-theme="brutalism"] .placeholder-card h2,
+:root[data-finos-theme="brutalism"] .placeholder-card p { color: #171717 !important; }
+:root[data-finos-theme="brutalism"] .placeholder-card p:not(.card-label) { color: #404040 !important; }

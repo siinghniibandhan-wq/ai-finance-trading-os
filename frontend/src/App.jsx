@@ -5189,10 +5189,18 @@ function Portfolio() {
   const searchInvestmentInstruments = async (value) => {
     setInstrumentQuery(value);
     setInstrumentSearchError("");
+    const productType = investmentForm.investment_type;
+    const isMutualFund = ["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(productType);
+    const usesListedCatalogue = ["Stocks", "ETFs", "REITs"].includes(productType);
     if (!value.trim()) { setInstrumentResults([]); return; }
+    if (!isMutualFund && !usesListedCatalogue) {
+      setInstrumentResults([]);
+      setInstrumentSearchError("This product type uses manual entry; no dedicated instrument catalogue is connected.");
+      setInvestmentForm((previous) => ({ ...previous, name: value, symbol: "" }));
+      return;
+    }
     setInstrumentSearchBusy(true);
     try {
-      const isMutualFund = investmentForm.investment_type === "Mutual Funds";
       const endpoint = isMutualFund
         ? `${API_BASE_URL}/api/mutual-funds/search/?query=${encodeURIComponent(value.trim())}&limit=12`
         : `${API_BASE_URL}/api/market-search/?query=${encodeURIComponent(value.trim())}&exchange=ALL&limit=12`;
@@ -5204,31 +5212,20 @@ function Portfolio() {
       }
       const safeResults = Array.isArray(data?.results)
         ? data.results.filter((item) => item && typeof item === "object").map((item) => {
-            const symbol = typeof item.symbol === "string"
-              ? item.symbol
-              : (typeof item.scheme_code === "string" ? item.scheme_code : (typeof item.tradingsymbol === "string" ? item.tradingsymbol : ""));
-            // AMFI mutual-fund results use the human-readable scheme name, while
-            // scheme code remains the unique identifier for the selected variant.
+            const symbol = typeof item.symbol === "string" ? item.symbol
+              : (typeof item.scheme_code === "string" ? item.scheme_code
+              : (typeof item.tradingsymbol === "string" ? item.tradingsymbol : ""));
             const name = isMutualFund
-              ? (typeof item.scheme_name === "string" && item.scheme_name.trim()
-                  ? item.scheme_name.trim()
-                  : (typeof item.name === "string" && item.name.trim()
-                      ? item.name.trim()
-                      : String(symbol || "Mutual Fund Scheme")))
-              : (typeof item.name === "string"
-                  ? item.name
-                  : (typeof item.scheme_name === "string" ? item.scheme_name : (typeof item.company_name === "string" ? item.company_name : String(symbol || "Instrument"))));
-            return {
-              ...item,
-              name,
-              symbol,
-              exchange: typeof item.exchange === "string" ? item.exchange : (isMutualFund ? "AMFI" : ""),
-            };
+              ? (typeof item.scheme_name === "string" && item.scheme_name.trim() ? item.scheme_name.trim()
+              : (typeof item.name === "string" && item.name.trim() ? item.name.trim() : String(symbol || "Mutual Fund Scheme")))
+              : (typeof item.name === "string" ? item.name
+              : (typeof item.scheme_name === "string" ? item.scheme_name
+              : (typeof item.company_name === "string" ? item.company_name : String(symbol || "Instrument"))));
+            return { ...item, name, symbol, exchange: typeof item.exchange === "string" ? item.exchange : (isMutualFund ? "AMFI" : "") };
           })
         : [];
       setInstrumentResults(safeResults);
-      // Only show the empty-state message when the latest response has no results.
-      setInstrumentSearchError(safeResults.length ? "" : (isMutualFund ? "No matching mutual fund schemes found." : "No matching NSE or BSE instruments found."));
+      setInstrumentSearchError(safeResults.length ? "" : (isMutualFund ? "No matching mutual fund schemes found." : "No matching listed instruments found."));
     } catch (error) {
       setInstrumentResults([]);
       setInstrumentSearchError(error?.message || "Instrument search is unavailable.");
@@ -5242,8 +5239,7 @@ function Portfolio() {
       ...previous,
       name,
       symbol,
-      exchange: instrument?.exchange || (previous.investment_type === "Mutual Funds" ? "AMFI" : ""),
-      investment_type: previous.investment_type === "Mutual Funds" ? previous.investment_type : "Stocks",
+      exchange: instrument?.exchange || (["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(previous.investment_type) ? "AMFI" : ""),
       current_price: instrument?.last_price != null && Number(instrument.last_price) > 0 ? String(instrument.last_price) : previous.current_price,
     }));
     setInstrumentQuery(`${name}${symbol ? ` (${symbol})` : ""}`);
@@ -6291,29 +6287,36 @@ const summaryCards = [
               </div>
             ) : (
               <div style={{ gridColumn: "1 / -1", position: "relative" }}>
-                <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Investment Instrument (required)</label>
-                <input type="text" autoComplete="off" placeholder={investmentForm.investment_type === "Mutual Funds" ? "Search mutual fund scheme, e.g. HDFC Flexi Cap" : "Search instrument name or symbol, e.g. HDFC Bank"} value={instrumentQuery || investmentForm.name} onChange={(event) => searchInvestmentInstruments(event.target.value)} style={investmentFieldStyle} />
-                {instrumentSearchBusy && <div style={{ ...muted, marginTop: "5px" }}>{investmentForm.investment_type === "Mutual Funds" ? "Searching mutual fund schemes…" : "Searching NSE instruments…"}</div>}
-                {instrumentSearchError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px", marginTop: "5px" }}>{instrumentSearchError}</div>}
-                {instrumentResults.length > 0 && <div style={{ position: "absolute", zIndex: 20, top: "100%", left: 0, right: 0, maxHeight: "240px", overflowY: "auto", background: "#17172a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px", boxShadow: "0 12px 30px rgba(0,0,0,0.4)" }}>
-                  {instrumentResults.map((instrument, index) => {
-                    // Show both plan and option because they identify distinct AMFI schemes.
-                    const displayName = instrument.scheme_name || instrument.name || instrument.company_name || instrument.tradingsymbol || instrument.symbol;
-                    const isMutualFund = investmentForm.investment_type === "Mutual Funds";
-                    const planSource = `${instrument.plan_type || ""} ${instrument.plan || ""} ${displayName}`;
-                    const planMatch = isMutualFund && /\bdirect(?:\s+plan)?\b/i.test(planSource)
-                      ? "Direct Plan"
-                      : (isMutualFund && /\bregular(?:\s+plan)?\b/i.test(planSource) ? "Regular Plan" : "");
-                    const optionSource = `${instrument.option_type || ""} ${instrument.option || ""} ${instrument.scheme_option || ""}`;
-                    const optionMatch = isMutualFund && /\bidcw\b/i.test(optionSource)
-                      ? "IDCW"
-                      : (isMutualFund && /\bgrowth\b/i.test(optionSource) ? "Growth" : (isMutualFund && /\bbonus\b/i.test(optionSource) ? "Bonus" : ""));
-                    return <button key={`${instrument.scheme_code || instrument.instrument_token || instrument.tradingsymbol || instrument.symbol}-${index}`} type="button" onClick={() => selectInvestmentInstrument({ ...instrument, name: isMutualFund ? `${displayName}${planMatch ? ` - ${planMatch}` : ""}${optionMatch ? ` - ${optionMatch}` : ""}` : displayName })} style={{ display: "block", width: "100%", padding: "10px 12px", textAlign: "left", color: "white", background: "transparent", border: 0, borderBottom: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}>
-                      <strong>{displayName}</strong>{!isMutualFund && instrument.exchange && <span style={{ display: "inline-block", marginLeft: "8px", padding: "2px 6px", borderRadius: "5px", background: instrument.exchange === "NSE" ? "rgba(34,197,94,0.15)" : "rgba(59,130,246,0.15)", color: instrument.exchange === "NSE" ? "#86efac" : "#93c5fd", fontSize: "10px", fontWeight: 700 }}>{instrument.exchange}{instrument.series ? ` ${instrument.series}` : (instrument.instrument_type ? ` ${instrument.instrument_type}` : "")}</span>}{planMatch && <span style={{ display: "inline-block", marginLeft: "8px", padding: "2px 6px", borderRadius: "5px", background: planMatch === "Direct Plan" ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)", color: planMatch === "Direct Plan" ? "#86efac" : "#fcd34d", fontSize: "10px", fontWeight: 700 }}>{planMatch}</span>}{optionMatch && <span style={{ display: "inline-block", marginLeft: "6px", padding: "2px 6px", borderRadius: "5px", background: "rgba(99,102,241,0.18)", color: "#c4b5fd", fontSize: "10px", fontWeight: 700 }}>{optionMatch}</span>}<div style={{ color: "rgba(255,255,255,0.55)", marginTop: "4px", fontSize: "11px" }}>{instrument.scheme_code ? `Scheme Code: ${instrument.scheme_code}` : (instrument.tradingsymbol || instrument.symbol)}{isMutualFund ? " · AMFI" : ""}</div>
-                    </button>;
-                  })}
-                </div>}
-                {investmentForm.name && investmentForm.symbol && <div style={{ ...muted, marginTop: "5px" }}>Selected: {investmentForm.name} · {investmentForm.symbol}{investmentForm.exchange ? ` · ${investmentForm.exchange}` : ""}</div>}
+                {["Stocks", "ETFs", "REITs", "Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(investmentForm.investment_type) ? (
+                  <>
+                    <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Investment Instrument (required)</label>
+                    <input type="text" autoComplete="off" placeholder={["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(investmentForm.investment_type) ? "Search mutual fund scheme" : "Search listed instrument, e.g. HDFC Bank"} value={instrumentQuery || investmentForm.name} onChange={(event) => searchInvestmentInstruments(event.target.value)} style={investmentFieldStyle} />
+                    {instrumentSearchBusy && <div style={{ ...muted, marginTop: "5px" }}>Searching {["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(investmentForm.investment_type) ? "fund schemes" : "listed instruments"}…</div>}
+                    {instrumentSearchError && <div role="status" style={{ color: "rgba(255,255,255,0.65)", fontSize: "12px", marginTop: "5px" }}>{instrumentSearchError}</div>}
+                    {instrumentResults.length > 0 && <div style={{ position: "absolute", zIndex: 20, top: "100%", left: 0, right: 0, maxHeight: "240px", overflowY: "auto", background: "#17172a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px", boxShadow: "0 12px 30px rgba(0,0,0,0.4)" }}>
+                      {instrumentResults.map((instrument, index) => {
+                        const displayName = instrument.scheme_name || instrument.name || instrument.company_name || instrument.tradingsymbol || instrument.symbol;
+                        const isMutualFund = ["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(investmentForm.investment_type);
+                        const planSource = `${instrument.plan_type || ""} ${instrument.plan || ""} ${displayName}`;
+                        const planMatch = isMutualFund && /\bdirect(?:\s+plan)?\b/i.test(planSource) ? "Direct Plan" : (isMutualFund && /\bregular(?:\s+plan)?\b/i.test(planSource) ? "Regular Plan" : "");
+                        const optionSource = `${instrument.option_type || ""} ${instrument.option || ""} ${instrument.scheme_option || ""}`;
+                        const optionMatch = isMutualFund && /\bidcw\b/i.test(optionSource) ? "IDCW" : (isMutualFund && /\bgrowth\b/i.test(optionSource) ? "Growth" : (isMutualFund && /\bbonus\b/i.test(optionSource) ? "Bonus" : ""));
+                        return <button key={`${instrument.scheme_code || instrument.instrument_token || instrument.tradingsymbol || instrument.symbol}-${index}`} type="button" onClick={() => selectInvestmentInstrument({ ...instrument, name: isMutualFund ? `${displayName}${planMatch ? ` - ${planMatch}` : ""}${optionMatch ? ` - ${optionMatch}` : ""}` : displayName })} style={{ display: "block", width: "100%", padding: "10px 12px", textAlign: "left", color: "white", background: "transparent", border: 0, borderBottom: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}>
+                          <strong>{displayName}</strong>{!isMutualFund && instrument.exchange && <span style={{ marginLeft: "8px", fontSize: "10px", fontWeight: 700 }}>{instrument.exchange}{instrument.series ? ` ${instrument.series}` : ""}</span>}
+                          {planMatch && <span style={{ marginLeft: "8px", fontSize: "10px" }}>{planMatch}</span>}{optionMatch && <span style={{ marginLeft: "6px", fontSize: "10px" }}>{optionMatch}</span>}
+                          <div style={{ color: "rgba(255,255,255,0.55)", marginTop: "4px", fontSize: "11px" }}>{instrument.scheme_code ? `Scheme Code: ${instrument.scheme_code}` : (instrument.tradingsymbol || instrument.symbol)}{isMutualFund ? " · AMFI" : ""}</div>
+                        </button>;
+                      })}
+                    </div>}
+                  </>
+                ) : (
+                  <>
+                    <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Investment Name (manual entry)</label>
+                    <input type="text" value={investmentForm.name} onChange={(event) => setInvestmentForm((previous) => ({ ...previous, name: event.target.value, symbol: "" }))} placeholder={investmentForm.investment_type === "Fixed Deposits" ? "Bank / issuer name" : investmentForm.investment_type === "Recurring Deposits" ? "Bank / RD name" : `Enter ${investmentForm.investment_type} name`} required style={investmentFieldStyle} />
+                    <div style={{ ...muted, marginTop: "5px" }}>No dedicated catalogue is connected for this product type. Enter its details manually.</div>
+                  </>
+                )}
+                {investmentForm.name && <div style={{ ...muted, marginTop: "5px" }}>Selected/entered: {investmentForm.name}{investmentForm.symbol ? ` · ${investmentForm.symbol}` : ""}{investmentForm.exchange ? ` · ${investmentForm.exchange}` : ""}</div>}
               </div>
             )}
 

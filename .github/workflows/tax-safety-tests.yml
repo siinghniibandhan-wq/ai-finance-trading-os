@@ -39,4 +39,5 @@ jobs:
       - name: Run capital-gains tax safety tests
         env:
           PYTHONPATH: .
+          DATABASE_URL: postgresql+psycopg://test:test@localhost:5432/testdb
         run: pytest -q tests/test_tax_calculation_eligibility_safeguards.py tests/test_tax_calculation_review_flags.py

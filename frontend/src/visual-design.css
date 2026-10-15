@@ -1,0 +1,97 @@
+/* Financial OS — visual-first design layer
+   Deliberately CSS-only: no API calls, data models, calculations, routes or forms changed. */
+:root {
+  color-scheme: dark;
+  --finos-panel: rgba(15, 23, 42, .76);
+  --finos-panel-strong: rgba(20, 28, 48, .92);
+  --finos-border: rgba(167, 139, 250, .16);
+  --finos-muted: #9ba8c2;
+  --finos-violet: #a78bfa;
+  --finos-pink: #f472b6;
+  --finos-cyan: #67e8f9;
+  --finos-green: #6ee7b7;
+}
+html { scroll-behavior: smooth; }
+body {
+  background:
+    radial-gradient(ellipse at 4% 0%, rgba(124,58,237,.17), transparent 34%),
+    radial-gradient(ellipse at 98% 9%, rgba(236,72,153,.10), transparent 31%),
+    radial-gradient(ellipse at 65% 100%, rgba(14,165,233,.07), transparent 40%),
+    #070b14;
+}
+::selection { background: rgba(167,139,250,.32); color: #fff; }
+:focus-visible { outline: 2px solid var(--finos-cyan); outline-offset: 3px; }
+.main-area { min-width: 0; }
+.content { padding: clamp(18px, 2.4vw, 34px); }
+.dashboard { width: 100%; }
+.page-title h1 { letter-spacing: -.55px; }
+.eyebrow, .welcome-label { letter-spacing: 1.6px; }
+.welcome-section { align-items: center; }
+.welcome-section h2 { line-height: 1.06; }
+.welcome-description { color: #a7b2c9; }
+button, a, input, select, textarea { transition-duration: .16s; }
+button:not(:disabled):active { transform: translateY(1px); }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.primary-button, .button-primary {
+  box-shadow: 0 8px 24px rgba(124,58,237,.20);
+}
+.primary-button:hover, .button-primary:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 10px 28px rgba(124,58,237,.28);
+}
+.card, .panel, .stat-card, .metric-card, .summary-card, .chart-card, .section-card,
+[class*="stat-card"], [class*="metric-card"], [class*="chart-card"] {
+  border-color: rgba(167,139,250,.15);
+}
+.card, .panel, .stat-card, .metric-card, .summary-card, .chart-card, .section-card {
+  background-image: linear-gradient(145deg, rgba(255,255,255,.025), transparent 58%);
+  box-shadow: 0 12px 36px rgba(0,0,0,.10);
+}
+.card:hover, .panel:hover, .stat-card:hover, .metric-card:hover, .summary-card:hover, .chart-card:hover {
+  border-color: rgba(167,139,250,.28);
+}
+table { border-collapse: separate; border-spacing: 0; }
+thead th {
+  color: #aebbd3;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+tbody tr { transition: background .15s ease; }
+tbody tr:hover { background: rgba(167,139,250,.055); }
+td, th { border-color: rgba(148,163,184,.10); }
+input, select, textarea {
+  accent-color: #a78bfa;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(167,139,250,.7) !important;
+  box-shadow: 0 0 0 3px rgba(139,92,246,.12);
+}
+.finos-select-menu {
+  border: 1px solid rgba(167,139,250,.25);
+  box-shadow: 0 18px 42px rgba(0,0,0,.42);
+}
+.finos-select-option:hover, .finos-select-option.is-selected {
+  background: rgba(139,92,246,.16);
+}
+hr { border-color: rgba(148,163,184,.12); }
+svg { flex-shrink: 0; }
+@media (min-width: 1500px) {
+  .content { padding: 36px 42px; }
+  .dashboard { max-width: 1680px; }
+}
+@media (max-width: 900px) {
+  .content { padding: 20px 16px; }
+  .welcome-section { align-items: flex-start; flex-direction: column; }
+  .welcome-section h2 { font-size: clamp(28px, 7vw, 42px); letter-spacing: -1.2px; }
+}
+@media (max-width: 560px) {
+  .content { padding: 16px 12px; }
+  .topbar { padding-left: 14px; padding-right: 14px; }
+  .page-title h1 { font-size: 17px; }
+  table { min-width: 620px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

@@ -1,6 +1,7 @@
 name: Market search and quote regression tests
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - "backend/app/routes/market.py"

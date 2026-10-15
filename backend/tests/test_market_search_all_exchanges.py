@@ -165,3 +165,57 @@ def test_search_accepts_mstock_equity_segment_eq(monkeypatch):
         ("NSE", "RELIANCE-EQ"),
         ("BSE", "RELIANCE-A"),
     ]
+
+
+PRODUCT_TYPE_CSV = """instrument_token,exchange_token,tradingsymbol,name,last_price,expiry,strike,tick_size,lot_size,instrument_type,segment,exchange
+101,1,RELIANCE-EQ,Reliance Industries,1400,,,0.05,1,EQ,NSECM,NSE
+202,2,HDFCBANK-EQ,HDFC Bank Limited,1600,,,0.05,1,EQ,NSECM,NSE
+303,3,NIFTYBEES,Nippon India ETF Nifty 50 BeEs,280,,,0.05,1,EQ,NSECM,NSE
+404,4,ICICINIFTY,ICICI Prudential Nifty 50 ETF,250,,,0.05,1,ETF,NSECM,NSE
+505,5,EMBASSY,Embassy Office Parks REIT,400,,,0.05,1,EQ,NSECM,NSE
+606,6,MINDSPACE,Mindspace Business Parks REIT,350,,,0.05,1,EQ,NSECM,NSE
+707,7,BIRET,Brookfield India Real Estate Trust,300,,,0.05,1,EQ,NSECM,NSE
+808,8,NXST,Nexus Select Trust,150,,,0.05,1,EQ,NSECM,NSE
+"""
+
+
+def test_product_type_stocks_excludes_etfs_and_reits(monkeypatch):
+    monkeypatch.setattr(market_search, "urlopen", lambda *args, **kwargs: FakeResponse(PRODUCT_TYPE_CSV))
+
+    result = market_search.search_market(query="E", exchange="ALL", limit=50, product_type="Stocks")
+
+    assert {item["symbol"] for item in result["results"]} == {"RELIANCE-EQ", "HDFCBANK-EQ"}
+
+
+def test_product_type_etfs_returns_only_etfs(monkeypatch):
+    monkeypatch.setattr(market_search, "urlopen", lambda *args, **kwargs: FakeResponse(PRODUCT_TYPE_CSV))
+
+    result = market_search.search_market(query="E", exchange="ALL", limit=50, product_type="ETFs")
+
+    assert {item["symbol"] for item in result["results"]} == {"NIFTYBEES", "ICICINIFTY"}
+
+
+def test_product_type_reits_returns_only_reits(monkeypatch):
+    monkeypatch.setattr(market_search, "urlopen", lambda *args, **kwargs: FakeResponse(PRODUCT_TYPE_CSV))
+
+    result = market_search.search_market(query="E", exchange="ALL", limit=50, product_type="REITs")
+
+    assert {item["symbol"] for item in result["results"]} == {"EMBASSY", "MINDSPACE", "BIRET", "NXST"}
+
+
+def test_product_type_filter_is_applied_before_result_limit(monkeypatch):
+    monkeypatch.setattr(market_search, "urlopen", lambda *args, **kwargs: FakeResponse(PRODUCT_TYPE_CSV))
+
+    result = market_search.search_market(query="E", exchange="ALL", limit=1, product_type="ETFs")
+
+    assert result["count"] == 1
+    assert result["results"][0]["symbol"] in {"NIFTYBEES", "ICICINIFTY"}
+
+
+def test_product_type_rejects_unknown_values(monkeypatch):
+    monkeypatch.setattr(market_search, "urlopen", lambda *args, **kwargs: FakeResponse(PRODUCT_TYPE_CSV))
+
+    with pytest.raises(HTTPException) as error:
+        market_search.search_market(query="E", exchange="ALL", limit=12, product_type="Mutual Funds")
+
+    assert error.value.status_code == 422

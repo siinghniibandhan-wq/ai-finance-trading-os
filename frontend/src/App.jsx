@@ -202,6 +202,43 @@ const navigation = [
   }
 ];
 
+
+// Appearance themes are local preferences; they do not change financial data or calculations.
+const FINOS_THEMES = ["Default","Light","Dark","Aurora","Emerald","Ocean","Sunset","Minimal","Retro Terminal","Glass","Skeuomorphism","Neumorphism","Glassmorphism","Claymorphism","Brutalism","Maximalism","Liquid Glass","Bento Grid","Elegant Plain"];
+const FINOS_THEME_DESCRIPTIONS = {
+  "Default": "The original Financial OS dark-purple workspace.",
+  "Light": "Bright, clean surfaces with dark readable text.",
+  "Dark": "A low-glare dark workspace.",
+  "Aurora": "Purple and pink gradient accents.",
+  "Emerald": "Nature-inspired green accents.",
+  "Ocean": "Calm professional blue accents.",
+  "Sunset": "Warm amber and coral accents.",
+  "Minimal": "Quiet, reduced visual decoration.",
+  "Retro Terminal": "Terminal-inspired green and monospace details.",
+  "Glass": "Translucent panels and soft depth.",
+  "Skeuomorphism": "Tactile surfaces with subtle inset and raised depth.",
+  "Neumorphism": "Soft, low-contrast raised and inset surfaces.",
+  "Glassmorphism": "Frosted translucent cards and blur.",
+  "Claymorphism": "Rounded, soft, pillowy card surfaces.",
+  "Brutalism": "Bold borders, hard contrast, and square edges.",
+  "Maximalism": "Expressive gradients and vivid accent colors.",
+  "Liquid Glass": "Glossy translucent surfaces with fluid highlights.",
+  "Bento Grid": "Clean modular panels with clear visual grouping.",
+  "Elegant Plain": "Plain white, thin borders, restrained spacing, and elegant typography."
+};
+const readFinosTheme = () => {
+  try {
+    const saved = window.localStorage.getItem("financial-os-theme");
+    return FINOS_THEMES.includes(saved) ? saved : "Default";
+  } catch { return "Default"; }
+};
+const applyFinosTheme = (theme) => {
+  const nextTheme = FINOS_THEMES.includes(theme) ? theme : "Default";
+  document.documentElement.dataset.finosTheme = nextTheme.toLowerCase().replaceAll(" ", "-");
+  document.documentElement.style.colorScheme = ["Light", "Elegant Plain", "Minimal", "Skeuomorphism", "Neumorphism", "Claymorphism", "Bento Grid"].includes(nextTheme) ? "light" : "dark";
+  try { window.localStorage.setItem("financial-os-theme", nextTheme); } catch { /* Theme still applies for this session. */ }
+};
+
 // ============================================================
 // MAIN APP
 // ============================================================
@@ -234,6 +271,10 @@ export default function App() {
     return page && validPages.has(page) ? page : "Wealth Manager";
   };
   const [activePage, setActivePage] = useState(getPageFromLocation);
+  const [selectedTheme, setSelectedTheme] = useState(readFinosTheme);
+
+  useEffect(() => { applyFinosTheme(selectedTheme); }, [selectedTheme]);
+  const changeTheme = (theme) => { setSelectedTheme(theme); applyFinosTheme(theme); };
 
   useEffect(() => {
     const restoreLocation = () => setActivePage(getPageFromLocation());
@@ -518,7 +559,7 @@ export default function App() {
 ) : activePage === "Finance Diary" ? (
    <FinanceDiaryPage />
 ) : activePage === "Settings" ? (
-   <SettingsPage onNavigate={handleNavigation} />
+   <SettingsPage onNavigate={handleNavigation} selectedTheme={selectedTheme} onThemeChange={changeTheme} />
 ) : (
    <PlaceholderPage
     title={activePage}
@@ -8648,8 +8689,23 @@ function AccountCompletionPage() {
 // ACCOUNTS
 // ============================================================
 
-function SettingsPage({ onNavigate }) {
-  return <div className="dashboard"><section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Manage your profile, app preferences, and permanent financial history.</p></div></section><section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }}><h3>Account Profile</h3><p style={{ color: "rgba(255,255,255,0.62)", lineHeight: 1.6 }}>Manage your personal details, tax information, and salary setup. This is separate from your bank and investment accounts.</p><button className="primary-button" onClick={() => onNavigate("Account Profile")}>Open Account Profile</button></section><section className="glass-card" style={{ padding: "22px" }}><h3>Finance Diary</h3><p style={{ color: "rgba(255,255,255,0.62)", lineHeight: 1.6 }}>Read-only master history of account and transaction activity. Entries cannot be edited or deleted.</p><button className="primary-button" onClick={() => onNavigate("Finance Diary")}>Open Finance Diary</button></section></div>;
+function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
+  return <div className="dashboard finos-settings-page">
+    <section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Personalize your workspace. Your theme is saved on this device and applies throughout Financial OS.</p></div></section>
+    <section className="finos-theme-settings glass-card">
+      <div className="finos-theme-settings-heading"><div><p className="finos-theme-eyebrow">APPEARANCE</p><h3>Choose your theme</h3><p>19 visual styles. Select a preview to apply it immediately.</p></div><span className="finos-theme-current">Current: {selectedTheme}</span></div>
+      <div className="finos-theme-settings-grid">
+        {FINOS_THEMES.map((theme) => <button type="button" key={theme} aria-pressed={selectedTheme === theme} onClick={() => onThemeChange(theme)} className={`finos-theme-option finos-theme-option-${theme.toLowerCase().replaceAll(" ", "-")} ${selectedTheme === theme ? "is-active" : ""}`}>
+          <span className="finos-theme-sample" aria-hidden="true"><i/><i/><i/><b/></span>
+          <span className="finos-theme-option-copy"><strong>{theme}</strong><small>{FINOS_THEME_DESCRIPTIONS[theme]}</small></span>
+          <span className="finos-theme-radio" aria-hidden="true">{selectedTheme === theme ? "✓" : ""}</span>
+        </button>)}
+      </div>
+      <p className="finos-theme-footnote">Default remains the standard Financial OS look. Elegant Plain is a clean white theme with thin borders and minimal visual decoration. Theme selection changes appearance only, not your records or calculations.</p>
+    </section>
+    <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }}><h3>Account Profile</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Manage your personal details, tax information, and salary setup. This is separate from your bank and investment accounts.</p><button className="primary-button" onClick={() => onNavigate("Account Profile")}>Open Account Profile</button></section>
+    <section className="glass-card" style={{ padding: "22px" }}><h3>Finance Diary</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Read-only master history of account and transaction activity. Entries cannot be edited or deleted.</p><button className="primary-button" onClick={() => onNavigate("Finance Diary")}>Open Finance Diary</button></section>
+  </div>;
 }
 
 function FinanceDiaryPage() {

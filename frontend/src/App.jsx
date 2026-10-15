@@ -13329,21 +13329,29 @@ function Category() {
               </section>
             ))}
 
-            {otherCategories.length > 0 && (
-              <section style={{ marginTop: "10px", paddingTop: "18px", borderTop: "1px solid rgba(255,255,255,.09)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                  <span style={{ fontSize: "16px" }}>↔️</span>
-                  <h4 style={{ margin: 0, color: "#fff", fontSize: "14px" }}>Other / Transfers</h4>
-                  <span style={{ fontSize: "11px", color: "rgba(255,255,255,.5)" }}>{otherCategories.length}</span>
-                </div>
-                <div style={{ display: "grid", gap: "10px" }}>{otherCategories.map(renderCategoryCard)}</div>
-              </section>
-            )}
+
           </>
         )}
 
       </section>
 
+      {!loading && otherCategories.length > 0 && (
+        <section className="glass-card" style={{ marginTop: "18px" }}>
+          <div className="card-header">
+            <div>
+              <p className="card-label">ADDITIONAL CATEGORIES</p>
+              <h3 style={{ margin: 0 }}>Other / Transfers</h3>
+            </div>
+            <span className="score">{otherCategories.length}</span>
+          </div>
+          <p style={{ color: "rgba(255,255,255,.55)", fontSize: "12px", marginTop: "10px" }}>
+            Transfer and settlement categories stay separate from income and expense.
+          </p>
+          <div style={{ display: "grid", gap: "10px", marginTop: "14px" }}>
+            {otherCategories.map(renderCategoryCard)}
+          </div>
+        </section>
+      )}
 
       {/* ====================================================
           CATEGORY FORM

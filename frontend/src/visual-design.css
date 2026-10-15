@@ -1699,3 +1699,52 @@ svg { flex-shrink: 0; }
 :root[data-finos-theme="brutalism"] .wc-history-chart {
   box-shadow: none;
 }
+
+/* Final component pass: remove fixed dark chart details that clash with light themes. */
+:root[data-finos-theme] .wc-asset-pie::before,
+:root[data-finos-theme] .wc-wealth-pie::before {
+  background: var(--finos-chart-bg) !important;
+  border-color: var(--finos-control-border);
+}
+:root[data-finos-theme] .wc-chart-surface {
+  border-top-color: var(--finos-control-border);
+}
+:root[data-finos-theme] .wc-asset-pie small,
+:root[data-finos-theme] .wc-wealth-pie small,
+:root[data-finos-theme] .wc-history-column,
+:root[data-finos-theme] .wc-history-column small,
+:root[data-finos-theme] .wc-allocation-arrow {
+  color: var(--finos-chart-muted);
+}
+:root[data-finos-theme] .wc-history-bars {
+  border-bottom-color: var(--finos-chart-grid);
+}
+:root[data-finos-theme] .wc-history-column:hover,
+:root[data-finos-theme] .wc-history-column:focus-visible {
+  border-color: var(--finos-control-border);
+  background: color-mix(in srgb, var(--finos-accent) 10%, transparent);
+}
+:root[data-finos-theme] .wc-balance-track {
+  background: color-mix(in srgb, var(--finos-chart-muted) 16%, transparent);
+}
+:root[data-finos-theme] .wc-balance-track > span {
+  background: var(--finos-chart-series-1);
+}
+:root[data-finos-theme] .wc-balance-row.liabilities .wc-balance-track > span {
+  background: var(--finos-chart-series-2);
+}
+:root[data-finos-theme] .wc-balance-row.net-worth .wc-balance-track > span {
+  background: var(--finos-chart-series-3);
+}
+:root[data-finos-theme] .wc-chart-surface .wc-panel-heading {
+  border-bottom-color: var(--finos-control-border);
+}
+@media (max-width: 760px) {
+  .finos-theme-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .finos-theme-option { grid-template-columns: 58px minmax(0, 1fr) 18px; gap: 9px; padding: 10px; }
+  .finos-theme-sample { width: 58px; height: 44px; }
+}
+@media (max-width: 420px) {
+  .finos-theme-settings-grid { grid-template-columns: minmax(0, 1fr); }
+}
+

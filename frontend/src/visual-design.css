@@ -269,3 +269,133 @@ svg { flex-shrink: 0; }
   .wc-primary-card { min-height: 140px; }
   .wc-flow-stats { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* ============================================================
+   FINANCIAL OVERVIEW — clearer visual hierarchy and scanability
+   ============================================================ */
+.dashboard-overview .metrics-grid { gap: 13px; }
+.dashboard-overview .metric-card {
+  min-height: 132px;
+  border-radius: 17px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(167,139,250,.08), transparent 55%),
+    linear-gradient(145deg, rgba(20,28,48,.88), rgba(10,15,28,.92));
+  border-color: rgba(167,139,250,.14);
+}
+.dashboard-overview .metric-card:hover {
+  border-color: rgba(167,139,250,.34);
+  transform: translateY(-2px);
+}
+.dashboard-overview .metric-value { font-variant-numeric: tabular-nums; }
+.dashboard-overview .dashboard-grid { gap: 18px; }
+.dashboard-overview .large-card,
+.dashboard-overview .dashboard-grid > .glass-card,
+.dashboard-overview .module-overview-card,
+.dashboard-overview .notifications-card,
+.dashboard-overview .goals-summary-card,
+.dashboard-overview .health-card,
+.dashboard-overview .ai-card {
+  border-radius: 20px;
+  border-color: rgba(148,163,184,.13);
+  background: linear-gradient(145deg, rgba(255,255,255,.035), transparent 48%), rgba(12,17,31,.72);
+  box-shadow: 0 14px 34px rgba(0,0,0,.12);
+}
+.dashboard-overview .trend-columns { min-height: 205px; }
+.dashboard-overview .trend-bars { height: 158px; }
+.dashboard-overview .trend-bar { min-width: 8px; }
+.dashboard-overview .chart-legend { color: #c1cbe0; }
+.dashboard-overview .category-fill { box-shadow: 0 0 12px rgba(167,139,250,.12); }
+.dashboard-overview .module-overview-tile { min-height: 74px; transition: border-color .16s, background .16s, transform .16s; }
+.dashboard-overview .module-overview-tile:focus-visible { outline: 2px solid var(--finos-cyan); outline-offset: 3px; }
+.dashboard-overview .notification-item { border-radius: 12px; }
+.dashboard-overview .health-footer { border-bottom-color: rgba(148,163,184,.10); }
+@media (max-width: 720px) {
+  .dashboard-overview .metrics-grid { gap: 9px; }
+  .dashboard-overview .metric-card { min-height: 118px; }
+  .dashboard-overview .trend-columns { gap: 6px; min-height: 165px; }
+  .dashboard-overview .trend-bars { height: 118px; gap: 3px; }
+  .dashboard-overview .trend-column { font-size: 10px; }
+  .dashboard-overview .module-overview-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+  .dashboard-overview .module-overview-tile { padding: 11px; gap: 8px; }
+}
+@media (max-width: 420px) {
+  .dashboard-overview .module-overview-grid { grid-template-columns: minmax(0,1fr); }
+}
+
+/* ============================================================
+   MARKETS — polish existing live-data UI without touching quote flow
+   ============================================================ */
+.markets-workspace { gap: 22px !important; }
+.markets-workspace > section[aria-label="Market overview"] {
+  padding: 14px 18px 16px !important;
+  border: 1px solid rgba(167,139,250,.16);
+  border-radius: 18px;
+  background: radial-gradient(ellipse at 0% 0%, rgba(139,92,246,.12), transparent 62%), rgba(12,17,31,.50);
+}
+.markets-workspace > section[aria-label="Major Indian market indices"] { gap: 13px !important; }
+.markets-workspace > section[aria-label="Market instrument search"] {
+  padding: 18px;
+  border: 1px solid rgba(148,163,184,.13);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(255,255,255,.025), transparent 55%), rgba(12,17,31,.52);
+}
+.markets-workspace input[aria-label="Search company, stock or instrument"] {
+  min-height: 58px !important;
+  transition: border-color .16s, box-shadow .16s;
+}
+.markets-workspace input[aria-label="Search company, stock or instrument"]:focus {
+  border-color: rgba(196,181,253,.9) !important;
+  box-shadow: 0 0 0 4px rgba(124,58,237,.15), 0 14px 32px rgba(0,0,0,.16) !important;
+}
+.markets-workspace button[aria-pressed] { transition: filter .16s, border-color .16s, background .16s; }
+.markets-workspace button[aria-pressed="true"] { filter: brightness(1.08); }
+.markets-workspace section[aria-label="Major Indian market indices"] > div {
+  min-height: 145px;
+}
+@media (max-width: 560px) {
+  .markets-workspace { gap: 15px !important; }
+  .markets-workspace > section[aria-label="Major Indian market indices"] { grid-template-columns: minmax(0,1fr) !important; }
+  .markets-workspace > section[aria-label="Major Indian market indices"] > div { min-height: 124px; }
+  .markets-workspace > section[aria-label="Market instrument search"] { padding: 13px; }
+  .markets-workspace form { grid-template-columns: minmax(0,1fr) !important; }
+  .markets-workspace form > button { width: 100%; min-height: 48px !important; }
+}
+
+/* ============================================================
+   TAX CENTRE — distinguish sections, data summaries and controls
+   ============================================================ */
+.tax-centre { min-width: 0; }
+.tax-centre > section:first-child {
+  padding: 15px 18px;
+  border: 1px solid rgba(167,139,250,.15);
+  border-radius: 18px;
+  background: radial-gradient(ellipse at 0% 0%, rgba(139,92,246,.10), transparent 62%), rgba(12,17,31,.42);
+}
+.tax-centre nav[aria-label="Tax sections"] {
+  position: sticky;
+  top: 82px;
+  z-index: 12;
+  padding: 10px;
+  border: 1px solid rgba(148,163,184,.12);
+  border-radius: 14px;
+  background: rgba(8,12,23,.92);
+  backdrop-filter: blur(16px);
+}
+.tax-centre nav[aria-label="Tax sections"] button { min-height: 38px; }
+.tax-centre input:not([type="checkbox"]),
+.tax-centre select,
+.tax-centre textarea {
+  border-radius: 10px !important;
+}
+.tax-centre table { width: 100%; }
+.tax-centre table th, .tax-centre table td { padding: 11px 12px; }
+.tax-centre h3 { letter-spacing: -.2px; }
+.tax-centre [role="alert"] { line-height: 1.55; }
+.tax-centre .glass-card { border-radius: 18px; }
+@media (max-width: 600px) {
+  .tax-centre > section:first-child { padding: 14px; }
+  .tax-centre nav[aria-label="Tax sections"] { top: 66px; gap: 6px !important; padding: 8px; }
+  .tax-centre nav[aria-label="Tax sections"] button { flex: 1 1 auto; padding: 9px 10px !important; }
+  .tax-centre table { min-width: 560px; }
+}

@@ -4981,16 +4981,6 @@ function Holdings() {
                         <button type="button" className="secondary-button" style={{ padding: "7px 12px", minWidth: "78px", fontSize: "11px" }} onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "EDIT", symbol: holding.symbol || "", name: holding.name || "", exchange: holding.exchange || "NSE" })); } catch {} const url = new URL(window.location.href); url.searchParams.set("page", "Portfolio"); window.history.pushState({ page: "Portfolio" }, "", `${url.pathname}${url.search}${url.hash}`); window.dispatchEvent(new PopStateEvent("popstate")); }}>EDIT</button>
                         <button type="button" className="secondary-button" style={{ padding: "7px 12px", minWidth: "78px", fontSize: "11px" }} onClick={() => setExpandedSymbol(expanded ? null : holdingKey)}>{expanded ? "Hide details" : "History / View"}</button>
                       </div>
-                        style={{
-                          whiteSpace:
-                            "nowrap",
-                        }}
-                      >
-                        {expanded
-                          ? "Hide"
-                          : "View"}
-                      </button>
-                    </div>
 
                     {/* DRILL-DOWN */}
 

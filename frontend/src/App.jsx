@@ -2932,7 +2932,7 @@ function PlanPage() {
   const requiredMonthly = monthsAvailable > 0 ? remaining / monthsAvailable : (remaining === 0 ? 0 : null);
   const progress = Number(form.target_amount) > 0 ? Math.min(100, Number(form.current_amount || 0) / Number(form.target_amount) * 100) : 0;
 
-  return <div style={{ display: "grid", gap: "18px" }}>
+  return <div className="plan-workspace" style={{ display: "grid", gap: "18px" }}>
     <section style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "14px", flexWrap: "wrap" }}>
       <div><p className="card-label">FINANCIAL OS · PLAN</p><h2 style={{ margin: "6px 0" }}>Plan & Goals</h2><p style={{ ...muted, maxWidth: "680px", fontSize: "13px" }}>Create and save goals, track progress, and calculate the contribution required to reach your target. Goals are stored separately and do not change account balances.</p></div>
       <button type="button" onClick={refreshAll} disabled={loading} className="secondary-button">{loading ? "Refreshing…" : "Refresh goals"}</button>

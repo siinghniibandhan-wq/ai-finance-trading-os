@@ -5387,7 +5387,7 @@ function Portfolio() {
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     return now.toISOString().slice(0, 10);
   };
-  const isListedProductType = (productType) => ["Stocks", "ETFs", "REITs"].includes(productType);
+  const isListedProductType = (productType) => ["Stocks", "Stock", "ETFs", "ETF", "REITs", "REIT"].includes(productType);
 
   // Shared muted text style used by Portfolio and the investment form.
   // Keep this local to Portfolio so it does not depend on MarketsPage state.

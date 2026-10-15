@@ -2201,7 +2201,7 @@ function TaxPage() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+    <div className="tax-centre" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
       {/* Tax Centre header */}
       <section style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
         <div><p className="card-label">FINANCIAL OS / TAX</p><h2 style={{ margin: "4px 0 6px", fontSize: "28px", fontWeight: 800 }}>Tax Centre</h2><p style={{ margin: 0, color: "rgba(255,255,255,0.55)", fontSize: "13px" }}>Income, capital gains, deductions and tax-report readiness in one place.</p></div>
@@ -2570,7 +2570,7 @@ function MarketsPage() {
   const movers = overview?.market_movers || {};
   const gainers = Array.isArray(movers.gainers) ? movers.gainers : [];
   const losers = Array.isArray(movers.losers) ? movers.losers : [];
-  return <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+  return <div className="markets-workspace" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
     <section aria-label="Market overview" style={{ padding: "4px 0 2px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}>
         <div><p className="card-label" style={{ margin: "0 0 4px" }}>INDIA MARKETS</p><h2 style={{ margin: 0, fontSize: "25px", fontWeight: 850, letterSpacing: "-.035em" }}>Market Pulse</h2></div>

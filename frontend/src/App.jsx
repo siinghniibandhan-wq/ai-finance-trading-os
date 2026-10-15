@@ -5853,6 +5853,9 @@ const openInvestmentTransaction = (
           ...(previous.transaction_date === getLocalDateString() ? { price: livePrice } : {}),
         }));
         setInvestments((previous) => previous.map((item) => item.id === investment.id ? { ...item, current_price: livePrice } : item));
+        setTransactionModal((previous) => previous?.investment?.id === investment.id
+          ? { ...previous, investment: { ...previous.investment, current_price: livePrice } }
+          : previous);
       })
       .catch((error) => console.warn("Live BUY quote unavailable; keeping the latest stored price.", error));
   }
@@ -5903,6 +5906,8 @@ const openInvestmentTransactions = async (
   investment
 ) => {
 
+  transactionQuoteRequestRef.current += 1;
+  activeTransactionInstrumentRef.current = "";
   setTransactionModal({
     investment,
     mode: "history",

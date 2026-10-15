@@ -143,6 +143,16 @@ function BreakdownPanel({ activeCard, data, onClose, onNavigate, onSelectCard })
               <BreakdownAction onClick={() => onNavigate("Holdings")}>View holdings</BreakdownAction>
             </div>
           </div>
+          <div className="wc-breakdown-category">
+            <div className="wc-breakdown-category-main">
+              <div><strong>Outstanding receivables</strong><small>Money owed to you, net of recorded settlements</small></div>
+              <strong>{money(receivables)}</strong>
+            </div>
+            <div className="wc-breakdown-actions">
+              <BreakdownAction onClick={() => onNavigate("Transactions")}>Review receivables</BreakdownAction>
+              <BreakdownAction onClick={() => onNavigate("Loans & Liabilities")}>Review loans given</BreakdownAction>
+            </div>
+          </div>
           <div className="wc-total-row"><span>Recorded assets included in this phase</span><strong>{money(assets)}</strong></div>
           <p className="wc-note">This breakdown includes the asset values returned by the current Financial Summary API. Separate categories such as FDs/RDs, bonds, gold, and real estate will appear only after their data sources are verified to avoid double-counting.</p>
         </>

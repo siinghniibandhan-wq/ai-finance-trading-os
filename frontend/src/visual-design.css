@@ -811,3 +811,33 @@ svg { flex-shrink: 0; }
   .wealth-centre .wc-wealth-mix-track span { transition: none; }
 }
 
+
+/* Wealth Manager: accessible clickable data, receivables and historical analysis. */
+.wealth-centre .wc-inline-link { display:inline; border:0; padding:0; margin:0; color:#c4b5fd; background:transparent; text-decoration:underline; text-underline-offset:3px; cursor:pointer; font:inherit; }
+.wealth-centre .wc-inline-link:hover { color:#f0abfc; }
+.wealth-centre .wc-wealth-mix-track .receivables { background:linear-gradient(90deg,#34d399,#2dd4bf); }
+.wc-lifetime-analysis { margin-top: 16px; }
+.wc-analysis-controls { display:flex; flex-wrap:wrap; gap:12px; margin:18px 0; }
+.wc-analysis-controls label { display:grid; gap:7px; color:#aebbd3; font-size:12px; }
+.wc-analysis-controls select { min-width:160px; padding:9px 11px; color:#f5f3ff; background:#171827; border:1px solid rgba(167,139,250,.28); border-radius:10px; }
+.wc-analysis-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:12px 0 18px; }
+.wc-analysis-summary > div { display:grid; gap:8px; min-width:0; padding:13px; border:1px solid rgba(167,139,250,.14); border-radius:13px; background:rgba(139,92,246,.055); }
+.wc-analysis-summary span { color:#9ba8c2; font-size:11px; }
+.wc-analysis-summary strong { color:#f5f3ff; overflow-wrap:anywhere; font-size:clamp(13px,2vw,18px); }
+.wc-history-chart { display:grid; grid-template-columns:repeat(auto-fit,minmax(34px,1fr)); align-items:stretch; gap:5px; min-height:210px; padding:14px 8px 8px; border-radius:14px; background:rgba(8,12,23,.36); overflow-x:auto; }
+.wc-history-column { display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:8px; min-width:0; min-height:180px; padding:4px 2px; border:1px solid transparent; border-radius:8px; color:#9ba8c2; background:transparent; cursor:pointer; }
+.wc-history-column:hover,.wc-history-column:focus-visible { border-color:rgba(196,181,253,.45); background:rgba(139,92,246,.09); outline:none; }
+.wc-history-bars { display:flex; align-items:flex-end; justify-content:center; gap:3px; width:100%; height:145px; border-bottom:1px solid rgba(148,163,184,.18); }
+.wc-history-bars i { display:block; width:min(45%,13px); min-height:0; border-radius:4px 4px 1px 1px; }
+.wc-history-bars i.income { background:linear-gradient(180deg,#38bdf8,#6366f1); }
+.wc-history-bars i.expense { background:linear-gradient(180deg,#fb7185,#f97316); }
+.wc-history-bars i.net-positive { background:linear-gradient(180deg,#34d399,#059669); }
+.wc-history-bars i.net-negative { background:linear-gradient(180deg,#fb7185,#e11d48); }
+.wc-history-column small { font-size:9px; white-space:nowrap; }
+@media(max-width:640px) { .wc-analysis-summary { grid-template-columns:minmax(0,1fr); } .wc-analysis-controls label,.wc-analysis-controls select { width:100%; } .wc-history-chart { grid-template-columns:repeat(6,minmax(35px,1fr)); overflow-x:auto; } }
+
+/* Dashboard cards and charts expose obvious keyboard-accessible drill-downs. */
+.dashboard-overview .dashboard-clickable-card { min-width:0; cursor:pointer; border-radius:16px; transition:transform .16s ease, box-shadow .16s ease; }
+.dashboard-overview .dashboard-clickable-card:hover { transform:translateY(-2px); }
+.dashboard-overview .dashboard-clickable-card:focus-visible { outline:2px solid #c4b5fd; outline-offset:3px; }
+.dashboard-overview .dashboard-clickable-card .metric-card { height:100%; }

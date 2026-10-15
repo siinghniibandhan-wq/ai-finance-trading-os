@@ -344,9 +344,12 @@ def get_market_quote(
     ttl = MARKET_PRICE_CACHE_TTL_SECONDS
 
     if ttl <= 0:
+        _LAST_QUOTE_DETAILS.pop(normalized_symbol, None)
         price = _fetch_gateway_quote(normalized_symbol)
+        details = _LAST_QUOTE_DETAILS.pop(normalized_symbol, {})
         return {
             "price": price,
+            "details": details,
             "retrieved_at": datetime.now(timezone.utc).isoformat(),
             "cache_hit": False,
         }
@@ -358,13 +361,14 @@ def get_market_quote(
             if cached and now - cached[0] <= ttl:
                 return {
                     "price": cached[1],
+                    "details": cached[3] if len(cached) > 3 else {},
                     "retrieved_at": cached[2],
                     "cache_hit": True,
                 }
 
             flight = _MARKET_PRICE_INFLIGHT.get(normalized_symbol)
             if flight is None:
-                flight = {"event": Event(), "price": None, "retrieved_at": None, "error": None}
+                flight = {"event": Event(), "price": None, "details": {}, "retrieved_at": None, "error": None}
                 _MARKET_PRICE_INFLIGHT[normalized_symbol] = flight
                 is_fetcher = True
             else:
@@ -376,12 +380,15 @@ def get_market_quote(
                 raise flight["error"]
             return {
                 "price": flight["price"],
+                "details": flight["details"],
                 "retrieved_at": flight["retrieved_at"],
                 "cache_hit": True,
             }
 
         try:
+            _LAST_QUOTE_DETAILS.pop(normalized_symbol, None)
             price = _fetch_gateway_quote(normalized_symbol)
+            details = _LAST_QUOTE_DETAILS.pop(normalized_symbol, {})
             retrieved_at = datetime.now(timezone.utc).isoformat()
 
             with _MARKET_PRICE_CACHE_LOCK:
@@ -401,9 +408,10 @@ def get_market_quote(
                     _MARKET_PRICE_CACHE.pop(oldest_key, None)
 
                 _MARKET_PRICE_CACHE[normalized_symbol] = (
-                    monotonic(), price, retrieved_at
+                    monotonic(), price, retrieved_at, details
                 )
                 flight["price"] = price
+                flight["details"] = details
                 flight["retrieved_at"] = retrieved_at
 
             return {

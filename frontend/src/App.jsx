@@ -5938,20 +5938,49 @@ useEffect(() => {
   const symbol = String(intent?.symbol || "").trim().toUpperCase();
   const name = String(intent?.name || "").trim().toUpperCase();
   if (!symbol && !name) return;
+  const normalizeInstrument = (value) => String(value || "").trim().toUpperCase().replace(/\\s+/g, " ");
+  const requestedExchange = normalizeInstrument(intent?.exchange);
+  const requestedInstrumentId = normalizeInstrument(intent?.instrument_id || intent?.instrumentId);
+  const sameSecurity = (item) => {
+    const itemSymbols = [
+      item?.symbol, item?.tradingsymbol, item?.instrument_id, item?.instrumentId,
+      item?.instrument_master_id, item?.instrumentMasterId,
+    ].map(normalizeInstrument).filter(Boolean);
+    const itemNames = [item?.name, item?.instrument_name, item?.instrumentName]
+      .map(normalizeInstrument).filter(Boolean);
+    return (symbol && itemSymbols.includes(symbol))
+      || (requestedInstrumentId && itemSymbols.includes(requestedInstrumentId))
+      || (!symbol && name && itemNames.includes(name));
+  };
   const matched = investments.find((item) => {
-    const itemSymbol = String(item?.symbol || item?.tradingsymbol || "").trim().toUpperCase();
-    const itemName = String(item?.name || "").trim().toUpperCase();
-    const sameSecurity = (symbol && itemSymbol === symbol) || (!symbol && name && itemName === name);
-    const requestedExchange = String(intent?.exchange || "").trim().toUpperCase();
-    const itemExchange = String(item?.exchange || "").trim().toUpperCase();
-    return sameSecurity && (!requestedExchange || !itemExchange || requestedExchange === itemExchange);
-  }) || investments.find((item) => {
-    const itemSymbol = String(item?.symbol || item?.tradingsymbol || "").trim().toUpperCase();
-    const itemName = String(item?.name || "").trim().toUpperCase();
-    return (symbol && itemSymbol === symbol) || (!symbol && name && itemName === name);
-  });
+    if (!sameSecurity(item)) return false;
+    const itemExchange = normalizeInstrument(item?.exchange || item?.instrument_exchange);
+    return !requestedExchange || !itemExchange || requestedExchange === itemExchange;
+  }) || investments.find(sameSecurity);
   if (!matched) {
-    // Don't discard the intent while the investment list is still loading.
+    // Keep the pending action until investments have finished loading.
+    // If the instrument is not held yet, BUY starts the existing investment-entry
+    // form (which creates the investment and its initial BUY ledger row exactly once).
+    if (intent.type === "BUY" && !loadingInvestments) {
+      try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {}
+      resetInvestmentForm();
+      setInvestmentForm((previous) => ({
+        ...previous,
+        name: intent?.name || "",
+        symbol: intent?.symbol || "",
+        exchange: intent?.exchange || "",
+        investment_type: intent?.product_type || intent?.investment_type || "Stocks",
+        product_type: intent?.product_type || intent?.investment_type || "Stocks",
+        buy_date: getLocalDateString(),
+      }));
+      setEditingInvestmentId(null);
+      setShowInvestmentForm(true);
+    } else if (intent.type === "SELL" || intent.type === "EDIT") {
+      try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {}
+      setTransactionMessage(intent.type === "SELL"
+        ? "This instrument is not in your portfolio, so there is no holding to sell."
+        : "This instrument is not in your portfolio, so there is nothing to edit.");
+    }
     return;
   }
   try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {}

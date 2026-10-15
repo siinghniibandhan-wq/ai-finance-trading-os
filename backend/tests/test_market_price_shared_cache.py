@@ -181,3 +181,24 @@ def test_unexpected_fetch_error_is_shared_as_market_price_error(monkeypatch):
         list(executor.map(lambda _: request_quote(), range(6)))
 
     assert calls == ["RELIANCE"]
+
+
+def test_quote_cache_aliases_unqualified_and_nse_symbol_but_keeps_bse_separate(monkeypatch):
+    calls = []
+
+    def fake_fetch(symbol):
+        calls.append(symbol)
+        return Decimal("200") if symbol.startswith("BSE:") else Decimal("100")
+
+    monkeypatch.setattr(market_price, "_fetch_gateway_quote", fake_fetch)
+    monkeypatch.setattr(market_price, "MARKET_PRICE_CACHE_TTL_SECONDS", 1.0)
+
+    assert market_price.get_market_quote("RELIANCE")["price"] == Decimal("100")
+    nse_alias = market_price.get_market_quote("NSE:RELIANCE-EQ")
+    assert nse_alias["price"] == Decimal("100")
+    assert nse_alias["cache_hit"] is True
+
+    bse_quote = market_price.get_market_quote("BSE:RELIANCE")
+    assert bse_quote["price"] == Decimal("200")
+    assert bse_quote["cache_hit"] is False
+    assert calls == ["RELIANCE", "BSE:RELIANCE"]

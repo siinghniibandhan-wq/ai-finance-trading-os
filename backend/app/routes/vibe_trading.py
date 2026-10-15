@@ -73,7 +73,11 @@ def _get_cached_market_quote(symbol: str):
         with QUOTE_CACHE_LOCK:
             cached = QUOTE_CACHE.get(cleaned)
             if cached and now - cached[0] <= QUOTE_CACHE_TTL_SECONDS:
-                return {**cached[1], "cache_hit": True}
+                return {
+                    **cached[1],
+                    "cache_hit": True,
+                    "cache_age_seconds": round(max(0.0, now - cached[0]), 3),
+                }
 
     # Never hold the cache lock during network I/O.
     quote = get_market_quote(cleaned)

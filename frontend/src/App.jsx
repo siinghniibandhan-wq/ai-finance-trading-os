@@ -2358,24 +2358,34 @@ function MarketsPage() {
   const gainers = Array.isArray(movers.gainers) ? movers.gainers : [];
   const losers = Array.isArray(movers.losers) ? movers.losers : [];
   return <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-    <section style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}><div><p className="card-label">FINANCIAL OS / MARKETS</p><h2 style={{ margin: "4px 0 6px", fontSize: "28px", fontWeight: 800 }}>Market Workspace</h2><p style={{ ...muted, margin: 0 }}>Indian market overview, stock search and quotes.</p></div><button className="secondary-button" type="button" onClick={refresh} disabled={busy}>{busy ? "Refreshing..." : "Refresh market data"}</button></section>
-    <p style={{ ...muted, margin: 0 }}>Existing m.Stock gateway via Financial OS API · Read-only · No database writes{updated ? ` · Updated ${updated}` : ""}</p>
-    <section aria-label="Market instrument search" style={{ padding: "8px 0 18px", borderBottom: "1px solid rgba(255,255,255,.09)" }}>
+    <section aria-label="Market overview" style={{ padding: "4px 0 2px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}>
+        <div><p className="card-label" style={{ margin: "0 0 4px" }}>INDIA MARKETS</p><h2 style={{ margin: 0, fontSize: "25px", fontWeight: 850, letterSpacing: "-.035em" }}>Market Pulse</h2></div>
+        <button className="secondary-button" type="button" onClick={refresh} disabled={busy}>{busy ? "Refreshing…" : "↻ Refresh"}</button>
+      </div>
+    </section>
+      <section aria-label="Major Indian market indices" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" }}>
+        {requestedIndices.map((item, i) => <div key={item.label} style={{ ...card, position: "relative", overflow: "hidden", padding: "15px", borderRadius: "18px", border: "1px solid rgba(167,139,250,.18)", background: i % 2 === 0 ? "linear-gradient(145deg, rgba(124,58,237,0.24), rgba(13,18,38,.78))" : "linear-gradient(145deg, rgba(14,165,233,0.18), rgba(13,18,38,.78))", boxShadow: "0 12px 28px rgba(0,0,0,.12)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}><strong style={{ fontSize: "11px", letterSpacing: ".07em" }}>{item.label}</strong><span style={{ ...muted, fontSize: "10px" }}>{item.data?.status || (busy ? "Loading" : "Market index")}</span></div>
+          <div style={{ fontSize: "clamp(20px, 4vw, 27px)", fontWeight: 850, marginTop: "12px", letterSpacing: "-.04em", overflowWrap: "anywhere" }}>{item.data?.last_price != null && Number.isFinite(Number(item.data.last_price)) ? Number(item.data.last_price).toLocaleString("en-IN", { maximumFractionDigits: 2 }) : busy ? "Loading…" : "Unavailable"}</div>
+          <div style={{ ...muted, marginTop: "5px", fontSize: "11px" }}>{item.data ? `${item.data.exchange || "Indian market"} · Latest available` : "Not currently returned by market API"}</div>
+          <div aria-hidden="true" style={{ height: "3px", borderRadius: "9px", marginTop: "14px", background: "linear-gradient(90deg, rgba(167,139,250,.95), rgba(56,189,248,.35), transparent)" }} />
+        </div>)}
+      </section>
+    <section aria-label="Market instrument search" style={{ padding: "4px 0 18px", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
       <div style={{ marginBottom: "12px" }}>
-        <p className="card-label" style={{ margin: "0 0 5px" }}>INSTRUMENT SEARCH</p>
-        <h3 style={{ margin: "0 0 5px", fontSize: "20px", fontWeight: 800 }}>Find a stock or instrument</h3>
-        <p style={{ ...muted, margin: 0 }}>Search across NSE and BSE listings in one place. Choose a result to load its latest available price and chart.</p>
+        <h3 style={{ margin: "0 0 8px", fontSize: "19px", fontWeight: 800, letterSpacing: "-.02em" }}>Find an instrument</h3>
       </div>
       <form onSubmit={search} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: "10px", alignItems: "stretch" }}>
         <div style={{ position: "relative", minWidth: 0 }}>
           <Search aria-hidden="true" size={22} style={{ position: "absolute", left: "17px", top: "50%", transform: "translateY(-50%)", color: "#c4b5fd", pointerEvents: "none" }} />
-          <input aria-label="Search company, stock or instrument" autoComplete="off" style={{ ...input, width: "100%", minHeight: "62px", padding: "16px 18px 16px 50px", borderRadius: "16px", border: "1px solid rgba(168,85,247,.58)", background: "linear-gradient(135deg, rgba(168,85,247,.13), rgba(255,255,255,.045))", boxShadow: "0 0 0 3px rgba(168,85,247,.06)", fontSize: "16px" }} value={query} onChange={e => setQuery(e.target.value)} placeholder="Try Reliance, HDFC Bank, TCS…" />
+          <input aria-label="Search company, stock or instrument" autoComplete="off" style={{ ...input, width: "100%", minHeight: "60px", padding: "15px 18px 15px 50px", borderRadius: "18px", border: "1px solid rgba(167,139,250,.62)", background: "linear-gradient(115deg, rgba(124,58,237,.22), rgba(15,23,42,.94) 72%)", boxShadow: "0 0 0 4px rgba(124,58,237,.07), 0 14px 32px rgba(0,0,0,.16)", fontSize: "16px" }} value={query} onChange={e => setQuery(e.target.value)} placeholder="Try Reliance, HDFC Bank, TCS…" />
         </div>
-        <button className="primary-button" type="submit" disabled={searchBusy} style={{ minWidth: "118px", minHeight: "62px", padding: "0 22px", borderRadius: "15px", fontSize: "14px", fontWeight: 750, whiteSpace: "nowrap" }}>
+        <button className="primary-button" type="submit" disabled={searchBusy} style={{ minWidth: "118px", minHeight: "60px", padding: "0 18px", borderRadius: "16px", fontSize: "14px", fontWeight: 750, whiteSpace: "nowrap" }}>
           {searchBusy ? "Searching…" : <><Search size={17} style={{ marginRight: "7px", verticalAlign: "middle" }} />Search</>}
         </button>
       </form>
-      <p style={{ ...muted, margin: "8px 2px 0", fontSize: "11px" }}>NSE and BSE matches appear together. Exchange is shown on each result; no exchange dropdown is needed.</p>
+      
       {searchBusy && <p role="status" style={{ ...muted, marginTop: "12px" }}>Searching the instrument master…</p>}
       {searchError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px", marginTop: "12px" }}>{searchError}</p>}
       {results.length > 0 && <p style={{ ...muted, margin: "12px 0 4px" }}>{results.length} matching instruments · Select a result to open its quote and chart.</p>}
@@ -2384,14 +2394,7 @@ function MarketsPage() {
     </section>
     {overviewError && <div role="status" style={{ padding: "12px 14px", borderRadius: "12px", color: "#fcd34d", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", fontSize: "12px" }}>{overviewError}</div>}
     {!selectedInstrument && <>
-      <section aria-label="Major Indian market indices" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
-        {requestedIndices.map((item, i) => <div key={item.label} style={{ ...card, position: "relative", overflow: "hidden", background: i % 2 === 0 ? "linear-gradient(135deg, rgba(124,58,237,0.20), rgba(255,255,255,0.025))" : "linear-gradient(135deg, rgba(14,165,233,0.15), rgba(255,255,255,0.025))" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}><strong style={{ fontSize: "13px", letterSpacing: ".04em" }}>{item.label}</strong><span style={{ ...muted, fontSize: "10px" }}>{item.data?.status || (busy ? "Loading" : "Market index")}</span></div>
-          <div style={{ fontSize: "25px", fontWeight: 850, marginTop: "13px", letterSpacing: "-.03em" }}>{item.data?.last_price != null && Number.isFinite(Number(item.data.last_price)) ? Number(item.data.last_price).toLocaleString("en-IN", { maximumFractionDigits: 2 }) : busy ? "Loading…" : "Unavailable"}</div>
-          <div style={{ ...muted, marginTop: "5px" }}>{item.data ? `${item.data.exchange || "Indian market"} · Latest available` : "Not currently returned by market API"}</div>
-          <div aria-hidden="true" style={{ height: "3px", borderRadius: "9px", marginTop: "14px", background: "linear-gradient(90deg, rgba(167,139,250,.95), rgba(56,189,248,.35), transparent)" }} />
-        </div>)}
-      </section>
+
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" }}>
         <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}><div><div style={muted}>Market breadth · returned by provider</div><strong style={{ fontSize: "18px" }}>Top gainers</strong><div style={muted}>Stocks moving higher</div></div><div style={{ fontSize: "28px", fontWeight: 850, color: "#86efac" }}>{gainers.length}</div></div>
         <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}><div><div style={muted}>Market breadth · returned by provider</div><strong style={{ fontSize: "18px" }}>Top losers</strong><div style={muted}>Stocks moving lower</div></div><div style={{ fontSize: "28px", fontWeight: 850, color: "#fca5a5" }}>{losers.length}</div></div>

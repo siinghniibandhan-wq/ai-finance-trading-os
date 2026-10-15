@@ -22,6 +22,8 @@ m.Stock Script Master
 
 import csv
 import os
+import threading
+import time
 from io import StringIO
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -37,6 +39,88 @@ MSTOCK_GATEWAY_URL = os.getenv(
     "MSTOCK_GATEWAY_URL",
     "http://54.153.201.74:8000",
 ).rstrip("/")
+
+# Cache the gateway's instrument master in this backend process. This is read-only
+# and deliberately does not change the search response or ranking behaviour.
+try:
+    MARKET_INSTRUMENT_CACHE_TTL_SECONDS = max(
+        1, int(os.getenv("MARKET_INSTRUMENT_CACHE_TTL_SECONDS", "900"))
+    )
+except (TypeError, ValueError):
+    MARKET_INSTRUMENT_CACHE_TTL_SECONDS = 900
+
+_instrument_master_cache = {"text": None, "loaded_at": 0.0}
+_instrument_master_cache_lock = threading.Lock()
+
+
+def _get_instrument_master_csv():
+    """Return the cached instrument-master CSV, refreshing it after the TTL."""
+    now = time.monotonic()
+    cached_text = _instrument_master_cache["text"]
+    if cached_text is not None and now - _instrument_master_cache["loaded_at"] < MARKET_INSTRUMENT_CACHE_TTL_SECONDS:
+        return cached_text
+
+    # Lock and double-check to avoid multiple concurrent refresh downloads.
+    with _instrument_master_cache_lock:
+        now = time.monotonic()
+        cached_text = _instrument_master_cache["text"]
+        if cached_text is not None and now - _instrument_master_cache["loaded_at"] < MARKET_INSTRUMENT_CACHE_TTL_SECONDS:
+            return cached_text
+
+        try:
+            request = Request(f"{MSTOCK_GATEWAY_URL}/instruments", method="GET")
+            with urlopen(request, timeout=30) as response:
+                status_code = response.status
+                response_text = response.read().decode("utf-8", errors="replace")
+
+            if status_code == 401:
+                raise HTTPException(
+                    status_code=502,
+                    detail="Market gateway authentication required.",
+                )
+            if status_code != 200:
+                raise HTTPException(
+                    status_code=502,
+                    detail="Market instrument data unavailable.",
+                )
+            # Reject empty or headerless payloads so a transient bad response
+            # cannot replace a previously good cache entry.
+            reader = csv.DictReader(StringIO(response_text.lstrip("\ufeff")))
+            if not reader.fieldnames:
+                raise ValueError("Instrument master CSV has no header row.")
+            _instrument_master_cache["text"] = response_text
+            _instrument_master_cache["loaded_at"] = time.monotonic()
+            return response_text
+        except HTTPException:
+            if cached_text is not None:
+                return cached_text
+            raise
+        except HTTPError as exc:
+            if cached_text is not None:
+                return cached_text
+            if exc.code == 401:
+                raise HTTPException(
+                    status_code=502,
+                    detail="Market gateway authentication required.",
+                ) from exc
+            raise HTTPException(
+                status_code=502,
+                detail="Market instrument data unavailable.",
+            ) from exc
+        except URLError as exc:
+            if cached_text is not None:
+                return cached_text
+            raise HTTPException(
+                status_code=502,
+                detail="Unable to reach market data gateway.",
+            ) from exc
+        except Exception as exc:
+            if cached_text is not None:
+                return cached_text
+            raise HTTPException(
+                status_code=502,
+                detail="Unable to parse market instrument data.",
+            ) from exc
 
 
 # ============================================================
@@ -82,56 +166,7 @@ def search_market(
             detail="Search query is required.",
         )
 
-    # --------------------------------------------------------
-    # Fetch instrument master from AWS gateway
-    # --------------------------------------------------------
-
-    try:
-        request = Request(
-            f"{MSTOCK_GATEWAY_URL}/instruments",
-            method="GET",
-        )
-
-        with urlopen(request, timeout=30) as response:
-            status_code = response.status
-            response_text = response.read().decode(
-                "utf-8",
-                errors="replace",
-            )
-
-    except HTTPError as exc:
-        if exc.code == 401:
-            raise HTTPException(
-                status_code=502,
-                detail="Market gateway authentication required.",
-            ) from exc
-
-        raise HTTPException(
-            status_code=502,
-            detail="Market instrument data unavailable.",
-        ) from exc
-
-    except URLError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail="Unable to reach market data gateway.",
-        ) from exc
-
-    # --------------------------------------------------------
-    # Gateway authentication
-    # --------------------------------------------------------
-
-    if status_code == 401:
-        raise HTTPException(
-            status_code=502,
-            detail="Market gateway authentication required.",
-        )
-
-    if status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail="Market instrument data unavailable.",
-        )
+    response_text = _get_instrument_master_csv()
 
     # --------------------------------------------------------
     # Parse Script Master CSV

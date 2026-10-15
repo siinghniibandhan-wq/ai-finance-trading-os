@@ -651,7 +651,6 @@ function Dashboard() {
 
   const summary = dashboardData?.summary || {};
   const trend = dashboardData?.monthly_trend || [];
-  const breakdown = dashboardData?.expense_breakdown || [];
   const alerts = dashboardData?.alerts || [];
   const recentTransactions = dashboardData?.recent_transactions || [];
   const totalBalance = Number(summary.total_balance || 0);
@@ -693,7 +692,6 @@ function Dashboard() {
   ];
 
   const maxTrend = Math.max(1, ...trend.flatMap(item => [Number(item.income || 0), Number(item.expenses || 0)]));
-  const maxCategory = Math.max(1, ...breakdown.map(item => Number(item.amount || 0)));
 
   return (
     <div className="dashboard dashboard-overview">
@@ -702,7 +700,7 @@ function Dashboard() {
           <p className="welcome-label">FINANCIAL COMMAND CENTRE</p>
           <h2>Your financial <br /><span>overview.</span></h2>
           <p className="welcome-description">
-            A concise view of Money, Investments, Planning, Markets, AI and Tax—using available recorded data.
+            Your at-a-glance financial status. Open Money for detailed cash-flow analysis, Portfolio for investments, and Wealth Manager for your complete balance sheet.
           </p>
           <p style={{fontSize: "12px", opacity: .7, marginTop: 8}}>
             {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit"})}` : "Loading overview…"}
@@ -814,19 +812,13 @@ function Dashboard() {
           )}
         </div>
 
-        <div className="glass-card">
-          <div className="card-header"><div><p className="card-label">MONEY • SPENDING</p><h3>Expense categories</h3></div></div>
-          {breakdown.length === 0 ? <div className="empty-chart">No expense categories recorded for this month.</div> : (
-            <div className="category-chart">
-              {breakdown.map((item, index) => (
-                <div className="category-row" key={`${item.category}-${index}`}>
-                  <div className="category-row-label"><span>{item.category}</span><strong>{formatCurrency(item.amount)}</strong></div>
-                  <div className="category-track"><div className="category-fill" style={{width:`${Math.min(100, Number(item.amount || 0) / maxCategory * 100)}%`}}/></div>
-                </div>
-              ))}
-              <p className="chart-footnote">Current-month expenses; largest categories shown first.</p>
-            </div>
-          )}
+        <div className="glass-card dashboard-money-drilldown">
+          <div className="card-header">
+            <div><p className="card-label">MONEY / FULL ANALYSIS</p><h3>Explore your cash flow</h3></div>
+            <ArrowUpRight size={18} />
+          </div>
+          <p className="chart-footnote">Detailed spending categories, budgets and transaction analysis belong in the Money workspace. This dashboard keeps the trend summary concise.</p>
+          <button className="primary-button" type="button" onClick={() => goTo("Transactions")}>Open Money analysis</button>
         </div>
       </section>
 

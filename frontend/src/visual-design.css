@@ -399,3 +399,56 @@ svg { flex-shrink: 0; }
   .tax-centre nav[aria-label="Tax sections"] button { flex: 1 1 auto; padding: 9px 10px !important; }
   .tax-centre table { min-width: 560px; }
 }
+
+
+/* ============================================================
+   INVEST / HOLDINGS — portfolio metrics and position readability
+   ============================================================ */
+.holdings-workspace { min-width: 0; }
+.holdings-workspace > section.glass-card {
+  border-radius: 20px;
+  border-color: rgba(148,163,184,.14);
+  background: linear-gradient(145deg, rgba(255,255,255,.035), transparent 48%), rgba(12,17,31,.74);
+}
+.holdings-workspace .metrics-grid { gap: 13px !important; }
+.holdings-workspace .metric-card {
+  min-height: 136px;
+  border-radius: 17px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(167,139,250,.08), transparent 58%),
+    linear-gradient(145deg, rgba(20,28,48,.88), rgba(10,15,28,.94));
+  border-color: rgba(167,139,250,.15);
+}
+.holdings-workspace .metric-value { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.holdings-workspace .holdings-row {
+  padding: 5px 0;
+}
+.holdings-workspace .holdings-row > div { min-width: 0; }
+.holdings-workspace .holdings-row strong { font-variant-numeric: tabular-nums; }
+.holdings-workspace .holdings-row + div { min-width: 0; }
+.holdings-workspace .holdings-row [role="button"]:focus-visible { outline: 2px solid var(--finos-cyan); }
+.holdings-workspace .primary-button,
+.holdings-workspace .secondary-button,
+.holdings-workspace .small-button { min-height: 36px; }
+@media (max-width: 1180px) {
+  .holdings-workspace .holdings-row {
+    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+    gap: 12px !important;
+  }
+  .holdings-workspace .holdings-row > div:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .holdings-workspace .metrics-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 8px !important; }
+  .holdings-workspace .metric-card { min-height: 116px; padding: 13px; }
+  .holdings-workspace .metric-value { font-size: clamp(16px,4.5vw,21px); }
+  .holdings-workspace .holdings-row { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+  .holdings-workspace .holdings-row > div:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 380px) {
+  .holdings-workspace .metrics-grid { grid-template-columns: minmax(0,1fr) !important; }
+  .holdings-workspace .holdings-row { grid-template-columns: minmax(0,1fr) !important; }
+}
+
+/* Keep comparison tables legible on narrow screens without shrinking figures. */
+.tax-centre table, .holdings-workspace table { display: block; max-width: 100%; overflow-x: auto; }
+.tax-centre table thead, .tax-centre table tbody { width: 100%; }

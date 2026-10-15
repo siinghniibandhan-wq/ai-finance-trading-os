@@ -650,7 +650,7 @@ function Dashboard() {
   };
 
   const summary = dashboardData?.summary || {};
-  const trend = dashboardData?.monthly_trend || [];
+  const trend = (dashboardData?.monthly_trend || []).slice(-6);
   const alerts = dashboardData?.alerts || [];
   const recentTransactions = dashboardData?.recent_transactions || [];
   const totalBalance = Number(summary.total_balance || 0);
@@ -717,10 +717,10 @@ function Dashboard() {
 
       {/* MONEY: high-level metrics; the dashboard intentionally avoids transaction-level detail. */}
       <section className="metrics-grid">
-        <MetricCard title="Cash Balance" value={loading ? "Loading…" : formatCurrency(totalBalance)} change={`${summary.account_count || 0} active accounts`} positive icon={Wallet} />
-        <MetricCard title="Total Income" value={loading ? "Loading…" : formatCurrency(totalIncome)} change="All recorded income" positive icon={TrendingUp} />
-        <MetricCard title="Total Expenses" value={loading ? "Loading…" : formatCurrency(totalExpense)} change="All recorded expenses" positive={false} icon={CreditCard} />
-        <MetricCard title="Net Cash Flow" value={loading ? "Loading…" : formatCurrency(netCashFlow)} change={netCashFlow >= 0 ? "Positive" : "Negative"} positive={netCashFlow >= 0} icon={CircleDollarSign} />
+        <div role="button" tabIndex={0} onClick={() => goTo("Accounts")} onKeyDown={(event) => event.key === "Enter" && goTo("Accounts")} className="dashboard-clickable-card" aria-label="Open accounts"><MetricCard title="Cash Balance" value={loading ? "Loading…" : formatCurrency(totalBalance)} change={`${summary.account_count || 0} active accounts · Open accounts`} positive icon={Wallet} /></div>
+        <div role="button" tabIndex={0} onClick={() => goTo("Transactions")} onKeyDown={(event) => event.key === "Enter" && goTo("Transactions")} className="dashboard-clickable-card" aria-label="Open income transactions"><MetricCard title="Total Income" value={loading ? "Loading…" : formatCurrency(totalIncome)} change="All recorded income · View details" positive icon={TrendingUp} /></div>
+        <div role="button" tabIndex={0} onClick={() => goTo("Transactions")} onKeyDown={(event) => event.key === "Enter" && goTo("Transactions")} className="dashboard-clickable-card" aria-label="Open expense transactions"><MetricCard title="Total Expenses" value={loading ? "Loading…" : formatCurrency(totalExpense)} change="All recorded expenses · View details" positive={false} icon={CreditCard} /></div>
+        <div role="button" tabIndex={0} onClick={() => goTo("Transactions")} onKeyDown={(event) => event.key === "Enter" && goTo("Transactions")} className="dashboard-clickable-card" aria-label="Open cash flow details"><MetricCard title="Net Cash Flow" value={loading ? "Loading…" : formatCurrency(netCashFlow)} change={`${netCashFlow >= 0 ? "Positive" : "Negative"} · View details`} positive={netCashFlow >= 0} icon={CircleDollarSign} /></div>
         <MetricCard title="Avg. Monthly Income" value={loading ? "Loading…" : formatCurrency(avgIncome)} change="Last 90 days ÷ 3" positive icon={ArrowUpRight} />
         <MetricCard title="Avg. Monthly Expenses" value={loading ? "Loading…" : formatCurrency(avgExpense)} change="Last 90 days ÷ 3" positive={false} icon={ArrowDownRight} />
         <MetricCard title="Estimated Monthly Savings" value={loading ? "Loading…" : formatCurrency(monthlySavings)} change="Income minus expenses" positive={monthlySavings >= 0} icon={WalletCards} />

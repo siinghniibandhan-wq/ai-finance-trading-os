@@ -1294,3 +1294,57 @@ svg { flex-shrink: 0; }
 :root[data-finos-theme="brutalism"] .placeholder-card p:last-child {
   color: #404040 !important;
 }
+
+
+/* Theme-aware foregrounds for common controls and icons.
+   Keep each theme's background/accent identity; only correct unreadable
+   foreground colours inherited from the original dark interface. */
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) {
+  --finos-text: #172033;
+  --finos-muted: #475569;
+  --finos-border: #cbd5e1;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content p,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content label,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content th,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content td {
+  color: var(--finos-text);
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content svg {
+  color: currentColor;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content input,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content select,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content textarea {
+  color: #172033;
+  background-color: #fff;
+  border-color: #cbd5e1;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content input::placeholder,
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content textarea::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content button:not(.primary-button):not(.button-primary) {
+  color: #334155;
+}
+:root[data-finos-theme="elegant-plain"] .content .primary-button,
+:root[data-finos-theme="elegant-plain"] .content .button-primary {
+  color: #fff !important;
+  background: #202938 !important;
+}
+:root[data-finos-theme="brutalism"] .content p,
+:root[data-finos-theme="brutalism"] .content label,
+:root[data-finos-theme="brutalism"] .content th,
+:root[data-finos-theme="brutalism"] .content td,
+:root[data-finos-theme="brutalism"] .content button:not(.primary-button):not(.button-primary) {
+  color: #171717;
+}
+:root[data-finos-theme="brutalism"] .content input,
+:root[data-finos-theme="brutalism"] .content select,
+:root[data-finos-theme="brutalism"] .content textarea {
+  color: #171717;
+  background: #fff;
+  border-color: #525252;
+}

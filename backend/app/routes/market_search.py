@@ -44,10 +44,10 @@ MSTOCK_GATEWAY_URL = os.getenv(
 # and deliberately does not change the search response or ranking behaviour.
 try:
     MARKET_INSTRUMENT_CACHE_TTL_SECONDS = max(
-        1, int(os.getenv("MARKET_INSTRUMENT_CACHE_TTL_SECONDS", "900"))
+        1, int(os.getenv("MARKET_INSTRUMENT_CACHE_TTL_SECONDS", "600"))
     )
 except (TypeError, ValueError):
-    MARKET_INSTRUMENT_CACHE_TTL_SECONDS = 900
+    MARKET_INSTRUMENT_CACHE_TTL_SECONDS = 600
 
 _instrument_master_cache = {"text": None, "loaded_at": 0.0}
 _instrument_master_cache_lock = threading.Lock()

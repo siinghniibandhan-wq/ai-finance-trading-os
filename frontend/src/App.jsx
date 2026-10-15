@@ -6732,6 +6732,7 @@ const summaryCards = [
                 const nextType = event.target.value;
                 instrumentSearchRequestRef.current += 1;
                 selectedInstrumentQuoteRef.current = "";
+                setLiveInstrumentQuoteLoading(false);
                 setInstrumentSearchBusy(false);
                 setInvestmentForm((previous) => ({
                   ...previous,

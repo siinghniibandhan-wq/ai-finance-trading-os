@@ -49,7 +49,7 @@ try:
 except (TypeError, ValueError):
     MARKET_INSTRUMENT_CACHE_TTL_SECONDS = 600
 
-_instrument_master_cache = {"text": None, "loaded_at": 0.0}
+_instrument_master_cache = {"text": None, "loaded_at": 0.0, "parsed_text": None, "fieldnames": None, "rows": None, "stale": False}
 _instrument_master_cache_lock = threading.Lock()
 
 
@@ -69,7 +69,7 @@ def _get_instrument_master_csv():
 
         try:
             request = Request(f"{MSTOCK_GATEWAY_URL}/instruments", method="GET")
-            with urlopen(request, timeout=30) as response:
+            with urlopen(request, timeout=8) as response:
                 status_code = response.status
                 response_text = response.read().decode("utf-8", errors="replace")
 
@@ -90,13 +90,16 @@ def _get_instrument_master_csv():
                 raise ValueError("Instrument master CSV has no header row.")
             _instrument_master_cache["text"] = response_text
             _instrument_master_cache["loaded_at"] = time.monotonic()
+            _instrument_master_cache["stale"] = False
             return response_text
         except HTTPException:
             if cached_text is not None:
+                _instrument_master_cache["stale"] = True
                 return cached_text
             raise
         except HTTPError as exc:
             if cached_text is not None:
+                _instrument_master_cache["stale"] = True
                 return cached_text
             if exc.code == 401:
                 raise HTTPException(
@@ -109,6 +112,7 @@ def _get_instrument_master_csv():
             ) from exc
         except URLError as exc:
             if cached_text is not None:
+                _instrument_master_cache["stale"] = True
                 return cached_text
             raise HTTPException(
                 status_code=502,
@@ -116,6 +120,7 @@ def _get_instrument_master_csv():
             ) from exc
         except Exception as exc:
             if cached_text is not None:
+                _instrument_master_cache["stale"] = True
                 return cached_text
             raise HTTPException(
                 status_code=502,
@@ -176,14 +181,23 @@ def search_market(
         # Instrument-master exports can use different column labels across
         # gateway versions. Normalize headers once (including a UTF-8 BOM)
         # and map provider aliases into the names used below.
-        reader = csv.DictReader(StringIO(response_text.lstrip("\ufeff")))
-        if not reader.fieldnames:
-            raise ValueError("Instrument master CSV has no header row.")
+        if _instrument_master_cache.get("parsed_text") == response_text and _instrument_master_cache.get("rows") is not None:
+            fieldnames = _instrument_master_cache["fieldnames"]
+            raw_rows = _instrument_master_cache["rows"]
+        else:
+            reader = csv.DictReader(StringIO(response_text.lstrip("\ufeff")))
+            if not reader.fieldnames:
+                raise ValueError("Instrument master CSV has no header row.")
+            fieldnames = list(reader.fieldnames)
+            raw_rows = list(reader)
+            _instrument_master_cache["parsed_text"] = response_text
+            _instrument_master_cache["fieldnames"] = fieldnames
+            _instrument_master_cache["rows"] = raw_rows
 
         def normalize_header(value):
             return "".join(ch for ch in str(value or "").strip().lower() if ch.isalnum())
 
-        header_lookup = {normalize_header(name): name for name in reader.fieldnames}
+        header_lookup = {normalize_header(name): name for name in fieldnames}
         aliases = {
             "exchange": ("exchange", "exch", "exchseg", "exchangesegment", "marketsegment"),
             "tradingsymbol": ("tradingsymbol", "tradingsym", "symbol", "tradingcode", "ticker"),
@@ -209,7 +223,7 @@ def search_market(
 
         results = []
 
-        for raw_row in reader:
+        for raw_row in raw_rows:
             # Canonicalize aliases so downstream result construction remains
             # consistent regardless of the gateway's CSV header spelling.
             row = {key: value_for(raw_row, key) for key in aliases}
@@ -384,6 +398,9 @@ def search_market(
             "provider": "m.Stock",
             "gateway": "AWS Gateway",
             "endpoint": "/instruments",
+            "cache_age_seconds": max(0, int(time.monotonic() - _instrument_master_cache["loaded_at"])),
+            "stale": bool(_instrument_master_cache.get("stale")),
+            "warning": "Using cached instrument data because gateway refresh failed." if _instrument_master_cache.get("stale") else None,
         },
         "database_write": False,
         "next_module": "Historical Market Data",

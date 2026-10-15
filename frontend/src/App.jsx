@@ -12604,6 +12604,7 @@ function Category() {
   // ----------------------------------------------------------
 
   const [categories, setCategories] = useState([]);
+  const [activeCategoryTab, setActiveCategoryTab] = useState("income");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -12974,6 +12975,97 @@ function Category() {
     }
   }
 
+  const visibleTypeCategories = categories.filter(
+    (category) => category.category_type === activeCategoryTab
+  );
+
+  const favoriteNames = activeCategoryTab === "income"
+    ? [
+        "Salary",
+        "Other Sources > Savings Interest",
+        "Other Sources > Dividends",
+        "House Property > Rent",
+      ]
+    : [
+        "Food > Groceries",
+        "Housing > Rent",
+        "Transport > Fuel",
+        "Utilities > Electricity",
+      ];
+
+  const favoriteCategories = favoriteNames
+    .map((name) => visibleTypeCategories.find(
+      (category) => String(category.name || "").toLowerCase() === name.toLowerCase()
+    ))
+    .filter(Boolean);
+
+  const favoriteCategoryIds = new Set(favoriteCategories.map((category) => category.id));
+
+  const isBusinessCategory = (category) => {
+    const name = String(category.name || "").toLowerCase();
+    const root = name.split(" > ")[0].trim();
+    return root === "business/profession"
+      || root === "business expenses"
+      || /^(business income|business revenue|business sales|business services|business travel|business utilities)(\s*>|$)/.test(name);
+  };
+
+  const personalCategories = visibleTypeCategories.filter(
+    (category) => !favoriteCategoryIds.has(category.id) && !isBusinessCategory(category)
+  );
+
+  const businessCategories = visibleTypeCategories.filter(
+    (category) => !favoriteCategoryIds.has(category.id) && isBusinessCategory(category)
+  );
+
+  const otherCategories = categories.filter(
+    (category) => !["income", "expense"].includes(String(category.category_type || "").toLowerCase())
+  );
+
+  const renderCategoryCard = (category) => (
+    <div
+      key={category.id}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "16px",
+        padding: "16px",
+        borderRadius: "16px",
+        background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+        border: "1px solid rgba(255,255,255,0.08)",
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", overflowWrap: "anywhere" }}>
+          {category.name}
+        </div>
+        {category.description && (
+          <div style={{ marginTop: "5px", fontSize: "12px", color: "rgba(255,255,255,0.55)" }}>
+            {category.description}
+          </div>
+        )}
+      </div>
+      <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => openEditCategoryForm(category)}
+          style={{ padding: "7px 12px", fontSize: "11px" }}
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => setCategoryToDelete(category)}
+          style={{ padding: "7px 12px", fontSize: "11px", color: "#fb7185", borderColor: "rgba(251,113,133,0.25)" }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  );
+
   // ----------------------------------------------------------
   // RENDER
   // ----------------------------------------------------------
@@ -13170,121 +13262,84 @@ function Category() {
         )}
 
 
-        {!loading &&
-          categories.length > 0 && (
-
-          <div
-            style={{
-              display: "grid",
-              gap: "14px",
-              marginTop: "20px",
-            }}
-          >
-
-            {categories.map((category) => (
-
-              <div
-                key={category.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent:
-                    "space-between",
-                  gap: "16px",
-                  padding: "18px",
-                  borderRadius: "18px",
-                  background:
-                    "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
-                  border:
-                    "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
-
-                <div>
-
-                  <div
+        {!loading && (
+          <>
+            <div style={{ display: "flex", gap: "10px", marginTop: "20px", marginBottom: "22px" }}>
+              {[
+                { value: "income", label: "Income", icon: "↑" },
+                { value: "expense", label: "Expense", icon: "↓" },
+              ].map((tab) => {
+                const selected = activeCategoryTab === tab.value;
+                const count = categories.filter((category) => category.category_type === tab.value).length;
+                return (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    onClick={() => setActiveCategoryTab(tab.value)}
+                    aria-pressed={selected}
                     style={{
-                      fontSize: "15px",
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "9px",
+                      padding: "14px 16px",
+                      borderRadius: "14px",
+                      border: selected ? "1px solid rgba(190,100,255,.55)" : "1px solid rgba(255,255,255,.10)",
+                      background: selected ? "linear-gradient(135deg, rgba(168,85,247,.28), rgba(236,72,153,.16))" : "rgba(255,255,255,.035)",
+                      color: "#fff",
                       fontWeight: 700,
-                      color: "#ffffff",
+                      cursor: "pointer",
                     }}
                   >
-                    {category.name}
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop: "5px",
-                      fontSize: "12px",
-                      color:
-                        "rgba(255,255,255,0.55)",
-                      textTransform:
-                        "capitalize",
-                    }}
-                  >
-                    {category.category_type}
-
-                    {category.description
-                      ? ` • ${category.description}`
-                      : ""}
-                  </div>
-
-                </div>
-
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "8px",
-                    flexShrink: 0,
-                  }}
-                >
-
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() =>
-                      openEditCategoryForm(
-                        category
-                      )
-                    }
-                    style={{
-                      padding:
-                        "7px 12px",
-                      fontSize: "11px",
-                    }}
-                  >
-                    Edit
+                    <span style={{ fontSize: "18px" }}>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,.62)", fontWeight: 600 }}>{count}</span>
                   </button>
+                );
+              })}
+            </div>
 
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() =>
-                      setCategoryToDelete(
-                        category
-                      )
-                    }
-                    style={{
-                      padding:
-                        "7px 12px",
-                      fontSize: "11px",
-                      color: "#fb7185",
-                      borderColor:
-                        "rgba(251,113,133,0.25)",
-                    }}
-                  >
-                    Delete
-                  </button>
-
-                </div>
-
+            <section style={{ marginBottom: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <span style={{ fontSize: "18px" }}>⭐</span>
+                <h4 style={{ margin: 0, color: "#fff", fontSize: "15px" }}>Favorite {activeCategoryTab === "income" ? "Income" : "Expense"} Categories</h4>
+                <span style={{ fontSize: "11px", color: "rgba(255,255,255,.5)" }}>Top 4</span>
               </div>
+              <div style={{ display: "grid", gap: "10px" }}>
+                {favoriteCategories.length > 0
+                  ? favoriteCategories.map(renderCategoryCard)
+                  : <p style={{ color: "rgba(255,255,255,.55)", fontSize: "13px" }}>Favorite categories will appear here when available.</p>}
+              </div>
+            </section>
 
+            {[
+              { title: "Personal", items: personalCategories, icon: "👤" },
+              { title: "Business", items: businessCategories, icon: "🏢" },
+            ].map((group) => (
+              <section key={group.title} style={{ marginBottom: "24px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                  <span style={{ fontSize: "17px" }}>{group.icon}</span>
+                  <h4 style={{ margin: 0, color: "#fff", fontSize: "15px" }}>{group.title} {activeCategoryTab === "income" ? "Income" : "Expense"}</h4>
+                  <span style={{ fontSize: "11px", color: "rgba(255,255,255,.5)" }}>{group.items.length}</span>
+                </div>
+                {group.items.length > 0
+                  ? <div style={{ display: "grid", gap: "10px" }}>{group.items.map(renderCategoryCard)}</div>
+                  : <p style={{ color: "rgba(255,255,255,.45)", fontSize: "12px", margin: "0 0 4px" }}>No categories in this section yet.</p>}
+              </section>
             ))}
 
-          </div>
-
+            {otherCategories.length > 0 && (
+              <section style={{ marginTop: "10px", paddingTop: "18px", borderTop: "1px solid rgba(255,255,255,.09)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                  <span style={{ fontSize: "16px" }}>↔️</span>
+                  <h4 style={{ margin: 0, color: "#fff", fontSize: "14px" }}>Other / Transfers</h4>
+                  <span style={{ fontSize: "11px", color: "rgba(255,255,255,.5)" }}>{otherCategories.length}</span>
+                </div>
+                <div style={{ display: "grid", gap: "10px" }}>{otherCategories.map(renderCategoryCard)}</div>
+              </section>
+            )}
+          </>
         )}
 
       </section>

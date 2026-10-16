@@ -2357,3 +2357,105 @@ svg { flex-shrink: 0; }
 :root[data-finos-theme="bento-grid"] .content .wc-primary-card {
   border-top: 3px solid var(--finos-accent) !important;
 }
+
+
+/* ELEGANT PLAIN — focused ivory / stone / charcoal contrast refinements.
+   Scoped only to Elegant Plain; the Default pink/purple theme and other themes are unchanged. */
+:root[data-finos-theme="elegant-plain"] {
+  color-scheme: light;
+  --t-bg: #f5f5f2;
+  --t-text: #242424;
+  --t-text-2: #525252;
+  --t-muted: #737373;
+  --t-border: #e5e5e0;
+  --t-surface: #ffffff;
+  --t-card: #ffffff;
+  --t-accent: #303030;
+  --t-accent-soft: #525252;
+  --t-accent-2: #73736d;
+  --t-sidebar-bg: #fafaf8;
+  --t-topbar-bg: rgba(250,250,248,.96);
+  --t-input-bg: #ffffff;
+  --t-input-border: #c9c9c2;
+  --t-btn-bg: #303030;
+  --t-btn-shadow: none;
+  --t-radius: 5px;
+  --t-btn-radius: 3px;
+  --t-radius-sm: 3px;
+  --t-nav-active-bg: #eaeae5;
+  --t-nav-active-text: #242424;
+  --t-heading-font: Georgia, "Times New Roman", serif;
+}
+:root[data-finos-theme="elegant-plain"] body { background: #f5f5f2 !important; color: #242424; }
+:root[data-finos-theme="elegant-plain"] .glass-card,
+:root[data-finos-theme="elegant-plain"] .metric-card,
+:root[data-finos-theme="elegant-plain"] .dashboard-card,
+:root[data-finos-theme="elegant-plain"] .stat-card,
+:root[data-finos-theme="elegant-plain"] .content-card,
+:root[data-finos-theme="elegant-plain"] .panel,
+:root[data-finos-theme="elegant-plain"] .modal-content,
+:root[data-finos-theme="elegant-plain"] .dropdown-menu,
+:root[data-finos-theme="elegant-plain"] .dropdown-content,
+:root[data-finos-theme="elegant-plain"] [role="menu"],
+:root[data-finos-theme="elegant-plain"] [role="listbox"] {
+  color: #242424 !important;
+  background: #fff !important;
+  border-color: #e5e5e0 !important;
+  box-shadow: 0 2px 8px rgba(36,36,36,.045) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+:root[data-finos-theme="elegant-plain"] h1,
+:root[data-finos-theme="elegant-plain"] h2,
+:root[data-finos-theme="elegant-plain"] h3,
+:root[data-finos-theme="elegant-plain"] h4 { color: #242424 !important; }
+:root[data-finos-theme="elegant-plain"] p,
+:root[data-finos-theme="elegant-plain"] label,
+:root[data-finos-theme="elegant-plain"] .card-label,
+:root[data-finos-theme="elegant-plain"] .metric-label,
+:root[data-finos-theme="elegant-plain"] .text-muted,
+:root[data-finos-theme="elegant-plain"] small { color: #525252; }
+:root[data-finos-theme="elegant-plain"] button.primary-button,
+:root[data-finos-theme="elegant-plain"] .primary-button,
+:root[data-finos-theme="elegant-plain"] button[type="submit"] {
+  color: #fff !important; background: #303030 !important; border: 1px solid #303030 !important;
+  box-shadow: none !important; text-shadow: none !important;
+}
+:root[data-finos-theme="elegant-plain"] .primary-button:hover,
+:root[data-finos-theme="elegant-plain"] button[type="submit"]:hover { background: #171717 !important; border-color: #171717 !important; }
+:root[data-finos-theme="elegant-plain"] .secondary-button,
+:root[data-finos-theme="elegant-plain"] .small-button,
+:root[data-finos-theme="elegant-plain"] .icon-button,
+:root[data-finos-theme="elegant-plain"] .menu-button {
+  color: #303030 !important; background: #fff !important; border: 1px solid #c9c9c2 !important; box-shadow: none !important;
+}
+:root[data-finos-theme="elegant-plain"] .secondary-button:hover,
+:root[data-finos-theme="elegant-plain"] .small-button:hover,
+:root[data-finos-theme="elegant-plain"] .icon-button:hover,
+:root[data-finos-theme="elegant-plain"] .menu-button:hover { background: #f0f0eb !important; }
+:root[data-finos-theme="elegant-plain"] .brand-icon,
+:root[data-finos-theme="elegant-plain"] .profile-avatar { background: #303030 !important; color: #fff !important; box-shadow: none !important; }
+:root[data-finos-theme="elegant-plain"] .navigation-item { color: #525252 !important; border-radius: 3px !important; }
+:root[data-finos-theme="elegant-plain"] .navigation-item:hover,
+:root[data-finos-theme="elegant-plain"] .navigation-item.active { background: #eaeae5 !important; color: #242424 !important; border-color: #d4d4cd !important; box-shadow: none !important; }
+:root[data-finos-theme="elegant-plain"] input,
+:root[data-finos-theme="elegant-plain"] textarea,
+:root[data-finos-theme="elegant-plain"] select {
+  color: #242424 !important; background: #fff !important; border-color: #c9c9c2 !important;
+}
+:root[data-finos-theme="elegant-plain"] input::placeholder,
+:root[data-finos-theme="elegant-plain"] textarea::placeholder { color: #737373 !important; opacity: 1; }
+:root[data-finos-theme="elegant-plain"] select option,
+:root[data-finos-theme="elegant-plain"] [role="option"],
+:root[data-finos-theme="elegant-plain"] [role="menuitem"] { color: #242424 !important; background: #fff !important; }
+:root[data-finos-theme="elegant-plain"] [role="option"]:hover,
+:root[data-finos-theme="elegant-plain"] [role="option"][aria-selected="true"],
+:root[data-finos-theme="elegant-plain"] [role="menuitem"]:hover { color: #242424 !important; background: #eaeae5 !important; }
+:root[data-finos-theme="elegant-plain"] :focus-visible { outline: 2px solid #525252 !important; outline-offset: 2px; }
+:root[data-finos-theme="elegant-plain"] table thead,
+:root[data-finos-theme="elegant-plain"] th { color: #303030 !important; background: #f0f0eb !important; }
+:root[data-finos-theme="elegant-plain"] td,
+:root[data-finos-theme="elegant-plain"] th { border-color: #e5e5e0 !important; }
+:root[data-finos-theme="elegant-plain"] .welcome-section h2 span { background: none !important; color: #242424 !important; -webkit-text-fill-color: currentColor !important; }
+:root[data-finos-theme="elegant-plain"] svg { filter: none; }
+:root[data-finos-theme="elegant-plain"] .finos-theme-option-elegant-plain .finos-theme-sample { --s-bg: #f5f5f2; --s-border: 1px solid #e5e5e0; --s-radius: 3px; --s-line: #303030; --s-line-radius: 0; --s-btn: #303030; --s-btn-radius: 2px; }

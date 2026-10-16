@@ -136,6 +136,9 @@ class Account(Base):
         nullable=False,
     )
 
+    # Credit products use balance as the outstanding amount (positive = owed).
+    # These nullable fields keep existing non-credit account records compatible.
+    credit_limit: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,

@@ -1529,3 +1529,43 @@
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history div[style*="color: rgb(252, 165, 165)"] {
   color: #b91c1c !important;
 }
+
+
+/* Shared light-theme form polish: consistent controls and clearer section rhythm.
+   Keep the existing theme palette and dark/brutalism treatments intact. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--finos-text, #202938);
+  background: var(--t-inner-bg, var(--t-card-bg, #fff));
+  border: 1px solid color-mix(in srgb, var(--finos-border, #dfe4ec) 78%, var(--finos-text, #202938) 22%) !important;
+  border-radius: var(--t-radius-sm, 9px);
+  box-shadow: none !important;
+  outline-offset: 2px;
+  transition: border-color .16s ease, background-color .16s ease;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea):focus-visible {
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent);
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content select option {
+  color: var(--finos-text, #202938);
+  background: var(--t-card-bg, #fff);
+}
+/* Let form groups read as separate sections without adding heavy outlines. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content :is(form, .form-section, .settings-section, .tax-income-aggregation, .tax-business-income-review, .tax-house-property-panel, .tax-hra-panel) > :is(h2,h3,h4) {
+  margin-top: 0;
+  line-height: 1.35;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content :is(.tax-income-aggregation, .tax-business-income-review, .tax-house-property-panel, .tax-hra-panel) {
+  min-width: 0;
+  margin-block: 16px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 620px) {
+  :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea) {
+    width: 100%;
+    max-width: 100%;
+  }
+}

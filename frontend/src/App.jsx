@@ -9073,6 +9073,16 @@ function Accounts() {
     account_number: "",
     currency: "INR",
     balance: "",
+    credit_limit: "",
+    loan_principal: "",
+    loan_disbursed: "",
+    loan_interest_rate: "",
+    loan_tenure_months: "",
+    loan_emi_amount: "",
+    loan_start_date: new Date().toISOString().slice(0, 10),
+    loan_first_payment_date: "",
+    loan_interest_type: "reducing_balance",
+    loan_repayment_frequency: "monthly",
   });
 
   // ----------------------------------------------------------
@@ -9138,11 +9148,21 @@ const handleAccountSubmit = async () => {
       return;
     }
 
-    if (
-      accountForm.balance === "" ||
-      Number(accountForm.balance) < 0
-    ) {
-      setError("Please enter a valid opening balance.");
+    if (accountForm.balance === "" || !Number.isFinite(Number(accountForm.balance))) {
+      setError("Please enter a valid opening balance or outstanding balance.");
+      return;
+    }
+    const isCreditAccount = ["credit_card", "credit_line"].includes(accountForm.account_type);
+    if (isCreditAccount && (accountForm.credit_limit === "" || Number(accountForm.credit_limit) <= 0 || Number(accountForm.balance) < 0)) {
+      setError("Enter a positive credit limit and a non-negative opening outstanding amount.");
+      return;
+    }
+    if (isCreditAccount && Number(accountForm.balance) > Number(accountForm.credit_limit)) {
+      setError("Opening outstanding amount cannot exceed the credit limit.");
+      return;
+    }
+    if (accountForm.account_type === "loan" && (!accountForm.loan_principal || Number(accountForm.loan_principal) <= 0 || !accountForm.loan_disbursed || Number(accountForm.loan_disbursed) <= 0 || Number(accountForm.loan_disbursed) > Number(accountForm.loan_principal) || !accountForm.loan_start_date)) {
+      setError("Enter a valid loan principal, disbursed amount, and start date. Disbursed amount cannot exceed principal.");
       return;
     }
 
@@ -9159,16 +9179,17 @@ const handleAccountSubmit = async () => {
             accountForm.account_number.trim(),
           currency: accountForm.currency,
           balance: Number(accountForm.balance),
+          credit_limit: isCreditAccount ? Number(accountForm.credit_limit) : null,
         }
       : {
           user_id: USER_ID,
           name: accountForm.name.trim(),
           account_type: accountForm.account_type,
           institution: accountForm.institution.trim(),
-          account_number:
-            accountForm.account_number.trim(),
+          account_number: accountForm.account_number.trim(),
           currency: accountForm.currency,
           balance: Number(accountForm.balance),
+          credit_limit: isCreditAccount ? Number(accountForm.credit_limit) : null,
         };
 
     const response = await apiFetch(
@@ -9212,6 +9233,16 @@ const handleAccountSubmit = async () => {
       account_number: "",
       currency: "INR",
       balance: "",
+      credit_limit: "",
+      loan_principal: "",
+      loan_disbursed: "",
+      loan_interest_rate: "",
+      loan_tenure_months: "",
+      loan_emi_amount: "",
+      loan_start_date: new Date().toISOString().slice(0, 10),
+      loan_first_payment_date: "",
+      loan_interest_type: "reducing_balance",
+      loan_repayment_frequency: "monthly",
     });
 
     setEditingAccount(null);
@@ -9313,6 +9344,16 @@ const handleEditAccount = (account) => {
     account_number: account.account_number || "",
     currency: account.currency || "INR",
     balance: account.balance ?? "",
+    credit_limit: account.credit_limit ?? "",
+    loan_principal: "",
+    loan_disbursed: "",
+    loan_interest_rate: "",
+    loan_tenure_months: "",
+    loan_emi_amount: "",
+    loan_start_date: new Date().toISOString().slice(0, 10),
+    loan_first_payment_date: "",
+    loan_interest_type: "reducing_balance",
+    loan_repayment_frequency: "monthly",
   });
 
   setShowAccountForm(true);

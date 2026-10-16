@@ -2062,3 +2062,62 @@
   --tax-section-border: rgba(148,163,184,.18);
   --tax-subtle-surface: rgba(148,163,184,.035);
 }
+
+
+/* Tax workspace polish: unify form controls with the active theme and remove
+   the oversized legacy select outlines. Presentation only; tax logic is untouched. */
+:root[data-finos-theme] .tax-centre :is(select, input:not([type="checkbox"]):not([type="radio"]), textarea) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--tax-input-border, var(--finos-border, rgba(148,163,184,.28))) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  background: var(--tax-input-surface, var(--finos-surface-raised, var(--t-inner-bg, #151a27))) !important;
+  color: var(--tax-ink, var(--finos-text, inherit)) !important;
+  box-shadow: none !important;
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+:root[data-finos-theme] .tax-centre :is(select, input:not([type="checkbox"]):not([type="radio"]), textarea):focus-visible {
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent) !important;
+  outline-offset: 1px;
+}
+:root[data-finos-theme] .tax-centre select option {
+  color: var(--tax-ink, var(--finos-text, #202631));
+  background: var(--tax-input-surface, var(--finos-surface, #fff));
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre {
+  --tax-ink: #202938;
+  --tax-muted: #5b6472;
+  --tax-input-surface: color-mix(in srgb, var(--finos-surface, #fff) 84%, var(--finos-page, #f5f7fb) 16%);
+  --tax-input-border: color-mix(in srgb, var(--finos-border, #dfe4ec) 82%, var(--finos-text, #202938) 18%);
+  --tax-section-border: color-mix(in srgb, var(--finos-border, #dfe4ec) 86%, var(--finos-text, #202938) 14%);
+  --tax-subtle-surface: color-mix(in srgb, var(--finos-surface, #fff) 90%, var(--finos-page, #f5f7fb) 10%);
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre :is(select, input:not([type="checkbox"]):not([type="radio"]), textarea) {
+  background: var(--tax-input-surface) !important;
+  border-color: var(--tax-input-border) !important;
+  color: var(--tax-ink) !important;
+  border-width: 1px !important;
+  box-shadow: none !important;
+}
+.tax-centre :is(.tax-income-aggregation,.tax-business-income-review,.tax-house-property-panel,.tax-hra-panel,.tax-hra-salary-section,.tax-hra-rent-section) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tax-centre :is(.tax-income-aggregation,.tax-business-income-review,.tax-house-property-panel) {
+  margin-block: 14px !important;
+}
+.tax-centre :is(.tax-income-aggregation,.tax-business-income-review,.tax-house-property-panel) > :is(h2,h3,h4) {
+  margin-top: 0 !important;
+}
+.tax-centre :is(.tax-hra-panel,.tax-hra-salary-section) {
+  background: var(--tax-subtle-surface, var(--finos-surface, transparent));
+}
+@media (max-width: 620px) {
+  .tax-centre :is(.tax-income-aggregation,.tax-business-income-review,.tax-house-property-panel,.tax-hra-panel) {
+    padding: 14px !important;
+    border-radius: 12px !important;
+  }
+}

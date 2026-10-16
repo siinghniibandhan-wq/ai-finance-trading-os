@@ -2914,3 +2914,96 @@ svg { flex-shrink: 0; }
 :root[data-finos-theme="elegant-plain"] .wc-balance-row.assets .wc-balance-track > span { background: #5c6470; }
 :root[data-finos-theme="elegant-plain"] .wc-balance-row.liabilities .wc-balance-track > span { background: #b7a18c; }
 :root[data-finos-theme="elegant-plain"] .wc-balance-row.net-worth .wc-balance-track > span { background: #6b8f80; }
+
+
+/* Chart of Accounts: restore readable contrast and mobile table usability.
+   Scoped to this module; account data and accounting behavior are unchanged. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .chart-of-accounts-card {
+  color: var(--finos-text, #252a32) !important;
+  background: var(--t-card-bg, #fff) !important;
+  border-color: var(--finos-border, #dedfe4) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: currentColor;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .chart-of-accounts-card :is(table,thead,tbody,tr,th,td,label,small,p,span,strong,b) {
+  opacity: 1 !important;
+  -webkit-text-fill-color: currentColor;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .chart-of-accounts-card :is(th,td) {
+  color: var(--finos-text, #252a32) !important;
+  border-color: var(--finos-border, #e1e4e9) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .chart-of-accounts-card :is(th) {
+  background: var(--t-inner-bg, #f0f1ed) !important;
+  color: var(--finos-text, #252a32) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .chart-of-accounts-card :is(td, .text-muted, .muted, small) {
+  color: var(--finos-muted, #5f6876) !important;
+}
+:root[data-finos-theme="elegant-plain"] .chart-of-accounts-card {
+  --finos-text: #292b30;
+  --finos-muted: #62666d;
+  --finos-border: #e2ded4;
+  --t-inner-bg: #f0efe9;
+}
+:root[data-finos-theme="elegant-plain"] .chart-of-accounts-card :is(th, thead) {
+  background: #efefe9 !important;
+  color: #292b30 !important;
+}
+:root[data-finos-theme="elegant-plain"] .chart-of-accounts-card :is(td, small, p, span) {
+  color: #62666d !important;
+}
+:root[data-finos-theme="elegant-plain"] .chart-of-accounts-card :is(td strong, td b, th strong, th b) {
+  color: #292b30 !important;
+}
+@media (max-width: 760px) {
+  .chart-of-accounts-card {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .chart-of-accounts-card table {
+    min-width: 560px;
+  }
+}

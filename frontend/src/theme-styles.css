@@ -1456,3 +1456,14 @@
   color: var(--finos-control-text, var(--finos-text, #f1f5f9)) !important;
   background-color: color-mix(in srgb, var(--finos-accent, #a78bfa) 22%, var(--finos-control-bg, #111827)) !important;
 }
+
+
+/* Portfolio form: make the custom dropdown trigger controls visually unboxed,
+   matching the existing Product Type control. Do not affect menu options,
+   form inputs, or dropdown behavior. */
+:root[data-finos-theme] .content .finos-select-wrap > button.finos-select-trigger {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}

@@ -1529,3 +1529,42 @@
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history div[style*="color: rgb(252, 165, 165)"] {
   color: #b91c1c !important;
 }
+
+
+/* Investment Transactions filters: override the legacy dark defaults in styles.css.
+   Keep the native custom-select behavior intact; only colors/surfaces change. */
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-wrap > button.finos-select-trigger {
+  color: var(--finos-control-text, var(--finos-text, #202738)) !important;
+  background: var(--finos-control-bg, var(--finos-surface, #ffffff)) !important;
+  border: 1px solid var(--finos-control-border, var(--finos-border, #d8deea)) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-trigger > span:first-child {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-chevron {
+  color: var(--finos-muted, currentColor) !important;
+}
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-menu {
+  color: var(--finos-control-text, var(--finos-text, #202738)) !important;
+  background: var(--finos-control-bg, var(--finos-surface, #ffffff)) !important;
+  border: 1px solid var(--finos-control-border, var(--finos-border, #d8deea)) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--t-shadow, 0 12px 30px rgba(25,35,55,.16)) !important;
+  backdrop-filter: none !important;
+}
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-menu .finos-select-option {
+  color: var(--finos-control-text, var(--finos-text, #202738)) !important;
+  background: transparent !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-menu .finos-select-option:hover,
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-menu .finos-select-option.is-selected {
+  color: var(--finos-control-text, var(--finos-text, #202738)) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 14%, var(--finos-control-bg, #ffffff)) !important;
+}
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-check {
+  color: var(--finos-accent, #5145cd) !important;
+}

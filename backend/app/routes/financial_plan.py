@@ -152,6 +152,11 @@ def get_financial_plan(
         .filter(
             Account.user_id == user_id,
             Account.is_active == True,
+            ~func.lower(Account.account_type).in_([
+                "loan", "personal_loan", "home_loan", "term_loan",
+                "credit_card", "creditcard", "credit_line", "credit line",
+                "cash_credit", "overdraft", "od", "payable", "receivable",
+            ]),
         )
         .scalar()
     )
@@ -163,6 +168,11 @@ def get_financial_plan(
         .filter(
             Account.user_id == user_id,
             Account.is_active == True,
+            ~func.lower(Account.account_type).in_([
+                "loan", "personal_loan", "home_loan", "term_loan",
+                "credit_card", "creditcard", "credit_line", "credit line",
+                "cash_credit", "overdraft", "od", "payable", "receivable",
+            ]),
         )
         .scalar()
     )

@@ -4050,7 +4050,7 @@ function InvestmentTransactions() {
                             marginTop: "5px",
                             fontSize: "11px",
                             color:
-                              "rgba(255,255,255,0.45)",
+                              "var(--finos-muted, #64748b)",
                             whiteSpace:
                               "nowrap",
                             overflow:
@@ -4084,7 +4084,7 @@ function InvestmentTransactions() {
                           style={{
                             fontSize: "10px",
                             color:
-                              "rgba(255,255,255,0.38)",
+                              "var(--finos-muted, #64748b)",
                             textTransform:
                               "uppercase",
                             letterSpacing:
@@ -4116,7 +4116,7 @@ function InvestmentTransactions() {
                           style={{
                             fontSize: "10px",
                             color:
-                              "rgba(255,255,255,0.38)",
+                              "var(--finos-muted, #64748b)",
                             textTransform:
                               "uppercase",
                             letterSpacing:
@@ -4153,7 +4153,7 @@ function InvestmentTransactions() {
                           style={{
                             fontSize: "10px",
                             color:
-                              "rgba(255,255,255,0.38)",
+                              "var(--finos-muted, #64748b)",
                             textTransform:
                               "uppercase",
                             letterSpacing:
@@ -4180,7 +4180,7 @@ function InvestmentTransactions() {
                             marginTop: "4px",
                             fontSize: "10px",
                             color:
-                              "rgba(255,255,255,0.42)",
+                              "var(--finos-muted, #64748b)",
                           }}
                         >
                           Qty{" "}

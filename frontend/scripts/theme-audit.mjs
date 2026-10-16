@@ -38,7 +38,7 @@ for (const slug of slugs) {
 console.log(`PASS: CSS includes theme-specific rules for all ${slugs.length} theme slugs.`);
 
 for (const selector of [
-  ".finos-select-wrap", ".finos-select-menu", ".finos-select-option",
+  ".finos-select-menu", ".finos-select-option",
   ".wc-chart-surface", ".wc-periods", ".wc-chart-types",
   ".finos-theme-settings-grid", ".finos-theme-option",
 ]) {

@@ -194,3 +194,107 @@
     max-width: 100%;
   }
 }
+
+
+/* Screenshot-driven refinements: Loans, Portfolio and Ledger */
+:root[data-finos-theme] .loan-management-page {
+  color: var(--finos-text) !important;
+  min-width: 0;
+}
+:root[data-finos-theme] .loan-management-page > div:first-child p,
+:root[data-finos-theme] .loan-management-page section p,
+:root[data-finos-theme] .loan-management-page > div:last-child {
+  color: var(--finos-muted) !important;
+}
+:root[data-finos-theme] .loan-management-page > div:first-child > div > div:first-child,
+:root[data-finos-theme] .loan-management-page section h3,
+:root[data-finos-theme] .loan-management-page h3 {
+  color: var(--finos-text) !important;
+}
+:root[data-finos-theme] .loan-management-page > div,
+:root[data-finos-theme] .loan-management-page section {
+  border-color: var(--finos-border) !important;
+  background: var(--t-card-bg, transparent) !important;
+  color: var(--finos-text) !important;
+  border-radius: var(--t-radius, 12px);
+  box-shadow: var(--t-shadow, none);
+}
+:root[data-finos-theme] .loan-management-page table th {
+  color: var(--finos-text) !important;
+  background: var(--t-inner-bg, var(--t-card-bg)) !important;
+  border-color: var(--finos-border) !important;
+}
+:root[data-finos-theme] .loan-management-page table td,
+:root[data-finos-theme] .loan-management-page table tr {
+  color: var(--finos-text);
+  border-color: var(--finos-border) !important;
+}
+:root[data-finos-theme] .loan-management-page input,
+:root[data-finos-theme] .loan-management-page select,
+:root[data-finos-theme] .loan-management-page textarea {
+  color: var(--finos-text) !important;
+  background: var(--t-inner-bg, var(--t-card-bg)) !important;
+  border-color: var(--finos-border) !important;
+}
+:root[data-finos-theme] .loan-management-page button {
+  color: var(--t-btn-text, var(--finos-text)) !important;
+  background: var(--t-btn-bg, var(--t-card-bg)) !important;
+  border: var(--t-btn-border, 1px solid var(--finos-border)) !important;
+  border-radius: var(--t-radius-sm, var(--t-radius, 8px)) !important;
+}
+:root[data-finos-theme="elegant-plain"] .loan-management-page > div:first-child > div > div:first-child {
+  color: #6d5aa6 !important;
+}
+:root[data-finos-theme="elegant-plain"] .loan-management-page button {
+  color: #292b30 !important;
+}
+:root[data-finos-theme] .investment-workspace {
+  color: var(--finos-text);
+}
+:root[data-finos-theme] .investment-workspace :is(h1,h2,h3,h4,h5,strong,.card-title,.card-header) {
+  color: var(--finos-text);
+}
+:root[data-finos-theme] .investment-workspace :is(p,small,.muted,.description,.card-label) {
+  color: var(--finos-muted) !important;
+}
+:root[data-finos-theme] .investment-workspace .glass-card {
+  background: var(--t-card-bg) !important;
+  color: var(--finos-text) !important;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius, 12px) !important;
+  box-shadow: var(--t-shadow, none) !important;
+}
+:root[data-finos-theme] .investment-workspace :is(input,textarea,select) {
+  color: var(--finos-text) !important;
+  background: var(--t-inner-bg, var(--t-card-bg)) !important;
+  border-color: var(--finos-border) !important;
+}
+:root[data-finos-theme] .investment-workspace :is(.secondary-button,.primary-button) {
+  border-radius: var(--t-radius-sm, var(--t-radius, 8px)) !important;
+}
+:root[data-finos-theme="elegant-plain"] .investment-workspace :is(.primary-button,.secondary-button) {
+  color: var(--t-btn-text, #23262b) !important;
+  background: var(--t-btn-bg, #fff) !important;
+  border: var(--t-btn-border, 1px solid #d6d2c8) !important;
+}
+:root[data-finos-theme="elegant-plain"] .investment-workspace .primary-button {
+  color: #fff !important;
+  background: #303030 !important;
+  border: 1px solid #303030 !important;
+}
+:root[data-finos-theme] .ledger-page > .welcome-section h2 {
+  font-size: clamp(22px, 3vw, 30px) !important;
+  line-height: 1.2 !important;
+  margin: 4px 0 6px !important;
+  font-weight: 650 !important;
+}
+:root[data-finos-theme] .ledger-page > .welcome-section {
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+}
+@media (max-width: 760px) {
+  :root[data-finos-theme] .loan-management-page table { min-width: 760px; }
+  :root[data-finos-theme] .loan-management-page > div { min-width: 0; }
+  :root[data-finos-theme] .ledger-page > .welcome-section h2 { font-size: 24px !important; }
+}

@@ -6986,7 +6986,7 @@ const summaryCards = [
                   setInstrumentResults([]);
                   setInstrumentSearchError("");
                 }}
-                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "#17172a", color: "#ffffff", fontSize: "12px", outline: "none" }}
+                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.05)", color: "#ffffff", fontSize: "12px", outline: "none" }}
               >
                 <option value="Equity">Equity</option>
                 <option value="Fixed Income">Fixed Income</option>
@@ -7183,7 +7183,7 @@ const summaryCards = [
                   setInvestmentForm((previous) => ({ ...previous, broker: value === "Other" ? "" : value }));
                 }}
                 required
-                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "#151525", color: "#ffffff", fontSize: "12px" }}
+                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.05)", color: "#ffffff", fontSize: "12px", outline: "none" }}
               >
                 <option value="">Select broker…</option>
                 <option value="Zerodha">Zerodha</option><option value="Groww">Groww</option><option value="Upstox">Upstox</option><option value="Angel One">Angel One</option><option value="ICICI Direct">ICICI Direct</option><option value="HDFC Securities">HDFC Securities</option><option value="Kotak Securities">Kotak Securities</option><option value="m.Stock">m.Stock (Mirae Asset)</option><option value="Other">Other (enter broker)</option>

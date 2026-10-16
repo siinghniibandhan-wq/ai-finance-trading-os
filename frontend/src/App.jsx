@@ -6322,7 +6322,7 @@ const handleInvestmentTransactionSubmit =
       // ------------------------------------------------------
 
       const response = await apiFetch(
-        "https://wealthmanager.duckdns.org/api/investment-transactions/",
+        `${API_BASE_URL}/api/investment-transactions/`,
         {
           method: "POST",
 
@@ -6533,8 +6533,8 @@ const handleInvestmentTransactionSubmit =
       // --------------------------------------------------------
 
       const url = editingInvestmentId
-        ? `https://wealthmanager.duckdns.org/api/investments/${editingInvestmentId}`
-        : "https://wealthmanager.duckdns.org/api/investments/";
+        ? `${API_BASE_URL}/api/investments/${editingInvestmentId}`
+        : `${API_BASE_URL}/api/investments/`;
 
       const response = await apiFetch(
         url,
@@ -6600,7 +6600,7 @@ const handleInvestmentTransactionSubmit =
 
         const transactionResponse =
           await apiFetch(
-            "https://wealthmanager.duckdns.org/api/investment-transactions/",
+            `${API_BASE_URL}/api/investment-transactions/`,
             {
               method: "POST",
 
@@ -6631,7 +6631,7 @@ const handleInvestmentTransactionSubmit =
 
           try {
             await apiFetch(
-              `https://wealthmanager.duckdns.org/api/investments/${data.id}`,
+              `${API_BASE_URL}/api/investments/${data.id}`,
               {
                 method: "DELETE",
               }

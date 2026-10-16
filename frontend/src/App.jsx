@@ -9216,6 +9216,34 @@ const handleAccountSubmit = async () => {
       );
     }
 
+    if (!isEditing && accountForm.account_type === "loan") {
+      const loanPayload = {
+        user_id: USER_ID,
+        name: accountForm.name.trim(),
+        lender_name: accountForm.institution.trim(),
+        loan_type: "term_loan",
+        principal_amount: Number(accountForm.loan_principal),
+        amount_disbursed: Number(accountForm.loan_disbursed),
+        linked_account_id: data.id,
+        interest_rate: accountForm.loan_interest_rate === "" ? null : Number(accountForm.loan_interest_rate),
+        interest_type: accountForm.loan_interest_type,
+        tenure_months: accountForm.loan_tenure_months === "" ? null : Number(accountForm.loan_tenure_months),
+        emi_amount: accountForm.loan_emi_amount === "" ? null : Number(accountForm.loan_emi_amount),
+        start_date: accountForm.loan_start_date,
+        first_payment_date: accountForm.loan_first_payment_date || null,
+        repayment_frequency: accountForm.loan_repayment_frequency,
+      };
+      const loanResponse = await apiFetch(`${API_BASE_URL}/api/loans`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loanPayload),
+      });
+      const loanResult = await loanResponse.json();
+      if (!loanResponse.ok) {
+        throw new Error(loanResult?.detail || "Account was created, but loan setup failed. Open Loan Management and link or complete the loan record.");
+      }
+    }
+
     setAccounts((previous) =>
       isEditing
         ? previous.map((account) =>

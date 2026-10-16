@@ -1499,3 +1499,24 @@
 :root[data-finos-theme] .content .instrument-search-result-meta {
   color: var(--finos-muted, #94a3b8);
 }
+/* Portfolio transaction modal: restore readable contrast in light-family themes.
+   Dark/colorful themes intentionally keep their existing styling. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .portfolio-transaction-modal {
+  color: var(--finos-text, #1f2937) !important;
+  background: var(--t-card-bg, #ffffff) !important;
+  border-color: var(--finos-border, #d1d5db) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .portfolio-transaction-modal :is(p,small,label,span,div,h1,h2,h3,h4,strong,b) {
+  color: var(--finos-text, #1f2937);
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .portfolio-transaction-modal [style*="rgba(255,255,255"] {
+  color: var(--finos-muted, #4b5563) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .portfolio-transaction-modal button {
+  color: var(--finos-text, #1f2937);
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .portfolio-transaction-modal > div[style*="rgba(255,255,255"] {
+  background: color-mix(in srgb, var(--finos-text, #1f2937) 4%, var(--t-card-bg, #ffffff)) !important;
+  border-color: var(--finos-border, #d1d5db) !important;
+}
+

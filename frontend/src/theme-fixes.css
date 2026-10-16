@@ -1216,3 +1216,85 @@
   min-height: 48px !important;
   border-radius: 12px !important;
 }
+
+
+/* Market breadth semantic colors: theme-aware gain/loss badges for every
+   light-family theme. Keep the counts saturated enough to read, while adapting
+   their hue, softness, and glass effect to each theme's visual language. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: #16834a !important;
+  -webkit-text-fill-color: #16834a !important;
+  background: rgba(34, 197, 94, .10);
+  border: 1px solid rgba(22, 131, 74, .20);
+  border-radius: 12px;
+  min-width: 38px;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 2px 8px;
+  box-sizing: border-box;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: #c63845 !important;
+  -webkit-text-fill-color: #c63845 !important;
+  background: rgba(239, 68, 68, .09);
+  border: 1px solid rgba(198, 56, 69, .20);
+  border-radius: 12px;
+  min-width: 38px;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 2px 8px;
+  box-sizing: border-box;
+}
+/* Minimal and Elegant Plain: restrained, flat semantic treatments. */
+:root[data-finos-theme="minimal"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child,
+:root[data-finos-theme="elegant-plain"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: #287747 !important; -webkit-text-fill-color: #287747 !important;
+  background: #edf7f0; border-color: #d5eadb; box-shadow: none;
+}
+:root[data-finos-theme="minimal"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child,
+:root[data-finos-theme="elegant-plain"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: #b83b45 !important; -webkit-text-fill-color: #b83b45 !important;
+  background: #fff0f0; border-color: #f3d7d9; box-shadow: none;
+}
+/* Claymorphism: soft, rounded tinted surfaces. */
+:root[data-finos-theme="claymorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: #25804d !important; -webkit-text-fill-color: #25804d !important;
+  background: linear-gradient(145deg, rgba(220,252,231,.95), rgba(240,253,244,.78));
+  border-color: rgba(74, 160, 105, .24); box-shadow: 2px 3px 8px rgba(74,120,90,.08), inset 0 1px 0 rgba(255,255,255,.9);
+}
+:root[data-finos-theme="claymorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: #c34450 !important; -webkit-text-fill-color: #c34450 !important;
+  background: linear-gradient(145deg, rgba(255,228,230,.96), rgba(255,241,242,.82));
+  border-color: rgba(195,68,80,.22); box-shadow: 2px 3px 8px rgba(150,70,80,.07), inset 0 1px 0 rgba(255,255,255,.9);
+}
+/* Neumorphism: quiet text with recessed pastel pills. */
+:root[data-finos-theme="neumorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: #28794a !important; -webkit-text-fill-color: #28794a !important;
+  background: #e6f2e9; border-color: #d2e5d7; box-shadow: inset 2px 2px 4px rgba(100,130,110,.10), inset -2px -2px 4px #fff;
+}
+:root[data-finos-theme="neumorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: #b6424b !important; -webkit-text-fill-color: #b6424b !important;
+  background: #f8e9ea; border-color: #efd6d8; box-shadow: inset 2px 2px 4px rgba(150,100,105,.10), inset -2px -2px 4px #fff;
+}
+/* Skeuomorphism: stronger, crisp indicator colors with a subtle raised finish. */
+:root[data-finos-theme="skeuomorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: #16713e !important; -webkit-text-fill-color: #16713e !important;
+  background: linear-gradient(180deg,#f4fff7,#dcefe2); border-color: #b9d8c2;
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(30,60,40,.10);
+}
+:root[data-finos-theme="skeuomorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: #b52d3a !important; -webkit-text-fill-color: #b52d3a !important;
+  background: linear-gradient(180deg,#fff7f7,#f5dfe1); border-color: #e7bfc3;
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(70,30,35,.10);
+}
+/* Bento Grid: cool, clean tinted blocks. */
+:root[data-finos-theme="bento-grid"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: #16776c !important; -webkit-text-fill-color: #16776c !important;
+  background: #e4f5f1; border-color: #c7e7df;
+}
+:root[data-finos-theme="bento-grid"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: #bd4652 !important; -webkit-text-fill-color: #bd4652 !important;
+  background: #fff0f1; border-color: #f2d5d8;
+}

@@ -1484,7 +1484,7 @@ function TaxPage() {
     const isNone = hpForm.property_type === "none";
     const isLetOut = hpForm.property_type === "let_out";
     return (
-      <div style={{ ...panelStyle, marginTop: 18 }}>
+      <section className="tax-house-property-panel" style={{ ...panelStyle, marginTop: 0 }}>
         <h3 style={{ marginTop: 0 }}>House property income</h3>
         <p style={{ color: "rgba(255,255,255,0.58)", fontSize: 12, lineHeight: 1.6 }}>Add each property for {financialYear}, or confirm that you have none. A record counts in your taxable income only after you verify it. Rent receipts in Money are never counted automatically. The app does not inspect documents.</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "10px", marginBottom: "12px" }}>
@@ -1524,7 +1524,7 @@ function TaxPage() {
             </div>
           ))}
         </div>
-      </div>
+      </section>
     );
   };
 
@@ -1747,7 +1747,8 @@ function TaxPage() {
   );
 
   const renderIncome = () => (
-    <div style={panelStyle}>
+    <div className="tax-income-layout" style={{ display: "grid", gap: "18px" }}>
+    <section className="tax-income-aggregation" style={panelStyle}>
       <h3 style={{ marginTop: 0 }}>Income aggregation</h3>
       <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "12px", lineHeight: 1.6 }}>Amounts are taken from the existing final taxable-income engine. Missing income heads are shown as unavailable rather than assumed to be zero.</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "12px" }}>
@@ -1761,7 +1762,7 @@ function TaxPage() {
         ].map(([label, value]) => <div key={label} style={cardStyle}><div style={labelStyle}>{label}</div><div style={{ fontSize: "18px", fontWeight: 750 }}>{value == null ? "Unavailable" : formatCurrency(value)}</div></div>)}
       </div>
       <div style={{ marginTop: "16px", color: "rgba(255,255,255,0.55)", fontSize: "12px" }}>Salary, house-property and business/profession income must not be treated as zero if the engine marks those heads unavailable.</div>
-      <div style={{ ...panelStyle, marginTop: 18 }}>
+      <section className="tax-business-income-review" style={{ ...panelStyle, marginTop: 0 }}>
         <h3 style={{ marginTop: 0 }}>Money transactions awaiting business-income review</h3>
         <p style={{ color: "rgba(255,255,255,0.58)", fontSize: 12, lineHeight: 1.6 }}>
           These are unlinked Money transactions that may be business or professional income. Being listed here does not make them business income, and nothing is saved or verified automatically. Only verified records count as business income. An entry filed under an Other Sources category may already be counted above as other-source income.
@@ -1787,8 +1788,9 @@ function TaxPage() {
             </table>
           </div>
         )}
-      </div>
-      {renderHouseProperty()}
+      </section>
+    </section>
+    {renderHouseProperty()}
     </div>
   );
 

@@ -1548,8 +1548,8 @@
   background: #4f46e5 !important;
   border-color: #4f46e5 !important;
 }
-:root[data-finos-theme="light"] .investment-transaction-modal > div[style*="rgba(255,255,255,0.04)"],
-:root[data-finos-theme="light"] .investment-transaction-modal > div[style*="rgba(255,255,255,0.05)"] {
+:root[data-finos-theme="light"] .investment-transaction-modal div[style*="rgba(255,255,255,0.04)"],
+:root[data-finos-theme="light"] .investment-transaction-modal div[style*="rgba(255,255,255,0.05)"] {
   background: #f7f9fc !important;
   border-color: #d8dee8 !important;
 }

@@ -9459,7 +9459,22 @@ const deleteAccount = async () => {
     return total + Number(account.balance || 0);
   }, 0);
 
-  const visibleAccounts = accounts;
+  const accountTypeKey = (account) => String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_");
+  const accountGroups = [
+    { label: "Banks", types: ["bank", "savings", "savings_account", "current", "current_account", "checking", "checking_account"] },
+    { label: "Credit Cards", types: ["credit_card", "creditcard", "credit_card_account"] },
+    { label: "Credit Lines", types: ["credit_line", "creditline", "credit_line_account", "cash_credit", "cash_credit_account", "overdraft", "od"] },
+    { label: "Wallets", types: ["wallet", "digital_wallet", "payment_wallet"] },
+    { label: "Cash", types: ["cash", "cash_account"] },
+    { label: "Broker Accounts", types: ["broker", "brokerage", "broker_account", "trading_account", "investment", "investment_account"] },
+    { label: "Loans", types: ["loan", "loan_account", "personal_loan", "home_loan", "term_loan"] },
+  ].map((group) => ({
+    ...group,
+    accounts: accounts.filter((account) => group.types.includes(accountTypeKey(account))),
+  }));
+  const categorizedAccountIds = new Set(accountGroups.flatMap((group) => group.accounts.map((account) => account.id)));
+  const uncategorizedAccounts = accounts.filter((account) => !categorizedAccountIds.has(account.id));
+  if (uncategorizedAccounts.length) accountGroups.push({ label: "Other Accounts", accounts: uncategorizedAccounts });
 
   // ----------------------------------------------------------
   // RENDER
@@ -9633,19 +9648,13 @@ const deleteAccount = async () => {
     ACCOUNT CARDS
 -------------------------------------------------- */}
 
-{!loading && visibleAccounts.length > 0 && (
-
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
-      alignItems: "stretch",
-      gap: "16px",
-      marginTop: "20px",
-    }}
-  >
-
-    {accounts.map((account) => (
+{!loading && accounts.length > 0 && (
+  <div style={{ display: "flex", flexDirection: "column", gap: "26px", marginTop: "20px" }}>
+    {accountGroups.map((group) => group.accounts.length > 0 && (
+      <section key={group.label} aria-label={group.label}>
+        <h3 style={{ margin: "0 0 12px", fontSize: "16px", fontWeight: 750, color: "var(--finos-text, inherit)" }}>{group.label}</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", alignItems: "stretch", gap: "16px" }}>
+          {group.accounts.map((account) => (
 
       <div
         key={account.id}
@@ -9905,10 +9914,11 @@ gridTemplateRows: "auto auto auto",
         </div>
       </div>
 
+          ))}
+        </div>
+      </section>
     ))}
-
-    </div>
-
+  </div>
 )}
 
         {/* ==================================================

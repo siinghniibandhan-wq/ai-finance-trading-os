@@ -181,6 +181,7 @@ def create_loan(payload: LoanPayload, current_user: User = Depends(get_current_u
         raise HTTPException(status_code=400, detail="Amount disbursed cannot exceed principal amount")
     if payload.deposit_account_id is not None:
         _owned_account(db, current_user.id, payload.deposit_account_id, lock=False)
+    linked_account = None
     if payload.linked_account_id is not None:
         linked_account = _owned_account(db, current_user.id, payload.linked_account_id, lock=False)
         if (linked_account.account_type or "").strip().lower() != "loan":
@@ -192,6 +193,8 @@ def create_loan(payload: LoanPayload, current_user: User = Depends(get_current_u
         loan = Loan(**payload.model_dump(exclude={'user_id'}), user_id=current_user.id, outstanding_principal=payload.principal_amount)
         db.add(loan)
         db.flush()
+        if linked_account is not None:
+            linked_account.balance = payload.principal_amount
         liability = Liability(
             user_id=current_user.id, name=payload.name,
             liability_type=payload.loan_type,

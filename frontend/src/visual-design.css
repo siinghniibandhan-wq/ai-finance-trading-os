@@ -2796,3 +2796,41 @@ svg { flex-shrink: 0; }
   }
   :root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] > div:last-child button { width: auto !important; flex: 1 1 72px; }
 }
+
+
+/* Theme tokens for account cards: JSX consumes these variables instead of fixed colors. */
+:root {
+  --finos-account-card-bg: var(--finos-panel, rgba(15,23,42,.76));
+  --finos-account-card-border: var(--finos-border, rgba(167,139,250,.16));
+  --finos-account-card-shadow: 0 12px 30px rgba(0,0,0,.18);
+  --finos-account-icon-bg: linear-gradient(135deg, rgba(168,85,247,.30), rgba(236,72,153,.20));
+  --finos-account-icon-border: rgba(255,255,255,.10);
+  --finos-account-title: #f8fafc;
+  --finos-account-muted: #aebbd3;
+  --finos-account-subtle: #8997b2;
+}
+:root[data-finos-theme="light"],
+:root[data-finos-theme="minimal"],
+:root[data-finos-theme="skeuomorphism"],
+:root[data-finos-theme="neumorphism"],
+:root[data-finos-theme="claymorphism"],
+:root[data-finos-theme="bento-grid"] {
+  --finos-account-card-bg: var(--finos-surface, #fff);
+  --finos-account-card-border: var(--finos-border, #e1e6ef);
+  --finos-account-card-shadow: 0 3px 12px rgba(31,41,55,.055);
+  --finos-account-icon-bg: var(--finos-accent-soft, #f0efff);
+  --finos-account-icon-border: var(--finos-border, #e1e6ef);
+  --finos-account-title: var(--finos-text, #202738);
+  --finos-account-muted: var(--finos-muted, #596579);
+  --finos-account-subtle: var(--finos-muted, #667085);
+}
+:root[data-finos-theme="elegant-plain"] {
+  --finos-account-card-bg: #fff;
+  --finos-account-card-border: #e5e5e0;
+  --finos-account-card-shadow: 0 2px 8px rgba(36,36,36,.045);
+  --finos-account-icon-bg: #f0f0eb;
+  --finos-account-icon-border: #e5e5e0;
+  --finos-account-title: #242424;
+  --finos-account-muted: #525252;
+  --finos-account-subtle: #737373;
+}

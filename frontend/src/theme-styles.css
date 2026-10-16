@@ -1456,13 +1456,3 @@
   color: var(--finos-control-text, var(--finos-text, #f1f5f9)) !important;
   background-color: color-mix(in srgb, var(--finos-accent, #a78bfa) 22%, var(--finos-control-bg, #111827)) !important;
 }
-
-
-/* Match custom dropdown triggers to the unboxed Product Type control.
-   Intentionally limited to the trigger itself; menu, options, and theme
-   backgrounds/text remain unchanged. */
-:root[data-finos-theme] .content .finos-select-trigger {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}

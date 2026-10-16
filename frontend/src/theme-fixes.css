@@ -1956,3 +1956,109 @@
 .tax-centre .tax-income-aggregation {
   background: var(--surface, #ffffff);
 }
+
+
+/* HRA calculator: clear form hierarchy, responsive fields and theme-aware controls. */
+.tax-centre .tax-hra-panel {
+  display: grid;
+  gap: 16px;
+  padding: clamp(14px, 2.2vw, 22px) !important;
+  border: 1px solid var(--tax-section-border, rgba(125,135,155,.28)) !important;
+  border-radius: 16px !important;
+}
+.tax-centre .tax-hra-heading {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--tax-section-border, rgba(125,135,155,.28));
+}
+.tax-centre .tax-hra-heading h3 {
+  font-size: clamp(19px, 2vw, 24px);
+  line-height: 1.25;
+  margin-bottom: 6px !important;
+}
+.tax-centre .tax-hra-heading p { margin-bottom: 0; max-width: 78ch; }
+.tax-centre .tax-hra-salary-section {
+  margin-bottom: 0 !important;
+  padding: clamp(12px, 1.8vw, 18px) !important;
+  border: 1px solid var(--tax-section-border, rgba(125,135,155,.28)) !important;
+  border-radius: 12px !important;
+}
+.tax-centre .tax-hra-salary-section h3 { font-size: 16px; margin-bottom: 6px !important; }
+.tax-centre .tax-hra-salary-section > p { max-width: 85ch; }
+.tax-centre .tax-hra-form { gap: 16px !important; }
+.tax-centre .tax-hra-rent-section {
+  padding: clamp(12px, 1.8vw, 18px);
+  border: 1px solid var(--tax-section-border, rgba(125,135,155,.28));
+  border-radius: 12px;
+  background: var(--tax-subtle-surface, rgba(125,135,155,.035));
+}
+.tax-centre .tax-hra-rent-section h4 {
+  margin: 0 0 5px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.tax-centre .tax-hra-rent-section > p { margin: 0 0 14px; font-size: 12px; line-height: 1.55; }
+.tax-centre .tax-hra-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+.tax-centre .tax-hra-fields > label {
+  min-width: 0;
+  align-content: start;
+  line-height: 1.45;
+  font-weight: 600;
+}
+.tax-centre .tax-hra-fields input:not([type="checkbox"]),
+.tax-centre .tax-hra-fields select,
+.tax-centre .tax-hra-fields textarea {
+  min-width: 0;
+  min-height: 42px;
+  border-radius: 8px !important;
+  border: 1px solid var(--tax-input-border, #cbd5e1) !important;
+  background: var(--tax-input-surface, #fff) !important;
+  color: var(--tax-ink, #202938) !important;
+  padding: 10px 11px !important;
+  box-shadow: none !important;
+}
+.tax-centre .tax-hra-fields input:focus,
+.tax-centre .tax-hra-fields select:focus {
+  outline: 2px solid color-mix(in srgb, #7563dc 32%, transparent);
+  outline-offset: 1px;
+}
+.tax-centre .tax-hra-fields input::placeholder { color: var(--tax-muted, #5b6472) !important; opacity: .78; }
+.tax-centre .tax-hra-fields label:has(input[type="checkbox"]) {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  gap: 9px !important;
+  padding: 10px 11px;
+  border: 1px solid var(--tax-section-border, rgba(125,135,155,.28));
+  border-radius: 8px;
+  font-weight: 500;
+}
+.tax-centre .tax-hra-fields input[type="checkbox"] { margin-top: 3px; flex: 0 0 auto; accent-color: #7563dc; }
+.tax-centre .tax-hra-classification > div[aria-live] {
+  min-height: 42px !important;
+  border: 1px solid var(--tax-input-border, #cbd5e1) !important;
+  border-radius: 8px !important;
+  background: var(--tax-input-surface, #fff) !important;
+  color: var(--tax-ink, #202938) !important;
+}
+.tax-centre .tax-hra-actions { padding-top: 2px; }
+.tax-centre .tax-hra-actions button { min-height: 40px; padding: 10px 15px; }
+@media (max-width: 620px) {
+  .tax-centre .tax-hra-fields { grid-template-columns: minmax(0, 1fr) !important; }
+  .tax-centre .tax-hra-fields label:has(input[type="checkbox"]) { grid-column: 1; }
+}
+:root[data-finos-theme="dark"] .tax-centre .tax-hra-fields input:not([type="checkbox"]),
+:root[data-finos-theme="dark"] .tax-centre .tax-hra-fields select,
+:root[data-finos-theme="dark"] .tax-centre .tax-hra-fields textarea,
+:root[data-finos-theme="dark"] .tax-centre .tax-hra-classification > div[aria-live] {
+  --tax-input-surface: #111827;
+  --tax-input-border: #30394b;
+  --tax-ink: #e5e7eb;
+  --tax-muted: #9ca3af;
+}
+:root[data-finos-theme="dark"] .tax-centre .tax-hra-rent-section {
+  --tax-section-border: rgba(148,163,184,.18);
+  --tax-subtle-surface: rgba(148,163,184,.035);
+}

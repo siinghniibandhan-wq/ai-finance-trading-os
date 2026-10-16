@@ -6803,6 +6803,7 @@ const summaryCards = [
       ===================================================== */}
 
       <section
+        className="portfolio-header"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -7328,7 +7329,7 @@ const summaryCards = [
         {summaryCards.map((card) => (
           <div
   key={card.label}
-  className="glass-card"
+  className="glass-card portfolio-summary-card"
   style={{
     padding: "18px",
     minHeight: "105px",

@@ -943,3 +943,102 @@
   background: #17181d !important;
   border-color: #484950 !important;
 }
+
+
+/* Brutalism polish: navigation, tabs, and chart/empty-data surfaces.
+   Keep the dark canvas, use dim ivory text and yellow accent controls. */
+:root[data-finos-theme="brutalism"] .sidebar .navigation-title {
+  color: #aaa89f !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme="brutalism"] .sidebar .navigation-item {
+  color: #e7e5dc !important;
+  background: transparent !important;
+  border: 2px solid transparent !important;
+  border-radius: 2px !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme="brutalism"] .sidebar .navigation-item svg,
+:root[data-finos-theme="brutalism"] .sidebar .navigation-item span {
+  color: inherit !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme="brutalism"] .sidebar .navigation-item:hover {
+  color: #facc15 !important;
+  background: #202127 !important;
+  border-color: #6b5a0a !important;
+}
+:root[data-finos-theme="brutalism"] .sidebar .navigation-item.active {
+  color: #17181d !important;
+  background: #facc15 !important;
+  border: 2px solid #facc15 !important;
+  box-shadow: 3px 3px 0 #000 !important;
+}
+:root[data-finos-theme="brutalism"] .sidebar .navigation-item.active :is(svg,span) {
+  color: #17181d !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(button,[role="tab"],.tab,.tab-button,.finos-tab) {
+  color: #e7e5dc;
+  border-color: #6b5a0a;
+}
+:root[data-finos-theme="brutalism"] .content :is([role="tab"],.tab,.tab-button,.finos-tab)[aria-selected="true"],
+:root[data-finos-theme="brutalism"] .content :is([role="tab"],.tab,.tab-button,.finos-tab).active {
+  background: #facc15 !important;
+  color: #17181d !important;
+  border: 2px solid #facc15 !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(
+  .overview-chart,.chart-card,.chart-panel,.chart-container,.chart-legend,
+  .chart-footnote,.holdings-allocation-panel,.holdings-allocation-track,
+  .holdings-allocation-row,.holdings-allocation-list,.trend-bars,
+  .asset-allocation,.allocation-chart,.wealth-allocation,.wealth-chart
+) {
+  background: #17181d !important;
+  background-image: none !important;
+  color: #e7e5dc !important;
+  border-color: #484950 !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(
+  .overview-chart,.chart-card,.chart-panel,.chart-container,
+  .holdings-allocation-panel,.asset-allocation,.allocation-chart,
+  .wealth-allocation,.wealth-chart
+) {
+  border: 2px solid #facc15 !important;
+  box-shadow: 4px 4px 0 #000 !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(
+  .overview-chart,.chart-card,.chart-panel,.chart-container,
+  .holdings-allocation-panel,.asset-allocation,.allocation-chart,
+  .wealth-allocation,.wealth-chart,.empty-chart
+) :is(h1,h2,h3,h4,p,span,strong,small,label,figcaption) {
+  color: #e7e5dc !important;
+  -webkit-text-fill-color: #e7e5dc !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(
+  .legend-income,.income-bar,.holdings-allocation-track::after
+) {
+  background: #facc15 !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(.expense-bar) {
+  background: #d97706 !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(svg.recharts-surface,.recharts-wrapper) {
+  background: #17181d !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(.recharts-cartesian-grid line,.recharts-cartesian-axis line,.recharts-cartesian-axis-tick line) {
+  stroke: #484950 !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(.recharts-cartesian-axis-tick-value,.recharts-label,.recharts-legend-item-text) {
+  fill: #e7e5dc !important;
+  color: #e7e5dc !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(.empty-chart,.empty-state,.empty-placeholder,.placeholder,.no-data,.no-results) {
+  background: #202127 !important;
+  color: #e7e5dc !important;
+  border: 2px solid #facc15 !important;
+  border-radius: 2px !important;
+  box-shadow: 3px 3px 0 #000 !important;
+}

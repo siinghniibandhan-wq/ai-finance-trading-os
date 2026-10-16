@@ -2221,3 +2221,43 @@
   border-radius: 12px !important;
   background: color-mix(in srgb, var(--finos-surface, #fff) 72%, var(--finos-page, #f5f7fb) 28%) !important;
 }
+
+
+/* Final cascade correction for Tax Calculation custom dropdowns.
+   The shared .content dropdown rule is more specific than the earlier tax rule. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre .finos-select-wrap > button.finos-select-trigger {
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--finos-border, #dfe4ec) 72%, transparent) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--tax-ink, var(--finos-text, #202938)) !important;
+  -webkit-text-fill-color: var(--tax-ink, var(--finos-text, #202938)) !important;
+  min-height: 42px;
+  padding: 10px 4px !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre .finos-select-wrap > button.finos-select-trigger:focus-visible,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre .finos-select-wrap > button.finos-select-trigger[aria-expanded="true"] {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 20%, transparent) !important;
+  outline-offset: 1px;
+  border-bottom-color: var(--finos-accent, #7563dc) !important;
+}
+/* Real wrappers in renderTaxCalculation: distinguish major areas without heavy outlines. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre :is(.tax-calculation-liability,.tax-calculation-settings,.tax-calculation-breakdown,.tax-calculation-scope) {
+  margin-block: 8px 16px !important;
+  padding: 18px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, var(--finos-surface, #fff) 90%, var(--finos-page, #f5f7fb) 10%) !important;
+  min-width: 0;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre :is(.tax-calculation-liability,.tax-calculation-settings,.tax-calculation-scope) > h3 {
+  margin-top: 0 !important;
+  color: var(--tax-ink, var(--finos-text, #202938)) !important;
+}
+@media (max-width: 620px) {
+  :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre :is(.tax-calculation-liability,.tax-calculation-settings,.tax-calculation-breakdown,.tax-calculation-scope) {
+    padding: 13px !important;
+  }
+}

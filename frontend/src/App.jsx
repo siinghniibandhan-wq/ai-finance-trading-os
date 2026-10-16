@@ -13808,7 +13808,6 @@ function Category() {
               <StyledSelect className="finos-select"
                 value={formData.parent_category}
                 onChange={(event) => updateForm("parent_category", event.target.value)}
-                className="finos-select"
                 style={{ width: "100%", marginTop: "8px", padding: "12px", borderRadius: "12px" }}
               >
                 <option value="">None — create a main category</option>

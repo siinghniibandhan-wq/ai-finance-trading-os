@@ -81,9 +81,9 @@ def get_dashboard_summary(
             Account.user_id == user_id,
             Account.is_active == True,
             func.lower(Account.account_type).notin_([
-                "loan", "personal_loan", "home_loan", "term_loan",
-                "credit_card", "creditcard", "credit_line", "credit line",
-                "cash_credit", "overdraft", "od", "payable", "receivable",
+                "loan", "loan_account", "personal_loan", "home_loan", "term_loan",
+                "credit_card", "creditcard", "credit_card_account", "credit_line", "creditline", "credit line",
+                "credit_line_account", "cash_credit", "cash_credit_account", "overdraft", "od", "payable", "receivable",
             ]),
         )
         .scalar()

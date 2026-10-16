@@ -28,3 +28,30 @@
 :root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="elegant-plain"]) .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.module-overview-card,.wc-primary-card,.wc-shortcut-tile,.wc-welcome,.welcome-section,.dashboard-clickable-card) { background:var(--t-card-bg); color:var(--finos-text); border:1px solid var(--finos-border); border-radius:var(--t-radius); box-shadow:var(--t-shadow); }
 :root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="elegant-plain"]) :is(input,textarea,select,.finos-select-trigger) { background:var(--t-inner-bg); color:var(--finos-text); border-color:var(--finos-border); }
 :root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="elegant-plain"]) :is(.header-popover,.finos-select-menu,[role="menu"],[role="listbox"]) { background:var(--pop-bg,#fff); color:var(--finos-text); border:1px solid var(--finos-border); box-shadow:var(--pop-shadow,0 10px 30px rgba(0,0,0,.1)); }
+
+
+/* Elegant Plain: replace legacy fixed-grey financial summary bars and labels
+   with the theme's ivory/charcoal palette while preserving chart semantics. */
+:root[data-finos-theme="elegant-plain"] {
+  --finos-summary-bg: #f1efe9;
+  --finos-summary-text: #34363a;
+  --finos-summary-muted: #77766f;
+  --finos-track: #e8e5dd;
+}
+:root[data-finos-theme="elegant-plain"] .content :is(.balance-summary,.balance-sheet-summary,.net-worth-summary,.asset-liability-summary,.financial-summary-strip,.summary-strip) {
+  background: var(--finos-summary-bg) !important;
+  color: var(--finos-summary-text) !important;
+  border: 1px solid var(--finos-border);
+}
+:root[data-finos-theme="elegant-plain"] .content :is(.balance-summary,.balance-sheet-summary,.net-worth-summary,.asset-liability-summary,.financial-summary-strip,.summary-strip) :is(span,small,p,strong,b) {
+  color: inherit;
+}
+:root[data-finos-theme="elegant-plain"] .content :is(.balance-summary,.balance-sheet-summary,.net-worth-summary,.asset-liability-summary,.financial-summary-strip,.summary-strip) :is(.muted,.label,.secondary,.caption) {
+  color: var(--finos-summary-muted) !important;
+}
+:root[data-finos-theme="elegant-plain"] .content :is(.balance-bar,.asset-bar,.liability-bar,.net-worth-bar,.progress-track,.bar-track) {
+  background-color: var(--finos-track);
+}
+:root[data-finos-theme="elegant-plain"] .content :is(.balance-bar,.asset-bar,.liability-bar,.net-worth-bar,.progress-fill) {
+  color: var(--finos-summary-text);
+}

@@ -1499,3 +1499,43 @@
 :root[data-finos-theme] .content .instrument-search-result-meta {
   color: var(--finos-muted, #94a3b8);
 }
+
+/* Investment transaction modal: restore readable contrast in light themes.
+   Scoped to this modal so the dark theme and other pages remain unchanged. */
+:root[data-finos-theme="light"] .investment-transaction-modal {
+  --investment-modal-text: #202431;
+  --investment-modal-muted: #596273;
+  --investment-modal-surface: #ffffff;
+  --investment-modal-card: #f5f7fb;
+  --investment-modal-border: #d7dce5;
+  color: var(--investment-modal-text) !important;
+  background: var(--investment-modal-surface) !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal :is(h1,h2,h3,h4,p,span,div,label,strong,small) {
+  color: var(--investment-modal-text);
+}
+:root[data-finos-theme="light"] .investment-transaction-modal :is(.card-label) {
+  color: var(--investment-modal-muted) !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal :is(button,.small-button,.icon-button) {
+  color: #303747 !important;
+  background: #f4f6fa !important;
+  border: 1px solid var(--investment-modal-border) !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal div[style*="rgba(255,255,255,0.04)"] {
+  background: var(--investment-modal-card) !important;
+  border-color: var(--investment-modal-border) !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal div[style*="rgba(255,255,255,0.45)"] {
+  color: var(--investment-modal-muted) !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal div[style*="rgba(255,255,255,0.05)"] {
+  color: #303747 !important;
+  background: #eef2f8 !important;
+  border: 1px solid var(--investment-modal-border) !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal :is(input,textarea,select) {
+  color: #202431 !important;
+  background: #ffffff !important;
+  border-color: var(--investment-modal-border) !important;
+}

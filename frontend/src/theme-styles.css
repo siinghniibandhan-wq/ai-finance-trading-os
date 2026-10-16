@@ -1623,3 +1623,31 @@
   color: #087f5b !important;
   -webkit-text-fill-color: #087f5b !important;
 }
+
+
+/* Investment Transactions: final light-theme text contrast for all row content. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row :is(div,span,small,p,strong,button) {
+  color: var(--finos-text, #202938) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row :is(div[style*="font-size: 10px"],div[style*="font-size: 11px"],small) {
+  color: var(--finos-muted, #596579) !important;
+  -webkit-text-fill-color: currentColor !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row strong[style*="#86efac"] {
+  color: #166534 !important;
+  -webkit-text-fill-color: #166534 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row :is(strong[style*="#fca5a5"],button[style*="#fca5a5"]) {
+  color: #b42332 !important;
+  -webkit-text-fill-color: #b42332 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions > span {
+  color: #166534 !important;
+  -webkit-text-fill-color: #166534 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions > span[style*="#fca5a5"] {
+  color: #b42332 !important;
+  -webkit-text-fill-color: #b42332 !important;
+}

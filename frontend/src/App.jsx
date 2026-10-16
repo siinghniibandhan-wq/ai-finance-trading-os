@@ -8485,7 +8485,7 @@ const holdingReturn =
 
         {transactionModal.mode === "history" && (
 
-          <div>
+          <div className="portfolio-transaction-history">
 
             <div
               style={{

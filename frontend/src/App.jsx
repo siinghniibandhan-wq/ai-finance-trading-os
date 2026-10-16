@@ -13261,16 +13261,14 @@ function Category() {
         gap: "16px",
         padding: "16px",
         borderRadius: "16px",
-        background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
-        border: "1px solid rgba(255,255,255,0.08)",
       }}
     >
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", overflowWrap: "anywhere" }}>
+        <div style={{ fontSize: "14px", fontWeight: 700, overflowWrap: "anywhere" }}>
           {category.name}
         </div>
         {category.description && (
-          <div style={{ marginTop: "5px", fontSize: "12px", color: "rgba(255,255,255,0.55)" }}>
+          <div style={{ marginTop: "5px", fontSize: "12px" }}>
             {category.description}
           </div>
         )}
@@ -13288,7 +13286,7 @@ function Category() {
           type="button"
           className="secondary-button"
           onClick={() => setCategoryToDelete(category)}
-          style={{ padding: "7px 12px", fontSize: "11px", color: "#fb7185", borderColor: "rgba(251,113,133,0.25)" }}
+          style={{ padding: "7px 12px", fontSize: "11px" }}
         >
           Delete
         </button>

@@ -1293,3 +1293,59 @@
   -webkit-text-fill-color: #252a32 !important;
   opacity: 1 !important;
 }
+
+
+/* FINAL scoped correction: Portfolio holdings only, for light-surface themes.
+   Use a subtly tinted surface so each holding reads as its own card against the
+   white Holdings panel. Force readable text only inside these holding cards. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card {
+  display: block !important;
+  box-sizing: border-box !important;
+  margin: 12px 0 !important;
+  padding: 18px !important;
+  background: #f2f5f9 !important;
+  background-image: none !important;
+  border: 1px solid #c7d1df !important;
+  border-radius: 14px !important;
+  box-shadow: 0 3px 10px rgba(30, 41, 59, 0.10) !important;
+  color: #202938 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card + .portfolio-holding-card {
+  margin-top: 14px !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row > div {
+  color: #202938 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row strong {
+  color: #202938 !important;
+  -webkit-text-fill-color: #202938 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row :is(.card-label,small,p,div[style*="rgba(255,255,255"]) {
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row > div:nth-child(4) {
+  background: #e5f6ee !important;
+  border: 1px solid #b9e2ce !important;
+  border-radius: 12px !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row > div:nth-child(4) :is(.card-label,span,strong) {
+  color: #087449 !important;
+  -webkit-text-fill-color: #087449 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid {
+  border-color: #cbd5e1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid > div {
+  background: #ffffff !important;
+  border-color: #d5dde7 !important;
+  color: #202938 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid :is(span,p,strong) {
+  color: #202938 !important;
+  -webkit-text-fill-color: #202938 !important;
+  opacity: 1 !important;
+}

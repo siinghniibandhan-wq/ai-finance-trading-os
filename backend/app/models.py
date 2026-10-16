@@ -444,6 +444,7 @@ class Loan(Base):
     amount_disbursed: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     outstanding_principal: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     deposit_account_id: Mapped[int | None] = mapped_column(ForeignKey("accounts.id", ondelete="SET NULL"), nullable=True)
+    linked_account_id: Mapped[int | None] = mapped_column(ForeignKey("accounts.id", ondelete="SET NULL"), nullable=True, index=True)
     # Link the loan to the Income transaction that recorded its disbursement.
     disbursement_transaction_id: Mapped[int | None] = mapped_column(
         ForeignKey("transactions.id", ondelete="SET NULL"), unique=True, nullable=True, index=True

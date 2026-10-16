@@ -8503,6 +8503,12 @@ const holdingReturn =
               Transaction History
             </div>
 
+            {transactionMessage && (
+              <div style={{ marginBottom: "12px", padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", fontSize: "11px" }}>
+                {transactionMessage}
+              </div>
+            )}
+
             {transactionHistoryLoading ? (
 
               <div

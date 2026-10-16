@@ -75,7 +75,13 @@ function BreakdownPanel({ activeCard, data, onClose, onNavigate, onSelectCard })
   const [expandedLiabilityType, setExpandedLiabilityType] = useState(null);
   if (!activeCard) return null;
 
-  const cash = numberValue(data.summary?.cash?.total_balance);
+  const liabilityTypes = new Set(["loan", "personal_loan", "home_loan", "term_loan", "credit_card", "creditcard", "credit_line", "cash_credit", "overdraft", "od", "payable", "receivable"]);
+  const cash = data.accounts?.length
+    ? data.accounts.reduce((sum, account) => {
+        const type = String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_");
+        return account.is_active === false || liabilityTypes.has(type) ? sum : sum + numberValue(account.balance);
+      }, 0)
+    : numberValue(data.summary?.cash?.total_balance);
   const investments = numberValue(data.summary?.investments?.current_value);
   const receivables = numberValue(data.receivables?.total_receivable);
   const assets = cash + investments + receivables;

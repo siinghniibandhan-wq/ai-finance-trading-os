@@ -11335,7 +11335,7 @@ function Transactions() {
   // ----------------------------------------------------------
 
   const [transactions, setTransactions] = useState([]);
-  const [activeTransactionTab, setActiveTransactionTab] = useState("income");
+  const [activeTransactionTab, setActiveTransactionTab] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -11610,7 +11610,7 @@ const isLoanDisbursement = categories.some((category) =>
     account_id: "",
     transfer_to_account_id: "",
     category_id: "",
-    transaction_type: activeTransactionTab,
+    transaction_type: activeTransactionTab === "all" ? "expense" : activeTransactionTab,
     amount: "",
     transaction_date:
       new Date().toISOString().split("T")[0],
@@ -12476,6 +12476,19 @@ const transactionFormModal = showForm && (
           TRANSACTION LIST
       ==================================================== */}
 
+      <div role="tablist" aria-label="Filter transaction history" style={{ display: "flex", flexWrap: "wrap", gap: "8px", margin: "12px 0" }}>
+        {[
+          { id: "all", label: "All" },
+          { id: "income", label: "Income" },
+          { id: "expense", label: "Expense" },
+          { id: "transfer", label: "Transfer" },
+        ].map((tab) => (
+          <button key={tab.id} type="button" role="tab" aria-selected={activeTransactionTab === tab.id} onClick={() => setActiveTransactionTab(tab.id)} className={activeTransactionTab === tab.id ? "primary-button" : "secondary-button"} style={{ padding: "9px 14px" }}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <section className="glass-card">
 
         <div className="card-header">
@@ -12521,7 +12534,7 @@ const transactionFormModal = showForm && (
         -------------------------------------------------- */}
 
         {!loading &&
-          transactions.filter((item) => mainTransactionTab(item) === activeTransactionTab).length === 0 && (
+          transactions.filter((item) => activeTransactionTab === "all" || mainTransactionTab(item) === activeTransactionTab).length === 0 && (
 
             <div className="empty-chart">
 
@@ -12552,7 +12565,7 @@ const transactionFormModal = showForm && (
         -------------------------------------------------- */}
 
         {!loading &&
-          transactions.filter((item) => mainTransactionTab(item) === activeTransactionTab).length > 0 && (
+          transactions.filter((item) => activeTransactionTab === "all" || mainTransactionTab(item) === activeTransactionTab).length > 0 && (
 
             <div
               style={{
@@ -12562,7 +12575,7 @@ const transactionFormModal = showForm && (
               }}
             >
 
-              {transactions.filter((item) => mainTransactionTab(item) === activeTransactionTab).map(
+              {transactions.filter((item) => activeTransactionTab === "all" || mainTransactionTab(item) === activeTransactionTab).map(
                 (transaction) => {
 
                   const income =

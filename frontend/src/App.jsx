@@ -1106,6 +1106,11 @@ function TaxPage() {
   const [creditBusy, setCreditBusy] = useState(false);
   const [creditMessage, setCreditMessage] = useState("");
   const [creditError, setCreditError] = useState("");
+  const [taxReviewState, setTaxReviewState] = useState({});
+  const [taxReviewBusy, setTaxReviewBusy] = useState(false);
+  const [taxReviewError, setTaxReviewError] = useState("");
+  const [taxReviewMessage, setTaxReviewMessage] = useState("");
+  const [form26asTotal, setForm26asTotal] = useState("");
   const [dedClaims, setDedClaims] = useState([]);
   const [dedForm, setDedForm] = useState({ deduction_key: "", claimed_amount: "", evidence_reference: "" });
   const [dedBusy, setDedBusy] = useState(false);
@@ -1509,6 +1514,58 @@ function TaxPage() {
     );
   };
 
+  const loadTaxReview = async () => {
+    try {
+      const r = await apiFetch(`${API_BASE_URL}/api/tax-review/?user_id=${USER_ID}&financial_year=${encodeURIComponent(financialYear)}`);
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d?.detail || `Tax review returned ${r.status}`);
+      setTaxReviewState(d?.sections || {});
+      setTaxReviewError("");
+    } catch (err) {
+      setTaxReviewError(err?.message || "Unable to load tax review confirmations.");
+    }
+  };
+  useEffect(() => { loadTaxReview(); }, [financialYear]);
+
+  const changeTaxReview = async (sectionKey, confirm) => {
+    setTaxReviewBusy(true);
+    setTaxReviewError("");
+    setTaxReviewMessage("");
+    try {
+      const url = confirm
+        ? `${API_BASE_URL}/api/tax-review/confirm`
+        : `${API_BASE_URL}/api/tax-review/confirm?user_id=${USER_ID}&financial_year=${encodeURIComponent(financialYear)}&section=${encodeURIComponent(sectionKey)}`;
+      const options = confirm
+        ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ user_id: USER_ID, financial_year: financialYear, section: sectionKey }) }
+        : { method: "DELETE" };
+      const r = await apiFetch(url, options);
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(typeof d?.detail === "string" ? d.detail : `Request failed (${r.status}).`);
+      if (d?.sections) setTaxReviewState(d.sections);
+      else await loadTaxReview();
+      setTaxReviewMessage(confirm ? "Your confirmation was saved. Pending entries still block completion." : "Your confirmation was removed.");
+      await loadTaxData();
+    } catch (err) {
+      setTaxReviewError(err?.message || "Unable to save your confirmation.");
+    } finally {
+      setTaxReviewBusy(false);
+    }
+  };
+
+  const renderTaxReviewConfirm = (sectionKey, description, buttonLabel) => {
+    const info = taxReviewState?.[sectionKey] || {};
+    return (
+      <div style={{ ...cardStyle, padding: "13px", marginTop: "14px", borderColor: info.complete ? "rgba(34,197,94,0.35)" : "rgba(255,255,255,0.12)" }}>
+        <div style={{ fontWeight: 750, fontSize: "12px" }}>{info.complete ? "Section complete" : info.confirmed_by_user ? "Confirmation saved · review still pending" : "Your confirmation is required"}</div>
+        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "11px", lineHeight: 1.6, margin: "7px 0" }}>{description}</p>
+        <p style={{ color: info.complete ? "#86efac" : "#fbbf24", fontSize: "11px", margin: "6px 0" }}>{info.reason || "Review status is not available yet."}</p>
+        <button type="button" className="secondary-button" disabled={taxReviewBusy} onClick={() => changeTaxReview(sectionKey, !info.confirmed_by_user)}>
+          {info.confirmed_by_user ? "Undo my confirmation" : buttonLabel}
+        </button>
+      </div>
+    );
+  };
+
   // Tax credits (TDS, advance tax, self-assessment tax). Entries are saved as
   // pending and only count once verified on the person's own confirmation.
   const loadTaxCredits = async () => {
@@ -1550,6 +1607,15 @@ function TaxPage() {
       <div style={panelStyle}>
         <h3 style={{ marginTop: 0 }}>Tax already paid (TDS and advance tax)</h3>
         <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", lineHeight: 1.6 }}>Add tax already paid for {financialYear}. An entry reduces your tax only after you verify it with a challan or Form 26AS / AIS reference. The app does not inspect documents.</p>
+        <div style={{ ...cardStyle, padding: "13px", marginBottom: "12px" }}>
+          <div style={labelStyle}>Check against Form 26AS / AIS · comparison only</div>
+          <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "11px", lineHeight: 1.6, marginTop: 0 }}>Compare the total shown in Form 26AS / AIS with the verified tax-credit entries below. This does not import data or change tax calculations.</p>
+          <label style={{ display: "grid", gap: "6px", fontSize: "11px", color: "rgba(255,255,255,0.7)" }}>Total tax credits shown in Form 26AS / AIS (₹)
+            <input aria-label="Form 26AS AIS tax credit total" style={box} type="number" min="0" step="0.01" value={form26asTotal} onChange={(event) => setForm26asTotal(event.target.value)} placeholder="Enter the total to compare" />
+          </label>
+          <div style={{ marginTop: "9px", fontSize: "12px" }}>Verified entries in Financial OS: <strong>{formatCurrency(taxCredits.filter((c) => c?.status === "verified").reduce((sum, c) => sum + (Number(c.amount) || 0), 0))}</strong></div>
+          {form26asTotal !== "" && Number.isFinite(Number(form26asTotal)) && Number(form26asTotal) >= 0 && <div style={{ marginTop: "6px", fontSize: "12px" }}>AIS / 26AS less verified entries: <strong>{formatCurrency(Number(form26asTotal) - taxCredits.filter((c) => c?.status === "verified").reduce((sum, c) => sum + (Number(c.amount) || 0), 0))}</strong></div>}
+        </div>
         <div style={{ display: "grid", gap: "8px" }}>
           <select aria-label="Credit type" style={box} value={creditForm.credit_type} onChange={(e) => setCreditForm((f) => ({ ...f, credit_type: e.target.value }))}>
             <option value="tds">TDS (tax deducted at source)</option>
@@ -1845,6 +1911,9 @@ function TaxPage() {
             </table>
           )}
         </div>
+        {renderTaxReviewConfirm("tds_advance_tax", "Confirm only after every TDS, advance-tax and self-assessment payment for this financial year is entered and verified. Any pending entry blocks completion.", "I have entered all tax already paid")}
+        {taxReviewError && <div role="alert" style={{ color: "#fca5a5", fontSize: "11px", marginTop: "8px" }}>{taxReviewError}</div>}
+        {taxReviewMessage && <div role="status" style={{ color: "#86efac", fontSize: "11px", marginTop: "8px" }}>{taxReviewMessage}</div>}
       </div>
     );
   };
@@ -1878,6 +1947,7 @@ function TaxPage() {
         </div>
       ) : <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Deduction catalogue is unavailable from the backend. Refresh the tax data or check that the deductions endpoint is deployed.</p>}
       {renderDeductionClaims()}
+      {renderTaxReviewConfirm("deductions_exemptions", "Confirm only after all deductions and exempt-income claims you want to make are saved and verified. Any pending claim blocks completion.", "I have added all my deductions")}
       <h4 style={{ margin: "20px 0 10px" }}>Exempt-income / allowance checks</h4>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px" }}>
         {(Array.isArray(deductionData?.exempt_income) ? deductionData.exempt_income : []).map((item) => (

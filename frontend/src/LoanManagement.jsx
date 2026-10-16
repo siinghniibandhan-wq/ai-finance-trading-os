@@ -83,7 +83,7 @@ export default function LoanManagement() {
   };
 
   const card = { background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.09)", borderRadius: 16, padding: 18, minWidth: 0 };
-  return <div style={{ display: "grid", gap: 18, color: "#f8fafc" }}>
+  return <div className="loan-management-page" style={{ display: "grid", gap: 18, color: "#f8fafc" }}>
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
       <div><div style={{ fontSize: 12, letterSpacing: 1.5, color: "#c4b5fd", fontWeight: 700 }}>MONEY • LOANS</div><h2 style={{ margin: "6px 0" }}>Loan Management</h2><p style={{ margin: 0, color: "#a1a1b5" }}>Review borrowing, lending, repayments and recoveries. Corrections update linked balances together.</p></div>
       <button style={buttonStyle} onClick={load} disabled={loading}><RefreshCw size={16} /> Refresh</button>

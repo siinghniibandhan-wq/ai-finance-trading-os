@@ -13253,6 +13253,7 @@ function Category() {
   const renderCategoryCard = (category) => (
     <div
       key={category.id}
+      className="category-list-item"
       style={{
         display: "flex",
         alignItems: "center",
@@ -13301,7 +13302,7 @@ function Category() {
 
   return (
 
-    <div className="dashboard">
+    <div className="dashboard categories-page">
 
       {/* ====================================================
           HEADER
@@ -13432,7 +13433,7 @@ function Category() {
           CATEGORY LIST
       ==================================================== */}
 
-      <section className="glass-card">
+      <section className="glass-card category-list-section">
 
         <div className="card-header">
 
@@ -13565,7 +13566,7 @@ function Category() {
       </section>
 
       {!loading && otherCategories.length > 0 && (
-        <section className="glass-card" style={{ marginTop: "18px" }}>
+        <section className="glass-card category-list-section" style={{ marginTop: "18px" }}>
           <div className="card-header">
             <div>
               <p className="card-label">ADDITIONAL CATEGORIES</p>

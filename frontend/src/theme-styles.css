@@ -604,3 +604,43 @@
 :root[data-finos-theme="brutalism"] .categories-page :is(h3,h4,.card-label,.score) {
   color: #f7f5ef !important;
 }
+
+
+/* Category rows: explicit per-theme foregrounds. Keep scoped to Categories. */
+:root[data-finos-theme="brutalism"] .categories-page .category-list-section,
+:root[data-finos-theme="brutalism"] .categories-page .category-list-item {
+  background: #17181d !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
+  border-radius: 2px !important;
+  box-shadow: 4px 4px 0 rgba(0,0,0,.25) !important;
+}
+:root[data-finos-theme="brutalism"] .categories-page .category-list-item :is(div,span,p,strong,small) {
+  color: #f7f5ef !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #f7f5ef !important;
+}
+:root[data-finos-theme="brutalism"] .categories-page .category-list-item button {
+  background: #202127 !important;
+  color: #facc15 !important;
+  border: 2px solid #facc15 !important;
+  border-radius: 2px !important;
+}
+:root[data-finos-theme="brutalism"] .categories-page .category-list-item button:last-child {
+  color: #f7f5ef !important;
+  border-color: #f7f5ef !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-item :is(div,span,p,strong,small) {
+  color: #292b30 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #292b30 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-item button {
+  background: #fff !important;
+  color: #292b30 !important;
+  border: 1px solid #dedbd2 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-item button:last-child {
+  color: #a33b4a !important;
+  border-color: #e5c9ce !important;
+}

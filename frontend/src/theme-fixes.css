@@ -1147,3 +1147,72 @@
   background: #f4f6fa !important;
   border: 1px solid #d8dee8 !important;
 }
+
+
+/* Market layout polish: restore the missing card boundaries visible in the
+   latest user screenshot. The original JSX spreads a style object, not a
+   .card class, on several sections, so text was fixed but the section surfaces
+   remained transparent. These rules style each landing-page module as a card. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section:not([aria-label="Major Indian market indices"]):not([aria-label="Market instrument search"]):not([aria-label="Market overview"]) {
+  box-sizing: border-box;
+  padding: 16px !important;
+  border: 1px solid #e0e5ed !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  background-image: none !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.055) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market overview"] {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market overview"] > div {
+  box-sizing: border-box;
+  padding: 15px 16px !important;
+  margin: 0 !important;
+  border: 1px solid #e0e5ed !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  background-image: none !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.055) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market breadth"] > div,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 14px !important;
+  border: 1px solid #e0e5ed !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  background-image: none !important;
+  box-shadow: 0 2px 8px rgba(31,41,55,.045) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[style*="linear-gradient(120deg"] {
+  background: #ffffff !important;
+  background-image: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section > div[style*="rgba(255,255,255,.025)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section > div[style*="rgba(255,255,255,0.025)"] {
+  padding: 12px !important;
+  border: 1px solid #e0e5ed !important;
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market instrument search"] {
+  padding: 15px !important;
+  border: 1px solid #e0e5ed !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.055) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market instrument search"] form input {
+  border-radius: 12px !important;
+  min-height: 48px !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market instrument search"] form button {
+  min-height: 48px !important;
+  border-radius: 12px !important;
+}

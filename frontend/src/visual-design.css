@@ -3379,3 +3379,24 @@ svg { flex-shrink: 0; }
 ) :is(button.active,button[aria-pressed="true"]) {
   background: #facc15 !important;
 }
+
+
+/* Global form dropdown cleanup: remove heavy/black control borders in every theme.
+   Keep a soft theme-colored keyboard focus indicator; dropdown option panels retain
+   their own subtle surface edge so the menu remains visually separated. */
+:root[data-finos-theme] .content :is(select, .finos-select-trigger, [role="combobox"]) {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .content :is(select, .finos-select-trigger, [role="combobox"]):focus {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .content :is(select, .finos-select-trigger, [role="combobox"]):focus-visible {
+  border: 0 !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #8b7cf6) 48%, transparent) !important;
+  outline-offset: 1px !important;
+  box-shadow: none !important;
+}

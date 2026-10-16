@@ -34,6 +34,7 @@ class LoanPayload(BaseModel):
     principal_amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     amount_disbursed: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     deposit_account_id: Optional[int] = None
+    linked_account_id: Optional[int] = None
     interest_rate: Optional[Decimal] = Field(default=None, ge=0, le=100, max_digits=7, decimal_places=4)
     interest_type: str = "reducing_balance"
     tenure_months: Optional[int] = Field(default=None, gt=0, le=600)
@@ -92,6 +93,7 @@ def _loan_dict(x: Loan):
         "amount_disbursed": float(x.amount_disbursed),
         "outstanding_principal": float(x.outstanding_principal),
         "deposit_account_id": x.deposit_account_id,
+        "linked_account_id": x.linked_account_id,
         "interest_rate": float(x.interest_rate) if x.interest_rate is not None else None,
         "interest_type": x.interest_type, "tenure_months": x.tenure_months,
         "emi_amount": float(x.emi_amount) if x.emi_amount is not None else None,
@@ -180,10 +182,20 @@ def create_loan(payload: LoanPayload, current_user: User = Depends(get_current_u
         raise HTTPException(status_code=400, detail="Amount disbursed cannot exceed principal amount")
     if payload.deposit_account_id is not None:
         _owned_account(db, current_user.id, payload.deposit_account_id, lock=False)
+    linked_account = None
+    if payload.linked_account_id is not None:
+        linked_account = _owned_account(db, current_user.id, payload.linked_account_id, lock=False)
+        if (linked_account.account_type or "").strip().lower() != "loan":
+            raise HTTPException(status_code=422, detail="Linked account must be a Loan Account.")
+        existing_loan = db.query(Loan).filter(Loan.user_id == current_user.id, Loan.linked_account_id == linked_account.id).first()
+        if existing_loan:
+            raise HTTPException(status_code=409, detail="This account is already linked to a loan.")
     try:
         loan = Loan(**payload.model_dump(exclude={'user_id'}), user_id=current_user.id, outstanding_principal=payload.principal_amount)
         db.add(loan)
         db.flush()
+        if linked_account is not None:
+            linked_account.balance = payload.principal_amount
         liability = Liability(
             user_id=current_user.id, name=payload.name,
             liability_type=payload.loan_type,
@@ -236,6 +248,9 @@ def repay_loan(loan_id: int, payload: LoanMovementCreate, current_user: User = D
         db.add(movement)
         loan.outstanding_principal -= payload.principal_amount
         loan.status = "closed" if loan.outstanding_principal == 0 else "active"
+        if loan.linked_account_id is not None:
+            linked_account = _owned_account(db, current_user.id, loan.linked_account_id)
+            linked_account.balance = loan.outstanding_principal
         if liability:
             liability.outstanding_amount = loan.outstanding_principal
             liability.status = "closed" if liability.outstanding_amount == 0 else "active"

@@ -80,6 +80,7 @@ def get_dashboard_summary(
         .filter(
             Account.user_id == user_id,
             Account.is_active == True,
+            func.lower(Account.account_type).notin_(["loan", "credit_card", "credit_line", "credit line", "payable"]),
         )
         .scalar()
     )

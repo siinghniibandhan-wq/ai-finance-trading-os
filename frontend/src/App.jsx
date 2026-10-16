@@ -9073,6 +9073,16 @@ function Accounts() {
     account_number: "",
     currency: "INR",
     balance: "",
+    credit_limit: "",
+    loan_principal: "",
+    loan_disbursed: "",
+    loan_interest_rate: "",
+    loan_tenure_months: "",
+    loan_emi_amount: "",
+    loan_start_date: new Date().toISOString().slice(0, 10),
+    loan_first_payment_date: "",
+    loan_interest_type: "reducing_balance",
+    loan_repayment_frequency: "monthly",
   });
 
   // ----------------------------------------------------------
@@ -9138,11 +9148,21 @@ const handleAccountSubmit = async () => {
       return;
     }
 
-    if (
-      accountForm.balance === "" ||
-      Number(accountForm.balance) < 0
-    ) {
-      setError("Please enter a valid opening balance.");
+    if (accountForm.account_type !== "loan" && (accountForm.balance === "" || !Number.isFinite(Number(accountForm.balance)) || Number(accountForm.balance) < 0)) {
+      setError("Please enter a valid non-negative opening balance or outstanding amount.");
+      return;
+    }
+    const isCreditAccount = ["credit_card", "credit_line"].includes(accountForm.account_type);
+    if (isCreditAccount && (accountForm.credit_limit === "" || Number(accountForm.credit_limit) <= 0 || Number(accountForm.balance) < 0)) {
+      setError("Enter a positive credit limit and a non-negative opening outstanding amount.");
+      return;
+    }
+    if (isCreditAccount && Number(accountForm.balance) > Number(accountForm.credit_limit)) {
+      setError("Opening outstanding amount cannot exceed the credit limit.");
+      return;
+    }
+    if (accountForm.account_type === "loan" && (!accountForm.loan_principal || Number(accountForm.loan_principal) <= 0 || !accountForm.loan_disbursed || Number(accountForm.loan_disbursed) <= 0 || Number(accountForm.loan_disbursed) > Number(accountForm.loan_principal) || !accountForm.loan_start_date)) {
+      setError("Enter a valid loan principal, disbursed amount, and start date. Disbursed amount cannot exceed principal.");
       return;
     }
 
@@ -9158,17 +9178,18 @@ const handleAccountSubmit = async () => {
           account_number:
             accountForm.account_number.trim(),
           currency: accountForm.currency,
-          balance: Number(accountForm.balance),
+          balance: accountForm.account_type === "loan" ? Number(accountForm.loan_principal) : Number(accountForm.balance),
+          credit_limit: isCreditAccount ? Number(accountForm.credit_limit) : null,
         }
       : {
           user_id: USER_ID,
           name: accountForm.name.trim(),
           account_type: accountForm.account_type,
           institution: accountForm.institution.trim(),
-          account_number:
-            accountForm.account_number.trim(),
+          account_number: accountForm.account_number.trim(),
           currency: accountForm.currency,
-          balance: Number(accountForm.balance),
+          balance: accountForm.account_type === "loan" ? Number(accountForm.loan_principal) : Number(accountForm.balance),
+          credit_limit: isCreditAccount ? Number(accountForm.credit_limit) : null,
         };
 
     const response = await apiFetch(
@@ -9195,6 +9216,34 @@ const handleAccountSubmit = async () => {
       );
     }
 
+    if (!isEditing && accountForm.account_type === "loan") {
+      const loanPayload = {
+        user_id: USER_ID,
+        name: accountForm.name.trim(),
+        lender_name: accountForm.institution.trim(),
+        loan_type: "term_loan",
+        principal_amount: Number(accountForm.loan_principal),
+        amount_disbursed: Number(accountForm.loan_disbursed),
+        linked_account_id: data.id,
+        interest_rate: accountForm.loan_interest_rate === "" ? null : Number(accountForm.loan_interest_rate),
+        interest_type: accountForm.loan_interest_type,
+        tenure_months: accountForm.loan_tenure_months === "" ? null : Number(accountForm.loan_tenure_months),
+        emi_amount: accountForm.loan_emi_amount === "" ? null : Number(accountForm.loan_emi_amount),
+        start_date: accountForm.loan_start_date,
+        first_payment_date: accountForm.loan_first_payment_date || null,
+        repayment_frequency: accountForm.loan_repayment_frequency,
+      };
+      const loanResponse = await apiFetch(`${API_BASE_URL}/api/loans`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loanPayload),
+      });
+      const loanResult = await loanResponse.json();
+      if (!loanResponse.ok) {
+        throw new Error(loanResult?.detail || "Account was created, but loan setup failed. Open Loan Management and link or complete the loan record.");
+      }
+    }
+
     setAccounts((previous) =>
       isEditing
         ? previous.map((account) =>
@@ -9212,6 +9261,16 @@ const handleAccountSubmit = async () => {
       account_number: "",
       currency: "INR",
       balance: "",
+      credit_limit: "",
+      loan_principal: "",
+      loan_disbursed: "",
+      loan_interest_rate: "",
+      loan_tenure_months: "",
+      loan_emi_amount: "",
+      loan_start_date: new Date().toISOString().slice(0, 10),
+      loan_first_payment_date: "",
+      loan_interest_type: "reducing_balance",
+      loan_repayment_frequency: "monthly",
     });
 
     setEditingAccount(null);
@@ -9313,6 +9372,16 @@ const handleEditAccount = (account) => {
     account_number: account.account_number || "",
     currency: account.currency || "INR",
     balance: account.balance ?? "",
+    credit_limit: account.credit_limit ?? "",
+    loan_principal: "",
+    loan_disbursed: "",
+    loan_interest_rate: "",
+    loan_tenure_months: "",
+    loan_emi_amount: "",
+    loan_start_date: new Date().toISOString().slice(0, 10),
+    loan_first_payment_date: "",
+    loan_interest_type: "reducing_balance",
+    loan_repayment_frequency: "monthly",
   });
 
   setShowAccountForm(true);
@@ -9729,6 +9798,12 @@ columnGap: "20px",
           >
             {formatCurrency(account.balance)}
           </div>
+          {["credit_card", "credit_line", "credit line"].includes(String(account.account_type || "").toLowerCase()) && (
+            <div style={{ marginTop: "6px", fontSize: "11px", color: "var(--finos-account-muted, var(--finos-muted, #94a3b8))", lineHeight: 1.45 }}>
+              <div>Limit: {formatCurrency(account.credit_limit)}</div>
+              <div>Available: {formatCurrency(Math.max(0, Number(account.credit_limit || 0) - Number(account.balance || 0)))}</div>
+            </div>
+          )}
 
         </div>
 
@@ -9878,7 +9953,19 @@ columnGap: "20px",
                   { key: "account_type", label: "Account type *", type: "select", required: true },
                   { key: "institution", label: "Bank / Institution", placeholder: "e.g. HDFC Bank", type: "text" },
                   { key: "account_number", label: "Account number", placeholder: "Enter account number (optional)", type: "text" },
-                  { key: "balance", label: "Opening balance (₹) *", placeholder: "0.00", type: "number", required: true },
+                  ...(accountForm.account_type !== "loan" ? [{ key: "balance", label: ["credit_card", "credit_line"].includes(accountForm.account_type) ? "Opening outstanding amount (₹) *" : "Opening balance (₹) *", placeholder: "0.00", type: "number", required: true }] : []),
+                  ...(["credit_card", "credit_line"].includes(accountForm.account_type) ? [
+                    { key: "credit_limit", label: "Approved credit limit (₹) *", placeholder: "e.g. 100000", type: "number", required: true },
+                  ] : []),
+                  ...(accountForm.account_type === "loan" ? [
+                    { key: "loan_principal", label: "Original loan principal (₹) *", placeholder: "e.g. 500000", type: "number", required: true },
+                    { key: "loan_disbursed", label: "Amount disbursed (₹) *", placeholder: "e.g. 500000", type: "number", required: true },
+                    { key: "loan_interest_rate", label: "Annual interest rate (%)", placeholder: "e.g. 8.5", type: "number" },
+                    { key: "loan_tenure_months", label: "Tenure (months)", placeholder: "e.g. 240", type: "number" },
+                    { key: "loan_emi_amount", label: "EMI amount (₹)", placeholder: "e.g. 42000", type: "number" },
+                    { key: "loan_start_date", label: "Loan start date *", type: "date", required: true },
+                    { key: "loan_first_payment_date", label: "First payment date", type: "date" },
+                  ] : []),
                 ].map((field) => (
                   <label key={field.key} style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: 0, color: "#d1d5db", fontSize: "13px", fontWeight: 600 }}>
                     <span>{field.label}</span>
@@ -9916,6 +10003,26 @@ columnGap: "20px",
                 ))}
               </div>
 
+              {accountForm.account_type === "loan" && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: "17px", marginTop: "17px" }}>
+                  <label style={{ display: "flex", flexDirection: "column", gap: "8px", color: "#d1d5db", fontSize: "13px", fontWeight: 600 }}>
+                    <span>Interest calculation</span>
+                    <StyledSelect value={accountForm.loan_interest_type} onChange={(event) => setAccountForm({ ...accountForm, loan_interest_type: event.target.value })}>
+                      <option value="reducing_balance">Reducing balance</option>
+                      <option value="flat">Flat rate</option>
+                    </StyledSelect>
+                  </label>
+                  <label style={{ display: "flex", flexDirection: "column", gap: "8px", color: "#d1d5db", fontSize: "13px", fontWeight: 600 }}>
+                    <span>Repayment frequency</span>
+                    <StyledSelect value={accountForm.loan_repayment_frequency} onChange={(event) => setAccountForm({ ...accountForm, loan_repayment_frequency: event.target.value })}>
+                      <option value="monthly">Monthly</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="annually">Annually</option>
+                    </StyledSelect>
+                  </label>
+                </div>
+              )}
               <footer style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "10px", marginTop: "26px", paddingTop: "18px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
                 <button
                   type="button"

@@ -65,6 +65,16 @@ def update_account(account_id: int, account_data: AccountUpdate, db: Session = D
     if not account:
         raise HTTPException(status_code=404, detail="Account not found.")
     update_data = account_data.model_dump(exclude_unset=True)
+    next_type = str(update_data.get("account_type", account.account_type) or "").strip().lower()
+    next_limit = update_data.get("credit_limit", account.credit_limit)
+    next_balance = update_data.get("balance", account.balance)
+    if next_type in {"credit_card", "credit_line", "credit line"}:
+        if next_limit is None or next_limit <= 0:
+            raise HTTPException(status_code=422, detail="Credit Card and Credit Line accounts require a positive approved credit limit.")
+        if next_balance is not None and (next_balance < 0 or next_balance > next_limit):
+            raise HTTPException(status_code=422, detail="Outstanding amount must be between zero and the approved credit limit.")
+    elif next_limit is not None:
+        raise HTTPException(status_code=422, detail="Credit limit is only valid for Credit Card or Credit Line accounts.")
     before = {"id": account.id, "name": account.name, "account_type": account.account_type, "institution": account.institution, "currency": account.currency, "balance": account.balance, "is_active": account.is_active}
     for field, value in update_data.items():
         setattr(account, field, value)

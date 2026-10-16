@@ -23,6 +23,12 @@ on:
       - main
     paths:
       - "backend/app/routes/tax_calculation.py"
+      - "backend/app/models.py"
+      - "backend/app/main.py"
+      - "backend/app/routes/tax_review.py"
+      - "backend/app/tax_review_rules.py"
+      - "backend/app/routes/itr_ready_tax_report.py"
+      - "backend/tests/test_tax_review_rules.py"
       - "backend/app/routes/investment_transactions.py"
       - "backend/app/routes/investment_pnl.py"
       - "backend/tests/test_tax_calculation_eligibility_safeguards.py"
@@ -58,6 +64,7 @@ jobs:
           DATABASE_URL: postgresql+psycopg://test:test@localhost:5432/testdb
         run: |
           pytest -q \
+            tests/test_tax_review_rules.py \
             tests/test_tax_calculation_eligibility_safeguards.py \
             tests/test_tax_calculation_review_flags.py \
             tests/test_investment_transaction_timeline.py \

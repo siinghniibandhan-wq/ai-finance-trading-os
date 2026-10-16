@@ -26,3 +26,66 @@
   color: #202631;
   border-color: #e1e6ee;
 }
+
+/* Light + Minimal: keep dialogs and transaction-history controls readable.
+   These overrides are presentation-only and do not alter transaction behavior. */
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) {
+  --finos-text: #202631;
+  --finos-muted: #5b6472;
+  --finos-border: #dfe4ec;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) :is(
+  [role="dialog"], .modal, .modal-content, .modal-dialog,
+  .investment-transaction-modal, .transaction-history-modal,
+  .modal-body, .modal-header, .modal-footer
+) {
+  color: #202631;
+  background-color: #fff;
+  border-color: #dfe4ec;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) :is(
+  [role="dialog"], .modal, .modal-content, .modal-dialog,
+  .investment-transaction-modal, .transaction-history-modal
+) :is(h1, h2, h3, h4, h5, p, span, label, small, strong, b, td, th, div) {
+  color: inherit;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) :is(
+  [role="dialog"], .modal, .modal-content, .modal-dialog,
+  .investment-transaction-modal, .transaction-history-modal
+) :is(.muted, .text-muted, .description, .helper-text, .field-hint, small) {
+  color: #5b6472;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) :is(
+  [role="dialog"], .modal, .modal-content, .modal-dialog,
+  .investment-transaction-modal, .transaction-history-modal
+) :is(button, input, select, textarea) {
+  color: #202631;
+  border-color: #d5dce7;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) :is(
+  [role="dialog"], .modal, .modal-content, .modal-dialog,
+  .investment-transaction-modal, .transaction-history-modal
+) :is(button:not(.primary-button):not(.finos-button-primary):not([data-variant="primary"])) {
+  background-color: #fff;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content :is(
+  .card, .glass-card, .panel, .metric-card, .stat-card, .chart-card,
+  .transaction-card, .table-card, .data-card, .holding-card, .portfolio-card
+) {
+  color: #202631;
+  border-color: #dfe4ec;
+}
+:root[data-finos-theme="minimal"] body,
+:root[data-finos-theme="minimal"] #root {
+  color: #202631;
+  background: #f8f9fb;
+}
+:root[data-finos-theme="minimal"] :is(input, textarea, select, .finos-select-trigger) {
+  color: #202631;
+  background-color: #fff;
+  border-color: #d5dce7;
+}
+:root[data-finos-theme="minimal"] :is(input, textarea)::placeholder {
+  color: #687386;
+  opacity: 1;
+}

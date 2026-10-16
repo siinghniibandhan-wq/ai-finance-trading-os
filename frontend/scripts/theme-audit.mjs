@@ -56,7 +56,7 @@ console.log("PASS: CSS brace balance is zero.");
 // BUY/SELL regression guards: these static checks catch accidental removal of
 // the Market-to-Portfolio intent matcher and transaction form safety checks.
 assert.ok(
-  /replace\(\/\\\\s\+\/g, " "\)/.test(app),
+  /replace\(\/\\s\+\/g, " "\)/.test(app),
   "BUY/SELL instrument normalization must collapse whitespace correctly",
 );
 assert.ok(

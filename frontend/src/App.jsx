@@ -9456,7 +9456,7 @@ const deleteAccount = async () => {
 
   const totalBalance = accounts.reduce((total, account) => {
     const tab = String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_");
-    if (["credit_card", "creditcard", "credit_line", "creditline", "cash_credit", "overdraft", "od", "loan", "personal_loan", "home_loan", "term_loan"].includes(tab)) return total;
+    if (["credit_card", "creditcard", "credit_card_account", "credit_line", "creditline", "credit_line_account", "cash_credit", "cash_credit_account", "overdraft", "od", "loan", "loan_account", "personal_loan", "home_loan", "term_loan"].includes(tab)) return total;
     return total + Number(account.balance || 0);
   }, 0);
 

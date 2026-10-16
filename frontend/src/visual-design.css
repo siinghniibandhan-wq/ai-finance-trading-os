@@ -3007,3 +3007,89 @@ svg { flex-shrink: 0; }
     min-width: 560px;
   }
 }
+
+
+/* Chart of Accounts layout system. Theme colors come from the active theme
+   variables so alignment stays consistent while appearance changes by theme. */
+.coa-page { min-width: 0; width: 100%; }
+.coa-page-heading { min-width: 0; }
+.coa-filter {
+  color: var(--finos-text, #e5e7eb) !important;
+  background: var(--t-card-bg, rgba(255,255,255,.035)) !important;
+  border-color: var(--finos-border, rgba(148,163,184,.22)) !important;
+}
+.coa-filter input { flex: 0 0 auto; }
+.coa-section-card {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--finos-text, #e5e7eb);
+}
+.coa-section-title { color: var(--finos-text, #e5e7eb) !important; }
+.coa-table-scroll {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.coa-table {
+  width: 100%;
+  min-width: 700px !important;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.coa-table th,
+.coa-table td {
+  box-sizing: border-box;
+  padding: 10px 12px !important;
+  vertical-align: middle;
+  text-align: left;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid var(--finos-border, rgba(148,163,184,.16)) !important;
+}
+.coa-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: .045em !important;
+  text-transform: uppercase;
+  background: var(--t-inner-bg, rgba(148,163,184,.12)) !important;
+  color: var(--finos-text, #e5e7eb) !important;
+}
+.coa-table td {
+  font-size: 12px !important;
+  color: var(--finos-muted, #aab4c5) !important;
+}
+.coa-table td:nth-child(1), .coa-table th:nth-child(1) { width: 72px; }
+.coa-table td:nth-child(2), .coa-table th:nth-child(2) { width: 150px; }
+.coa-table td:nth-child(3), .coa-table th:nth-child(3) { width: 120px; }
+.coa-table td:nth-child(4), .coa-table th:nth-child(4) { width: 130px; }
+.coa-table td:nth-child(5), .coa-table th:nth-child(5) { width: 95px; }
+.coa-table td:nth-child(6), .coa-table th:nth-child(6) { width: 85px; text-align: center; }
+.coa-table td:nth-child(1) { font-variant-numeric: tabular-nums; }
+.coa-table td:nth-child(2) { color: var(--finos-text, #e5e7eb) !important; }
+.coa-table td:nth-child(6) { overflow: visible; }
+.coa-table td:nth-child(6) button { max-width: 100%; }
+.coa-table tbody tr:hover { background: var(--finos-soft-accent, rgba(148,163,184,.07)) !important; }
+.coa-table tbody tr:last-child td { border-bottom: 0 !important; }
+:root[data-finos-theme="elegant-plain"] .coa-table th { background: #efeee8 !important; }
+:root[data-finos-theme="elegant-plain"] .coa-table td:nth-child(1) { color: #6b6578 !important; }
+:root[data-finos-theme="elegant-plain"] .coa-table td:nth-child(2) { color: #292b30 !important; }
+:root[data-finos-theme="elegant-plain"] .coa-table td:nth-child(3),
+:root[data-finos-theme="elegant-plain"] .coa-table td:nth-child(4) { color: #62666d !important; }
+@media (max-width: 760px) {
+  .coa-page-heading { align-items: flex-start !important; }
+  .coa-filter { max-width: 100%; }
+  .coa-section-card { padding: 12px !important; margin-bottom: 12px !important; }
+  .coa-table-scroll { border-radius: 8px; }
+  .coa-table { min-width: 700px !important; }
+}

@@ -8072,7 +8072,7 @@ const holdingReturn =
     >
 
       <div
-        className="glass-card"
+        className="glass-card investment-transaction-modal"
         style={{
           width: "100%",
           maxWidth: "560px",

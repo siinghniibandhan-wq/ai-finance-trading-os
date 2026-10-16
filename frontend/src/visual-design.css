@@ -3379,3 +3379,22 @@ svg { flex-shrink: 0; }
 ) :is(button.active,button[aria-pressed="true"]) {
   background: #facc15 !important;
 }
+
+
+/* Dark and colorful themes only: keep dropdown menus/options on their active
+   theme control palette instead of falling back to the default white surface.
+   Light-family themes are intentionally excluded and remain unchanged. */
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content :is(.finos-select-menu, [role="listbox"], .dropdown-menu) {
+  color: var(--finos-control-text) !important;
+  background: var(--finos-control-bg) !important;
+  border-color: var(--finos-control-border);
+}
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content :is(.finos-select-menu, [role="listbox"], .dropdown-menu) :is(.finos-select-option, [role="option"]) {
+  color: var(--finos-control-text) !important;
+  background: transparent;
+}
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content :is(.finos-select-menu, [role="listbox"], .dropdown-menu) .finos-select-option:hover,
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content :is(.finos-select-menu, [role="listbox"], .dropdown-menu) .finos-select-option.is-selected {
+  color: var(--finos-control-text) !important;
+  background: color-mix(in srgb, var(--finos-accent, #a78bfa) 22%, var(--finos-control-bg)) !important;
+}

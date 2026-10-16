@@ -12123,16 +12123,7 @@ const transactionFormModal = showForm && (
           name="account_id"
           value={formData.account_id}
           onChange={handleFormChange}
-          style={{
-            width: "100%",
-            padding: "13px 14px",
-            borderRadius: "12px",
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "#151525",
-            color: "#fff",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
+          style={{ width: "100%", minWidth: 0 }}
         >
           <option value="">Select account</option>
 {accounts.map((account) => (
@@ -12149,7 +12140,7 @@ const transactionFormModal = showForm && (
       {formData.transaction_type === "transfer" && (
         <div style={{ marginBottom: "16px" }}>
           <label style={{ display: "block", marginBottom: "7px", fontSize: "13px", color: "rgba(255,255,255,0.70)" }}>To Account</label>
-          <StyledSelect name="transfer_to_account_id" value={formData.transfer_to_account_id} onChange={handleFormChange} style={{ width: "100%", padding: "13px 14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.12)", background: "#151525", color: "#fff", outline: "none", boxSizing: "border-box" }}>
+          <StyledSelect name="transfer_to_account_id" value={formData.transfer_to_account_id} onChange={handleFormChange} style={{ width: "100%", minWidth: 0 }}>
             <option value="">Select destination account</option>
             {accounts.filter((account) => String(account.id) !== String(formData.account_id)).map((account) => <option key={account.id} value={account.id}>{account.name} ({account.account_type})</option>)}
           </StyledSelect>
@@ -12174,16 +12165,7 @@ const transactionFormModal = showForm && (
           name="category_id"
           value={formData.category_id}
           onChange={handleFormChange}
-          style={{
-            width: "100%",
-            padding: "13px 14px",
-            borderRadius: "12px",
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "#151525",
-            color: "#fff",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
+          style={{ width: "100%", minWidth: 0 }}
         >
           <option value="">Select category</option>
           {formData.transaction_type === "income" && !categories.some((category) => String(category.name || "").trim().toLowerCase() === "loan disbursement" && String(category.category_type || "").toLowerCase() === "income") && (

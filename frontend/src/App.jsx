@@ -6121,7 +6121,7 @@ useEffect(() => {
   const symbol = String(intent?.symbol || "").trim().toUpperCase();
   const name = String(intent?.name || "").trim().toUpperCase();
   if (!symbol && !name) return;
-  const normalizeInstrument = (value) => String(value || "").trim().toUpperCase().replace(/\\s+/g, " ");
+  const normalizeInstrument = (value) => String(value || "").trim().toUpperCase().replace(/\s+/g, " ");
   const requestedExchange = normalizeInstrument(intent?.exchange);
   const requestedInstrumentId = normalizeInstrument(intent?.instrument_id || intent?.instrumentId);
   const sameSecurity = (item) => {
@@ -6224,7 +6224,7 @@ const closeInvestmentTransactionModal = () => {
 const handleInvestmentTransactionSubmit =
   async () => {
 
-    if (!transactionModal?.investment) {
+    if (transactionLoading || !transactionModal?.investment) {
       return;
     }
 
@@ -6274,6 +6274,17 @@ const handleInvestmentTransactionSubmit =
 
         return;
 
+      }
+
+      const fees = Number(transactionForm.fees || 0);
+      if (!Number.isFinite(fees) || fees < 0) {
+        setTransactionMessage("Fees must be a valid amount greater than or equal to zero.");
+        return;
+      }
+
+      if (!Number.isFinite(Number(transactionForm.quantity)) || !Number.isFinite(Number(transactionForm.price))) {
+        setTransactionMessage("Quantity and price must be valid numbers.");
+        return;
       }
 
       // ------------------------------------------------------

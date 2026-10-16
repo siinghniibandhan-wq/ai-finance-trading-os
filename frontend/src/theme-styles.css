@@ -520,3 +520,34 @@
     font-size: 23px !important;
   }
 }
+
+
+/* Subtle form controls across themes: almost hairline borders, with focus
+   visibility retained for keyboard users. */
+:root[data-finos-theme] .content :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select, textarea, .finos-select-trigger, [role="combobox"]
+) {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: color-mix(in srgb, var(--finos-border, currentColor) 38%, transparent) !important;
+  box-shadow: none;
+}
+:root[data-finos-theme] .content :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select, textarea, .finos-select-trigger, [role="combobox"]
+):focus,
+:root[data-finos-theme] .content :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select, textarea, .finos-select-trigger, [role="combobox"]
+):focus-visible {
+  border-color: color-mix(in srgb, var(--finos-accent, #888) 55%, transparent) !important;
+  outline: 1px solid color-mix(in srgb, var(--finos-accent, #888) 30%, transparent);
+  outline-offset: 1px;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .content :is(.finos-select-menu, [role="listbox"], .dropdown-menu) {
+  border-width: 1px;
+  border-color: color-mix(in srgb, var(--finos-border, currentColor) 45%, transparent);
+  box-shadow: var(--pop-shadow, 0 6px 20px rgba(0,0,0,.08));
+}

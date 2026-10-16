@@ -18,12 +18,12 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.models import Account, User
+from app.models import User
 from app.finance_diary import record_finance_event
 from app.routes.auth import get_current_user
 
@@ -106,6 +106,15 @@ def ensure_transaction_table(db: Session):
 # PYDANTIC SCHEMA
 # ============================================================
 
+def _validate_decimal_scale(value: Decimal, max_places: int, field_name: str) -> Decimal:
+    """Reject precision the database would silently round in the transaction ledger."""
+    normalized = value.normalize()
+    decimal_places = max(0, -normalized.as_tuple().exponent)
+    if decimal_places > max_places:
+        raise ValueError(f"{field_name} supports at most {max_places} decimal places.")
+    return value
+
+
 class InvestmentTransactionCreate(BaseModel):
 
     user_id: int
@@ -133,6 +142,21 @@ class InvestmentTransactionCreate(BaseModel):
     transaction_date: date
 
     notes: str | None = None
+
+    @field_validator("quantity")
+    @classmethod
+    def validate_quantity_scale(cls, value: Decimal) -> Decimal:
+        return _validate_decimal_scale(value, 6, "Quantity")
+
+    @field_validator("price")
+    @classmethod
+    def validate_price_scale(cls, value: Decimal) -> Decimal:
+        return _validate_decimal_scale(value, 4, "Price")
+
+    @field_validator("fees")
+    @classmethod
+    def validate_fees_scale(cls, value: Decimal) -> Decimal:
+        return _validate_decimal_scale(value, 2, "Fees")
 
 
 def _cash_effect(transaction_type: str, quantity: Decimal, price: Decimal, fees: Decimal) -> Decimal:
@@ -213,6 +237,21 @@ class InvestmentTransactionUpdate(BaseModel):
     fees: Decimal = Field(default=Decimal("0"), ge=0)
     transaction_date: date
     notes: str | None = None
+
+    @field_validator("quantity")
+    @classmethod
+    def validate_quantity_scale(cls, value: Decimal) -> Decimal:
+        return _validate_decimal_scale(value, 6, "Quantity")
+
+    @field_validator("price")
+    @classmethod
+    def validate_price_scale(cls, value: Decimal) -> Decimal:
+        return _validate_decimal_scale(value, 4, "Price")
+
+    @field_validator("fees")
+    @classmethod
+    def validate_fees_scale(cls, value: Decimal) -> Decimal:
+        return _validate_decimal_scale(value, 2, "Fees")
 
 
 class InvestmentTransactionVoid(BaseModel):

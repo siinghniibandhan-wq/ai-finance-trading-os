@@ -2151,3 +2151,42 @@
   margin-top: 0;
   line-height: 1.35;
 }
+
+
+/* Tax Calculation page: remove the heavy boxed dropdown treatment in light themes.
+   Keep these rules scoped to tax controls; other modules retain their existing styling. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre select {
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--finos-border, #dfe4ec) 75%, transparent) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  background: var(--tax-input-surface, var(--finos-surface, #fff)) !important;
+  color: var(--tax-ink, var(--finos-text, #202938)) !important;
+  min-height: 42px;
+  padding: 10px 30px 10px 12px !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent) !important;
+  outline-offset: 1px;
+  border-bottom-color: var(--finos-accent, #7563dc) !important;
+}
+/* Distinguish tax workflow sections with whitespace and subtle surface changes,
+   not nested heavy outlines. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre :is(.tax-calculation-settings,.tax-calculation-results,.tax-paid-section,.tax-credit-section,.tax-income-aggregation,.tax-business-income-review,.tax-house-property-panel,.tax-hra-panel) {
+  margin-block: 20px !important;
+  padding: 16px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--finos-surface, #fff) 72%, var(--finos-page, #f5f7fb) 28%) !important;
+  min-width: 0;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre :is(.tax-calculation-settings,.tax-calculation-results,.tax-paid-section,.tax-credit-section,.tax-income-aggregation,.tax-business-income-review,.tax-house-property-panel,.tax-hra-panel) > :is(h2,h3,h4) {
+  margin-top: 0 !important;
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+@media (max-width: 620px) {
+  :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre :is(.tax-calculation-settings,.tax-calculation-results,.tax-paid-section,.tax-credit-section) {
+    padding: 12px !important;
+  }
+}

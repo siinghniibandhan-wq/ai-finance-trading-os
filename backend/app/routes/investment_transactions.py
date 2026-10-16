@@ -23,7 +23,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.models import User
+from app.models import Account, User
+from app.finance_diary import record_finance_event
 from app.routes.auth import get_current_user
 
 
@@ -132,6 +133,40 @@ class InvestmentTransactionCreate(BaseModel):
     transaction_date: date
 
     notes: str | None = None
+
+
+def _cash_effect(transaction_type: str, quantity: Decimal, price: Decimal, fees: Decimal) -> Decimal:
+    """Signed broker-cash movement: negative for BUY, positive for SELL."""
+    gross = quantity * price
+    return -(gross + fees) if transaction_type == "BUY" else gross - fees
+
+
+def _load_locked_broker_account(db: Session, investment_row, user_id: int):
+    """Lock the investment's linked broker cash account within this DB transaction."""
+    account_id = investment_row["investment_account_id"] if isinstance(investment_row, dict) else investment_row.investment_account_id
+    if account_id is None:
+        raise HTTPException(status_code=409, detail="This holding has no linked broker cash account. Link/reconcile its broker account before recording or changing trades.")
+    account = db.execute(text("""
+        SELECT id, name, balance FROM accounts
+        WHERE id = :account_id AND user_id = :user_id
+          AND account_type = 'investment' AND is_active = TRUE
+        FOR UPDATE
+    """), {"account_id": account_id, "user_id": user_id}).first()
+    if not account:
+        raise HTTPException(status_code=409, detail="The linked broker cash account is unavailable. No trade changes were saved.")
+    return account
+
+
+def _apply_cash_delta(db: Session, account, delta: Decimal, user_id: int):
+    """Apply a signed cash movement; reject debits that exceed available cash."""
+    balance = Decimal(str(account.balance or 0))
+    new_balance = balance + delta
+    if new_balance < 0:
+        raise HTTPException(status_code=409, detail="Insufficient cash in the linked broker account for this trade change.")
+    db.execute(text("""
+        UPDATE accounts SET balance = :balance
+        WHERE id = :account_id AND user_id = :user_id
+    """), {"balance": new_balance, "account_id": account.id, "user_id": user_id})
 
 
 def validate_transaction_timeline(rows, candidate_type: str, candidate_quantity: Decimal, candidate_date: date):
@@ -302,7 +337,8 @@ def create_transaction(
             SELECT
                 id,
                 user_id,
-                quantity
+                quantity,
+                investment_account_id
             FROM investments
             WHERE id = :investment_id
               AND user_id = :user_id
@@ -322,6 +358,8 @@ def create_transaction(
             status_code=404,
             detail="Investment not found for this user.",
         )
+
+    broker_account = _load_locked_broker_account(db, investment, user_id)
 
     # --------------------------------------------------------
     # VALIDATE THE COMPLETE ACTIVE LEDGER IN DATE ORDER
@@ -439,6 +477,17 @@ def create_transaction(
         },
     )
 
+    # Cash and ledger commit together: BUY spends cost plus fees; SELL credits net proceeds.
+    cash_delta = _cash_effect(transaction_type, data.quantity, data.price, data.fees)
+    _apply_cash_delta(db, broker_account, cash_delta, user_id)
+    record_finance_event(
+        db, user_id=user_id, event_type="created", entity_type="investment_transaction",
+        entity_id=transaction.id, description=f"Investment {transaction_type} recorded; broker cash reconciled",
+        snapshot={"investment_id": data.investment_id, "account_id": broker_account.id,
+                  "transaction_type": transaction_type, "quantity": data.quantity,
+                  "price": data.price, "fees": data.fees, "cash_delta": cash_delta},
+    )
+
     # --------------------------------------------------------
     # COMMIT
     # --------------------------------------------------------
@@ -531,7 +580,7 @@ def update_transaction(
         raise HTTPException(status_code=404, detail="Investment transaction not found.")
 
     locked_investment = db.execute(text("""
-        SELECT id FROM investments
+        SELECT id, investment_account_id FROM investments
         WHERE id = :investment_id AND user_id = :user_id
         FOR UPDATE
     """), {"investment_id": locator.investment_id, "user_id": user_id}).first()
@@ -547,6 +596,11 @@ def update_transaction(
         raise HTTPException(status_code=404, detail="Investment transaction not found.")
     if existing.status != "ACTIVE":
         raise HTTPException(status_code=409, detail="Only active transactions can be edited.")
+    broker_account = _load_locked_broker_account(db, locked_investment, user_id)
+    old_cash_effect = _cash_effect(
+        existing.transaction_type, Decimal(str(existing.quantity)),
+        Decimal(str(existing.price)), Decimal(str(existing.fees or 0)),
+    )
 
     # Validate that all active transactions remain non-negative when ordered by date.
     rows = db.execute(text("""
@@ -594,6 +648,14 @@ def update_transaction(
         UPDATE investments SET quantity = :quantity, updated_at = CURRENT_TIMESTAMP
         WHERE id = :investment_id AND user_id = :user_id
     """), {"quantity": Decimal(str(active_balance.quantity or 0)), "investment_id": existing.investment_id, "user_id": user_id})
+    new_cash_effect = _cash_effect(transaction_type, data.quantity, data.price, data.fees)
+    _apply_cash_delta(db, broker_account, new_cash_effect - old_cash_effect, user_id)
+    record_finance_event(
+        db, user_id=user_id, event_type="updated", entity_type="investment_transaction",
+        entity_id=transaction_id, description="Investment transaction edited; broker cash reconciled",
+        snapshot={"investment_id": existing.investment_id, "account_id": broker_account.id,
+                  "old_cash_effect": old_cash_effect, "new_cash_effect": new_cash_effect},
+    )
     db.commit()
     return dict(updated._mapping)
 
@@ -639,6 +701,11 @@ def void_transaction(
         raise HTTPException(status_code=404, detail="Investment transaction not found.")
     if existing.status != "ACTIVE":
         raise HTTPException(status_code=409, detail="Transaction is already voided or inactive.")
+    broker_account = _load_locked_broker_account(db, locked_investment, user_id)
+    original_cash_effect = _cash_effect(
+        existing.transaction_type, Decimal(str(existing.quantity)),
+        Decimal(str(existing.price)), Decimal(str(existing.fees or 0)),
+    )
 
     # Ensure voiding this BUY will not leave any later active SELL unsupported.
     rows = db.execute(text("""
@@ -673,6 +740,15 @@ def void_transaction(
         UPDATE investments SET quantity = :quantity, updated_at = CURRENT_TIMESTAMP
         WHERE id = :investment_id AND user_id = :user_id
     """), {"quantity": Decimal(str(balance.quantity or 0)), "investment_id": existing.investment_id, "user_id": user_id})
+    # Reverse the original trade cash movement; reject an overdrawn reversal atomically.
+    _apply_cash_delta(db, broker_account, -original_cash_effect, user_id)
+    record_finance_event(
+        db, user_id=user_id, event_type="voided", entity_type="investment_transaction",
+        entity_id=transaction_id, description="Investment transaction voided; broker cash reversed",
+        snapshot={"investment_id": existing.investment_id, "account_id": broker_account.id,
+                  "original_cash_effect": original_cash_effect, "reversal": -original_cash_effect,
+                  "reason": data.reason.strip()},
+    )
     db.commit()
     return {"status": "voided", "transaction_id": transaction_id, "reason": data.reason.strip(), "active_quantity": str(balance.quantity or 0)}
 

@@ -2834,3 +2834,83 @@ svg { flex-shrink: 0; }
   --finos-account-muted: #525252;
   --finos-account-subtle: #737373;
 }
+
+
+/* Wealth Manager balance sheet: honor the selected light-family theme.
+   These are the actual component classes used by WealthManager.jsx. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .wc-balance-row {
+  color: var(--finos-text, #252a32);
+  border-color: var(--finos-border, #dfe3e8);
+  background: var(--t-card-bg, #fff);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .wc-balance-row:hover {
+  background: var(--finos-soft-accent, #f2f3f5);
+  border-color: var(--finos-border, #dfe3e8);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .wc-balance-label small {
+  color: var(--finos-muted, #626b78);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .wc-balance-track {
+  background: var(--finos-border, #e2e5e9);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .wc-balance-equation {
+  background: var(--t-inner-bg, #f4f5f7);
+  border-color: var(--finos-border, #dfe3e8);
+  color: var(--finos-muted, #626b78);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .wc-balance-equation strong {
+  color: var(--finos-text, #252a32);
+}
+/* Elegant Plain uses restrained neutral bars rather than dark-theme grey. */
+:root[data-finos-theme="elegant-plain"] .wc-balance-track { background: #e8e5dd; }
+:root[data-finos-theme="elegant-plain"] .wc-balance-row.assets .wc-balance-track > span { background: #5c6470; }
+:root[data-finos-theme="elegant-plain"] .wc-balance-row.liabilities .wc-balance-track > span { background: #b7a18c; }
+:root[data-finos-theme="elegant-plain"] .wc-balance-row.net-worth .wc-balance-track > span { background: #6b8f80; }

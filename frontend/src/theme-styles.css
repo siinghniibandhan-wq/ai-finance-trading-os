@@ -68,9 +68,6 @@
   --finos-page: var(--t-page-bg, #0b1020);
   --finos-surface: var(--t-card-bg, rgba(20, 28, 48, .92));
   --finos-surface-raised: var(--t-inner-bg, var(--t-card-bg, rgba(20, 28, 48, .92)));
-  --finos-text: var(--finos-text, #e7eaf2);
-  --finos-muted: var(--finos-muted, #9ba8c2);
-  --finos-border: var(--finos-border, rgba(148, 163, 184, .2));
 }
 :root[data-finos-theme] :is(.content, main, .dashboard, .page-content) {
   color: var(--finos-text);

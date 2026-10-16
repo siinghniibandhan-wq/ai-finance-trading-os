@@ -644,3 +644,45 @@
   color: #a33b4a !important;
   border-color: #e5c9ce !important;
 }
+
+
+/* Category row surfaces and actions must inherit theme tokens, not legacy
+   dark-theme inline values. Keep this fix tightly scoped to Categories. */
+:root[data-finos-theme] .categories-page .category-list-item {
+  background: var(--t-inner-bg, var(--t-card-bg, transparent)) !important;
+  color: var(--finos-text, inherit) !important;
+  border: 1px solid var(--finos-border, currentColor) !important;
+  border-radius: var(--t-radius, 12px) !important;
+  box-shadow: var(--t-shadow, none) !important;
+}
+:root[data-finos-theme] .categories-page .category-list-item > div:first-child > div:first-child {
+  color: var(--finos-text, inherit) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme] .categories-page .category-list-item > div:first-child > div:nth-child(2) {
+  color: var(--finos-muted, inherit) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme] .categories-page .category-list-item button {
+  color: var(--t-btn-text, var(--finos-text, inherit)) !important;
+  background: var(--t-btn-bg, var(--t-card-bg, transparent)) !important;
+  border: 1px solid var(--finos-border, currentColor) !important;
+  border-radius: var(--t-radius-sm, var(--t-radius, 8px)) !important;
+}
+:root[data-finos-theme="brutalism"] .categories-page .category-list-item {
+  background: #202127 !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
+  border-radius: 2px !important;
+  box-shadow: 3px 3px 0 #000 !important;
+}
+:root[data-finos-theme="brutalism"] .categories-page .category-list-item > div:first-child > div:first-child,
+:root[data-finos-theme="brutalism"] .categories-page .category-list-item > div:first-child > div:nth-child(2) {
+  color: #f7f5ef !important;
+}
+:root[data-finos-theme="brutalism"] .categories-page .category-list-item button {
+  color: #f7f5ef !important;
+  background: #17181d !important;
+  border: 2px solid #facc15 !important;
+  border-radius: 2px !important;
+}

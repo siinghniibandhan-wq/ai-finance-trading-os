@@ -232,7 +232,7 @@ function BreakdownPanel({ activeCard, data, onClose, onNavigate, onSelectCard })
 // ============================================================
 
 export default function WealthManager({ onNavigate = () => {} }) {
-  const [data, setData] = useState({ summary: null, liabilities: null, taxLiability: null, receivables: null, transactions: [], holdings: [] });
+  const [data, setData] = useState({ summary: null, liabilities: null, taxLiability: null, receivables: null, transactions: [], holdings: [], accounts: [] });
   const [analysisPeriod, setAnalysisPeriod] = useState("12");
   const [analysisChart, setAnalysisChart] = useState("income-expense");
   // Keep the Wealth Manager estimate aligned with the user's explicit regime selection.
@@ -258,6 +258,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
       getJson(`/api/transactions/receivables-payables`),
       getJson(`/api/transactions/`),
       getJson(`/api/holdings/?user_id=${USER_ID}`),
+      getJson(`/api/accounts/?user_id=${USER_ID}`),
     ]);
 
     const nextData = {
@@ -267,6 +268,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
       receivables: requests[3].status === "fulfilled" ? requests[3].value : null,
       transactions: requests[4].status === "fulfilled" && Array.isArray(requests[4].value) ? requests[4].value : [],
       holdings: requests[5].status === "fulfilled" && Array.isArray(requests[5].value?.holdings) ? requests[5].value.holdings : [],
+      accounts: requests[6].status === "fulfilled" && Array.isArray(requests[6].value) ? requests[6].value : [],
     };
     setData(nextData);
 
@@ -288,7 +290,17 @@ export default function WealthManager({ onNavigate = () => {} }) {
   }, [loadWealthData]);
 
   const totals = useMemo(() => {
-    const cash = numberValue(data.summary?.cash?.total_balance);
+    // Only real asset accounts belong in Wealth Manager cash totals.
+    // Credit limits/outstanding balances and loan principal are liabilities,
+    // not assets, even if an account's stored balance contains those values.
+    const liabilityTypes = new Set(["credit_card", "creditcard", "credit_line", "creditline", "cash_credit", "overdraft", "od", "loan", "personal_loan", "home_loan", "term_loan", "receivable", "payable"]);
+    const cash = data.accounts.length
+      ? data.accounts.reduce((sum, account) => {
+          const type = String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_");
+          if (account.is_active === false || liabilityTypes.has(type)) return sum;
+          return sum + numberValue(account.balance);
+        }, 0)
+      : numberValue(data.summary?.cash?.total_balance);
     const investments = numberValue(data.summary?.investments?.current_value);
     const receivables = numberValue(data.receivables?.total_receivable);
     const assets = cash + investments + receivables;

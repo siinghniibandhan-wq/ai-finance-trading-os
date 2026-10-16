@@ -833,3 +833,113 @@
   -webkit-text-fill-color: #f7f5ef !important;
   opacity: 1 !important;
 }
+
+
+/* === Targeted theme repairs requested from live screenshots === */
+
+/* Portfolio: repair only the three named themes plus Bento. Leave Brutalism
+   Portfolio and all already-working themes unchanged. */
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace {
+  color: var(--finos-text) !important;
+}
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace .portfolio-header {
+  background: var(--t-card-bg) !important;
+  background-image: none;
+  color: var(--finos-text) !important;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius) !important;
+  box-shadow: var(--t-shadow) !important;
+  padding: 16px !important;
+}
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace .portfolio-header :is(h1,h2,h3,p,.card-label) {
+  color: var(--finos-text) !important;
+  -webkit-text-fill-color: var(--finos-text) !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace .portfolio-header p:not(.card-label) {
+  color: var(--finos-muted) !important;
+  -webkit-text-fill-color: var(--finos-muted) !important;
+}
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace .glass-card {
+  background: var(--t-card-bg) !important;
+  background-image: none;
+  color: var(--finos-text) !important;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius) !important;
+  box-shadow: var(--t-shadow) !important;
+}
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace .glass-card :is(h1,h2,h3,h4,strong,b) {
+  color: var(--finos-text) !important;
+  -webkit-text-fill-color: var(--finos-text) !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace .glass-card :is(p,small,label,.card-label) {
+  color: var(--finos-muted) !important;
+  -webkit-text-fill-color: var(--finos-muted) !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace .portfolio-summary-card .portfolio-summary-value {
+  color: var(--finos-text) !important;
+  -webkit-text-fill-color: var(--finos-text) !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace .secondary-button {
+  background: var(--t-card-bg) !important;
+  color: var(--finos-text) !important;
+  border: 1px solid var(--finos-border) !important;
+}
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace .primary-button {
+  background: var(--finos-accent) !important;
+  color: #fff !important;
+  border: 1px solid var(--finos-accent) !important;
+}
+
+/* Brutalism: prevent empty/loading/chart placeholder surfaces from becoming
+   black-on-black or default white blocks. Keep this scoped to placeholders. */
+:root[data-finos-theme="brutalism"] .content :is(
+  .empty-chart,.empty-state,.empty-placeholder,.placeholder,.no-data,
+  .no-results,.loading-state,.loading-placeholder,.skeleton-card,.skeleton,
+  [data-empty-state="true"],[data-placeholder="true"]
+) {
+  background: #202127 !important;
+  background-image: none !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
+  border-radius: 2px !important;
+  box-shadow: 3px 3px 0 #000 !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(
+  .empty-chart,.empty-state,.empty-placeholder,.placeholder,.no-data,
+  .no-results,.loading-state,.loading-placeholder,.skeleton-card,.skeleton,
+  [data-empty-state="true"],[data-placeholder="true"]
+) :is(h1,h2,h3,h4,p,span,strong,small,label,button) {
+  color: #f7f5ef !important;
+  -webkit-text-fill-color: #f7f5ef !important;
+  opacity: 1 !important;
+}
+/* Chart of Accounts is the only non-placeholder Brutalism surface changed. */
+:root[data-finos-theme="brutalism"] .content :is(.coa-section-card,.coa-filter) {
+  background: #17181d !important;
+  background-image: none !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
+  border-radius: 2px !important;
+  box-shadow: 3px 3px 0 #000 !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(.coa-section-card,.coa-filter) :is(h2,h3,h4,p,label,span,th,td,button) {
+  color: #f7f5ef !important;
+  -webkit-text-fill-color: #f7f5ef !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme="brutalism"] .content .coa-section-card table thead,
+:root[data-finos-theme="brutalism"] .content .coa-section-card th {
+  background: #292a30 !important;
+  color: #facc15 !important;
+  -webkit-text-fill-color: #facc15 !important;
+}
+:root[data-finos-theme="brutalism"] .content .coa-section-card tr,
+:root[data-finos-theme="brutalism"] .content .coa-section-card td {
+  background: #17181d !important;
+  border-color: #484950 !important;
+}

@@ -3093,3 +3093,139 @@ svg { flex-shrink: 0; }
   .coa-table-scroll { border-radius: 8px; }
   .coa-table { min-width: 700px !important; }
 }
+
+
+/* ACCOUNT PROFILE DROPDOWN — inherit the active theme and preserve readable contrast.
+   Scoped only to the header popover; no account actions or theme behavior changed. */
+.header-profile-popover {
+  background: var(--finos-surface, var(--finos-panel-strong, #111827)) !important;
+  color: var(--finos-text, #f3f4f6) !important;
+  border-color: var(--finos-border, rgba(148,163,184,.24)) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.24) !important;
+}
+.header-profile-popover .header-profile-summary strong,
+.header-profile-popover .header-popover-heading strong,
+.header-profile-popover > button,
+.header-profile-popover > button span:not(.header-signout),
+.header-profile-popover svg {
+  color: var(--finos-text, #f3f4f6) !important;
+  -webkit-text-fill-color: currentColor !important;
+  opacity: 1 !important;
+}
+.header-profile-popover .header-profile-summary span,
+.header-profile-popover .header-popover-heading span {
+  color: var(--finos-muted, #aebbd3) !important;
+  -webkit-text-fill-color: currentColor !important;
+  opacity: 1 !important;
+}
+.header-profile-popover .header-profile-divider {
+  background: var(--finos-border, rgba(148,163,184,.24)) !important;
+}
+.header-profile-popover > button:hover {
+  background: var(--finos-soft-accent, rgba(139,92,246,.16)) !important;
+  color: var(--finos-text, #f3f4f6) !important;
+}
+.header-profile-popover .header-popover-primary {
+  background: var(--finos-accent-soft, rgba(139,92,246,.18)) !important;
+  color: var(--finos-accent, #c4b5fd) !important;
+  border: 1px solid var(--finos-border, rgba(167,139,250,.24)) !important;
+}
+.header-profile-popover .header-popover-primary,
+.header-profile-popover .header-popover-primary span,
+.header-profile-popover .header-popover-primary svg {
+  color: var(--finos-accent, #c4b5fd) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+.header-profile-popover .header-signout,
+.header-profile-popover .header-signout span,
+.header-profile-popover .header-signout svg {
+  color: #e5484d !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+.header-profile-popover .header-signout:hover {
+  background: rgba(229,72,77,.10) !important;
+}
+
+/* Light-family themes use dark foregrounds on their light theme surfaces. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .header-profile-popover {
+  background: var(--finos-surface, #fff) !important;
+  color: var(--finos-text, #202738) !important;
+  border-color: var(--finos-border, #e1e6ef) !important;
+  box-shadow: 0 12px 32px rgba(25,35,55,.16) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .header-profile-popover .header-profile-summary strong,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .header-profile-popover .header-popover-heading strong,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .header-profile-popover > button {
+  color: var(--finos-text, #202738) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .header-profile-popover .header-profile-summary span,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .header-profile-popover .header-popover-heading span {
+  color: var(--finos-muted, #596579) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .header-profile-popover > button:hover {
+  background: var(--finos-soft-accent, #f0efff) !important;
+  color: var(--finos-text, #202738) !important;
+}
+:root[data-finos-theme="elegant-plain"] .header-profile-popover .header-popover-primary {
+  background: #f0f0eb !important;
+  color: #343434 !important;
+  border-color: #e5e5e0 !important;
+}

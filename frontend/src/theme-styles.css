@@ -1499,3 +1499,37 @@
 :root[data-finos-theme] .content .instrument-search-result-meta {
   color: var(--finos-muted, #94a3b8);
 }
+
+/* Portfolio transaction modal: scoped light-theme contrast repair.
+   Dark themes and unrelated screens are intentionally unchanged. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="brutalism"]) .portfolio-transaction-modal {
+  background: #ffffff !important;
+  color: #202938 !important;
+  border: 1px solid #d7dee8 !important;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="brutalism"]) .portfolio-transaction-modal :is(h1,h2,h3,h4,strong,b,label,p) {
+  color: #202938;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="brutalism"]) .portfolio-transaction-modal [style*="color: rgba(255,255,255"] {
+  color: #596579 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="brutalism"]) .portfolio-transaction-modal [style*="background: rgba(255,255,255"] {
+  background: #f4f6fa !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="brutalism"]) .portfolio-transaction-modal .small-button,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="brutalism"]) .portfolio-transaction-modal .icon-button {
+  color: #344054 !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="brutalism"]) .portfolio-transaction-modal .small-button:disabled {
+  color: #667085 !important;
+  opacity: 0.75;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="brutalism"]) .portfolio-transaction-modal button[style*="#86efac"] {
+  color: #16803d !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="brutalism"]) .portfolio-transaction-modal button[style*="#fca5a5"] {
+  color: #b42318 !important;
+}

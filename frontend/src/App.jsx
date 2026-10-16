@@ -7388,7 +7388,7 @@ const summaryCards = [
         {/* PERFORMANCE */}
 
         <div
-          className="glass-card"
+          className="glass-card portfolio-performance-card"
           style={{
             padding: "20px",
             minHeight: "280px",
@@ -7529,7 +7529,7 @@ const summaryCards = [
         {/* ASSET ALLOCATION */}
 
         <div
-          className="glass-card"
+          className="glass-card portfolio-asset-allocation-card"
           style={{
             padding: "20px",
             minHeight: "280px",

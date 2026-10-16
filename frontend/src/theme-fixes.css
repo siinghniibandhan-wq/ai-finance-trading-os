@@ -1298,3 +1298,165 @@
   color: #bd4652 !important; -webkit-text-fill-color: #bd4652 !important;
   background: #fff0f1; border-color: #f2d5d8;
 }
+
+
+/* Plan & Goals workspace — consistent card hierarchy inspired by Markets,
+   Portfolio, Holdings and Wealth Manager. Theme variables preserve each
+   theme's own material, radius, contrast and accent; goal/API behavior untouched. */
+:root[data-finos-theme] .plan-workspace {
+  --goals-ink: var(--finos-text, var(--t-text, #202938));
+  --goals-muted: var(--finos-muted, #596579);
+  --goals-surface: var(--t-card-bg, var(--finos-surface, #fff));
+  --goals-inner: var(--t-inner-bg, var(--finos-surface-raised, #f5f7fa));
+  --goals-border: var(--finos-border, #d8dee8);
+  --goals-accent: var(--finos-accent, #6356d9);
+  color: var(--goals-ink) !important;
+  gap: 18px;
+}
+:root[data-finos-theme] .plan-workspace > section {
+  min-width: 0;
+  box-sizing: border-box;
+}
+:root[data-finos-theme] .plan-workspace > section:first-child {
+  padding: 18px 20px !important;
+  border: 1px solid var(--goals-border) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--goals-surface) !important;
+  background-image: none;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.06));
+}
+:root[data-finos-theme] .plan-workspace > section:first-child > div {
+  min-width: 0;
+}
+:root[data-finos-theme] .plan-workspace > section:first-child h2,
+:root[data-finos-theme] .plan-workspace h3,
+:root[data-finos-theme] .plan-workspace h4 {
+  color: var(--goals-ink) !important;
+  -webkit-text-fill-color: var(--goals-ink) !important;
+}
+:root[data-finos-theme] .plan-workspace :is(p,span,label,small) {
+  color: var(--goals-muted) !important;
+  -webkit-text-fill-color: var(--goals-muted) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme] .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"] > div {
+  min-width: 0;
+  padding: 16px !important;
+  border: 1px solid var(--goals-border) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--goals-surface) !important;
+  background-image: none !important;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.055)) !important;
+  color: var(--goals-ink) !important;
+}
+:root[data-finos-theme] .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"] > div > div:last-child {
+  overflow-wrap: anywhere;
+  color: var(--goals-ink) !important;
+  -webkit-text-fill-color: var(--goals-ink) !important;
+}
+:root[data-finos-theme] .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"],
+:root[data-finos-theme] .plan-workspace > section:has(> form),
+:root[data-finos-theme] .plan-workspace > section:has(> div > h3),
+:root[data-finos-theme] .plan-workspace > section:has(> .card-label) {
+  padding: 18px !important;
+  border: 1px solid var(--goals-border) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--goals-surface) !important;
+  background-image: none !important;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.055)) !important;
+}
+:root[data-finos-theme] .plan-workspace > section > form {
+  gap: 14px;
+}
+:root[data-finos-theme] .plan-workspace :is(input,select,textarea) {
+  box-sizing: border-box !important;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin-top: 7px !important;
+  padding: 11px 12px !important;
+  border: 1px solid var(--goals-border) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  background: var(--goals-inner) !important;
+  background-image: none !important;
+  color: var(--goals-ink) !important;
+  -webkit-text-fill-color: var(--goals-ink) !important;
+  box-shadow: none;
+  font: inherit;
+}
+:root[data-finos-theme] .plan-workspace :is(input,select,textarea)::placeholder {
+  color: var(--goals-muted) !important;
+  -webkit-text-fill-color: var(--goals-muted) !important;
+  opacity: .9;
+}
+:root[data-finos-theme] .plan-workspace :is(input,select,textarea):focus-visible {
+  outline: 2px solid var(--goals-accent) !important;
+  outline-offset: 2px;
+}
+:root[data-finos-theme] .plan-workspace article {
+  min-width: 0;
+  border: 1px solid var(--goals-border) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--goals-inner) !important;
+  background-image: none !important;
+  box-shadow: var(--t-shadow, 0 2px 8px rgba(31,41,55,.05)) !important;
+  color: var(--goals-ink) !important;
+}
+:root[data-finos-theme] .plan-workspace article h4,
+:root[data-finos-theme] .plan-workspace article strong {
+  color: var(--goals-ink) !important;
+  -webkit-text-fill-color: var(--goals-ink) !important;
+}
+:root[data-finos-theme] .plan-workspace article > div[style*="height: 8px"],
+:root[data-finos-theme] .plan-workspace > section > div[style*="height: 8px"] {
+  background: var(--goals-border) !important;
+}
+:root[data-finos-theme] .plan-workspace article > div[style*="height: 8px"] > div,
+:root[data-finos-theme] .plan-workspace > section > div[style*="height: 8px"] > div {
+  background: linear-gradient(90deg, var(--goals-accent), color-mix(in srgb, var(--goals-accent) 60%, #e879a9)) !important;
+  border-radius: inherit;
+}
+:root[data-finos-theme] .plan-workspace [role="alert"] {
+  color: #b42332 !important;
+  -webkit-text-fill-color: #b42332 !important;
+  background: #fff1f2 !important;
+  border-color: #f2c9ce !important;
+}
+:root[data-finos-theme] .plan-workspace [role="status"] {
+  color: #167345 !important;
+  -webkit-text-fill-color: #167345 !important;
+  background: #effaf3 !important;
+  border-color: #ccebd7 !important;
+}
+/* Theme-specific material signatures. Brutalism deliberately keeps hard edges,
+   thick ink borders and offset shadows instead of the soft glass-card treatment. */
+:root[data-finos-theme="brutalism"] .plan-workspace > section,
+:root[data-finos-theme="brutalism"] .plan-workspace > section:first-child,
+:root[data-finos-theme="brutalism"] .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"] > div,
+:root[data-finos-theme="brutalism"] .plan-workspace article {
+  border: 2px solid var(--finos-border, #484950) !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0 var(--finos-border, #484950) !important;
+}
+:root[data-finos-theme="brutalism"] .plan-workspace :is(input,select,textarea) {
+  border: 2px solid var(--finos-border, #484950) !important;
+  border-radius: 3px !important;
+  background: var(--t-inner-bg, #202127) !important;
+}
+:root[data-finos-theme="claymorphism"] .plan-workspace > section,
+:root[data-finos-theme="claymorphism"] .plan-workspace article {
+  box-shadow: 0 10px 22px rgba(124,92,255,.12), inset 0 1px 0 rgba(255,255,255,.8) !important;
+}
+:root[data-finos-theme="neumorphism"] .plan-workspace > section,
+:root[data-finos-theme="neumorphism"] .plan-workspace article {
+  box-shadow: 7px 7px 16px rgba(150,160,175,.28), -7px -7px 16px rgba(255,255,255,.9) !important;
+}
+:root[data-finos-theme="skeuomorphism"] .plan-workspace > section,
+:root[data-finos-theme="skeuomorphism"] .plan-workspace article {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 5px 12px rgba(30,40,60,.12) !important;
+}
+:root[data-finos-theme="bento-grid"] .plan-workspace > section,
+:root[data-finos-theme="bento-grid"] .plan-workspace article {
+  border-radius: 18px !important;
+  box-shadow: 0 4px 18px rgba(28,70,65,.06) !important;
+}

@@ -9947,7 +9947,19 @@ columnGap: "20px",
                   { key: "account_type", label: "Account type *", type: "select", required: true },
                   { key: "institution", label: "Bank / Institution", placeholder: "e.g. HDFC Bank", type: "text" },
                   { key: "account_number", label: "Account number", placeholder: "Enter account number (optional)", type: "text" },
-                  { key: "balance", label: "Opening balance (₹) *", placeholder: "0.00", type: "number", required: true },
+                  { key: "balance", label: ["credit_card", "credit_line"].includes(accountForm.account_type) ? "Opening outstanding amount (₹) *" : accountForm.account_type === "loan" ? "Opening outstanding principal (₹) *" : "Opening balance (₹) *", placeholder: "0.00", type: "number", required: true },
+                  ...(["credit_card", "credit_line"].includes(accountForm.account_type) ? [
+                    { key: "credit_limit", label: "Approved credit limit (₹) *", placeholder: "e.g. 100000", type: "number", required: true },
+                  ] : []),
+                  ...(accountForm.account_type === "loan" ? [
+                    { key: "loan_principal", label: "Original loan principal (₹) *", placeholder: "e.g. 500000", type: "number", required: true },
+                    { key: "loan_disbursed", label: "Amount disbursed (₹) *", placeholder: "e.g. 500000", type: "number", required: true },
+                    { key: "loan_interest_rate", label: "Annual interest rate (%)", placeholder: "e.g. 8.5", type: "number" },
+                    { key: "loan_tenure_months", label: "Tenure (months)", placeholder: "e.g. 240", type: "number" },
+                    { key: "loan_emi_amount", label: "EMI amount (₹)", placeholder: "e.g. 42000", type: "number" },
+                    { key: "loan_start_date", label: "Loan start date *", type: "date", required: true },
+                    { key: "loan_first_payment_date", label: "First payment date", type: "date" },
+                  ] : []),
                 ].map((field) => (
                   <label key={field.key} style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: 0, color: "#d1d5db", fontSize: "13px", fontWeight: 600 }}>
                     <span>{field.label}</span>
@@ -9985,6 +9997,26 @@ columnGap: "20px",
                 ))}
               </div>
 
+              {accountForm.account_type === "loan" && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: "17px", marginTop: "17px" }}>
+                  <label style={{ display: "flex", flexDirection: "column", gap: "8px", color: "#d1d5db", fontSize: "13px", fontWeight: 600 }}>
+                    <span>Interest calculation</span>
+                    <StyledSelect value={accountForm.loan_interest_type} onChange={(event) => setAccountForm({ ...accountForm, loan_interest_type: event.target.value })}>
+                      <option value="reducing_balance">Reducing balance</option>
+                      <option value="flat">Flat rate</option>
+                    </StyledSelect>
+                  </label>
+                  <label style={{ display: "flex", flexDirection: "column", gap: "8px", color: "#d1d5db", fontSize: "13px", fontWeight: 600 }}>
+                    <span>Repayment frequency</span>
+                    <StyledSelect value={accountForm.loan_repayment_frequency} onChange={(event) => setAccountForm({ ...accountForm, loan_repayment_frequency: event.target.value })}>
+                      <option value="monthly">Monthly</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="annually">Annually</option>
+                    </StyledSelect>
+                  </label>
+                </div>
+              )}
               <footer style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: "10px", marginTop: "26px", paddingTop: "18px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
                 <button
                   type="button"

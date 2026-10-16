@@ -247,6 +247,9 @@ def repay_loan(loan_id: int, payload: LoanMovementCreate, current_user: User = D
         db.add(movement)
         loan.outstanding_principal -= payload.principal_amount
         loan.status = "closed" if loan.outstanding_principal == 0 else "active"
+        if loan.linked_account_id is not None:
+            linked_account = _owned_account(db, current_user.id, loan.linked_account_id)
+            linked_account.balance = loan.outstanding_principal
         if liability:
             liability.outstanding_amount = loan.outstanding_principal
             liability.status = "closed" if liability.outstanding_amount == 0 else "active"

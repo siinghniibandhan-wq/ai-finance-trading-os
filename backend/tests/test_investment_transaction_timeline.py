@@ -166,3 +166,55 @@ def test_update_transaction_rejects_precision_database_would_round(field, value)
     payload[field] = value
     with pytest.raises(ValidationError):
         InvestmentTransactionUpdate(**payload)
+
+
+
+def test_apply_cash_delta_updates_balance_without_losing_decimal_precision():
+    from types import SimpleNamespace
+    from app.routes.investment_transactions import _apply_cash_delta
+
+    class FakeDB:
+        def __init__(self):
+            self.statement = None
+            self.params = None
+            self.rolled_back = False
+
+        def execute(self, statement, params):
+            self.statement = str(statement)
+            self.params = params
+
+        def rollback(self):
+            self.rolled_back = True
+
+    db = FakeDB()
+    account = SimpleNamespace(id=7, balance=Decimal("100.25"))
+    _apply_cash_delta(db, account, Decimal("-20.10"), user_id=3)
+
+    assert db.params == {"balance": Decimal("80.15"), "account_id": 7, "user_id": 3}
+    assert not db.rolled_back
+
+
+def test_apply_cash_delta_rolls_back_when_debit_would_overdraw():
+    from types import SimpleNamespace
+    from fastapi import HTTPException
+    from app.routes.investment_transactions import _apply_cash_delta
+
+    class FakeDB:
+        def __init__(self):
+            self.executed = False
+            self.rolled_back = False
+
+        def execute(self, statement, params):
+            self.executed = True
+
+        def rollback(self):
+            self.rolled_back = True
+
+    db = FakeDB()
+    account = SimpleNamespace(id=7, balance=Decimal("10.00"))
+    with pytest.raises(HTTPException) as exc:
+        _apply_cash_delta(db, account, Decimal("-10.01"), user_id=3)
+
+    assert exc.value.status_code == 409
+    assert db.rolled_back
+    assert not db.executed

@@ -1498,3 +1498,275 @@ svg { flex-shrink: 0; }
   .menu-button { cursor: pointer; }
   .mobile-close { cursor: pointer; }
 }
+
+
+/* ============================================================
+   Theme audit pass: shared control + chart tokens.
+   These are presentation-only overrides; no data or chart logic changes.
+   ============================================================ */
+:root {
+  --finos-control-bg: #111827;
+  --finos-control-text: #f1f5f9;
+  --finos-control-muted: #aab6ca;
+  --finos-control-border: #475569;
+  --finos-chart-bg: rgba(8, 12, 23, .36);
+  --finos-chart-text: #dbe5f5;
+  --finos-chart-muted: #aab6ca;
+  --finos-chart-grid: rgba(203, 213, 225, .20);
+  --finos-chart-series-1: var(--finos-accent, #a78bfa);
+  --finos-chart-series-2: #fb7185;
+  --finos-chart-series-3: #34d399;
+  --finos-chart-series-4: #38bdf8;
+  --finos-chart-series-5: #fbbf24;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) {
+  color-scheme: light;
+  --finos-control-bg: #ffffff;
+  --finos-control-text: #172033;
+  --finos-control-muted: #475569;
+  --finos-control-border: #cbd5e1;
+  --finos-chart-bg: #ffffff;
+  --finos-chart-text: #172033;
+  --finos-chart-muted: #475569;
+  --finos-chart-grid: rgba(71, 85, 105, .22);
+  --finos-chart-series-1: var(--finos-accent, #475569);
+  --finos-chart-series-2: #be123c;
+  --finos-chart-series-3: #047857;
+  --finos-chart-series-4: #0369a1;
+  --finos-chart-series-5: #a16207;
+}
+:root[data-finos-theme="aurora"] {
+  --finos-chart-series-1: #e879f9; --finos-chart-series-2: #fb7185;
+  --finos-chart-series-3: #67e8f9; --finos-chart-series-4: #a78bfa; --finos-chart-series-5: #f0abfc;
+}
+:root[data-finos-theme="emerald"] {
+  --finos-chart-series-1: #34d399; --finos-chart-series-2: #fda4af;
+  --finos-chart-series-3: #a3e635; --finos-chart-series-4: #38bdf8; --finos-chart-series-5: #fbbf24;
+}
+:root[data-finos-theme="ocean"] {
+  --finos-chart-series-1: #38bdf8; --finos-chart-series-2: #fb7185;
+  --finos-chart-series-3: #2dd4bf; --finos-chart-series-4: #818cf8; --finos-chart-series-5: #fbbf24;
+}
+:root[data-finos-theme="sunset"] {
+  --finos-chart-series-1: #fb923c; --finos-chart-series-2: #fb7185;
+  --finos-chart-series-3: #fcd34d; --finos-chart-series-4: #38bdf8; --finos-chart-series-5: #c084fc;
+}
+:root[data-finos-theme="retro-terminal"] {
+  --finos-chart-series-1: #4ade80; --finos-chart-series-2: #f87171;
+  --finos-chart-series-3: #a3e635; --finos-chart-series-4: #22d3ee; --finos-chart-series-5: #facc15;
+}
+:root:is([data-finos-theme="glass"],[data-finos-theme="glassmorphism"],[data-finos-theme="liquid-glass"]) {
+  --finos-chart-series-1: #67e8f9; --finos-chart-series-2: #f0abfc;
+  --finos-chart-series-3: #6ee7b7; --finos-chart-series-4: #93c5fd; --finos-chart-series-5: #fde68a;
+}
+:root[data-finos-theme="claymorphism"] {
+  --finos-chart-series-1: #0f766e; --finos-chart-series-2: #be185d;
+  --finos-chart-series-3: #15803d; --finos-chart-series-4: #0369a1; --finos-chart-series-5: #a16207;
+}
+:root[data-finos-theme="bento-grid"] {
+  --finos-chart-series-1: #0f766e; --finos-chart-series-2: #be123c;
+  --finos-chart-series-3: #047857; --finos-chart-series-4: #0369a1; --finos-chart-series-5: #a16207;
+}
+:root[data-finos-theme="brutalism"] {
+  --finos-chart-series-1: #a16207; --finos-chart-series-2: #be123c;
+  --finos-chart-series-3: #166534; --finos-chart-series-4: #1d4ed8; --finos-chart-series-5: #171717;
+}
+:root[data-finos-theme="maximalism"] {
+  --finos-chart-series-1: #f0abfc; --finos-chart-series-2: #fb7185;
+  --finos-chart-series-3: #34d399; --finos-chart-series-4: #22d3ee; --finos-chart-series-5: #fbbf24;
+}
+
+/* Native and custom form controls: keep the opened options readable too. */
+:root[data-finos-theme] select,
+:root[data-finos-theme] input,
+:root[data-finos-theme] textarea,
+:root[data-finos-theme] [role="combobox"] {
+  color: var(--finos-control-text);
+  background-color: var(--finos-control-bg);
+  border-color: var(--finos-control-border);
+}
+:root[data-finos-theme] select option,
+:root[data-finos-theme] optgroup {
+  color: var(--finos-control-text);
+  background-color: var(--finos-control-bg);
+}
+:root[data-finos-theme] input::placeholder,
+:root[data-finos-theme] textarea::placeholder {
+  color: var(--finos-control-muted);
+  opacity: 1;
+}
+
+/* Chart typography, canvas surfaces, legends and controls follow theme tokens. */
+:root[data-finos-theme] .wc-chart-subtitle,
+:root[data-finos-theme] .wc-note,
+:root[data-finos-theme] .wc-chart-stat span,
+:root[data-finos-theme] .wc-flow-stats span,
+:root[data-finos-theme] .wc-chart-legend span,
+:root[data-finos-theme] .wc-pie-legend span,
+:root[data-finos-theme] .dashboard-overview .chart-legend,
+:root[data-finos-theme] .wc-chart-empty {
+  color: var(--finos-chart-muted) !important;
+}
+:root[data-finos-theme] .wc-history-chart {
+  background: var(--finos-chart-bg) !important;
+  color: var(--finos-chart-text);
+  border: 1px solid var(--finos-control-border);
+}
+:root[data-finos-theme] .wc-periods button,
+:root[data-finos-theme] .wc-chart-types button {
+  color: var(--finos-chart-text);
+  background: var(--finos-control-bg);
+  border-color: var(--finos-control-border);
+}
+:root[data-finos-theme] .wc-periods button.active,
+:root[data-finos-theme] .wc-chart-types button.active {
+  color: #fff;
+  background: var(--finos-accent);
+  border-color: var(--finos-accent);
+}
+:root[data-finos-theme] .wc-chart-empty {
+  border-color: var(--finos-control-border);
+}
+:root[data-finos-theme] .wc-chart-svg circle {
+  stroke: var(--finos-chart-bg);
+}
+:root[data-finos-theme] .wc-line-chart .wc-line-income { stroke: var(--finos-chart-series-1); }
+:root[data-finos-theme] .wc-line-chart .wc-line-expense { stroke: var(--finos-chart-series-2); }
+:root[data-finos-theme] .wc-line-chart .wc-line-net { stroke: var(--finos-chart-series-3); }
+:root[data-finos-theme] .wc-pie-legend i { background: var(--finos-chart-series-1); }
+:root[data-finos-theme] .wc-pie-legend i.investments { background: var(--finos-chart-series-3); }
+:root[data-finos-theme] .wc-pie-legend i.receivables { background: var(--finos-chart-series-4); }
+:root[data-finos-theme] .wc-line-chart .wc-line-point {
+  background: var(--finos-chart-series-1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--finos-chart-series-1) 18%, transparent);
+}
+:root[data-finos-theme] .chart-legend .legend-income { background-color: var(--finos-chart-series-1); }
+:root[data-finos-theme] .chart-legend .legend-expense { background-color: var(--finos-chart-series-2); }
+
+
+/* Theme tokens must win over legacy inline colours on form controls. */
+:root[data-finos-theme] select,
+:root[data-finos-theme] input,
+:root[data-finos-theme] textarea,
+:root[data-finos-theme] [role="combobox"] {
+  color: var(--finos-control-text) !important;
+  background-color: var(--finos-control-bg) !important;
+  border-color: var(--finos-control-border) !important;
+  caret-color: var(--finos-control-text);
+}
+:root[data-finos-theme] select option,
+:root[data-finos-theme] optgroup {
+  color: var(--finos-control-text) !important;
+  background-color: var(--finos-control-bg) !important;
+}
+:root[data-finos-theme] input::placeholder,
+:root[data-finos-theme] textarea::placeholder {
+  color: var(--finos-control-muted) !important;
+  opacity: 1;
+}
+
+
+/* Additional audit fixes for the custom SVG price chart and chart labels. */
+:root[data-finos-theme] .content svg[role="img"] line {
+  stroke: var(--finos-chart-grid) !important;
+}
+:root[data-finos-theme] .content svg[role="img"] polyline {
+  stroke: var(--finos-chart-series-1) !important;
+}
+:root[data-finos-theme] .content svg[role="img"] text {
+  fill: var(--finos-chart-muted) !important;
+}
+:root[data-finos-theme] .content svg[role="img"] circle {
+  stroke: var(--finos-chart-bg) !important;
+}
+:root[data-finos-theme] .wc-chart-stat strong,
+:root[data-finos-theme] .wc-flow-stats strong,
+:root[data-finos-theme] .wc-pie-legend strong {
+  color: var(--finos-chart-text);
+}
+:root[data-finos-theme] .wc-chart-subtitle,
+:root[data-finos-theme] .wc-note,
+:root[data-finos-theme] .wc-chart-empty {
+  background-color: transparent;
+}
+:root[data-finos-theme="light"] .wc-history-chart,
+:root[data-finos-theme="elegant-plain"] .wc-history-chart,
+:root[data-finos-theme="minimal"] .wc-history-chart,
+:root[data-finos-theme="skeuomorphism"] .wc-history-chart,
+:root[data-finos-theme="neumorphism"] .wc-history-chart,
+:root[data-finos-theme="claymorphism"] .wc-history-chart,
+:root[data-finos-theme="bento-grid"] .wc-history-chart,
+:root[data-finos-theme="brutalism"] .wc-history-chart {
+  box-shadow: none;
+}
+
+/* Final component pass: remove fixed dark chart details that clash with light themes. */
+:root[data-finos-theme] .wc-asset-pie::before,
+:root[data-finos-theme] .wc-wealth-pie::before {
+  background: var(--finos-chart-bg) !important;
+  border-color: var(--finos-control-border);
+}
+:root[data-finos-theme] .wc-chart-surface {
+  border-top-color: var(--finos-control-border);
+}
+:root[data-finos-theme] .wc-asset-pie small,
+:root[data-finos-theme] .wc-wealth-pie small,
+:root[data-finos-theme] .wc-history-column,
+:root[data-finos-theme] .wc-history-column small,
+:root[data-finos-theme] .wc-allocation-arrow {
+  color: var(--finos-chart-muted);
+}
+:root[data-finos-theme] .wc-history-bars {
+  border-bottom-color: var(--finos-chart-grid);
+}
+:root[data-finos-theme] .wc-history-column:hover,
+:root[data-finos-theme] .wc-history-column:focus-visible {
+  border-color: var(--finos-control-border);
+  background: color-mix(in srgb, var(--finos-accent) 10%, transparent);
+}
+:root[data-finos-theme] .wc-balance-track {
+  background: color-mix(in srgb, var(--finos-chart-muted) 16%, transparent);
+}
+:root[data-finos-theme] .wc-balance-track > span {
+  background: var(--finos-chart-series-1);
+}
+:root[data-finos-theme] .wc-balance-row.liabilities .wc-balance-track > span {
+  background: var(--finos-chart-series-2);
+}
+:root[data-finos-theme] .wc-balance-row.net-worth .wc-balance-track > span {
+  background: var(--finos-chart-series-3);
+}
+:root[data-finos-theme] .wc-chart-surface .wc-panel-heading {
+  border-bottom-color: var(--finos-control-border);
+}
+@media (max-width: 760px) {
+  .finos-theme-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .finos-theme-option { grid-template-columns: 58px minmax(0, 1fr) 18px; gap: 9px; padding: 10px; }
+  .finos-theme-sample { width: 58px; height: 44px; }
+}
+@media (max-width: 420px) {
+  .finos-theme-settings-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Selected chart controls need legible text against each theme's own accent. */
+:root[data-finos-theme="emerald"] .wc-periods button.active,
+:root[data-finos-theme="emerald"] .wc-chart-types button.active,
+:root[data-finos-theme="ocean"] .wc-periods button.active,
+:root[data-finos-theme="ocean"] .wc-chart-types button.active,
+:root[data-finos-theme="sunset"] .wc-periods button.active,
+:root[data-finos-theme="sunset"] .wc-chart-types button.active,
+:root[data-finos-theme="retro-terminal"] .wc-periods button.active,
+:root[data-finos-theme="retro-terminal"] .wc-chart-types button.active,
+:root[data-finos-theme="brutalism"] .wc-periods button.active,
+:root[data-finos-theme="brutalism"] .wc-chart-types button.active,
+:root[data-finos-theme="maximalism"] .wc-periods button.active,
+:root[data-finos-theme="maximalism"] .wc-chart-types button.active,
+:root[data-finos-theme="glass"] .wc-periods button.active,
+:root[data-finos-theme="glass"] .wc-chart-types button.active,
+:root[data-finos-theme="glassmorphism"] .wc-periods button.active,
+:root[data-finos-theme="glassmorphism"] .wc-chart-types button.active,
+:root[data-finos-theme="liquid-glass"] .wc-periods button.active,
+:root[data-finos-theme="liquid-glass"] .wc-chart-types button.active {
+  color: #101827;
+}
+

@@ -686,3 +686,75 @@
   border: 2px solid #facc15 !important;
   border-radius: 2px !important;
 }
+
+
+/* Portfolio: fix legacy inline dark-theme text that remains low-contrast on
+   Light, Minimal and Elegant Plain. Strictly scoped to this module. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace {
+  --portfolio-fg: #292b30;
+  --portfolio-muted: #62666d;
+  color: var(--portfolio-fg) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-header {
+  background: #fff !important;
+  color: #292b30 !important;
+  border: 1px solid #e2ded4 !important;
+  border-radius: var(--t-radius, 12px) !important;
+  box-shadow: var(--t-shadow, 0 2px 8px rgba(20,30,50,.05)) !important;
+  padding: 16px !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-header :is(h1,h2,h3,p,.card-label) {
+  color: #292b30 !important;
+  -webkit-text-fill-color: #292b30 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-header p:not(.card-label) {
+  color: #62666d !important;
+  -webkit-text-fill-color: #62666d !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-summary-card {
+  background: #fff !important;
+  color: #292b30 !important;
+  border: 1px solid #e2ded4 !important;
+  box-shadow: 0 2px 8px rgba(20,30,50,.05) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-summary-card > div {
+  color: #62666d !important;
+  -webkit-text-fill-color: #62666d !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-summary-card .portfolio-summary-value {
+  color: #292b30 !important;
+  -webkit-text-fill-color: #292b30 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .glass-card {
+  background: #fff !important;
+  color: #292b30 !important;
+  border-color: #e2ded4 !important;
+  box-shadow: 0 2px 8px rgba(20,30,50,.05) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .glass-card :is(h1,h2,h3,h4,strong,b) {
+  color: #292b30 !important;
+  -webkit-text-fill-color: #292b30 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .glass-card :is(p,small,label) {
+  color: #62666d !important;
+  -webkit-text-fill-color: #62666d !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme="brutalism"] .investment-workspace .portfolio-header,
+:root[data-finos-theme="brutalism"] .investment-workspace .portfolio-summary-card {
+  background: #17181d !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
+  border-radius: 2px !important;
+  box-shadow: 4px 4px 0 #000 !important;
+}
+:root[data-finos-theme="brutalism"] .investment-workspace .portfolio-header :is(h1,h2,h3,p,.card-label),
+:root[data-finos-theme="brutalism"] .investment-workspace .portfolio-summary-card :is(div,p,span) {
+  color: #f7f5ef !important;
+  -webkit-text-fill-color: #f7f5ef !important;
+  opacity: 1 !important;
+}

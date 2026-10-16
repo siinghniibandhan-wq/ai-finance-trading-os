@@ -9,6 +9,8 @@ import AuthPage from "./AuthPage";
 import { API_BASE_URL, apiFetch, clearSession, getAccessToken } from "./api";
 import "./styles.css";
 import "./visual-design.css";
+import "./theme-fixes.css";
+import "./theme-styles.css";
 
 class AppRenderBoundary extends React.Component {
   constructor(props) {

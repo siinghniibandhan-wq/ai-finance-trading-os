@@ -1,0 +1,28 @@
+/* Theme-only surface corrections. Scope strictly to visual theme attributes. */
+:root[data-finos-theme="light"] {
+  color-scheme: light;
+  --finos-text: #202631;
+  --finos-muted: #5b6472;
+  --finos-border: #dfe4ec;
+}
+:root[data-finos-theme="light"] body,
+:root[data-finos-theme="light"] #root {
+  background: #f5f7fb;
+  color: #202631;
+}
+:root[data-finos-theme="light"] :is(.header-popover, .finos-select-menu, [role="menu"], [role="listbox"]) {
+  background: #fff;
+  color: #202631;
+  border-color: #dfe4ec;
+  box-shadow: 0 12px 32px rgba(24, 35, 55, .12);
+}
+:root[data-finos-theme="light"] :is(input, textarea, select, .finos-select-trigger) {
+  color: #202631;
+  background-color: #fff;
+  border-color: #d5dce7;
+}
+:root[data-finos-theme="light"] :is(input, textarea)::placeholder { color: #687386; opacity: 1; }
+:root[data-finos-theme="light"] :is(.card, .glass-card, .panel, .metric-card, .stat-card, .chart-card) {
+  color: #202631;
+  border-color: #e1e6ee;
+}

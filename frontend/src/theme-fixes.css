@@ -2121,3 +2121,33 @@
     border-radius: 12px !important;
   }
 }
+
+
+/* Focused light-theme refinement: dropdowns only, plus clearer section separation.
+   Keep existing input styling, cards, and all dark-theme styling untouched. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content select {
+  border: 1px solid color-mix(in srgb, var(--finos-border, #dfe4ec) 72%, transparent) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  box-shadow: none !important;
+  background-image: none;
+  background-color: var(--t-inner-bg, var(--t-card-bg, #fff)) !important;
+  color: var(--finos-text, #202938) !important;
+  outline-offset: 2px;
+  transition: border-color .16s ease, background-color .16s ease;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content select:focus-visible {
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 20%, transparent);
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content select option {
+  color: var(--finos-text, #202938);
+  background: var(--t-card-bg, #fff);
+}
+/* Use spacing and heading hierarchy—not heavy borders—to distinguish sections. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content :is(form, section, .form-section, .settings-section) + :is(form, section, .form-section, .settings-section) {
+  margin-top: 20px;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content :is(.form-section, .settings-section) > :is(h2,h3,h4) {
+  margin-top: 0;
+  line-height: 1.35;
+}

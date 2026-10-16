@@ -4,6 +4,12 @@ on:
   pull_request:
     paths:
       - "backend/app/routes/tax_calculation.py"
+      - "backend/tests/test_tax_review_rules.py"
+      - "backend/app/routes/itr_ready_tax_report.py"
+      - "backend/app/tax_review_rules.py"
+      - "backend/app/routes/tax_review.py"
+      - "backend/app/main.py"
+      - "backend/app/models.py"
       - "backend/app/routes/investment_transactions.py"
       - "backend/app/routes/investment_pnl.py"
       - "backend/tests/test_tax_calculation_eligibility_safeguards.py"

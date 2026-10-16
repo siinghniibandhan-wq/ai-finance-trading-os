@@ -6224,7 +6224,7 @@ const closeInvestmentTransactionModal = () => {
 const handleInvestmentTransactionSubmit =
   async () => {
 
-    if (!transactionModal?.investment) {
+    if (transactionLoading || !transactionModal?.investment) {
       return;
     }
 
@@ -6274,6 +6274,17 @@ const handleInvestmentTransactionSubmit =
 
         return;
 
+      }
+
+      const fees = Number(transactionForm.fees || 0);
+      if (!Number.isFinite(fees) || fees < 0) {
+        setTransactionMessage("Fees must be a valid amount greater than or equal to zero.");
+        return;
+      }
+
+      if (!Number.isFinite(Number(transactionForm.quantity)) || !Number.isFinite(Number(transactionForm.price))) {
+        setTransactionMessage("Quantity and price must be valid numbers.");
+        return;
       }
 
       // ------------------------------------------------------

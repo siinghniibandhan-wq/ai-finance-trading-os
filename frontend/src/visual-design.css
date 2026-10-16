@@ -3229,3 +3229,101 @@ svg { flex-shrink: 0; }
   color: #343434 !important;
   border-color: #e5e5e0 !important;
 }
+
+
+/* BRUTALISM THEME — Wealth Manager charts, balance sheet and cash-flow surfaces.
+   Fix theme-mismatched white cards with pale text; preserve existing data and layout. */
+:root[data-finos-theme="brutalism"] .wealth-centre,
+:root[data-finos-theme="brutalism"] .wealth-centre :is(section,article,div,button,p,span,small,strong,b,label) {
+  -webkit-text-fill-color: currentColor;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre {
+  color: #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  .wc-welcome,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,
+  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart,
+  .wc-flow-stats > div,.wc-chart-stat,.wc-chart-empty,.wc-breakdown-category
+) {
+  background: #ffffff !important;
+  color: #171717 !important;
+  border: 2px solid #171717 !important;
+  border-radius: 0 !important;
+  box-shadow: 4px 4px 0 #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  .wc-panel-heading,.wc-welcome,.wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
+) {
+  border-color: #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  h1,h2,h3,h4,strong,b,.wc-panel-heading h3,.wc-card-value,
+  .wc-balance-label strong,.wc-balance-value,.wc-flow-stats strong,
+  .wc-chart-stat strong,.wc-total-row strong
+) {
+  color: #171717 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  p,small,label,.wc-chart-subtitle,.wc-note,.wc-card-label,.wc-card-subtitle,
+  .wc-balance-label small,.wc-flow-stats span,.wc-chart-stat span,
+  .wc-category-label,.wc-latest-main span,.wc-detail-row > div > span
+) {
+  color: #404040 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #404040 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-row {
+  background: #ffffff !important;
+  color: #171717 !important;
+  border: 2px solid #171717 !important;
+  border-radius: 0 !important;
+  box-shadow: 3px 3px 0 #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-row:hover {
+  background: #fef9c3 !important;
+  border-color: #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  .wc-balance-track,.wc-category-track,.wc-goal-track
+) {
+  background: #e5e5e5 !important;
+  border: 1px solid #171717 !important;
+  border-radius: 0 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  .wc-chart-empty,.wc-flow-stats > div,.wc-chart-stat
+) {
+  background: #fff !important;
+  color: #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  button,select,input
+) {
+  color: #171717 !important;
+  background: #ffffff !important;
+  border: 2px solid #171717 !important;
+  border-radius: 0 !important;
+  box-shadow: 2px 2px 0 #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre button:is(.active,[aria-pressed="true"]) {
+  background: #facc15 !important;
+  color: #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-chart-svg text {
+  fill: #171717 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-chart-svg :is(path,line,polyline) {
+  stroke: #171717;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-equation {
+  background: #fef9c3 !important;
+  color: #171717 !important;
+  border: 2px solid #171717 !important;
+  border-radius: 0 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-equation :is(strong,span) {
+  color: #171717 !important;
+  -webkit-text-fill-color: #171717 !important;
+}

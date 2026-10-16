@@ -3217,9 +3217,6 @@ function PlaceholderPage({ title }) {
 
 function InvestmentTransactions() {
 
-  const API_BASE_URL =
-    "https://wealthmanager.duckdns.org";
-
   const USER_ID = getCurrentUserId();
 
   // ----------------------------------------------------------
@@ -4418,9 +4415,6 @@ function InvestmentTransactions() {
 // ============================================================
 
 function Holdings() {
-  const API_BASE_URL =
-    "https://wealthmanager.duckdns.org";
-
   const USER_ID = getCurrentUserId();
 
   const [holdings, setHoldings] = useState([]);
@@ -5804,6 +5798,8 @@ const [transactionModal, setTransactionModal] =
 const [transactionType, setTransactionType] =
   useState("BUY");
 
+const [editingTransactionId, setEditingTransactionId] = useState(null);
+
 const [transactionForm, setTransactionForm] =
   useState({
     quantity: "",
@@ -6209,6 +6205,7 @@ const openInvestmentTransactions = async (
 
 const closeInvestmentTransactionModal = () => {
 
+  setEditingTransactionId(null);
   transactionQuoteRequestRef.current += 1;
   activeTransactionInstrumentRef.current = "";
   setTransactionModal(null);
@@ -6322,9 +6319,11 @@ const handleInvestmentTransactionSubmit =
       // ------------------------------------------------------
 
       const response = await apiFetch(
-        "https://wealthmanager.duckdns.org/api/investment-transactions/",
+        editingTransactionId
+          ? `${API_BASE_URL}/api/investment-transactions/${editingTransactionId}`
+          : `${API_BASE_URL}/api/investment-transactions/`,
         {
-          method: "POST",
+          method: editingTransactionId ? "PUT" : "POST",
 
           headers: {
             "Content-Type":
@@ -6343,7 +6342,7 @@ const handleInvestmentTransactionSubmit =
 
         throw new Error(
           data?.detail ||
-            `Unable to create ${transactionType} transaction.`
+            `Unable to ${editingTransactionId ? "update" : "create"} ${transactionType} transaction.`
         );
 
       }
@@ -6353,10 +6352,11 @@ const handleInvestmentTransactionSubmit =
       // ------------------------------------------------------
 
       setTransactionMessage(
-        `${transactionType} transaction created successfully.`
+        `${transactionType} transaction ${editingTransactionId ? "updated" : "created"} successfully.`
       );
 
       // Refresh transaction history
+      setEditingTransactionId(null);
       await loadInvestmentTransactions(
         investment.id
       );
@@ -6391,7 +6391,7 @@ const handleInvestmentTransactionSubmit =
 
       setTransactionMessage(
         error?.message ||
-          `Unable to create ${transactionType} transaction.`
+          `Unable to ${editingTransactionId ? "update" : "create"} ${transactionType} transaction.`
       );
 
     } finally {
@@ -6533,8 +6533,8 @@ const handleInvestmentTransactionSubmit =
       // --------------------------------------------------------
 
       const url = editingInvestmentId
-        ? `https://wealthmanager.duckdns.org/api/investments/${editingInvestmentId}`
-        : "https://wealthmanager.duckdns.org/api/investments/";
+        ? `${API_BASE_URL}/api/investments/${editingInvestmentId}`
+        : `${API_BASE_URL}/api/investments/`;
 
       const response = await apiFetch(
         url,
@@ -6600,7 +6600,7 @@ const handleInvestmentTransactionSubmit =
 
         const transactionResponse =
           await apiFetch(
-            "https://wealthmanager.duckdns.org/api/investment-transactions/",
+            `${API_BASE_URL}/api/investment-transactions/`,
             {
               method: "POST",
 
@@ -6631,7 +6631,7 @@ const handleInvestmentTransactionSubmit =
 
           try {
             await apiFetch(
-              `https://wealthmanager.duckdns.org/api/investments/${data.id}`,
+              `${API_BASE_URL}/api/investments/${data.id}`,
               {
                 method: "DELETE",
               }
@@ -8158,6 +8158,7 @@ const holdingReturn =
                   : "rgba(255,255,255,0.55)",
             }}
             onClick={() => {
+              setEditingTransactionId(null);
               setTransactionType("BUY");
               setTransactionModal({
                 ...transactionModal,
@@ -8181,6 +8182,7 @@ const holdingReturn =
                   : "rgba(255,255,255,0.55)",
             }}
             onClick={() => {
+              setEditingTransactionId(null);
               setTransactionType("SELL");
               setTransactionModal({
                 ...transactionModal,
@@ -8201,6 +8203,7 @@ const holdingReturn =
             }}
             onClick={async () => {
 
+              setEditingTransactionId(null);
               setTransactionModal({
                 ...transactionModal,
                 mode: "history",
@@ -8468,7 +8471,7 @@ const holdingReturn =
             >
               {transactionLoading
                 ? "Saving..."
-                : `Confirm ${transactionType}`}
+                : editingTransactionId ? `Save ${transactionType} Changes` : `Confirm ${transactionType}`}
             </button>
 
           </div>
@@ -8493,6 +8496,12 @@ const holdingReturn =
             >
               Transaction History
             </div>
+
+            {transactionMessage && (
+              <div style={{ marginBottom: "12px", padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", fontSize: "11px" }}>
+                {transactionMessage}
+              </div>
+            )}
 
             {transactionHistoryLoading ? (
 
@@ -8639,6 +8648,55 @@ const holdingReturn =
                         </div>
 
                       )}
+
+                      <div style={{ display: "flex", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
+                        {(transaction.status || "ACTIVE") === "ACTIVE" && (
+                          <>
+                            <button type="button" className="small-button" disabled={transactionLoading} onClick={() => {
+                              setEditingTransactionId(transaction.id);
+                              setTransactionType(transaction.transaction_type);
+                              setTransactionForm({
+                                quantity: String(transaction.quantity ?? ""),
+                                price: String(transaction.price ?? ""),
+                                fees: String(transaction.fees ?? 0),
+                                transaction_date: String(transaction.transaction_date || "").slice(0, 10),
+                                notes: transaction.notes || "",
+                              });
+                              setTransactionModal({ ...transactionModal, mode: "form" });
+                              setTransactionMessage("Editing this ledger transaction. Save to validate the complete holding timeline.");
+                            }}>Edit transaction</button>
+                            <button type="button" className="small-button" disabled={transactionLoading} onClick={async () => {
+                              const reason = window.prompt("Reason for voiding this transaction (required):");
+                              if (reason === null) return;
+                              if (reason.trim().length < 3) {
+                                setTransactionMessage("Enter a reason of at least 3 characters to void this transaction.");
+                                return;
+                              }
+                              try {
+                                setTransactionLoading(true);
+                                setTransactionMessage("");
+                                const response = await apiFetch(`${API_BASE_URL}/api/investment-transactions/${transaction.id}/void`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ reason: reason.trim() }),
+                                });
+                                const data = await response.json().catch(() => ({}));
+                                if (!response.ok) throw new Error(data?.detail || "Unable to void transaction.");
+                                setTransactionMessage("Transaction voided. Its audit history has been preserved.");
+                                await loadInvestmentTransactions(transactionModal.investment.id);
+                                await loadInvestments();
+                              } catch (error) {
+                                setTransactionMessage(error?.message || "Unable to void transaction.");
+                              } finally {
+                                setTransactionLoading(false);
+                              }
+                            }}>Void transaction</button>
+                          </>
+                        )}
+                        {(transaction.status || "ACTIVE") !== "ACTIVE" && (
+                          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>Voided — audit record retained</span>
+                        )}
+                      </div>
 
                     </div>
 

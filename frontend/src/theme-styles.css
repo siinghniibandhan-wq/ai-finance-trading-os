@@ -1467,3 +1467,35 @@
   border-radius: 0 !important;
   box-shadow: none !important;
 }
+
+
+/* Portfolio instrument search results — theme-aware, scoped to this list only.
+   Use the active theme's surface/text tokens instead of fixed dark colors. */
+:root[data-finos-theme] .content .instrument-search-results {
+  color: var(--finos-text, #f8fafc);
+  background: var(--t-card-bg, var(--finos-surface-raised, #17172a));
+  border: 1px solid var(--finos-border, rgba(148, 163, 184, .28));
+  border-radius: var(--t-radius, 10px);
+  box-shadow: var(--t-shadow, 0 12px 30px rgba(0, 0, 0, .24));
+}
+:root[data-finos-theme] .content .instrument-search-result {
+  color: var(--finos-text, #f8fafc);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--finos-border, rgba(148, 163, 184, .18));
+}
+:root[data-finos-theme] .content .instrument-search-result:last-child {
+  border-bottom: 0;
+}
+:root[data-finos-theme] .content .instrument-search-result:hover,
+:root[data-finos-theme] .content .instrument-search-result:focus-visible {
+  background: color-mix(in srgb, var(--finos-accent, #8b5cf6) 12%, var(--t-card-bg, #17172a));
+  outline: none;
+}
+:root[data-finos-theme] .content .instrument-search-result strong,
+:root[data-finos-theme] .content .instrument-search-result > span {
+  color: inherit;
+}
+:root[data-finos-theme] .content .instrument-search-result-meta {
+  color: var(--finos-muted, #94a3b8);
+}

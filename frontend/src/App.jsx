@@ -4984,13 +4984,12 @@ function Holdings() {
                 return (
                   <div
                     key={holdingKey}
+                    className="portfolio-holding-card"
                     style={{
-                      border:
-                        "1px solid rgba(255,255,255,0.08)",
+                      border: "1px solid var(--finos-border, rgba(255,255,255,0.08))",
                       borderRadius: "16px",
                       padding: "16px",
-                      background:
-                        "linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.025))",
+                      background: "var(--t-card-bg, rgba(255,255,255,0.03))",
                     }}
                   >
                     {/* MAIN HOLDING */}

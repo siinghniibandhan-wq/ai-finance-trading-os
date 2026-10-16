@@ -9710,6 +9710,25 @@ gridTemplateRows: "auto auto auto",
         }}
       >
 
+        {/* Realistic credit-card face; other account types retain their existing card layout. */}
+        {["credit_card", "creditcard", "credit_card_account"].includes(String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_")) && (
+          <div style={{ position: "relative", overflow: "hidden", minHeight: "158px", padding: "17px 18px", borderRadius: "16px", color: "#fff", background: "linear-gradient(135deg, #172554 0%, #4338ca 52%, #7c3aed 100%)", boxShadow: "0 10px 24px rgba(49,46,129,.24)", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "16px" }}>
+            <div style={{ position: "absolute", width: "190px", height: "190px", borderRadius: "50%", right: "-62px", top: "-92px", background: "rgba(255,255,255,.10)", pointerEvents: "none" }} />
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", position: "relative" }}>
+              <div><div style={{ fontSize: "10px", letterSpacing: ".15em", textTransform: "uppercase", color: "rgba(255,255,255,.72)" }}>Credit Card</div><div style={{ fontSize: "13px", fontWeight: 750, marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "220px" }}>{account.institution || "Financial Institution"}</div></div>
+              <Landmark size={24} style={{ flexShrink: 0, opacity: .92 }} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", position: "relative" }}>
+              <div style={{ width: "35px", height: "26px", borderRadius: "6px", background: "linear-gradient(135deg,#f5e7b2,#c7a96b)", border: "1px solid rgba(255,255,255,.35)", display: "grid", gridTemplateColumns: "1fr 1fr", overflow: "hidden", flexShrink: 0 }}><span style={{ borderRight: "1px solid rgba(90,70,30,.28)", borderBottom: "1px solid rgba(90,70,30,.28)" }} /><span style={{ borderBottom: "1px solid rgba(90,70,30,.28)" }} /><span style={{ borderRight: "1px solid rgba(90,70,30,.28)" }} /><span /></div>
+              <span style={{ fontSize: "13px", letterSpacing: ".13em", color: "rgba(255,255,255,.92)" }}>{account.account_number ? "•••• •••• •••• " + String(account.account_number).replace(/\D/g, "").slice(-4) : "•••• •••• •••• ••••"}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "10px", position: "relative" }}>
+              <div style={{ minWidth: 0 }}><div style={{ fontSize: "9px", letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,.66)" }}>Cardholder</div><div style={{ fontSize: "12px", fontWeight: 700, marginTop: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{account.name}</div></div>
+              <div style={{ fontSize: "11px", fontWeight: 800, letterSpacing: ".08em", whiteSpace: "nowrap", opacity: .92 }}>CREDIT</div>
+            </div>
+          </div>
+        )}
+
         {/* ACCOUNT INFORMATION */}
 
         <div
@@ -9774,7 +9793,7 @@ gridTemplateRows: "auto auto auto",
               {account.type}
             </div>
 
-            {account.account_number && (
+            {account.account_number && !["credit_card", "creditcard", "credit_card_account"].includes(String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_")) && (
 
               <div
                 style={{

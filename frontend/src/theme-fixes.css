@@ -1771,3 +1771,98 @@
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre td {
   border-color: var(--tax-line, #dfe4ec) !important;
 }
+
+
+/* Tax Centre: make the entire module follow Goals' light-theme card/form system.
+   This is deliberately a presentation-only layer; no tax data or calculations
+   are touched. Inline dark-mode styles in nested tax panels need explicit wins. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre {
+  color: var(--finos-text, #202938) !important;
+  color-scheme: light;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(section, article, .glass-card, .card, [class*="panel"], [class*="card"], [style*="linear-gradient"], [style*="rgba(12,16,30"], [style*="rgba(15,23,42"], [style*="rgba(255,255,255,0.02"], [style*="rgba(255,255,255,0.03"], [style*="rgba(255,255,255,0.04"], [style*="rgba(255,255,255,0.05"], [style*="rgba(255,255,255,0.06"], [style*="rgba(255,255,255,0.07"], [style*="rgba(255,255,255,0.08"]) {
+  color: var(--tax-ink, #202938) !important;
+  background-color: var(--tax-surface, #fff) !important;
+  background-image: none !important;
+  border-color: var(--tax-line, #dfe4ec) !important;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.055)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(.glass-card, .card, [class*="panel"], [class*="card"]) {
+  border: 1px solid var(--tax-line, #dfe4ec) !important;
+  border-radius: var(--t-radius, 14px) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(h1,h2,h3,h4,h5,h6,strong,b,label,th,td,button) {
+  color: var(--tax-ink, #202938) !important;
+  -webkit-text-fill-color: var(--tax-ink, #202938) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(p,span,small,dt,dd,caption,legend) {
+  color: var(--tax-muted, #5b6472) !important;
+  -webkit-text-fill-color: var(--tax-muted, #5b6472) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(input,select,textarea) {
+  box-sizing: border-box !important;
+  min-height: 42px;
+  color: var(--tax-ink, #202938) !important;
+  -webkit-text-fill-color: var(--tax-ink, #202938) !important;
+  background: var(--tax-inner, #f3f5f9) !important;
+  border: 1px solid var(--tax-line, #dfe4ec) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(input,select,textarea)::placeholder {
+  color: var(--tax-muted, #5b6472) !important;
+  -webkit-text-fill-color: var(--tax-muted, #5b6472) !important;
+  opacity: .85 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(input,select,textarea):focus-visible {
+  outline: 2px solid var(--finos-accent, #6356d9) !important;
+  outline-offset: 2px;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre nav[aria-label="Tax sections"] {
+  padding: 8px !important;
+  background: var(--tax-inner, #f3f5f9) !important;
+  border: 1px solid var(--tax-line, #dfe4ec) !important;
+  border-radius: var(--t-radius, 14px) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre nav[aria-label="Tax sections"] button {
+  border-radius: var(--t-radius-sm, 9px) !important;
+  border: 1px solid var(--tax-line, #dfe4ec) !important;
+  background: var(--tax-surface, #fff) !important;
+  color: var(--tax-ink, #202938) !important;
+  -webkit-text-fill-color: var(--tax-ink, #202938) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme="light"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="minimal"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="elegant-plain"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="skeuomorphism"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="neumorphism"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="neomorphism"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="claymorphism"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="bento-grid"] .tax-centre nav[aria-label="Tax sections"] button.primary-button {
+  background: var(--finos-accent, #6356d9) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  border-color: var(--finos-accent, #6356d9) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre button:not(.primary-button) {
+  background: var(--tax-inner, #f3f5f9) !important;
+  border: 1px solid var(--tax-line, #dfe4ec) !important;
+  color: var(--tax-ink, #202938) !important;
+  -webkit-text-fill-color: var(--tax-ink, #202938) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [role="alert"] {
+  color: #a92c3b !important;
+  -webkit-text-fill-color: #a92c3b !important;
+  background: #fff0f1 !important;
+  border: 1px solid #f0cbd0 !important;
+  border-radius: 12px !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: "#fff""],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: "white""] {
+  color: var(--tax-muted, #5b6472) !important;
+}

@@ -1499,3 +1499,33 @@
 :root[data-finos-theme] .content .instrument-search-result-meta {
   color: var(--finos-muted, #94a3b8);
 }
+
+
+/* Portfolio transaction-history modal: improve contrast only in light themes.
+   Dark theme keeps its existing palette and inline styles unchanged. */
+:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history {
+  color: #1f2937 !important;
+}
+:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history :is(div,span,small,p,strong,b) {
+  color: #1f2937 !important;
+}
+:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history > div > div[style*="background"] {
+  background: #ffffff !important;
+  border-color: #d1d5db !important;
+}
+:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history :is(button,.small-button,.primary-button,.secondary-button) {
+  color: #1f2937 !important;
+  border-color: #9ca3af !important;
+}
+:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history button {
+  background-color: #f3f4f6;
+}
+:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history :is(button,.small-button,.primary-button,.secondary-button):hover {
+  background-color: #e5e7eb;
+}
+:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history div[style*="color: rgb(134, 239, 172)"] {
+  color: #166534 !important;
+}
+:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history div[style*="color: rgb(252, 165, 165)"] {
+  color: #b91c1c !important;
+}

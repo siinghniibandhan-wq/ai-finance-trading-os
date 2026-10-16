@@ -2459,3 +2459,126 @@ svg { flex-shrink: 0; }
 :root[data-finos-theme="elegant-plain"] .welcome-section h2 span { background: none !important; color: #242424 !important; -webkit-text-fill-color: currentColor !important; }
 :root[data-finos-theme="elegant-plain"] svg { filter: none; }
 :root[data-finos-theme="elegant-plain"] .finos-theme-option-elegant-plain .finos-theme-sample { --s-bg: #f5f5f2; --s-border: 1px solid #e5e5e0; --s-radius: 3px; --s-line: #303030; --s-line-radius: 0; --s-btn: #303030; --s-btn-radius: 2px; }
+
+
+/* LIGHT THEME — restore readable text and stable card layouts across every module. */
+:root[data-finos-theme="light"] {
+  color-scheme: light;
+  --finos-bg: #f4f6fb;
+  --finos-surface: #ffffff;
+  --finos-card: #ffffff;
+  --finos-text: #202738;
+  --finos-text-primary: #202738;
+  --finos-muted: #667085;
+  --finos-border: #e1e6ef;
+  --finos-accent: #5b4bdb;
+}
+:root[data-finos-theme="light"] .welcome-section,
+:root[data-finos-theme="light"] .page-hero,
+:root[data-finos-theme="light"] .module-hero,
+:root[data-finos-theme="light"] .accounts-hero {
+  color: #202738 !important;
+}
+:root[data-finos-theme="light"] .welcome-section p,
+:root[data-finos-theme="light"] .welcome-section small,
+:root[data-finos-theme="light"] .welcome-section .eyebrow,
+:root[data-finos-theme="light"] .welcome-section .subtitle,
+:root[data-finos-theme="light"] .welcome-section .description,
+:root[data-finos-theme="light"] .welcome-section span:not(.gradient-text),
+:root[data-finos-theme="light"] .page-hero p,
+:root[data-finos-theme="light"] .module-hero p {
+  color: #e8eaf1 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme="light"] .glass-card,
+:root[data-finos-theme="light"] .metric-card,
+:root[data-finos-theme="light"] .dashboard-card,
+:root[data-finos-theme="light"] .stat-card,
+:root[data-finos-theme="light"] .content-card,
+:root[data-finos-theme="light"] .panel,
+:root[data-finos-theme="light"] .account-card,
+:root[data-finos-theme="light"] .transaction-card,
+:root[data-finos-theme="light"] .account-list-item,
+:root[data-finos-theme="light"] .chart-of-accounts-card {
+  color: #202738;
+  background-color: #ffffff;
+  border-color: #e1e6ef;
+}
+:root[data-finos-theme="light"] .glass-card :is(h1,h2,h3,h4,h5,strong,b,th),
+:root[data-finos-theme="light"] .metric-card :is(h1,h2,h3,h4,h5,strong,b),
+:root[data-finos-theme="light"] .dashboard-card :is(h1,h2,h3,h4,h5,strong,b),
+:root[data-finos-theme="light"] .content-card :is(h1,h2,h3,h4,h5,strong,b),
+:root[data-finos-theme="light"] .account-card :is(h1,h2,h3,h4,h5,strong,b),
+:root[data-finos-theme="light"] .transaction-card :is(h1,h2,h3,h4,h5,strong,b) {
+  color: #202738 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme="light"] .glass-card :is(p,small,label,span,td,li),
+:root[data-finos-theme="light"] .metric-card :is(p,small,label,span),
+:root[data-finos-theme="light"] .dashboard-card :is(p,small,label,span),
+:root[data-finos-theme="light"] .content-card :is(p,small,label,span),
+:root[data-finos-theme="light"] .account-card :is(p,small,label,span),
+:root[data-finos-theme="light"] .transaction-card :is(p,small,label,span) {
+  color: #596579;
+  opacity: 1;
+  -webkit-text-fill-color: currentColor;
+}
+:root[data-finos-theme="light"] .chart-of-accounts-card *,
+:root[data-finos-theme="light"] .accounts-list *,
+:root[data-finos-theme="light"] .transactions-list * {
+  opacity: 1;
+}
+:root[data-finos-theme="light"] input,
+:root[data-finos-theme="light"] textarea,
+:root[data-finos-theme="light"] select,
+:root[data-finos-theme="light"] [contenteditable="true"] {
+  color: #202738 !important;
+  background-color: #ffffff !important;
+  border-color: #cbd3e1 !important;
+}
+:root[data-finos-theme="light"] input::placeholder,
+:root[data-finos-theme="light"] textarea::placeholder { color: #687386 !important; opacity: 1 !important; }
+:root[data-finos-theme="light"] .topbar-actions { position: relative; }
+:root[data-finos-theme="light"] .header-popover {
+  position: absolute;
+  z-index: 1000;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(330px, calc(100vw - 28px));
+  padding: 14px;
+  border: 1px solid #e1e6ef;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #202738;
+  box-shadow: 0 14px 36px rgba(25,35,55,.16);
+}
+.header-action-wrap { position: relative; display: flex; align-items: center; }
+.header-search-popover label { display:block; margin:0 0 8px; font-size:12px; font-weight:700; color:#344054; }
+.header-search-popover input { width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #cbd3e1; border-radius:8px; background:#fff; color:#202738; }
+.header-search-results { display:grid; gap:3px; margin-top:8px; max-height:260px; overflow:auto; }
+.header-search-results button,
+.header-profile-popover > button,
+.header-popover-primary { display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:9px 10px; border:0; border-radius:7px; background:transparent; color:#344054; cursor:pointer; font:inherit; }
+.header-search-results button:hover,
+.header-profile-popover > button:hover,
+.header-popover-primary:hover { background:#f0f2f8; color:#202738; }
+.header-popover-empty { margin:10px 0; color:#667085; font-size:12px; line-height:1.5; }
+.header-popover-heading { display:flex; flex-direction:column; gap:3px; margin-bottom:8px; }
+.header-popover-heading strong { font-size:14px; color:#202738; }
+.header-popover-heading span { font-size:11px; color:#667085; }
+.header-popover-primary { justify-content:space-between; margin-top:6px; background:#f0efff; color:#4338a8; font-size:12px; font-weight:700; }
+.header-profile-summary { display:flex; align-items:center; gap:10px; padding:4px 4px 12px; }
+.header-profile-summary > div:last-child { display:flex; min-width:0; flex-direction:column; gap:3px; }
+.header-profile-summary strong { color:#202738; font-size:13px; }
+.header-profile-summary span { color:#667085; font-size:11px; overflow-wrap:anywhere; }
+.header-profile-divider { height:1px; margin:6px 0; background:#e1e6ef; }
+.header-profile-popover .header-signout { color:#b42318; font-weight:700; }
+:root[data-finos-theme="light"] .topbar-actions .profile-info strong { color:#202738; }
+:root[data-finos-theme="light"] .topbar-actions .profile-info span { color:#667085; }
+@media (max-width: 600px) {
+  .header-profile-popover { right:0; }
+  .header-search-popover { right:-90px; }
+  .header-notifications-popover { right:-44px; }
+}

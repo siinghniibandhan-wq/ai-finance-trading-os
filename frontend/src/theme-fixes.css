@@ -534,3 +534,92 @@
 :root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(button.primary-button, button.secondary-button) {
   color: var(--t-pri-text, var(--broker-form-ink));
 }
+
+
+/* Match the proven transaction-history text palette in the broker order form.
+   Use the same readable primary (#202631) and secondary (#5b6472) text tones
+   used by the light/minimal history UI, without removing each theme's shadows. */
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal {
+  --broker-form-surface: #ffffff;
+  --broker-form-raised: #f8fafc;
+  --broker-form-ink: #202631;
+  --broker-form-muted: #5b6472;
+  --broker-form-line: #dfe4ec;
+  color: #202631 !important;
+  background-color: #ffffff !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal :is(div, label, p, span, small, .broker-order-field-label) {
+  color: #5b6472 !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal :is(h2, strong, input, select, textarea) {
+  color: #202631 !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal .broker-order-quote {
+  color: #202631 !important;
+  background: #f8fafc !important;
+  border-color: #dfe4ec !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal :is(input, select, textarea) {
+  color: #202631 !important;
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal button.secondary-button {
+  color: #202631 !important;
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal button.primary-button {
+  color: var(--t-pri-text, #ffffff) !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal [role="alert"] {
+  color: #8f1725 !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal [role="status"] {
+  color: #14532d !important;
+}

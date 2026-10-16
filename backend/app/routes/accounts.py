@@ -26,6 +26,7 @@ def create_account(account_data: AccountCreate, db: Session = Depends(get_db), c
         account_number=account_data.account_number,
         currency=account_data.currency,
         balance=account_data.balance,
+        credit_limit=account_data.credit_limit,
     )
     db.add(account)
     db.flush()

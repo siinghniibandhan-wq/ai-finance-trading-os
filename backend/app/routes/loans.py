@@ -34,6 +34,7 @@ class LoanPayload(BaseModel):
     principal_amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     amount_disbursed: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     deposit_account_id: Optional[int] = None
+    linked_account_id: Optional[int] = None
     interest_rate: Optional[Decimal] = Field(default=None, ge=0, le=100, max_digits=7, decimal_places=4)
     interest_type: str = "reducing_balance"
     tenure_months: Optional[int] = Field(default=None, gt=0, le=600)
@@ -180,6 +181,13 @@ def create_loan(payload: LoanPayload, current_user: User = Depends(get_current_u
         raise HTTPException(status_code=400, detail="Amount disbursed cannot exceed principal amount")
     if payload.deposit_account_id is not None:
         _owned_account(db, current_user.id, payload.deposit_account_id, lock=False)
+    if payload.linked_account_id is not None:
+        linked_account = _owned_account(db, current_user.id, payload.linked_account_id, lock=False)
+        if (linked_account.account_type or "").strip().lower() != "loan":
+            raise HTTPException(status_code=422, detail="Linked account must be a Loan Account.")
+        existing_loan = db.query(Loan).filter(Loan.user_id == current_user.id, Loan.linked_account_id == linked_account.id).first()
+        if existing_loan:
+            raise HTTPException(status_code=409, detail="This account is already linked to a loan.")
     try:
         loan = Loan(**payload.model_dump(exclude={'user_id'}), user_id=current_user.id, outstanding_principal=payload.principal_amount)
         db.add(loan)

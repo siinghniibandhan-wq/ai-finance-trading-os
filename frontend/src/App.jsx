@@ -6121,7 +6121,7 @@ useEffect(() => {
   const symbol = String(intent?.symbol || "").trim().toUpperCase();
   const name = String(intent?.name || "").trim().toUpperCase();
   if (!symbol && !name) return;
-  const normalizeInstrument = (value) => String(value || "").trim().toUpperCase().replace(/\\s+/g, " ");
+  const normalizeInstrument = (value) => String(value || "").trim().toUpperCase().replace(/\s+/g, " ");
   const requestedExchange = normalizeInstrument(intent?.exchange);
   const requestedInstrumentId = normalizeInstrument(intent?.instrument_id || intent?.instrumentId);
   const sameSecurity = (item) => {

@@ -1460,3 +1460,33 @@
   border-radius: 18px !important;
   box-shadow: 0 4px 18px rgba(28,70,65,.06) !important;
 }
+
+/* Theme-tinted Goals category/status dropdowns in light themes. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="brutalism"]) .plan-workspace select,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="brutalism"]) .plan-workspace select option {
+  color: var(--goals-ink, #202938) !important;
+  -webkit-text-fill-color: var(--goals-ink, #202938) !important;
+  background-color: var(--goals-inner, #f1f3f7) !important;
+}
+:root[data-finos-theme="light"] .plan-workspace select,
+:root[data-finos-theme="light"] .plan-workspace select option { background-color: #f0f3fa !important; }
+:root[data-finos-theme="minimal"] .plan-workspace select,
+:root[data-finos-theme="minimal"] .plan-workspace select option { background-color: #f1f3f6 !important; }
+:root[data-finos-theme="elegant-plain"] .plan-workspace select,
+:root[data-finos-theme="elegant-plain"] .plan-workspace select option { background-color: #f5f2eb !important; }
+:root[data-finos-theme="skeuomorphism"] .plan-workspace select,
+:root[data-finos-theme="skeuomorphism"] .plan-workspace select option { background-color: #edf2f7 !important; }
+:root[data-finos-theme="neumorphism"] .plan-workspace select,
+:root[data-finos-theme="neumorphism"] .plan-workspace select option { background-color: #e9edf3 !important; }
+:root[data-finos-theme="neomorphism"] .plan-workspace select,
+:root[data-finos-theme="neomorphism"] .plan-workspace select option { background-color: #edf0f7 !important; }
+:root[data-finos-theme="claymorphism"] .plan-workspace select,
+:root[data-finos-theme="claymorphism"] .plan-workspace select option { background-color: #f1edff !important; }
+:root[data-finos-theme="bento-grid"] .plan-workspace select,
+:root[data-finos-theme="bento-grid"] .plan-workspace select option { background-color: #eaf4f2 !important; }
+:root[data-finos-theme="brutalism"] .plan-workspace select,
+:root[data-finos-theme="brutalism"] .plan-workspace select option {
+  color: var(--finos-text, #f7f5ef) !important;
+  -webkit-text-fill-color: var(--finos-text, #f7f5ef) !important;
+  background-color: var(--t-inner-bg, #202127) !important;
+}

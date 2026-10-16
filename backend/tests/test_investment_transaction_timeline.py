@@ -115,3 +115,54 @@ def test_sell_fees_cannot_exceed_gross_proceeds():
     ).read_text()
 
     assert source.count("data.fees > data.quantity * data.price") == 2
+
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("quantity", "1.0000001"),
+        ("price", "10.00001"),
+        ("fees", "0.001"),
+    ],
+)
+def test_create_transaction_rejects_precision_database_would_round(field, value):
+    from pydantic import ValidationError
+    from app.routes.investment_transactions import InvestmentTransactionCreate
+
+    payload = {
+        "user_id": 1,
+        "investment_id": 1,
+        "transaction_type": "BUY",
+        "quantity": "1",
+        "price": "10",
+        "fees": "0",
+        "transaction_date": "2026-10-16",
+    }
+    payload[field] = value
+    with pytest.raises(ValidationError):
+        InvestmentTransactionCreate(**payload)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("quantity", "1.0000001"),
+        ("price", "10.00001"),
+        ("fees", "0.001"),
+    ],
+)
+def test_update_transaction_rejects_precision_database_would_round(field, value):
+    from pydantic import ValidationError
+    from app.routes.investment_transactions import InvestmentTransactionUpdate
+
+    payload = {
+        "transaction_type": "BUY",
+        "quantity": "1",
+        "price": "10",
+        "fees": "0",
+        "transaction_date": "2026-10-16",
+    }
+    payload[field] = value
+    with pytest.raises(ValidationError):
+        InvestmentTransactionUpdate(**payload)

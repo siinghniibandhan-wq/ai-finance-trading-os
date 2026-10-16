@@ -12001,7 +12001,7 @@ const transactionFormModal = showForm && (
     onClick={closeTransactionForm}
   >
     <div
-      className="glass-card"
+      className="glass-card add-transaction-modal"
       style={{
         width: "100%",
         maxWidth: "620px",

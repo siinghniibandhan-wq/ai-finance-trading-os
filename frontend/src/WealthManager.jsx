@@ -75,7 +75,7 @@ function BreakdownPanel({ activeCard, data, onClose, onNavigate, onSelectCard })
   const [expandedLiabilityType, setExpandedLiabilityType] = useState(null);
   if (!activeCard) return null;
 
-  const liabilityTypes = new Set(["loan", "personal_loan", "home_loan", "term_loan", "credit_card", "creditcard", "credit_line", "cash_credit", "overdraft", "od", "payable", "receivable"]);
+  const liabilityTypes = new Set(["loan", "loan_account", "personal_loan", "home_loan", "term_loan", "credit_card", "creditcard", "credit_card_account", "credit_line", "creditline", "credit_line_account", "cash_credit", "cash_credit_account", "overdraft", "od", "payable", "receivable"]);
   const cash = data.accounts?.length
     ? data.accounts.reduce((sum, account) => {
         const type = String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_");
@@ -299,7 +299,7 @@ export default function WealthManager({ onNavigate = () => {} }) {
     // Only real asset accounts belong in Wealth Manager cash totals.
     // Credit limits/outstanding balances and loan principal are liabilities,
     // not assets, even if an account's stored balance contains those values.
-    const liabilityTypes = new Set(["credit_card", "creditcard", "credit_line", "creditline", "cash_credit", "overdraft", "od", "loan", "personal_loan", "home_loan", "term_loan", "receivable", "payable"]);
+    const liabilityTypes = new Set(["credit_card", "creditcard", "credit_card_account", "credit_line", "creditline", "credit_line_account", "cash_credit", "cash_credit_account", "overdraft", "od", "loan", "loan_account", "personal_loan", "home_loan", "term_loan", "receivable", "payable"]);
     const cash = data.accounts.length
       ? data.accounts.reduce((sum, account) => {
           const type = String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_");

@@ -93,6 +93,7 @@ def _loan_dict(x: Loan):
         "amount_disbursed": float(x.amount_disbursed),
         "outstanding_principal": float(x.outstanding_principal),
         "deposit_account_id": x.deposit_account_id,
+        "linked_account_id": x.linked_account_id,
         "interest_rate": float(x.interest_rate) if x.interest_rate is not None else None,
         "interest_type": x.interest_type, "tenure_months": x.tenure_months,
         "emi_amount": float(x.emi_amount) if x.emi_amount is not None else None,

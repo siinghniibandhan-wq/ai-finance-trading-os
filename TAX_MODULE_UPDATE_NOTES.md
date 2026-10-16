@@ -35,3 +35,11 @@
 ## Important limitations
 
 This is a tax-module improvement batch, not a completed electronic ITR filing integration. Verified deduction evidence, salary gross-up/Form 16 details, house-property schedules, business/profession schedules, TDS/advance-tax records, residential status, and final ITR form eligibility still need dedicated data capture and validation. The displayed report remains provisional until those sources are connected and reconciled. Review current Finance Act rules for the selected FY before filing.
+
+
+## Tax review confirmations — integration into main
+
+- Added the `tax_review_confirmations` table and registered the `/api/tax-review/` endpoints.
+- A tax section is complete only when the user explicitly confirms it and no entries remain pending review.
+- The ITR-ready report now uses these section statuses to update the missing-section list; residential status, personal/filing details, and ITR-form eligibility remain required.
+- This is a preparatory review workflow, not automated document verification or electronic ITR filing.

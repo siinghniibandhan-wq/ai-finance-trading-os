@@ -670,6 +670,28 @@ class TaxCreditEntry(Base):
 
 
 # ============================================================
+# TAX REVIEW CONFIRMATIONS
+# The owner's own statement that a section is complete for a year.
+# It is not document verification by the application.
+# ============================================================
+
+class TaxReviewConfirmation(Base):
+    __tablename__ = "tax_review_confirmations"
+    __table_args__ = (
+        UniqueConstraint("user_id", "financial_year", "section", name="uq_tax_review_confirmation"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    financial_year: Mapped[str] = mapped_column(String(9), nullable=False, index=True)
+    section: Mapped[str] = mapped_column(String(40), nullable=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confirmed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+# ============================================================
 # FINANCE DIARY — APPEND-ONLY MASTER HISTORY
 # No foreign keys to business records: history survives deletion.
 # ============================================================

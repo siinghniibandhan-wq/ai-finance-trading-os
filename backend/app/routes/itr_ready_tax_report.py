@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.routes.ownership import require_matching_user_id
+from app.routes.tax_review import review_state
 from app.routes.final_tax_liability import calculate_surcharge
 from app.models import TaxBusinessIncomeRecord, TaxDeductionClaim, TaxCreditEntry, TaxSalaryIncomeRecord, TaxHousePropertyRecord
 from app.house_property_calc import compute_house_property
@@ -1324,18 +1325,25 @@ def get_itr_ready_tax_report(
             "business_or_profession"
         )
 
-    # A generated report is not complete merely because the income-head
-    # placeholders are populated. This endpoint currently has no verified
-    # deduction-claim ledger, tax-credit reconciliation, residential-status
-    # confirmation, or complete personal/filing details. Keep readiness
-    # conservative until those inputs are genuinely connected and validated.
+    # A report is not complete merely because income-head placeholders exist.
+    # The owner must confirm deductions and tax already paid, and no entries
+    # may remain pending review. Other filing requirements stay conservative.
+    review = review_state(db, user_id, financial_year)
+    deductions_review_done = review["deductions_exemptions"]["complete"]
+    credits_review_done = review["tds_advance_tax"]["complete"]
+
     missing_required_sections = [
-        "verified_deductions_and_exemptions",
-        "tds_and_advance_tax_reconciliation",
         "residential_status",
         "personal_and_filing_details",
         "itr_form_eligibility_validation",
     ]
+    if not deductions_review_done:
+        missing_required_sections.insert(0, "verified_deductions_and_exemptions")
+    if not credits_review_done:
+        missing_required_sections.insert(
+            1 if not deductions_review_done else 0,
+            "tds_and_advance_tax_reconciliation",
+        )
 
     if not salary_available:
         missing_required_sections.append("salary_income")

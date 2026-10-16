@@ -80,6 +80,7 @@ from app.routes import (
     itr_ready_tax_report,
     tax_business_income,
     tax_house_property,
+    tax_review,
 )
 
 
@@ -367,3 +368,4 @@ app.include_router(final_tax_liability.router)
 app.include_router(itr_ready_tax_report.router)
 app.include_router(tax_business_income.router)
 app.include_router(tax_house_property.router)
+app.include_router(tax_review.router)

@@ -1707,3 +1707,67 @@
 :root[data-finos-theme="brutalism"] .plan-workspace > section:nth-of-type(2) > div {
   border: 2px solid var(--finos-border, #484950) !important;
 }
+
+
+/* Tax Centre light-theme parity pass. The Tax JSX uses dark-mode inline
+   rgba/gradient colours, so override those locally without touching tax logic
+   or the Dark theme. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre {
+  --tax-ink: var(--finos-text, #202938);
+  --tax-muted: var(--finos-muted, #5b6472);
+  --tax-surface: var(--t-card-bg, #ffffff);
+  --tax-inner: var(--t-inner-bg, #f3f5f9);
+  --tax-line: var(--finos-border, #dfe4ec);
+  color: var(--tax-ink) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre > section,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="linear-gradient(135deg, rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.025)"] {
+  color: var(--tax-ink) !important;
+  background: var(--tax-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--tax-line) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.055)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(h1,h2,h3,h4,h5,strong,b,th,td,label) {
+  color: var(--tax-ink, #202938) !important;
+  -webkit-text-fill-color: var(--tax-ink, #202938) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(p,span,small,dt,dd,caption) {
+  color: var(--tax-muted, #5b6472) !important;
+  -webkit-text-fill-color: var(--tax-muted, #5b6472) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.48)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.55)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.58)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.62)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.65)"] {
+  color: var(--tax-muted, #5b6472) !important;
+  -webkit-text-fill-color: var(--tax-muted, #5b6472) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(input,select,textarea) {
+  color: var(--tax-ink, #202938) !important;
+  -webkit-text-fill-color: var(--tax-ink, #202938) !important;
+  background: var(--tax-inner, #f3f5f9) !important;
+  border: 1px solid var(--tax-line, #dfe4ec) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [role="alert"] {
+  color: #a92c3b !important;
+  -webkit-text-fill-color: #a92c3b !important;
+  background: #fff0f1 !important;
+  border: 1px solid #f0cbd0 !important;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre table {
+  color: var(--tax-ink, #202938) !important;
+  border-color: var(--tax-line, #dfe4ec) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre th,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre td {
+  border-color: var(--tax-line, #dfe4ec) !important;
+}

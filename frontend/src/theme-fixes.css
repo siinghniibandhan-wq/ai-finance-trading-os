@@ -1866,3 +1866,27 @@
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: "white""] {
   color: var(--tax-muted, #5b6472) !important;
 }
+
+
+/* Final Tax text-contrast correction: several tax metric/card labels are plain
+   divs with inline white rgba colours, not paragraphs/spans. Catch those too
+   so text remains readable inside every light-theme card and nested panel. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: white"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color:#fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: #fff"] {
+  color: var(--tax-muted, #5b6472) !important;
+  -webkit-text-fill-color: var(--tax-muted, #5b6472) !important;
+  opacity: 1 !important;
+}
+/* Values and primary labels should use the darker foreground, even when the
+   original inline colour was translucent white. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="font-weight: 700"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="font-weight: 800"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="fontSize: 22"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="fontSize: 24"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="fontSize: 28"] {
+  color: var(--tax-ink, #202938) !important;
+  -webkit-text-fill-color: var(--tax-ink, #202938) !important;
+  opacity: 1 !important;
+}

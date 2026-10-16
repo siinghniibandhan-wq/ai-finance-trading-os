@@ -1499,3 +1499,60 @@
 :root[data-finos-theme] .content .instrument-search-result-meta {
   color: var(--finos-muted, #94a3b8);
 }
+
+
+/* Investment transaction modal: light-theme readability only. Dark theme remains unchanged. */
+:root[data-finos-theme="light"] .investment-transaction-modal {
+  color: #202631 !important;
+  background: #ffffff !important;
+  border-color: #d8dee8 !important;
+  --investment-modal-text: #202631;
+  --investment-modal-muted: #586474;
+  --investment-modal-border: #d8dee8;
+  --investment-modal-surface: #f7f9fc;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal p,
+:root[data-finos-theme="light"] .investment-transaction-modal h3,
+:root[data-finos-theme="light"] .investment-transaction-modal label,
+:root[data-finos-theme="light"] .investment-transaction-modal div,
+:root[data-finos-theme="light"] .investment-transaction-modal span {
+  color: var(--investment-modal-text) !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal .card-label,
+:root[data-finos-theme="light"] .investment-transaction-modal label {
+  color: var(--investment-modal-muted) !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal input,
+:root[data-finos-theme="light"] .investment-transaction-modal textarea,
+:root[data-finos-theme="light"] .investment-transaction-modal select {
+  color: #202631 !important;
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal input::placeholder,
+:root[data-finos-theme="light"] .investment-transaction-modal textarea::placeholder {
+  color: #64748b !important;
+  opacity: 1;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal button {
+  color: #334155 !important;
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal button:disabled {
+  color: #64748b !important;
+  opacity: 0.75;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal button.primary-button {
+  color: #ffffff !important;
+  background: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal > div[style*="rgba(255,255,255,0.04)"],
+:root[data-finos-theme="light"] .investment-transaction-modal > div[style*="rgba(255,255,255,0.05)"] {
+  background: #f7f9fc !important;
+  border-color: #d8dee8 !important;
+}
+:root[data-finos-theme="light"] .investment-transaction-modal svg {
+  color: currentColor;
+}

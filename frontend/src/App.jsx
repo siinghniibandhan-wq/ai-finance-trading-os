@@ -8948,7 +8948,7 @@ function LedgerPage() {
   const muted = { color: "rgba(255,255,255,.62)", fontSize: "12px" };
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.005;
 
-  return <div className="dashboard" style={{ display: "grid", gap: "18px" }}>
+  return <div className="dashboard ledger-page" style={{ display: "grid", gap: "18px" }}>
     <section className="welcome-section">
       <div>
         <p className="welcome-label">MONEY / ACCOUNTING</p>

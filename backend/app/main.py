@@ -92,6 +92,19 @@ Base.metadata.create_all(
     bind=engine
 )
 
+def _apply_account_credit_limit_migration():
+    """Add credit-limit storage to existing accounts without replacing records."""
+    inspector = inspect(engine)
+    if not inspector.has_table("accounts"):
+        return
+    columns = {column["name"] for column in inspector.get_columns("accounts")}
+    if "credit_limit" not in columns:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE accounts ADD COLUMN credit_limit NUMERIC(18, 2)"))
+            
+_apply_account_credit_limit_migration()
+
+
 
 def _apply_hra_eligibility_schema_migration():
     """Add HRA eligibility columns to existing databases safely.

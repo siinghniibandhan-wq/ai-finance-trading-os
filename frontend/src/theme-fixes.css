@@ -124,3 +124,93 @@
   opacity: .6;
 }
 
+
+
+/* Broker order modal: inherit the active Financial OS theme instead of hard-coded dark styling. */
+:root[data-finos-theme] .broker-order-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--finos-page, #0b1020) 72%, transparent);
+  backdrop-filter: blur(8px);
+}
+:root[data-finos-theme] .broker-order-modal {
+  box-sizing: border-box;
+  color: var(--finos-text, #f8fafc) !important;
+  background: var(--finos-surface, #111827) !important;
+  border: 1px solid var(--finos-border, rgba(255,255,255,.14)) !important;
+  border-radius: var(--t-radius, 18px) !important;
+  box-shadow: var(--t-shadow, 0 24px 80px rgba(0,0,0,.35)) !important;
+  font-family: var(--t-font, inherit);
+}
+:root[data-finos-theme] .broker-order-modal :is(h2, strong, label, span, p, div) {
+  color: inherit;
+}
+:root[data-finos-theme] .broker-order-modal :is(label, .broker-order-field-label) {
+  color: var(--finos-muted, var(--finos-text, inherit)) !important;
+  font-size: 12px;
+  line-height: 1.45;
+  min-width: 0;
+}
+:root[data-finos-theme] .broker-order-modal :is(input, select, textarea) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 11px;
+  margin-top: 5px;
+  color: var(--finos-text, #f8fafc) !important;
+  background: var(--finos-surface-raised, var(--t-inner-bg, #172033)) !important;
+  border: 1px solid var(--finos-border, rgba(255,255,255,.18)) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  font: inherit;
+  line-height: 1.35;
+  text-align: left;
+}
+:root[data-finos-theme] .broker-order-modal select option {
+  color: var(--finos-text, #111827);
+  background: var(--finos-surface, #fff);
+}
+:root[data-finos-theme] .broker-order-modal :is(input, select, textarea)::placeholder {
+  color: var(--finos-muted, #6b7280);
+  opacity: 1;
+}
+:root[data-finos-theme] .broker-order-modal :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--finos-accent, #8b5cf6);
+  outline-offset: 2px;
+}
+:root[data-finos-theme] .broker-order-modal .broker-order-quote {
+  color: var(--finos-text, inherit) !important;
+  background: var(--finos-surface-raised, var(--t-inner-bg, transparent)) !important;
+  border: 1px solid var(--finos-border, transparent) !important;
+  border-radius: var(--t-radius, 12px) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.1)"] {
+  border-color: var(--finos-border, rgba(255,255,255,.1)) !important;
+}
+:root[data-finos-theme] .broker-order-modal [role="alert"] {
+  border: 1px solid color-mix(in srgb, #ef4444 30%, var(--finos-border, transparent));
+}
+:root[data-finos-theme="light"] .broker-order-overlay,
+:root[data-finos-theme="minimal"] .broker-order-overlay,
+:root[data-finos-theme="elegant-plain"] .broker-order-overlay,
+:root[data-finos-theme="skeuomorphism"] .broker-order-overlay,
+:root[data-finos-theme="neumorphism"] .broker-order-overlay,
+:root[data-finos-theme="claymorphism"] .broker-order-overlay,
+:root[data-finos-theme="bento-grid"] .broker-order-overlay {
+  background: color-mix(in srgb, var(--finos-page, #fff) 66%, transparent);
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"], [data-finos-theme="skeuomorphism"], [data-finos-theme="neumorphism"], [data-finos-theme="claymorphism"], [data-finos-theme="bento-grid"]) .broker-order-modal {
+  color: var(--finos-text) !important;
+}
+@media (max-width: 520px) {
+  :root[data-finos-theme] .broker-order-overlay { align-items: flex-start; padding: 10px; }
+  :root[data-finos-theme] .broker-order-modal { padding: 16px !important; width: 100%; max-height: calc(100dvh - 20px); }
+  :root[data-finos-theme] .broker-order-modal > div[style*="grid-template-columns"] { grid-template-columns: minmax(0, 1fr) !important; }
+}

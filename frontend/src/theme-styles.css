@@ -1162,3 +1162,134 @@
   background: #f7f9fc !important;
   border-color: #d8dee8 !important;
 }
+
+
+/* Portfolio light-theme visibility pass (CSS only; no financial logic changes).
+   Keep the holding cards distinct and make performance/allocation labels readable.
+   This file is imported last, so these rules intentionally win over theme defaults. */
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card {
+  display: block !important;
+  width: 100%;
+  margin: 12px 0 !important;
+  padding: 16px !important;
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #252a32 !important;
+  border: 1px solid #cbd4e0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 3px 10px rgba(28, 39, 56, .10) !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row {
+  color: #252a32 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row > div {
+  color: #252a32 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card :is(strong,b) {
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card :is(.card-label,small,p,.holdings-row div[style*="rgba(255,255,255"]) {
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row > div:nth-child(4) {
+  background: #eefaf5 !important;
+  border: 1px solid #c5ead9 !important;
+  border-radius: 12px !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row > div:nth-child(4) :is(.card-label,span) {
+  color: #087f5b !important;
+  -webkit-text-fill-color: #087f5b !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid {
+  border-color: #d8dee8 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid > div {
+  background: #f7f9fc !important;
+  border-color: #d8dee8 !important;
+  color: #252a32 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid :is(span,p,strong) {
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
+  opacity: 1 !important;
+}
+
+/* Portfolio Performance: make all existing period options legible. */
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #252a32 !important;
+  border: 1px solid #d8dee8 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:first-child :is(div,p,span) {
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:first-child > div:first-child > div:first-child {
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:first-child > div:last-child > span {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  background: #f1f3f8 !important;
+  border: 1px solid #d7dce6 !important;
+  color: #4b5563 !important;
+  -webkit-text-fill-color: #4b5563 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:first-child > div:last-child > span:nth-child(4) {
+  background: #eee8ff !important;
+  border-color: #d8cafa !important;
+  color: #5b36a8 !important;
+  -webkit-text-fill-color: #5b36a8 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:nth-child(2) {
+  background: #f8fafc !important;
+  border-color: #d8dee8 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:nth-child(2) :is(div,span,strong) {
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
+  opacity: 1 !important;
+}
+
+/* Asset Allocation: readable category labels, invested label and percentages. */
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #252a32 !important;
+  border: 1px solid #d8dee8 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:first-child {
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:nth-child(2) {
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:nth-child(3) > div {
+  border-color: #e5dcfa !important;
+  box-shadow: 0 0 0 1px rgba(80, 55, 130, .08) !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:nth-child(3) > div > div > div:first-child {
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:nth-child(3) > div > div > div:last-child {
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
+}
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:last-child span {
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
+  opacity: 1 !important;
+}

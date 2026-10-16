@@ -18,6 +18,15 @@ router = APIRouter(prefix="/api/accounts", tags=["Accounts"])
 @router.post("/", response_model=AccountResponse)
 def create_account(account_data: AccountCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Create an account using the user_id supplied by the application."""
+    normalized_type = (account_data.account_type or "").strip().lower()
+    is_credit_account = normalized_type in {"credit_card", "credit_line", "credit line"}
+    if is_credit_account:
+        if account_data.credit_limit is None or account_data.credit_limit <= 0:
+            raise HTTPException(status_code=422, detail="Credit Card and Credit Line accounts require a positive approved credit limit.")
+        if account_data.balance < 0 or account_data.balance > account_data.credit_limit:
+            raise HTTPException(status_code=422, detail="Opening outstanding amount must be between zero and the approved credit limit.")
+    elif account_data.credit_limit is not None:
+        raise HTTPException(status_code=422, detail="Credit limit is only valid for Credit Card or Credit Line accounts.")
     account = Account(
         user_id=current_user.id,
         name=account_data.name,

@@ -3779,10 +3779,6 @@ function InvestmentTransactions() {
               boxSizing: "border-box",
               padding: "11px 12px",
               borderRadius: "10px",
-              border:
-                "1px solid rgba(255,255,255,0.10)",
-              background: "#151525",
-              color: "#ffffff",
               fontSize: "12px",
               outline: "none",
             }}
@@ -3818,10 +3814,6 @@ function InvestmentTransactions() {
               boxSizing: "border-box",
               padding: "11px 12px",
               borderRadius: "10px",
-              border:
-                "1px solid rgba(255,255,255,0.10)",
-              background: "#151525",
-              color: "#ffffff",
               fontSize: "12px",
               outline: "none",
             }}
@@ -3857,10 +3849,6 @@ function InvestmentTransactions() {
               boxSizing: "border-box",
               padding: "11px 12px",
               borderRadius: "10px",
-              border:
-                "1px solid rgba(255,255,255,0.10)",
-              background: "#151525",
-              color: "#ffffff",
               fontSize: "12px",
               outline: "none",
             }}
@@ -3890,10 +3878,6 @@ function InvestmentTransactions() {
               boxSizing: "border-box",
               padding: "11px 12px",
               borderRadius: "10px",
-              border:
-                "1px solid rgba(255,255,255,0.10)",
-              background: "#151525",
-              color: "#ffffff",
               fontSize: "12px",
               outline: "none",
             }}

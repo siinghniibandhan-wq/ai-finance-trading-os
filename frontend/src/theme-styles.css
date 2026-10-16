@@ -449,3 +449,74 @@
   color: #f7f5ef !important;
   border: 2px solid #facc15 !important;
 }
+
+
+/* Portfolio light-family polish: the portfolio contains legacy inline white/
+   translucent text and surfaces, so explicitly restore readable contrast. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace {
+  color: var(--finos-text, #292b30) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace > section:first-child {
+  background: var(--t-card-bg, #fff) !important;
+  color: var(--finos-text, #292b30) !important;
+  border: 1px solid var(--finos-border, #e2ded4);
+  border-radius: var(--t-radius, 12px);
+  box-shadow: var(--t-shadow, 0 2px 8px rgba(20,30,50,.06));
+  padding: 18px;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace :is(h1,h2,h3,h4,h5,strong,b,.card-header,.card-label) {
+  color: var(--finos-text, #292b30) !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace :is(p,small,.muted,.description,.card-label) {
+  color: var(--finos-muted, #62666d) !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .glass-card {
+  background: var(--t-card-bg, #fff) !important;
+  color: var(--finos-text, #292b30) !important;
+  border: 1px solid var(--finos-border, #e2ded4) !important;
+  border-radius: var(--t-radius, 12px) !important;
+  box-shadow: var(--t-shadow, 0 2px 8px rgba(20,30,50,.06)) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace :is(span,div,label) {
+  -webkit-text-fill-color: currentColor;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace :is(input,select,textarea) {
+  color: var(--finos-text, #292b30) !important;
+  background: var(--t-inner-bg, #f8f8f6) !important;
+  border-color: var(--finos-border, #dedbd2) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .secondary-button {
+  color: var(--finos-text, #292b30) !important;
+  background: var(--t-btn-bg, #fff) !important;
+  border: var(--t-btn-border, 1px solid #dedbd2) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"]) .investment-workspace .primary-button {
+  color: var(--t-pri-text, #fff) !important;
+  background: var(--t-pri-bg, #6356d9) !important;
+  border: var(--t-pri-border, 1px solid #6356d9) !important;
+}
+:root[data-finos-theme="elegant-plain"] .investment-workspace .primary-button {
+  color: #fff !important;
+  background: #303238 !important;
+  border: 1px solid #303238 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace [style*="rgba(255,255,255"] {
+  color: var(--finos-muted, #62666d) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace [style*="background: linear-gradient"] {
+  color: var(--finos-text, #292b30) !important;
+}
+@media (max-width: 760px) {
+  :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace {
+    gap: 14px !important;
+  }
+  :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace > section:first-child {
+    align-items: flex-start;
+    padding: 15px;
+  }
+  :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace > section:first-child h2 {
+    font-size: 23px !important;
+  }
+}

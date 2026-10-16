@@ -9052,6 +9052,7 @@ function Accounts() {
   // ----------------------------------------------------------
 
   const [accounts, setAccounts] = useState([]);
+  const [activeAccountTab, setActiveAccountTab] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -9459,6 +9460,34 @@ const deleteAccount = async () => {
     0
   );
 
+  const accountTabFor = (account) => {
+    const type = String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_");
+    if (["credit_card", "creditcard"].includes(type)) return "credit_cards";
+    if (["credit_line", "creditline", "cash_credit", "overdraft", "od"].includes(type)) return "credit_lines";
+    if (["wallet", "digital_wallet", "payment_wallet"].includes(type)) return "wallets";
+    if (["cash", "cash_account"].includes(type)) return "cash";
+    if (["broker", "brokerage", "broker_account", "trading_account", "investment", "investment_account"].includes(type)) return "brokers";
+    if (["loan", "personal_loan", "home_loan", "term_loan"].includes(type)) return "loans";
+    if (["bank", "savings", "savings_account", "current", "current_account", "checking", "checking_account"].includes(type)) return "bank";
+    return "other";
+  };
+
+  const accountTabs = [
+    { id: "all", label: "All Accounts" },
+    { id: "bank", label: "Bank" },
+    { id: "credit_cards", label: "Credit Cards" },
+    { id: "credit_lines", label: "Credit Lines" },
+    { id: "wallets", label: "Wallets" },
+    { id: "cash", label: "Cash" },
+    { id: "brokers", label: "Broker Accounts" },
+    { id: "loans", label: "Loans" },
+    { id: "other", label: "Other" },
+  ];
+
+  const visibleAccounts = activeAccountTab === "all"
+    ? accounts
+    : accounts.filter((account) => accountTabFor(account) === activeAccountTab);
+
   // ----------------------------------------------------------
   // RENDER
   // ----------------------------------------------------------
@@ -9561,6 +9590,25 @@ const deleteAccount = async () => {
           ACCOUNT LIST
       ==================================================== */}
 
+      <div role="tablist" aria-label="Filter accounts by type" style={{ display: "flex", flexWrap: "wrap", gap: "8px", margin: "4px 0 16px" }}>
+        {accountTabs.map((tab) => {
+          const count = tab.id === "all" ? accounts.length : accounts.filter((account) => accountTabFor(account) === tab.id).length;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeAccountTab === tab.id}
+              onClick={() => setActiveAccountTab(tab.id)}
+              className={activeAccountTab === tab.id ? "primary-button" : "secondary-button"}
+              style={{ padding: "10px 14px", whiteSpace: "nowrap" }}
+            >
+              {tab.label} <span style={{ opacity: 0.75, marginLeft: "4px" }}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
       <section className="glass-card">
 
         <div className="card-header">
@@ -9631,31 +9679,34 @@ const deleteAccount = async () => {
     ACCOUNT CARDS
 -------------------------------------------------- */}
 
-{!loading && accounts.length > 0 && (
+{!loading && visibleAccounts.length > 0 && (
 
   <div
     style={{
       display: "grid",
-      gap: "14px",
+      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
+      alignItems: "stretch",
+      gap: "16px",
       marginTop: "20px",
     }}
   >
 
-    {accounts.map((account) => (
+    {visibleAccounts.map((account) => (
 
       <div
         key={account.id}
         style={{
           display: "grid",
-gridTemplateColumns: "minmax(0, 1fr) minmax(120px, 1fr) 90px",
-alignItems: "center",
-columnGap: "20px",
+gridTemplateRows: "auto auto auto",
+          alignContent: "start",
+          gap: "16px",
           padding: "20px",
           borderRadius: "18px",
           background: "var(--finos-account-card-bg, var(--finos-panel, rgba(15,23,42,.76)))",
           border: "1px solid var(--finos-account-card-border, var(--finos-border, rgba(167,139,250,.16)))",
           boxShadow: "var(--finos-account-card-shadow, 0 12px 30px rgba(0,0,0,.18))",
-          minHeight: "90px",
+          minHeight: "270px",
+          boxSizing: "border-box",
         }}
       >
 
@@ -9771,8 +9822,10 @@ columnGap: "20px",
 
         <div
           style={{
-            textAlign: "center",
-            minWidth: "110px",
+            textAlign: "left",
+            minWidth: 0,
+            paddingTop: "12px",
+            borderTop: "1px solid var(--finos-border, rgba(167,139,250,.16))",
           }}
         >
 

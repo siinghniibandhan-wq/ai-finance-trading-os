@@ -107,7 +107,7 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
-:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal .portfolio-transaction-history > div[style*="rgba(255,255,255,0.04)"] {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal .portfolio-transaction-history div[style*="rgba(255,255,255,0.04)"] {
   background: #f8fafc !important;
   border-color: #e2e8f0 !important;
 }

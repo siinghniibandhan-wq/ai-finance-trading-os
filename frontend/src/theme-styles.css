@@ -1434,3 +1434,25 @@
   -webkit-text-fill-color: currentColor !important;
   opacity: 1 !important;
 }
+
+
+/* FIX: dropdown menus in dark/colorful themes must inherit their theme palette.
+   This is placed after shared menu rules so later-loaded theme CSS cannot reset
+   the menu to a white surface with white option text. Light-family themes are
+   explicitly excluded and remain unchanged. */
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .finos-select-menu,
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content [role="listbox"],
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .dropdown-menu {
+  color: var(--finos-control-text, var(--finos-text, #f1f5f9)) !important;
+  background-color: var(--finos-control-bg, #111827) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .finos-select-menu .finos-select-option,
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content [role="listbox"] [role="option"],
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .dropdown-menu [role="option"] {
+  color: var(--finos-control-text, var(--finos-text, #f1f5f9)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .finos-select-menu .finos-select-option:hover,
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .finos-select-menu .finos-select-option.is-selected {
+  color: var(--finos-control-text, var(--finos-text, #f1f5f9)) !important;
+  background-color: color-mix(in srgb, var(--finos-accent, #a78bfa) 22%, var(--finos-control-bg, #111827)) !important;
+}

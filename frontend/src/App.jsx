@@ -6176,7 +6176,7 @@ useEffect(() => {
   } else {
     openInvestmentTransaction(matched, intent.type === "SELL" ? "SELL" : "BUY");
   }
-}, [investments, loadingInvestments, investmentsLoadError]);
+}, [activePage, investments, loadingInvestments, investmentsLoadError]);
 
 // OPEN TRANSACTION HISTORY
 // ============================================================

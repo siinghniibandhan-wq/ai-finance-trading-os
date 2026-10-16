@@ -1387,3 +1387,29 @@
   color: #087f5b !important;
   -webkit-text-fill-color: #087f5b !important;
 }
+
+
+/* Portfolio page Holdings preview: repair text contrast only in the six light themes.
+   Deliberately excludes action buttons, financial values, card layout and all other modules. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview {
+  color: #202938 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview .portfolio-holding-preview-item > div:first-child > div:first-child {
+  color: #202938 !important;
+  -webkit-text-fill-color: #202938 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview .portfolio-holding-preview-item div[style*="color: rgba(255,255,255"] {
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview > div:first-child > div:first-child > div:last-child {
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview > div:first-child > span {
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
+}

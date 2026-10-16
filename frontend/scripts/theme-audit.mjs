@@ -52,4 +52,33 @@ console.log("PASS: dropdown, chart, theme gallery, mobile breakpoint, and reduce
 const braceBalance = (css.match(/{/g) || []).length - (css.match(/}/g) || []).length;
 assert.equal(braceBalance, 0, "CSS braces must be balanced");
 console.log("PASS: CSS brace balance is zero.");
+
+// BUY/SELL regression guards: these static checks catch accidental removal of
+// the Market-to-Portfolio intent matcher and transaction form safety checks.
+assert.ok(
+  /replace\(\/\\s\+\/g, " "\)/.test(app),
+  "BUY/SELL instrument normalization must collapse whitespace correctly",
+);
+assert.ok(
+  /if \(transactionLoading \|\| !transactionModal\?\.investment\)/.test(app),
+  "BUY/SELL submission must ignore duplicate saves and missing investments",
+);
+assert.ok(
+  app.includes("Fees must be a valid amount greater than or equal to zero."),
+  "BUY/SELL form must reject invalid or negative fees",
+);
+assert.ok(
+  app.includes("Quantity and price must be valid numbers."),
+  "BUY/SELL form must reject non-finite quantity and price values",
+);
+assert.ok(
+  /if \(!editingInvestmentId\) \{[\s\S]{0,500}transaction_type:\s*"BUY"/.test(app),
+  "Creating a new Portfolio investment must create its initial BUY transaction only in create mode",
+);
+assert.ok(
+  app.includes("This instrument is not in your portfolio, so there is no holding to sell."),
+  "SELL on an instrument without a holding must show clear feedback",
+);
+console.log("PASS: BUY/SELL intent matching, validation, initial BUY, and no-holding guards exist.");
+
 console.log("NOTE: These are static regression checks; they do not replace real-browser visual/accessibility testing.");

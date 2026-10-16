@@ -405,6 +405,35 @@ def list_liabilities(
         .filter(Loan.user_id == current_user.id, Liability.user_id == current_user.id, Liability.status == "active", Loan.linked_account_id.isnot(None))
         .all()
     }
+    liability_loan_ids = {item.loan_id for item in items if item.loan_id is not None}
+    # Legacy/imported loan contracts may exist without a matching Liability row.
+    # Include their outstanding principal once, while linked account balances
+    # remain excluded below.
+    unrepresented_loans = (
+        db.query(Loan)
+        .filter(Loan.user_id == current_user.id, Loan.status == "active")
+        .all()
+    )
+    for loan in unrepresented_loans:
+        if loan.id in liability_loan_ids:
+            continue
+        outstanding = max(Decimal(str(loan.outstanding_principal or 0)), Decimal("0"))
+        if outstanding <= 0:
+            continue
+        total += outstanding
+        liability_rows.append({
+            "id": f"loan-{loan.id}",
+            "user_id": loan.user_id,
+            "name": loan.name,
+            "liability_type": loan.loan_type,
+            "original_amount": float(loan.principal_amount),
+            "outstanding_amount": float(outstanding),
+            "loan_id": loan.id,
+            "due_date": None,
+            "notes": "Outstanding principal from loan contract.",
+            "status": "active",
+            "account_id": loan.linked_account_id,
+        })
     for account in accounts:
         account_type = (account.account_type or "").strip().lower().replace("-", "_").replace(" ", "_")
         if account_type not in account_liability_types:

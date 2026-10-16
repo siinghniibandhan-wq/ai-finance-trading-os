@@ -1536,7 +1536,7 @@
 :root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-wrap > button.finos-select-trigger {
   color: var(--finos-control-text, var(--finos-text, #202738)) !important;
   background: var(--finos-control-bg, var(--finos-surface, #ffffff)) !important;
-  border: 1px solid var(--finos-control-border, var(--finos-border, #d8deea)) !important;
+  border: 0 !important;
   border-radius: 10px !important;
   box-shadow: none !important;
 }

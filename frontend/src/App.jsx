@@ -8875,15 +8875,15 @@ function ChartOfAccountsPage() {
     whiteSpace: "nowrap",
   };
   const headerCell = { ...cell, color: "rgba(255,255,255,0.94)", fontWeight: 650, fontSize: 11, letterSpacing: ".02em" };
-  return <section className="dashboard">
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
+  return <section className="dashboard coa-page">
+    <div className="coa-page-heading" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
       <div><p className="welcome-label" style={{ marginBottom: 6 }}>MONEY · ACCOUNTING</p><h2 style={{ margin: 0 }}>Chart of Accounts</h2><p className="welcome-description" style={{ margin: "6px 0 0" }}>Your accounting account catalogue. Stable account codes support consistent reporting.</p></div>
-      <label style={{ display: "inline-flex", gap: 9, alignItems: "center", fontSize: 12, color: "rgba(255,255,255,0.78)", padding: "9px 12px", borderRadius: 10, background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.08)" }}><input type="checkbox" checked={showDisabled} onChange={(e) => setShowDisabled(e.target.checked)} style={{ accentColor: "#a855f7" }} /> Show disabled accounts only</label>
+      <label className="coa-filter" style={{ display: "inline-flex", gap: 9, alignItems: "center", fontSize: 12, color: "rgba(255,255,255,0.78)", padding: "9px 12px", borderRadius: 10, background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.08)" }}><input type="checkbox" checked={showDisabled} onChange={(e) => setShowDisabled(e.target.checked)} style={{ accentColor: "#a855f7" }} /> Show disabled accounts only</label>
     </div>
     {error && <div role="alert" style={{ ...card, color: "#fecaca", borderColor: "rgba(248,113,113,0.32)", background: "rgba(127,29,29,0.18)" }}>{error}</div>}
-    {loading ? <div className="glass-card" style={{ ...card, padding: 20 }}>Loading Chart of Accounts…</div> : Object.entries(grouped).map(([kind, accounts]) => <div key={kind} className="glass-card" style={card}>
-      <h3 style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 650, color: "#fff" }}>{kind === "Asset" ? "Assets" : kind === "Liability" ? "Liabilities" : `${kind}s`} <span style={{ fontSize: 12, fontWeight: 400, color: "#b7a4ff" }}>({accounts.length})</span></h3>
-      <div style={{ overflowX: "auto", borderRadius: 10 }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}><thead><tr>
+    {loading ? <div className="glass-card" style={{ ...card, padding: 20 }}>Loading Chart of Accounts…</div> : Object.entries(grouped).map(([kind, accounts]) => <div key={kind} className="glass-card coa-section-card" style={card}>
+      <h3 className="coa-section-title" style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 650, color: "#fff" }}>{kind === "Asset" ? "Assets" : kind === "Liability" ? "Liabilities" : `${kind}s`} <span style={{ fontSize: 12, fontWeight: 400, color: "#b7a4ff" }}>({accounts.length})</span></h3>
+      <div className="coa-table-scroll" style={{ overflowX: "auto", borderRadius: 10 }}><table className="coa-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}><thead><tr>
         {["Code", "Account", "Parent", "Tax mapping", "Status", ""].map((label) => <th key={label} style={headerCell}>{label}</th>)}
       </tr></thead><tbody>{accounts.map((row) => <tr key={row.id} style={{ background: row.is_enabled ? "transparent" : "rgba(255,255,255,0.018)" }}>
         <td style={{ ...cell, color: "#c4b5fd", fontVariantNumeric: "tabular-nums" }}>{row.code}</td><td style={{ ...cell, color: "rgba(255,255,255,0.94)" }}>{row.name}{row.is_system ? <span style={{ marginLeft: 8, color: "#a99acb", fontSize: 10 }}>Standard</span> : null}</td>

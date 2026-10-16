@@ -9798,6 +9798,12 @@ columnGap: "20px",
           >
             {formatCurrency(account.balance)}
           </div>
+          {["credit_card", "credit_line", "credit line"].includes(String(account.account_type || "").toLowerCase()) && (
+            <div style={{ marginTop: "6px", fontSize: "11px", color: "var(--finos-account-muted, var(--finos-muted, #94a3b8))", lineHeight: 1.45 }}>
+              <div>Limit: {formatCurrency(account.credit_limit)}</div>
+              <div>Available: {formatCurrency(Math.max(0, Number(account.credit_limit || 0) - Number(account.balance || 0)))}</div>
+            </div>
+          )}
 
         </div>
 

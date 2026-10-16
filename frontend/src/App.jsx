@@ -2098,7 +2098,7 @@ function TaxPage() {
 
   const renderTaxCalculation = () => (
     <>
-      <div style={panelStyle}>
+      <div className="tax-calculation-liability" style={panelStyle}>
         <h3 style={{ marginTop: 0 }}>Final tax liability estimate</h3>
         <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", lineHeight: 1.6 }}>
           This uses the existing liability engine for the selected tax year and taxpayer inputs. Missing income heads, unverified claims, capital-gains eligibility or tax credits can keep the result provisional.
@@ -2129,7 +2129,7 @@ function TaxPage() {
           </>
         ) : <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Choose a regime to load the estimate.</div>}
       </div>
-      <div style={panelStyle}>
+      <div className="tax-calculation-settings" style={panelStyle}>
         <h3 style={{ marginTop: 0 }}>Calculation settings</h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", alignItems: "end" }}>
           <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "rgba(255,255,255,0.65)" }}>Financial year<StyledSelect value={financialYear} onChange={e => setFinancialYear(e.target.value)} style={{ padding: "11px", borderRadius: "10px", background: "#151525", color: "white", border: "1px solid rgba(255,255,255,0.12)" }}><option value="2026-27">2026-27</option></StyledSelect></label>
@@ -2140,14 +2140,14 @@ function TaxPage() {
           <button type="button" className="primary-button" onClick={loadTaxData} disabled={loading}>{loading ? "Calculating..." : "Refresh / Calculate"}</button>
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+      <div className="tax-calculation-breakdown" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
         <div style={cardStyle}><div style={labelStyle}>STCG tax</div><div style={valueStyle}>{formatCurrency(tax?.stcg?.tax)}</div><div style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", marginTop: "8px" }}>{tax?.stcg?.status || "Awaiting calculation"}</div></div>
         <div style={cardStyle}><div style={labelStyle}>LTCG tax</div><div style={valueStyle}>{formatCurrency(tax?.ltcg?.tax)}</div><div style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", marginTop: "8px" }}>Taxable gain: {formatCurrency(tax?.ltcg?.taxable_gain)}</div></div>
         <div style={cardStyle}><div style={labelStyle}>Base tax</div><div style={valueStyle}>{formatCurrency(taxSummary.base_tax)}</div></div>
         <div style={cardStyle}><div style={labelStyle}>Health & education cess</div><div style={valueStyle}>{formatCurrency(taxSummary.health_education_cess)}</div></div>
         <div style={cardStyle}><div style={labelStyle}>Total calculated tax + cess</div><div style={valueStyle}>{formatCurrency(taxSummary.tax_plus_cess)}</div></div>
       </div>
-      <div style={{ ...panelStyle, color: "rgba(255,255,255,0.6)", fontSize: "12px", lineHeight: 1.7 }}>This tax-calculation endpoint estimates tax on qualifying realised capital gains only. It does not calculate complete ITR liability, slab-rate tax, surcharge, rebate or all deductions. The selected tax regime is used by the provisional taxable-income endpoint and does not convert this special-rate calculation into a complete tax assessment.</div>
+      <div className="tax-calculation-scope" style={{ ...panelStyle, color: "rgba(255,255,255,0.6)", fontSize: "12px", lineHeight: 1.7 }}>This tax-calculation endpoint estimates tax on qualifying realised capital gains only. It does not calculate complete ITR liability, slab-rate tax, surcharge, rebate or all deductions. The selected tax regime is used by the provisional taxable-income endpoint and does not convert this special-rate calculation into a complete tax assessment.</div>
       {renderTaxCredits()}
     </>
   );

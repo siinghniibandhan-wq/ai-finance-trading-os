@@ -1499,3 +1499,37 @@
 :root[data-finos-theme] .content .instrument-search-result-meta {
   color: var(--finos-muted, #94a3b8);
 }
+
+
+/* Investment transaction modal: repair legacy dark inline colors in light themes.
+   Scoped only to this modal; dark theme and all other pages remain unchanged. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-transaction-modal {
+  color: var(--finos-text, #202633) !important;
+  background: var(--t-card-bg, #ffffff) !important;
+  border: 1px solid var(--finos-border, #d7dce5) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-transaction-modal [style*="rgba(255,255,255"] {
+  color: var(--finos-muted, #586273) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-transaction-modal [style*="background: rgba(255,255,255"] {
+  background: var(--t-inner-bg, #f4f6fa) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-transaction-modal [style*="border: 1px solid rgba(255,255,255"] {
+  border-color: var(--finos-border, #d7dce5) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-transaction-modal .small-button,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-transaction-modal .icon-button {
+  color: var(--finos-text, #202633) !important;
+  background: var(--t-inner-bg, #f4f6fa) !important;
+  border: 1px solid var(--finos-border, #cbd2de) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-transaction-modal .small-button:hover,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-transaction-modal .icon-button:hover {
+  background: color-mix(in srgb, var(--finos-accent, #6857d9) 10%, white) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-transaction-modal input,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-transaction-modal textarea {
+  color: var(--finos-text, #202633) !important;
+  background: var(--t-inner-bg, #f7f8fb) !important;
+  border-color: var(--finos-border, #cbd2de) !important;
+}

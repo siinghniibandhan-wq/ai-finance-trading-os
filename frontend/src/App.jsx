@@ -1762,7 +1762,8 @@ function TaxPage() {
         ].map(([label, value]) => <div key={label} style={cardStyle}><div style={labelStyle}>{label}</div><div style={{ fontSize: "18px", fontWeight: 750 }}>{value == null ? "Unavailable" : formatCurrency(value)}</div></div>)}
       </div>
       <div style={{ marginTop: "16px", color: "rgba(255,255,255,0.55)", fontSize: "12px" }}>Salary, house-property and business/profession income must not be treated as zero if the engine marks those heads unavailable.</div>
-      <section className="tax-business-income-review" style={{ ...panelStyle, marginTop: 0 }}>
+    </section>
+    <section className="tax-business-income-review" style={{ ...panelStyle, marginTop: 0 }}>
         <h3 style={{ marginTop: 0 }}>Money transactions awaiting business-income review</h3>
         <p style={{ color: "rgba(255,255,255,0.58)", fontSize: 12, lineHeight: 1.6 }}>
           These are unlinked Money transactions that may be business or professional income. Being listed here does not make them business income, and nothing is saved or verified automatically. Only verified records count as business income. An entry filed under an Other Sources category may already be counted above as other-source income.
@@ -1788,7 +1789,6 @@ function TaxPage() {
             </table>
           </div>
         )}
-      </section>
     </section>
     {renderHouseProperty()}
     </div>

@@ -482,3 +482,38 @@
     flex-basis: 100%;
   }
 }
+
+
+/* Light-theme broker order readability correction.
+   Scoped only to the Market BUY/SELL broker order dialog. */
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal {
+  --broker-form-surface: #ffffff;
+  --broker-form-raised: #f1f4f8;
+  --broker-form-ink: #202631;
+  --broker-form-muted: #4b5565;
+  --broker-form-line: #cbd3df;
+  --broker-form-accent: var(--finos-accent, #4f46e5);
+}
+
+/* Explicitly override legacy inline light-on-dark muted styles inside this
+   form; these were the reason several labels and quote details disappeared. */
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(label, p, span, small, .broker-order-field-label) {
+  color: var(--broker-form-muted) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(h2, strong, input, select, textarea) {
+  color: var(--broker-form-ink) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal .broker-order-quote {
+  background: #f1f4f8 !important;
+  border-color: #cbd3df !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(input, select, textarea) {
+  background: #f1f4f8 !important;
+  border-color: #cbd3df !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal [role="alert"] {
+  color: #8f1725 !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal [role="status"] {
+  color: #14532d !important;
+}

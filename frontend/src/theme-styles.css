@@ -55,3 +55,145 @@
 :root[data-finos-theme="elegant-plain"] .content :is(.balance-bar,.asset-bar,.liability-bar,.net-worth-bar,.progress-fill) {
   color: var(--finos-summary-text);
 }
+
+
+/* -------------------------------------------------------------------------
+   Cross-module theme contract
+   Shared presentation rules for every module: Dashboard, Money, Invest,
+   Markets, Plan, AI, Tax, Playground and settings. Theme-specific tokens above
+   supply colors, borders, radius, typography and depth; these rules normalize
+   component behavior without changing handlers or financial logic.
+   ------------------------------------------------------------------------- */
+:root[data-finos-theme] {
+  --finos-page: var(--t-page-bg, #0b1020);
+  --finos-surface: var(--t-card-bg, rgba(20, 28, 48, .92));
+  --finos-surface-raised: var(--t-inner-bg, var(--t-card-bg, rgba(20, 28, 48, .92)));
+  --finos-text: var(--finos-text, #e7eaf2);
+  --finos-muted: var(--finos-muted, #9ba8c2);
+  --finos-border: var(--finos-border, rgba(148, 163, 184, .2));
+}
+:root[data-finos-theme] :is(.content, main, .dashboard, .page-content) {
+  color: var(--finos-text);
+  min-width: 0;
+}
+:root[data-finos-theme] .content :is(
+  .glass-card, .card, .panel, .stat-card, .metric-card, .summary-card,
+  .chart-card, .section-card, .large-card, .ai-card, .module-overview-card,
+  .wc-primary-card, .wc-shortcut-tile, .wc-welcome, .welcome-section,
+  .dashboard-clickable-card, .content-card, .account-card, .transaction-card,
+  .account-list-item, .chart-of-accounts-card, .settings-card, .form-card,
+  .table-card, .data-card, .feature-card, .insight-card, .holding-card,
+  .portfolio-card, .market-card, .tax-card, .goal-card, .budget-card
+) {
+  color: var(--finos-text);
+  border-color: var(--finos-border);
+}
+:root[data-finos-theme] .content :is(
+  h1, h2, h3, h4, h5, h6, .page-title, .section-title, .card-title,
+  .module-title, .welcome-title
+) {
+  color: var(--finos-text);
+}
+:root[data-finos-theme] .content :is(
+  p, small, label, .muted, .text-muted, .subtitle, .description,
+  .helper-text, .field-hint, .eyebrow, .caption
+) {
+  color: var(--finos-muted);
+}
+:root[data-finos-theme] .content :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea, select, .finos-select-trigger, [contenteditable="true"]
+) {
+  color: var(--finos-text);
+  background-color: var(--t-inner-bg, var(--t-card-bg, transparent));
+  border-color: var(--finos-border);
+}
+:root[data-finos-theme] .content :is(input, textarea, select)::placeholder {
+  color: var(--finos-muted);
+  opacity: 1;
+}
+:root[data-finos-theme] .content :is(
+  .header-popover, .finos-select-menu, [role="menu"], [role="listbox"],
+  .dropdown-menu, .popover, .tooltip-panel, .modal-content
+) {
+  color: var(--finos-text);
+  background: var(--pop-bg, var(--t-card-bg, #fff));
+  border-color: var(--pop-border, var(--finos-border));
+  border-radius: var(--pop-radius, var(--t-radius, 10px));
+  box-shadow: var(--pop-shadow, var(--t-shadow, 0 8px 24px rgba(0,0,0,.12)));
+}
+:root[data-finos-theme] .content :is(
+  .finos-select-menu, [role="menu"], [role="listbox"], .dropdown-menu,
+  .popover, .modal-content
+) :is(button, a, [role="option"], [role="menuitem"]) {
+  color: inherit;
+}
+:root[data-finos-theme] .content :is(
+  table, .data-table, .table, .transactions-table, .holdings-table
+) {
+  color: var(--finos-text);
+  border-color: var(--finos-border);
+}
+:root[data-finos-theme] .content :is(th, td) {
+  border-color: var(--finos-border);
+}
+:root[data-finos-theme] .content :is(th) {
+  color: var(--finos-text);
+  background: var(--t-inner-bg, var(--t-card-bg, transparent));
+}
+:root[data-finos-theme] .content :is(
+  .divider, hr, .table-divider, .section-divider, .border-bottom
+) {
+  border-color: var(--finos-border);
+}
+:root[data-finos-theme] .content :is(
+  .secondary-button, .outline-button, .ghost-button, .icon-button,
+  .finos-button-secondary, button[data-variant="secondary"]
+) {
+  color: var(--t-btn-text, var(--finos-text));
+  background: var(--t-btn-bg, var(--t-card-bg, transparent));
+  border: var(--t-btn-border, 1px solid var(--finos-border));
+  border-radius: var(--t-radius-sm, var(--t-radius, 8px));
+}
+:root[data-finos-theme] .content :is(
+  .primary-button, .finos-button-primary, button[data-variant="primary"]
+) {
+  color: var(--t-pri-text, #fff);
+  background: var(--t-pri-bg, var(--finos-accent, #6657d9));
+  border: var(--t-pri-border, 1px solid var(--finos-accent, #6657d9));
+  border-radius: var(--t-radius-sm, var(--t-radius, 8px));
+}
+:root[data-finos-theme] .content :is(
+  .secondary-button, .outline-button, .ghost-button, .icon-button,
+  .finos-button-secondary, .primary-button, .finos-button-primary
+):hover {
+  filter: brightness(.97);
+}
+:root[data-finos-theme] .content :is(button, input, select, textarea, a):focus-visible {
+  outline-color: var(--finos-accent, #8b7cf6);
+}
+:root[data-finos-theme] .content :is(.glass-card, .card, .panel, .stat-card,
+  .metric-card, .summary-card, .chart-card, .section-card, .content-card,
+  .account-card, .transaction-card, .settings-card, .form-card, .table-card,
+  .data-card, .feature-card, .insight-card, .holding-card, .portfolio-card,
+  .market-card, .tax-card, .goal-card, .budget-card) {
+  border-radius: var(--t-radius, 12px);
+  box-shadow: var(--t-shadow, none);
+}
+:root[data-finos-theme] .content :is(.glass-card, .card, .panel, .stat-card,
+  .metric-card, .summary-card, .chart-card, .section-card, .content-card,
+  .account-card, .transaction-card, .settings-card, .form-card, .table-card,
+  .data-card, .feature-card, .insight-card, .holding-card, .portfolio-card,
+  .market-card, .tax-card, .goal-card, .budget-card) :is(button, input, select, textarea) {
+  max-width: 100%;
+}
+@media (max-width: 760px) {
+  :root[data-finos-theme] .content :is(.glass-card, .card, .panel, .stat-card,
+    .metric-card, .summary-card, .chart-card, .section-card, .content-card,
+    .account-card, .transaction-card, .settings-card, .form-card, .table-card,
+    .data-card, .feature-card, .insight-card, .holding-card, .portfolio-card,
+    .market-card, .tax-card, .goal-card, .budget-card) {
+    min-width: 0;
+    max-width: 100%;
+  }
+}

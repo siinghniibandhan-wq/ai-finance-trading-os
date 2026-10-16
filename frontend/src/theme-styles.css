@@ -1568,3 +1568,27 @@
 :root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-check {
   color: var(--finos-accent, #5145cd) !important;
 }
+
+
+/* Investment Transactions: remove legacy dark wrapper and trigger frames.
+   StyledSelect's inline style is applied to the wrapper, so both layers need explicit neutral styling. */
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-wrap,
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-wrap.finos-select {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-wrap > button.finos-select-trigger {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-wrap > button.finos-select-trigger:focus,
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-wrap > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-wrap > button.finos-select-trigger[aria-expanded="true"] {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}

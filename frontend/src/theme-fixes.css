@@ -1039,3 +1039,111 @@
   border: 1px solid #d8dee8 !important;
   opacity: 1 !important;
 }
+
+
+/* Final Market-page contrast pass. The theme stylesheet is imported after
+   theme-fixes.css, and several Market JSX nodes use inline low-alpha white
+   colors. Use high-specificity, theme-scoped rules for every text-bearing
+   element and every surface, while retaining semantic gain/loss and action colors. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace {
+  --market-ink: #202938;
+  --market-muted: #596579;
+  --market-surface: #ffffff;
+  --market-raised: #f4f6fa;
+  --market-line: #d8dee8;
+  color: var(--market-ink) !important;
+  background: transparent;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(
+  h1,h2,h3,h4,h5,strong,b,label,legend,li,dt,dd,p,span,small,div,article,aside,section,summary,th,td
+) {
+  opacity: 1 !important;
+  -webkit-text-fill-color: currentColor;
+}
+/* Correct inline legacy light-on-dark colors regardless of React's whitespace
+   serialization; also cover text whose color is inherited from the old muted token. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(
+  p,span,small,label,dt,dd,th,td,li,summary
+) {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(
+  h1,h2,h3,h4,h5,strong,b,[aria-label="Market overview"] > div > div
+) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+}
+/* Plain DIVs include price values, watchlist quote errors and explanatory copy.
+   Make them readable by default, then restore secondary copy and semantic states. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace div {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: #fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:#fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: white"] {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+}
+/* Preserve the red/green market semantics used for gain/loss counts and prices. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#86efac"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#4ade80"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#fca5a5"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#f87171"] {
+  -webkit-text-fill-color: currentColor !important;
+}
+/* Header, watchlist, breadth, news, and empty states must not inherit opaque
+   gray/dark inline surfaces from the dark-theme design. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(
+  section[aria-label="Market overview"],
+  section[aria-label="Market instrument search"],
+  section[aria-label="Major Indian market indices"],
+  section[aria-label="Market breadth"],
+  .market-news,.market-news-card,.watchlist-card,.market-watchlist,
+  .instrument-search-results,.instrument-search-result,.market-card,.glass-card,.panel,.data-card,.card
+) {
+  color: var(--market-ink) !important;
+  background-color: var(--market-surface) !important;
+  background-image: none !important;
+  border-color: var(--market-line) !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.06) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace section[aria-label="Market overview"] > div {
+  padding: 14px 16px !important;
+  border: 1px solid var(--market-line) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--market-surface) !important;
+  background-image: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace section[aria-label="Major Indian market indices"] > div {
+  background: var(--market-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.07) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(input,select,textarea,[role="combobox"],.finos-select-trigger) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+  background: #ffffff !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(input,select,textarea)::placeholder {
+  color: #687386 !important;
+  -webkit-text-fill-color: #687386 !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(button.primary-button,button[aria-label*="Search"]) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is([role="alert"],[role="status"]) {
+  color: #374151 !important;
+  -webkit-text-fill-color: #374151 !important;
+  background: #f4f6fa !important;
+  border: 1px solid #d8dee8 !important;
+}

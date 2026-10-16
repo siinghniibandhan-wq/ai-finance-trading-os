@@ -120,8 +120,14 @@ def _apply_balance_effect(account: Account, transaction_type: str, amount):
 
 
 def _reverse_balance_effect(account: Account, transaction_type: str, amount):
-    """Undo a previously applied transaction balance effect."""
-    if transaction_type in INCREASE_BALANCE_TYPES:
+    """Reverse transaction effects using liability balances as amounts owed."""
+    is_liability = (account.account_type or "").strip().lower() in {"loan", "credit_card", "credit line", "credit_line", "payable"}
+    if is_liability:
+        if transaction_type in DECREASE_BALANCE_TYPES:
+            account.balance = (account.balance or 0) - amount
+        elif transaction_type in INCREASE_BALANCE_TYPES:
+            account.balance = (account.balance or 0) + amount
+    elif transaction_type in INCREASE_BALANCE_TYPES:
         account.balance = (account.balance or 0) - amount
     elif transaction_type in DECREASE_BALANCE_TYPES:
         account.balance = (account.balance or 0) + amount

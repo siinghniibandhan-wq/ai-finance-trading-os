@@ -2020,11 +2020,13 @@ function TaxPage() {
       ["annual_hra_received", "Annual HRA received (₹)", "number", true],
       ["annual_rent_paid", "Annual rent paid (₹)", "number", true],
     ];
-    return <div style={panelStyle}>
+    return <section className="tax-hra-panel" style={panelStyle}>
+      <header className="tax-hra-heading">
       <h3 style={{ marginTop: 0 }}>HRA exemption calculator</h3>
       <p style={{ color: "rgba(255,255,255,0.62)", fontSize: "13px", lineHeight: 1.7 }}>Calculate the potential exemption under section 10(13A). To connect salary to the taxable-income engine, enter gross salary from your salary statement/Form 16 and save a salary-source evidence reference below. Bank deposits are not treated as gross salary.</p>
+      </header>
       {taxRegime !== "old" && <div role="status" style={{ padding: "12px 14px", borderRadius: "10px", marginBottom: "14px", background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.28)", color: "#fcd34d", fontSize: "12px" }}>Select Old Regime above to calculate HRA exemption. HRA exemption is not available under the New Regime.</div>}
-      <div style={{ ...panelStyle, marginBottom: "16px", border: "1px solid rgba(168,85,247,0.24)" }}>
+      <section className="tax-hra-salary-section" style={{ ...panelStyle, marginBottom: "16px", border: "1px solid rgba(168,85,247,0.24)" }}>
         <h3 style={{ marginTop: 0 }}>Salary components</h3>
         <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", lineHeight: 1.6 }}>Enter employer and gross salary. A suggested breakdown is generated using editable defaults (Basic 40% of gross; HRA 40% of Basic; DA 0%; other allowances balance). These percentages are not statutory Indian salary limits. Adjust figures to match actual payroll/Form 16. The actual net salary remains the existing Money income transaction; this form does not create or change a transaction.</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "12px" }}>
@@ -2036,9 +2038,12 @@ function TaxPage() {
           <div style={cardStyle}><div style={labelStyle}>Gross less entered deductions</div><div style={valueStyle}>{formatCurrency((Number(salaryProfile.gross_salary) || 0) - ["employee_pf", "professional_tax", "tds"].reduce((sum, key) => sum + (Number(salaryProfile[key]) || 0), 0))}</div></div>
         </div>
         <p style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px", lineHeight: 1.5, marginBottom: 0 }}>PF, professional tax and TDS are not automatically assumed from gross salary because eligibility and rates depend on applicable rules and payroll facts. Enter verified amounts. Unreconciled differences are shown, not silently classified as deductions. Actual salary received must remain the amount of the existing Money income transaction; this tax panel does not create or change that transaction.</p>
-      </div>
-      <form onSubmit={calculateHra} style={{ display: "grid", gap: "14px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
+      </section>
+      <form className="tax-hra-form" onSubmit={calculateHra} style={{ display: "grid", gap: "14px" }}>
+        <section className="tax-hra-rent-section">
+          <h4>Rent and salary details</h4>
+          <p>Enter annual figures from your salary and rent records. Required fields are marked by the browser.</p>
+        <div className="tax-hra-fields" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
           {fields.map(([key, label, type, required]) => <label key={key} style={fieldStyle}>{label}<input aria-label={label} type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "0.01" : undefined} required={required} value={hraInputs[key]} onChange={(event) => { const value = event.target.value; setHraInputs((current) => ({ ...current, [key]: value })); const profileKey = ({ gross_salary: "gross_salary", annual_basic_salary: "basic_salary", annual_da_forming_retirement_benefits: "da", annual_hra_received: "hra" })[key]; if (profileKey) setSalaryProfile((current) => ({ ...current, [profileKey]: value })); }} style={inputStyle} /></label>)}
           <label style={{ ...fieldStyle, display: "flex", alignItems: "center", flexDirection: "row", gap: "9px" }}><input type="checkbox" checked={hraInputs.accommodation_owned_by_taxpayer} onChange={(event) => { setHraInputs((current) => ({ ...current, accommodation_owned_by_taxpayer: event.target.checked })); setHraResult(null); }} /> I own the accommodation for which I am entering rent</label>
           <label style={{ ...fieldStyle, display: "flex", alignItems: "center", flexDirection: "row", gap: "9px" }}><input type="checkbox" checked={hraInputs.rent_actually_paid} onChange={(event) => { setHraInputs((current) => ({ ...current, rent_actually_paid: event.target.checked })); setHraResult(null); }} /> I confirm that rent was actually paid for this period</label>
@@ -2051,14 +2056,15 @@ function TaxPage() {
             <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Choose a suggestion or type an unlisted city. Unlisted cities default to Non-metro.</span>
             {hraCityCatalogError && <span role="status" style={{ color: "#fbbf24", fontSize: "10px" }}>{hraCityCatalogError}</span>}
           </label>
-          <div style={fieldStyle}>Tax-rule classification
+          <div className="tax-hra-classification" style={fieldStyle}>Tax-rule classification
             <div aria-live="polite" style={{ ...inputStyle, minHeight: "40px", display: "flex", alignItems: "center", borderColor: hraInputs.city.trim() ? "rgba(34,197,94,0.28)" : "rgba(255,255,255,0.14)" }}>
               {hraInputs.city.trim() ? (hraInputs.city_classification === "metro" ? "Metro · 50% salary limit" : "Non-metro · 40% salary limit") : "Select or enter a city"}
             </div>
             <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Classification is determined by the backend tax-rules mapping; it cannot be selected manually.</span>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+        </section>
+        <div className="tax-hra-actions" style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
           <button type="submit" className="primary-button" disabled={hraLoading || taxRegime !== "old"}>{hraLoading ? "Calculating…" : "Calculate HRA exemption"}</button>
           <button type="button" className="secondary-button" onClick={() => { setHraInputs({ gross_salary: "", annual_basic_salary: "", annual_da_forming_retirement_benefits: "0", annual_commission_on_turnover_at_fixed_percentage: "0", annual_hra_received: "", annual_rent_paid: "", city: "", city_classification: "non_metro" }); setHraResult(null); setHraError(""); setHraSalaryMessage(""); setHraSalaryError(""); }}>Clear inputs</button>
         </div>
@@ -2087,7 +2093,7 @@ function TaxPage() {
         {!hraResult && hraSalaryError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px" }}>{hraSalaryError}</div>}
         {!hraResult && hraSalaryMessage && <div role="status" style={{ color: "#86efac", fontSize: "12px" }}>{hraSalaryMessage}</div>}
       </div>
-    </div>;
+    </section>;
   };
 
   const renderTaxCalculation = () => (

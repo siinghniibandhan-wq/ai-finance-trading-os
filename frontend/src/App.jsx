@@ -3217,9 +3217,6 @@ function PlaceholderPage({ title }) {
 
 function InvestmentTransactions() {
 
-  const API_BASE_URL =
-    "https://wealthmanager.duckdns.org";
-
   const USER_ID = getCurrentUserId();
 
   // ----------------------------------------------------------
@@ -4418,9 +4415,6 @@ function InvestmentTransactions() {
 // ============================================================
 
 function Holdings() {
-  const API_BASE_URL =
-    "https://wealthmanager.duckdns.org";
-
   const USER_ID = getCurrentUserId();
 
   const [holdings, setHoldings] = useState([]);

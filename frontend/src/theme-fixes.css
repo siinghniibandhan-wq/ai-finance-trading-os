@@ -214,3 +214,52 @@
   :root[data-finos-theme] .broker-order-modal { padding: 16px !important; width: 100%; max-height: calc(100dvh - 20px); }
   :root[data-finos-theme] .broker-order-modal > div[style*="grid-template-columns"] { grid-template-columns: minmax(0, 1fr) !important; }
 }
+
+
+/* Broker order modal contrast correction: inline legacy white-muted styles
+   were winning over theme inheritance in light themes, hiding key metadata. */
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,0.55)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,0.62)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.55)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.62)"] {
+  color: var(--finos-muted, var(--finos-text)) !important;
+}
+:root[data-finos-theme] .broker-order-modal > div:first-child > div,
+:root[data-finos-theme] .broker-order-modal .broker-order-quote > div {
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .broker-order-modal > div[style*="border-top"] {
+  border-top-color: var(--finos-border, rgba(255,255,255,.1)) !important;
+}
+:root[data-finos-theme] .broker-order-modal .broker-order-quote strong {
+  color: var(--finos-text, inherit) !important;
+}
+:root[data-finos-theme] .broker-order-modal :is(label, input, select, button) {
+  font-family: var(--t-font, inherit);
+}
+:root[data-finos-theme] .broker-order-modal label {
+  color: var(--finos-muted, var(--finos-text)) !important;
+}
+:root[data-finos-theme] .broker-order-modal .broker-order-quote [style*="rgba(255,255,255"] {
+  color: var(--finos-muted, var(--finos-text)) !important;
+}
+:root[data-finos-theme] .broker-order-modal [role="status"] {
+  color: var(--finos-text) !important;
+  background: var(--finos-surface-raised, var(--t-inner-bg, transparent)) !important;
+  border: 1px solid var(--finos-border) !important;
+}
+:root[data-finos-theme] .broker-order-modal [role="status"] :is(strong, div) {
+  color: inherit !important;
+}
+@media (max-width: 520px) {
+  :root[data-finos-theme] .broker-order-modal > div:first-child {
+    align-items: flex-start;
+  }
+  :root[data-finos-theme] .broker-order-modal > div:first-child h2 {
+    font-size: 20px !important;
+    overflow-wrap: anywhere;
+  }
+  :root[data-finos-theme] .broker-order-modal > div[style*="border-top"] > div {
+    align-items: flex-start;
+  }
+}

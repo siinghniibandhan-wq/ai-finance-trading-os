@@ -80,7 +80,7 @@ def test_edit_and_void_lock_parent_investment_before_reading_active_timeline(rou
     route_end = source.find("\n@router.", route_start + 1)
     route_source = source[route_start:route_end if route_end != -1 else None]
 
-    parent_lock = route_source.index("SELECT id FROM investments")
+    parent_lock = route_source.index("SELECT id, investment_account_id FROM investments")
     lock_clause = route_source.index("FOR UPDATE", parent_lock)
     ledger_timeline = route_source.index("SELECT id, transaction_type, quantity, transaction_date")
     assert parent_lock < lock_clause < ledger_timeline

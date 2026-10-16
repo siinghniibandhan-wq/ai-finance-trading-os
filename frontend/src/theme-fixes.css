@@ -517,3 +517,20 @@
 :root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal [role="status"] {
   color: #14532d !important;
 }
+
+
+/* Complete the light-form fix: several missing-looking fields are DIVs, not
+   labels/spans. The earlier patch only covered a subset of muted text nodes. */
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(div, label, p, span, small, .broker-order-field-label) {
+  color: var(--broker-form-muted) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(h2, strong, input, select, textarea) {
+  color: var(--broker-form-ink) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal .broker-order-quote strong,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal > div[style*="border-top"] strong {
+  color: var(--broker-form-ink) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(button.primary-button, button.secondary-button) {
+  color: var(--t-pri-text, var(--broker-form-ink));
+}

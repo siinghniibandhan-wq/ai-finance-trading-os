@@ -298,3 +298,154 @@
   :root[data-finos-theme] .loan-management-page > div { min-width: 0; }
   :root[data-finos-theme] .ledger-page > .welcome-section h2 { font-size: 24px !important; }
 }
+
+
+/* Repair theme regressions reported in Settings screenshots.
+   These themes must theme the whole workspace, not only individual cards. */
+:root[data-finos-theme="light"] {
+  color-scheme: light;
+  --t-page-bg: #f5f7fb;
+  --t-card-bg: #ffffff;
+  --t-inner-bg: #f8fafc;
+  --t-sidebar-bg: #ffffff;
+  --finos-text: #202631;
+  --finos-muted: #586474;
+  --finos-border: #dce2ea;
+  --finos-accent: #6356d9;
+  --t-btn-bg: #ffffff;
+  --t-btn-text: #202631;
+  --t-btn-border: 1px solid #dce2ea;
+  --t-pri-bg: #6356d9;
+  --t-pri-text: #ffffff;
+  --t-pri-border: 1px solid #6356d9;
+  --t-radius: 12px;
+  --t-radius-sm: 8px;
+  --t-shadow: 0 2px 8px rgba(20,30,50,.06);
+}
+:root[data-finos-theme="minimal"] {
+  color-scheme: light;
+  --t-page-bg: #f7f8fa;
+  --t-card-bg: #ffffff;
+  --t-inner-bg: #f5f6f8;
+  --t-sidebar-bg: #ffffff;
+  --finos-text: #252a31;
+  --finos-muted: #626b76;
+  --finos-border: #dfe3e8;
+  --finos-accent: #536273;
+  --t-btn-bg: #ffffff;
+  --t-btn-text: #252a31;
+  --t-btn-border: 1px solid #dfe3e8;
+  --t-pri-bg: #536273;
+  --t-pri-text: #ffffff;
+  --t-pri-border: 1px solid #536273;
+  --t-radius: 6px;
+  --t-radius-sm: 5px;
+  --t-shadow: none;
+}
+:root[data-finos-theme="brutalism"] {
+  color-scheme: dark;
+  --t-page-bg: #101114;
+  --t-card-bg: #17181d;
+  --t-inner-bg: #202127;
+  --t-sidebar-bg: #111216;
+  --finos-text: #f7f5ef;
+  --finos-muted: #c5c3bc;
+  --finos-border: #484950;
+  --finos-accent: #facc15;
+  --t-btn-bg: #202127;
+  --t-btn-text: #f7f5ef;
+  --t-btn-border: 2px solid #facc15;
+  --t-pri-bg: #facc15;
+  --t-pri-text: #111216;
+  --t-pri-border: 2px solid #facc15;
+  --t-radius: 2px;
+  --t-radius-sm: 2px;
+  --t-shadow: 4px 4px 0 rgba(0,0,0,.3);
+}
+/* Ensure global shell and Settings surfaces actually use the selected theme. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="brutalism"]) :is(body,#root,.app,.app-shell,.main-content,.content,.dashboard) {
+  background: var(--t-page-bg) !important;
+  color: var(--finos-text) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="brutalism"]) .sidebar {
+  background: var(--t-sidebar-bg) !important;
+  color: var(--finos-text) !important;
+  border-color: var(--finos-border) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="brutalism"]) .content :is(
+  .glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,
+  .section-card,.large-card,.ai-card,.module-overview-card,.wc-primary-card,
+  .wc-shortcut-tile,.wc-welcome,.welcome-section,.dashboard-clickable-card,
+  .finos-theme-settings,.finos-theme-option
+) {
+  background: var(--t-card-bg) !important;
+  color: var(--finos-text) !important;
+  border-color: var(--finos-border) !important;
+  box-shadow: var(--t-shadow) !important;
+  border-radius: var(--t-radius) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="brutalism"]) .content :is(
+  h1,h2,h3,h4,h5,h6,strong,b,.page-title,.section-title,.card-title,
+  .finos-theme-settings-heading,.finos-theme-option-copy strong
+) { color: var(--finos-text) !important; }
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="brutalism"]) .content :is(
+  p,small,label,.muted,.text-muted,.subtitle,.description,.helper-text,
+  .field-hint,.eyebrow,.caption,.finos-theme-option-copy small,.finos-theme-footnote
+) { color: var(--finos-muted) !important; opacity: 1 !important; }
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="brutalism"]) .content :is(
+  input:not([type="checkbox"]):not([type="radio"]),textarea,select,.finos-select-trigger
+) {
+  color: var(--finos-text) !important;
+  background: var(--t-inner-bg) !important;
+  border-color: var(--finos-border) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="brutalism"]) .content :is(
+  .primary-button,.secondary-button,.outline-button,.ghost-button
+) {
+  border-radius: var(--t-radius-sm) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"]) .content :is(.primary-button,.finos-button-primary) {
+  background: var(--t-pri-bg) !important;
+  color: var(--t-pri-text) !important;
+  border: var(--t-pri-border) !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(.primary-button,.finos-button-primary) {
+  background: var(--t-pri-bg) !important;
+  color: var(--t-pri-text) !important;
+  border: var(--t-pri-border) !important;
+  box-shadow: 3px 3px 0 #000 !important;
+}
+/* Empty, loading and placeholder states are first-class themed components. */
+:root[data-finos-theme] .content :is(
+  .empty-chart,.empty-state,.empty-placeholder,.placeholder,.no-data,
+  .no-results,.loading-state,.loading-placeholder,.skeleton-card,.skeleton,
+  [data-empty-state="true"],[data-placeholder="true"]
+) {
+  color: var(--finos-muted) !important;
+  background-color: var(--t-inner-bg, var(--t-card-bg, transparent));
+  border-color: var(--finos-border) !important;
+}
+:root[data-finos-theme] .content :is(.empty-chart,.empty-state,.empty-placeholder,.no-data,.no-results,.loading-state) :is(h1,h2,h3,h4,p,span,strong,small) {
+  color: inherit !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"]) .content :is(.empty-chart,.empty-state,.empty-placeholder,.no-data,.no-results,.loading-state) {
+  background: #f8fafc !important;
+  color: #586474 !important;
+  border: 1px dashed #dce2ea !important;
+}
+:root[data-finos-theme="brutalism"] .content :is(.empty-chart,.empty-state,.empty-placeholder,.no-data,.no-results,.loading-state) {
+  background: #202127 !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
+  border-radius: 2px !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"]) .content .finos-theme-settings {
+  background: #fff !important;
+  color: #202631 !important;
+}
+:root[data-finos-theme="brutalism"] .content .finos-theme-settings {
+  background: #17181d !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
+}

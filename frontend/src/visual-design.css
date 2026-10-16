@@ -2582,3 +2582,142 @@ svg { flex-shrink: 0; }
   .header-search-popover { right:-90px; }
   .header-notifications-popover { right:-44px; }
 }
+
+
+/* Header popovers are true anchored dropdowns in every theme and viewport. */
+.topbar-actions { display:flex; align-items:center; gap:10px; }
+.header-action-wrap { position:relative; display:flex; align-items:center; }
+.header-popover {
+  position:absolute !important;
+  z-index:1200 !important;
+  top:calc(100% + 10px) !important;
+  right:0 !important;
+  left:auto !important;
+  display:block;
+  box-sizing:border-box;
+  width:min(330px, calc(100vw - 24px));
+  max-width:calc(100vw - 24px);
+  max-height:min(70vh, 520px);
+  overflow:auto;
+  padding:14px;
+  border:1px solid var(--finos-border, #e1e6ef);
+  border-radius:12px;
+  background:var(--finos-surface, #fff);
+  color:var(--finos-text, #202738);
+  box-shadow:0 14px 36px rgba(25,35,55,.16);
+}
+.header-profile-popover { display:flex !important; flex-direction:column !important; align-items:stretch !important; gap:2px !important; }
+.header-profile-popover > button { flex:0 0 auto; justify-content:flex-start; }
+.header-profile-popover > button span { margin-left:auto; }
+.header-profile-summary { flex:0 0 auto; }
+.header-search-popover { right:-56px !important; }
+.header-notifications-popover { right:-28px !important; }
+@media (max-width: 600px) {
+  .header-profile-popover { right:0 !important; }
+  .header-search-popover { right:-62px !important; }
+  .header-notifications-popover { right:-32px !important; }
+}
+
+/* Light theme: use the same readable, predictable surfaces across modules. */
+:root[data-finos-theme="light"] {
+  --finos-bg: #f4f6fb;
+  --finos-surface: #ffffff;
+  --finos-card: #ffffff;
+  --finos-text: #202738;
+  --finos-text-primary: #202738;
+  --finos-muted: #667085;
+  --finos-border: #e1e6ef;
+  --finos-accent: #5b4bdb;
+}
+:root[data-finos-theme="light"] .dashboard,
+:root[data-finos-theme="light"] .dashboard > section,
+:root[data-finos-theme="light"] .page-content,
+:root[data-finos-theme="light"] .content-area { color:#202738; }
+:root[data-finos-theme="light"] .dashboard .glass-card,
+:root[data-finos-theme="light"] .dashboard .metric-card,
+:root[data-finos-theme="light"] .dashboard .dashboard-card,
+:root[data-finos-theme="light"] .dashboard .stat-card,
+:root[data-finos-theme="light"] .dashboard .content-card,
+:root[data-finos-theme="light"] .dashboard .panel,
+:root[data-finos-theme="light"] .dashboard .account-card,
+:root[data-finos-theme="light"] .dashboard .transaction-card,
+:root[data-finos-theme="light"] .dashboard .account-list-item,
+:root[data-finos-theme="light"] .dashboard .chart-of-accounts-card {
+  color:#202738 !important;
+  background:#fff !important;
+  border-color:#e1e6ef !important;
+  box-shadow:0 2px 8px rgba(32,39,56,.045) !important;
+}
+:root[data-finos-theme="light"] .dashboard .glass-card :is(h1,h2,h3,h4,h5,strong,b,th),
+:root[data-finos-theme="light"] .dashboard .metric-card :is(h1,h2,h3,h4,h5,strong,b),
+:root[data-finos-theme="light"] .dashboard .dashboard-card :is(h1,h2,h3,h4,h5,strong,b),
+:root[data-finos-theme="light"] .dashboard .content-card :is(h1,h2,h3,h4,h5,strong,b),
+:root[data-finos-theme="light"] .dashboard .account-card :is(h1,h2,h3,h4,h5,strong,b),
+:root[data-finos-theme="light"] .dashboard .transaction-card :is(h1,h2,h3,h4,h5,strong,b) {
+  color:#202738 !important; opacity:1 !important; -webkit-text-fill-color:currentColor !important;
+}
+:root[data-finos-theme="light"] .dashboard .glass-card :is(p,small,label,span,td,li),
+:root[data-finos-theme="light"] .dashboard .metric-card :is(p,small,label,span),
+:root[data-finos-theme="light"] .dashboard .dashboard-card :is(p,small,label,span),
+:root[data-finos-theme="light"] .dashboard .content-card :is(p,small,label,span),
+:root[data-finos-theme="light"] .dashboard .account-card :is(p,small,label,span),
+:root[data-finos-theme="light"] .dashboard .transaction-card :is(p,small,label,span) {
+  color:#596579; opacity:1 !important; -webkit-text-fill-color:currentColor !important;
+}
+:root[data-finos-theme="light"] .dashboard .welcome-section,
+:root[data-finos-theme="light"] .dashboard .page-hero,
+:root[data-finos-theme="light"] .dashboard .module-hero,
+:root[data-finos-theme="light"] .dashboard .accounts-hero {
+  color:#202738 !important;
+}
+:root[data-finos-theme="light"] .dashboard .welcome-section :is(p,small,.eyebrow,.subtitle,.description),
+:root[data-finos-theme="light"] .dashboard .page-hero p,
+:root[data-finos-theme="light"] .dashboard .module-hero p {
+  color:#e8eaf1 !important; opacity:1 !important; -webkit-text-fill-color:currentColor !important;
+}
+
+/* Account rows were built with dark inline gradients; normalize them in Light
+   and stack action controls below details on narrow screens. */
+:root[data-finos-theme="light"] .dashboard .glass-card > div[style*="grid-template-columns"] {
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:12px !important;
+  background:#fff !important;
+  border:1px solid #e1e6ef !important;
+  border-radius:12px !important;
+  box-shadow:0 2px 8px rgba(32,39,56,.05) !important;
+  color:#202738 !important;
+}
+:root[data-finos-theme="light"] .dashboard .glass-card > div[style*="grid-template-columns"] * {
+  color:#344054;
+}
+:root[data-finos-theme="light"] .dashboard .glass-card > div[style*="grid-template-columns"] button {
+  color:#344054 !important;
+  background:#fff !important;
+  border-color:#cbd3e1 !important;
+}
+:root[data-finos-theme="light"] .dashboard .glass-card > div[style*="grid-template-columns"] button:hover {
+  background:#f0f2f8 !important;
+}
+@media (min-width: 760px) {
+  :root[data-finos-theme="light"] .dashboard .glass-card > div[style*="grid-template-columns"] {
+    grid-template-columns:minmax(0,1fr) minmax(150px,1fr) 110px !important;
+  }
+}
+
+/* Chart of Accounts uses inline dark colors for the original Default theme.
+   Override those presentational values only when Light is selected. */
+:root[data-finos-theme="light"] .dashboard label[style*="rgba(255,255,255"] {
+  color:#344054 !important; background:#f8f9fc !important; border-color:#e1e6ef !important;
+}
+:root[data-finos-theme="light"] .dashboard table { color:#344054 !important; background:#fff !important; }
+:root[data-finos-theme="light"] .dashboard table thead,
+:root[data-finos-theme="light"] .dashboard table th { color:#344054 !important; background:#f2f4f8 !important; }
+:root[data-finos-theme="light"] .dashboard table td { color:#596579 !important; border-bottom-color:#e1e6ef !important; }
+:root[data-finos-theme="light"] .dashboard table td:nth-child(1) { color:#5145cd !important; }
+:root[data-finos-theme="light"] .dashboard table td:nth-child(2) { color:#202738 !important; }
+:root[data-finos-theme="light"] .dashboard table td span { color:#667085 !important; }
+:root[data-finos-theme="light"] .dashboard table tbody tr { background:#fff !important; }
+:root[data-finos-theme="light"] .dashboard table tbody tr:hover { background:#f8f9fc !important; }
+:root[data-finos-theme="light"] .dashboard input[type="checkbox"] { accent-color:#5b4bdb !important; }
+:root[data-finos-theme="light"] .dashboard .welcome-label,
+:root[data-finos-theme="light"] .dashboard .welcome-description { color:#667085 !important; -webkit-text-fill-color:currentColor !important; }

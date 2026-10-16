@@ -7662,7 +7662,7 @@ const summaryCards = [
       ===================================================== */}
 
       <div
-        className="glass-card"
+        className="glass-card portfolio-holdings-preview"
         style={{
           padding: "20px",
         }}
@@ -7801,6 +7801,7 @@ const holdingReturn =
       return (
         <div
           key={investment.id}
+          className="portfolio-holding-preview-item"
           style={{
             display: "grid",
             gridTemplateColumns:

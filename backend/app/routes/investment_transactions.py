@@ -162,6 +162,7 @@ def _apply_cash_delta(db: Session, account, delta: Decimal, user_id: int):
     balance = Decimal(str(account.balance or 0))
     new_balance = balance + delta
     if new_balance < 0:
+        db.rollback()
         raise HTTPException(status_code=409, detail="Insufficient cash in the linked broker account for this trade change.")
     db.execute(text("""
         UPDATE accounts SET balance = :balance
@@ -326,6 +327,8 @@ def create_transaction(
             status_code=400,
             detail="Transaction type must be BUY or SELL.",
         )
+    if transaction_type == "SELL" and data.fees > data.quantity * data.price:
+        raise HTTPException(status_code=422, detail="SELL fees cannot exceed gross sale proceeds.")
 
     # --------------------------------------------------------
     # FIND INVESTMENT
@@ -568,6 +571,8 @@ def update_transaction(
     transaction_type = data.transaction_type.strip().upper()
     if transaction_type not in {"BUY", "SELL"}:
         raise HTTPException(status_code=400, detail="Transaction type must be BUY or SELL.")
+    if transaction_type == "SELL" and data.fees > data.quantity * data.price:
+        raise HTTPException(status_code=422, detail="SELL fees cannot exceed gross sale proceeds.")
 
     # Resolve the parent investment first, then acquire the same parent-row
     # lock used by create_transaction. All ledger mutations for one investment
@@ -685,7 +690,7 @@ def void_transaction(
         raise HTTPException(status_code=404, detail="Investment transaction not found.")
 
     locked_investment = db.execute(text("""
-        SELECT id FROM investments
+        SELECT id, investment_account_id FROM investments
         WHERE id = :investment_id AND user_id = :user_id
         FOR UPDATE
     """), {"investment_id": locator.investment_id, "user_id": user_id}).first()

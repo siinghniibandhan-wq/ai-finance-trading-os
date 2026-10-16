@@ -831,3 +831,121 @@
   background: #f8fafc !important;
   border: 1px solid #cbd5e1 !important;
 }
+
+
+/* Market workspace follow-up: screenshots showed the first pass only fixed
+   headings and paragraph-like nodes. Many Market labels, provider messages and
+   watchlist details are plain DIVs with legacy white inline colors, while the
+   search/news containers still retained dark gray inline backgrounds. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(div, article, aside, section) {
+  color: var(--market-ink, #202938);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace [style*="color: rgba(255,255,255"],
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace [style*="color:#fff"],
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace [style*="color: #fff"] {
+  color: var(--market-ink, #202938) !important;
+  -webkit-text-fill-color: var(--market-ink, #202938) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(
+  [aria-label="Market instrument search"],
+  [aria-label="Selected instrument"],
+  [aria-label="Market breadth"],
+  .market-news,
+  .watchlist-card,
+  .market-watchlist,
+  .instrument-search-results,
+  .instrument-search-result
+) {
+  color: var(--market-ink, #202938) !important;
+  background-color: var(--market-surface, #fff) !important;
+  background-image: none !important;
+  border-color: var(--market-line, #cbd5e1) !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.06) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(input, select, textarea)::placeholder {
+  color: #687386 !important;
+  -webkit-text-fill-color: #687386 !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(.market-card, .glass-card, .panel, .data-card, .card) {
+  color: var(--market-ink, #202938) !important;
+  background: var(--market-surface, #fff) !important;
+  background-image: none !important;
+  border-color: var(--market-line, #cbd5e1) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(button, [role="button"]) {
+  opacity: 1 !important;
+}

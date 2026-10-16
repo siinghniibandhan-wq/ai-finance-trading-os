@@ -1712,3 +1712,39 @@
 :root[data-finos-theme] .add-transaction-modal .finos-select-menu .finos-select-check {
   color: var(--finos-accent, #7563dc) !important;
 }
+
+
+/* Borderless presentation for every light visual theme.
+   Preserve element sizing, backgrounds, focus indicators, shadows and behavior;
+   only remove decorative CSS borders. Dark and Brutalism themes are excluded. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) :is(body, #root, .app, .app-shell, .sidebar, .content, main, .modal-overlay, .modal-content) * {
+  border-color: transparent !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) :is(body, #root, .app, .app-shell, .sidebar, .content, main, .modal-overlay, .modal-content) *::before,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) :is(body, #root, .app, .app-shell, .sidebar, .content, main, .modal-overlay, .modal-content) *::after {
+  border-color: transparent !important;
+}

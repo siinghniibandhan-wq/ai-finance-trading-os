@@ -1862,8 +1862,6 @@
   border-radius: 12px !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: rgba(255,255,255"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: "#fff""],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: "white""] {
   color: var(--tax-muted, #5b6472) !important;
 }
 

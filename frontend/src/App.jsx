@@ -256,6 +256,23 @@ const PRODUCT_TYPES_BY_ASSET_CLASS = {
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerPanel, setHeaderPanel] = useState("");
+  const [headerSearch, setHeaderSearch] = useState("");
+  const headerActionsRef = useRef(null);
+
+  useEffect(() => {
+    if (!headerPanel) return undefined;
+    const closeOutside = (event) => {
+      if (headerActionsRef.current && !headerActionsRef.current.contains(event.target)) setHeaderPanel("");
+    };
+    const closeEscape = (event) => { if (event.key === "Escape") setHeaderPanel(""); };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeEscape);
+    };
+  }, [headerPanel]);
 
   // Keep navigation in the URL so the current section survives refreshes,
   // direct links, and browser Back/Forward throughout the application.
@@ -452,66 +469,63 @@ export default function App() {
 
           </div>
 
-          <div className="topbar-actions">
+          <div className="topbar-actions" ref={headerActionsRef}>
+            <div className="header-action-wrap">
+              <button className="icon-button" type="button" aria-label="Search pages" title="Search" aria-expanded={headerPanel === "search"} onClick={() => setHeaderPanel((panel) => panel === "search" ? "" : "search")}>
+                <Search size={19} />
+              </button>
+              {headerPanel === "search" && (
+                <div className="header-popover header-search-popover" role="dialog" aria-label="Search Financial OS">
+                  <label htmlFor="global-page-search">Search Financial OS</label>
+                  <input id="global-page-search" autoFocus value={headerSearch} onChange={(event) => setHeaderSearch(event.target.value)} placeholder="Search pages…" />
+                  <div className="header-search-results">
+                    {["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Playground", "Settings", "Finance Diary", "Account Profile"]
+                      .filter((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase()))
+                      .slice(0, 8)
+                      .map((page) => <button type="button" key={page} onClick={() => { setHeaderPanel(""); setHeaderSearch(""); handleNavigation(page); }}>{page}</button>)}
+                    {headerSearch.trim() && !["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Playground", "Settings", "Finance Diary", "Account Profile"].some((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase())) && <p className="header-popover-empty">No matching pages found.</p>}
+                  </div>
+                </div>
+              )}
+            </div>
 
-            <button className="icon-button">
-              <Search size={19} />
-            </button>
+            <div className="header-action-wrap">
+              <button className="icon-button" type="button" aria-label="Notifications" title="Notifications" aria-expanded={headerPanel === "notifications"} onClick={() => setHeaderPanel((panel) => panel === "notifications" ? "" : "notifications")}>
+                <Bell size={19} />
+              </button>
+              {headerPanel === "notifications" && (
+                <div className="header-popover header-notifications-popover" role="dialog" aria-label="Notifications">
+                  <div className="header-popover-heading"><strong>Notifications</strong><span>Financial OS</span></div>
+                  <p className="header-popover-empty">Your financial reminders and budget alerts are available on the Dashboard.</p>
+                  <button type="button" className="header-popover-primary" onClick={() => { setHeaderPanel(""); handleNavigation("Dashboard"); }}>View alerts &amp; notifications <span>→</span></button>
+                </div>
+              )}
+            </div>
 
-            <button className="icon-button">
-              <Bell size={19} />
-            </button>
-
-            <button
-              className="profile"
-              type="button"
-              onClick={() => handleNavigation("Account Profile")}
-              aria-label="Open account profile"
-              title="Open account profile"
-              style={{ cursor: "pointer", color: "inherit", font: "inherit", textAlign: "left", border: 0, background: "transparent", padding: 0 }}
-            >
-
-              <div className="profile-avatar">
-                {(getCurrentUser()?.name || "U").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}
-              </div>
-
-              <div className="profile-info">
-                <strong>{getCurrentUser()?.name || "User"}</strong>
-                <span>{getCurrentUser()?.email || "Personal workspace"}</span>
-              </div>
-
-            </button>
-
-            <button
-              className="icon-button"
-              type="button"
-              aria-label="Sign out"
-              title="Sign out"
-              onClick={() => {
-                // Capture the token before clearing local credentials. Start a
-                // keepalive revoke request, then immediately remove the local
-                // session and navigate away so the old UI cannot remain visible.
-                const token = sessionStorage.getItem("financial_os_access_token") || "";
-                try {
-                  if (token) {
-                    fetch(`${API_BASE_URL}/api/auth/logout`, {
-                      method: "POST",
-                      keepalive: true,
-                      headers: {
-                        Accept: "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                    }).catch((error) => console.warn("Server-side logout could not be confirmed.", error));
-                  }
-                } finally {
-                  clearSession();
-                  window.location.replace("/login");
-                }
-              }}
-            >
-              Sign out
-            </button>
-
+            <div className="header-action-wrap">
+              <button className="profile" type="button" onClick={() => setHeaderPanel((panel) => panel === "profile" ? "" : "profile")} aria-label="Open user menu" title="User menu" aria-expanded={headerPanel === "profile"} style={{ cursor: "pointer", color: "inherit", font: "inherit", textAlign: "left", border: 0, background: "transparent", padding: 0 }}>
+                <div className="profile-avatar">{(getCurrentUser()?.name || "U").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</div>
+                <div className="profile-info"><strong>{getCurrentUser()?.name || "User"}</strong><span>{getCurrentUser()?.email || "Personal workspace"}</span></div>
+              </button>
+              {headerPanel === "profile" && (
+                <div className="header-popover header-profile-popover" role="menu" aria-label="User menu">
+                  <div className="header-profile-summary"><div className="profile-avatar">{(getCurrentUser()?.name || "U").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</div><div><strong>{getCurrentUser()?.name || "User"}</strong><span>{getCurrentUser()?.email || "Personal workspace"}</span></div></div>
+                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Account Profile"); }}>Account profile</button>
+                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}><Settings size={16}/> Settings &amp; preferences <span>›</span></button>
+                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}>Theme &amp; appearance <span>›</span></button>
+                  <div className="header-profile-divider"/>
+                  <button type="button" role="menuitem" className="header-signout" onClick={() => {
+                    const token = sessionStorage.getItem("financial_os_access_token") || "";
+                    try {
+                      if (token) fetch(`${API_BASE_URL}/api/auth/logout`, { method: "POST", keepalive: true, headers: { Accept: "application/json", Authorization: `Bearer ${token}` } }).catch((error) => console.warn("Server-side logout could not be confirmed.", error));
+                    } finally {
+                      clearSession();
+                      window.location.replace("/login");
+                    }
+                  }}>Sign out</button>
+                </div>
+              )}
+            </div>
           </div>
 
         </header>

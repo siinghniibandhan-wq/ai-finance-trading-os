@@ -92,35 +92,35 @@
 
 /* Holding-card transaction history: readable on the two light, restrained themes.
    Scoped to this modal so Dark and all other themes keep their current styling. */
-:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal {
   color: #202631;
   background: #ffffff;
   border-color: #dfe4ec;
 }
-:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal .portfolio-transaction-history {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history {
   color: #202631;
 }
-:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal .portfolio-transaction-history > div {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history > div {
   color: #202631;
 }
-:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal .portfolio-transaction-history > div > div {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history > div > div {
   min-width: 0;
   overflow-wrap: anywhere;
 }
-:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal .portfolio-transaction-history div[style*="rgba(255,255,255,0.04)"] {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history div[style*="rgba(255,255,255,0.04)"] {
   background: #f8fafc !important;
   border-color: #e2e8f0 !important;
 }
-:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal .portfolio-transaction-history [style*="rgba(255,255,255,0.45)"],
-:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal .portfolio-transaction-history [style*="rgba(255,255,255,0.05)"] {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history [style*="rgba(255,255,255,0.45)"],
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history [style*="rgba(255,255,255,0.05)"] {
   color: #5b6472 !important;
 }
-:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal .portfolio-transaction-history button:not(.primary-button):not(.finos-button-primary) {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history button:not(.primary-button):not(.finos-button-primary) {
   color: #202631;
   background: #ffffff;
   border-color: #cbd5e1;
 }
-:root:is([data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .investment-transaction-modal .portfolio-transaction-history button:disabled {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history button:disabled {
   opacity: .6;
 }
 

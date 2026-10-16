@@ -84,3 +84,34 @@ def test_edit_and_void_lock_parent_investment_before_reading_active_timeline(rou
     lock_clause = route_source.index("FOR UPDATE", parent_lock)
     ledger_timeline = route_source.index("SELECT id, transaction_type, quantity, transaction_date")
     assert parent_lock < lock_clause < ledger_timeline
+
+
+def test_trade_cash_effect_uses_gross_buy_cost_and_net_sell_proceeds():
+    from app.routes.investment_transactions import _cash_effect
+
+    assert _cash_effect("BUY", Decimal("2"), Decimal("100"), Decimal("5")) == Decimal("-205")
+    assert _cash_effect("SELL", Decimal("2"), Decimal("100"), Decimal("5")) == Decimal("195")
+
+
+def test_investment_trade_routes_reconcile_cash_and_keep_audit_events():
+    from pathlib import Path
+
+    source = Path(__file__).parents[1].joinpath(
+        "app", "routes", "investment_transactions.py"
+    ).read_text()
+
+    assert "investment_account_id" in source
+    assert "new_cash_effect - old_cash_effect" in source
+    assert "_apply_cash_delta(db, broker_account, -original_cash_effect, user_id)" in source
+    assert "entity_type=\"investment_transaction\"" in source
+    assert "db.rollback()" in source
+
+
+def test_sell_fees_cannot_exceed_gross_proceeds():
+    from pathlib import Path
+
+    source = Path(__file__).parents[1].joinpath(
+        "app", "routes", "investment_transactions.py"
+    ).read_text()
+
+    assert source.count("data.fees > data.quantity * data.price") == 2

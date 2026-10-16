@@ -9521,11 +9521,9 @@ alignItems: "center",
 columnGap: "20px",
           padding: "20px",
           borderRadius: "18px",
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow:
-            "0 12px 30px rgba(0,0,0,0.18)",
+          background: "var(--finos-account-card-bg, var(--finos-panel, rgba(15,23,42,.76)))",
+          border: "1px solid var(--finos-account-card-border, var(--finos-border, rgba(167,139,250,.16)))",
+          boxShadow: "var(--finos-account-card-shadow, 0 12px 30px rgba(0,0,0,.18))",
           minHeight: "90px",
         }}
       >
@@ -9552,10 +9550,8 @@ columnGap: "20px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background:
-                "linear-gradient(135deg, rgba(168,85,247,0.30), rgba(236,72,153,0.20))",
-              border:
-                "1px solid rgba(255,255,255,0.10)",
+              background: "var(--finos-account-icon-bg, linear-gradient(135deg, rgba(168,85,247,.30), rgba(236,72,153,.20)))",
+              border: "1px solid var(--finos-account-icon-border, rgba(255,255,255,.10))",
             }}
           >
             <Landmark size={21} />
@@ -9573,7 +9569,7 @@ columnGap: "20px",
               style={{
                 fontSize: "15px",
                 fontWeight: 700,
-                color: "#ffffff",
+                color: "var(--finos-account-title, var(--finos-text, #ffffff))",
                 marginBottom: "5px",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -9586,7 +9582,7 @@ columnGap: "20px",
             <div
               style={{
                 fontSize: "12px",
-                color: "rgba(255,255,255,0.60)",
+                color: "var(--finos-account-muted, var(--finos-muted, rgba(255,255,255,.60)))",
                 textTransform: "capitalize",
               }}
             >
@@ -9601,7 +9597,7 @@ columnGap: "20px",
               <div
                 style={{
                   fontSize: "11px",
-                  color: "rgba(255,255,255,0.40)",
+                  color: "var(--finos-account-subtle, var(--finos-muted, rgba(255,255,255,.40)))",
                   marginTop: "4px",
                 }}
               >
@@ -9652,7 +9648,7 @@ columnGap: "20px",
           <div
             style={{
               fontSize: "10px",
-              color: "rgba(255,255,255,0.45)",
+              color: "var(--finos-account-muted, var(--finos-muted, rgba(255,255,255,.45)))",
               textTransform: "uppercase",
               letterSpacing: "0.08em",
               marginBottom: "5px",
@@ -9665,7 +9661,7 @@ columnGap: "20px",
             style={{
               fontSize: "17px",
               fontWeight: 800,
-              color: "#ffffff",
+              color: "var(--finos-account-title, var(--finos-text, #ffffff))",
               whiteSpace: "nowrap",
             }}
           >

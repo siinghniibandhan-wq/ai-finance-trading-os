@@ -1770,3 +1770,590 @@ svg { flex-shrink: 0; }
   color: #101827;
 }
 
+
+
+/* ============================================================
+   LIGHT THEME READABILITY PASS (presentation only)
+   Keep dark/colorful themes untouched. Each light theme gets its
+   own surface, accent, text and border palette so content stays
+   legible even where legacy components used dark-theme colours.
+   ============================================================ */
+
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) {
+  color-scheme: light;
+  --finos-text: #172033;
+  --finos-muted: #475569;
+  --finos-border: #cbd5e1;
+  --finos-control-bg: #ffffff;
+  --finos-control-text: #172033;
+  --finos-control-muted: #64748b;
+  --finos-control-border: #cbd5e1;
+  --finos-chart-bg: #ffffff;
+  --finos-chart-text: #172033;
+  --finos-chart-muted: #475569;
+  --finos-chart-grid: rgba(51, 65, 85, .22);
+}
+
+/* Light — cool white, blue-violet accents. */
+:root[data-finos-theme="light"] {
+  --finos-accent: #5b45c6;
+  --finos-violet: #6d5ce7;
+  --finos-pink: #b23b86;
+  --finos-cyan: #087eaa;
+  --finos-page: #f3f6fc;
+  --finos-surface: #ffffff;
+  --finos-surface-raised: #ffffff;
+  --finos-soft-accent: #e9eaff;
+  --finos-icon-bg: #e8eaff;
+  --finos-border: #cbd5e1;
+}
+/* Minimal — almost-white, flat surfaces and restrained slate accents. */
+:root[data-finos-theme="minimal"] {
+  --finos-accent: #475569;
+  --finos-violet: #475569;
+  --finos-pink: #64748b;
+  --finos-cyan: #0369a1;
+  --finos-page: #f8fafc;
+  --finos-surface: #ffffff;
+  --finos-surface-raised: #ffffff;
+  --finos-soft-accent: #eef2f6;
+  --finos-icon-bg: #f1f5f9;
+  --finos-border: #d8dee7;
+}
+/* Elegant Plain — warm paper, charcoal typography and fine lines. */
+:root[data-finos-theme="elegant-plain"] {
+  --finos-accent: #334155;
+  --finos-violet: #475569;
+  --finos-pink: #78716c;
+  --finos-cyan: #0f766e;
+  --finos-page: #faf9f6;
+  --finos-surface: #fffefa;
+  --finos-surface-raised: #ffffff;
+  --finos-soft-accent: #f1efe9;
+  --finos-icon-bg: #f1efe9;
+  --finos-border: #dedbd3;
+}
+/* Skeuomorphism — ivory panels, blue steel and subtle raised edges. */
+:root[data-finos-theme="skeuomorphism"] {
+  --finos-accent: #245a91;
+  --finos-violet: #376da5;
+  --finos-pink: #9c426d;
+  --finos-cyan: #087e8b;
+  --finos-page: #e8edf2;
+  --finos-surface: #f8fafc;
+  --finos-surface-raised: #ffffff;
+  --finos-soft-accent: #e1eaf4;
+  --finos-icon-bg: #dce8f5;
+  --finos-border: #b9c7d6;
+}
+/* Neumorphism — soft cool-grey canvas, dark slate text and clear inset fields. */
+:root[data-finos-theme="neumorphism"] {
+  --finos-accent: #315b78;
+  --finos-violet: #426b88;
+  --finos-pink: #9b5576;
+  --finos-cyan: #087e8b;
+  --finos-page: #e5e9ef;
+  --finos-surface: #edf1f6;
+  --finos-surface-raised: #f1f4f8;
+  --finos-soft-accent: #dce5ee;
+  --finos-icon-bg: #dce5ee;
+  --finos-border: #c5ced9;
+}
+/* Claymorphism — warm lilac page with crisp, readable pastel cards. */
+:root[data-finos-theme="claymorphism"] {
+  --finos-accent: #8b3f91;
+  --finos-violet: #854caa;
+  --finos-pink: #b83280;
+  --finos-cyan: #087e8b;
+  --finos-page: #f5effb;
+  --finos-surface: #fffaff;
+  --finos-surface-raised: #ffffff;
+  --finos-soft-accent: #f0e2fa;
+  --finos-icon-bg: #efe1f8;
+  --finos-border: #d8c4e8;
+}
+/* Bento Grid — pale mint page, modular white panels and deep teal accents. */
+:root[data-finos-theme="bento-grid"] {
+  --finos-accent: #0f766e;
+  --finos-violet: #0f766e;
+  --finos-pink: #a33b72;
+  --finos-cyan: #0369a1;
+  --finos-page: #edf7f4;
+  --finos-surface: #ffffff;
+  --finos-surface-raised: #f9fffd;
+  --finos-soft-accent: #d9f0e9;
+  --finos-icon-bg: #d9f0e9;
+  --finos-border: #b8d9d0;
+}
+/* Brutalism — warm cream, ink-black text, hard edges and yellow accent. */
+:root[data-finos-theme="brutalism"] {
+  --finos-accent: #a16207;
+  --finos-violet: #a16207;
+  --finos-pink: #be123c;
+  --finos-cyan: #0369a1;
+  --finos-page: #fffbea;
+  --finos-surface: #ffffff;
+  --finos-surface-raised: #ffffff;
+  --finos-soft-accent: #fef3c7;
+  --finos-icon-bg: #fef3c7;
+  --finos-border: #292524;
+}
+
+/* Establish an actual light canvas instead of recolouring text over dark layers. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) body {
+  color: var(--finos-text) !important;
+  background: var(--finos-page) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .app-shell,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .main-area,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content {
+  color: var(--finos-text);
+  background-color: transparent;
+}
+
+/* Sidebar and topbar use the palette of the selected light theme. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .sidebar {
+  background: var(--finos-surface) !important;
+  border-right: 1px solid var(--finos-border) !important;
+  box-shadow: 4px 0 18px rgba(15, 23, 42, .035);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .topbar {
+  background: color-mix(in srgb, var(--finos-surface) 94%, transparent) !important;
+  border-bottom-color: var(--finos-border) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .sidebar .brand-text,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .topbar,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .page-title h1 {
+  color: var(--finos-text) !important;
+}
+
+/* Ensure primary content, helper text, labels and table details are readable. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(h1,h2,h3,h4,h5,h6,strong,b,th,td,label,legend,dt,dd),
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(p,small,li,figcaption,.muted,.subtitle,.description,.helper-text,.empty-state,.metric-label,.card-label,.eyebrow,.welcome-description,.wc-card-label,.wc-card-subtitle,.wc-chart-subtitle,.wc-note,.wc-panel-heading,.wc-detail-row > div > span,.wc-latest-main span,.wc-latest-amount,.wc-category-label,.wc-flow-stats span,.wc-chart-stat span,.wc-chart-legend span,.wc-pie-legend span,.wc-history-column,.wc-history-column small) {
+  color: var(--finos-muted);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(h1,h2,h3,h4,h5,h6,strong,b,td,th,label,legend,dt,dd) {
+  color: var(--finos-text);
+}
+
+/* Cards and information panels must be visibly separated from the page. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.module-overview-card,.notifications-card,.goals-summary-card,.health-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-chart-stat,.wc-flow-stats > div,.wc-shortcut-tile,.wc-breakdown-category,.wc-chart-surface,.wc-chart-empty,.finos-theme-settings) {
+  color: var(--finos-text);
+  background-color: var(--finos-surface) !important;
+  border-color: var(--finos-border) !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .055);
+}
+:root[data-finos-theme="minimal"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
+  box-shadow: none;
+  border-radius: 10px;
+}
+:root[data-finos-theme="elegant-plain"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
+  box-shadow: none;
+  border-radius: 8px;
+}
+:root[data-finos-theme="skeuomorphism"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
+  box-shadow: inset 0 1px rgba(255,255,255,.9), 0 3px 8px rgba(15,23,42,.09);
+  border-radius: 12px;
+}
+:root[data-finos-theme="neumorphism"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
+  border-color: transparent !important;
+  box-shadow: 5px 5px 12px rgba(139,150,166,.24), -5px -5px 12px rgba(255,255,255,.88);
+  border-radius: 16px;
+}
+:root[data-finos-theme="claymorphism"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
+  box-shadow: 0 7px 0 color-mix(in srgb, var(--finos-accent) 10%, white), 0 12px 24px rgba(72,36,90,.08);
+  border-radius: 18px;
+}
+:root[data-finos-theme="bento-grid"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(15,118,110,.055);
+}
+:root[data-finos-theme="brutalism"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
+  border: 2px solid #292524 !important;
+  border-radius: 2px;
+  box-shadow: 4px 4px 0 rgba(41,37,36,.12);
+}
+
+/* Navigation, icons, secondary actions and selected states use theme accents. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .navigation-item {
+  color: var(--finos-muted) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .navigation-item.active {
+  color: var(--finos-accent) !important;
+  background: var(--finos-soft-accent) !important;
+  border-color: var(--finos-border) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(.metric-icon,.chart-icon,.wc-card-icon,.wc-shortcut-icon,.placeholder-icon) {
+  color: var(--finos-accent) !important;
+  background: var(--finos-icon-bg) !important;
+  border-color: var(--finos-border) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(button:not(.primary-button):not(.button-primary),[role="tab"],.tab,.tab-button,.wc-periods button,.wc-chart-types button,.finos-select-trigger,.secondary-button,.small-button,.icon-button) {
+  color: var(--finos-text);
+  border-color: var(--finos-border);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(.wc-periods button.active,.wc-chart-types button.active,[role="tab"][aria-selected="true"],.tab.active,.tab-button.active) {
+  color: #ffffff !important;
+  background: var(--finos-accent) !important;
+  border-color: var(--finos-accent) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(.primary-button,.button-primary) {
+  color: #ffffff !important;
+  background: var(--finos-accent) !important;
+  border-color: var(--finos-accent) !important;
+  box-shadow: none;
+}
+:root[data-finos-theme="brutalism"] .content :is(button,.primary-button,.button-primary) {
+  border-radius: 2px !important;
+  border: 2px solid #292524 !important;
+  box-shadow: 2px 2px 0 rgba(41,37,36,.14);
+}
+:root[data-finos-theme="elegant-plain"] .content :is(.primary-button,.button-primary) {
+  background: #334155 !important;
+  border-color: #334155 !important;
+}
+
+/* Inputs, custom dropdowns, table rows and chart surfaces stay visible. */
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(input,select,textarea,[role="combobox"],.finos-select-trigger) {
+  color: var(--finos-control-text) !important;
+  background: var(--finos-control-bg) !important;
+  border-color: var(--finos-control-border) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(input,textarea)::placeholder {
+  color: var(--finos-control-muted) !important;
+  opacity: 1;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .finos-select-menu {
+  color: var(--finos-text);
+  background: var(--finos-surface-raised) !important;
+  border-color: var(--finos-border) !important;
+  box-shadow: 0 14px 30px rgba(15,23,42,.14);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .finos-select-option {
+  color: var(--finos-text) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .finos-select-option:hover,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .finos-select-option.is-selected {
+  color: var(--finos-text) !important;
+  background: var(--finos-soft-accent) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content table {
+  color: var(--finos-text);
+  border-color: var(--finos-border);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(thead th,tbody td) {
+  border-color: var(--finos-border);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content tbody tr:hover {
+  background: var(--finos-soft-accent);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(.wc-chart-stat,.wc-flow-stats > div,.wc-chart-empty,.wc-chart-surface,.wc-history-chart) {
+  color: var(--finos-chart-text);
+  background: var(--finos-chart-bg) !important;
+  border-color: var(--finos-control-border) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content svg text {
+  fill: var(--finos-chart-muted);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"],
+  [data-finos-theme="brutalism"]
+) .content :is(.wc-chart-legend span,.wc-pie-legend span,.chart-legend) {
+  color: var(--finos-chart-muted) !important;
+}
+
+/* Keep the plain themes plain; use distinctive surfaces, not extra decoration. */
+:root[data-finos-theme="minimal"] .content :is(.wc-card-icon,.metric-icon,.chart-icon) {
+  border-radius: 8px;
+}
+:root[data-finos-theme="elegant-plain"] .content :is(.wc-card-icon,.metric-icon,.chart-icon) {
+  border-radius: 6px;
+}
+:root[data-finos-theme="bento-grid"] .content .wc-primary-card {
+  border-top: 3px solid var(--finos-accent) !important;
+}

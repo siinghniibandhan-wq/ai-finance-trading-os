@@ -1694,3 +1694,16 @@
   border: 2px solid var(--finos-border, #484950) !important;
   border-radius: 3px !important;
 }
+
+
+/* Goals summary cards: thin black outline only, across every light-family theme.
+   Keep the existing solid surface, typography, spacing and all other styling. */
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace > section:nth-of-type(2) > div {
+  border: 1px solid rgba(20, 22, 28, 0.62) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+/* Brutalism's existing strong border language is intentionally preserved. */
+:root[data-finos-theme="brutalism"] .plan-workspace > section:nth-of-type(2) > div {
+  border: 2px solid var(--finos-border, #484950) !important;
+}

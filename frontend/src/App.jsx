@@ -6211,6 +6211,7 @@ const openInvestmentTransactions = async (
 
 const closeInvestmentTransactionModal = () => {
 
+  setEditingTransactionId(null);
   transactionQuoteRequestRef.current += 1;
   activeTransactionInstrumentRef.current = "";
   setTransactionModal(null);
@@ -6347,7 +6348,7 @@ const handleInvestmentTransactionSubmit =
 
         throw new Error(
           data?.detail ||
-            `Unable to create ${transactionType} transaction.`
+            `Unable to ${editingTransactionId ? "update" : "create"} ${transactionType} transaction.`
         );
 
       }
@@ -6396,7 +6397,7 @@ const handleInvestmentTransactionSubmit =
 
       setTransactionMessage(
         error?.message ||
-          `Unable to create ${transactionType} transaction.`
+          `Unable to ${editingTransactionId ? "update" : "create"} ${transactionType} transaction.`
       );
 
     } finally {
@@ -8163,6 +8164,7 @@ const holdingReturn =
                   : "rgba(255,255,255,0.55)",
             }}
             onClick={() => {
+              setEditingTransactionId(null);
               setTransactionType("BUY");
               setTransactionModal({
                 ...transactionModal,
@@ -8186,6 +8188,7 @@ const holdingReturn =
                   : "rgba(255,255,255,0.55)",
             }}
             onClick={() => {
+              setEditingTransactionId(null);
               setTransactionType("SELL");
               setTransactionModal({
                 ...transactionModal,
@@ -8206,6 +8209,7 @@ const holdingReturn =
             }}
             onClick={async () => {
 
+              setEditingTransactionId(null);
               setTransactionModal({
                 ...transactionModal,
                 mode: "history",

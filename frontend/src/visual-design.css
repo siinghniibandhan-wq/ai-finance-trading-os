@@ -1748,3 +1748,25 @@ svg { flex-shrink: 0; }
   .finos-theme-settings-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* Selected chart controls need legible text against each theme's own accent. */
+:root[data-finos-theme="emerald"] .wc-periods button.active,
+:root[data-finos-theme="emerald"] .wc-chart-types button.active,
+:root[data-finos-theme="ocean"] .wc-periods button.active,
+:root[data-finos-theme="ocean"] .wc-chart-types button.active,
+:root[data-finos-theme="sunset"] .wc-periods button.active,
+:root[data-finos-theme="sunset"] .wc-chart-types button.active,
+:root[data-finos-theme="retro-terminal"] .wc-periods button.active,
+:root[data-finos-theme="retro-terminal"] .wc-chart-types button.active,
+:root[data-finos-theme="brutalism"] .wc-periods button.active,
+:root[data-finos-theme="brutalism"] .wc-chart-types button.active,
+:root[data-finos-theme="maximalism"] .wc-periods button.active,
+:root[data-finos-theme="maximalism"] .wc-chart-types button.active,
+:root[data-finos-theme="glass"] .wc-periods button.active,
+:root[data-finos-theme="glass"] .wc-chart-types button.active,
+:root[data-finos-theme="glassmorphism"] .wc-periods button.active,
+:root[data-finos-theme="glassmorphism"] .wc-chart-types button.active,
+:root[data-finos-theme="liquid-glass"] .wc-periods button.active,
+:root[data-finos-theme="liquid-glass"] .wc-chart-types button.active {
+  color: #101827;
+}
+

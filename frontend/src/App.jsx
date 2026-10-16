@@ -9148,8 +9148,8 @@ const handleAccountSubmit = async () => {
       return;
     }
 
-    if (accountForm.balance === "" || !Number.isFinite(Number(accountForm.balance))) {
-      setError("Please enter a valid opening balance or outstanding balance.");
+    if (accountForm.account_type !== "loan" && (accountForm.balance === "" || !Number.isFinite(Number(accountForm.balance)) || Number(accountForm.balance) < 0)) {
+      setError("Please enter a valid non-negative opening balance or outstanding amount.");
       return;
     }
     const isCreditAccount = ["credit_card", "credit_line"].includes(accountForm.account_type);
@@ -9178,7 +9178,7 @@ const handleAccountSubmit = async () => {
           account_number:
             accountForm.account_number.trim(),
           currency: accountForm.currency,
-          balance: Number(accountForm.balance),
+          balance: accountForm.account_type === "loan" ? Number(accountForm.loan_principal) : Number(accountForm.balance),
           credit_limit: isCreditAccount ? Number(accountForm.credit_limit) : null,
         }
       : {
@@ -9188,7 +9188,7 @@ const handleAccountSubmit = async () => {
           institution: accountForm.institution.trim(),
           account_number: accountForm.account_number.trim(),
           currency: accountForm.currency,
-          balance: Number(accountForm.balance),
+          balance: accountForm.account_type === "loan" ? Number(accountForm.loan_principal) : Number(accountForm.balance),
           credit_limit: isCreditAccount ? Number(accountForm.credit_limit) : null,
         };
 
@@ -9953,7 +9953,7 @@ columnGap: "20px",
                   { key: "account_type", label: "Account type *", type: "select", required: true },
                   { key: "institution", label: "Bank / Institution", placeholder: "e.g. HDFC Bank", type: "text" },
                   { key: "account_number", label: "Account number", placeholder: "Enter account number (optional)", type: "text" },
-                  { key: "balance", label: ["credit_card", "credit_line"].includes(accountForm.account_type) ? "Opening outstanding amount (₹) *" : accountForm.account_type === "loan" ? "Opening outstanding principal (₹) *" : "Opening balance (₹) *", placeholder: "0.00", type: "number", required: true },
+                  ...(accountForm.account_type !== "loan" ? [{ key: "balance", label: ["credit_card", "credit_line"].includes(accountForm.account_type) ? "Opening outstanding amount (₹) *" : "Opening balance (₹) *", placeholder: "0.00", type: "number", required: true }] : []),
                   ...(["credit_card", "credit_line"].includes(accountForm.account_type) ? [
                     { key: "credit_limit", label: "Approved credit limit (₹) *", placeholder: "e.g. 100000", type: "number", required: true },
                   ] : []),

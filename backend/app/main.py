@@ -93,15 +93,20 @@ Base.metadata.create_all(
 )
 
 def _apply_account_credit_limit_migration():
-    """Add credit-limit storage to existing accounts without replacing records."""
+    """Add account credit fields and loan-account linking to existing databases."""
     inspector = inspect(engine)
-    if not inspector.has_table("accounts"):
-        return
-    columns = {column["name"] for column in inspector.get_columns("accounts")}
-    if "credit_limit" not in columns:
-        with engine.begin() as connection:
-            connection.execute(text("ALTER TABLE accounts ADD COLUMN credit_limit NUMERIC(18, 2)"))
-            
+    with engine.begin() as connection:
+        if inspector.has_table("accounts"):
+            account_columns = {column["name"] for column in inspector.get_columns("accounts")}
+            if "credit_limit" not in account_columns:
+                connection.execute(text("ALTER TABLE accounts ADD COLUMN credit_limit NUMERIC(18, 2)"))
+        if inspector.has_table("loans"):
+            loan_columns = {column["name"] for column in inspector.get_columns("loans")}
+            if "linked_account_id" not in loan_columns:
+                connection.execute(text("ALTER TABLE loans ADD COLUMN linked_account_id INTEGER"))
+            if engine.dialect.name == "postgresql":
+                connection.execute(text("CREATE INDEX IF NOT EXISTS ix_loans_linked_account_id ON loans (linked_account_id)"))
+
 _apply_account_credit_limit_migration()
 
 

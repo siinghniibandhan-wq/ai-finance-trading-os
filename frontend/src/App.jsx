@@ -4025,9 +4025,9 @@ function InvestmentTransactions() {
                         padding: "16px",
                         borderRadius: "16px",
                         background:
-                          "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+                          "var(--t-card-bg, var(--finos-surface, #ffffff))",
                         border:
-                          "1px solid rgba(255,255,255,0.08)",
+                          "1px solid var(--finos-border, #e1e6ef)",
                       }}
                     >
 
@@ -4204,7 +4204,7 @@ function InvestmentTransactions() {
                           <button type="button" className="secondary-button" onClick={() => editInvestmentTransaction(transaction)} style={{ padding: "6px 9px", fontSize: "11px" }}>Edit</button>
                           <button type="button" className="secondary-button" onClick={() => voidInvestmentTransaction(transaction)} style={{ padding: "6px 9px", fontSize: "11px", color: "#fca5a5" }}>Void</button>
                         </div>}
-                        {transaction.status === "VOIDED" && transaction.void_reason && <small style={{ color: "rgba(255,255,255,0.5)" }}>Reason: {transaction.void_reason}</small>}
+                        {transaction.status === "VOIDED" && transaction.void_reason && <small style={{ color: "var(--finos-muted, #64748b)" }}>Reason: {transaction.void_reason}</small>}
                       </div>
 
                     </div>

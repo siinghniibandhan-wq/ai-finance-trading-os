@@ -375,9 +375,67 @@ def list_liabilities(
     db: Session = Depends(get_db),
 ):
     items = db.query(Liability).filter(Liability.user_id == current_user.id).order_by(Liability.created_at.desc()).all()
+    active_liabilities = [x for x in items if x.status == "active"]
+    total = sum((x.outstanding_amount for x in active_liabilities), Decimal("0"))
+    liability_rows = [_liability_dict(x) for x in items]
+
+    # Credit products store the actual amount owed in Account.balance. Their
+    # credit_limit is a facility limit, never a liability balance.
+    # Loan accounts linked to a Loan are already represented by that loan's
+    # Liability row, so only unlinked loan accounts are added below.
+    account_liability_types = {
+        "credit_card", "creditcard", "credit_card_account",
+        "credit_line", "creditline", "credit_line_account",
+        "cash_credit", "cash_credit_account", "overdraft", "od",
+        "loan", "loan_account", "personal_loan", "home_loan", "term_loan",
+    }
+    accounts = (
+        db.query(Account)
+        .filter(Account.user_id == current_user.id, Account.is_active.is_(True))
+        .order_by(Account.id.desc())
+        .all()
+    )
+    linked_loan_account_ids = {
+        loan.linked_account_id
+        for loan in db.query(Loan).filter(Loan.user_id == current_user.id, Loan.linked_account_id.isnot(None)).all()
+    }
+    represented_loan_account_ids = {
+        loan.linked_account_id
+        for loan in db.query(Loan).join(Liability, Liability.loan_id == Loan.id)
+        .filter(Loan.user_id == current_user.id, Liability.user_id == current_user.id, Liability.status == "active", Loan.linked_account_id.isnot(None))
+        .all()
+    }
+    for account in accounts:
+        account_type = (account.account_type or "").strip().lower().replace("-", "_").replace(" ", "_")
+        if account_type not in account_liability_types:
+            continue
+        if account_type in {"loan", "loan_account"} and account.id in represented_loan_account_ids:
+            continue
+        # A linked loan without an active Liability is still represented by
+        # its Loan contract; avoid counting its account balance twice.
+        if account_type in {"loan", "loan_account"} and account.id in linked_loan_account_ids:
+            continue
+        outstanding = max(Decimal(str(account.balance or 0)), Decimal("0"))
+        if outstanding <= 0:
+            continue
+        total += outstanding
+        liability_rows.append({
+            "id": f"account-{account.id}",
+            "user_id": account.user_id,
+            "name": account.name,
+            "liability_type": account_type,
+            "original_amount": float(outstanding),
+            "outstanding_amount": float(outstanding),
+            "loan_id": None,
+            "due_date": None,
+            "notes": "Outstanding balance from linked financial account.",
+            "status": "active",
+            "account_id": account.id,
+        })
+
     return {
-        "status": "success", "liabilities": [_liability_dict(x) for x in items],
-        "total_outstanding": float(sum((x.outstanding_amount for x in items if x.status == "active"), Decimal("0"))),
+        "status": "success", "liabilities": liability_rows,
+        "total_outstanding": float(total),
     }
 
 

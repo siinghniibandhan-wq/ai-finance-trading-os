@@ -3327,3 +3327,55 @@ svg { flex-shrink: 0; }
   color: #171717 !important;
   -webkit-text-fill-color: #171717 !important;
 }
+
+
+/* BRUTALISM — strengthen text contrast in Wealth Manager's white chart panels.
+   These targeted overrides address nested/low-opacity labels that remain pale on white. */
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-chart-surface,
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-asset-composition,
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-sheet-chart {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border: 2px solid #111111 !important;
+  border-radius: 0 !important;
+  box-shadow: 5px 5px 0 #111111 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-chart-surface *,
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-asset-composition *,
+:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-sheet-chart * {
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
+) :is(h1,h2,h3,h4,h5,strong,b,em,p,span,small,label,div,button,td,th,li) {
+  -webkit-text-fill-color: currentColor;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
+) :is(h1,h2,h3,h4,h5,strong,b) {
+  color: #111111 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
+) :is(p,span,small,label,li,td,th) {
+  color: #333333 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
+) :is(svg text) {
+  fill: #111111 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
+) :is(input,select,button) {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border: 2px solid #111111 !important;
+  border-radius: 0 !important;
+}
+:root[data-finos-theme="brutalism"] .wealth-centre :is(
+  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
+) :is(button.active,button[aria-pressed="true"]) {
+  background: #facc15 !important;
+}

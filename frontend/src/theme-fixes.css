@@ -2190,3 +2190,34 @@
     padding: 12px !important;
   }
 }
+
+
+/* Definitive fix for the custom Financial OS dropdown used on Tax Calculation.
+   The visible boxed control is .finos-select-trigger (not the native select element). */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre .finos-select-trigger {
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--finos-border, #dfe4ec) 72%, transparent) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  background: var(--tax-input-surface, var(--finos-surface, #fff)) !important;
+  color: var(--tax-ink, var(--finos-text, #202938)) !important;
+  min-height: 42px;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre .finos-select-trigger:focus-visible,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre .finos-select-trigger[aria-expanded="true"] {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 20%, transparent) !important;
+  outline-offset: 1px;
+  border-bottom-color: var(--finos-accent, #7563dc) !important;
+}
+/* Make the three main Tax Calculation areas visibly distinct using whitespace
+   and subtle surfaces while avoiding heavy card borders. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre .finos-select-wrap {
+  min-width: 0;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre :is(.tax-calculation-settings,.tax-calculation-results,.tax-paid-section,.tax-credit-section) {
+  margin-block: 20px !important;
+  padding: 16px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--finos-surface, #fff) 72%, var(--finos-page, #f5f7fb) 28%) !important;
+}

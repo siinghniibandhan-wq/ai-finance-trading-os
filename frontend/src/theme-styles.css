@@ -1369,3 +1369,21 @@
   color: #b42332 !important;
   -webkit-text-fill-color: #b42332 !important;
 }
+
+
+/* Portfolio Holdings: label-only contrast repair for the six light themes.
+   Values, card surfaces, buttons, other themes and other modules are untouched. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .card-label {
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card :is(.holdings-row > div > div[style*="rgba(255,255,255"], .holdings-row > div > div[style*="color: rgba(255,255,255"]) {
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
+  opacity: 1 !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .card-label[style*="110, 231, 183"] {
+  color: #087f5b !important;
+  -webkit-text-fill-color: #087f5b !important;
+}

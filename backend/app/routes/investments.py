@@ -36,7 +36,7 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -1239,7 +1239,7 @@ def update_investment(
     existing = db.execute(
         text(
             """
-            SELECT id
+            SELECT id, investment_type, symbol, buy_date, broker
             FROM investments
             WHERE id = :investment_id AND user_id = :user_id
             """
@@ -1256,6 +1256,52 @@ def update_investment(
             status_code=404,
             detail="Investment not found.",
         )
+
+    # A ledger-backed position is derived from its BUY/SELL history. Do not
+    # silently overwrite its quantity/cost basis or change the broker/security
+    # identity through the legacy position form; those changes must go through
+    # the transaction ledger so history and holdings remain consistent.
+    if inspect(db.get_bind()).has_table("investment_transactions"):
+        ledger = db.execute(text("""
+            SELECT
+                COUNT(*) FILTER (WHERE status = 'ACTIVE') AS active_count,
+                COALESCE(SUM(CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                                  THEN quantity ELSE 0 END), 0)
+                  - COALESCE(SUM(CASE WHEN status = 'ACTIVE' AND transaction_type = 'SELL'
+                                      THEN quantity ELSE 0 END), 0) AS active_quantity,
+                COALESCE(SUM(CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                                  THEN quantity ELSE 0 END), 0) AS buy_quantity,
+                CASE WHEN COALESCE(SUM(CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                                            THEN quantity ELSE 0 END), 0) > 0
+                     THEN SUM(CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                                   THEN quantity * price + COALESCE(fees, 0) ELSE 0 END)
+                          / SUM(CASE WHEN status = 'ACTIVE' AND transaction_type = 'BUY'
+                                     THEN quantity ELSE 0 END)
+                     ELSE NULL END AS weighted_buy_price
+            FROM investment_transactions
+            WHERE user_id = :user_id AND investment_id = :investment_id
+        """), {"user_id": user_id, "investment_id": investment_id}).first()
+
+        if ledger and ledger.active_count:
+            ledger_quantity = Decimal(str(ledger.active_quantity or 0))
+            ledger_buy_price = Decimal(str(ledger.weighted_buy_price or 0))
+            quantity_changed = abs(Decimal(str(data.quantity)) - ledger_quantity) > Decimal("0.000001")
+            cost_changed = bool(ledger.buy_quantity) and abs(Decimal(str(data.buy_price)) - ledger_buy_price) > Decimal("0.0001")
+            identity_changed = (
+                data.investment_type.strip() != (existing.investment_type or "").strip()
+                or (data.symbol or "").strip().upper() != (existing.symbol or "").strip().upper()
+                or data.broker.strip() != (existing.broker or "").strip()
+                or data.buy_date != existing.buy_date
+            )
+            if quantity_changed or cost_changed or identity_changed:
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "This holding is controlled by its BUY/SELL transaction history. "
+                        "Edit the transaction from Portfolio → History to change quantity or cost basis. "
+                        "Broker, instrument, and opening-date changes are blocked to protect position identity."
+                    ),
+                )
 
     # --------------------------------------------------------
     # Update investment

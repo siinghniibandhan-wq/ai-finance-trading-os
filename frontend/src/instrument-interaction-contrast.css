@@ -5,7 +5,8 @@
 /* The active label colour is paired to the known accent used by each theme:
    the default/dark lavender accent needs dark ink; the light-theme slate and
    signature-theme accents use white ink. */
-:root[data-finos-theme="dark"],\n:root[data-finos-theme="default"] {
+:root[data-finos-theme="dark"],
+:root[data-finos-theme="default"] {
   --instrument-active-text: #21183b;
 }
 :root[data-finos-theme="light"],

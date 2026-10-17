@@ -1748,3 +1748,18 @@
 ) :is(body, #root, .app, .app-shell, .sidebar, .content, main, .modal-overlay, .modal-content) *::after {
   border-color: transparent !important;
 }
+
+
+/* Accounts: credit-card accounts use a responsive two-up grid on desktop,
+   switching to a single full-width card per row on mobile. */
+.account-list-grid.credit-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.account-list-grid.credit-card-grid > * {
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .account-list-grid.credit-card-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

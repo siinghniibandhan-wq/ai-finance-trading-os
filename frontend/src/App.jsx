@@ -5605,7 +5605,7 @@ function Portfolio() {
 
   // Shared muted text style used by Portfolio and the investment form.
   // Keep this local to Portfolio so it does not depend on MarketsPage state.
-  const muted = { color: "rgba(255,255,255,0.55)", fontSize: "12px", lineHeight: 1.6 };
+  const muted = { color: "var(--finos-muted)", fontSize: "12px", lineHeight: 1.6 };
   
   // ----------------------------------------------------------
   // ADD INVESTMENT FORM STATE
@@ -6413,9 +6413,9 @@ const handleInvestmentTransactionSubmit =
     boxSizing: "border-box",
     padding: "11px 12px",
     borderRadius: "10px",
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.05)",
-    color: "#ffffff",
+    border: "1px solid var(--finos-border)",
+    background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+    color: "var(--finos-text)",
     fontSize: "12px",
     outline: "none",
   };
@@ -6828,7 +6828,7 @@ const summaryCards = [
           <p
             style={{
               margin: 0,
-              color: "rgba(255,255,255,0.55)",
+              color: "var(--finos-muted)",
               fontSize: "13px",
             }}
           >
@@ -6928,7 +6928,7 @@ const summaryCards = [
             {/* ADD mode requires a canonical search result; EDIT mode edits the existing record directly. */}
             {editingInvestmentId ? (
               <div style={{ gridColumn: "1 / -1" }}>
-                <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Investment Instrument</label>
+                <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Investment Instrument</label>
                 <input type="text" value={investmentForm.name} onChange={(event) => setInvestmentForm((previous) => ({ ...previous, name: event.target.value }))} required style={investmentFieldStyle} />
                 <div style={{ ...muted, marginTop: "5px" }}>Editing the existing investment. Instrument search is only required when adding a new investment.</div>
               </div>
@@ -6936,10 +6936,10 @@ const summaryCards = [
               <div style={{ gridColumn: "1 / -1", position: "relative" }}>
                 {["Stocks", "ETFs", "REITs", "Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(investmentForm.investment_type) ? (
                   <>
-                    <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Investment Instrument (required)</label>
+                    <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Investment Instrument (required)</label>
                     <input type="text" autoComplete="off" placeholder={["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(investmentForm.investment_type) ? "Search mutual fund scheme" : "Search listed instrument, e.g. HDFC Bank"} value={instrumentQuery || investmentForm.name} onChange={(event) => searchInvestmentInstruments(event.target.value)} style={investmentFieldStyle} />
                     {instrumentSearchBusy && <div style={{ ...muted, marginTop: "5px" }}>Searching {["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(investmentForm.investment_type) ? "fund schemes" : "listed instruments"}…</div>}
-                    {instrumentSearchError && <div role="status" style={{ color: "rgba(255,255,255,0.65)", fontSize: "12px", marginTop: "5px" }}>{instrumentSearchError}</div>}
+                    {instrumentSearchError && <div role="status" style={{ color: "var(--finos-muted)", fontSize: "12px", marginTop: "5px" }}>{instrumentSearchError}</div>}
                     {instrumentResults.length > 0 && <div className="instrument-search-results" role="listbox" aria-label="Instrument search results" style={{ position: "absolute", zIndex: 20, top: "100%", left: 0, right: 0, maxHeight: "240px", overflowY: "auto" }}>
                       {instrumentResults.map((instrument, index) => {
                         const displayName = instrument.scheme_name || instrument.name || instrument.company_name || instrument.tradingsymbol || instrument.symbol;
@@ -6958,7 +6958,7 @@ const summaryCards = [
                   </>
                 ) : (
                   <>
-                    <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Investment Name (manual entry)</label>
+                    <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Investment Name (manual entry)</label>
                     <input type="text" value={investmentForm.name} onChange={(event) => setInvestmentForm((previous) => ({ ...previous, name: event.target.value, symbol: "" }))} placeholder={investmentForm.investment_type === "Fixed Deposits" ? "Bank / issuer name" : investmentForm.investment_type === "Recurring Deposits" ? "Bank / RD name" : `Enter ${investmentForm.investment_type} name`} required style={investmentFieldStyle} />
                     <div style={{ ...muted, marginTop: "5px" }}>No dedicated catalogue is connected for this product type. Enter its details manually.</div>
                   </>
@@ -6969,7 +6969,7 @@ const summaryCards = [
 
             {/* ASSET CLASS — high-level investment classification */}
             <div>
-              <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Asset Class</label>
+              <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Asset Class</label>
               <StyledSelect className="finos-select"
                 value={investmentForm.asset_class || "Equity"}
                 onChange={(event) => {
@@ -6984,7 +6984,7 @@ const summaryCards = [
                   setInstrumentResults([]);
                   setInstrumentSearchError("");
                 }}
-                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.05)", color: "#ffffff", fontSize: "12px", outline: "none" }}
+                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px", outline: "none" }}
               >
                 <option value="Equity">Equity</option>
                 <option value="Fixed Income">Fixed Income</option>
@@ -6998,7 +6998,7 @@ const summaryCards = [
 
             {/* PRODUCT TYPE — existing investment-type catalogue */}
             <div>
-            <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Product Type</label>
+            <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Product Type</label>
             <StyledSelect className="finos-select"
               value={investmentForm.investment_type}
               onChange={(event) => {
@@ -7025,10 +7025,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
               }}
@@ -7047,7 +7047,7 @@ const summaryCards = [
               readOnly={!editingInvestmentId}
               required={!editingInvestmentId}
               onChange={(event) => setInvestmentForm((previous) => ({ ...previous, symbol: event.target.value }))}
-              style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "#ffffff", fontSize: "12px", outline: "none" }}
+              style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px", outline: "none" }}
             />
 
             {/* QUANTITY */}
@@ -7068,10 +7068,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
               }}
@@ -7098,10 +7098,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
               }}
@@ -7115,7 +7115,7 @@ const summaryCards = [
         display: "block",
         marginBottom: "6px",
         fontSize: "11px",
-        color: "rgba(255,255,255,0.60)",
+        color: "var(--finos-muted)",
       }}
     >
       Current Price
@@ -7158,10 +7158,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
                 colorScheme: "dark",
@@ -7171,7 +7171,7 @@ const summaryCards = [
 
             {/* BROKER — mandatory dropdown, with explicit custom broker option */}
             <div>
-              <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Broker / Platform (required)</label>
+              <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Broker / Platform (required)</label>
               <StyledSelect className="finos-select"
                 value={brokerChoice || (investmentForm.broker && !["Zerodha", "Groww", "Upstox", "Angel One", "ICICI Direct", "HDFC Securities", "Kotak Securities", "m.Stock", "Other"].includes(investmentForm.broker) ? "Other" : investmentForm.broker)}
                 onChange={(event) => {
@@ -7181,12 +7181,12 @@ const summaryCards = [
                   setInvestmentForm((previous) => ({ ...previous, broker: value === "Other" ? "" : value }));
                 }}
                 required
-                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.05)", color: "#ffffff", fontSize: "12px", outline: "none" }}
+                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px", outline: "none" }}
               >
                 <option value="">Select broker…</option>
                 <option value="Zerodha">Zerodha</option><option value="Groww">Groww</option><option value="Upstox">Upstox</option><option value="Angel One">Angel One</option><option value="ICICI Direct">ICICI Direct</option><option value="HDFC Securities">HDFC Securities</option><option value="Kotak Securities">Kotak Securities</option><option value="m.Stock">m.Stock (Mirae Asset)</option><option value="Other">Other (enter broker)</option>
               </StyledSelect>
-              {brokerChoice === "Other" && <input type="text" placeholder="Enter broker name (required)" value={customBroker} onChange={(event) => { setCustomBroker(event.target.value); setInvestmentForm((previous) => ({ ...previous, broker: event.target.value })); }} required style={{ width: "100%", boxSizing: "border-box", marginTop: "8px", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.05)", color: "#ffffff", fontSize: "12px" }} />}
+              {brokerChoice === "Other" && <input type="text" placeholder="Enter broker name (required)" value={customBroker} onChange={(event) => { setCustomBroker(event.target.value); setInvestmentForm((previous) => ({ ...previous, broker: event.target.value })); }} required style={{ width: "100%", boxSizing: "border-box", marginTop: "8px", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px" }} />}
             </div>
 
             {/* FEES */}
@@ -7207,10 +7207,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
               }}
@@ -7236,10 +7236,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
                 resize: "vertical",
@@ -7301,7 +7301,7 @@ const summaryCards = [
   .portfolio-summary-value {
     font-size: 20px;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--finos-text);
     white-space: nowrap;
   }
 
@@ -7341,7 +7341,7 @@ const summaryCards = [
             <div
               style={{
                 fontSize: "10px",
-                color: "rgba(255,255,255,0.42)",
+                color: "var(--finos-muted)",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
                 marginBottom: "8px",
@@ -7358,7 +7358,7 @@ const summaryCards = [
               style={{
                 marginTop: "6px",
                 fontSize: "11px",
-                color: "rgba(255,255,255,0.42)",
+                color: "var(--finos-muted)",
               }}
             >
               {card.change}
@@ -7417,7 +7417,7 @@ const summaryCards = [
                 style={{
                   marginTop: "4px",
                   fontSize: "11px",
-                  color: "rgba(255,255,255,0.45)",
+                  color: "var(--finos-muted)",
                 }}
               >
                 Track portfolio growth over time
@@ -7441,9 +7441,9 @@ const summaryCards = [
                       background:
                         index === 3
                           ? "rgba(168,85,247,0.18)"
-                          : "rgba(255,255,255,0.04)",
+                          : "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
                       border:
-                        "1px solid rgba(255,255,255,0.08)",
+                        "1px solid var(--finos-border)",
                       color:
                         index === 3
                           ? "#d8b4fe"
@@ -7467,9 +7467,9 @@ const summaryCards = [
               justifyContent: "center",
               borderRadius: "14px",
               border:
-                "1px dashed rgba(255,255,255,0.10)",
+                "1px dashed var(--finos-border)",
               background:
-                "rgba(255,255,255,0.02)",
+                "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
             }}
           >
 
@@ -7482,7 +7482,7 @@ const summaryCards = [
   <div
     style={{
       fontSize: "12px",
-      color: "rgba(255,255,255,0.45)",
+      color: "var(--finos-muted)",
       marginBottom: "8px",
     }}
   >
@@ -7502,7 +7502,7 @@ const summaryCards = [
   <div
     style={{
       fontSize: "12px",
-      color: "rgba(255,255,255,0.45)",
+      color: "var(--finos-muted)",
     }}
   >
     Current portfolio value
@@ -7547,7 +7547,7 @@ const summaryCards = [
             style={{
               marginTop: "4px",
               fontSize: "11px",
-              color: "rgba(255,255,255,0.45)",
+              color: "var(--finos-muted)",
             }}
           >
             Where your investment money is allocated
@@ -7593,7 +7593,7 @@ const summaryCards = [
                 <div
                   style={{
                     fontSize: "9px",
-                    color: "rgba(255,255,255,0.40)",
+                    color: "var(--finos-muted)",
                     textTransform: "uppercase",
                   }}
                 >
@@ -7631,7 +7631,7 @@ const summaryCards = [
         >
           <span
             style={{
-              color: "rgba(255,255,255,0.65)",
+              color: "var(--finos-muted)",
             }}
           >
             {type}
@@ -7690,7 +7690,7 @@ const summaryCards = [
               style={{
                 marginTop: "4px",
                 fontSize: "11px",
-                color: "rgba(255,255,255,0.45)",
+                color: "var(--finos-muted)",
               }}
             >
               Your current investments
@@ -7702,11 +7702,11 @@ const summaryCards = [
               padding: "5px 9px",
               borderRadius: "999px",
               fontSize: "10px",
-              color: "rgba(255,255,255,0.55)",
+              color: "var(--finos-muted)",
               background:
-                "rgba(255,255,255,0.05)",
+                "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
               border:
-                "1px solid rgba(255,255,255,0.08)",
+                "1px solid var(--finos-border)",
             }}
           >
             {investments.length} Holdings
@@ -7719,7 +7719,7 @@ const summaryCards = [
     minHeight: "120px",
     borderRadius: "14px",
     background:
-      "rgba(255,255,255,0.02)",
+      "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
     border:
       "1px solid rgba(255,255,255,0.06)",
     padding: "14px",
@@ -7809,9 +7809,9 @@ const holdingReturn =
             padding: "14px",
             borderRadius: "12px",
             background:
-              "rgba(255,255,255,0.04)",
+              "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
             border:
-              "1px solid rgba(255,255,255,0.08)",
+              "1px solid var(--finos-border)",
             marginBottom: "8px",
           }}
         >
@@ -7878,7 +7878,7 @@ const holdingReturn =
     style={{
       marginTop: "4px",
       fontSize: "10px",
-      color: "rgba(255,255,255,0.40)",
+      color: "var(--finos-muted)",
     }}
   >
     Invested
@@ -7899,7 +7899,7 @@ const holdingReturn =
     style={{
       marginTop: "4px",
       fontSize: "10px",
-      color: "rgba(255,255,255,0.40)",
+      color: "var(--finos-muted)",
     }}
   >
     Current Value
@@ -7920,7 +7920,7 @@ const holdingReturn =
     style={{
       marginTop: "4px",
       fontSize: "10px",
-      color: "rgba(255,255,255,0.40)",
+      color: "var(--finos-muted)",
     }}
   >
     Gain / Loss
@@ -8113,7 +8113,7 @@ const holdingReturn =
               style={{
                 marginTop: "4px",
                 fontSize: "11px",
-                color: "rgba(255,255,255,0.45)",
+                color: "var(--finos-muted)",
               }}
             >
               {transactionModal.investment.symbol ||
@@ -8442,7 +8442,7 @@ const holdingReturn =
                   padding: "10px",
                   borderRadius: "10px",
                   background:
-                    "rgba(255,255,255,0.05)",
+                    "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
                   fontSize: "11px",
                 }}
               >
@@ -8496,7 +8496,7 @@ const holdingReturn =
             </div>
 
             {transactionMessage && (
-              <div style={{ marginBottom: "12px", padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", fontSize: "11px" }}>
+              <div style={{ marginBottom: "12px", padding: "10px", borderRadius: "10px", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", fontSize: "11px" }}>
                 {transactionMessage}
               </div>
             )}
@@ -8549,9 +8549,9 @@ const holdingReturn =
                         padding: "12px",
                         borderRadius: "12px",
                         background:
-                          "rgba(255,255,255,0.04)",
+                          "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
                         border:
-                          "1px solid rgba(255,255,255,0.08)",
+                          "1px solid var(--finos-border)",
                       }}
                     >
 
@@ -8692,7 +8692,7 @@ const holdingReturn =
                           </>
                         )}
                         {(transaction.status || "ACTIVE") !== "ACTIVE" && (
-                          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>Voided — audit record retained</span>
+                          <span style={{ fontSize: "11px", color: "var(--finos-muted)" }}>Voided — audit record retained</span>
                         )}
                       </div>
 

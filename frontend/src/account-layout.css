@@ -1,0 +1,111 @@
+/* Focused Money > Accounts layout refinement.
+   Uses existing FinOS theme variables and leaves account behavior untouched. */
+.money-accounts .account-list-grid {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  align-items: stretch;
+  min-width: 0;
+}
+.money-accounts .account-strip-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+.money-accounts .account-strip-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(130px, .7fr) minmax(190px, .75fr);
+  grid-template-rows: auto;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  background: var(--finos-account-card-bg, var(--finos-panel, rgba(15,23,42,.76)));
+  border: 1px solid var(--finos-account-card-border, var(--finos-border, rgba(167,139,250,.16)));
+  box-shadow: var(--finos-account-card-shadow, 0 8px 22px rgba(0,0,0,.10));
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.money-accounts .account-strip-item:not(.account-credit-card) > div {
+  min-width: 0;
+}
+.money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) {
+  justify-self: end;
+  width: 100%;
+}
+.money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 7px;
+}
+.money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) button {
+  width: auto !important;
+  min-width: 68px;
+}
+.money-accounts .account-strip-item.account-credit-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 13px;
+  padding: 14px;
+  border-radius: 18px;
+  min-width: 0;
+  align-content: start;
+}
+.money-accounts .credit-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.money-accounts .account-credit-card > div:nth-child(1) {
+  min-width: 0;
+}
+.money-accounts .account-credit-card > div:nth-child(2) {
+  min-width: 0;
+}
+.money-accounts .account-credit-card > div:nth-child(3) {
+  padding-top: 10px;
+  border-top: 1px solid var(--finos-border, rgba(167,139,250,.16));
+}
+.money-accounts .account-credit-card > div:nth-child(4) {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.money-accounts .account-credit-card > div:nth-child(4) button {
+  width: auto !important;
+  flex: 1 1 80px;
+}
+.money-accounts .account-strip-item button {
+  min-height: 34px;
+  box-sizing: border-box;
+}
+@media (max-width: 760px) {
+  .money-accounts .credit-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .money-accounts .account-strip-item:not(.account-credit-card) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 13px;
+  }
+  .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(1) {
+    grid-column: 1 / -1;
+  }
+  .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) {
+    justify-self: start;
+  }
+  .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 420px) {
+  .money-accounts .account-credit-card {
+    padding: 11px;
+  }
+  .money-accounts .account-credit-card > div:first-child {
+    padding: 14px !important;
+  }
+}

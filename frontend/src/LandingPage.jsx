@@ -8,9 +8,9 @@ import {
 import "./landing.css";
 
 const plans = [
-  { name: "Starter", price: 1999, tagline: "Build better money habits", popular: false, features: ["Accounts and transaction tracking", "Budgets and expense categories", "Investment portfolio tracking", "Financial dashboard", "Core planning tools", "Email support"] },
-  { name: "Professional", price: 5999, tagline: "For active money managers", popular: true, features: ["Everything in Starter", "Advanced portfolio analytics", "Financial goals and planning", "Expanded market insights", "All available themes", "AI assistant tools", "Tax organisation tools", "Razorpay payment support"] },
-  { name: "Enterprise", price: 9999, tagline: "Deeper insights in one workspace", popular: false, features: ["Everything in Professional", "Advanced financial analytics", "Research Playground access", "Advanced AI financial analysis", "Expanded research tools", "Priority support"] },
+  { name: "Orbit", price: 69, tagline: "Essential money management", popular: false, features: ["Accounts module", "Budget creation and tracking", "Account balances and summaries", "Basic income and expense tracking"] },
+  { name: "Nova", price: 199, tagline: "Complete personal finance workspace", popular: true, features: ["Everything in Orbit", "All standard Financial OS modules", "Transactions, transfers and categories", "Investments, holdings and portfolio tracking", "Markets, instrument search and watchlists", "Loans, goals and financial planning", "Dashboards and analytics", "Available tax calculations and planning tools", "Standard AI tools and themes"] },
+  { name: "Galaxy", price: 399, tagline: "Premium financial intelligence", popular: false, features: ["Everything in Nova", "Premium tax-filing assistance and workflows", "Wealth Manager tools", "Advanced tax planning and wealth analytics", "Advanced AI and Research Playground tools where available", "Priority support"] },
 ];
 const features = [
   { icon: Wallet, title: "Money, organised", text: "Bring accounts, transactions, budgets and bills into one clear workspace." },
@@ -43,7 +43,7 @@ export default function LandingPage() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [checkoutMessage, setCheckoutMessage] = useState("");
-  const prices = { monthly: [1999, 5999, 9999], halfYearly: [null, null, null], annually: [null, null, null] };
+  const prices = { monthly: [69, 199, 399], halfYearly: [null, null, null], annually: [null, null, null] };
   const billingLabel = billing === "monthly" ? "/ month" : billing === "halfYearly" ? "/ 6 months" : "/ year";
   const displayedThemes = showAllThemes ? themes : themes.slice(0, 5);
   const goApp = () => { window.location.href = "/login"; };
@@ -155,6 +155,21 @@ export default function LandingPage() {
       <section className="fos-faq-section fos-container" id="faq"><div className="fos-section-head"><div><div className="fos-eyebrow">GOOD QUESTIONS</div><h2>Know before<br/><span>you get started.</span></h2></div><p>Some capabilities and subscription rules are still being built. We aim to make the details clear before you purchase.</p></div><div className="fos-faq-list">{faqs.map(([q,a],i)=><article className={`fos-faq-item ${faqOpen===i?"open":""}`} key={q}><button onClick={()=>setFaqOpen(faqOpen===i?-1:i)}><span>{q}</span><ChevronDown size={19}/></button>{faqOpen===i&&<p>{a}</p>}</article>)}</div></section>
 
       <section className="fos-final-cta fos-container"><div className="fos-final-glow"/><div className="fos-eyebrow">YOUR NEXT STEP STARTS HERE</div><h2>Make room for a clearer<br/><span>financial future.</span></h2><p>Bring your money, investments and plans into one connected workspace.</p><button className="fos-cta" onClick={goApp}>Create your account <ArrowRight size={18}/></button><small>Secure checkout is available for monthly plans. Plan activation may require support confirmation.</small></section>
+      <section className="fos-refund-section fos-container" id="refund-policy">
+        <div className="fos-eyebrow">BILLING TRANSPARENCY</div>
+        <h2>Refund &amp; Cancellation Policy</h2>
+        <p className="fos-refund-owner"><strong>Policy owner: KPMC Enterprises</strong> — Financial OS is part of KPMC Enterprises.</p>
+        <div className="fos-refund-grid">
+          <article><h3>1. Eligible refund requests</h3><p>If you were charged more than once for the same order, or a payment was debited but the order was not successfully created or confirmed, contact support with your payment ID and transaction details. We will review the transaction and arrange a refund where the duplicate or failed payment is confirmed.</p></article>
+          <article><h3>2. Digital subscription purchases</h3><p>Please review the plan features and price before paying. Because Financial OS plans provide access to digital services, a change of mind or non-use of a plan does not automatically qualify for a refund once the plan has been activated. This does not limit any refund rights that apply under law.</p></article>
+          <article><h3>3. Plan activation and cancellations</h3><p>Payment confirmation and plan activation may be separate steps. If your payment is verified but your plan is not activated, contact support before making another payment. You may request cancellation through support; cancellation does not itself guarantee a refund. No automatic renewal is promised by this policy.</p></article>
+          <article><h3>4. How to request a refund</h3><p>Contact Financial OS support at <a href="tel:+917644841104">+91 76448 41104</a> or through <a href="https://wa.me/917644841104" target="_blank" rel="noreferrer">WhatsApp</a>. Include the name and email used at checkout, payment ID or order ID, payment date, amount, and a short explanation. Do not send card details, UPI PINs, passwords, or OTPs.</p></article>
+          <article><h3>5. Review and processing</h3><p>KPMC Enterprises will review the request and may ask for relevant transaction information. If a refund is approved, it will be initiated to the original payment method where supported. The time taken for the amount to appear depends on the payment provider and the customer’s bank.</p></article>
+          <article><h3>6. Policy updates and applicable rights</h3><p>This policy applies to purchases made through Financial OS and may be updated when the service or applicable requirements change. Nothing in this policy removes rights that cannot legally be excluded. Please contact support if you need clarification before purchasing.</p></article>
+        </div>
+        <p className="fos-refund-disclaimer">This policy is published for KPMC Enterprises in relation to Financial OS. Confirm the exact registered legal entity name and have the final wording reviewed for your business and applicable law before accepting live payments.</p>
+      </section>
+
       <section className="fos-contact-section fos-container" id="contact">
         <div className="fos-contact-copy"><div className="fos-eyebrow">WE'RE HERE TO HELP</div><h2>Questions? <span>Talk to us.</span></h2><p>Contact Financial OS support for account, billing, payment, or plan-activation questions.</p></div>
         <div className="fos-contact-actions"><a className="fos-contact-card" href="tel:+917644841104"><strong>Call us</strong><span>+91 76448 41104</span></a><a className="fos-contact-card" href="https://wa.me/917644841104" target="_blank" rel="noreferrer"><strong>WhatsApp</strong><span>Chat with support</span></a></div>
@@ -177,6 +192,6 @@ export default function LandingPage() {
         <small className="fos-checkout-legal">By continuing, you agree to contact support for subscription activation or payment issues. Payments are processed by Razorpay.</small>
       </section>
     </div>}
-    <footer className="fos-footer"><div className="fos-container fos-footer-main"><a className="fos-brand" href="#top"><span className="fos-brand-mark"><Layers3 size={20}/></span><span>Financial<span className="fos-brand-accent">OS</span><small>YOUR MONEY. ONE WORKSPACE.</small></span></a><p>One workspace for money management, investing and planning.</p><div className="fos-footer-links"><a href="#features">Features</a><a href="#plans">Pricing</a><a href="#faq">FAQ</a><a href="#privacy">Privacy</a><a href="#contact">Contact</a></div></div><div className="fos-container fos-footer-bottom"><span>© {new Date().getFullYear()} Financial OS. All rights reserved.</span><span>Part of KPMC Enterprises · Illustrative previews only. Not investment advice.</span></div></footer>
+    <footer className="fos-footer"><div className="fos-container fos-footer-main"><a className="fos-brand" href="#top"><span className="fos-brand-mark"><Layers3 size={20}/></span><span>Financial<span className="fos-brand-accent">OS</span><small>YOUR MONEY. ONE WORKSPACE.</small></span></a><p>One workspace for money management, investing and planning.</p><div className="fos-footer-links"><a href="#features">Features</a><a href="#plans">Pricing</a><a href="#faq">FAQ</a><a href="#privacy">Privacy</a><a href="#refund-policy">Refund Policy</a><a href="#contact">Contact</a></div></div><div className="fos-container fos-footer-bottom"><span>© {new Date().getFullYear()} Financial OS. All rights reserved.</span><span>Part of KPMC Enterprises · Illustrative previews only. Not investment advice.</span></div></footer>
   </div>;
 }

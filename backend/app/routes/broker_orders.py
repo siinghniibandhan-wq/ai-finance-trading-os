@@ -19,7 +19,7 @@ from urllib.request import Request, urlopen
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
 
-from app.routes.auth import get_current_user
+from app.routes.auth import get_current_user, get_current_admin
 from app.models import User
 
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
@@ -104,8 +104,8 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
 
 
 @router.post("/", status_code=202)
-def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends(get_current_user)):
-    """Submit a real broker order. The AWS gateway handles broker authentication."""
+def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends(get_current_admin)):
+    """Submit a real broker order; restrict real-money order placement to the configured platform owner."""
     payload = {
         "side": request.side,
         "symbol": request.symbol,

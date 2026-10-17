@@ -64,3 +64,25 @@ def test_normalize_mstock_style_tradebook_fields_with_gateway_mapping():
     assert trade["side"] == "BUY"
     assert trade["quantity"] == Decimal("3")
     assert trade["price"] == Decimal("1500.50")
+
+def test_normalize_official_mstock_uppercase_tradebook_fields():
+    trade = _normalize_trade({
+        "TRADE_NUMBER": "MT-9001",
+        "ORDER_NUMBER": "MO-7001",
+        "client_reference": "financial-os-7-verified",
+        "SYMBOL": "INFY-EQ",
+        "BUY_SELL": "BUY",
+        "QUANTITY": "2",
+        "PRICE": "1512.40",
+        "ORDER_DATE_TIME": "2026-10-17T10:15:00",
+        "EXCHANGE": "NSE",
+    })
+    assert trade is not None
+    assert trade["trade_id"] == "MT-9001"
+    assert trade["client_reference"] == "financial-os-7-verified"
+    assert trade["symbol"] == "INFY-EQ"
+    assert trade["side"] == "BUY"
+    assert trade["quantity"] == Decimal("2")
+    assert trade["price"] == Decimal("1512.40")
+    assert trade["trade_date"] == date(2026, 10, 17)
+

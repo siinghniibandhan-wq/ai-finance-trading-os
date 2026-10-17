@@ -10,19 +10,19 @@
   box-shadow: var(--t-shadow) !important;
 }
 :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid > .metric-card:hover {
-  background: var(--t-card-bg, #141c30) !important;
-  border-color: var(--finos-border, rgba(255,255,255,.12)) !important;
-  box-shadow: var(--t-shadow, none) !important;
+  background: var(--t-card-bg) !important;
+  border-color: var(--finos-border) !important;
+  box-shadow: var(--t-shadow) !important;
   transform: none;
 }
 :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-label {
   color: var(--finos-muted) !important;
 }
 :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-value {
-  color: var(--finos-text, #f4f5ff) !important;
+  color: var(--finos-text) !important;
 }
 :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-icon {
   color: var(--finos-accent) !important;
   background: var(--t-inner-bg) !important;
-  border-color: var(--finos-border, rgba(255,255,255,.12)) !important;
+  border-color: var(--finos-border) !important;
 }

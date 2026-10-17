@@ -19,7 +19,7 @@ from urllib.request import Request, urlopen
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
 
-from app.routes.auth import get_current_user
+from app.routes.auth import get_current_user, get_current_admin
 from app.models import User
 
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
@@ -75,6 +75,13 @@ class BrokerOrderRequest(BaseModel):
 def _gateway_request(path: str, method: str, payload: dict | None = None, query: dict | None = None):
     if not GATEWAY_URL:
         raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_URL is not configured.")
+    # Broker credentials are shared by the configured m.Stock account. Keep
+    # the secret on loopback only; never send it to a public IP over HTTP.
+    if GATEWAY_URL not in {"http://127.0.0.1:8000", "http://localhost:8000"}:
+        raise HTTPException(
+            status_code=503,
+            detail="Broker gateway must be configured on loopback HTTP (127.0.0.1:8000).",
+        )
     if not GATEWAY_SECRET:
         raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_SECRET is not configured; broker gateway requests are disabled.")
     url = f"{GATEWAY_URL}{path}"
@@ -113,8 +120,8 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
 
 
 @router.post("/", status_code=202)
-def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends(get_current_user)):
-    """Submit a real broker order. The AWS gateway handles broker authentication."""
+def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends(get_current_admin)):
+    """Submit a real-money order only for the configured platform owner."""
     payload = {
         "side": request.side,
         "symbol": request.symbol,
@@ -188,7 +195,7 @@ def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends
 
 
 @router.get("/")
-def list_broker_orders(current_user: User = Depends(get_current_user), status: str | None = Query(default=None, max_length=30)):
+def list_broker_orders(current_user: User = Depends(get_current_admin), status: str | None = Query(default=None, max_length=30)):
     """Read broker order book; the gateway must return orders belonging to its configured account."""
     query = {"status": status} if status else None
     result = _gateway_request(GATEWAY_ORDER_BOOK_PATH, "GET", query=query)

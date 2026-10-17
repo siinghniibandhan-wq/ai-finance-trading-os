@@ -13773,37 +13773,15 @@ function Category() {
               setShowForm(false);
             }
           }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 10050,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "18px",
-            background: "rgba(3, 5, 15, 0.78)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-          }}
+          className="category-form-overlay"
         >
 
         <div
-          className="glass-card"
+          className="glass-card category-form-dialog"
           role="dialog"
           aria-modal="true"
           aria-labelledby="category-form-title"
-          style={{
-            width: "100%",
-            maxWidth: "560px",
-            maxHeight: "min(88vh, 760px)",
-            overflowY: "auto",
-            padding: "24px",
-            borderRadius: "22px",
-            border: "1px solid rgba(190, 100, 255, 0.28)",
-            boxShadow: "0 24px 80px rgba(0,0,0,0.55)",
-            background: "linear-gradient(145deg, rgba(25, 26, 48, 0.98), rgba(17, 20, 36, 0.98))",
-            boxSizing: "border-box",
-          }}
+
         >
 
           <div className="card-header">
@@ -13830,7 +13808,7 @@ function Category() {
               aria-label="Close category form"
               onClick={() => !saving && setShowForm(false)}
               disabled={saving}
-              style={{ minWidth: "38px", padding: "8px 12px", borderRadius: "12px" }}
+              className="secondary-button category-form-close"
             >
               ✕
             </button>
@@ -13841,11 +13819,7 @@ function Category() {
 
             {/* NAME */}
 
-            <div
-              style={{
-                marginBottom: "16px",
-              }}
-            >
+            <div className="category-form-field">
 
               <label>
                 Category Name
@@ -13861,12 +13835,7 @@ function Category() {
                     event.target.value
                   )
                 }
-                style={{
-                  width: "100%",
-                  marginTop: "8px",
-                  padding: "12px",
-                  borderRadius: "12px",
-                }}
+                className="category-form-input"
               />
 
             </div>
@@ -13894,12 +13863,7 @@ function Category() {
                     event.target.value
                   )
                 }
-                style={{
-                  width: "100%",
-                  marginTop: "8px",
-                  padding: "12px",
-                  borderRadius: "12px",
-                }}
+                className="category-form-select"
               >
 
                 <option value="expense">
@@ -13920,12 +13884,12 @@ function Category() {
 
 
             {/* OPTIONAL PARENT: selecting one creates a subcategory path */}
-            <div style={{ marginBottom: "16px" }}>
+            <div className="category-form-field">
               <label>Parent Category (optional)</label>
               <StyledSelect className="finos-select"
                 value={formData.parent_category}
                 onChange={(event) => updateForm("parent_category", event.target.value)}
-                style={{ width: "100%", marginTop: "8px", padding: "12px", borderRadius: "12px" }}
+                className="category-form-select"
               >
                 <option value="">None — create a main category</option>
                 {formData.category_type === "income" && <option value="Business/Profession">Business / Profession</option>}
@@ -13934,7 +13898,7 @@ function Category() {
                   .filter((category) => category.category_type === formData.category_type && !String(category.name || "").includes(" > ") && (!editingCategory || category.id !== editingCategory.id))
                   .map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}
               </StyledSelect>
-              <p style={{ marginTop: "6px", fontSize: "11px", color: "rgba(255,255,255,.5)" }}>Choose a parent to create a subcategory. Existing categories and transaction records are preserved.</p>
+              <p className="category-form-help">Choose a parent to create a subcategory. Existing categories and transaction records are preserved.</p>
             </div>
 
             {/* DESCRIPTION */}
@@ -13961,14 +13925,7 @@ function Category() {
                   )
                 }
                 rows="3"
-                style={{
-                  width: "100%",
-                  marginTop: "8px",
-                  padding: "12px",
-                  borderRadius: "12px",
-                  resize: "vertical",
-                  boxSizing: "border-box",
-                }}
+                className="category-form-textarea"
               />
 
             </div>
@@ -13976,12 +13933,7 @@ function Category() {
 
             {/* ACTIONS */}
 
-            <div
-              style={{
-                display: "flex",
-                gap: "12px",
-              }}
-            >
+            <div className="category-form-actions">
 
               <button
                 type="submit"
@@ -13997,7 +13949,7 @@ function Category() {
 
               <button
                 type="button"
-                className="secondary-button"
+                className="secondary-button category-form-cancel"
                 onClick={() =>
                   setShowForm(false)
                 }

@@ -36,14 +36,14 @@ def test_place_order_returns_acknowledgement_without_updating_portfolio(monkeypa
     assert result["order_id"] == "ORD-123"
     assert result["portfolio_updated"] is False
     assert "does not confirm execution" in result["message"]
-    assert captured["client_reference"].startswith("financial-os-7-")
+    assert captured["client_id"].startswith("financial-os-7-")
 
 
 def test_each_order_gets_a_unique_client_reference(monkeypatch):
     references = []
 
     def fake_gateway(path, method, payload):
-        references.append(payload["client_reference"])
+        references.append(payload["client_id"])
         return {"success": True, "order_id": f"ORD-{len(references)}"}
 
     monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
@@ -89,3 +89,24 @@ def test_ambiguous_gateway_response_requires_order_book_check(monkeypatch):
 
     assert error.value.status_code == 502
     assert "Check the broker order book" in error.value.detail
+
+
+
+def test_supplied_client_id_is_forwarded_unchanged(monkeypatch):
+    captured = {}
+
+    def fake_gateway(path, method, payload):
+        captured.update(payload)
+        return {"success": True, "order_id": "ORD-IDEMPOTENT"}
+
+    monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
+    request = request_payload()
+    request.client_id = "stable-order-attempt-123"
+
+    result = broker_orders.place_broker_order(
+        request, current_user=SimpleNamespace(id=7)
+    )
+
+    assert result["order_id"] == "ORD-IDEMPOTENT"
+    assert captured["client_id"] == "stable-order-attempt-123"
+    assert "client_reference" not in captured

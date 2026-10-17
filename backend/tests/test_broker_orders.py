@@ -67,7 +67,7 @@ def test_each_order_gets_a_unique_client_id_when_not_supplied(monkeypatch, db_se
     monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
     user = SimpleNamespace(id=7)
 
-    broker_orders.place_broker_order(request_payload(), current_user=user)
+    broker_orders.place_broker_order(request_payload(), db=db_session, current_user=user)
     broker_orders.place_broker_order(request_payload(), current_user=user)
 
     assert len(client_ids) == 2
@@ -100,7 +100,7 @@ def test_order_uses_gateway_order_endpoint(monkeypatch, db_session):
         return {"success": True, "order_id": "ORD-PATH"}
 
     monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
-    broker_orders.place_broker_order(request_payload(), current_user=SimpleNamespace(id=7))
+    broker_orders.place_broker_order(request_payload(), db=db_session, current_user=SimpleNamespace(id=7))
 
     assert captured == {"path": broker_orders.GATEWAY_ORDER_PLACE_PATH, "method": "POST"}
     assert broker_orders.GATEWAY_ORDER_PLACE_PATH == "/order"
@@ -223,3 +223,46 @@ def test_same_client_id_with_different_payload_is_blocked(monkeypatch, db_sessio
 
     assert error.value.status_code == 409
     assert len(calls) == 1
+
+
+def test_simultaneous_duplicate_requests_only_reach_gateway_once(monkeypatch, db_session):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    from sqlalchemy.orm import Session
+
+    engine = db_session.get_bind()
+    user = SimpleNamespace(id=79)
+    entered_gateway = Event()
+    release_gateway = Event()
+    calls = []
+
+    def fake_gateway(path, method, payload):
+        calls.append(payload["client_id"])
+        entered_gateway.set()
+        assert release_gateway.wait(timeout=5)
+        return {"success": True, "order_id": "ORD-CONCURRENT"}
+
+    monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
+
+    def submit():
+        session = Session(bind=engine, expire_on_commit=False)
+        try:
+            return broker_orders.place_broker_order(
+                request_payload("concurrent-key-1"), db=session, current_user=user
+            )
+        finally:
+            session.close()
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(submit)
+        assert entered_gateway.wait(timeout=5)
+        second = pool.submit(submit)
+        try:
+            with pytest.raises(HTTPException) as error:
+                second.result(timeout=5)
+            assert error.value.status_code == 409
+        finally:
+            release_gateway.set()
+        assert first.result(timeout=5)["order_id"] == "ORD-CONCURRENT"
+
+    assert calls == ["concurrent-key-1"]

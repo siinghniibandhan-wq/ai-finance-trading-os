@@ -30,7 +30,7 @@ const faqs = [
 ];
 
 export default function LandingPage() {
-  const [billing, setBilling] = useState("monthly");
+  const [billing] = useState("monthly");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState(0);
   const [theme, setTheme] = useState("Default");
@@ -157,7 +157,7 @@ export default function LandingPage() {
       <section className="fos-final-cta fos-container"><div className="fos-final-glow"/><div className="fos-eyebrow">YOUR NEXT STEP STARTS HERE</div><h2>Make room for a clearer<br/><span>financial future.</span></h2><p>Bring your money, investments and plans into one connected workspace.</p><button className="fos-cta" onClick={goApp}>Create your account <ArrowRight size={18}/></button><small>Secure checkout is available for monthly plans. Plan activation may require support confirmation.</small></section>
       <section className="fos-contact-section fos-container" id="contact">
         <div className="fos-contact-copy"><div className="fos-eyebrow">WE'RE HERE TO HELP</div><h2>Questions? <span>Talk to us.</span></h2><p>Contact Financial OS support for account, billing, payment, or plan-activation questions.</p></div>
-        <div className="fos-contact-actions"><a className="fos-contact-card" href="tel:+917644841104"><strong>Call us</strong><span>+91 76448 41104</span></a><a className="fos-contact-card" href="https://wa.me/917644841104" target="_blank" rel="noreferrer"><strong>WhatsApp</strong><span>Chat with support</span></a><a className="fos-contact-card" href="mailto:support@kpmc-enterprises.com"><strong>Email</strong><span>support@kpmc-enterprises.com</span></a></div>
+        <div className="fos-contact-actions"><a className="fos-contact-card" href="tel:+917644841104"><strong>Call us</strong><span>+91 76448 41104</span></a><a className="fos-contact-card" href="https://wa.me/917644841104" target="_blank" rel="noreferrer"><strong>WhatsApp</strong><span>Chat with support</span></a></div>
         <p className="fos-company-note">Financial OS is part of KPMC Enterprises.</p>
       </section>
     </main>

@@ -45,3 +45,22 @@ def test_trade_book_rejects_unsupported_shape():
     with pytest.raises(HTTPException) as error:
         _trade_rows({"orders": [{"order_id": "not-a-fill"}]})
     assert error.value.status_code == 502
+
+
+def test_normalize_mstock_style_tradebook_fields_with_gateway_mapping():
+    trade = _normalize_trade({
+        "tradeid": "TRD-2026-9",
+        "client_reference": "financial-os-7-ref",
+        "tradingsymbol": "INFY-EQ",
+        "transactiontype": "BUY",
+        "tradeqty": "3",
+        "tradeprice": "1500.50",
+        "tradedate": "2026-10-17",
+        "exchange": "NSE",
+    })
+    assert trade is not None
+    assert trade["trade_id"] == "TRD-2026-9"
+    assert trade["symbol"] == "INFY-EQ"
+    assert trade["side"] == "BUY"
+    assert trade["quantity"] == Decimal("3")
+    assert trade["price"] == Decimal("1500.50")

@@ -10745,31 +10745,14 @@ function getActualSpending(categoryId, month) {
 {!loading && budgets.length > 0 && (
 
   <div
-    style={{
-      display: "grid",
-      gridTemplateColumns:
-        "repeat(auto-fit, minmax(280px, 1fr))",
-      gap: "16px",
-      marginTop: "20px",
-    }}
+    className="budget-list-grid"
   >
 
     {budgets.map((budget) => (
 
       <div
         key={budget.id}
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          padding: "20px",
-          borderRadius: "20px",
-          background:
-            "linear-gradient(145deg, rgba(112,72,255,0.18), rgba(244,91,105,0.08), rgba(255,255,255,0.04))",
-          border:
-            "1px solid rgba(255,255,255,0.10)",
-          boxShadow:
-            "0 12px 35px rgba(0,0,0,0.18)",
-        }}
+        className="budget-list-card"
       >
 
         {/* ---------------------------------------------
@@ -10782,8 +10765,7 @@ function getActualSpending(categoryId, month) {
             width: "100px",
             height: "100px",
             borderRadius: "50%",
-            background:
-              "rgba(112,72,255,0.16)",
+            background: "var(--finos-accent-soft, var(--t-inner-bg, transparent))",
             filter: "blur(30px)",
             top: "-40px",
             right: "-30px",
@@ -10813,8 +10795,7 @@ function getActualSpending(categoryId, month) {
                 fontWeight: 700,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color:
-                  "rgba(255,255,255,0.50)",
+                color: "var(--finos-muted-text, var(--finos-text))",
                 marginBottom: "7px",
               }}
             >
@@ -10826,7 +10807,7 @@ function getActualSpending(categoryId, month) {
                 margin: 0,
                 fontSize: "18px",
                 fontWeight: 700,
-                color: "#ffffff",
+                color: "var(--finos-text)",
               }}
             >
               {getCategoryName(
@@ -10840,13 +10821,11 @@ function getActualSpending(categoryId, month) {
             style={{
               padding: "6px 10px",
               borderRadius: "999px",
-              background:
-                "rgba(112,72,255,0.18)",
-              border:
-                "1px solid rgba(150,120,255,0.20)",
+              background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+              border: "1px solid var(--finos-border)",
               fontSize: "11px",
               fontWeight: 700,
-              color: "#cfc4ff",
+              color: "var(--finos-accent)",
               whiteSpace: "nowrap",
             }}
           >
@@ -10867,8 +10846,7 @@ function getActualSpending(categoryId, month) {
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            color:
-              "rgba(255,255,255,0.58)",
+            color: "var(--finos-muted-text, var(--finos-text))",
             fontSize: "13px",
           }}
         >
@@ -10899,8 +10877,7 @@ function getActualSpending(categoryId, month) {
           <div
             style={{
               fontSize: "12px",
-              color:
-                "rgba(255,255,255,0.50)",
+              color: "var(--finos-muted-text, var(--finos-text))",
               marginBottom: "5px",
             }}
           >
@@ -10941,8 +10918,7 @@ function getActualSpending(categoryId, month) {
               display: "flex",
               justifyContent: "space-between",
               fontSize: "11px",
-              color:
-                "rgba(255,255,255,0.45)",
+              color: "var(--finos-muted-text, var(--finos-text))",
               marginBottom: "7px",
             }}
           >
@@ -10967,8 +10943,7 @@ function getActualSpending(categoryId, month) {
             style={{
               height: "7px",
               borderRadius: "999px",
-              background:
-                "rgba(255,255,255,0.08)",
+              background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
               overflow: "hidden",
             }}
           >
@@ -10988,8 +10963,7 @@ function getActualSpending(categoryId, month) {
 )}%`,
                 height: "100%",
                 borderRadius: "999px",
-                background:
-                  "linear-gradient(90deg, #7048ff, #f45b69)",
+                background: "var(--finos-accent)",
               }}
             />
 
@@ -11031,8 +11005,8 @@ function getActualSpending(categoryId, month) {
     padding: "7px 12px",
     fontSize: "11px",
     marginLeft: "6px",
-    color: "#fb7185",
-    borderColor: "rgba(251,113,133,0.25)",
+    color: "var(--finos-danger, var(--finos-text))",
+    borderColor: "var(--finos-border)",
   }}
 >
   Delete
@@ -11051,8 +11025,7 @@ function getActualSpending(categoryId, month) {
             justifyContent: "space-between",
             alignItems: "center",
             fontSize: "11px",
-            color:
-              "rgba(255,255,255,0.42)",
+            color: "var(--finos-muted-text, var(--finos-text))",
           }}
         >
 

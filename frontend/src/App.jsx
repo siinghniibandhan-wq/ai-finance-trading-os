@@ -2720,7 +2720,7 @@ function MarketsPage() {
           <div aria-hidden="true" style={{ height: "3px", borderRadius: "9px", marginTop: "14px", background: "linear-gradient(90deg, rgba(167,139,250,.95), rgba(56,189,248,.35), transparent)" }} />
         </div>)}
       </section>
-    <section aria-label="Market instrument search" style={{ padding: "4px 0 18px", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
+    <section className="instrument-search-panel" aria-label="Market instrument search" style={{ padding: "4px 0 18px", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
       <div style={{ marginBottom: "12px" }}>
         <h3 style={{ margin: "0 0 8px", fontSize: "19px", fontWeight: 800, letterSpacing: "-.02em" }}>Find an instrument</h3>
       </div>
@@ -2803,7 +2803,7 @@ function MarketsPage() {
     </>}
     {selectedInstrument && <section style={{ ...card, background: "linear-gradient(135deg, rgba(124,58,237,.15), rgba(255,255,255,.025))" }}><h3 style={{ margin: "0 0 10px", fontSize: "13px", color: "rgba(255,255,255,.65)", fontWeight: 650 }}>Latest Traded Price (LTP)</h3>{quoteBusy && <p style={muted}>Loading price…</p>}{quoteError && <p role="status" style={{ color: "#fca5a5", fontSize: "12px" }}>{quoteError}</p>}{quote && <><div style={{ fontSize: "34px", fontWeight: 900, letterSpacing: "-.035em" }}>{money(quote.quote?.last_price)}</div><p style={{ ...muted, marginTop: "6px", marginBottom: 0 }}>Backend retrieved {quote.last_updated ? new Date(quote.last_updated).toLocaleTimeString("en-IN") : "time unavailable"}{quote.cache_hit ? ` · cached (${quote.cache_age_seconds ?? 0}s old)` : " · fetched from gateway"}{quote.provider_latency_ms != null ? ` · ${quote.cache_hit ? "last provider fetch" : "provider"} ${quote.provider_latency_ms}ms` : ""}. Provider market timestamp is not supplied.</p></>}{!quoteBusy && !quoteError && !quote && <p style={muted}>Price unavailable.</p>}</section>}
     {/* Historical chart belongs only to the selected instrument workspace, never the market landing page. */}
-    {selectedInstrument && <section style={card}>
+    {selectedInstrument && <section className="instrument-chart-panel" style={card}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
         <div><h3 style={{ margin: "0 0 4px" }}>Historical price chart</h3><p style={{ ...muted, margin: 0 }}>{chartInfo ? `${chartInfo.symbol || chartSymbol} · ${chartInfo.exchange || chartExchange} · Daily close` : "Choose a stock and period to load daily closing prices."}</p></div>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>{["1D", "1W", "1M", "3M", "6M", "1Y", "5Y"].map((range) => <button key={range} type="button" className={chartRange === range ? "primary-button" : "secondary-button"} style={{ padding: "8px 10px", fontSize: "11px" }} onClick={() => { setChartRange(range); loadChart(chartSymbol, chartExchange, range); }}>{range}</button>)}</div>
@@ -2859,7 +2859,7 @@ function MarketsPage() {
         "Dividend Yield": "Annual dividend per share divided by the share price, expressed as a percentage. It can change as price or dividends change.",
       };
       const metric = (label, value, hint = "") => <button key={label} type="button" onClick={() => setExpandedMetric((current) => current === label ? "" : label)} aria-expanded={expandedMetric === label} style={{ ...card, padding: "13px", textAlign: "left", color: "inherit", cursor: "pointer", width: "100%" }}><div style={muted}>{label}</div><strong style={{ display: "block", fontSize: "18px", marginTop: "5px" }}>{value}</strong>{hint ? <div style={{ ...muted, marginTop: "4px" }}>{hint}</div> : null}<div style={{ ...muted, marginTop: "7px", color: "#c4b5fd" }}>{expandedMetric === label ? "Tap to hide explanation" : "Tap to understand this metric"}</div>{expandedMetric === label && <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,.1)", fontSize: "12px", lineHeight: 1.6, color: "rgba(255,255,255,.8)" }}>{metricExplanations[label] || hint || "This value is provided by the connected data source when available. Check the reporting period and source before making a decision."}</div>}</button>;
-      return <section style={{ ...card, padding: "16px" }}>
+      return <section className="instrument-research-panel" style={{ ...card, padding: "16px" }}>
         <div style={{ marginBottom: "12px" }}>
           <p className="card-label" style={{ margin: "0 0 4px" }}>INSTRUMENT RESEARCH</p>
           <h3 style={{ margin: "0 0 4px", fontSize: "20px" }}>{selectedInstrument.name || selectedInstrument.symbol}</h3>
@@ -2900,7 +2900,7 @@ function MarketsPage() {
               const sellQuantity = quoteValue("total_sell_quantity", "total_sell_qty", "totalSellQty", "sell_quantity");
               const upperCircuit = quoteValue("upper_circuit_limit", "upper_circuit", "upperCircuit", "upperCircuitLimit");
               const lowerCircuit = quoteValue("lower_circuit_limit", "lower_circuit", "lowerCircuit", "lowerCircuitLimit");
-              return <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+              return <div className="instrument-price-metrics" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
                 {metric("Latest Traded Price (LTP)", ltp != null ? money(ltp) : "Unavailable", "Most recent price returned by the quote provider")}
                 {metric("Previous Closing Price", prev != null ? money(prev) : "Unavailable", "Previous trading session's close")}
                 {metric("Today's Change", dayChange != null ? `${dayChange >= 0 ? "+" : "−"}${money(Math.abs(dayChange))}` : "Unavailable", dayPct != null ? `${dayPct >= 0 ? "+" : ""}${dayPct.toFixed(2)}% vs previous close` : "Provider must return LTP and previous close")}

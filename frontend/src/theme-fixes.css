@@ -2562,3 +2562,27 @@
   background: var(--t-card-bg, var(--finos-surface, var(--t-surface, #fff))) !important;
   border: 1px solid var(--finos-border, var(--t-border, transparent)) !important;
 }
+
+
+/* Final override for the Add Account type selector: prevent browser/global
+   button focus styles from painting the thick black frame seen on mobile. */
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:hover,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:active,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:focus,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger[aria-expanded="true"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  outline: 0 !important;
+  outline-offset: 0 !important;
+  border: 1px solid var(--finos-border, var(--t-border, #dfe4ec)) !important;
+  background: var(--t-inner-bg, var(--finos-surface-raised, #fff)) !important;
+  color: var(--finos-text, var(--t-text, #202938)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--t-text, #202938)) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, var(--t-accent, #7563dc)) !important;
+}

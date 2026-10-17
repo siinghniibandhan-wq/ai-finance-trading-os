@@ -138,7 +138,7 @@ def _enrich_trade_rows(rows, order_rows):
         item["exchange_order_id"] = exch_id
         item["client_reference"] = matched["client_reference"]
         # Prefer the tradebook's SYMBOL code. /trades tradingsymbol may be a company name.
-        item["symbol"] = _book_value(row, "SYMBOL", "symbol", "FULL_SYMBOL") or matched["symbol"]
+        item["symbol"] = _book_value(row, "SYMBOL", "symbol") or matched["symbol"]
         item["exchange"] = _book_value(row, "EXCHANGE", "exchange") or matched["exchange"]
         item["trade_id"] = _book_value(row, "TRADE_NUMBER", "trade_id", "tradeid", "fill_id")
         item["side"] = _book_value(row, "BUY_SELL", "side", "transaction_type")

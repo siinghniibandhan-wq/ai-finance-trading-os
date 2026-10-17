@@ -38,14 +38,23 @@ def _trade_rows(response):
 def _normalize_trade(row):
     if not isinstance(row, dict):
         return None
-    trade_id = row.get("trade_id") or row.get("tradeid") or row.get("tradeId") or row.get("fill_id") or row.get("trade_no")
+    # m.Stock Type A trade-book fields are uppercase (TRADE_NUMBER,
+    # ORDER_NUMBER, EXCH_ORDER_NUMBER, SYMBOL, BUY_SELL, PRICE, QUANTITY,
+    # ORDER_DATE_TIME). The gateway must enrich the row with client_reference
+    # using a verified broker order-ID mapping; never infer ownership from symbol.
+    trade_id = (row.get("trade_id") or row.get("tradeid") or row.get("tradeId")
+                or row.get("fill_id") or row.get("trade_no") or row.get("TRADE_NUMBER"))
     reference = row.get("client_reference") or row.get("clientReference")
-    symbol = row.get("symbol") or row.get("tradingsymbol") or row.get("trading_symbol")
-    side = row.get("side") or row.get("transaction_type") or row.get("transactionType") or row.get("transactiontype")
-    quantity = row.get("quantity") or row.get("traded_quantity") or row.get("filled_quantity") or row.get("tradeqty")
-    price = row.get("price") or row.get("trade_price") or row.get("average_price") or row.get("tradeprice")
-    trade_date = row.get("trade_date") or row.get("tradeDate") or row.get("tradedate") or row.get("date")
-    exchange = row.get("exchange") or row.get("exch")
+    symbol = row.get("symbol") or row.get("tradingsymbol") or row.get("trading_symbol") or row.get("SYMBOL")
+    side = (row.get("side") or row.get("transaction_type") or row.get("transactionType")
+            or row.get("transactiontype") or row.get("BUY_SELL"))
+    quantity = (row.get("quantity") or row.get("traded_quantity") or row.get("filled_quantity")
+                or row.get("tradeqty") or row.get("QUANTITY"))
+    price = (row.get("price") or row.get("trade_price") or row.get("average_price")
+             or row.get("tradeprice") or row.get("PRICE"))
+    trade_date = (row.get("trade_date") or row.get("tradeDate") or row.get("tradedate")
+                  or row.get("date") or row.get("ORDER_DATE_TIME"))
+    exchange = row.get("exchange") or row.get("exch") or row.get("EXCHANGE")
     if not all((trade_id, reference, symbol, side, quantity, price, trade_date, exchange)):
         return None
     try:

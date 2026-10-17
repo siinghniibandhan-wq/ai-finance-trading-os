@@ -4726,13 +4726,7 @@ function Holdings() {
 
       <section
         className="holdings-summary-grid"
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(6, minmax(0, 1fr))",
-          gap: "14px",
-          width: "100%",
-        }}
+        style={{ width: "100%" }}
       >
         <MetricCard
           title="Holdings"

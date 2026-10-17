@@ -24,6 +24,7 @@ from app.routes import (
     ai_assistant,
     vibe_trading,
     broker_orders,
+    broker_reconciliation,
     users,
     loans,
     accounts,
@@ -299,6 +300,7 @@ app.include_router(profile.router)
 app.include_router(ai_assistant.router)
 app.include_router(vibe_trading.router)
 app.include_router(broker_orders.router)
+app.include_router(broker_reconciliation.router)
 
 app.include_router(users.router)
 app.include_router(loans.router)

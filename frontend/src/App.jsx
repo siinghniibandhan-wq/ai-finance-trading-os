@@ -6415,7 +6415,7 @@ const handleInvestmentTransactionSubmit =
     borderRadius: "10px",
     border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.05)",
-    color: "#ffffff",
+    color: "var(--finos-text)",
     fontSize: "12px",
     outline: "none",
   };
@@ -15043,8 +15043,7 @@ function Bills() {
 
             <p
               style={{
-                color:
-                  "rgba(255,255,255,0.50)",
+                color: "var(--finos-muted-text, var(--finos-text))",
                 margin:
                   "8px 0 20px",
               }}

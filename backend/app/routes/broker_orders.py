@@ -10,6 +10,7 @@ must be implemented separately before updating portfolio quantities.
 import json
 import logging
 import os
+from uuid import uuid4
 from decimal import Decimal
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -114,20 +115,66 @@ def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends
         "validity": request.validity,
         "quantity": request.quantity,
         "price": str(request.price),
-        "client_reference": f"financial-os-user-{current_user.id}",
+        # A unique reference avoids different orders from the same user sharing
+        # a client reference and being mistaken for duplicates by the gateway.
+        "client_reference": f"financial-os-{current_user.id}-{uuid4().hex}",
     }
     result = _gateway_request(GATEWAY_ORDER_PLACE_PATH, "POST", payload)
-    if result.get("status") in {"error", "failed", "rejected"} or result.get("success") is False:
-        raise HTTPException(status_code=502, detail=result.get("message") or result.get("error") or "Gateway did not accept the order.")
     nested_data = result.get("data") if isinstance(result.get("data"), dict) else {}
-    order_id = result.get("order_id") or result.get("orderid") or nested_data.get("order_id") or nested_data.get("orderid")
+    # Broker gateways may wrap the placement result inside "data". Treat an
+    # explicit rejection anywhere in that response as a rejection, not success.
+    status_values = [
+        result.get("status"),
+        nested_data.get("status"),
+        result.get("order_status"),
+        nested_data.get("order_status"),
+    ]
+    rejected_statuses = {"error", "failed", "failure", "rejected", "not_accepted"}
+    if result.get("success") is False or nested_data.get("success") is False or any(
+        isinstance(status, str) and status.strip().lower() in rejected_statuses
+        for status in status_values
+    ):
+        message = (
+            nested_data.get("message")
+            or result.get("message")
+            or nested_data.get("error")
+            or result.get("error")
+            or "Gateway did not accept the order."
+        )
+        raise HTTPException(status_code=502, detail=message)
+
+    order_id = (
+        result.get("order_id")
+        or result.get("orderid")
+        or nested_data.get("order_id")
+        or nested_data.get("orderid")
+    )
+    # Only say "accepted" when the gateway provides a positive acknowledgement.
+    # A generic/empty response must not be presented as a successful order.
+    accepted_statuses = {"success", "accepted", "open", "pending", "submitted", "complete", "completed"}
+    explicitly_accepted = (
+        result.get("success") is True
+        or nested_data.get("success") is True
+        or any(
+            isinstance(status, str) and status.strip().lower() in accepted_statuses
+            for status in status_values
+        )
+        or bool(order_id)
+    )
+    if not explicitly_accepted:
+        logger.warning("m.Stock gateway returned an ambiguous placement response for user %s", current_user.id)
+        raise HTTPException(
+            status_code=502,
+            detail="The gateway response did not confirm whether the order was accepted. Check the broker order book before retrying.",
+        )
+
     return {
         "status": "submitted",
         "user_id": current_user.id,
         "order_id": order_id,
         "broker_response": result,
         "portfolio_updated": False,
-        "message": "Order was forwarded to the gateway. Holdings update only after confirmed fills are reconciled.",
+        "message": "The broker acknowledged the order request. This does not confirm execution; holdings update only after confirmed fills are reconciled.",
     }
 
 

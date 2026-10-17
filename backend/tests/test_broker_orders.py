@@ -68,7 +68,7 @@ def test_each_order_gets_a_unique_client_id_when_not_supplied(monkeypatch, db_se
     user = SimpleNamespace(id=7)
 
     broker_orders.place_broker_order(request_payload(), db=db_session, current_user=user)
-    broker_orders.place_broker_order(request_payload(), current_user=user)
+    broker_orders.place_broker_order(request_payload(), db=db_session, current_user=user)
 
     assert len(client_ids) == 2
     assert client_ids[0] != client_ids[1]

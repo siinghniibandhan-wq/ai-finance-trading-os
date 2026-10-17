@@ -55,6 +55,10 @@ def test_place_order_returns_acknowledgement_without_updating_portfolio(monkeypa
     assert result["portfolio_updated"] is False
     assert "does not confirm execution" in result["message"]
     assert captured["client_id"].startswith("financial-os-7-")
+    assert captured["transaction_type"] == "BUY"
+    assert captured["tradingsymbol"] == "RELIANCE-EQ"
+    assert captured["product"] == "CNC"
+    assert captured["ref_price"] == "1450.00"
 
 
 def test_each_order_gets_a_unique_client_id_when_not_supplied(monkeypatch, db_session):

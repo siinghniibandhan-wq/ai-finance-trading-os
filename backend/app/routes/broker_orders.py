@@ -25,6 +25,7 @@ from app.models import User
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
 logger = logging.getLogger(__name__)
 GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").rstrip("/")
+GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
 GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/order")
 GATEWAY_ORDER_BOOK_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_BOOK_PATH", "/orders")
 GATEWAY_TIMEOUT_SECONDS = 15
@@ -74,6 +75,8 @@ class BrokerOrderRequest(BaseModel):
 def _gateway_request(path: str, method: str, payload: dict | None = None, query: dict | None = None):
     if not GATEWAY_URL:
         raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_URL is not configured.")
+    if not GATEWAY_SECRET:
+        raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_SECRET is not configured; broker gateway requests are disabled.")
     url = f"{GATEWAY_URL}{path}"
     if query:
         url += "?" + urlencode(query)
@@ -82,6 +85,7 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
         "Accept": "application/json",
         "Content-Type": "application/json",
         "User-Agent": "Financial-OS/1.0",
+        "X-Financial-OS-Gateway-Secret": GATEWAY_SECRET,
     })
     try:
         with urlopen(request, timeout=GATEWAY_TIMEOUT_SECONDS) as response:

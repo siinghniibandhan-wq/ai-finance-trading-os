@@ -4371,3 +4371,42 @@
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+
+
+/* Light-family custom dropdowns: use the active theme palette instead of the
+   dark-only defaults in styles.css. Keep other themes unchanged. */
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-trigger,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-trigger:hover,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-trigger:active,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-trigger:focus,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-trigger[aria-expanded="true"] {
+  border: 1px solid var(--finos-border) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+  box-shadow: none;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-menu,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content [role="listbox"] {
+  border: 1px solid var(--finos-border) !important;
+  background: var(--t-card-bg, var(--finos-surface)) !important;
+  color: var(--finos-text) !important;
+  box-shadow: var(--t-shadow, 0 8px 24px rgba(20, 30, 50, .10)) !important;
+  backdrop-filter: none;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-option,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-option:hover,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-option.is-selected,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content [role="option"] {
+  color: var(--finos-text) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-option:hover,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-option.is-selected,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content [role="option"]:hover,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content [role="option"][aria-selected="true"] {
+  background: color-mix(in srgb, var(--finos-accent) 10%, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-chevron,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-check {
+  color: var(--finos-accent) !important;
+}

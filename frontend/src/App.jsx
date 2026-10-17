@@ -15342,7 +15342,7 @@ function Bills() {
       {showForm && (
 
         <div
-          className="glass-card"
+          className="glass-card bill-form-card"
           style={{
             marginTop: "22px",
             padding: "22px",

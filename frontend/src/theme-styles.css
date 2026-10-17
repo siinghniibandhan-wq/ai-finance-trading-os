@@ -2082,3 +2082,105 @@
     bottom: -18px;
   }
 }
+
+
+/* Shared, tidy create/edit modal layout for Category and Bills. */
+:root[data-finos-theme] .category-form-dialog {
+  width: min(100%, 520px);
+  max-width: 520px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+:root[data-finos-theme] .category-form-dialog .card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .category-form-dialog #category-form-title {
+  margin: 4px 0 0;
+  font-size: clamp(18px, 2.5vw, 22px);
+  line-height: 1.25;
+  color: var(--finos-text);
+}
+:root[data-finos-theme] .category-form-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+:root[data-finos-theme] .category-form-dialog .category-form-field {
+  margin-bottom: 14px;
+}
+:root[data-finos-theme] .category-form-dialog .category-form-field > label {
+  display: block;
+  margin: 0;
+  color: var(--finos-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+:root[data-finos-theme] .category-form-dialog :is(.category-form-input, .category-form-textarea) {
+  margin-top: 6px;
+  min-height: 42px;
+  border-radius: var(--t-radius-sm, 10px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)));
+  color: var(--finos-text);
+  border-color: var(--finos-border);
+  font-size: 14px;
+  line-height: 1.45;
+}
+:root[data-finos-theme] .category-form-dialog .category-form-textarea {
+  min-height: 88px;
+}
+:root[data-finos-theme] .category-form-dialog .category-form-select {
+  margin-top: 6px;
+}
+:root[data-finos-theme] .category-form-dialog .category-form-help {
+  font-size: 11px;
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+:root[data-finos-theme] .category-form-dialog .category-form-actions {
+  justify-content: flex-start;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .category-form-dialog .category-form-actions .primary-button {
+  order: 0;
+}
+:root[data-finos-theme] .category-form-dialog .category-form-actions .category-form-cancel {
+  order: 1;
+}
+:root[data-finos-theme] .category-form-dialog .category-form-close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 6px;
+}
+@media (max-width: 560px) {
+  :root[data-finos-theme] .category-form-overlay {
+    align-items: flex-end;
+    padding: 10px;
+  }
+  :root[data-finos-theme] .category-form-dialog {
+    max-height: 88dvh;
+    padding: 18px;
+    border-radius: var(--t-radius, 18px);
+  }
+  :root[data-finos-theme] .category-form-dialog .category-form-actions {
+    gap: 10px;
+  }
+  :root[data-finos-theme] .category-form-dialog .category-form-actions button {
+    min-height: 40px;
+  }
+}

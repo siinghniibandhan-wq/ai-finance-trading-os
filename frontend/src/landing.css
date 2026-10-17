@@ -55,3 +55,28 @@
 .fos-site-light .fos-refund-grid h3,.fos-site-light .fos-refund-owner strong{color:#202a3d}
 .fos-site-light .fos-refund-grid p,.fos-site-light .fos-refund-owner,.fos-site-light .fos-refund-disclaimer{color:#68758a}
 @media(max-width:740px){.fos-refund-section{padding:12px 0 55px}.fos-refund-grid{grid-template-columns:1fr}.fos-refund-grid article{padding:16px}}
+
+
+/* Standalone Tax Filing service */
+.fos-tax-service-section{padding:18px 0 70px;scroll-margin-top:90px}
+.fos-tax-service-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,.42fr);gap:28px;align-items:center;padding:clamp(22px,4vw,42px);border:1px solid #9b7cff55;border-radius:18px;background:linear-gradient(135deg,#17152a,#111827);box-shadow:0 18px 55px #00000012}
+.fos-tax-service-copy h2{font:800 clamp(28px,3vw,40px)/1.15 Manrope,sans-serif;letter-spacing:-1.2px;margin:12px 0}
+.fos-tax-service-copy h2 span{background:linear-gradient(95deg,#a78bfa,#ed8bcf);-webkit-background-clip:text;background-clip:text;color:transparent}
+.fos-tax-service-copy>p{font-size:12px;line-height:1.85;color:#aab5c8;max-width:680px}
+.fos-tax-service-copy ul{display:grid;gap:10px;list-style:none;padding:0;margin:18px 0}
+.fos-tax-service-copy li{display:flex;align-items:flex-start;gap:9px;font-size:12px;line-height:1.6;color:#e2e8f0}
+.fos-tax-service-copy li svg{flex:0 0 auto;color:#a78bfa;margin-top:2px}
+.fos-tax-service-copy .fos-tax-service-note{font-size:10px;color:#98a4b8}
+.fos-tax-service-cta{display:inline-flex;align-items:center;gap:9px;margin-top:8px;text-decoration:none}
+.fos-tax-service-price{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px 16px;border:1px solid #a78bfa55;border-radius:14px;background:#8b5cf618}
+.fos-tax-service-price span{font-size:10px;letter-spacing:1.8px;color:#c4b5fd;font-weight:800}
+.fos-tax-service-price strong{font:800 clamp(38px,5vw,58px)/1.25 Manrope,sans-serif;color:#fff;margin:8px 0}
+.fos-tax-service-price small{font-size:10px;line-height:1.7;color:#aab5c8;max-width:200px}
+.fos-site-light .fos-tax-service-card{background:linear-gradient(135deg,#f5f0ff,#f4f7ff);border-color:#d7c8ff}
+.fos-site-light .fos-tax-service-copy>p,.fos-site-light .fos-tax-service-copy li{color:#526077}
+.fos-site-light .fos-tax-service-copy .fos-tax-service-note{color:#66758b}
+.fos-site-light .fos-tax-service-price{background:#fff;border-color:#d7c8ff}
+.fos-site-light .fos-tax-service-price span{color:#6d45c9}
+.fos-site-light .fos-tax-service-price strong{color:#202a3d}
+.fos-site-light .fos-tax-service-price small{color:#66758b}
+@media(max-width:740px){.fos-tax-service-section{padding:10px 0 55px}.fos-tax-service-card{grid-template-columns:1fr;gap:20px;padding:22px 18px}.fos-tax-service-price{padding:18px}.fos-tax-service-price strong{font-size:42px}}

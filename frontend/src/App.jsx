@@ -10889,7 +10889,7 @@ function getActualSpending(categoryId, month) {
               fontSize: "28px",
               lineHeight: 1.2,
               fontWeight: 800,
-              color: "#ffffff",
+              color: "var(--finos-text)",
               letterSpacing: "-0.02em",
             }}
           >

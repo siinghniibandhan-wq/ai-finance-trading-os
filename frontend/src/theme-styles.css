@@ -3618,3 +3618,140 @@
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select .finos-select-check {
   color: var(--finos-accent, #7563dc);
 }
+
+
+/* Markets instrument workspace: theme-token surfaces, visible boundaries and unclipped controls. */
+:root[data-finos-theme] .instrument-search-panel,
+:root[data-finos-theme] .instrument-chart-panel,
+:root[data-finos-theme] .instrument-research-panel,
+:root[data-finos-theme] .instrument-chart-panel[style],
+:root[data-finos-theme] .instrument-search-panel[style],
+:root[data-finos-theme] .instrument-research-panel[style] {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--finos-border) !important;
+  background: var(--t-card-bg, var(--finos-surface)) !important;
+  color: var(--finos-text) !important;
+  box-shadow: var(--t-shadow, 0 5px 18px rgba(20, 30, 50, .06));
+}
+:root[data-finos-theme] .instrument-search-panel *,
+:root[data-finos-theme] .instrument-chart-panel *,
+:root[data-finos-theme] .instrument-research-panel * {
+  box-sizing: border-box;
+}
+:root[data-finos-theme] .instrument-search-panel input,
+:root[data-finos-theme] .instrument-chart-panel input,
+:root[data-finos-theme] .instrument-research-panel input,
+:root[data-finos-theme] .instrument-search-panel select,
+:root[data-finos-theme] .instrument-chart-panel select,
+:root[data-finos-theme] .instrument-research-panel select {
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  border: 1px solid var(--finos-border) !important;
+  color: var(--finos-text) !important;
+}
+:root[data-finos-theme] .instrument-search-panel input::placeholder,
+:root[data-finos-theme] .instrument-chart-panel input::placeholder,
+:root[data-finos-theme] .instrument-research-panel input::placeholder {
+  color: var(--finos-muted) !important;
+  opacity: .9;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 38px;
+  max-width: 100%;
+  padding: 9px 13px;
+  border: 1px solid var(--finos-border);
+  border-radius: var(--t-radius-sm, 10px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)));
+  color: var(--finos-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:hover {
+  border-color: var(--finos-accent, #7563dc);
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 9%, var(--t-card-bg, var(--finos-surface)));
+  color: var(--finos-text);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:focus-visible {
+  outline: 2px solid var(--finos-accent, #7563dc);
+  outline-offset: 2px;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab[aria-selected="true"],
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab.is-active {
+  border-color: var(--finos-accent, #7563dc);
+  background: var(--finos-accent, #7563dc);
+  color: var(--finos-accent-contrast, #fff);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel {
+  min-width: 0;
+  max-width: 100%;
+  padding-top: 18px;
+  color: var(--finos-text);
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel h4,
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel h5 {
+  color: var(--finos-text);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel [style*="grid-template-columns"] {
+  min-width: 0;
+  max-width: 100%;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger {
+  border: 1px solid var(--finos-border) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:hover,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent);
+  outline-offset: 1px;
+}
+:root[data-finos-theme] .instrument-search-panel button,
+:root[data-finos-theme] .instrument-chart-panel button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 560px) {
+  :root[data-finos-theme] .instrument-research-panel .instrument-research-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  :root[data-finos-theme] .instrument-research-panel .instrument-research-tab {
+    width: 100%;
+    padding: 9px 8px;
+  }
+}
+@media (max-width: 340px) {
+  :root[data-finos-theme] .instrument-research-panel .instrument-research-tabs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

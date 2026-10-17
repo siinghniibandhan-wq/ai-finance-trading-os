@@ -73,11 +73,15 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
     if query:
         url += "?" + urlencode(query)
     body = json.dumps(payload).encode("utf-8") if payload is not None else None
-    request = Request(url, data=body, method=method, headers={
+    headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "User-Agent": "Financial-OS/1.0",
-    })
+    }
+    gateway_secret = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
+    if gateway_secret:
+        headers["X-Financial-OS-Gateway-Secret"] = gateway_secret
+    request = Request(url, data=body, method=method, headers=headers)
     try:
         with urlopen(request, timeout=GATEWAY_TIMEOUT_SECONDS) as response:
             data = json.loads(response.read().decode("utf-8"))

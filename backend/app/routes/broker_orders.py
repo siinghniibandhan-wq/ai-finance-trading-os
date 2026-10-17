@@ -1,8 +1,9 @@
 """Authenticated m.Stock broker-order proxy.
 
 Gateway contract:
-  POST /orders/place  -> broker order placement
-  GET  /orders        -> broker order book (optional user-independent account book)
+  POST /order          -> broker order placement
+  GET  /orders         -> broker order book
+  GET  /trades         -> executed trade book enriched with client_reference
 The gateway owns m.Stock credentials and must validate product/validity/order fields.
 This API never records a holding from order placement alone; confirmed-fill reconciliation
 must be implemented separately before updating portfolio quantities.
@@ -25,7 +26,7 @@ from app.models import User
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
 logger = logging.getLogger(__name__)
 GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "http://54.153.201.74:8000").rstrip("/")
-GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/orders/place")
+GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/order")
 GATEWAY_ORDER_BOOK_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_BOOK_PATH", "/orders")
 GATEWAY_TIMEOUT_SECONDS = 15
 
@@ -106,18 +107,23 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
 @router.post("/", status_code=202)
 def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends(get_current_user)):
     """Submit a real broker order. The AWS gateway handles broker authentication."""
+    client_reference = f"financial-os-{current_user.id}-{uuid4().hex}"
+    # Translate the Financial OS API model into the field names accepted by the
+    # existing Flask gateway. client_id is persisted in gateway order logs and
+    # later joined to executed trade-book rows by broker order ID.
     payload = {
-        "side": request.side,
-        "symbol": request.symbol,
+        "client_id": client_reference,
+        "tradingsymbol": request.symbol,
         "exchange": request.exchange,
-        "product_type": request.product_type,
+        "transaction_type": request.side,
         "order_type": request.order_type,
+        "product": "CNC" if request.product_type == "DELIVERY" else "MIS",
         "validity": request.validity,
         "quantity": request.quantity,
         "price": str(request.price),
-        # A unique reference avoids different orders from the same user sharing
-        # a client reference and being mistaken for duplicates by the gateway.
-        "client_reference": f"financial-os-{current_user.id}-{uuid4().hex}",
+        "ref_price": str(request.quote_price),
+        "trigger_price": "0",
+        "tag": "fos",
     }
     result = _gateway_request(GATEWAY_ORDER_PLACE_PATH, "POST", payload)
     nested_data = result.get("data") if isinstance(result.get("data"), dict) else {}
@@ -170,6 +176,7 @@ def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends
 
     return {
         "status": "submitted",
+        "client_reference": client_reference,
         "user_id": current_user.id,
         "order_id": order_id,
         "broker_response": result,

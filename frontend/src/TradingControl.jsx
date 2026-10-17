@@ -2,12 +2,10 @@ import React, { useEffect, useState } from "react";
 import { apiFetch } from "./api";
 import "./trading-control.css";
 
-/**
- * Owner-only control. Parent should render this at the top of Portfolio only
- * when the authenticated user's email matches the server-configured owner.
- * Backend authorization remains authoritative; hiding the component is not security.
- */
+/** Owner-only UI; backend authorization remains authoritative. */
 export default function TradingControl() {
+  const [isOwner, setIsOwner] = useState(false);
+  const [ownerCheckComplete, setOwnerCheckComplete] = useState(false);
   const [status, setStatus] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -24,10 +22,30 @@ export default function TradingControl() {
     }
   }
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const response = await apiFetch("/api/broker/trading-owner");
+        if (!active) return;
+        if (!response.ok) {
+          setIsOwner(false);
+          return;
+        }
+        const result = await response.json();
+        setIsOwner(result.is_owner === true);
+        if (result.is_owner === true) await refresh();
+      } catch {
+        if (active) setIsOwner(false);
+      } finally {
+        if (active) setOwnerCheckComplete(true);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   async function toggle() {
-    if (!status || busy) return;
+    if (!status || busy || !isOwner) return;
     const enabled = !status.trading_enabled;
     if (enabled && !window.confirm("REAL-MONEY WARNING: Turning live trading ON allows broker orders to be submitted using real funds. Continue only if you intend to trade.")) return;
     setBusy(true);
@@ -49,6 +67,8 @@ export default function TradingControl() {
       setBusy(false);
     }
   }
+
+  if (!ownerCheckComplete || !isOwner) return null;
 
   return <section className="finos-trading-control" aria-label="Live trading control">
     <div className="finos-trading-control__heading">

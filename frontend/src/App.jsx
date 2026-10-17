@@ -11082,7 +11082,8 @@ function getActualSpending(categoryId, month) {
 
       {showForm && (
 
-        <div className="glass-card">
+        <div className="budget-form-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowForm(false); }}>
+          <div className="glass-card budget-form-modal" role="dialog" aria-modal="true" aria-labelledby="budget-form-title">
 
           <div className="card-header">
 
@@ -11092,9 +11093,8 @@ function getActualSpending(categoryId, month) {
                 NEW BUDGET
               </p>
 
-              <h3>
-                Create Budget
-              </h3>
+              <h3 id="budget-form-title">Create Budget</h3>
+              <button type="button" className="budget-form-close" aria-label="Close budget form" onClick={() => setShowForm(false)}>×</button>
 
             </div>
 
@@ -11239,6 +11239,7 @@ function getActualSpending(categoryId, month) {
 
           </form>
 
+          </div>
         </div>
 
             )}

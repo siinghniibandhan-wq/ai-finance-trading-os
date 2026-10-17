@@ -13,21 +13,20 @@
   min-width: 0;
   min-height: 132px;
   padding: 16px !important;
-  background:
-    radial-gradient(ellipse at 100% 0%, rgba(167,139,250,.08), transparent 55%),
-    linear-gradient(145deg, rgba(20,28,48,.88), rgba(10,15,28,.92)) !important;
+  /* Match the Portfolio investment-transaction row card surface exactly. */
+  background: var(--t-card-bg, var(--finos-surface, #ffffff)) !important;
+  background-image: none !important;
   color: var(--finos-text) !important;
-  border: 1px solid rgba(167,139,250,.14) !important;
-  border-radius: 17px !important;
-  box-shadow: var(--t-shadow) !important;
+  border: 1px solid var(--finos-border, #e1e6ef) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
   transform: none !important;
 }
 :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid > .metric-card:hover {
-  background:
-    radial-gradient(ellipse at 100% 0%, rgba(167,139,250,.08), transparent 55%),
-    linear-gradient(145deg, rgba(20,28,48,.88), rgba(10,15,28,.92)) !important;
-  border-color: rgba(167,139,250,.34) !important;
-  box-shadow: var(--t-shadow) !important;
+  background: var(--t-card-bg, var(--finos-surface, #ffffff)) !important;
+  background-image: none !important;
+  border-color: var(--finos-border, #e1e6ef) !important;
+  box-shadow: none !important;
   transform: none !important;
 }
 :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-top {

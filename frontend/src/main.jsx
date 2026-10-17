@@ -11,6 +11,7 @@ import "./styles.css";
 import "./visual-design.css";
 import "./theme-fixes.css";
 import "./theme-styles.css";
+import "./instrument-interaction-contrast.css";
 
 class AppRenderBoundary extends React.Component {
   constructor(props) {

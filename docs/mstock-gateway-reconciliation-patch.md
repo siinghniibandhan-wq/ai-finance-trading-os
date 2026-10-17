@@ -150,6 +150,13 @@ def list_trades():
 
 ## Important limitations and rollout
 
+- After adding the helper, also add these three lines at the very start of each existing `place_order()`, `modify_order()`, and `cancel_order()` route, before any order processing:
+  ```python
+  blocked = _require_financial_os_gateway_secret()
+  if blocked:
+      return blocked
+  ```
+  This protects order placement, modification, and cancellation with the same secret as the read-only endpoints. Keep the existing trading switch and order caps unchanged.
 - The existing gateway logs `client_id` and broker placement responses. This patch maps executed trade rows to the Financial OS reference using the broker order ID; it does not assume the broker echoes custom client references.
 - The log file must persist across service restarts and remain readable by the gateway process. Back up the log before changes.
 - Before enabling reconciliation, verify the exact field names in a **read-only** response from your m.Stock trade book. The backend skips rows it cannot normalize and never treats order-book acknowledgements as fills.

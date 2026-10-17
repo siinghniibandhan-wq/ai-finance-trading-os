@@ -3494,3 +3494,20 @@
     padding: 11px !important;
   }
 }
+
+
+/* Historical price chart exchange selector: remove the heavy outline around NSE/BSE. */
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger:hover,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger:active,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger:focus,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger:focus-visible,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger[aria-expanded="true"] {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger {
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+}

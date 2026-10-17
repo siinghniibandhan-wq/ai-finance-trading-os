@@ -13843,11 +13843,7 @@ function Category() {
 
             {/* TYPE */}
 
-            <div
-              style={{
-                marginBottom: "16px",
-              }}
-            >
+            <div className="category-form-field">
 
               <label>
                 Category Type
@@ -13903,11 +13899,7 @@ function Category() {
 
             {/* DESCRIPTION */}
 
-            <div
-              style={{
-                marginBottom: "16px",
-              }}
-            >
+            <div className="category-form-field">
 
               <label>
                 Description

@@ -9988,10 +9988,9 @@ const deleteAccount = async () => {
                   <label key={field.key} className="account-form-field">
                     <span>{field.label}</span>
                     {field.type === "select" ? (
-                      <StyledSelect className="finos-select"
-                        value={accountForm.account_type}
+                      <StyledSelect value={accountForm.account_type}
                         onChange={(event) => setAccountForm({ ...accountForm, account_type: event.target.value })}
-                        className="account-form-select"
+                        className="finos-select account-form-select"
                       >
                         <option value="bank">Bank Account</option>
                         <option value="cash">Cash in Hand</option>
@@ -10030,7 +10029,7 @@ const deleteAccount = async () => {
                       <option value="flat">Flat rate</option>
                     </StyledSelect>
                   </label>
-                  <label style={{ display: "flex", flexDirection: "column", gap: "8px", color: "#d1d5db", fontSize: "13px", fontWeight: 600 }}>
+                  <label className="account-form-field">
                     <span>Repayment frequency</span>
                     <StyledSelect value={accountForm.loan_repayment_frequency} onChange={(event) => setAccountForm({ ...accountForm, loan_repayment_frequency: event.target.value })}>
                       <option value="monthly">Monthly</option>
@@ -10044,17 +10043,15 @@ const deleteAccount = async () => {
               <footer className="account-form-footer">
                 <button
                   type="button"
-                  className="secondary-button"
+                  className="secondary-button account-form-cancel"
                   onClick={() => { setShowAccountForm(false); setEditingAccount(null); }}
                   disabled={accountSaving}
-                  className="account-form-cancel"
                 >Cancel</button>
                 <button
                   type="button"
-                  className="primary-button"
+                  className="primary-button account-form-submit"
                   onClick={handleAccountSubmit}
                   disabled={accountSaving || !accountForm.name.trim() || accountForm.balance === ""}
-                  className="account-form-submit"
                 >{accountSaving ? "Saving…" : editingAccount ? "Save changes" : "Save account"}</button>
               </footer>
             </section>

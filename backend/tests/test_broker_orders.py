@@ -150,12 +150,12 @@ def test_real_order_and_order_book_routes_require_admin():
     from app.routes.auth import get_current_admin
 
     route_dependencies = {
-        route.path: {
+        route.endpoint.__name__: {
             dependency.call
             for dependency in route.dependant.dependencies
         }
         for route in broker_orders.router.routes
     }
 
-    assert get_current_admin in route_dependencies["/api/broker-orders/"]
-    assert get_current_admin in route_dependencies["/api/broker-orders/"]
+    assert get_current_admin in route_dependencies["place_broker_order"]
+    assert get_current_admin in route_dependencies["list_broker_orders"]

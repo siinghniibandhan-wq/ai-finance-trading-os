@@ -45,6 +45,21 @@ def test_does_not_use_tradingsymbol_company_name_as_holding_symbol():
     assert _normalize_trade(row) is None
 
 
+def test_does_not_use_full_symbol_as_instrument_key():
+    row = {
+        "TRADE_NUMBER": "T-1003",
+        "EXCH_ORDER_NUMBER": "EX-9003",
+        "client_reference": "financial-os-7-abc123",
+        "FULL_SYMBOL": "NSE:RELIANCE-EQ",
+        "BUY_SELL": "B",
+        "QUANTITY": "2",
+        "PRICE": "100",
+        "ORDER_DATE_TIME": "2026-10-17",
+        "EXCHANGE": "NSE",
+    }
+    assert _normalize_trade(row) is None
+
+
 def test_requires_exchange_order_id_and_trade_id():
     row = {
         "client_reference": "financial-os-7-abc123",

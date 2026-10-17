@@ -1929,3 +1929,70 @@
     padding: 18px;
   }
 }
+
+
+/* Bills form: keep custom dropdowns aligned with the active theme.
+   The legacy bill JSX passes dark inline styles to the wrapper; these scoped
+   rules style the actual trigger/menu and neutralize that wrapper background. */
+:root[data-finos-theme] .bill-form-card .finos-select-wrap {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .bill-form-card .finos-select-wrap > button.finos-select-trigger,
+:root[data-finos-theme] .bill-form-card .finos-select-wrap > button.finos-select-trigger:hover,
+:root[data-finos-theme] .bill-form-card .finos-select-wrap > button.finos-select-trigger:active {
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  min-height: 42px !important;
+  padding: 10px 12px !important;
+  border: 1px solid var(--finos-border, #d5dce7) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, #fff))) !important;
+  background-image: none !important;
+  color: var(--finos-text, #202631) !important;
+  -webkit-text-fill-color: var(--finos-text, #202631) !important;
+  box-shadow: none !important;
+  text-align: left !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme] .bill-form-card .finos-select-wrap > button.finos-select-trigger > span:first-child {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .bill-form-card .finos-select-wrap > button.finos-select-trigger .finos-select-chevron {
+  color: var(--finos-accent, var(--finos-muted, currentColor)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .bill-form-card .finos-select-wrap > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .bill-form-card .finos-select-wrap > button.finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 20%, transparent) !important;
+  outline-offset: 1px !important;
+}
+:root[data-finos-theme] .bill-form-card .finos-select-menu {
+  z-index: 12000 !important;
+  background: var(--t-card-bg, var(--finos-surface, #fff)) !important;
+  color: var(--finos-text, #202631) !important;
+  border: 1px solid var(--finos-border, #d5dce7) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  box-shadow: var(--t-shadow, 0 12px 30px rgba(25, 35, 55, .16)) !important;
+  backdrop-filter: none !important;
+}
+:root[data-finos-theme] .bill-form-card .finos-select-menu .finos-select-option {
+  color: var(--finos-text, #202631) !important;
+  -webkit-text-fill-color: currentColor !important;
+  background: transparent !important;
+}
+:root[data-finos-theme] .bill-form-card .finos-select-menu .finos-select-option:hover,
+:root[data-finos-theme] .bill-form-card .finos-select-menu .finos-select-option.is-selected {
+  color: var(--finos-text, #202631) !important;
+  -webkit-text-fill-color: currentColor !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 14%, var(--t-card-bg, #fff)) !important;
+}

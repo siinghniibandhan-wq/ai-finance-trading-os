@@ -2397,6 +2397,7 @@ function MarketsPage() {
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderError, setOrderError] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(null);
+  const [orderClientId, setOrderClientId] = useState("");
   // Prevent overlapping refreshes for the same symbol and ignore stale responses
   // when the user switches instruments before a previous request completes.
   const quoteRequestRef = useRef({ activeSymbol: null, inFlightSymbols: new Set() });
@@ -2430,6 +2431,10 @@ function MarketsPage() {
   const money = (value) => {
     if (value === null || value === undefined || value === "" || !Number.isFinite(Number(value))) return "—";
     return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value));
+  };
+  const createOrderClientId = () => {
+    if (globalThis.crypto?.randomUUID) return `finos-${globalThis.crypto.randomUUID()}`;
+    return `finos-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
   };
 
   const refresh = async () => {
@@ -2738,7 +2743,7 @@ function MarketsPage() {
       {searchError && <p role="status" style={{ color: "var(--finos-negative)", fontSize: "12px", marginTop: "12px" }}>{searchError}</p>}
       {searchWarning && <p role="status" style={{ color: "var(--finos-warning)", fontSize: "12px", marginTop: "8px" }}>Data freshness warning: {searchWarning}</p>}
       {results.length > 0 && <p style={{ ...muted, margin: "12px 0 4px" }}>{results.length} matching instruments · Select a result to open its quote and chart.</p>}
-      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.4)", boxShadow: "0 6px 18px rgba(16,185,129,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("BUY"); }}>BUY</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #b91c1c, #ef4444)", border: "1px solid rgba(248,113,113,0.4)", boxShadow: "0 6px 18px rgba(239,68,68,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("SELL"); }}>SELL</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
+      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.4)", boxShadow: "0 6px 18px rgba(16,185,129,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("BUY"); }}>BUY</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #b91c1c, #ef4444)", border: "1px solid rgba(248,113,113,0.4)", boxShadow: "0 6px 18px rgba(239,68,68,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("SELL"); }}>SELL</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
       {orderModalSide && selectedInstrument && <div className="broker-order-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !orderSubmitting) setOrderModalSide(""); }}>
         <form onSubmit={async (event) => {
           event.preventDefault();
@@ -2755,7 +2760,8 @@ function MarketsPage() {
               side: orderModalSide, symbol: selectedInstrument.symbol, exchange: selectedInstrument.exchange || "NSE",
               product_type: orderDraft.product_type, order_type: orderDraft.order_type, validity: orderDraft.validity,
               quantity, price: orderDraft.order_type === "LIMIT" ? Number(orderDraft.limit_price) : 0,
-              quote_price: livePrice
+              quote_price: livePrice,
+              client_id: orderClientId || createOrderClientId()
             }) });
             const data = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Order request failed (${response.status}).`);
@@ -5605,7 +5611,7 @@ function Portfolio() {
 
   // Shared muted text style used by Portfolio and the investment form.
   // Keep this local to Portfolio so it does not depend on MarketsPage state.
-  const muted = { color: "rgba(255,255,255,0.55)", fontSize: "12px", lineHeight: 1.6 };
+  const muted = { color: "var(--finos-muted)", fontSize: "12px", lineHeight: 1.6 };
   
   // ----------------------------------------------------------
   // ADD INVESTMENT FORM STATE
@@ -6413,9 +6419,9 @@ const handleInvestmentTransactionSubmit =
     boxSizing: "border-box",
     padding: "11px 12px",
     borderRadius: "10px",
-    border: "1px solid rgba(255,255,255,0.10)",
-    background: "rgba(255,255,255,0.05)",
-    color: "#ffffff",
+    border: "1px solid var(--finos-border)",
+    background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+    color: "var(--finos-text)",
     fontSize: "12px",
     outline: "none",
   };
@@ -6828,7 +6834,7 @@ const summaryCards = [
           <p
             style={{
               margin: 0,
-              color: "rgba(255,255,255,0.55)",
+              color: "var(--finos-muted)",
               fontSize: "13px",
             }}
           >
@@ -6928,7 +6934,7 @@ const summaryCards = [
             {/* ADD mode requires a canonical search result; EDIT mode edits the existing record directly. */}
             {editingInvestmentId ? (
               <div style={{ gridColumn: "1 / -1" }}>
-                <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Investment Instrument</label>
+                <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Investment Instrument</label>
                 <input type="text" value={investmentForm.name} onChange={(event) => setInvestmentForm((previous) => ({ ...previous, name: event.target.value }))} required style={investmentFieldStyle} />
                 <div style={{ ...muted, marginTop: "5px" }}>Editing the existing investment. Instrument search is only required when adding a new investment.</div>
               </div>
@@ -6936,10 +6942,10 @@ const summaryCards = [
               <div style={{ gridColumn: "1 / -1", position: "relative" }}>
                 {["Stocks", "ETFs", "REITs", "Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(investmentForm.investment_type) ? (
                   <>
-                    <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Investment Instrument (required)</label>
+                    <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Investment Instrument (required)</label>
                     <input type="text" autoComplete="off" placeholder={["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(investmentForm.investment_type) ? "Search mutual fund scheme" : "Search listed instrument, e.g. HDFC Bank"} value={instrumentQuery || investmentForm.name} onChange={(event) => searchInvestmentInstruments(event.target.value)} style={investmentFieldStyle} />
                     {instrumentSearchBusy && <div style={{ ...muted, marginTop: "5px" }}>Searching {["Mutual Funds", "Index Funds", "Debt Mutual Funds"].includes(investmentForm.investment_type) ? "fund schemes" : "listed instruments"}…</div>}
-                    {instrumentSearchError && <div role="status" style={{ color: "rgba(255,255,255,0.65)", fontSize: "12px", marginTop: "5px" }}>{instrumentSearchError}</div>}
+                    {instrumentSearchError && <div role="status" style={{ color: "var(--finos-muted)", fontSize: "12px", marginTop: "5px" }}>{instrumentSearchError}</div>}
                     {instrumentResults.length > 0 && <div className="instrument-search-results" role="listbox" aria-label="Instrument search results" style={{ position: "absolute", zIndex: 20, top: "100%", left: 0, right: 0, maxHeight: "240px", overflowY: "auto" }}>
                       {instrumentResults.map((instrument, index) => {
                         const displayName = instrument.scheme_name || instrument.name || instrument.company_name || instrument.tradingsymbol || instrument.symbol;
@@ -6958,7 +6964,7 @@ const summaryCards = [
                   </>
                 ) : (
                   <>
-                    <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Investment Name (manual entry)</label>
+                    <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Investment Name (manual entry)</label>
                     <input type="text" value={investmentForm.name} onChange={(event) => setInvestmentForm((previous) => ({ ...previous, name: event.target.value, symbol: "" }))} placeholder={investmentForm.investment_type === "Fixed Deposits" ? "Bank / issuer name" : investmentForm.investment_type === "Recurring Deposits" ? "Bank / RD name" : `Enter ${investmentForm.investment_type} name`} required style={investmentFieldStyle} />
                     <div style={{ ...muted, marginTop: "5px" }}>No dedicated catalogue is connected for this product type. Enter its details manually.</div>
                   </>
@@ -6969,7 +6975,7 @@ const summaryCards = [
 
             {/* ASSET CLASS — high-level investment classification */}
             <div>
-              <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Asset Class</label>
+              <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Asset Class</label>
               <StyledSelect className="finos-select"
                 value={investmentForm.asset_class || "Equity"}
                 onChange={(event) => {
@@ -6984,7 +6990,7 @@ const summaryCards = [
                   setInstrumentResults([]);
                   setInstrumentSearchError("");
                 }}
-                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.05)", color: "#ffffff", fontSize: "12px", outline: "none" }}
+                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px", outline: "none" }}
               >
                 <option value="Equity">Equity</option>
                 <option value="Fixed Income">Fixed Income</option>
@@ -6998,7 +7004,7 @@ const summaryCards = [
 
             {/* PRODUCT TYPE — existing investment-type catalogue */}
             <div>
-            <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Product Type</label>
+            <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Product Type</label>
             <StyledSelect className="finos-select"
               value={investmentForm.investment_type}
               onChange={(event) => {
@@ -7025,10 +7031,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
               }}
@@ -7047,7 +7053,7 @@ const summaryCards = [
               readOnly={!editingInvestmentId}
               required={!editingInvestmentId}
               onChange={(event) => setInvestmentForm((previous) => ({ ...previous, symbol: event.target.value }))}
-              style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.03)", color: "#ffffff", fontSize: "12px", outline: "none" }}
+              style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px", outline: "none" }}
             />
 
             {/* QUANTITY */}
@@ -7068,10 +7074,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
               }}
@@ -7098,10 +7104,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
               }}
@@ -7115,7 +7121,7 @@ const summaryCards = [
         display: "block",
         marginBottom: "6px",
         fontSize: "11px",
-        color: "rgba(255,255,255,0.60)",
+        color: "var(--finos-muted)",
       }}
     >
       Current Price
@@ -7158,10 +7164,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
                 colorScheme: "dark",
@@ -7171,7 +7177,7 @@ const summaryCards = [
 
             {/* BROKER — mandatory dropdown, with explicit custom broker option */}
             <div>
-              <label style={{ display: "block", marginBottom: "6px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Broker / Platform (required)</label>
+              <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Broker / Platform (required)</label>
               <StyledSelect className="finos-select"
                 value={brokerChoice || (investmentForm.broker && !["Zerodha", "Groww", "Upstox", "Angel One", "ICICI Direct", "HDFC Securities", "Kotak Securities", "m.Stock", "Other"].includes(investmentForm.broker) ? "Other" : investmentForm.broker)}
                 onChange={(event) => {
@@ -7181,12 +7187,12 @@ const summaryCards = [
                   setInvestmentForm((previous) => ({ ...previous, broker: value === "Other" ? "" : value }));
                 }}
                 required
-                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.05)", color: "#ffffff", fontSize: "12px", outline: "none" }}
+                style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px", outline: "none" }}
               >
                 <option value="">Select broker…</option>
                 <option value="Zerodha">Zerodha</option><option value="Groww">Groww</option><option value="Upstox">Upstox</option><option value="Angel One">Angel One</option><option value="ICICI Direct">ICICI Direct</option><option value="HDFC Securities">HDFC Securities</option><option value="Kotak Securities">Kotak Securities</option><option value="m.Stock">m.Stock (Mirae Asset)</option><option value="Other">Other (enter broker)</option>
               </StyledSelect>
-              {brokerChoice === "Other" && <input type="text" placeholder="Enter broker name (required)" value={customBroker} onChange={(event) => { setCustomBroker(event.target.value); setInvestmentForm((previous) => ({ ...previous, broker: event.target.value })); }} required style={{ width: "100%", boxSizing: "border-box", marginTop: "8px", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.05)", color: "#ffffff", fontSize: "12px" }} />}
+              {brokerChoice === "Other" && <input type="text" placeholder="Enter broker name (required)" value={customBroker} onChange={(event) => { setCustomBroker(event.target.value); setInvestmentForm((previous) => ({ ...previous, broker: event.target.value })); }} required style={{ width: "100%", boxSizing: "border-box", marginTop: "8px", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px" }} />}
             </div>
 
             {/* FEES */}
@@ -7207,10 +7213,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
               }}
@@ -7236,10 +7242,10 @@ const summaryCards = [
                 padding: "11px 12px",
                 borderRadius: "10px",
                 border:
-                  "1px solid rgba(255,255,255,0.10)",
+                  "1px solid var(--finos-border)",
                 background:
-                  "rgba(255,255,255,0.05)",
-                color: "#ffffff",
+                  "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
+                color: "var(--finos-text)",
                 fontSize: "12px",
                 outline: "none",
                 resize: "vertical",
@@ -7301,7 +7307,7 @@ const summaryCards = [
   .portfolio-summary-value {
     font-size: 20px;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--finos-text);
     white-space: nowrap;
   }
 
@@ -7341,7 +7347,7 @@ const summaryCards = [
             <div
               style={{
                 fontSize: "10px",
-                color: "rgba(255,255,255,0.42)",
+                color: "var(--finos-muted)",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
                 marginBottom: "8px",
@@ -7358,7 +7364,7 @@ const summaryCards = [
               style={{
                 marginTop: "6px",
                 fontSize: "11px",
-                color: "rgba(255,255,255,0.42)",
+                color: "var(--finos-muted)",
               }}
             >
               {card.change}
@@ -7417,7 +7423,7 @@ const summaryCards = [
                 style={{
                   marginTop: "4px",
                   fontSize: "11px",
-                  color: "rgba(255,255,255,0.45)",
+                  color: "var(--finos-muted)",
                 }}
               >
                 Track portfolio growth over time
@@ -7441,13 +7447,13 @@ const summaryCards = [
                       background:
                         index === 3
                           ? "rgba(168,85,247,0.18)"
-                          : "rgba(255,255,255,0.04)",
+                          : "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
                       border:
-                        "1px solid rgba(255,255,255,0.08)",
+                        "1px solid var(--finos-border)",
                       color:
                         index === 3
                           ? "#d8b4fe"
-                          : "rgba(255,255,255,0.50)",
+                          : "var(--finos-muted)",
                     }}
                   >
                     {period}
@@ -7467,9 +7473,9 @@ const summaryCards = [
               justifyContent: "center",
               borderRadius: "14px",
               border:
-                "1px dashed rgba(255,255,255,0.10)",
+                "1px dashed var(--finos-border)",
               background:
-                "rgba(255,255,255,0.02)",
+                "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
             }}
           >
 
@@ -7482,7 +7488,7 @@ const summaryCards = [
   <div
     style={{
       fontSize: "12px",
-      color: "rgba(255,255,255,0.45)",
+      color: "var(--finos-muted)",
       marginBottom: "8px",
     }}
   >
@@ -7502,7 +7508,7 @@ const summaryCards = [
   <div
     style={{
       fontSize: "12px",
-      color: "rgba(255,255,255,0.45)",
+      color: "var(--finos-muted)",
     }}
   >
     Current portfolio value
@@ -7547,7 +7553,7 @@ const summaryCards = [
             style={{
               marginTop: "4px",
               fontSize: "11px",
-              color: "rgba(255,255,255,0.45)",
+              color: "var(--finos-muted)",
             }}
           >
             Where your investment money is allocated
@@ -7593,7 +7599,7 @@ const summaryCards = [
                 <div
                   style={{
                     fontSize: "9px",
-                    color: "rgba(255,255,255,0.40)",
+                    color: "var(--finos-muted)",
                     textTransform: "uppercase",
                   }}
                 >
@@ -7631,7 +7637,7 @@ const summaryCards = [
         >
           <span
             style={{
-              color: "rgba(255,255,255,0.65)",
+              color: "var(--finos-muted)",
             }}
           >
             {type}
@@ -7690,7 +7696,7 @@ const summaryCards = [
               style={{
                 marginTop: "4px",
                 fontSize: "11px",
-                color: "rgba(255,255,255,0.45)",
+                color: "var(--finos-muted)",
               }}
             >
               Your current investments
@@ -7702,11 +7708,11 @@ const summaryCards = [
               padding: "5px 9px",
               borderRadius: "999px",
               fontSize: "10px",
-              color: "rgba(255,255,255,0.55)",
+              color: "var(--finos-muted)",
               background:
-                "rgba(255,255,255,0.05)",
+                "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
               border:
-                "1px solid rgba(255,255,255,0.08)",
+                "1px solid var(--finos-border)",
             }}
           >
             {investments.length} Holdings
@@ -7719,9 +7725,9 @@ const summaryCards = [
     minHeight: "120px",
     borderRadius: "14px",
     background:
-      "rgba(255,255,255,0.02)",
+      "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
     border:
-      "1px solid rgba(255,255,255,0.06)",
+      "1px solid var(--finos-border)",
     padding: "14px",
   }}
 >
@@ -7761,7 +7767,7 @@ const summaryCards = [
             marginTop: "4px",
             fontSize: "11px",
             color:
-              "rgba(255,255,255,0.40)",
+              "var(--finos-muted)",
           }}
         >
           Your investments will appear here.
@@ -7809,9 +7815,9 @@ const holdingReturn =
             padding: "14px",
             borderRadius: "12px",
             background:
-              "rgba(255,255,255,0.04)",
+              "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
             border:
-              "1px solid rgba(255,255,255,0.08)",
+              "1px solid var(--finos-border)",
             marginBottom: "8px",
           }}
         >
@@ -7832,7 +7838,7 @@ const holdingReturn =
                 marginTop: "4px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.45)",
+                  "var(--finos-muted)",
               }}
             >
               {investment.investment_type}
@@ -7846,7 +7852,7 @@ const holdingReturn =
                 marginTop: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Qty: {investment.quantity}
@@ -7878,7 +7884,7 @@ const holdingReturn =
     style={{
       marginTop: "4px",
       fontSize: "10px",
-      color: "rgba(255,255,255,0.40)",
+      color: "var(--finos-muted)",
     }}
   >
     Invested
@@ -7899,7 +7905,7 @@ const holdingReturn =
     style={{
       marginTop: "4px",
       fontSize: "10px",
-      color: "rgba(255,255,255,0.40)",
+      color: "var(--finos-muted)",
     }}
   >
     Current Value
@@ -7920,7 +7926,7 @@ const holdingReturn =
     style={{
       marginTop: "4px",
       fontSize: "10px",
-      color: "rgba(255,255,255,0.40)",
+      color: "var(--finos-muted)",
     }}
   >
     Gain / Loss
@@ -7955,7 +7961,7 @@ const holdingReturn =
     className="small-button"
     style={{
       cursor: "pointer",
-      color: "#86efac",
+      color: "var(--finos-positive)",
     }}
     onClick={() =>
       openInvestmentTransaction(
@@ -7973,7 +7979,7 @@ const holdingReturn =
     className="small-button"
     style={{
       cursor: "pointer",
-      color: "#fca5a5",
+      color: "var(--finos-negative)",
     }}
     onClick={() =>
       openInvestmentTransaction(
@@ -8028,7 +8034,7 @@ const holdingReturn =
     marginTop: "6px",
     marginLeft: "6px",
     cursor: "pointer",
-    color: "#fca5a5",
+    color: "var(--finos-negative)",
     minWidth: "34px",
     padding: "6px 9px",
   }}
@@ -8113,7 +8119,7 @@ const holdingReturn =
               style={{
                 marginTop: "4px",
                 fontSize: "11px",
-                color: "rgba(255,255,255,0.45)",
+                color: "var(--finos-muted)",
               }}
             >
               {transactionModal.investment.symbol ||
@@ -8152,8 +8158,8 @@ const holdingReturn =
               padding: "10px",
               color:
                 transactionType === "BUY"
-                  ? "#86efac"
-                  : "rgba(255,255,255,0.55)",
+                  ? "var(--finos-positive)"
+                  : "var(--finos-muted)",
             }}
             onClick={() => {
               setEditingTransactionId(null);
@@ -8176,8 +8182,8 @@ const holdingReturn =
               padding: "10px",
               color:
                 transactionType === "SELL"
-                  ? "#fca5a5"
-                  : "rgba(255,255,255,0.55)",
+                  ? "var(--finos-negative)"
+                  : "var(--finos-muted)",
             }}
             onClick={() => {
               setEditingTransactionId(null);
@@ -8255,7 +8261,7 @@ const holdingReturn =
                   marginTop: "4px",
                   fontSize: "10px",
                   color:
-                    "rgba(255,255,255,0.45)",
+                    "var(--finos-muted)",
                 }}
               >
                 Record this transaction in your
@@ -8273,7 +8279,7 @@ const holdingReturn =
                 marginBottom: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Quantity
@@ -8305,7 +8311,7 @@ const holdingReturn =
                 marginBottom: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Price
@@ -8339,7 +8345,7 @@ const holdingReturn =
                 marginBottom: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Fees
@@ -8371,7 +8377,7 @@ const holdingReturn =
                 marginBottom: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Transaction Date
@@ -8408,7 +8414,7 @@ const holdingReturn =
                 marginBottom: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Notes
@@ -8442,7 +8448,7 @@ const holdingReturn =
                   padding: "10px",
                   borderRadius: "10px",
                   background:
-                    "rgba(255,255,255,0.05)",
+                    "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
                   fontSize: "11px",
                 }}
               >
@@ -8496,7 +8502,7 @@ const holdingReturn =
             </div>
 
             {transactionMessage && (
-              <div style={{ marginBottom: "12px", padding: "10px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", fontSize: "11px" }}>
+              <div style={{ marginBottom: "12px", padding: "10px", borderRadius: "10px", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", fontSize: "11px" }}>
                 {transactionMessage}
               </div>
             )}
@@ -8509,7 +8515,7 @@ const holdingReturn =
                   textAlign: "center",
                   fontSize: "12px",
                   color:
-                    "rgba(255,255,255,0.45)",
+                    "var(--finos-muted)",
                 }}
               >
                 Loading transactions...
@@ -8524,7 +8530,7 @@ const holdingReturn =
                   textAlign: "center",
                   fontSize: "12px",
                   color:
-                    "rgba(255,255,255,0.45)",
+                    "var(--finos-muted)",
                 }}
               >
                 No transactions yet.
@@ -8549,9 +8555,9 @@ const holdingReturn =
                         padding: "12px",
                         borderRadius: "12px",
                         background:
-                          "rgba(255,255,255,0.04)",
+                          "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
                         border:
-                          "1px solid rgba(255,255,255,0.08)",
+                          "1px solid var(--finos-border)",
                       }}
                     >
 
@@ -8573,8 +8579,8 @@ const holdingReturn =
                               color:
                                 transaction.transaction_type ===
                                 "BUY"
-                                  ? "#86efac"
-                                  : "#fca5a5",
+                                  ? "var(--finos-positive)"
+                                  : "var(--finos-negative)",
                             }}
                           >
                             {transaction.transaction_type}
@@ -8585,7 +8591,7 @@ const holdingReturn =
                               marginTop: "4px",
                               fontSize: "10px",
                               color:
-                                "rgba(255,255,255,0.45)",
+                                "var(--finos-muted)",
                             }}
                           >
                             {transaction.transaction_date}
@@ -8618,7 +8624,7 @@ const holdingReturn =
                               marginTop: "4px",
                               fontSize: "10px",
                               color:
-                                "rgba(255,255,255,0.45)",
+                                "var(--finos-muted)",
                             }}
                           >
                             Fees:{" "}
@@ -8639,7 +8645,7 @@ const holdingReturn =
                             marginTop: "8px",
                             fontSize: "10px",
                             color:
-                              "rgba(255,255,255,0.45)",
+                              "var(--finos-muted)",
                           }}
                         >
                           {transaction.notes}
@@ -8692,7 +8698,7 @@ const holdingReturn =
                           </>
                         )}
                         {(transaction.status || "ACTIVE") !== "ACTIVE" && (
-                          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>Voided — audit record retained</span>
+                          <span style={{ fontSize: "11px", color: "var(--finos-muted)" }}>Voided — audit record retained</span>
                         )}
                       </div>
 

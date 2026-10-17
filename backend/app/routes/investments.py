@@ -311,11 +311,13 @@ def list_investments(
         text(
             """
             SELECT
-                id,
-                user_id,
-                name,
-                investment_type,
-                symbol,
+                investments.id,
+                investments.user_id,
+                investments.name,
+                investments.investment_type,
+                investments.symbol,
+                (SELECT im.exchange FROM instrument_master im
+                 WHERE im.id = investments.instrument_master_id) AS exchange,
                 CASE
                     WHEN COALESCE(tx.ledger_count, 0) > 0
                     THEN COALESCE(tx.active_quantity, 0)
@@ -619,12 +621,12 @@ def refresh_market_prices(
         text(
             """
             SELECT
-                id,
-                user_id,
-                name,
-                investment_type,
-                symbol,
-                instrument_master_id,
+                investments.id,
+                investments.user_id,
+                investments.name,
+                investments.investment_type,
+                investments.symbol,
+                investments.instrument_master_id,
                 instrument_master.exchange AS instrument_exchange,
                 instrument_master.symbol AS master_symbol,
                 CASE
@@ -680,7 +682,7 @@ def refresh_market_prices(
             ) tx ON tx.investment_id = investments.id
             WHERE investments.user_id = :user_id
 
-            ORDER BY id ASC
+            ORDER BY investments.id ASC
             """
         ),
         {

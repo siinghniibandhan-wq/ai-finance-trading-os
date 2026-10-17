@@ -3511,3 +3511,34 @@
   background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
   color: var(--finos-text) !important;
 }
+
+
+/* Historical chart exchange control: theme-owned sizing and no hardcoded outline. */
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select {
+  flex: 0 0 100px;
+  width: 100px !important;
+  min-width: 100px;
+  align-self: stretch;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:hover,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:active,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"] {
+  box-sizing: border-box;
+  width: 100% !important;
+  min-height: 40px;
+  padding: 9px 10px !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 55%, transparent) !important;
+  outline-offset: 2px;
+}

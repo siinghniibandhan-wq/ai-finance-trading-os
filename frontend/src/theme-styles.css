@@ -4410,3 +4410,51 @@
 :root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-check {
   color: var(--finos-accent) !important;
 }
+
+/* Correct Budget and other form dropdowns in the light-family themes.
+   Uses shared theme tokens; no fixed dark palette. */
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) select {
+  color: var(--finos-text) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  border-color: var(--finos-border) !important;
+  color-scheme: light;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select option,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) select option {
+  color: var(--finos-text) !important;
+  background: var(--t-card-bg, var(--finos-surface)) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger:hover,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger:active,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger:focus,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger:focus-visible,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger[aria-expanded="true"] {
+  color: var(--finos-text) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  background-image: none !important;
+  border-color: var(--finos-border) !important;
+  box-shadow: none !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-menu {
+  color: var(--finos-text) !important;
+  background: var(--t-card-bg, var(--finos-surface)) !important;
+  border-color: var(--finos-border) !important;
+  box-shadow: var(--t-shadow, none) !important;
+  backdrop-filter: none !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option:hover,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option.is-selected {
+  color: var(--finos-text) !important;
+  background-image: none !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option:hover,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option.is-selected {
+  background: color-mix(in srgb, var(--finos-accent) 10%, var(--t-card-bg, var(--finos-surface))) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-chevron,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-check {
+  color: var(--finos-accent) !important;
+}

@@ -15398,7 +15398,6 @@ function Bills() {
         )
       }
       placeholder="Electricity"
-      className="bill-form-control"
     />
   </div>
 
@@ -15422,7 +15421,6 @@ function Bills() {
         )
       }
       placeholder="1000"
-      className="bill-form-control"
     />
   </div>
 
@@ -15434,7 +15432,7 @@ function Bills() {
       Category
     </label>
 
-    <StyledSelect className="finos-select"
+    <StyledSelect className="finos-select bill-form-select"
       value={formData.category_id}
       onChange={(event) =>
         handleChange(
@@ -15442,7 +15440,6 @@ function Bills() {
           event.target.value
         )
       }
-      className="bill-form-select"
     >
       <option value="">
         Select category
@@ -15475,7 +15472,7 @@ function Bills() {
       Payment Account
     </label>
 
-    <StyledSelect className="finos-select"
+    <StyledSelect className="finos-select bill-form-select"
       value={formData.account_id}
       onChange={(event) =>
         handleChange(
@@ -15483,7 +15480,6 @@ function Bills() {
           event.target.value
         )
       }
-      className="bill-form-control bill-form-date"
     >
       <option value="">
         Select account
@@ -15513,7 +15509,7 @@ function Bills() {
       Frequency
     </label>
 
-    <StyledSelect className="finos-select"
+    <StyledSelect className="finos-select bill-form-select"
       value={formData.frequency}
       onChange={(event) =>
         handleChange(
@@ -15521,7 +15517,6 @@ function Bills() {
           event.target.value
         )
       }
-      className="bill-form-control"
     >
       <option value="daily">Daily</option>
       <option value="weekly">Weekly</option>
@@ -15552,7 +15547,6 @@ function Bills() {
           event.target.value
         )
       }
-      className="bill-form-control"
     />
   </div>
 
@@ -15564,7 +15558,7 @@ function Bills() {
       Status
     </label>
 
-    <StyledSelect className="finos-select"
+    <StyledSelect className="finos-select bill-form-select"
       value={formData.status}
       onChange={(event) =>
         handleChange(
@@ -15572,7 +15566,6 @@ function Bills() {
           event.target.value
         )
       }
-      className="bill-form-control"
     >
       <option value="active">Active</option>
       <option value="paused">Paused</option>
@@ -15599,7 +15592,6 @@ function Bills() {
         )
       }
       placeholder="Optional notes"
-      className="bill-form-control"
     />
   </div>
 </div>

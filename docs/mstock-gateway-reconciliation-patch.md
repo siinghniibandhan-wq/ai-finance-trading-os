@@ -100,7 +100,27 @@ def list_orders():
                             "code": "AUTH_REQUIRED"}), 401
         if response.status_code != 200:
             return jsonify({"status": "error", "message": "m.Stock order-book request failed"}), 502
-        return jsonify(body)
+
+        # The backend must be able to filter this shared broker account's order
+        # book by Financial OS user. Enrich only orders whose broker order ID
+        # matches a locally logged placement; never expose unmapped rows as if
+        # they belonged to a particular user.
+        rows = _extract_rows(body, ("orders", "orderbook", "order_book", "items", "data"))
+        if rows is None:
+            return jsonify({"status": "error", "message": "Unsupported m.Stock order-book response shape"}), 502
+        references = _client_reference_by_order_id()
+        enriched = []
+        for raw in rows:
+            if not isinstance(raw, dict):
+                continue
+            row = dict(raw)
+            order_id = next((str(row[key]) for key in
+                             ("order_id", "orderid", "orderId", "nOrdNo")
+                             if row.get(key) not in (None, "")), None)
+            if order_id and order_id in references:
+                row["client_reference"] = references[order_id]
+            enriched.append(row)
+        return jsonify({"status": "success", "orders": enriched})
     except requests.RequestException:
         return jsonify({"status": "error", "message": "Unable to reach m.Stock"}), 502
 

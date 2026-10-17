@@ -4634,3 +4634,112 @@
   .budget-list-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .budget-list-card { padding: 16px; }
 }
+
+
+/* Connected account rows: readable text, centred balances and vertically stacked actions. Credit-card styling is intentionally excluded. */
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) {
+  grid-template-columns: minmax(0, 1fr) minmax(125px, .42fr) minmax(104px, 116px) !important;
+  align-items: center !important;
+  min-height: 148px;
+  gap: 14px !important;
+  padding: 18px !important;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) {
+  min-width: 0;
+  width: auto;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  color: var(--finos-text) !important;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) > div:first-child {
+  color: var(--finos-text) !important;
+  -webkit-text-fill-color: var(--finos-text) !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) > div:nth-child(2),
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) > div:nth-child(3) {
+  color: var(--finos-muted) !important;
+  -webkit-text-fill-color: var(--finos-muted) !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) > div:last-child {
+  display: flex !important;
+  width: fit-content;
+  align-items: center;
+  gap: 6px !important;
+  margin-top: 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+  font-weight: 650;
+  color: var(--finos-positive, #16a34a) !important;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) {
+  text-align: center !important;
+  justify-self: stretch !important;
+  align-self: center !important;
+  width: 100% !important;
+  padding: 12px 10px !important;
+  border-top: 0 !important;
+  border-left: 0 !important;
+  border-right: 1px solid var(--finos-border) !important;
+  border-bottom: 0 !important;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) > div:first-child {
+  color: var(--finos-muted) !important;
+  -webkit-text-fill-color: var(--finos-muted) !important;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) > div:nth-child(2) {
+  color: var(--finos-text) !important;
+  -webkit-text-fill-color: var(--finos-text) !important;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 7px !important;
+  padding-left: 12px !important;
+  border-left: 1px solid var(--finos-border) !important;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) button {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 34px;
+  white-space: normal !important;
+}
+@media (max-width: 760px) {
+  :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) {
+    grid-template-columns: minmax(0, 1fr) minmax(94px, 112px) !important;
+    min-height: 176px;
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+  :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child {
+    grid-column: 1 / -1;
+  }
+  :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+    border-right: 0 !important;
+    padding: 8px 4px !important;
+  }
+  :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+    border-left: 1px solid var(--finos-border) !important;
+    padding-left: 10px !important;
+  }
+}

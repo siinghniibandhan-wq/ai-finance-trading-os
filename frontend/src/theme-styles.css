@@ -4644,46 +4644,73 @@
   gap: 14px !important;
   padding: 18px !important;
 }
-:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) {
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   min-width: 0;
-  width: auto;
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-  color: var(--finos-text) !important;
+  gap: 4px;
 }
-:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) > div:first-child {
-  color: var(--finos-text) !important;
-  -webkit-text-fill-color: var(--finos-text) !important;
-  white-space: normal !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
-  overflow-wrap: anywhere;
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-name {
+  width: 100%;
+  min-width: 0;
+  color: var(--finos-account-title, var(--finos-text)) !important;
+  -webkit-text-fill-color: var(--finos-account-title, var(--finos-text)) !important;
+  font-size: 15px;
+  font-weight: 700;
   line-height: 1.4;
-}
-:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) > div:nth-child(2),
-:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) > div:nth-child(3) {
-  color: var(--finos-muted) !important;
-  -webkit-text-fill-color: var(--finos-muted) !important;
   white-space: normal;
   overflow-wrap: anywhere;
 }
-:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) > div:last-child {
-  display: flex !important;
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-institution {
+  min-width: 0;
+  color: var(--finos-account-muted, var(--finos-muted)) !important;
+  -webkit-text-fill-color: var(--finos-account-muted, var(--finos-muted)) !important;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-number {
+  min-width: 0;
+  color: var(--finos-account-subtle, var(--finos-muted)) !important;
+  -webkit-text-fill-color: var(--finos-account-subtle, var(--finos-muted)) !important;
+  font-size: 11px;
+  line-height: 1.4;
+  margin-top: 1px;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-status {
+  display: inline-flex !important;
   width: fit-content;
+  max-width: 100%;
   align-items: center;
   gap: 6px !important;
-  margin-top: 8px !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+  margin-top: 4px !important;
+  padding: 3px 8px !important;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: 999px !important;
+  background: var(--t-inner-bg, var(--t-card-bg, transparent)) !important;
   box-shadow: none !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 650;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-status > span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-status.is-active {
   color: var(--finos-positive, #16a34a) !important;
+  -webkit-text-fill-color: var(--finos-positive, #16a34a) !important;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-status.is-inactive {
+  color: var(--finos-negative, #dc2626) !important;
+  -webkit-text-fill-color: var(--finos-negative, #dc2626) !important;
 }
 :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) {
   text-align: center !important;

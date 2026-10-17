@@ -15343,23 +15343,10 @@ function Bills() {
 
         <div
           className="glass-card bill-form-card"
-          style={{
-            marginTop: "22px",
-            padding: "22px",
-          }}
+
         >
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent:
-                "space-between",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom:
-                "18px",
-            }}
-          >
+          <div className="bill-form-header">
 
             <div>
 
@@ -15371,12 +15358,7 @@ function Bills() {
                   : "ADD BILL"}
               </div>
 
-              <h3
-                style={{
-                  margin:
-                    "5px 0 0",
-                }}
-              >
+              <h3 className="bill-form-title">
                 {editingBill
                   ? "Update bill"
                   : "Create a new bill"}
@@ -15399,30 +15381,11 @@ function Bills() {
 
 
           <div
-  style={{
-    display: "grid",
-    gridTemplateColumns:
-      "repeat(2, minmax(0, 1fr))",
-    gap: "16px",
-  }}
+  className="bill-form-grid"
 >
   {/* BILL NAME */}
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "7px",
-    }}
-  >
-    <label
-      style={{
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "rgba(255,255,255,0.60)",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-      }}
-    >
+  <div className="bill-form-field">
+    <label className="bill-form-label">
       Bill Name
     </label>
 
@@ -15435,19 +15398,7 @@ function Bills() {
         )
       }
       placeholder="Electricity"
-      style={{
-        width: "100%",
-        minHeight: "42px",
-        padding: "10px 12px",
-        border:
-          "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "12px",
-        background: "rgba(255,255,255,0.05)",
-        color: "#ffffff",
-        outline: "none",
-        fontSize: "13px",
-        boxSizing: "border-box",
-      }}
+      className="bill-form-control"
     />
   </div>
 
@@ -15527,19 +15478,7 @@ function Bills() {
           event.target.value
         )
       }
-      style={{
-        width: "100%",
-        minHeight: "42px",
-        padding: "10px 12px",
-        border:
-          "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "12px",
-        background: "#151525",
-        color: "#ffffff",
-        outline: "none",
-        fontSize: "13px",
-        boxSizing: "border-box",
-      }}
+      className="bill-form-select"
     >
       <option value="">
         Select category
@@ -15592,19 +15531,7 @@ function Bills() {
           event.target.value
         )
       }
-      style={{
-        width: "100%",
-        minHeight: "42px",
-        padding: "10px 12px",
-        border:
-          "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "12px",
-        background: "#151525",
-        color: "#ffffff",
-        outline: "none",
-        fontSize: "13px",
-        boxSizing: "border-box",
-      }}
+      className="bill-form-control bill-form-date"
     >
       <option value="">
         Select account
@@ -15821,15 +15748,7 @@ function Bills() {
   </div>
 </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent:
-                "flex-end",
-              gap: "10px",
-              marginTop: "20px",
-            }}
-          >
+          <div className="bill-form-actions">
 
             <button
               type="button"

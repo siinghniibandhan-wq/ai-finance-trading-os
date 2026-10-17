@@ -38,3 +38,20 @@
 
 .fos-billing-switch span.active{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;border-radius:8px;background:#8b5cf62b;color:var(--text);font-size:11px;font-weight:700}
 .fos-billing-switch .fos-billing-coming-soon{font-size:10px;color:var(--muted);padding:8px}
+
+
+/* Company refund policy */
+.fos-refund-section{padding:20px 0 72px;scroll-margin-top:90px}
+.fos-refund-section>h2{font:800 clamp(28px,3vw,40px)/1.15 Manrope,sans-serif;letter-spacing:-1.2px;margin:12px 0}
+.fos-refund-owner{font-size:12px;line-height:1.8;color:var(--muted);margin:0 0 22px}
+.fos-refund-owner strong{color:var(--text)}
+.fos-refund-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fos-refund-grid article{padding:19px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0}
+.fos-refund-grid h3{font-size:13px;line-height:1.5;margin:0 0 9px;color:var(--text)}
+.fos-refund-grid p{font-size:11px;line-height:1.85;color:var(--muted);margin:0;overflow-wrap:anywhere}
+.fos-refund-grid a{color:#a78bfa;text-decoration:underline;text-underline-offset:3px}
+.fos-refund-disclaimer{font-size:10px;line-height:1.8;color:var(--muted);margin:15px 0 0}
+.fos-site-light .fos-refund-grid article{background:#fff;border-color:#dfe4ee}
+.fos-site-light .fos-refund-grid h3,.fos-site-light .fos-refund-owner strong{color:#202a3d}
+.fos-site-light .fos-refund-grid p,.fos-site-light .fos-refund-owner,.fos-site-light .fos-refund-disclaimer{color:#68758a}
+@media(max-width:740px){.fos-refund-section{padding:12px 0 55px}.fos-refund-grid{grid-template-columns:1fr}.fos-refund-grid article{padding:16px}}

@@ -15403,21 +15403,9 @@ function Bills() {
   </div>
 
   {/* AMOUNT */}
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "7px",
-    }}
+  <div className="bill-form-field"
   >
-    <label
-      style={{
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "rgba(255,255,255,0.60)",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-      }}
+    <label className="bill-form-label"
     >
       Amount
     </label>
@@ -15434,38 +15422,14 @@ function Bills() {
         )
       }
       placeholder="1000"
-      style={{
-        width: "100%",
-        minHeight: "42px",
-        padding: "10px 12px",
-        border:
-          "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "12px",
-        background: "rgba(255,255,255,0.05)",
-        color: "#ffffff",
-        outline: "none",
-        fontSize: "13px",
-        boxSizing: "border-box",
-      }}
+      className="bill-form-control"
     />
   </div>
 
   {/* CATEGORY */}
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "7px",
-    }}
+  <div className="bill-form-field"
   >
-    <label
-      style={{
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "rgba(255,255,255,0.60)",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-      }}
+    <label className="bill-form-label"
     >
       Category
     </label>
@@ -15504,21 +15468,9 @@ function Bills() {
   </div>
 
   {/* PAYMENT ACCOUNT */}
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "7px",
-    }}
+  <div className="bill-form-field"
   >
-    <label
-      style={{
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "rgba(255,255,255,0.60)",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-      }}
+    <label className="bill-form-label"
     >
       Payment Account
     </label>
@@ -15554,21 +15506,9 @@ function Bills() {
   </div>
 
   {/* FREQUENCY */}
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "7px",
-    }}
+  <div className="bill-form-field"
   >
-    <label
-      style={{
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "rgba(255,255,255,0.60)",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-      }}
+    <label className="bill-form-label"
     >
       Frequency
     </label>
@@ -15581,19 +15521,7 @@ function Bills() {
           event.target.value
         )
       }
-      style={{
-        width: "100%",
-        minHeight: "42px",
-        padding: "10px 12px",
-        border:
-          "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "12px",
-        background: "#151525",
-        color: "#ffffff",
-        outline: "none",
-        fontSize: "13px",
-        boxSizing: "border-box",
-      }}
+      className="bill-form-control"
     >
       <option value="daily">Daily</option>
       <option value="weekly">Weekly</option>
@@ -15608,21 +15536,9 @@ function Bills() {
   </div>
 
   {/* NEXT DUE DATE */}
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "7px",
-    }}
+  <div className="bill-form-field"
   >
-    <label
-      style={{
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "rgba(255,255,255,0.60)",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-      }}
+    <label className="bill-form-label"
     >
       Next Due Date
     </label>
@@ -15636,38 +15552,14 @@ function Bills() {
           event.target.value
         )
       }
-      style={{
-        width: "100%",
-        minHeight: "42px",
-        padding: "10px 12px",
-        border:
-          "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "12px",
-        background: "#151525",
-        color: "#ffffff",
-        outline: "none",
-        fontSize: "13px",
-        boxSizing: "border-box",
-      }}
+      className="bill-form-control"
     />
   </div>
 
   {/* STATUS */}
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "7px",
-    }}
+  <div className="bill-form-field"
   >
-    <label
-      style={{
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "rgba(255,255,255,0.60)",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-      }}
+    <label className="bill-form-label"
     >
       Status
     </label>
@@ -15680,19 +15572,7 @@ function Bills() {
           event.target.value
         )
       }
-      style={{
-        width: "100%",
-        minHeight: "42px",
-        padding: "10px 12px",
-        border:
-          "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "12px",
-        background: "#151525",
-        color: "#ffffff",
-        outline: "none",
-        fontSize: "13px",
-        boxSizing: "border-box",
-      }}
+      className="bill-form-control"
     >
       <option value="active">Active</option>
       <option value="paused">Paused</option>
@@ -15703,21 +15583,9 @@ function Bills() {
   </div>
 
   {/* NOTES */}
-  <div
-    style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "7px",
-    }}
+  <div className="bill-form-field"
   >
-    <label
-      style={{
-        fontSize: "11px",
-        fontWeight: 700,
-        color: "rgba(255,255,255,0.60)",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-      }}
+    <label className="bill-form-label"
     >
       Notes
     </label>
@@ -15731,19 +15599,7 @@ function Bills() {
         )
       }
       placeholder="Optional notes"
-      style={{
-        width: "100%",
-        minHeight: "42px",
-        padding: "10px 12px",
-        border:
-          "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "12px",
-        background: "rgba(255,255,255,0.05)",
-        color: "#ffffff",
-        outline: "none",
-        fontSize: "13px",
-        boxSizing: "border-box",
-      }}
+      className="bill-form-control"
     />
   </div>
 </div>

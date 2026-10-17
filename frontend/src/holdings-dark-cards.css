@@ -11,20 +11,22 @@
   position: relative;
   box-sizing: border-box;
   min-width: 0;
-  min-height: 0;
+  min-height: 132px;
   padding: 16px !important;
-  background: var(--t-card-bg) !important;
-  background-image: none !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(167,139,250,.08), transparent 55%),
+    linear-gradient(145deg, rgba(20,28,48,.88), rgba(10,15,28,.92)) !important;
   color: var(--finos-text) !important;
-  border: 1px solid var(--finos-border) !important;
-  border-radius: var(--t-radius) !important;
+  border: 1px solid rgba(167,139,250,.14) !important;
+  border-radius: 17px !important;
   box-shadow: var(--t-shadow) !important;
   transform: none !important;
 }
 :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid > .metric-card:hover {
-  background: var(--t-card-bg) !important;
-  background-image: none !important;
-  border-color: var(--finos-border) !important;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(167,139,250,.08), transparent 55%),
+    linear-gradient(145deg, rgba(20,28,48,.88), rgba(10,15,28,.92)) !important;
+  border-color: rgba(167,139,250,.34) !important;
   box-shadow: var(--t-shadow) !important;
   transform: none !important;
 }
@@ -44,7 +46,7 @@
   align-items: center;
   justify-content: center;
   color: var(--finos-accent) !important;
-  background: var(--t-inner-bg) !important;
+  background: var(--finos-icon-bg, var(--t-inner-bg)) !important;
   border: 1px solid var(--finos-border) !important;
   border-radius: var(--t-radius-sm) !important;
 }

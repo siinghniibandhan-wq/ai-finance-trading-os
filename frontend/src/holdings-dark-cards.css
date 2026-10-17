@@ -23,9 +23,9 @@
   transform: none !important;
 }
 :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid > .metric-card:hover {
-  background: var(--t-card-bg, var(--finos-surface, #ffffff)) !important;
+  background: var(--t-card-bg, var(--finos-surface)) !important;
   background-image: none !important;
-  border-color: var(--finos-border, #e1e6ef) !important;
+  border-color: var(--finos-border) !important;
   box-shadow: none !important;
   transform: none !important;
 }

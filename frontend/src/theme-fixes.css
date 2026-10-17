@@ -2375,3 +2375,214 @@
   border: 1px solid var(--finos-border, #dfe4ec) !important;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--finos-accent, #7563dc) 12%, transparent) !important;
 }
+
+
+/* Account form: all presentation comes from the active theme tokens. */
+:root[data-finos-theme] .money-accounts .account-form-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--t-space-4, 16px);
+  background: color-mix(in srgb, var(--finos-page, var(--t-page-bg, #0b1020)) 72%, transparent);
+  backdrop-filter: blur(var(--t-overlay-blur, 8px));
+  -webkit-backdrop-filter: blur(var(--t-overlay-blur, 8px));
+}
+:root[data-finos-theme] .money-accounts .account-form-dialog {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 620px;
+  max-height: min(88dvh, 760px);
+  overflow-y: auto;
+  padding: clamp(18px, 4vw, 28px);
+  color: var(--finos-text, var(--t-text, inherit));
+  background: var(--t-card-bg, var(--finos-surface, var(--t-surface, #111827)));
+  background-image: none;
+  border: var(--t-card-border, 1px solid var(--finos-border, var(--t-border, transparent)));
+  border-radius: var(--t-radius, 20px);
+  box-shadow: var(--t-shadow, 0 24px 90px rgba(0,0,0,.35));
+}
+:root[data-finos-theme] .money-accounts .account-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--t-space-4, 16px);
+  margin-bottom: var(--t-space-5, 22px);
+}
+:root[data-finos-theme] .money-accounts .account-form-eyebrow {
+  margin: 0 0 7px;
+  letter-spacing: var(--t-label-track, .14em);
+}
+:root[data-finos-theme] .money-accounts .account-form-title {
+  margin: 0;
+  color: var(--finos-text, var(--t-text, inherit));
+  font-size: clamp(21px, 4vw, 27px);
+}
+:root[data-finos-theme] .money-accounts .account-form-description {
+  margin: 8px 0 0;
+  color: var(--finos-muted, var(--t-muted, var(--finos-text, inherit)));
+  font-size: var(--t-font-sm, 13px);
+  line-height: 1.5;
+}
+:root[data-finos-theme] .money-accounts .account-form-close {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--finos-border, var(--t-border, transparent));
+  border-radius: var(--t-radius-sm, 10px);
+  color: var(--finos-text, var(--t-text, inherit));
+  background: var(--t-inner-bg, var(--finos-surface-raised, transparent));
+  font: inherit;
+  font-size: 21px;
+  cursor: pointer;
+}
+:root[data-finos-theme] .money-accounts .account-form-close:disabled {
+  cursor: not-allowed;
+  opacity: var(--t-disabled-opacity, .6);
+}
+:root[data-finos-theme] .money-accounts .account-form-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: var(--t-space-4, 17px);
+}
+:root[data-finos-theme] .money-accounts .account-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--t-space-2, 8px);
+  min-width: 0;
+  color: var(--finos-text, var(--t-text, inherit));
+  font-size: var(--t-font-sm, 13px);
+  font-weight: var(--t-label-weight, 600);
+}
+:root[data-finos-theme] .money-accounts :is(.account-form-input, .account-form-select, .account-form-field > .finos-select) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 11px 12px;
+  color: var(--finos-text, var(--t-text, inherit));
+  -webkit-text-fill-color: var(--finos-text, var(--t-text, inherit));
+  background: var(--t-inner-bg, var(--finos-surface-raised, transparent));
+  border: 1px solid var(--finos-border, var(--t-border, transparent));
+  border-radius: var(--t-radius-sm, 10px);
+  box-shadow: var(--t-shadow-inner, none);
+  font: inherit;
+  font-size: var(--t-control-font-size, 14px);
+  outline: none;
+}
+:root[data-finos-theme] .money-accounts .account-form-input::placeholder {
+  color: var(--finos-muted, var(--t-muted, currentColor));
+  -webkit-text-fill-color: var(--finos-muted, var(--t-muted, currentColor));
+  opacity: 1;
+}
+:root[data-finos-theme] .money-accounts :is(.account-form-input, .account-form-select, .account-form-field > .finos-select):focus,
+:root[data-finos-theme] .money-accounts :is(.account-form-input, .account-form-select, .account-form-field > .finos-select):focus-visible,
+:root[data-finos-theme] .money-accounts .account-form-select[aria-expanded="true"] {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--t-accent, currentColor)) 24%, transparent);
+  outline-offset: 1px;
+  border-color: var(--finos-accent, var(--t-accent, var(--finos-border, currentColor)));
+  box-shadow: none;
+}
+:root[data-finos-theme] .money-accounts .account-form-loan-fields {
+  margin-top: var(--t-space-4, 17px);
+}
+:root[data-finos-theme] .money-accounts .account-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--t-space-2, 10px);
+  margin-top: var(--t-space-5, 26px);
+  padding-top: var(--t-space-4, 18px);
+  border-top: 1px solid var(--finos-border, var(--t-border, transparent));
+}
+:root[data-finos-theme] .money-accounts .account-form-footer button {
+  min-height: 42px;
+  padding: 11px 18px;
+  border-radius: var(--t-radius-sm, 10px);
+}
+:root[data-finos-theme] .money-accounts .account-form-cancel { min-width: 100px; }
+:root[data-finos-theme] .money-accounts .account-form-submit { min-width: 145px; }
+:root[data-finos-theme] .money-accounts .account-form-submit:disabled {
+  opacity: var(--t-disabled-opacity, .65);
+}
+@media (max-width: 520px) {
+  :root[data-finos-theme] .money-accounts .account-form-overlay {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: var(--t-space-3, 10px);
+  }
+  :root[data-finos-theme] .money-accounts .account-form-dialog {
+    max-height: calc(100dvh - 2 * var(--t-space-3, 10px));
+  }
+  :root[data-finos-theme] .money-accounts .account-form-footer > button {
+    flex: 1 1 auto;
+  }
+}
+
+
+/* Root cause fix: account-form-select is the StyledSelect wrapper.
+   The visible control is its child button, .finos-select-trigger. */
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:hover,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:active,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:focus,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger[aria-expanded="true"] {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 11px 12px !important;
+  color: var(--finos-text, var(--t-text, inherit)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--t-text, inherit)) !important;
+  background: var(--t-inner-bg, var(--finos-surface-raised, transparent)) !important;
+  background-image: none !important;
+  border: 1px solid var(--finos-border, var(--t-border, transparent)) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  font-size: var(--t-control-font-size, 14px) !important;
+  text-align: left !important;
+}
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, var(--t-accent, var(--finos-border, currentColor))) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--t-accent, currentColor)) 20%, transparent) !important;
+  outline-offset: 1px !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:disabled {
+  opacity: var(--t-disabled-opacity, .6) !important;
+  cursor: not-allowed !important;
+}
+:root[data-finos-theme] .money-accounts .account-form-select .finos-select-menu {
+  color: var(--finos-text, var(--t-text, inherit)) !important;
+  background: var(--t-card-bg, var(--finos-surface, var(--t-surface, #fff))) !important;
+  border: 1px solid var(--finos-border, var(--t-border, transparent)) !important;
+}
+
+
+/* Final override for the Add Account type selector: prevent browser/global
+   button focus styles from painting the thick black frame seen on mobile. */
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:hover,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:active,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:focus,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger[aria-expanded="true"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  outline: 0 !important;
+  outline-offset: 0 !important;
+  border: 1px solid var(--finos-border, var(--t-border, #dfe4ec)) !important;
+  background: var(--t-inner-bg, var(--finos-surface-raised, #fff)) !important;
+  color: var(--finos-text, var(--t-text, #202938)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--t-text, #202938)) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, var(--t-accent, #7563dc)) !important;
+}

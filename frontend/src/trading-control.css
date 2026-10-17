@@ -1,0 +1,28 @@
+/* Theme-token-driven, accessible live trading control. */
+.finos-trading-control {
+  color: var(--finos-text, inherit);
+  background: var(--finos-card-bg, var(--finos-surface, transparent));
+  border: 1px solid var(--finos-border, currentColor);
+  border-radius: 14px;
+  padding: 16px;
+  margin: 0 0 18px;
+  box-shadow: var(--finos-card-shadow, none);
+}
+.finos-trading-control__heading,
+.finos-trading-control__actions,
+.finos-trading-control__limits {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+.finos-trading-control__heading h3 { margin: 0; color: var(--finos-text, inherit); }
+.finos-trading-control__heading p,
+.finos-trading-control__limits { margin: 6px 0 0; color: var(--finos-text-muted, var(--finos-text, inherit)); font-size: .9rem; }
+.finos-trading-control__status { border: 1px solid currentColor; border-radius: 999px; padding: 4px 10px; font-weight: 800; letter-spacing: .04em; }
+.finos-trading-control__status.is-on { color: var(--finos-success, #087443); }
+.finos-trading-control__status.is-off { color: var(--finos-danger, #b42318); }
+.finos-trading-control__actions { justify-content: flex-start; margin-top: 14px; }
+.finos-trading-control button { border: 1px solid var(--finos-border, currentColor); border-radius: 8px; padding: 9px 14px; color: var(--finos-button-text, var(--finos-text, inherit)); background: var(--finos-accent, var(--finos-surface, transparent)); cursor: pointer; }
+.finos-trading-control button.secondary { background: var(--finos-surface, transparent); }
+.finos-trading-control button:disabled { opacity: .55; cursor: not-allowed; }
+.finos-trading-control button:focus-visible { outline: 3px solid var(--finos-accent, currentColor); outline-offset: 2px; }
+.finos-trading-control__limits { margin-top: 12px; }
+.finos-trading-control__error { color: var(--finos-danger, #b42318); margin: 10px 0 0; }

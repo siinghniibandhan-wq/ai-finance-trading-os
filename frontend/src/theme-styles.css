@@ -4773,7 +4773,7 @@
 
 
 /* Account detail wrapper must remain plain text, never a pill/card. */
-:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-details {
+.money-accounts .account-strip-item:not(.account-credit-card) .account-strip-details {
   background: transparent !important;
   background-image: none !important;
   border: 0 !important;
@@ -4784,9 +4784,9 @@
   color: var(--finos-text) !important;
   -webkit-text-fill-color: var(--finos-text) !important;
 }
-:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-name,
-:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-institution,
-:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-number {
+.money-accounts .account-strip-item:not(.account-credit-card) .account-strip-name,
+.money-accounts .account-strip-item:not(.account-credit-card) .account-strip-institution,
+.money-accounts .account-strip-item:not(.account-credit-card) .account-strip-number {
   display: block !important;
   background: transparent !important;
   background-image: none !important;
@@ -4796,7 +4796,7 @@
   padding: 0 !important;
   text-align: left !important;
 }
-:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-status {
+.money-accounts .account-strip-item:not(.account-credit-card) .account-strip-status {
   display: inline-flex !important;
   width: fit-content !important;
   background: transparent !important;

@@ -7447,7 +7447,7 @@ const summaryCards = [
                       color:
                         index === 3
                           ? "#d8b4fe"
-                          : "rgba(255,255,255,0.50)",
+                          : "var(--finos-muted)",
                     }}
                   >
                     {period}
@@ -7761,7 +7761,7 @@ const summaryCards = [
             marginTop: "4px",
             fontSize: "11px",
             color:
-              "rgba(255,255,255,0.40)",
+              "var(--finos-muted)",
           }}
         >
           Your investments will appear here.
@@ -7832,7 +7832,7 @@ const holdingReturn =
                 marginTop: "4px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.45)",
+                  "var(--finos-muted)",
               }}
             >
               {investment.investment_type}
@@ -7846,7 +7846,7 @@ const holdingReturn =
                 marginTop: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Qty: {investment.quantity}
@@ -7955,7 +7955,7 @@ const holdingReturn =
     className="small-button"
     style={{
       cursor: "pointer",
-      color: "#86efac",
+      color: "var(--finos-positive)",
     }}
     onClick={() =>
       openInvestmentTransaction(
@@ -7973,7 +7973,7 @@ const holdingReturn =
     className="small-button"
     style={{
       cursor: "pointer",
-      color: "#fca5a5",
+      color: "var(--finos-negative)",
     }}
     onClick={() =>
       openInvestmentTransaction(
@@ -8028,7 +8028,7 @@ const holdingReturn =
     marginTop: "6px",
     marginLeft: "6px",
     cursor: "pointer",
-    color: "#fca5a5",
+    color: "var(--finos-negative)",
     minWidth: "34px",
     padding: "6px 9px",
   }}
@@ -8152,8 +8152,8 @@ const holdingReturn =
               padding: "10px",
               color:
                 transactionType === "BUY"
-                  ? "#86efac"
-                  : "rgba(255,255,255,0.55)",
+                  ? "var(--finos-positive)"
+                  : "var(--finos-muted)",
             }}
             onClick={() => {
               setEditingTransactionId(null);
@@ -8176,8 +8176,8 @@ const holdingReturn =
               padding: "10px",
               color:
                 transactionType === "SELL"
-                  ? "#fca5a5"
-                  : "rgba(255,255,255,0.55)",
+                  ? "var(--finos-negative)"
+                  : "var(--finos-muted)",
             }}
             onClick={() => {
               setEditingTransactionId(null);
@@ -8255,7 +8255,7 @@ const holdingReturn =
                   marginTop: "4px",
                   fontSize: "10px",
                   color:
-                    "rgba(255,255,255,0.45)",
+                    "var(--finos-muted)",
                 }}
               >
                 Record this transaction in your
@@ -8273,7 +8273,7 @@ const holdingReturn =
                 marginBottom: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Quantity
@@ -8305,7 +8305,7 @@ const holdingReturn =
                 marginBottom: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Price
@@ -8339,7 +8339,7 @@ const holdingReturn =
                 marginBottom: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Fees
@@ -8371,7 +8371,7 @@ const holdingReturn =
                 marginBottom: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Transaction Date
@@ -8408,7 +8408,7 @@ const holdingReturn =
                 marginBottom: "6px",
                 fontSize: "11px",
                 color:
-                  "rgba(255,255,255,0.55)",
+                  "var(--finos-muted)",
               }}
             >
               Notes
@@ -8509,7 +8509,7 @@ const holdingReturn =
                   textAlign: "center",
                   fontSize: "12px",
                   color:
-                    "rgba(255,255,255,0.45)",
+                    "var(--finos-muted)",
                 }}
               >
                 Loading transactions...
@@ -8524,7 +8524,7 @@ const holdingReturn =
                   textAlign: "center",
                   fontSize: "12px",
                   color:
-                    "rgba(255,255,255,0.45)",
+                    "var(--finos-muted)",
                 }}
               >
                 No transactions yet.
@@ -8573,8 +8573,8 @@ const holdingReturn =
                               color:
                                 transaction.transaction_type ===
                                 "BUY"
-                                  ? "#86efac"
-                                  : "#fca5a5",
+                                  ? "var(--finos-positive)"
+                                  : "var(--finos-negative)",
                             }}
                           >
                             {transaction.transaction_type}
@@ -8585,7 +8585,7 @@ const holdingReturn =
                               marginTop: "4px",
                               fontSize: "10px",
                               color:
-                                "rgba(255,255,255,0.45)",
+                                "var(--finos-muted)",
                             }}
                           >
                             {transaction.transaction_date}
@@ -8618,7 +8618,7 @@ const holdingReturn =
                               marginTop: "4px",
                               fontSize: "10px",
                               color:
-                                "rgba(255,255,255,0.45)",
+                                "var(--finos-muted)",
                             }}
                           >
                             Fees:{" "}
@@ -8639,7 +8639,7 @@ const holdingReturn =
                             marginTop: "8px",
                             fontSize: "10px",
                             color:
-                              "rgba(255,255,255,0.45)",
+                              "var(--finos-muted)",
                           }}
                         >
                           {transaction.notes}

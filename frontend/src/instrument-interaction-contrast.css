@@ -2,20 +2,28 @@
    Keep this stylesheet after theme-styles.css so interaction states win without
    changing the app-wide palette or unrelated modules. */
 
-/* Active-state text is inherited from the active theme's contrast/primary-text tokens. */
+/* Selected controls use the theme's paired background/text tokens. */
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab[aria-selected="true"],
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab.is-active,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button.is-active,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button[aria-pressed="true"] {
-  /* Use the theme's paired primary background/text tokens together. */
   background: var(--t-pri-bg, var(--finos-accent)) !important;
-  color: var(--finos-accent-contrast, var(--t-pri-text, var(--finos-text))) !important;
-  -webkit-text-fill-color: var(--finos-accent-contrast, var(--t-pri-text, var(--finos-text))) !important;
+  color: var(--t-pri-text, var(--finos-accent-contrast, var(--finos-text))) !important;
+  -webkit-text-fill-color: var(--t-pri-text, var(--finos-accent-contrast, var(--finos-text))) !important;
   border-color: var(--t-pri-bg, var(--finos-accent)) !important;
 }
 
-/* Hover and keyboard focus should be visible without sacrificing label contrast. */
-:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:hover,
+/* Research tabs do not have a separate hover state. Unselected tabs keep their
+   normal theme appearance; only the selected tab changes after a click. */
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:hover:not([aria-selected="true"]):not(.is-active) {
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+  -webkit-text-fill-color: var(--finos-text) !important;
+  border-color: var(--finos-border) !important;
+  box-shadow: none !important;
+}
+
+/* Keep other interactive controls readable; keyboard focus remains visible. */
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button:hover,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:hover,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"] {

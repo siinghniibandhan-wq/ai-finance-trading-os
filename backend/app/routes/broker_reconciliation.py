@@ -164,21 +164,10 @@ def reconcile_broker_fills(
                 """), {"user_id": user_id, "symbol": trade["symbol"], "exchange": trade["exchange"]}).first()
 
                 if investment is None:
-                    if trade["side"] == "SELL":
-                        raise _SkipFill()
-                    created = db.execute(text("""
-                        INSERT INTO investments
-                          (user_id, name, investment_type, symbol, quantity, buy_price,
-                           current_price, buy_date, broker, fees, notes, exchange)
-                        VALUES
-                          (:user_id, :symbol, 'Stock', :symbol, 0, :price, :price,
-                           :trade_date, 'm.Stock', 0, 'Created from confirmed broker fill', :exchange)
-                        RETURNING id, quantity, name
-                    """), {
-                        "user_id": user_id, "symbol": trade["symbol"], "price": trade["price"],
-                        "trade_date": trade["trade_date"], "exchange": trade["exchange"],
-                    }).first()
-                    investment = created
+                    # Never create a zero-quantity shell holding during reconciliation.
+                    # A fill without an existing ledger-aware position is flagged for
+                    # manual portfolio setup/review rather than silently changing holdings.
+                    raise _SkipFill()
 
                 ledger_count = db.execute(text("""
                     SELECT COUNT(*) FROM investment_transactions

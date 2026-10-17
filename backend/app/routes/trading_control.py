@@ -66,6 +66,12 @@ def _gateway_request(path: str, method: str = "GET", payload: dict | None = None
         raise HTTPException(status_code=503, detail="Unable to verify m.Stock gateway trading status.") from exc
 
 
+@router.get("/trading-owner")
+def get_trading_owner(admin: User = Depends(get_current_admin)):
+    """Return owner visibility only to the configured platform administrator."""
+    return {"is_owner": True}
+
+
 @router.get("/trading-status")
 def get_trading_status(admin: User = Depends(get_current_admin)):
     status = _gateway_request("/trading-status")

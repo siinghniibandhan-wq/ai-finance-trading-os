@@ -2296,3 +2296,71 @@
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .finos-select-check {
   color: var(--finos-accent, #7563dc) !important;
 }
+
+
+/* Add/Edit Account dialog: respect the active light theme instead of
+   retaining the hard-coded dark modal and dark input borders from inline styles. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="presentation"][style*="rgba(3, 7, 18, 0.78)"] {
+  background: rgba(25, 34, 48, .38) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] {
+  background: var(--t-card-bg, #fff) !important;
+  background-image: none !important;
+  color: var(--finos-text, #202938) !important;
+  border: 1px solid var(--finos-border, #e3e8ef) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  box-shadow: 0 22px 65px rgba(31, 41, 55, .18) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] h3 {
+  color: var(--finos-text, #202938) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] p {
+  color: var(--finos-muted, #5b6472) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] label {
+  color: var(--finos-text, #303846) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] input:not([type="checkbox"]):not([type="radio"]) {
+  background: var(--t-inner-bg, #f7f8fa) !important;
+  background-image: none !important;
+  color: var(--finos-text, #202938) !important;
+  -webkit-text-fill-color: var(--finos-text, #202938) !important;
+  border: 1px solid var(--finos-border, #dfe4ec) !important;
+  box-shadow: none !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] input::placeholder {
+  color: var(--finos-muted, #737d8c) !important;
+  -webkit-text-fill-color: var(--finos-muted, #737d8c) !important;
+  opacity: 1;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] input:focus {
+  border-color: var(--finos-accent, #7c6ee6) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--finos-accent, #7c6ee6) 14%, transparent) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-wrap > .finos-select-trigger {
+  background: var(--t-inner-bg, #f7f8fa) !important;
+  background-image: none !important;
+  color: var(--finos-text, #202938) !important;
+  -webkit-text-fill-color: var(--finos-text, #202938) !important;
+  border: 1px solid var(--finos-border, #dfe4ec) !important;
+  box-shadow: none !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-menu {
+  background: var(--t-card-bg, #fff) !important;
+  color: var(--finos-text, #202938) !important;
+  border: 1px solid var(--finos-border, #e3e8ef) !important;
+  box-shadow: 0 12px 30px rgba(31, 41, 55, .14) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-option {
+  color: var(--finos-text, #202938) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] header > button[aria-label="Close account form"] {
+  background: var(--t-inner-bg, #f7f8fa) !important;
+  color: var(--finos-text, #202938) !important;
+  border: 1px solid var(--finos-border, #dfe4ec) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] footer {
+  border-top: 1px solid var(--finos-border, #e3e8ef) !important;
+}

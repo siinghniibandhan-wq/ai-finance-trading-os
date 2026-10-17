@@ -9723,78 +9723,31 @@ const deleteAccount = async () => {
 
           {/* DETAILS */}
 
-          <div
-            style={{
-              minWidth: 0,
-            }}
-          >
-
-            <div
-              style={{
-                fontSize: "15px",
-                fontWeight: 700,
-                color: "var(--finos-account-title, var(--finos-text, #ffffff))",
-                marginBottom: "5px",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
+          <div className="account-strip-details" style={{ minWidth: 0 }}>
+            <div className="account-strip-name">
               {account.name}
             </div>
 
-            <div
-              style={{
-                fontSize: "12px",
-                color: "var(--finos-account-muted, var(--finos-muted, rgba(255,255,255,.60)))",
-                textTransform: "capitalize",
-              }}
-            >
-              {account.institution ||
-                "Financial Account"}
+            <div className="account-strip-institution">
+              {account.institution || "Financial Account"}
               {" • "}
               {account.type}
             </div>
 
             {account.account_number && !["credit_card", "creditcard", "credit_card_account"].includes(String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_")) && (
-
-              <div
-                style={{
-                  fontSize: "11px",
-                  color: "var(--finos-account-subtle, var(--finos-muted, rgba(255,255,255,.40)))",
-                  marginTop: "4px",
-                }}
-              >
+              <div className="account-strip-number">
                 {account.account_number}
               </div>
-
             )}
 
             <div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "5px",
-    marginTop: "6px",
-    fontSize: "10px",
-    color: account.is_active
-      ? "#4ade80"
-      : "#f87171",
-  }}
->
-  <span
-    style={{
-      width: "6px",
-      height: "6px",
-      borderRadius: "50%",
-      background: account.is_active
-        ? "#4ade80"
-        : "#f87171",
-    }}
-  />
-
-  {account.is_active ? "Active" : "Inactive"}
-</div>
+              className={`account-strip-status ${account.is_active ? "is-active" : "is-inactive"}`}
+              aria-label={account.is_active ? "Active account" : "Inactive account"}
+              title={account.is_active ? "Active" : "Inactive"}
+            >
+              <span aria-hidden="true" />
+              {account.is_active ? "Active" : "Inactive"}
+            </div>
           </div>
 
         </div>

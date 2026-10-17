@@ -70,7 +70,7 @@ def _normalize_trade(row):
     client_reference = row.get("client_reference") or row.get("client_id")
     # SYMBOL is the broker's instrument code. FULL_SYMBOL is a permitted fallback;
     # tradingsymbol from the /trades API is intentionally not used as a holding key.
-    symbol = row.get("symbol") or row.get("SYMBOL") or row.get("FULL_SYMBOL")
+    symbol = row.get("symbol") or row.get("SYMBOL")
     side = row.get("side") or row.get("BUY_SELL") or row.get("transaction_type")
     quantity = row.get("quantity") or row.get("QUANTITY") or row.get("traded_quantity")
     price = row.get("price") or row.get("PRICE") or row.get("trade_price") or row.get("average_price")

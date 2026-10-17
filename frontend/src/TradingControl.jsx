@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { apiFetch } from "./api";
+import { API_BASE_URL, apiFetch } from "./api";
 import "./trading-control.css";
 
 /** Owner-only UI; backend authorization remains authoritative. */
@@ -13,7 +13,7 @@ export default function TradingControl() {
   async function refresh() {
     setError("");
     try {
-      const response = await apiFetch("/api/broker/trading-status");
+      const response = await apiFetch(`${API_BASE_URL}/api/broker/trading-status`);
       if (!response.ok) throw new Error("Unable to verify live trading status.");
       setStatus(await response.json());
     } catch {
@@ -26,7 +26,7 @@ export default function TradingControl() {
     let active = true;
     (async () => {
       try {
-        const response = await apiFetch("/api/broker/trading-owner");
+        const response = await apiFetch(`${API_BASE_URL}/api/broker/trading-owner`);
         if (!active) return;
         if (!response.ok) {
           setIsOwner(false);
@@ -51,7 +51,7 @@ export default function TradingControl() {
     setBusy(true);
     setError("");
     try {
-      const response = await apiFetch("/api/broker/trading-toggle", {
+      const response = await apiFetch(`${API_BASE_URL}/api/broker/trading-toggle`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled }),

@@ -4004,3 +4004,18 @@
   :root[data-finos-theme] .instrument-chart-controls .instrument-chart-symbol-input { flex-basis:100%; width:100%; }
   :root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select { flex:1 1 90px; width:auto; }
 }
+
+
+:root[data-finos-theme] .instrument-technical-signal.is-positive,
+:root[data-finos-theme] .instrument-action-change.is-positive { color:var(--finos-positive,#16845b) !important; }
+:root[data-finos-theme] .instrument-technical-signal.is-negative,
+:root[data-finos-theme] .instrument-action-change.is-negative { color:var(--finos-negative,#c93643) !important; }
+:root[data-finos-theme] .instrument-technical-signal.is-neutral { color:var(--finos-warning,#b7791f) !important; }
+:root[data-finos-theme] .instrument-action-change { font-size:11px; line-height:1.4; font-variant-numeric:tabular-nums; }
+:root[data-finos-theme] .instrument-market-mover-row {
+  display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+  padding:9px 0; border-bottom:1px solid var(--finos-border);
+}
+:root[data-finos-theme] .instrument-market-mover-row:last-child { border-bottom:0; }
+:root[data-finos-theme] .instrument-market-mover-row > div { min-width:0; }
+:root[data-finos-theme] .instrument-market-mover-row > div:last-child { text-align:right; white-space:normal; overflow-wrap:anywhere; }

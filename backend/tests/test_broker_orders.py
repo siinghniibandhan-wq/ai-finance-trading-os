@@ -121,7 +121,7 @@ def test_explicit_gateway_rejection_is_not_reported_as_accepted(monkeypatch, gat
 
     with pytest.raises(HTTPException) as error:
         broker_orders.place_broker_order(
-            request_payload(), current_user=SimpleNamespace(id=7)
+            request_payload(), db=db_session, current_user=SimpleNamespace(id=7)
         )
 
     assert error.value.status_code == 502
@@ -134,7 +134,7 @@ def test_ambiguous_gateway_response_requires_order_book_check(monkeypatch, db_se
 
     with pytest.raises(HTTPException) as error:
         broker_orders.place_broker_order(
-            request_payload(), current_user=SimpleNamespace(id=7)
+            request_payload(), db=db_session, current_user=SimpleNamespace(id=7)
         )
 
     assert error.value.status_code == 502

@@ -3755,3 +3755,197 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+
+/* Instrument workspace polish: theme-token surfaces, visible card edges and accessible tabs. */
+:root[data-finos-theme] .instrument-ltp-panel {
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius, 16px);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--finos-accent, #7563dc) 7%, var(--t-card-bg, var(--finos-surface))),
+    var(--t-card-bg, var(--finos-surface)) 72%
+  ) !important;
+  color: var(--finos-text);
+  box-shadow: var(--t-shadow, 0 4px 16px rgba(20,30,50,.05));
+}
+:root[data-finos-theme] .instrument-research-panel {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius, 18px);
+  background: var(--t-card-bg, var(--finos-surface)) !important;
+  color: var(--finos-text);
+  box-shadow: var(--t-shadow, 0 5px 20px rgba(20,30,50,.055));
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabs {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  margin: 14px 0 0;
+  padding: 12px 0 16px;
+  border-top: 1px solid var(--finos-border);
+  border-bottom: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 9px 13px;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius-sm, 10px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:hover {
+  border-color: var(--finos-accent, #7563dc) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 9%, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:focus-visible {
+  outline: 2px solid var(--finos-accent, #7563dc);
+  outline-offset: 2px;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab[aria-selected="true"],
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab.is-active {
+  border-color: var(--finos-accent, #7563dc) !important;
+  background: var(--finos-accent, #7563dc) !important;
+  color: var(--finos-accent-contrast, #fff) !important;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel {
+  min-width: 0;
+  max-width: 100%;
+  padding-top: 18px;
+  color: var(--finos-text);
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel > h4 {
+  margin-bottom: 14px !important;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 14px !important;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius-sm, 12px) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  box-shadow: none;
+  transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-card:hover {
+  border-color: color-mix(in srgb, var(--finos-accent, #7563dc) 48%, var(--finos-border)) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 4%, var(--t-card-bg, var(--finos-surface))) !important;
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--finos-accent, #7563dc) 9%, transparent);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-card:focus-visible {
+  outline: 2px solid var(--finos-accent, #7563dc);
+  outline-offset: 2px;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-card[aria-expanded="true"] {
+  border-color: var(--finos-accent, #7563dc) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--finos-accent, #7563dc) 18%, transparent);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-label {
+  color: var(--finos-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-value {
+  display: block;
+  margin-top: 7px;
+  color: var(--finos-text);
+  font-size: clamp(16px, 1.8vw, 19px);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-hint,
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-help {
+  display: block;
+  margin-top: 6px;
+  color: var(--finos-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-help {
+  margin-top: auto;
+  padding-top: 9px;
+  color: var(--finos-accent, #7563dc);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-explanation {
+  display: block;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid var(--finos-border);
+  color: var(--finos-text);
+  font-size: 12px;
+  line-height: 1.6;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger {
+  min-height: 40px;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:hover,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 20%, transparent);
+  outline-offset: 1px;
+}
+:root[data-finos-theme] .instrument-chart-panel .secondary-button,
+:root[data-finos-theme] .instrument-chart-panel .primary-button {
+  min-height: 38px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .instrument-chart-panel input {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius-sm, 10px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+}
+@media (max-width: 560px) {
+  :root[data-finos-theme] .instrument-research-panel .instrument-research-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  :root[data-finos-theme] .instrument-research-panel .instrument-research-tab {
+    width: 100%;
+    padding: 9px 8px;
+  }
+  :root[data-finos-theme] .instrument-research-panel .instrument-metric-card {
+    padding: 11px !important;
+  }
+}
+@media (max-width: 340px) {
+  :root[data-finos-theme] .instrument-research-panel .instrument-research-tabs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

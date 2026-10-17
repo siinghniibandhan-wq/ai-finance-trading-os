@@ -36,14 +36,19 @@ def test_place_order_returns_acknowledgement_without_updating_portfolio(monkeypa
     assert result["order_id"] == "ORD-123"
     assert result["portfolio_updated"] is False
     assert "does not confirm execution" in result["message"]
-    assert captured["client_reference"].startswith("financial-os-7-")
+    assert captured["client_id"].startswith("financial-os-7-")
+    assert captured["tradingsymbol"] == "RELIANCE-EQ"
+    assert captured["transaction_type"] == "BUY"
+    assert captured["product"] == "CNC"
+    assert captured["ref_price"] == "1450.00"
+    assert result["client_reference"] == captured["client_id"]
 
 
 def test_each_order_gets_a_unique_client_reference(monkeypatch):
     references = []
 
     def fake_gateway(path, method, payload):
-        references.append(payload["client_reference"])
+        references.append(payload["client_id"])
         return {"success": True, "order_id": f"ORD-{len(references)}"}
 
     monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)

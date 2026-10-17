@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from app.routes import broker_orders
 
 
-def request_payload():
+def request_payload(client_id=None):
     return broker_orders.BrokerOrderRequest(
         side="BUY",
         symbol="RELIANCE-EQ",
@@ -17,6 +17,7 @@ def request_payload():
         validity="DAY",
         quantity=1,
         quote_price=Decimal("1450.00"),
+        client_id=client_id,
     )
 
 
@@ -36,15 +37,15 @@ def test_place_order_returns_acknowledgement_without_updating_portfolio(monkeypa
     assert result["order_id"] == "ORD-123"
     assert result["portfolio_updated"] is False
     assert "does not confirm execution" in result["message"]
-    assert captured["client_reference"].startswith("financial-os-7-")
+    assert captured["client_id"].startswith("financial-os-7-")
 
 
-def test_each_order_gets_a_unique_client_reference(monkeypatch):
-    references = []
+def test_each_order_gets_a_unique_client_id_when_not_supplied(monkeypatch):
+    client_ids = []
 
     def fake_gateway(path, method, payload):
-        references.append(payload["client_reference"])
-        return {"success": True, "order_id": f"ORD-{len(references)}"}
+        client_ids.append(payload["client_id"])
+        return {"success": True, "order_id": f"ORD-{len(client_ids)}"}
 
     monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
     user = SimpleNamespace(id=7)
@@ -52,8 +53,40 @@ def test_each_order_gets_a_unique_client_reference(monkeypatch):
     broker_orders.place_broker_order(request_payload(), current_user=user)
     broker_orders.place_broker_order(request_payload(), current_user=user)
 
-    assert len(references) == 2
-    assert references[0] != references[1]
+    assert len(client_ids) == 2
+    assert client_ids[0] != client_ids[1]
+
+
+def test_supplied_client_id_is_forwarded_unchanged(monkeypatch):
+    captured = {}
+
+    def fake_gateway(path, method, payload):
+        captured.update(payload)
+        return {"success": True, "order_id": "ORD-CLIENT-ID"}
+
+    monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
+    result = broker_orders.place_broker_order(
+        request_payload("finos-retry-123"), current_user=SimpleNamespace(id=7)
+    )
+
+    assert result["order_id"] == "ORD-CLIENT-ID"
+    assert captured["client_id"] == "finos-retry-123"
+    assert "client_reference" not in captured
+
+
+def test_order_uses_gateway_order_endpoint(monkeypatch):
+    captured = {}
+
+    def fake_gateway(path, method, payload):
+        captured["path"] = path
+        captured["method"] = method
+        return {"success": True, "order_id": "ORD-PATH"}
+
+    monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
+    broker_orders.place_broker_order(request_payload(), current_user=SimpleNamespace(id=7))
+
+    assert captured == {"path": broker_orders.GATEWAY_ORDER_PLACE_PATH, "method": "POST"}
+    assert broker_orders.GATEWAY_ORDER_PLACE_PATH == "/order"
 
 
 @pytest.mark.parametrize(

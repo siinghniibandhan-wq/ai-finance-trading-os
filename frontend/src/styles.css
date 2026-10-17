@@ -2626,30 +2626,27 @@ section,
    ============================================================ */
 .finos-select,
 select {
-  color: #f8fafc;
-  background-color: rgba(16, 20, 38, 0.96);
-  border: 1px solid rgba(167, 139, 250, 0.28);
-  border-radius: 10px;
+  color: var(--finos-text, inherit);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, transparent)));
+  border: 1px solid var(--finos-border, currentColor);
+  border-radius: var(--t-radius-sm, 10px);
   min-height: 42px;
   max-width: 100%;
   outline: none;
-  color-scheme: dark;
+  color-scheme: light;
   transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
 }
 .finos-select:focus,
 select:focus {
-  border-color: rgba(192, 132, 252, .9);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, .14);
+  border-color: var(--finos-accent, currentColor);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--finos-accent, currentColor) 14%, transparent);
 }
 .finos-select option,
 select option {
-  color: #f8fafc;
-  background: #17182b;
+  color: var(--finos-text, inherit);
+  background: var(--t-card-bg, var(--finos-surface, Canvas));
 }
-/* Forms use the same glass/purple visual language and adapt to phone widths. */
-input, textarea {
-  color-scheme: dark;
-}
+input, textarea { color-scheme: light; }
 @media (max-width: 640px) {
   .finos-select, select {
     width: 100%;
@@ -2658,6 +2655,7 @@ input, textarea {
 }
 
 /* Branded dropdown: replaces platform-native Android selection sheets. */
+/* Branded custom dropdown uses the active theme tokens by default. */
 .finos-select-wrap { width: 100%; }
 .finos-select-trigger {
   display: flex;
@@ -2667,52 +2665,40 @@ input, textarea {
   width: 100%;
   min-height: 42px;
   padding: 10px 12px;
-  border: 1px solid rgba(167, 139, 250, .28);
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(29, 31, 54, .98), rgba(17, 20, 36, .98));
-  color: #f8fafc;
+  border: 1px solid var(--finos-border, currentColor);
+  border-radius: var(--t-radius-sm, 10px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, transparent)));
+  color: var(--finos-text, inherit);
   text-align: left;
   cursor: pointer;
 }
-.finos-select-trigger:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }
+.finos-select-trigger:focus-visible { outline: 2px solid var(--finos-accent, currentColor); outline-offset: 2px; }
 .finos-select-trigger:disabled { opacity: .55; cursor: not-allowed; }
 .finos-select-trigger > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.finos-select-chevron { color: #c084fc; font-size: 20px; line-height: 1; transition: transform .15s ease; }
+.finos-select-chevron { color: var(--finos-accent, currentColor); font-size: 20px; line-height: 1; transition: transform .15s ease; }
 .finos-select-chevron.is-open { transform: rotate(180deg); }
 .finos-select-menu {
-  position: absolute;
-  z-index: 500;
-  top: calc(100% + 7px);
-  left: 0;
-  right: 0;
-  max-height: min(300px, 45vh);
-  overflow-y: auto;
-  padding: 6px;
-  border: 1px solid rgba(192, 132, 252, .30);
-  border-radius: 14px;
-  background: #111426;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255,255,255,.025) inset;
-  backdrop-filter: blur(18px);
+  position: absolute; z-index: 500; top: calc(100% + 7px); left: 0; right: 0;
+  max-height: min(300px, 45vh); overflow-y: auto; padding: 6px;
+  border: 1px solid var(--finos-border, currentColor);
+  border-radius: var(--t-radius, 14px);
+  background: var(--t-card-bg, var(--finos-surface, Canvas));
+  color: var(--finos-text, CanvasText);
+  box-shadow: var(--t-shadow, 0 8px 24px rgba(20, 30, 50, .10));
 }
 .finos-select-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  min-height: 42px;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: rgba(248,250,252,.88);
-  text-align: left;
-  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 42px; padding: 10px 12px; border: 0;
+  border-radius: var(--t-radius-sm, 9px); background: transparent;
+  color: var(--finos-text, CanvasText); text-align: left; cursor: pointer;
 }
-.finos-select-option:hover, .finos-select-option.is-selected { background: linear-gradient(90deg, rgba(139,92,246,.24), rgba(236,72,153,.10)); color: #fff; }
-.finos-select-option.is-selected { box-shadow: inset 2px 0 #c084fc; }
+.finos-select-option:hover, .finos-select-option.is-selected {
+  background: color-mix(in srgb, var(--finos-accent, currentColor) 10%, var(--t-card-bg, var(--finos-surface, Canvas)));
+  color: var(--finos-text, CanvasText);
+}
+.finos-select-option.is-selected { box-shadow: inset 2px 0 var(--finos-accent, currentColor); }
 .finos-select-option:disabled { opacity: .4; cursor: not-allowed; }
-.finos-select-check { color: #d8b4fe; font-weight: 800; }
+.finos-select-check { color: var(--finos-accent, currentColor); font-weight: 800; }
 @media (max-width: 640px) {
   .finos-select-menu { max-height: 42vh; }
   .finos-select-option { min-height: 46px; }

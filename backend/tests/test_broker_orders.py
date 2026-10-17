@@ -103,3 +103,38 @@ def test_gateway_shared_secret_is_never_sent_over_plain_http(monkeypatch):
         broker_orders._gateway_request("/trades", "GET")
     assert error.value.status_code == 503
     assert "not HTTPS" in error.value.detail
+
+
+def test_order_book_is_filtered_to_authenticated_user(monkeypatch):
+    gateway_response = {
+        "status": "success",
+        "data": {
+            "orders": [
+                {"order_id": "OWN-1", "client_reference": "financial-os-7-a"},
+                {"order_id": "OTHER-1", "client_reference": "financial-os-8-b"},
+            ],
+            "count": 2,
+        },
+    }
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request", lambda *args, **kwargs: gateway_response
+    )
+
+    result = broker_orders.list_broker_orders(current_user=SimpleNamespace(id=7))
+    rows = result["broker_response"]["data"]["orders"]
+    assert [row["order_id"] for row in rows] == ["OWN-1"]
+    assert result["user_id"] == 7
+
+
+def test_order_book_fails_closed_if_client_reference_missing(monkeypatch):
+    monkeypatch.setattr(
+        broker_orders,
+        "_gateway_request",
+        lambda *args, **kwargs: {"orders": [{"order_id": "UNMAPPED"}]},
+    )
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.list_broker_orders(current_user=SimpleNamespace(id=7))
+
+    assert error.value.status_code == 502
+    assert "refusing to expose unfiltered" in error.value.detail

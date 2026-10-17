@@ -3949,3 +3949,58 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+ 
+/* Instrument workspace controls: theme tokens only, visible borders and no clipped labels. */
+:root[data-finos-theme] .instrument-chart-panel {
+  min-width: 0; max-width: 100%; padding: clamp(16px, 2.4vw, 24px) !important;
+  border: 1px solid var(--finos-border) !important; border-radius: var(--t-radius, 18px) !important;
+  background: var(--t-card-bg, var(--finos-surface)) !important; color: var(--finos-text) !important;
+  box-shadow: var(--t-shadow, 0 5px 20px rgba(20,30,50,.055)) !important;
+}
+:root[data-finos-theme] .instrument-chart-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+:root[data-finos-theme] .instrument-chart-heading { min-width:0; flex:1 1 220px; }
+:root[data-finos-theme] .instrument-chart-heading h3 { margin:0 0 5px; color:var(--finos-text); font-size:16px; line-height:1.35; }
+:root[data-finos-theme] .instrument-chart-heading p { margin:0; color:var(--finos-muted); font-size:12px; line-height:1.5; }
+:root[data-finos-theme] .instrument-chart-ranges { display:flex; flex:0 1 auto; flex-wrap:wrap; align-items:center; gap:6px; max-width:100%; }
+:root[data-finos-theme] .instrument-chart-range-button {
+  flex:0 0 auto; min-width:38px; min-height:36px; padding:7px 10px;
+  border:1px solid var(--finos-border) !important; border-radius:var(--t-radius-sm, 9px) !important;
+  background:var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important; color:var(--finos-text) !important;
+  font:inherit; font-size:11px; font-weight:650; line-height:1.2; cursor:pointer;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease;
+}
+:root[data-finos-theme] .instrument-chart-range-button:hover { border-color:var(--finos-accent, #7563dc) !important; background:color-mix(in srgb,var(--finos-accent, #7563dc) 9%,var(--t-card-bg,var(--finos-surface))) !important; }
+:root[data-finos-theme] .instrument-chart-range-button:focus-visible { outline:2px solid var(--finos-accent, #7563dc); outline-offset:2px; }
+:root[data-finos-theme] .instrument-chart-range-button.is-active,
+:root[data-finos-theme] .instrument-chart-range-button[aria-pressed="true"] { border-color:var(--finos-accent, #7563dc) !important; background:var(--finos-accent, #7563dc) !important; color:var(--finos-accent-contrast, #fff) !important; box-shadow:0 3px 10px color-mix(in srgb,var(--finos-accent, #7563dc) 20%,transparent); }
+:root[data-finos-theme] .instrument-chart-controls { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-top:14px; min-width:0; }
+:root[data-finos-theme] .instrument-chart-controls > * { min-width:0; max-width:100%; }
+:root[data-finos-theme] .instrument-chart-controls .instrument-chart-symbol-input { flex:1 1 180px; width:min(100%,240px); min-height:40px; padding:9px 12px; border:1px solid var(--finos-border) !important; border-radius:var(--t-radius-sm,10px) !important; background:var(--t-inner-bg,var(--t-card-bg,var(--finos-surface))) !important; color:var(--finos-text) !important; }
+:root[data-finos-theme] .instrument-chart-controls .instrument-chart-symbol-input::placeholder { color:var(--finos-muted) !important; }
+:root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select { flex:0 0 100px; width:100px; }
+:root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select > button.finos-select-trigger { width:100%; min-height:40px; padding:9px 12px !important; border:1px solid var(--finos-border) !important; border-radius:var(--t-radius-sm,10px) !important; background:var(--t-inner-bg,var(--t-card-bg,var(--finos-surface))) !important; color:var(--finos-text) !important; box-shadow:none !important; }
+:root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select > button.finos-select-trigger:hover,
+:root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"] { border-color:var(--finos-accent,#7563dc) !important; }
+:root[data-finos-theme] .instrument-chart-controls .secondary-button,
+:root[data-finos-theme] .instrument-chart-controls .primary-button { min-height:40px; padding:9px 13px !important; border-radius:var(--t-radius-sm,10px) !important; white-space:normal; overflow-wrap:anywhere; }
+:root[data-finos-theme] .instrument-chart-message { margin:10px 0 0; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
+:root[data-finos-theme] .instrument-chart-warning { color:var(--finos-warning,#b7791f); }
+:root[data-finos-theme] .instrument-chart-period-return.is-positive { color:var(--finos-positive,#16845b) !important; }
+:root[data-finos-theme] .instrument-chart-period-return.is-negative { color:var(--finos-negative,#c93643) !important; }
+:root[data-finos-theme] .instrument-research-heading { margin-bottom:12px; min-width:0; }
+:root[data-finos-theme] .instrument-research-heading .card-label { margin:0 0 5px; color:var(--finos-muted); }
+:root[data-finos-theme] .instrument-research-heading h3 { margin:0 0 5px; color:var(--finos-text); font-size:clamp(18px,2.2vw,22px); line-height:1.3; overflow-wrap:anywhere; }
+:root[data-finos-theme] .instrument-research-heading > p:last-child { margin:0; color:var(--finos-muted); font-size:12px; line-height:1.5; }
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel > * { max-width:100%; }
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel h4,
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel h5 { color:var(--finos-text); line-height:1.4; }
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel p { overflow-wrap:anywhere; }
+@media (max-width:560px) {
+  :root[data-finos-theme] .instrument-chart-panel { padding:14px !important; }
+  :root[data-finos-theme] .instrument-chart-header { gap:12px; }
+  :root[data-finos-theme] .instrument-chart-ranges { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); width:100%; }
+  :root[data-finos-theme] .instrument-chart-range-button { width:100%; min-width:0; padding:8px 5px; }
+  :root[data-finos-theme] .instrument-chart-controls .instrument-chart-symbol-input { flex-basis:100%; width:100%; }
+  :root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select { flex:1 1 90px; width:auto; }
+}

@@ -5,7 +5,7 @@ It is **not** automatically deployed when the Financial OS backend PR is merged.
 
 ## Required configuration
 
-Create the AWS Systems Manager SecureString parameter `/financial-os/mstock/gateway-secret` with a long random secret. Configure the Financial OS backend environment with the same value as `MSTOCK_GATEWAY_SECRET`. Do not put the value in source control or paste it into chat.
+Create the AWS Systems Manager SecureString parameter `/financial-os/mstock/gateway-secret` with a long random secret. Configure the Financial OS backend environment with the same value as `MSTOCK_GATEWAY_SECRET`. Do not put the value in source control or paste it into chat. **The backend refuses to send this secret to an `http://` gateway URL. Configure HTTPS or a private encrypted tunnel first; the current public-IP HTTP URL must not be used with the shared secret.**
 
 The gateway's EC2 role must be allowed to read that parameter. The routes below fail closed if the parameter is unavailable.
 
@@ -160,6 +160,6 @@ def list_trades():
 - The existing gateway logs `client_id` and broker placement responses. This patch maps executed trade rows to the Financial OS reference using the broker order ID; it does not assume the broker echoes custom client references.
 - The log file must persist across service restarts and remain readable by the gateway process. Back up the log before changes.
 - Before enabling reconciliation, verify the exact field names in a **read-only** response from your m.Stock trade book. The backend skips rows it cannot normalize and never treats order-book acknowledgements as fills.
-- Add the shared secret to both AWS Parameter Store and the backend environment before calling the new endpoints. Restart only during a planned maintenance window.
+- Add the shared secret to both AWS Parameter Store and the backend environment before calling the new endpoints. Configure `MSTOCK_GATEWAY_URL` to an HTTPS URL before setting `MSTOCK_GATEWAY_SECRET`; the backend deliberately fails closed if the URL is HTTP. Restart only during a planned maintenance window.
 - Test `GET /trades` and `GET /orders` with an invalid secret (expect 401), then with a valid secret and an authenticated m.Stock session. Do not test by submitting a real order.
 - This patch does not change the existing order-placement trading switch or its caps. Do not enable live trading as part of reconciliation testing.

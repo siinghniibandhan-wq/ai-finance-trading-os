@@ -126,6 +126,10 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
 @router.post("/", status_code=202)
 def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_admin)):
     """Submit a real-money order only for the configured platform owner."""
+    # Keep the API's canonical fields and also provide the field names used
+    # by the deployed Flask gateway. This makes the contract explicit while
+    # remaining compatible with existing backend callers.
+    gateway_product = {"DELIVERY": "CNC", "INTRADAY": "MIS"}[request.product_type]
     payload = {
         "side": request.side,
         "symbol": request.symbol,
@@ -135,8 +139,14 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         "validity": request.validity,
         "quantity": request.quantity,
         "price": str(request.price),
+        "quote_price": str(request.quote_price),
+        # AWS gateway's current contract uses m.Stock field names.
+        "transaction_type": request.side,
+        "tradingsymbol": request.symbol,
+        "product": gateway_product,
+        "ref_price": str(request.quote_price),
         # Reuse the caller-provided ID for retries of the same form submission.
-        # The gateway contract uses client_id for duplicate suppression.
+        # Both backend DB reservation and gateway guard use this ID.
         "client_id": request.client_id or f"financial-os-{current_user.id}-{uuid4().hex}",
     }
     # Commit a durable reservation before the external side effect. The DB

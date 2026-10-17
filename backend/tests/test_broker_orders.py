@@ -94,3 +94,12 @@ def test_ambiguous_gateway_response_requires_order_book_check(monkeypatch):
 
     assert error.value.status_code == 502
     assert "Check the broker order book" in error.value.detail
+
+
+def test_gateway_shared_secret_is_never_sent_over_plain_http(monkeypatch):
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
+    monkeypatch.setattr(broker_orders, "GATEWAY_URL", "http://gateway.example:8000")
+    with pytest.raises(HTTPException) as error:
+        broker_orders._gateway_request("/trades", "GET")
+    assert error.value.status_code == 503
+    assert "not HTTPS" in error.value.detail

@@ -15340,11 +15340,22 @@ function Bills() {
       {/* ================================================== */}
 
       {showForm && (
-
         <div
-          className="glass-card bill-form-card"
-
+          className="bill-form-overlay"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              resetForm();
+              setShowForm(false);
+            }
+          }}
         >
+          <div
+            className="glass-card bill-form-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bill-form-heading"
+            onClick={(event) => event.stopPropagation()}
+          >
 
           <div className="bill-form-header">
 
@@ -15358,7 +15369,7 @@ function Bills() {
                   : "ADD BILL"}
               </div>
 
-              <h3 className="bill-form-title">
+              <h3 id="bill-form-heading" className="bill-form-title">
                 {editingBill
                   ? "Update bill"
                   : "Create a new bill"}
@@ -15627,8 +15638,8 @@ function Bills() {
 
           </div>
 
+          </div>
         </div>
-
       )}
 
 

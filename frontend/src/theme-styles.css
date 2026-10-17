@@ -1996,3 +1996,22 @@
   -webkit-text-fill-color: currentColor !important;
   background: color-mix(in srgb, var(--finos-accent, #7563dc) 14%, var(--t-card-bg, #fff)) !important;
 }
+
+
+/* Bill form fields: use the active design tokens instead of inline dark colors. */
+:root[data-finos-theme] .bill-form-card { margin-top:22px; padding:22px; }
+:root[data-finos-theme] .bill-form-card .bill-form-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; }
+:root[data-finos-theme] .bill-form-card .bill-form-title { margin:5px 0 0; color:var(--finos-text); }
+:root[data-finos-theme] .bill-form-card .bill-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+:root[data-finos-theme] .bill-form-card .bill-form-field { display:flex; flex-direction:column; gap:7px; min-width:0; }
+:root[data-finos-theme] .bill-form-card .bill-form-label { color:var(--finos-muted); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+:root[data-finos-theme] .bill-form-card .bill-form-control { box-sizing:border-box; width:100%; min-width:0; min-height:42px; padding:10px 12px; border:1px solid var(--finos-border); border-radius:var(--t-radius-sm,10px); background:var(--t-inner-bg,var(--t-card-bg,var(--finos-surface))); color:var(--finos-text); font:inherit; font-size:13px; outline:none; }
+:root[data-finos-theme] .bill-form-card .bill-form-control::placeholder { color:var(--finos-muted); opacity:1; }
+:root[data-finos-theme] .bill-form-card .bill-form-control:focus-visible { border-color:var(--finos-accent); outline:2px solid color-mix(in srgb,var(--finos-accent) 20%,transparent); outline-offset:1px; }
+:root[data-finos-theme] .bill-form-card .bill-form-date { color-scheme:light; }
+:root[data-finos-theme] .bill-form-card .bill-form-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+:root[data-finos-theme] .bill-form-card .bill-form-select { display:block; width:100%; min-width:0; }
+@media (max-width:640px) {
+  :root[data-finos-theme] .bill-form-card { padding:16px; }
+  :root[data-finos-theme] .bill-form-card .bill-form-grid { grid-template-columns:minmax(0,1fr); }
+}

@@ -9744,8 +9744,24 @@ const deleteAccount = async () => {
               className={`account-strip-status ${account.is_active ? "is-active" : "is-inactive"}`}
               aria-label={account.is_active ? "Active account" : "Inactive account"}
               title={account.is_active ? "Active" : "Inactive"}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                marginTop: "6px",
+                fontSize: "10px",
+                color: account.is_active ? "#4ade80" : "#f87171",
+              }}
             >
-              <span aria-hidden="true" />
+              <span
+                aria-hidden="true"
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: account.is_active ? "#4ade80" : "#f87171",
+                }}
+              />
               {account.is_active ? "Active" : "Inactive"}
             </div>
           </div>

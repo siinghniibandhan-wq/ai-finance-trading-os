@@ -2364,3 +2364,14 @@
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] footer {
   border-top: 1px solid var(--finos-border, #e3e8ef) !important;
 }
+
+
+/* Account type dropdown: remove the heavy dark focus ring visible in the
+   Add Account dialog on mobile; retain a subtle theme-accent focus indicator. */
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-wrap > .finos-select-trigger:focus,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-wrap > .finos-select-trigger:focus-visible,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-wrap > .finos-select-trigger[aria-expanded="true"] {
+  outline: none !important;
+  border: 1px solid var(--finos-border, #dfe4ec) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--finos-accent, #7563dc) 12%, transparent) !important;
+}

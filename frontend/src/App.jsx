@@ -3735,7 +3735,7 @@ function InvestmentTransactions() {
 
       {/* FILTERS */}
 
-      <section className="glass-card">
+      <section className="glass-card investment-activity-filter-panel">
 
         <div className="card-header">
 

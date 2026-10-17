@@ -9664,7 +9664,7 @@ const deleteAccount = async () => {
       </div>
 
 {!loading && (
-  <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
+  <div className={`account-list-grid${selectedAccountTab.id === "credit_card" ? " credit-card-grid" : ""}`} style={{ display: "grid", gridTemplateColumns: selectedAccountTab.id === "credit_card" ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)", gap: "16px", marginTop: "16px", alignItems: "stretch" }}>
     {visibleAccounts.length > 0 ? visibleAccounts.map((account) => (
 
       <div
@@ -9684,7 +9684,9 @@ const deleteAccount = async () => {
             border: "1px solid var(--finos-account-card-border, var(--finos-border, rgba(167,139,250,.16)))",
             boxShadow: "var(--finos-account-card-shadow, 0 8px 22px rgba(0,0,0,.10))",
             minHeight: isCreditCard ? "270px" : "unset",
+            width: "100%",
             boxSizing: "border-box",
+            alignContent: "start",
           };
         })()}
       >

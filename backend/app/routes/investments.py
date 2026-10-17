@@ -120,6 +120,7 @@ def ensure_investments_table(db: Session):
     db.execute(text("ALTER TABLE investments ADD COLUMN IF NOT EXISTS instrument_id VARCHAR(150)"))
     db.execute(text("ALTER TABLE investments ADD COLUMN IF NOT EXISTS investment_account_id INTEGER"))
     db.execute(text("ALTER TABLE investments ADD COLUMN IF NOT EXISTS instrument_master_id INTEGER"))
+    db.execute(text("ALTER TABLE investments ADD COLUMN IF NOT EXISTS exchange VARCHAR(10)"))
 
     db.commit()
 

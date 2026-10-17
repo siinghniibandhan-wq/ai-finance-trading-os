@@ -1,12 +1,12 @@
 /* Restore the original, simple Holdings summary cards in Dark theme only.
    Do not affect Light, Minimal, Elegant, or any other theme. */
-:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   align-items: stretch;
   gap: 14px !important;
 }
-:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid > .metric-card {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid > .metric-card {
   display: block !important;
   position: relative;
   box-sizing: border-box;
@@ -14,22 +14,22 @@
   min-height: 132px;
   padding: 16px !important;
   /* Match the Portfolio investment-transaction row card surface exactly. */
-  background: var(--t-card-bg, var(--finos-surface)) !important;
+  background: var(--t-card-bg, var(--finos-surface, #ffffff)) !important;
   background-image: none !important;
   color: var(--finos-text) !important;
-  border: 1px solid var(--finos-border) !important;
+  border: 1px solid var(--finos-border, #e1e6ef) !important;
   border-radius: 16px !important;
   box-shadow: none !important;
   transform: none !important;
 }
-:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid > .metric-card:hover {
-  background: var(--t-card-bg, var(--finos-surface)) !important;
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid > .metric-card:hover {
+  background: var(--t-card-bg, var(--finos-surface, #ffffff)) !important;
   background-image: none !important;
-  border-color: var(--finos-border) !important;
+  border-color: var(--finos-border, #e1e6ef) !important;
   box-shadow: none !important;
   transform: none !important;
 }
-:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid .metric-top {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-top {
   display: flex !important;
   align-items: center;
   justify-content: space-between;
@@ -37,7 +37,7 @@
   min-height: 0;
   margin-bottom: 12px;
 }
-:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid .metric-icon {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-icon {
   display: flex;
   flex: 0 0 34px;
   width: 34px;
@@ -46,17 +46,17 @@
   justify-content: center;
   color: var(--finos-accent) !important;
   background: var(--finos-icon-bg, var(--t-inner-bg)) !important;
-  border: 1px solid var(--finos-border) !important;
+  border: 1px solid var(--finos-border, #e1e6ef) !important;
   border-radius: var(--t-radius-sm) !important;
 }
-:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid .metric-label {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-label {
   margin: 0 0 6px !important;
   color: var(--finos-muted) !important;
   font-size: 11px;
   line-height: 1.4;
   font-weight: 600;
 }
-:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid .metric-value {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-value {
   margin: 0 !important;
   color: var(--finos-text) !important;
   font-size: clamp(17px, 1.5vw, 23px);
@@ -66,7 +66,7 @@
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
-:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid .metric-change {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-change {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -80,16 +80,16 @@
   overflow-wrap: anywhere;
 }
 @media (max-width: 900px) {
-  :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid {
+  :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
   }
-  :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid > .metric-card {
+  :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid > .metric-card {
     padding: 13px !important;
   }
 }
 @media (max-width: 380px) {
-  :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-summary-grid .metric-value {
+  :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-value {
     font-size: 17px;
   }
 }

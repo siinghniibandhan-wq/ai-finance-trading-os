@@ -20,9 +20,9 @@ from app.models import PaymentOrder
 router = APIRouter(prefix="/api/payments", tags=["Website Payments"])
 
 PLANS = {
-    "starter": {"name": "Starter", "amount": 1999 * 100},
-    "professional": {"name": "Professional", "amount": 5999 * 100},
-    "enterprise": {"name": "Enterprise", "amount": 9999 * 100},
+    "orbit": {"name": "Orbit", "amount": 69 * 100},
+    "nova": {"name": "Nova", "amount": 199 * 100},
+    "galaxy": {"name": "Galaxy", "amount": 399 * 100},
 }
 
 

@@ -1,6 +1,22 @@
 /* Instrument-only interaction contrast fixes.
    Keep this stylesheet after theme-styles.css so interaction states win without
    changing the app-wide palette or unrelated modules. */
+
+/* The active label colour is paired to the known accent used by each theme:
+   the default/dark lavender accent needs dark ink; the light-theme slate and
+   signature-theme accents use white ink. */
+:root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]) {
+  --instrument-active-text: #21183b;
+}
+:root[data-finos-theme="light"],
+:root[data-finos-theme="minimal"],
+:root[data-finos-theme="elegant-plain"],
+:root[data-finos-theme="skeuomorphism"],
+:root[data-finos-theme="neumorphism"],
+:root[data-finos-theme="claymorphism"],
+:root[data-finos-theme="bento-grid"] {
+  --instrument-active-text: #ffffff;
+}
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab[aria-selected="true"],
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab.is-active,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button.is-active,

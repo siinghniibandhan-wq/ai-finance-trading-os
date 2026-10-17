@@ -2432,3 +2432,24 @@
     flex-basis: 100%;
   }
 }
+
+
+:root[data-finos-theme] .holdings-list-panel .holding-action-buy {
+  background: var(--finos-positive, #16845b) !important;
+  border: 1px solid var(--finos-positive, #16845b) !important;
+  color: #fff !important;
+}
+:root[data-finos-theme] .holdings-list-panel .holding-action-sell {
+  background: transparent !important;
+  border: 1px solid color-mix(in srgb, var(--finos-negative, #dc4c55) 40%, var(--finos-border)) !important;
+  color: var(--finos-negative, #c93643) !important;
+}
+:root[data-finos-theme] .holdings-list-panel .holding-action-neutral {
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  border: 1px solid var(--finos-border) !important;
+  color: var(--finos-text) !important;
+}
+:root[data-finos-theme] .holdings-list-panel .holding-action-neutral:hover,
+:root[data-finos-theme] .holdings-list-panel .holding-action-sell:hover {
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 8%, var(--t-card-bg, #fff)) !important;
+}

@@ -132,3 +132,30 @@ def test_gateway_requests_fail_closed_without_shared_secret(monkeypatch):
 
     assert error.value.status_code == 503
     assert "MSTOCK_GATEWAY_SECRET" in error.value.detail
+
+
+
+def test_gateway_rejects_public_http_endpoint_and_does_not_send_secret(monkeypatch):
+    monkeypatch.setattr(broker_orders, "GATEWAY_URL", "http://54.153.201.74:8000")
+    monkeypatch.setattr(broker_orders, "GATEWAY_SECRET", "test-secret")
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders._gateway_request("/order", "POST", {"client_id": "retry-2"})
+
+    assert error.value.status_code == 503
+    assert "loopback HTTP" in error.value.detail
+
+
+def test_real_order_and_order_book_routes_require_admin():
+    from app.routes.auth import get_current_admin
+
+    route_dependencies = {
+        route.path: {
+            dependency.call
+            for dependency in route.dependant.dependencies
+        }
+        for route in broker_orders.router.routes
+    }
+
+    assert get_current_admin in route_dependencies["/api/broker-orders/"]
+    assert get_current_admin in route_dependencies["/api/broker-orders/"]

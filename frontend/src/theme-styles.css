@@ -2588,3 +2588,162 @@
     overflow-wrap: anywhere;
   }
 }
+
+
+/* Connected Accounts: clearer grouping, tab navigation and account-card hierarchy. */
+:root[data-finos-theme] .money-accounts > .glass-card:has(.account-list-grid) {
+  padding: clamp(14px, 2.4vw, 24px);
+}
+:root[data-finos-theme] .money-accounts > .glass-card:has(.account-list-grid) > .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .money-accounts > .glass-card:has(.account-list-grid) > .card-header h3 {
+  margin: 4px 0 0;
+  color: var(--finos-text);
+  font-size: clamp(16px, 2vw, 20px);
+  line-height: 1.3;
+}
+:root[data-finos-theme] .money-accounts > .glass-card:has(.account-list-grid) > div[role="tablist"] {
+  display: flex;
+  flex-wrap: nowrap !important;
+  gap: 6px !important;
+  margin: 14px 0 18px !important;
+  padding: 4px;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  border: 1px solid var(--finos-border);
+  border-radius: var(--t-radius, 14px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)));
+}
+:root[data-finos-theme] .money-accounts > .glass-card:has(.account-list-grid) > div[role="tablist"] button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 8px 12px !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  color: var(--finos-muted) !important;
+  background: transparent !important;
+  font-size: 11px;
+  white-space: nowrap;
+}
+:root[data-finos-theme] .money-accounts > .glass-card:has(.account-list-grid) > div[role="tablist"] button[aria-selected="true"] {
+  color: var(--finos-accent-contrast, #fff) !important;
+  background: var(--finos-accent, #7563dc) !important;
+  border-color: var(--finos-accent, #7563dc) !important;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent);
+}
+:root[data-finos-theme] .money-accounts .account-list-grid {
+  gap: 12px;
+  margin-top: 0;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item {
+  border-radius: var(--t-radius, 16px);
+  background: var(--t-card-bg, var(--finos-surface));
+  border-color: var(--finos-border);
+  box-shadow: var(--t-shadow, 0 4px 14px rgba(20,30,50,.05));
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) {
+  grid-template-columns: minmax(0, 1.4fr) minmax(100px, .65fr) minmax(180px, .8fr);
+  gap: 14px;
+  padding: 16px;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card):hover {
+  border-color: color-mix(in srgb, var(--finos-accent, #7563dc) 38%, var(--finos-border));
+  box-shadow: var(--t-shadow, 0 8px 24px rgba(20,30,50,.08));
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:first-child {
+  line-height: 1.4;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:nth-child(2) {
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:last-child {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px !important;
+  margin-top: 7px !important;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--finos-positive, #16a34a) 9%, var(--t-card-bg, #fff));
+  font-size: 10px !important;
+  font-weight: 650;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) > div:first-child {
+  margin-bottom: 5px;
+  color: var(--finos-muted) !important;
+  font-size: 10px !important;
+  letter-spacing: .08em;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) > div:nth-child(2) {
+  color: var(--finos-text) !important;
+  font-size: 17px !important;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) {
+  justify-content: flex-end;
+  gap: 6px;
+  padding-left: 12px;
+  border-left: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) button {
+  min-width: 66px;
+  min-height: 34px;
+  padding: 7px 9px !important;
+  border-radius: var(--t-radius-sm, 9px);
+  font-size: 11px !important;
+  white-space: nowrap;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) button:first-child {
+  color: var(--finos-text) !important;
+  border-color: var(--finos-border) !important;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) button:nth-child(2) {
+  color: var(--finos-warning, #b7791f) !important;
+  border-color: color-mix(in srgb, var(--finos-warning, #b7791f) 30%, var(--finos-border)) !important;
+}
+:root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) button:last-child {
+  color: var(--finos-negative, #c93643) !important;
+  border-color: color-mix(in srgb, var(--finos-negative, #c93643) 26%, var(--finos-border)) !important;
+}
+@media (max-width: 760px) {
+  :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) {
+    grid-template-columns: minmax(0, 1fr) minmax(85px, auto);
+    gap: 12px;
+    padding: 14px;
+  }
+  :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child {
+    grid-column: 1 / -1;
+  }
+  :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) {
+    justify-self: start;
+  }
+  :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    padding: 12px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--finos-border);
+  }
+}
+@media (max-width: 420px) {
+  :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) button {
+    min-width: 0;
+    width: 100%;
+    padding: 7px 4px !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

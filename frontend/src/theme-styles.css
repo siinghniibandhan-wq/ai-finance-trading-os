@@ -2295,3 +2295,140 @@
     flex: 1 1 auto;
   }
 }
+
+
+/* Holdings workspace: structured cards and theme-aware metrics/actions. */
+:root[data-finos-theme] .holdings-list-panel {
+  padding: clamp(16px, 2.2vw, 24px);
+}
+:root[data-finos-theme] .holdings-list-panel > .card-header {
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .holdings-list-panel > .card-header h3 {
+  margin: 4px 0 0;
+  color: var(--finos-text);
+  font-size: clamp(16px, 2vw, 20px);
+}
+:root[data-finos-theme] .holdings-list-panel .holdings-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 18px !important;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--t-card-bg, var(--finos-surface)) !important;
+  color: var(--finos-text);
+  box-shadow: var(--t-shadow, 0 4px 18px rgba(20,30,50,.06));
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  align-items: stretch !important;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:first-child {
+  grid-column: 1 / -1;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:first-child > strong {
+  display: block;
+  color: var(--finos-text);
+  font-size: 16px !important;
+  line-height: 1.35;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:first-child > div {
+  margin-top: 4px !important;
+  color: var(--finos-muted) !important;
+  font-size: 11px !important;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .card-label {
+  margin-bottom: 6px;
+  color: var(--finos-muted);
+  font-size: 10px;
+  letter-spacing: .08em;
+  line-height: 1.35;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div > strong {
+  display: inline-block;
+  color: var(--finos-text);
+  font-size: 13px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:nth-child(4) {
+  padding: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--finos-positive, #16a34a) 22%, var(--finos-border)) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  background: color-mix(in srgb, var(--finos-positive, #16a34a) 7%, var(--t-card-bg, #fff)) !important;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:nth-child(4) .card-label,
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:nth-child(4) > strong,
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:nth-child(4) > div {
+  color: var(--finos-positive, #16845b) !important;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:last-child {
+  grid-column: 1 / -1;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: center !important;
+  justify-content: flex-end;
+  gap: 8px !important;
+  min-width: 0 !important;
+  padding-top: 12px;
+  border-top: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:last-child button {
+  flex: 1 1 100px;
+  min-width: 0 !important;
+  min-height: 36px;
+  padding: 8px 12px !important;
+  border-radius: var(--t-radius-sm, 9px);
+  font-size: 11px !important;
+  line-height: 1.2;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-detail-grid {
+  border-top-color: var(--finos-border) !important;
+}
+:root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-detail-grid > div {
+  min-width: 0;
+  border-color: var(--finos-border) !important;
+  border-radius: var(--t-radius-sm, 12px) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+}
+@media (max-width: 760px) {
+  :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card {
+    padding: 14px !important;
+  }
+  :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px 12px !important;
+  }
+  :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:first-child,
+  :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:last-child {
+    grid-column: 1 / -1;
+  }
+  :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:last-child button {
+    flex: 1 1 calc(50% - 8px);
+  }
+}
+@media (max-width: 380px) {
+  :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row {
+    gap: 12px 8px !important;
+  }
+  :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:last-child button {
+    flex-basis: 100%;
+  }
+}

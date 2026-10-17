@@ -4882,7 +4882,7 @@ function Holdings() {
 
       {/* HOLDINGS LIST */}
 
-      <section className="glass-card">
+      <section className="glass-card holdings-list-panel">
         <div className="card-header">
           <div>
             <p className="card-label">
@@ -4928,13 +4928,7 @@ function Holdings() {
             </span>
           </div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gap: "12px",
-              marginTop: "18px",
-            }}
-          >
+          <div className="holdings-list">
             {holdings.map(
               (holding, index) => {
                 const realisedPnl = Number(

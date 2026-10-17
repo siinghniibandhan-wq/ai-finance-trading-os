@@ -4,6 +4,7 @@
 // ============================================================
 
 import React, { useEffect, useRef, useState } from "react";
+import "./account-layout.css";
 import WealthManager from "./WealthManager";
 import LoanManagement from "./LoanManagement";
 import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession } from "./api";
@@ -9664,31 +9665,12 @@ const deleteAccount = async () => {
       </div>
 
 {!loading && (
-  <div className={`account-list-grid${selectedAccountTab.id === "credit_card" ? " credit-card-grid" : ""}`} style={{ display: "grid", gridTemplateColumns: selectedAccountTab.id === "credit_card" ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)", gap: "16px", marginTop: "16px", alignItems: "stretch" }}>
+  <div className={`account-list-grid${selectedAccountTab.id === "credit_card" ? " credit-card-grid" : " account-strip-list"}`}>
     {visibleAccounts.length > 0 ? visibleAccounts.map((account) => (
 
       <div
         key={account.id}
-        style={(() => {
-          const isCreditCard = ["credit_card", "creditcard", "credit_card_account"].includes(accountTypeKey(account));
-          return {
-            display: "grid",
-            gridTemplateColumns: isCreditCard ? "minmax(0, 1fr)" : "minmax(0, 1.5fr) minmax(105px, .7fr) minmax(210px, .9fr)",
-            gridTemplateRows: "auto",
-            alignItems: "center",
-            alignContent: "start",
-            gap: isCreditCard ? "16px" : "12px",
-            padding: isCreditCard ? "16px" : "12px 16px",
-            borderRadius: isCreditCard ? "18px" : "12px",
-            background: "var(--finos-account-card-bg, var(--finos-panel, rgba(15,23,42,.76)))",
-            border: "1px solid var(--finos-account-card-border, var(--finos-border, rgba(167,139,250,.16)))",
-            boxShadow: "var(--finos-account-card-shadow, 0 8px 22px rgba(0,0,0,.10))",
-            minHeight: isCreditCard ? "270px" : "unset",
-            width: "100%",
-            boxSizing: "border-box",
-            alignContent: "start",
-          };
-        })()}
+        className={["credit_card", "creditcard", "credit_card_account"].includes(accountTypeKey(account)) ? "account-strip-item account-credit-card" : "account-strip-item"}
       >
 
         {/* Realistic credit-card face; other account types retain their existing card layout. */}

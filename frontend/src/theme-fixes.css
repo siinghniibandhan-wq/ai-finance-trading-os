@@ -2520,3 +2520,45 @@
     flex: 1 1 auto;
   }
 }
+
+
+/* Root cause fix: account-form-select is the StyledSelect wrapper.
+   The visible control is its child button, .finos-select-trigger. */
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:hover,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:active,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:focus,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger[aria-expanded="true"] {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 11px 12px !important;
+  color: var(--finos-text, var(--t-text, inherit)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--t-text, inherit)) !important;
+  background: var(--t-inner-bg, var(--finos-surface-raised, transparent)) !important;
+  background-image: none !important;
+  border: 1px solid var(--finos-border, var(--t-border, transparent)) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  font-size: var(--t-control-font-size, 14px) !important;
+  text-align: left !important;
+}
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, var(--t-accent, var(--finos-border, currentColor))) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--t-accent, currentColor)) 20%, transparent) !important;
+  outline-offset: 1px !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:disabled {
+  opacity: var(--t-disabled-opacity, .6) !important;
+  cursor: not-allowed !important;
+}
+:root[data-finos-theme] .money-accounts .account-form-select .finos-select-menu {
+  color: var(--finos-text, var(--t-text, inherit)) !important;
+  background: var(--t-card-bg, var(--finos-surface, var(--t-surface, #fff))) !important;
+  border: 1px solid var(--finos-border, var(--t-border, transparent)) !important;
+}

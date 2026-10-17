@@ -9052,6 +9052,7 @@ function Accounts() {
   // ----------------------------------------------------------
 
   const [accounts, setAccounts] = useState([]);
+  const [activeAccountTab, setActiveAccountTab] = useState("bank");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -9460,21 +9461,22 @@ const deleteAccount = async () => {
   }, 0);
 
   const accountTypeKey = (account) => String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_");
-  const accountGroups = [
-    { label: "Banks", types: ["bank", "savings", "savings_account", "current", "current_account", "checking", "checking_account"] },
-    { label: "Credit Cards", types: ["credit_card", "creditcard", "credit_card_account"] },
-    { label: "Credit Lines", types: ["credit_line", "creditline", "credit_line_account", "cash_credit", "cash_credit_account", "overdraft", "od"] },
-    { label: "Wallets", types: ["wallet", "digital_wallet", "payment_wallet"] },
-    { label: "Cash", types: ["cash", "cash_account"] },
-    { label: "Broker Accounts", types: ["broker", "brokerage", "broker_account", "trading_account", "investment", "investment_account"] },
-    { label: "Loans", types: ["loan", "loan_account", "personal_loan", "home_loan", "term_loan"] },
-  ].map((group) => ({
-    ...group,
-    accounts: accounts.filter((account) => group.types.includes(accountTypeKey(account))),
-  }));
-  const categorizedAccountIds = new Set(accountGroups.flatMap((group) => group.accounts.map((account) => account.id)));
-  const uncategorizedAccounts = accounts.filter((account) => !categorizedAccountIds.has(account.id));
-  if (uncategorizedAccounts.length) accountGroups.push({ label: "Other Accounts", accounts: uncategorizedAccounts });
+  const accountTabs = [
+    { id: "bank", label: "Banks", types: ["bank", "savings", "savings_account", "current", "current_account", "checking", "checking_account"] },
+    { id: "cash", label: "Cash", types: ["cash", "cash_account"] },
+    { id: "wallet", label: "Wallets", types: ["wallet", "digital_wallet", "payment_wallet"] },
+    { id: "credit_card", label: "Credit Cards", types: ["credit_card", "creditcard", "credit_card_account"] },
+    { id: "loan", label: "Loan Accounts", types: ["loan", "loan_account", "personal_loan", "home_loan", "term_loan"] },
+    { id: "credit_line", label: "Credit Lines", types: ["credit_line", "creditline", "credit_line_account", "cash_credit", "cash_credit_account", "overdraft", "od"] },
+    { id: "broker", label: "Broker Accounts", types: ["broker", "brokerage", "broker_account", "trading_account", "investment", "investment_account"] },
+    { id: "other", label: "Others", types: [] },
+  ];
+  const categorizedAccountIds = new Set(accountTabs.filter((tab) => tab.id !== "other").flatMap((tab) =>
+    accounts.filter((account) => tab.types.includes(accountTypeKey(account))).map((account) => account.id)
+  ));
+  const accountTabFor = (account) => accountTabs.find((tab) => tab.id !== "other" && tab.types.includes(accountTypeKey(account)))?.id || "other";
+  const selectedAccountTab = accountTabs.find((tab) => tab.id === activeAccountTab) || accountTabs[0];
+  const visibleAccounts = accounts.filter((account) => accountTabFor(account) === selectedAccountTab.id);
 
   // ----------------------------------------------------------
   // RENDER
@@ -9648,29 +9650,43 @@ const deleteAccount = async () => {
     ACCOUNT CARDS
 -------------------------------------------------- */}
 
-{!loading && accounts.length > 0 && (
-  <div style={{ display: "flex", flexDirection: "column", gap: "26px", marginTop: "20px" }}>
-    {accountGroups.map((group) => group.accounts.length > 0 && (
-      <section key={group.label} aria-label={group.label}>
-        <h3 style={{ margin: "0 0 12px", fontSize: "16px", fontWeight: 750, color: "var(--finos-text, inherit)" }}>{group.label}</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", alignItems: "stretch", gap: "16px" }}>
-          {group.accounts.map((account) => (
+<div role="tablist" aria-label="Account categories" style={{ display: "flex", flexWrap: "wrap", gap: "8px", margin: "4px 0 16px" }}>
+        {accountTabs.map((tab) => {
+          const count = tab.id === "other"
+            ? accounts.filter((account) => accountTabFor(account) === "other").length
+            : accounts.filter((account) => tab.types.includes(accountTypeKey(account))).length;
+          return (
+            <button key={tab.id} type="button" role="tab" aria-selected={activeAccountTab === tab.id} onClick={() => setActiveAccountTab(tab.id)} className={activeAccountTab === tab.id ? "primary-button" : "secondary-button"} style={{ padding: "9px 13px", whiteSpace: "nowrap" }}>
+              {tab.label} <span style={{ opacity: .75, marginLeft: "4px" }}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+{!loading && (
+  <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
+    {visibleAccounts.length > 0 ? visibleAccounts.map((account) => (
 
       <div
         key={account.id}
-        style={{
-          display: "grid",
-gridTemplateRows: "auto auto auto",
-          alignContent: "start",
-          gap: "16px",
-          padding: "20px",
-          borderRadius: "18px",
-          background: "var(--finos-account-card-bg, var(--finos-panel, rgba(15,23,42,.76)))",
-          border: "1px solid var(--finos-account-card-border, var(--finos-border, rgba(167,139,250,.16)))",
-          boxShadow: "var(--finos-account-card-shadow, 0 12px 30px rgba(0,0,0,.18))",
-          minHeight: "270px",
-          boxSizing: "border-box",
-        }}
+        style={(() => {
+          const isCreditCard = ["credit_card", "creditcard", "credit_card_account"].includes(accountTypeKey(account));
+          return {
+            display: "grid",
+            gridTemplateColumns: isCreditCard ? "minmax(0, 1fr)" : "minmax(0, 1.5fr) minmax(105px, .7fr) minmax(210px, .9fr)",
+            gridTemplateRows: "auto",
+            alignItems: "center",
+            alignContent: "start",
+            gap: isCreditCard ? "16px" : "12px",
+            padding: isCreditCard ? "16px" : "12px 16px",
+            borderRadius: isCreditCard ? "18px" : "12px",
+            background: "var(--finos-account-card-bg, var(--finos-panel, rgba(15,23,42,.76)))",
+            border: "1px solid var(--finos-account-card-border, var(--finos-border, rgba(167,139,250,.16)))",
+            boxShadow: "var(--finos-account-card-shadow, 0 8px 22px rgba(0,0,0,.10))",
+            minHeight: isCreditCard ? "270px" : "unset",
+            boxSizing: "border-box",
+          };
+        })()}
       >
 
         {/* Realistic credit-card face; other account types retain their existing card layout. */}
@@ -9806,8 +9822,8 @@ gridTemplateRows: "auto auto auto",
           style={{
             textAlign: "left",
             minWidth: 0,
-            paddingTop: "12px",
-            borderTop: "1px solid var(--finos-border, rgba(167,139,250,.16))",
+            paddingTop: ["credit_card", "creditcard", "credit_card_account"].includes(accountTypeKey(account)) ? "12px" : "0",
+            borderTop: ["credit_card", "creditcard", "credit_card_account"].includes(accountTypeKey(account)) ? "1px solid var(--finos-border, rgba(167,139,250,.16))" : "none",
           }}
         >
 
@@ -9848,9 +9864,11 @@ gridTemplateRows: "auto auto auto",
 <div
   style={{
     display: "flex",
-    flexDirection: "column",
+    flexDirection: ["credit_card", "creditcard", "credit_card_account"].includes(accountTypeKey(account)) ? "column" : "row",
+    flexWrap: "wrap",
     gap: "7px",
     alignItems: "stretch",
+    minWidth: 0,
   }}
 >
 
@@ -9914,10 +9932,12 @@ gridTemplateRows: "auto auto auto",
         </div>
       </div>
 
-          ))}
-        </div>
-      </section>
-    ))}
+          )) : (
+      <div className="empty-chart" style={{ padding: "24px 12px" }}>
+        <strong>No {selectedAccountTab.label.toLowerCase()} found</strong>
+        <span>Add an account in this category to see it here.</span>
+      </div>
+    )}
   </div>
 )}
 

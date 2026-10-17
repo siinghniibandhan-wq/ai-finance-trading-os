@@ -2424,9 +2424,9 @@ function MarketsPage() {
   });
   const [watchlistQuotes, setWatchlistQuotes] = useState({});
 
-  const card = { padding: "16px", borderRadius: "15px", border: "1px solid rgba(255,255,255,0.09)", background: "linear-gradient(135deg, rgba(255,255,255,0.065), rgba(255,255,255,0.02))", minWidth: 0 };
-  const muted = { color: "rgba(255,255,255,0.55)", fontSize: "12px", lineHeight: 1.6 };
-  const input = { width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)", background: "#151525", color: "white", fontSize: "13px" };
+  const card = { padding: "16px", borderRadius: "var(--t-radius, 15px)", border: "1px solid var(--finos-border)", background: "var(--t-card-bg, var(--finos-surface))", color: "var(--finos-text)", minWidth: 0, boxSizing: "border-box" };
+  const muted = { color: "var(--finos-muted)", fontSize: "12px", lineHeight: 1.6 };
+  const input = { width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "var(--t-radius-sm, 10px)", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "13px" };
   const money = (value) => {
     if (value === null || value === undefined || value === "" || !Number.isFinite(Number(value))) return "—";
     return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value));
@@ -2841,7 +2841,7 @@ function MarketsPage() {
         ? "Insufficient historical data"
         : latestClose > sma20 && rsi >= 50 ? "Positive momentum"
         : latestClose < sma20 && rsi < 50 ? "Negative momentum" : "Mixed / neutral";
-      const tabButton = (id, label) => <button key={id} type="button" onClick={() => setResearchTab(id)} aria-pressed={researchTab === id} className={researchTab === id ? "primary-button" : "secondary-button"} style={{ padding: "9px 12px", fontSize: "12px", whiteSpace: "nowrap" }}>{label}</button>;
+      const tabButton = (id, label) => <button key={id} type="button" role="tab" onClick={() => setResearchTab(id)} aria-selected={researchTab === id} aria-controls="instrument-research-tabpanel" className={`instrument-research-tab${researchTab === id ? " is-active" : ""}`}>{label}</button>;
       const metricExplanations = {
         "Latest Traded Price (LTP)": "The most recent traded price reported by the quote provider. It may be delayed depending on the data subscription.",
         "Previous Closing Price": "The official closing price from the previous trading session. It is the reference used to calculate today's change.",
@@ -2865,7 +2865,7 @@ function MarketsPage() {
           <h3 style={{ margin: "0 0 4px", fontSize: "20px" }}>{selectedInstrument.name || selectedInstrument.symbol}</h3>
           <p style={{ ...muted, margin: 0 }}>{selectedInstrument.symbol} · {selectedInstrument.exchange || exchange} · Research workspace</p>
         </div>
-        <div role="tablist" aria-label="Stock research sections" style={{ display: "flex", gap: "7px", flexWrap: "wrap", paddingBottom: "14px", borderBottom: "1px solid rgba(255,255,255,.09)" }}>
+        <div className="instrument-research-tabs" role="tablist" aria-label="Stock research sections">
           {tabButton("overview", "Overview")}
           {tabButton("fundamental", "Fundamental Analysis")}
           {tabButton("technical", "Technical Analysis")}
@@ -2873,7 +2873,7 @@ function MarketsPage() {
           {tabButton("dividends", "Dividends & Actions")}
           {tabButton("news", "News")}
         </div>
-        <div role="tabpanel" style={{ paddingTop: "15px" }}>
+        <div id="instrument-research-tabpanel" role="tabpanel" className="instrument-research-tabpanel" tabIndex={0}>
           {researchTab === "overview" && <>
             <h4 style={{ margin: "0 0 10px" }}>Price overview</h4>
             {(() => {

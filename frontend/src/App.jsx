@@ -12480,7 +12480,7 @@ const transactionFormModal = showForm && (
         ))}
       </div>
 
-      <section className="glass-card">
+      <section className="glass-card transaction-history-panel">
 
         <div className="card-header">
 
@@ -12558,13 +12558,7 @@ const transactionFormModal = showForm && (
         {!loading &&
           transactions.filter((item) => activeTransactionTab === "all" || mainTransactionTab(item) === activeTransactionTab).length > 0 && (
 
-            <div
-              style={{
-                display: "grid",
-                gap: "12px",
-                marginTop: "20px",
-              }}
-            >
+            <div className="transaction-history-list">
 
               {transactions.filter((item) => activeTransactionTab === "all" || mainTransactionTab(item) === activeTransactionTab).map(
                 (transaction) => {
@@ -12576,6 +12570,7 @@ const transactionFormModal = showForm && (
 
                     <div
                       key={transaction.id}
+                      className="transaction-history-card"
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -12633,6 +12628,7 @@ const transactionFormModal = showForm && (
                         >
 
                           <div
+                            className="transaction-history-title"
                             style={{
                               fontSize:
                                 "15px",
@@ -12656,6 +12652,7 @@ const transactionFormModal = showForm && (
 
 
                           <div
+                            className="transaction-history-meta"
                             style={{
                               fontSize:
                                 "12px",
@@ -12677,6 +12674,7 @@ const transactionFormModal = showForm && (
                           {transaction.reference && (
 
                             <div
+                              className="transaction-history-reference"
                               style={{
                                 fontSize:
                                   "11px",
@@ -12708,6 +12706,7 @@ const transactionFormModal = showForm && (
                       >
 
                         <div
+                          className="transaction-history-amount"
                           style={{
                             fontSize:
                               "16px",

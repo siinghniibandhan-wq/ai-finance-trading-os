@@ -25,7 +25,7 @@ from app.models import User
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
 logger = logging.getLogger(__name__)
 GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "http://54.153.201.74:8000").rstrip("/")
-GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/orders/place")
+GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/order")
 GATEWAY_ORDER_BOOK_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_BOOK_PATH", "/orders")
 GATEWAY_TIMEOUT_SECONDS = 15
 

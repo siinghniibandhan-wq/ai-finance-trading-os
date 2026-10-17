@@ -109,3 +109,23 @@
     padding: 14px !important;
   }
 }
+
+
+/* Keep credit-card actions on one horizontal row, including narrow cards. */
+.money-accounts .account-credit-card > div:nth-child(4) {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.money-accounts .account-credit-card > div:nth-child(4) button {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto !important;
+  padding-left: 4px;
+  padding-right: 4px;
+  white-space: nowrap;
+  font-size: 11px;
+}

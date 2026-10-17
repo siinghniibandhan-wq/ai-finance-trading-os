@@ -24,7 +24,7 @@ from app.models import User
 
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
 logger = logging.getLogger(__name__)
-GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "http://54.153.201.74:8000").rstrip("/")
+GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "http://127.0.0.1:8000").rstrip("/")
 GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/order")
 GATEWAY_ORDER_BOOK_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_BOOK_PATH", "/orders")
 GATEWAY_TIMEOUT_SECONDS = 15
@@ -67,8 +67,8 @@ class BrokerOrderRequest(BaseModel):
 
 
 def _gateway_request(path: str, method: str, payload: dict | None = None, query: dict | None = None):
-    if not GATEWAY_URL:
-        raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_URL is not configured.")
+    if GATEWAY_URL not in {"http://127.0.0.1:8000", "http://localhost:8000"}:
+        raise HTTPException(status_code=503, detail="Broker order requests require the m.Stock gateway on loopback HTTP.")
     url = f"{GATEWAY_URL}{path}"
     if query:
         url += "?" + urlencode(query)

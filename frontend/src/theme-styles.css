@@ -3040,3 +3040,73 @@
     border-bottom: 1px solid var(--finos-border);
   }
 }
+
+
+/* Investment Activity filters: compact, evenly sized controls based on available width. */
+.investment-activity-filter-panel {
+  container-type: inline-size;
+}
+.investment-activity-filter-panel .investment-transaction-filter-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  align-items: stretch;
+}
+.investment-activity-filter-panel .investment-transaction-filter-grid > .finos-select-wrap {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+.investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px !important;
+  border: 1px solid var(--finos-border, #d7dce5) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, #fff))) !important;
+  color: var(--finos-text, #252b36) !important;
+  font-size: 12px !important;
+  text-align: left;
+  box-shadow: none;
+}
+.investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger .finos-select-chevron {
+  flex: 0 0 auto;
+  margin-left: 4px;
+}
+.investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger:hover,
+.investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger:focus-visible,
+.investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: none;
+}
+@container (max-width: 760px) {
+  .investment-activity-filter-panel .investment-transaction-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
+@container (max-width: 360px) {
+  .investment-activity-filter-panel .investment-transaction-filter-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+@media (max-width: 900px) {
+  .investment-activity-filter-panel .investment-transaction-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 380px) {
+  .investment-activity-filter-panel .investment-transaction-filter-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

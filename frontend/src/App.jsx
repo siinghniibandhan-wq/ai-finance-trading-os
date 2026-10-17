@@ -3904,7 +3904,7 @@ function InvestmentTransactions() {
 
       {/* TRANSACTION HISTORY */}
 
-      <section className="glass-card">
+      <section className="glass-card investment-history-panel">
 
         <div className="card-header">
 

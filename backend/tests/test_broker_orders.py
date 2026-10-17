@@ -266,3 +266,43 @@ def test_simultaneous_duplicate_requests_only_reach_gateway_once(monkeypatch, db
         assert first.result(timeout=5)["order_id"] == "ORD-CONCURRENT"
 
     assert calls == ["concurrent-key-1"]
+
+
+
+def test_ambiguous_gateway_exception_keeps_reservation_and_blocks_retry(monkeypatch, db_session):
+    calls = []
+
+    def gateway_times_out(path, method, payload):
+        calls.append(payload["client_id"])
+        raise TimeoutError("simulated timeout after request transmission")
+
+    monkeypatch.setattr(broker_orders, "_gateway_request", gateway_times_out)
+    user = SimpleNamespace(id=81)
+    client_id = "ambiguous-timeout-key-1"
+
+    with pytest.raises(TimeoutError):
+        broker_orders.place_broker_order(
+            request_payload(client_id), db=db_session, current_user=user
+        )
+
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=user.id, client_id=client_id
+    ).one()
+    assert reservation.status == "SUBMITTING"
+
+    # A fresh session models a backend restart. The request must fail closed
+    # rather than submit a potentially already-accepted broker order again.
+    from sqlalchemy.orm import Session
+    restarted_session = Session(bind=db_session.get_bind(), expire_on_commit=False)
+    try:
+        with pytest.raises(HTTPException) as duplicate:
+            broker_orders.place_broker_order(
+                request_payload(client_id),
+                db=restarted_session,
+                current_user=user,
+            )
+        assert duplicate.value.status_code == 409
+    finally:
+        restarted_session.close()
+
+    assert calls == [client_id]

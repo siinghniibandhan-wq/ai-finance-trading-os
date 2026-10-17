@@ -7721,7 +7721,7 @@ const summaryCards = [
     background:
       "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
     border:
-      "1px solid rgba(255,255,255,0.06)",
+      "1px solid var(--finos-border)",
     padding: "14px",
   }}
 >

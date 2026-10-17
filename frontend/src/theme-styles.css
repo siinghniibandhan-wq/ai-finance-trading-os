@@ -4019,3 +4019,355 @@
 :root[data-finos-theme] .instrument-market-mover-row:last-child { border-bottom:0; }
 :root[data-finos-theme] .instrument-market-mover-row > div { min-width:0; }
 :root[data-finos-theme] .instrument-market-mover-row > div:last-child { text-align:right; white-space:normal; overflow-wrap:anywhere; }
+
+
+/* Final instrument workspace pass: visible theme borders, clear tab states and no clipped controls. */
+:root[data-finos-theme] .instrument-search-panel,
+:root[data-finos-theme] .instrument-ltp-panel,
+:root[data-finos-theme] .instrument-chart-panel,
+:root[data-finos-theme] .instrument-research-panel,
+:root[data-finos-theme] .instrument-market-news-panel {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--t-card-bg, var(--finos-surface)) !important;
+  color: var(--finos-text);
+  box-shadow: var(--t-shadow, 0 4px 16px rgba(20,30,50,.055));
+}
+:root[data-finos-theme] .instrument-search-panel,
+:root[data-finos-theme] .instrument-chart-panel,
+:root[data-finos-theme] .instrument-research-panel,
+:root[data-finos-theme] .instrument-market-news-panel {
+  padding: clamp(16px, 2vw, 24px);
+}
+:root[data-finos-theme] .instrument-search-panel h3,
+:root[data-finos-theme] .instrument-chart-panel h3,
+:root[data-finos-theme] .instrument-research-panel h3,
+:root[data-finos-theme] .instrument-research-panel h4,
+:root[data-finos-theme] .instrument-market-news-panel h3 {
+  color: var(--finos-text);
+  line-height: 1.35;
+}
+:root[data-finos-theme] .instrument-search-panel p,
+:root[data-finos-theme] .instrument-chart-panel p,
+:root[data-finos-theme] .instrument-research-panel p,
+:root[data-finos-theme] .instrument-market-news-panel p {
+  color: var(--finos-muted);
+  line-height: 1.55;
+}
+:root[data-finos-theme] .instrument-watchlist-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--finos-border);
+  border-radius: var(--t-radius, 14px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)));
+  color: var(--finos-text);
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(20,30,50,.035));
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+:root[data-finos-theme] .instrument-watchlist-card:hover {
+  border-color: color-mix(in srgb, var(--finos-accent) 40%, var(--finos-border));
+  box-shadow: var(--t-shadow, 0 7px 18px rgba(20,30,50,.075));
+  transform: translateY(-1px);
+}
+:root[data-finos-theme] .instrument-market-news-panel {
+  background: linear-gradient(125deg,
+    color-mix(in srgb, var(--finos-accent) 7%, var(--t-card-bg, var(--finos-surface))),
+    var(--t-card-bg, var(--finos-surface)) 76%) !important;
+}
+:root[data-finos-theme] .instrument-market-news-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border: 1px solid var(--finos-border);
+  border-radius: 999px;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)));
+  color: var(--finos-muted);
+}
+:root[data-finos-theme] .instrument-ltp-panel {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--finos-accent) 5%, var(--t-card-bg, var(--finos-surface))),
+    var(--t-card-bg, var(--finos-surface)) 75%) !important;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-heading {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-ranges {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button {
+  min-width: 36px;
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 1px solid var(--finos-border);
+  border-radius: var(--t-radius-sm, 9px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)));
+  color: var(--finos-text);
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button:hover {
+  border-color: var(--finos-accent);
+  background: color-mix(in srgb, var(--finos-accent) 8%, var(--t-card-bg, var(--finos-surface)));
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button.is-active,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button[aria-pressed="true"] {
+  border-color: var(--finos-accent);
+  background: var(--finos-accent);
+  color: var(--finos-accent-contrast, #fff);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--finos-accent) 20%, transparent);
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 14px;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-symbol-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius-sm, 10px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-symbol-input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent) 45%, transparent);
+  outline-offset: 1px;
+  border-color: var(--finos-accent) !important;
+}
+/* The custom select renders its actual interactive element as .finos-select-trigger. */
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select {
+  width: 88px !important;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:hover,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:active,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"] {
+  box-sizing: border-box;
+  width: 100% !important;
+  min-height: 40px;
+  padding: 9px 10px !important;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  outline: none;
+  box-shadow: none !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:hover,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"],
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible {
+  border-color: var(--finos-accent) !important;
+  background: color-mix(in srgb, var(--finos-accent) 7%, var(--t-card-bg, var(--finos-surface))) !important;
+}
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent) 35%, transparent);
+  outline-offset: 2px;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-heading {
+  min-width: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr));
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  margin: 14px 0 0;
+  padding: 0 0 16px;
+  border-top: 0;
+  border-bottom: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab,
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:hover,
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 9px 10px;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius-sm, 10px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-shadow: none;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:hover {
+  border-color: var(--finos-accent) !important;
+  background: color-mix(in srgb, var(--finos-accent) 8%, var(--t-card-bg, var(--finos-surface))) !important;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:focus-visible {
+  outline: 2px solid var(--finos-accent);
+  outline-offset: 2px;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab[aria-selected="true"],
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab.is-active {
+  border-color: var(--finos-accent) !important;
+  background: var(--finos-accent) !important;
+  color: var(--finos-accent-contrast, #fff) !important;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent) 22%, transparent);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-price-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  align-items: stretch;
+  gap: 12px !important;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-price-metrics > .instrument-metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+  min-height: 150px;
+  padding: 14px !important;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius, 14px) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  color: var(--finos-text) !important;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(20,30,50,.035));
+  transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-price-metrics > .instrument-metric-card:hover {
+  border-color: color-mix(in srgb, var(--finos-accent) 42%, var(--finos-border)) !important;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-price-metrics > .instrument-metric-card[aria-expanded="true"] {
+  border-color: var(--finos-accent) !important;
+  background: color-mix(in srgb, var(--finos-accent) 6%, var(--t-card-bg, var(--finos-surface))) !important;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-label {
+  color: var(--finos-muted) !important;
+  font-size: 11px;
+  line-height: 1.4;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-value {
+  color: var(--finos-text) !important;
+  font-size: clamp(15px, 1.6vw, 19px);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-hint,
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-help,
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-explanation {
+  color: var(--finos-muted) !important;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-metric-explanation {
+  display: block;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--finos-border);
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel {
+  min-width: 0;
+  max-width: 100%;
+  padding-top: 18px;
+  color: var(--finos-text);
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel > * {
+  max-width: 100%;
+}
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel [style*="grid-template-columns"] {
+  min-width: 0;
+  max-width: 100%;
+}
+:root[data-finos-theme] .instrument-research-panel button,
+:root[data-finos-theme] .instrument-chart-panel button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+  :root[data-finos-theme] .instrument-research-panel .instrument-price-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  :root[data-finos-theme] .instrument-chart-panel .instrument-chart-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  :root[data-finos-theme] .instrument-chart-panel .instrument-chart-ranges {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 560px) {
+  :root[data-finos-theme] .instrument-search-panel,
+  :root[data-finos-theme] .instrument-chart-panel,
+  :root[data-finos-theme] .instrument-research-panel,
+  :root[data-finos-theme] .instrument-market-news-panel {
+    padding: 14px !important;
+  }
+  :root[data-finos-theme] .instrument-chart-panel .instrument-chart-controls {
+    grid-template-columns: minmax(0, 1fr) 84px !important;
+    gap: 8px;
+  }
+  :root[data-finos-theme] .instrument-chart-panel .instrument-chart-controls > button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  :root[data-finos-theme] .instrument-research-panel .instrument-research-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  :root[data-finos-theme] .instrument-research-panel .instrument-research-tab {
+    min-height: 42px;
+    padding: 9px 7px;
+    font-size: 11px;
+  }
+  :root[data-finos-theme] .instrument-research-panel .instrument-price-metrics > .instrument-metric-card {
+    min-height: 136px;
+    padding: 11px !important;
+  }
+}
+@media (max-width: 340px) {
+  :root[data-finos-theme] .instrument-research-panel .instrument-research-tabs,
+  :root[data-finos-theme] .instrument-research-panel .instrument-price-metrics {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

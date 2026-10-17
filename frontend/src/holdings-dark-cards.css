@@ -1,12 +1,12 @@
 /* Restore the original, simple Holdings summary cards in Dark theme only.
    Do not affect Light, Minimal, Elegant, or any other theme. */
-:root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid {
   display: grid !important;
   grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
   align-items: stretch;
   gap: 14px !important;
 }
-:root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid > .metric-card {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid > .metric-card {
   display: block !important;
   position: relative;
   box-sizing: border-box;
@@ -21,14 +21,14 @@
   box-shadow: var(--t-shadow) !important;
   transform: none !important;
 }
-:root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid > .metric-card:hover {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid > .metric-card:hover {
   background: var(--t-card-bg) !important;
   background-image: none !important;
   border-color: var(--finos-border) !important;
   box-shadow: var(--t-shadow) !important;
   transform: none !important;
 }
-:root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-top {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-top {
   display: flex !important;
   align-items: center;
   justify-content: space-between;
@@ -36,7 +36,7 @@
   min-height: 0;
   margin-bottom: 12px;
 }
-:root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-icon {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-icon {
   display: flex;
   flex: 0 0 34px;
   width: 34px;
@@ -48,14 +48,14 @@
   border: 1px solid var(--finos-border) !important;
   border-radius: var(--t-radius-sm) !important;
 }
-:root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-label {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-label {
   margin: 0 0 6px !important;
   color: var(--finos-muted) !important;
   font-size: 11px;
   line-height: 1.4;
   font-weight: 600;
 }
-:root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-value {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-value {
   margin: 0 !important;
   color: var(--finos-text) !important;
   font-size: clamp(17px, 1.5vw, 23px);
@@ -65,7 +65,7 @@
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
-:root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-change {
+:root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-change {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -79,16 +79,16 @@
   overflow-wrap: anywhere;
 }
 @media (max-width: 900px) {
-  :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid {
+  :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
   }
-  :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid > .metric-card {
+  :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid > .metric-card {
     padding: 13px !important;
   }
 }
 @media (max-width: 380px) {
-  :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-value {
+  :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid .metric-value {
     font-size: 17px;
   }
 }

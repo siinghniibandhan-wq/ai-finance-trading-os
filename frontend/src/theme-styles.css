@@ -4464,3 +4464,58 @@
   color: var(--finos-text) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
 }
+
+
+/* Fix Budget custom/native selects in the light-family themes. These selectors
+   intentionally are not scoped to .content: the Budget form is rendered
+   outside that wrapper. All colors come from the active theme tokens. */
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-wrap,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select {
+  color: var(--finos-text) !important;
+  color-scheme: light;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger:hover,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger:active,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger:focus,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger:focus-visible,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-border) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  background-image: none !important;
+  color: var(--finos-text) !important;
+  box-shadow: none !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-menu {
+  border-color: var(--finos-border) !important;
+  background: var(--t-card-bg, var(--finos-surface)) !important;
+  color: var(--finos-text) !important;
+  box-shadow: var(--t-shadow, 0 8px 24px rgba(20, 30, 50, .10)) !important;
+  backdrop-filter: none !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option:hover,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option.is-selected {
+  background-image: none !important;
+  color: var(--finos-text) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option:hover,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option.is-selected {
+  background: color-mix(in srgb, var(--finos-accent) 10%, var(--t-card-bg, var(--finos-surface))) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-chevron,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-check {
+  color: var(--finos-accent) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) select.finos-select,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) select {
+  color: var(--finos-text) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
+  border-color: var(--finos-border) !important;
+  color-scheme: light;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) select.finos-select option,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) select option {
+  color: var(--finos-text) !important;
+  background: var(--t-card-bg, var(--finos-surface)) !important;
+}

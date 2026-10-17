@@ -40,6 +40,7 @@ class BrokerOrderRequest(BaseModel):
     quantity: int = Field(gt=0, le=1000000)
     price: Decimal = Field(default=Decimal("0"), ge=0)
     quote_price: Decimal = Field(gt=0)
+    client_id: str | None = Field(default=None, min_length=1, max_length=120)
 
     @model_validator(mode="after")
     def validate_order(self):
@@ -49,6 +50,10 @@ class BrokerOrderRequest(BaseModel):
         self.product_type = self.product_type.strip().upper()
         self.order_type = self.order_type.strip().upper()
         self.validity = self.validity.strip().upper()
+        if self.client_id is not None:
+            self.client_id = self.client_id.strip()
+            if not self.client_id:
+                raise ValueError("client_id must not be blank")
         if self.side not in {"BUY", "SELL"}:
             raise ValueError("side must be BUY or SELL")
         if self.exchange not in {"NSE", "BSE"}:
@@ -119,9 +124,9 @@ def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends
         "validity": request.validity,
         "quantity": request.quantity,
         "price": str(request.price),
-        # A unique reference avoids different orders from the same user sharing
-        # a client reference and being mistaken for duplicates by the gateway.
-        "client_reference": f"financial-os-{current_user.id}-{uuid4().hex}",
+        # Match the gateway's actual idempotency field. The frontend keeps this
+        # ID stable while the order form remains open, including a retry after timeout.
+        "client_id": request.client_id or f"financial-os-{current_user.id}-{uuid4().hex}",
     }
     result = _gateway_request(GATEWAY_ORDER_PLACE_PATH, "POST", payload)
     nested_data = result.get("data") if isinstance(result.get("data"), dict) else {}

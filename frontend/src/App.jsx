@@ -13804,7 +13804,6 @@ function Category() {
 
             <button
               type="button"
-              className="secondary-button"
               aria-label="Close category form"
               onClick={() => !saving && setShowForm(false)}
               disabled={saving}
@@ -13849,7 +13848,7 @@ function Category() {
                 Category Type
               </label>
 
-              <StyledSelect className="finos-select"
+              <StyledSelect className="category-form-select"
                 value={
                   formData.category_type
                 }
@@ -13859,7 +13858,6 @@ function Category() {
                     event.target.value
                   )
                 }
-                className="category-form-select"
               >
 
                 <option value="expense">
@@ -13882,10 +13880,9 @@ function Category() {
             {/* OPTIONAL PARENT: selecting one creates a subcategory path */}
             <div className="category-form-field">
               <label>Parent Category (optional)</label>
-              <StyledSelect className="finos-select"
+              <StyledSelect className="category-form-select"
                 value={formData.parent_category}
                 onChange={(event) => updateForm("parent_category", event.target.value)}
-                className="category-form-select"
               >
                 <option value="">None — create a main category</option>
                 {formData.category_type === "income" && <option value="Business/Profession">Business / Profession</option>}

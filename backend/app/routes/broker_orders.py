@@ -83,6 +83,14 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
     # secret in environment configuration, never in source control.
     gateway_secret = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
     if gateway_secret:
+        # Never transmit the shared gateway secret over plaintext HTTP.
+        # Configure HTTPS (or a private encrypted tunnel) before enabling it.
+        from urllib.parse import urlparse
+        if urlparse(url).scheme.lower() != "https":
+            raise HTTPException(
+                status_code=503,
+                detail="MSTOCK_GATEWAY_SECRET is configured, but the gateway URL is not HTTPS. Configure HTTPS before using the shared secret.",
+            )
         headers["X-Financial-OS-Gateway-Secret"] = gateway_secret
     request = Request(url, data=body, method=method, headers=headers)
     try:

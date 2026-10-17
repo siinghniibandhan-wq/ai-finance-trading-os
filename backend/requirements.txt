@@ -11,3 +11,6 @@ psycopg[binary]==3.2.3
 
 # Google Gemini AI integration
 google-genai>=1.0.0
+
+# Email validation for public payment checkout requests
+email-validator>=2.0.0

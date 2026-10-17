@@ -4510,3 +4510,67 @@
   color: var(--finos-text) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
 }
+
+
+/* Budget creation/edit form modal */
+.budget-form-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--t-page-bg, var(--finos-page)) 42%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.budget-form-modal {
+  position: relative;
+  width: min(100%, 560px);
+  max-height: min(88dvh, 760px);
+  overflow-y: auto;
+  padding: clamp(18px, 4vw, 28px);
+  background: var(--t-card-bg, var(--finos-surface)) !important;
+  color: var(--finos-text) !important;
+  border: 1px solid var(--finos-border) !important;
+  box-shadow: var(--t-shadow, 0 16px 48px rgba(20, 30, 50, .16)) !important;
+}
+.budget-form-modal .card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-right: 34px;
+}
+.budget-form-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--finos-border);
+  border-radius: var(--t-radius-sm, 10px);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)));
+  color: var(--finos-text);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+.budget-form-modal label { color: var(--finos-text); }
+.budget-form-modal input {
+  max-width: 100%;
+  box-sizing: border-box;
+  color: var(--finos-text);
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)));
+  border-color: var(--finos-border);
+  color-scheme: light;
+}
+@media (max-width: 640px) {
+  .budget-form-overlay { align-items: center; padding: 12px; }
+  .budget-form-modal { width: 100%; max-height: 88dvh; }
+}

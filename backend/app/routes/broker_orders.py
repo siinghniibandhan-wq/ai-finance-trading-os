@@ -118,6 +118,52 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
         raise HTTPException(status_code=502, detail="Gateway timed out or returned invalid JSON; check broker order status before retrying.") from exc
 
 
+def _filter_user_order_book(response: dict, user_id: int) -> dict:
+    """Return only this user's orders; fail closed if the gateway omits client references."""
+    own_prefix = f"financial-os-{user_id}-"
+
+    def visit(value):
+        if isinstance(value, list):
+            if not all(isinstance(row, dict) for row in value):
+                raise HTTPException(status_code=502, detail="Gateway order book has an unsupported shape.")
+            filtered = []
+            for row in value:
+                reference = row.get("client_reference") or row.get("clientReference") or row.get("client_id")
+                if not isinstance(reference, str) or not reference:
+                    raise HTTPException(
+                        status_code=502,
+                        detail="Gateway order book lacks client references; refusing to expose unfiltered broker orders.",
+                    )
+                if reference.startswith(own_prefix):
+                    filtered.append(row)
+            return filtered, True
+        if isinstance(value, dict):
+            for key in ("orders", "orderbook", "order_book", "items"):
+                candidate = value.get(key)
+                if isinstance(candidate, list):
+                    filtered, _ = visit(candidate)
+                    copied = dict(value)
+                    copied[key] = filtered
+                    return copied, True
+            for key in ("data", "result"):
+                candidate = value.get(key)
+                if isinstance(candidate, (dict, list)):
+                    filtered, found = visit(candidate)
+                    if found:
+                        copied = dict(value)
+                        copied[key] = filtered
+                        return copied, True
+        return value, False
+
+    filtered, found = visit(response)
+    if not found:
+        raise HTTPException(
+            status_code=502,
+            detail="Gateway order book has an unsupported shape; no unfiltered orders were returned.",
+        )
+    return filtered
+
+
 @router.post("/", status_code=202)
 def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends(get_current_user)):
     """Submit a real broker order. The AWS gateway handles broker authentication."""
@@ -201,7 +247,8 @@ def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends
 
 @router.get("/")
 def list_broker_orders(current_user: User = Depends(get_current_user), status: str | None = Query(default=None, max_length=30)):
-    """Read broker order book; the gateway must return orders belonging to its configured account."""
+    """Return only orders attributable to the authenticated Financial OS user."""
     query = {"status": status} if status else None
     result = _gateway_request(GATEWAY_ORDER_BOOK_PATH, "GET", query=query)
-    return {"status": "success", "user_id": current_user.id, "broker_response": result}
+    filtered_result = _filter_user_order_book(result, current_user.id)
+    return {"status": "success", "user_id": current_user.id, "broker_response": filtered_result}

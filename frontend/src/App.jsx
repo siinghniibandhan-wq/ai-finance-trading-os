@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 import "./account-layout.css";
 import WealthManager from "./WealthManager";
 import LoanManagement from "./LoanManagement";
+import TradingControl from "./TradingControl";
 import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession } from "./api";
 
 import {
@@ -7320,6 +7321,8 @@ const summaryCards = [
       {/* =====================================================
           SUMMARY CARDS
       ===================================================== */}
+
+      <TradingControl />
 
       <div className="portfolio-summary-grid">
 

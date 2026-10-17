@@ -37,4 +37,5 @@ jobs:
       - name: Run broker order API tests
         env:
           PYTHONPATH: .
+          DATABASE_URL: postgresql+psycopg://test:test@localhost:5432/testdb
         run: pytest -q tests/test_broker_orders.py

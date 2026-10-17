@@ -9,8 +9,8 @@
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button[aria-pressed="true"] {
   /* Use the theme's paired primary background/text tokens together. */
   background: var(--t-pri-bg, var(--finos-accent)) !important;
-  color: var(--finos-accent-contrast, var(--t-pri-text, #fff)) !important;
-  -webkit-text-fill-color: var(--finos-accent-contrast, var(--t-pri-text, #fff)) !important;
+  color: var(--finos-accent-contrast, var(--t-pri-text, var(--finos-text))) !important;
+  -webkit-text-fill-color: var(--finos-accent-contrast, var(--t-pri-text, var(--finos-text))) !important;
   border-color: var(--t-pri-bg, var(--finos-accent)) !important;
 }
 

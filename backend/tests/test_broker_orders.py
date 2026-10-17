@@ -2,9 +2,26 @@ from types import SimpleNamespace
 from decimal import Decimal
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.database.database import Base
+from app import models
 from fastapi import HTTPException
 
 from app.routes import broker_orders
+
+
+@pytest.fixture
+def db_session(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'broker-orders-test.db'}")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False)
+    session = session_factory()
+    try:
+        yield session
+    finally:
+        session.close()
+        engine.dispose()
 
 
 def request_payload(client_id=None):
@@ -21,7 +38,7 @@ def request_payload(client_id=None):
     )
 
 
-def test_place_order_returns_acknowledgement_without_updating_portfolio(monkeypatch):
+def test_place_order_returns_acknowledgement_without_updating_portfolio(monkeypatch, db_session):
     captured = {}
 
     def fake_gateway(path, method, payload):
@@ -30,7 +47,7 @@ def test_place_order_returns_acknowledgement_without_updating_portfolio(monkeypa
 
     monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
     result = broker_orders.place_broker_order(
-        request_payload(), current_user=SimpleNamespace(id=7)
+        request_payload(), db=db_session, current_user=SimpleNamespace(id=7)
     )
 
     assert result["status"] == "submitted"
@@ -40,7 +57,7 @@ def test_place_order_returns_acknowledgement_without_updating_portfolio(monkeypa
     assert captured["client_id"].startswith("financial-os-7-")
 
 
-def test_each_order_gets_a_unique_client_id_when_not_supplied(monkeypatch):
+def test_each_order_gets_a_unique_client_id_when_not_supplied(monkeypatch, db_session):
     client_ids = []
 
     def fake_gateway(path, method, payload):
@@ -57,7 +74,7 @@ def test_each_order_gets_a_unique_client_id_when_not_supplied(monkeypatch):
     assert client_ids[0] != client_ids[1]
 
 
-def test_supplied_client_id_is_forwarded_unchanged(monkeypatch):
+def test_supplied_client_id_is_forwarded_unchanged(monkeypatch, db_session):
     captured = {}
 
     def fake_gateway(path, method, payload):
@@ -66,7 +83,7 @@ def test_supplied_client_id_is_forwarded_unchanged(monkeypatch):
 
     monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
     result = broker_orders.place_broker_order(
-        request_payload("finos-retry-123"), current_user=SimpleNamespace(id=7)
+        request_payload("finos-retry-123"), db=db_session, current_user=SimpleNamespace(id=7)
     )
 
     assert result["order_id"] == "ORD-CLIENT-ID"
@@ -74,7 +91,7 @@ def test_supplied_client_id_is_forwarded_unchanged(monkeypatch):
     assert "client_reference" not in captured
 
 
-def test_order_uses_gateway_order_endpoint(monkeypatch):
+def test_order_uses_gateway_order_endpoint(monkeypatch, db_session):
     captured = {}
 
     def fake_gateway(path, method, payload):
@@ -97,7 +114,7 @@ def test_order_uses_gateway_order_endpoint(monkeypatch):
         {"data": {"success": False, "error": "Invalid order"}},
     ],
 )
-def test_explicit_gateway_rejection_is_not_reported_as_accepted(monkeypatch, gateway_result):
+def test_explicit_gateway_rejection_is_not_reported_as_accepted(monkeypatch, gateway_result, db_session):
     monkeypatch.setattr(
         broker_orders, "_gateway_request", lambda *args, **kwargs: gateway_result
     )
@@ -110,7 +127,7 @@ def test_explicit_gateway_rejection_is_not_reported_as_accepted(monkeypatch, gat
     assert error.value.status_code == 502
 
 
-def test_ambiguous_gateway_response_requires_order_book_check(monkeypatch):
+def test_ambiguous_gateway_response_requires_order_book_check(monkeypatch, db_session):
     monkeypatch.setattr(
         broker_orders, "_gateway_request", lambda *args, **kwargs: {"message": "received"}
     )
@@ -159,3 +176,50 @@ def test_real_order_and_order_book_routes_require_admin():
 
     assert get_current_admin in route_dependencies["place_broker_order"]
     assert get_current_admin in route_dependencies["list_broker_orders"]
+
+
+def test_duplicate_client_id_is_blocked_from_persistent_database_record(monkeypatch, db_session):
+    calls = []
+
+    def fake_gateway(path, method, payload):
+        calls.append(payload["client_id"])
+        return {"success": True, "order_id": "ORD-PERSISTENT"}
+
+    monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
+    user = SimpleNamespace(id=77)
+    broker_orders.place_broker_order(request_payload("persistent-key-1"), db=db_session, current_user=user)
+
+    # Simulate a backend process restart by using a fresh ORM session against
+    # the same persistent database file.
+    engine = db_session.get_bind()
+    from sqlalchemy.orm import Session
+    restarted_session = Session(bind=engine, expire_on_commit=False)
+    try:
+        with pytest.raises(HTTPException) as error:
+            broker_orders.place_broker_order(
+                request_payload("persistent-key-1"), db=restarted_session, current_user=user
+            )
+        assert error.value.status_code == 409
+    finally:
+        restarted_session.close()
+
+    assert calls == ["persistent-key-1"]
+
+
+def test_same_client_id_with_different_payload_is_blocked(monkeypatch, db_session):
+    calls = []
+    monkeypatch.setattr(
+        broker_orders,
+        "_gateway_request",
+        lambda path, method, payload: calls.append(payload) or {"success": True, "order_id": "ORD-1"},
+    )
+    user = SimpleNamespace(id=78)
+    broker_orders.place_broker_order(request_payload("payload-key-1"), db=db_session, current_user=user)
+    changed = request_payload("payload-key-1")
+    changed.quantity = 2
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(changed, db=db_session, current_user=user)
+
+    assert error.value.status_code == 409
+    assert len(calls) == 1

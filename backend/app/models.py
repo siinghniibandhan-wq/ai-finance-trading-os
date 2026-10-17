@@ -781,3 +781,21 @@ class PaymentOrder(Base):
     customer_phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="created", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+# ============================================================
+# DURABLE BROKER ORDER IDEMPOTENCY
+# ============================================================
+class BrokerOrderSubmission(Base):
+    __tablename__ = "broker_order_submissions"
+    __table_args__ = (UniqueConstraint("user_id", "client_id", name="uq_broker_order_user_client_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    client_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="SUBMITTING")
+    gateway_order_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    response_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

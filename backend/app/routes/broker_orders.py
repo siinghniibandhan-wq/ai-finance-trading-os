@@ -8,6 +8,7 @@ This API never records a holding from order placement alone; confirmed-fill reco
 must be implemented separately before updating portfolio quantities.
 """
 import json
+import hashlib
 import logging
 import os
 from uuid import uuid4
@@ -17,10 +18,13 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, model_validator
 
-from app.routes.auth import get_current_user
-from app.models import User
+from app.routes.auth import get_current_user, get_current_admin
+from app.models import User, BrokerOrderSubmission
+from app.database.database import get_db
 
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
 logger = logging.getLogger(__name__)
@@ -75,6 +79,13 @@ class BrokerOrderRequest(BaseModel):
 def _gateway_request(path: str, method: str, payload: dict | None = None, query: dict | None = None):
     if not GATEWAY_URL:
         raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_URL is not configured.")
+    # Broker credentials are shared by the configured m.Stock account. Keep
+    # the secret on loopback only; never send it to a public IP over HTTP.
+    if GATEWAY_URL not in {"http://127.0.0.1:8000", "http://localhost:8000"}:
+        raise HTTPException(
+            status_code=503,
+            detail="Broker gateway must be configured on loopback HTTP (127.0.0.1:8000).",
+        )
     if not GATEWAY_SECRET:
         raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_SECRET is not configured; broker gateway requests are disabled.")
     url = f"{GATEWAY_URL}{path}"
@@ -113,8 +124,12 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
 
 
 @router.post("/", status_code=202)
-def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends(get_current_user)):
-    """Submit a real broker order. The AWS gateway handles broker authentication."""
+def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_admin)):
+    """Submit a real-money order only for the configured platform owner."""
+    # Keep the API's canonical fields and also provide the field names used
+    # by the deployed Flask gateway. This makes the contract explicit while
+    # remaining compatible with existing backend callers.
+    gateway_product = {"DELIVERY": "CNC", "INTRADAY": "MIS"}[request.product_type]
     payload = {
         "side": request.side,
         "symbol": request.symbol,
@@ -124,11 +139,60 @@ def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends
         "validity": request.validity,
         "quantity": request.quantity,
         "price": str(request.price),
+        "quote_price": str(request.quote_price),
+        # AWS gateway's current contract uses m.Stock field names.
+        "transaction_type": request.side,
+        "tradingsymbol": request.symbol,
+        "product": gateway_product,
+        "ref_price": str(request.quote_price),
         # Reuse the caller-provided ID for retries of the same form submission.
-        # The gateway contract uses client_id for duplicate suppression.
+        # Both backend DB reservation and gateway guard use this ID.
         "client_id": request.client_id or f"financial-os-{current_user.id}-{uuid4().hex}",
     }
-    result = _gateway_request(GATEWAY_ORDER_PLACE_PATH, "POST", payload)
+    # Commit a durable reservation before the external side effect. The DB
+    # unique constraint arbitrates concurrent requests across backend workers.
+    # Existing IDs are never automatically resubmitted, including after restart.
+    canonical_payload = json.dumps(
+        {key: value for key, value in payload.items() if key != "client_id"},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    payload_hash = hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
+    reservation = BrokerOrderSubmission(
+        user_id=current_user.id,
+        client_id=payload["client_id"],
+        payload_hash=payload_hash,
+        status="SUBMITTING",
+    )
+    try:
+        db.add(reservation)
+        db.commit()
+        db.refresh(reservation)
+    except IntegrityError as exc:
+        db.rollback()
+        existing = db.query(BrokerOrderSubmission).filter(
+            BrokerOrderSubmission.user_id == current_user.id,
+            BrokerOrderSubmission.client_id == payload["client_id"],
+        ).first()
+        if existing:
+            if existing.payload_hash != payload_hash:
+                raise HTTPException(status_code=409, detail="This client_id was already used for a different order.") from exc
+            raise HTTPException(
+                status_code=409,
+                detail=f"Duplicate order blocked. Existing request status: {existing.status}. Check the broker order book before taking further action.",
+            ) from exc
+        raise HTTPException(status_code=503, detail="Unable to verify order idempotency state; order was not submitted.") from exc
+    except SQLAlchemyError as exc:
+        db.rollback()
+        logger.error("Unable to persist broker order idempotency reservation")
+        raise HTTPException(status_code=503, detail="Order submission is disabled because durable duplicate protection is unavailable.") from exc
+
+    try:
+        result = _gateway_request(GATEWAY_ORDER_PLACE_PATH, "POST", payload)
+    except Exception:
+        # A timeout may occur after broker acceptance. Keep the durable
+        # SUBMITTING reservation and require reconciliation; never retry blindly.
+        raise
     nested_data = result.get("data") if isinstance(result.get("data"), dict) else {}
     # Broker gateways may wrap the placement result inside "data". Treat an
     # explicit rejection anywhere in that response as a rejection, not success.
@@ -150,6 +214,9 @@ def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends
             or result.get("error")
             or "Gateway did not accept the order."
         )
+        reservation.status = "REJECTED"
+        reservation.response_json = json.dumps(result, default=str)
+        db.commit()
         raise HTTPException(status_code=502, detail=message)
 
     order_id = (
@@ -177,6 +244,11 @@ def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends
             detail="The gateway response did not confirm whether the order was accepted. Check the broker order book before retrying.",
         )
 
+    reservation.status = "ACKNOWLEDGED"
+    reservation.gateway_order_id = str(order_id) if order_id else None
+    reservation.response_json = json.dumps(result, default=str)
+    db.commit()
+
     return {
         "status": "submitted",
         "user_id": current_user.id,
@@ -188,7 +260,7 @@ def place_broker_order(request: BrokerOrderRequest, current_user: User = Depends
 
 
 @router.get("/")
-def list_broker_orders(current_user: User = Depends(get_current_user), status: str | None = Query(default=None, max_length=30)):
+def list_broker_orders(current_user: User = Depends(get_current_admin), status: str | None = Query(default=None, max_length=30)):
     """Read broker order book; the gateway must return orders belonging to its configured account."""
     query = {"status": status} if status else None
     result = _gateway_request(GATEWAY_ORDER_BOOK_PATH, "GET", query=query)

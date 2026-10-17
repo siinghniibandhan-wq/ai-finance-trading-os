@@ -5,6 +5,7 @@ on:
     paths:
       - "backend/app/routes/broker_orders.py"
       - "backend/tests/test_broker_orders.py"
+      - "backend/tests/test_broker_orders_postgres.py"
       - ".github/workflows/broker-order-tests.yml"
   push:
     branches:
@@ -12,6 +13,7 @@ on:
     paths:
       - "backend/app/routes/broker_orders.py"
       - "backend/tests/test_broker_orders.py"
+      - "backend/tests/test_broker_orders_postgres.py"
       - ".github/workflows/broker-order-tests.yml"
 
 permissions:
@@ -20,6 +22,20 @@ permissions:
 jobs:
   broker-orders:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d testdb"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: backend
@@ -34,8 +50,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pytest
-      - name: Run broker order API tests
+      - name: Run broker order API tests with PostgreSQL integration coverage
         env:
           PYTHONPATH: .
           DATABASE_URL: postgresql+psycopg://test:test@localhost:5432/testdb
-        run: pytest -q tests/test_broker_orders.py
+          BROKER_TEST_DATABASE_URL: postgresql+psycopg://test:test@localhost:5432/testdb
+        run: pytest -q tests/test_broker_orders.py tests/test_broker_orders_postgres.py

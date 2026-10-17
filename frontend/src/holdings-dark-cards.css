@@ -2,7 +2,7 @@
    Do not affect Light, Minimal, Elegant, or any other theme. */
 :root:is([data-finos-theme="dark"], [data-finos-theme="default"]) .holdings-workspace .holdings-summary-grid {
   display: grid !important;
-  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   align-items: stretch;
   gap: 14px !important;
 }

@@ -3,11 +3,11 @@
 :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid > .metric-card {
   box-sizing: border-box;
   min-width: 0;
-  background: var(--t-card-bg, #141c30) !important;
-  color: var(--finos-text, #f4f5ff) !important;
-  border: 1px solid var(--finos-border, rgba(255,255,255,.12)) !important;
-  border-radius: var(--t-radius, 16px) !important;
-  box-shadow: var(--t-shadow, none) !important;
+  background: var(--t-card-bg) !important;
+  color: var(--finos-text) !important;
+  border: 1px solid var(--finos-border) !important;
+  border-radius: var(--t-radius) !important;
+  box-shadow: var(--t-shadow) !important;
 }
 :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid > .metric-card:hover {
   background: var(--t-card-bg, #141c30) !important;
@@ -16,13 +16,13 @@
   transform: none;
 }
 :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-label {
-  color: var(--finos-muted, #aab2c5) !important;
+  color: var(--finos-muted) !important;
 }
 :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-value {
   color: var(--finos-text, #f4f5ff) !important;
 }
 :root[data-finos-theme="dark"] .holdings-workspace .holdings-summary-grid .metric-icon {
-  color: var(--finos-accent, #b7a5ff) !important;
-  background: var(--t-inner-bg, #1b2439) !important;
+  color: var(--finos-accent) !important;
+  background: var(--t-inner-bg) !important;
   border-color: var(--finos-border, rgba(255,255,255,.12)) !important;
 }

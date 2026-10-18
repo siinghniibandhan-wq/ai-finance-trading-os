@@ -319,12 +319,8 @@ def logout(
 # ============================================================
 
 def get_current_admin(user: User = Depends(get_current_user)) -> User:
-    # The designated administrator email is always accepted. ADMIN_USER_ID can
-    # additionally designate a stable database account ID.
-    designated_admin_email = "siinghniibandhan@gmail.com"
-    if (user.email or "").strip().lower() == designated_admin_email:
-        return user
-
+    # Prefer a stable database user ID when configured. Email-based admin
+    # checks otherwise break as soon as the administrator changes their login email.
     admin_user_id = os.getenv("ADMIN_USER_ID", "").strip()
     if admin_user_id:
         try:
@@ -376,7 +372,7 @@ def admin_list_users(
                 "currency": item.currency,
                 "is_active": item.is_active,
                 "created_at": item.created_at.isoformat() if item.created_at else None,
-                "is_admin": (item.email or "").strip().lower() == "siinghniibandhan@gmail.com" or (str(item.id) == admin_user_id if admin_user_id else (item.email or "").strip().lower() == admin_email),
+                "is_admin": str(item.id) == admin_user_id if admin_user_id else (item.email or "").strip().lower() == admin_email,
             }
             for item in users
         ],

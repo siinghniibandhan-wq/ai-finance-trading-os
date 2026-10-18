@@ -4,10 +4,12 @@ Target: `/home/ssm-user/mstock-gateway/app.py`
 
 This is an insertion patch for the five-part source provided in this conversation. Insert the code below immediately before the existing `if __name__ == "__main__":` block. It does not replace existing routes, does not submit/modify/cancel orders, and does not require a restart until the owner explicitly applies and approves it.
 
-**Upstream paths are configurable** because they must be checked against the account's currently documented m.Stock Type A API before application:
-- `MSTOCK_ORDER_BOOK_URL` defaults to `/openapi/typea/orders`
-- `MSTOCK_TRADE_BOOK_URL` defaults to `/openapi/typea/tradebook`
-- `MSTOCK_TRADE_HISTORY_URL` defaults to `/openapi/typea/trades`
+**Endpoint paths verified against the official m.Stock Type A API documentation** (Orders page, checked 18 Oct 2026):
+- Order book: `GET /openapi/typea/orders`
+- Trade book: `GET /openapi/typea/tradebook`
+- Trade history: `GET /openapi/typea/trades` (requires `fromdate` and `todate`)
+
+The environment overrides remain available. This verifies the documented paths, **not** the current live gateway's response shape or its `ORDER_LOG` field mapping; validate those before applying or restarting anything.
 
 ```python
 # ============================================================

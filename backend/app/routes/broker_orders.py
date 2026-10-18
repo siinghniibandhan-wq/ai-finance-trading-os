@@ -18,6 +18,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, model_validator
@@ -46,6 +47,7 @@ class BrokerOrderRequest(BaseModel):
     price: Decimal = Field(default=Decimal("0"), ge=0)
     quote_price: Decimal = Field(gt=0)
     client_id: str | None = Field(default=None, min_length=1, max_length=120)
+    investment_id: int | None = Field(default=None, gt=0)
 
     @model_validator(mode="after")
     def validate_order(self):
@@ -129,6 +131,20 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
     # Keep the API's canonical fields and also provide the field names used
     # by the deployed Flask gateway. This makes the contract explicit while
     # remaining compatible with existing backend callers.
+    # When an investment is selected, validate ownership before reserving or
+    # sending any order. The investment table is created by the investments API.
+    if request.investment_id is not None:
+        try:
+            owned_investment = db.execute(text("""
+                SELECT id FROM investments
+                WHERE id = :investment_id AND user_id = :user_id
+            """), {"investment_id": request.investment_id, "user_id": current_user.id}).first()
+        except SQLAlchemyError as exc:
+            db.rollback()
+            raise HTTPException(status_code=503, detail="Unable to validate the selected investment; order was not submitted.") from exc
+        if owned_investment is None:
+            raise HTTPException(status_code=404, detail="Selected investment was not found for this user.")
+
     gateway_product = {"DELIVERY": "CNC", "INTRADAY": "MIS"}[request.product_type]
     payload = {
         "side": request.side,
@@ -157,9 +173,17 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         sort_keys=True,
         separators=(",", ":"),
     )
+    # Investment selection is backend metadata, not a broker API field, but
+    # it is included in the idempotency hash so one client_id cannot be rebound.
+    canonical_payload = json.dumps(
+        {"order": json.loads(canonical_payload), "investment_id": request.investment_id},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
     payload_hash = hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
     reservation = BrokerOrderSubmission(
         user_id=current_user.id,
+        investment_id=request.investment_id,
         client_id=payload["client_id"],
         payload_hash=payload_hash,
         status="SUBMITTING",

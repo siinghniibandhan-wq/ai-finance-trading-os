@@ -59,7 +59,23 @@ def _trade_rows(response):
                 wrappers.append(nested)
     for envelope in wrappers:
         status = str(envelope.get("status", "")).strip().lower()
-        if status in {"error", "failed", "failure"}:
+        success = envelope.get("success")
+        error_values = [
+            envelope.get("error"), envelope.get("error_code"), envelope.get("errorCode"),
+        ]
+        def has_error(value):
+            if value is None or value is False:
+                return False
+            if isinstance(value, (int, float)) and value == 0:
+                return False
+            if isinstance(value, str) and value.strip().lower() in {"", "0", "false", "none", "null"}:
+                return False
+            return True
+        if (
+            status in {"error", "failed", "failure"}
+            or success is False
+            or any(has_error(value) for value in error_values)
+        ):
             raise HTTPException(status_code=502, detail="Gateway returned a trade-book error; no fills were imported.")
 
     for key in ("tradebook", "trades", "data", "items"):

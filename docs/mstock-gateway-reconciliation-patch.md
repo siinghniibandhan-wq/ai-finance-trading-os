@@ -117,13 +117,22 @@ def _enrich_trade_rows(rows, order_rows):
             continue
         exch_id = _book_value(order, "exchange_order_id", "EXCH_ORDER_NUMBER", "exchangeorderid")
         order_id = _book_value(order, "order_id", "orderid", "ORDER_NUMBER")
-        client_id = by_logged_id.get(order_id) or by_logged_id.get(exch_id)
-        if not exch_id or not client_id:
+
+        # Preserve the exact ID that matched a successful local placement response.
+        # Never substitute an unverified order-book field as the broker order ID.
+        matched_logged_id = (
+            order_id if order_id and order_id in by_logged_id
+            else exch_id if exch_id and exch_id in by_logged_id
+            else ""
+        )
+        client_id = by_logged_id.get(matched_logged_id) if matched_logged_id else None
+        if not exch_id or not matched_logged_id or not client_id:
             continue
+
         original_request = requests_by_client.get(client_id, {})
         by_exchange_order_id[exch_id] = {
-            # Keep placement/order-book ID distinct from exchange order number.
-            "broker_order_id": order_id or by_logged_id.get(exch_id),
+            # This exact placement-response ID is used for the local match.
+            "broker_order_id": matched_logged_id,
             "client_reference": client_id,
             "exchange": _book_value(order, "exchange", "EXCHANGE") or _book_value(original_request, "exchange"),
             "symbol": _book_value(order, "tradingsymbol", "symbol", "SYMBOL") or _book_value(original_request, "tradingsymbol"),
@@ -175,6 +184,9 @@ def _read_trade_rows(url, keys, params=None):
         return jsonify({"status": "error", "message": str(exc)[:200]}), 502
 
 
+# The backend defaults MSTOCK_GATEWAY_ORDER_BOOK_PATH to "/orders".
+# Keep "/orderbook" as a read-only alias for direct diagnostics.
+@app.get("/orders")
 @app.get("/orderbook")
 def read_orderbook():
     blocked = read_only_precheck()
@@ -223,6 +235,7 @@ def read_tradehistory():
 
 ## Application caveats
 - The uploaded gateway source confirms the logger writes `place_request` with `client_id` and submitted `exchange`, then `place_response` with the same `client_id` and broker response body. The log filename is the existing `ORDER_LOG` constant; this patch reads that constant rather than assuming a filename.
-- The mapping code joins the broker order-book row to a logged placement response by exact broker order ID, then enriches tradebook rows by exact exchange-order ID. It returns both `broker_order_id` (the placement/order-book ID) and `exchange_order_id` (the exchange's order number) as separate fields; the backend matches the stored placement ID only against `broker_order_id`. It does not infer ownership from symbol, price, quantity, tag, or timestamp.
+- The backend defaults to `GET /orders`; the gateway patch exposes both `/orders` and `/orderbook` so the route contract matches.
+- The mapping code joins the broker order-book row to a logged placement response only when an order-book ID exactly matches an ID captured from that client's placement response. It preserves that exact matched ID as `broker_order_id`, then joins tradebook rows by exact exchange-order ID. It does not infer ownership from symbol, price, quantity, tag, or timestamp. If the placement response ID cannot be joined unambiguously, the trade is skipped rather than misattributed.
 - The uploaded excerpts establish the logging format, but they do **not** include a real successful broker response payload or live orderbook/tradebook sample. Confirm the actual response contains a joinable order ID and that the live tradebook includes `EXCH_ORDER_NUMBER` and `TRADE_NUMBER` before enabling imports. Unmatched rows are skipped.
 - The endpoint paths are documented by m.Stock Type A API docs, but the patch has not been applied to AWS and must not be deployed without separate review.

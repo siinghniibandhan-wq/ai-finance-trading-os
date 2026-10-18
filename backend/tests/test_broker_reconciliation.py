@@ -296,3 +296,34 @@ def test_submission_match_rejects_missing_symbol():
         quantity=2,
     )
     assert _submission_matches_trade(submission, trade) is False
+
+def test_normalizes_documented_mstock_trade_history_fields():
+    # Mirrors the official Type A /trades schema. The gateway must enrich
+    # broker_order_id/client_reference and supply the locally submitted symbol;
+    # tradingsymbol may be a display name, not an instrument code.
+    row = {
+        "trade_id": "68346395",
+        "order_id": "1300000040250500",
+        "exchange_order_id": "1300000040250500",
+        "exchange": "NSE",
+        "symbol": "RCF",
+        "tradingsymbol": "RASHTRIYA CHEMICALS & FER",
+        "average_price": 145.45,
+        "quantity": 1,
+        "transaction_type": "SELL",
+        "order_timestamp": "2024-02-14 14:48:23",
+        "broker_order_id": "1300000040250500",
+        "client_reference": "financial-os-7-abc123",
+    }
+
+    normalized = _normalize_trade(row)
+    assert normalized is not None
+    assert normalized["trade_id"] == "68346395"
+    assert normalized["exchange_order_id"] == "1300000040250500"
+    assert normalized["broker_order_id"] == "1300000040250500"
+    assert normalized["symbol"] == "RCF"
+    assert normalized["side"] == "SELL"
+    assert normalized["quantity"] == Decimal("1")
+    assert normalized["price"] == Decimal("145.45")
+    assert normalized["trade_date"] == date(2024, 2, 14)
+

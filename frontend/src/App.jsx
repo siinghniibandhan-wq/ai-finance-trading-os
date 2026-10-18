@@ -512,6 +512,7 @@ export default function App() {
                 <div className="header-popover header-profile-popover" role="menu" aria-label="User menu">
                   <div className="header-profile-summary"><div className="profile-avatar">{(getCurrentUser()?.name || "U").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</div><div><strong>{getCurrentUser()?.name || "User"}</strong><span>{getCurrentUser()?.email || "Personal workspace"}</span></div></div>
                   <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Account Profile"); }}>Account profile</button>
+                  <div role="none"><TradingControlSettings compact /></div>
                   <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}><Settings size={16}/> Settings &amp; preferences <span>›</span></button>
                   <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}>Theme &amp; appearance <span>›</span></button>
                   <div className="header-profile-divider"/>
@@ -8839,7 +8840,7 @@ function AccountCompletionPage() {
 // ACCOUNTS
 // ============================================================
 
-function TradingControlSettings() {
+function TradingControlSettings({ compact = false }) {
   const API = "https://wealthmanager.duckdns.org";
   const [tradingControl, setTradingControl] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -8884,6 +8885,18 @@ function TradingControlSettings() {
   };
 
   const enabled = Boolean(tradingControl?.enabled);
+  if (compact) return <div style={{ padding: "10px 12px", borderTop: "1px solid var(--finos-border, rgba(255,255,255,.12))", borderBottom: "1px solid var(--finos-border, rgba(255,255,255,.12))" }} aria-labelledby="live-trading-settings-title">
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+      <strong id="live-trading-settings-title" style={{ fontSize: 13 }}>Live Trading</strong>
+      <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "#ef4444" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
+    </div>
+    <button type="button" onClick={toggleTradingControl} disabled={!tradingControl || busy} aria-pressed={enabled} style={{ width: "100%", marginTop: 8, padding: "9px 10px", borderRadius: 8, border: "1px solid var(--finos-border, rgba(255,255,255,.18))", background: enabled ? "rgba(239,68,68,.12)" : "rgba(34,197,94,.12)", color: "inherit", cursor: !tradingControl || busy ? "not-allowed" : "pointer", opacity: !tradingControl || busy ? .6 : 1, font: "inherit", fontSize: 12, fontWeight: 700 }}>
+      {busy ? "Saving…" : enabled ? "Turn LIVE TRADING OFF" : "Turn LIVE TRADING ON"}
+    </button>
+    {error && <p role="alert" style={{ color: "var(--finos-negative, #ef4444)", fontSize: 11, lineHeight: 1.4 }}>{error}</p>}
+    {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", fontSize: 11, lineHeight: 1.4 }}>{notice}</p>}
+    <p style={{ color: "var(--finos-muted, rgba(255,255,255,.62))", fontSize: 10, lineHeight: 1.4, marginBottom: 0 }}>Admin-only. OFF blocks new Financial OS orders.</p>
+  </div>;
   return <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }} aria-labelledby="live-trading-settings-title">
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
       <div style={{ minWidth: 0, flex: "1 1 280px" }}>
@@ -8922,7 +8935,6 @@ function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
       </div>
       <p className="finos-theme-footnote">Default remains the standard Financial OS look. Elegant Plain is a clean white theme with thin borders and minimal visual decoration. Theme selection changes appearance only, not your records or calculations.</p>
     </section>
-    <TradingControlSettings />
     <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }}><h3>Account Profile</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Manage your personal details, tax information, and salary setup. This is separate from your bank and investment accounts.</p><button className="primary-button" onClick={() => onNavigate("Account Profile")}>Open Account Profile</button></section>
     <section className="glass-card" style={{ padding: "22px" }}><h3>Finance Diary</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Read-only master history of account and transaction activity. Entries cannot be edited or deleted.</p><button className="primary-button" onClick={() => onNavigate("Finance Diary")}>Open Finance Diary</button></section>
   </div>;

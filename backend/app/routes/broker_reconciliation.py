@@ -71,8 +71,9 @@ def _normalize_trade(row):
     # broker_order_id after joining the order book to the local placement log.
     broker_order_id = row.get("broker_order_id")
     client_reference = row.get("client_reference") or row.get("client_id")
-    # SYMBOL is the broker's instrument code. FULL_SYMBOL is a permitted fallback;
-    # tradingsymbol from the /trades API is intentionally not used as a holding key.
+    # Require SYMBOL (or gateway-normalized symbol) as the instrument code.
+    # FULL_SYMBOL and /trades tradingsymbol are deliberately not fallback keys:
+    # they may contain display names rather than the exact instrument identifier.
     symbol = row.get("symbol") or row.get("SYMBOL")
     side = row.get("side") or row.get("BUY_SELL") or row.get("transaction_type")
     quantity = row.get("quantity") or row.get("QUANTITY") or row.get("traded_quantity")

@@ -291,10 +291,18 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         result.get("error"), result.get("error_code"), result.get("errorCode"),
         nested_data.get("error"), nested_data.get("error_code"), nested_data.get("errorCode"),
     ]
-    has_error = any(
-        value is not None and str(value).strip() not in {"", "0", "None"}
-        for value in error_values
-    )
+    def is_error_value(value):
+        # Some gateway wrappers always include error/error_code keys and use
+        # false, null, or zero to mean no error. Do not reject those responses.
+        if value is None or value is False:
+            return False
+        if isinstance(value, (int, float)) and value == 0:
+            return False
+        if isinstance(value, str) and value.strip().lower() in {"", "0", "false", "none", "null"}:
+            return False
+        return True
+
+    has_error = any(is_error_value(value) for value in error_values)
     if has_error or result.get("success") is False or nested_data.get("success") is False or any(
         isinstance(status, str) and status.strip().lower() in rejected_statuses
         for status in status_values

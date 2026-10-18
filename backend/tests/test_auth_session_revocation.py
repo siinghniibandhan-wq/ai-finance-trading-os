@@ -98,3 +98,48 @@ def test_login_logout_revokes_old_bearer_token():
     # Also ensure a protected endpoint rejects the revoked token.
     # /api/auth/me is the minimal protected endpoint and is the canonical check.
     assert "revoked" in after_logout.text.lower() or "invalid" in after_logout.text.lower()
+
+
+
+def test_account_contact_updates_email_and_phone_login():
+    original_email = "contact-update-test@example.test"
+    new_email = "contact-update-new@example.test"
+    phone = "+919876543210"
+    password = "Test-Password-Only-456!"
+
+    register = client.post(
+        "/api/auth/register",
+        json={"name": "Contact Update Test", "email": original_email, "password": password},
+    )
+    assert register.status_code == 201, register.text
+    token = client.post("/api/auth/login", json={"email": original_email, "password": password}).json()["access_token"]
+    auth = {"Authorization": f"Bearer {token}"}
+
+    update_email = client.patch(
+        "/api/auth/contact",
+        headers=auth,
+        json={"email": new_email, "current_password": password},
+    )
+    assert update_email.status_code == 200, update_email.text
+    assert update_email.json()["user"]["email"] == new_email
+
+    login_new_email = client.post("/api/auth/login", json={"email": new_email, "password": password})
+    assert login_new_email.status_code == 200, login_new_email.text
+
+    update_phone = client.patch(
+        "/api/auth/contact",
+        headers=auth,
+        json={"phone_number": phone, "current_password": password},
+    )
+    assert update_phone.status_code == 200, update_phone.text
+    assert update_phone.json()["user"]["phone_number"] == phone
+
+    login_phone = client.post("/api/auth/login", json={"email": phone, "password": password})
+    assert login_phone.status_code == 200, login_phone.text
+
+    wrong_password = client.patch(
+        "/api/auth/contact",
+        headers=auth,
+        json={"phone_number": "+919876543211", "current_password": "wrong-password"},
+    )
+    assert wrong_password.status_code == 401, wrong_password.text

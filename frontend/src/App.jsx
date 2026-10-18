@@ -2377,6 +2377,100 @@ function TaxPage() {
 }
 
 // ============================================================
+// Pure, deterministic technical-indicator calculations over historical OHLCV candles.
+function calculateTechnicalIndicators(rows) {
+  const numeric = (row, key) => {
+    const value = Number(row?.[key]);
+    return Number.isFinite(value) ? value : null;
+  };
+  const closes = rows.map((row) => numeric(row, "close")).filter((value) => value !== null && value > 0);
+  const validRows = rows.filter((row) => numeric(row, "close") > 0);
+  const last = (values) => values.length ? values[values.length - 1] : null;
+  const sma = (values, period) => values.length >= period ? values.slice(-period).reduce((sum, value) => sum + value, 0) / period : null;
+  const emaSeries = (values, period) => {
+    if (values.length < period) return [];
+    const multiplier = 2 / (period + 1);
+    const series = [values.slice(0, period).reduce((sum, value) => sum + value, 0) / period];
+    for (let i = period; i < values.length; i++) series.push(values[i] * multiplier + series[series.length - 1] * (1 - multiplier));
+    return series;
+  };
+  const rsiWilder = (values, period = 14) => {
+    if (values.length <= period) return null;
+    let gain = 0, loss = 0;
+    for (let i = 1; i <= period; i++) {
+      const delta = values[i] - values[i - 1];
+      gain += Math.max(delta, 0); loss += Math.max(-delta, 0);
+    }
+    let avgGain = gain / period, avgLoss = loss / period;
+    for (let i = period + 1; i < values.length; i++) {
+      const delta = values[i] - values[i - 1];
+      avgGain = (avgGain * (period - 1) + Math.max(delta, 0)) / period;
+      avgLoss = (avgLoss * (period - 1) + Math.max(-delta, 0)) / period;
+    }
+    if (avgGain === 0 && avgLoss === 0) return 50;
+    if (avgLoss === 0) return 100;
+    return 100 - 100 / (1 + avgGain / avgLoss);
+  };
+  const sma20 = sma(closes, 20);
+  const sma50 = sma(closes, 50);
+  const ema12Series = emaSeries(closes, 12);
+  const ema26Series = emaSeries(closes, 26);
+  const ema12 = last(ema12Series), ema26 = last(ema26Series);
+  const macdSeries = [];
+  if (ema12Series.length && ema26Series.length) {
+    const offset = 26 - 12;
+    for (let i = 0; i < ema26Series.length; i++) macdSeries.push(ema12Series[i + offset] - ema26Series[i]);
+  }
+  const macdSignalSeries = emaSeries(macdSeries, 9);
+  const macd = last(macdSeries), macdSignal = last(macdSignalSeries);
+  const macdHistogram = macd != null && macdSignal != null ? macd - macdSignal : null;
+  const last20 = closes.slice(-20);
+  const bollingerMiddle = sma20;
+  const bollingerStd = last20.length === 20 && sma20 != null
+    ? Math.sqrt(last20.reduce((sum, value) => sum + (value - sma20) ** 2, 0) / 20) : null;
+  const bollingerUpper = bollingerMiddle != null && bollingerStd != null ? bollingerMiddle + 2 * bollingerStd : null;
+  const bollingerLower = bollingerMiddle != null && bollingerStd != null ? bollingerMiddle - 2 * bollingerStd : null;
+  const typicals = validRows.map((row) => {
+    const high = numeric(row, "high"), low = numeric(row, "low"), close = numeric(row, "close");
+    return high != null && low != null && close != null ? (high + low + close) / 3 : null;
+  });
+  let volumeSum = 0, typicalVolumeSum = 0;
+  validRows.forEach((row, index) => {
+    const volume = numeric(row, "volume");
+    if (volume != null && volume >= 0 && typicals[index] != null) {
+      volumeSum += volume; typicalVolumeSum += typicals[index] * volume;
+    }
+  });
+  const vwap = volumeSum > 0 ? typicalVolumeSum / volumeSum : null;
+  const trueRanges = [];
+  validRows.forEach((row, index) => {
+    const high = numeric(row, "high"), low = numeric(row, "low"), close = numeric(row, "close");
+    if (high == null || low == null) return;
+    const previousClose = index > 0 ? numeric(validRows[index - 1], "close") : null;
+    trueRanges.push(previousClose == null ? high - low : Math.max(high - low, Math.abs(high - previousClose), Math.abs(low - previousClose)));
+  });
+  const atr14 = trueRanges.length >= 14 ? trueRanges.slice(-14).reduce((sum, value) => sum + value, 0) / 14 : null;
+  const stochasticWindow = validRows.slice(-14);
+  const stochasticHighs = stochasticWindow.map((row) => numeric(row, "high")).filter((value) => value != null);
+  const stochasticLows = stochasticWindow.map((row) => numeric(row, "low")).filter((value) => value != null);
+  const currentClose = last(closes);
+  const highest14 = stochasticHighs.length === 14 ? Math.max(...stochasticHighs) : null;
+  const lowest14 = stochasticLows.length === 14 ? Math.min(...stochasticLows) : null;
+  const stochasticK = highest14 != null && lowest14 != null && highest14 !== lowest14 && currentClose != null
+    ? (currentClose - lowest14) / (highest14 - lowest14) * 100 : null;
+  let obv = 0;
+  for (let i = 1; i < validRows.length; i++) {
+    const currentClose = numeric(validRows[i], "close"), previousClose = numeric(validRows[i - 1], "close");
+    const volume = numeric(validRows[i], "volume");
+    if (volume == null || currentClose == null || previousClose == null) continue;
+    if (currentClose > previousClose) obv += volume;
+    else if (currentClose < previousClose) obv -= volume;
+  }
+  return { closes, latestClose: last(closes), previousClose: closes.length > 1 ? closes[closes.length - 2] : null,
+    sma20, sma50, ema12, ema26, rsi14: rsiWilder(closes), macd, macdSignal, macdHistogram,
+    bollingerUpper, bollingerMiddle, bollingerLower, vwap, atr14, stochasticK, obv };
+}
+
 // MARKETS WORKSPACE — existing read-only m.Stock/AWS APIs
 // ============================================================
 function MarketsPage() {
@@ -2622,7 +2716,7 @@ function MarketsPage() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Historical data returned ${response.status}`);
       const rows = Array.isArray(data?.data) ? data.data : [];
-      const validRows = rows.map((row) => ({ ...row, close: Number(row.close) })).filter((row) => Number.isFinite(row.close) && row.close > 0);
+      const validRows = rows.map((row) => ({ ...row, open: Number(row.open), high: Number(row.high), low: Number(row.low), close: Number(row.close), volume: Number(row.volume) })).filter((row) => Number.isFinite(row.close) && row.close > 0);
       setChartData(validRows); setChartInfo(data?.chart || null);
       if (!validRows.length) setChartError("The historical-data API responded, but no usable daily prices were returned for this period.");
     } catch (e) {
@@ -2834,21 +2928,14 @@ function MarketsPage() {
 
     {/* Stock research tabs appear only after an instrument is selected. */}
     {selectedInstrument && (() => {
-      const closes = chartData.map((row) => Number(row.close)).filter((value) => Number.isFinite(value) && value > 0);
-      const latestClose = closes.length ? closes[closes.length - 1] : null;
-      const previousClose = closes.length > 1 ? closes[closes.length - 2] : null;
-      const sma20 = closes.length >= 20 ? closes.slice(-20).reduce((sum, value) => sum + value, 0) / 20 : null;
-      const changes = closes.slice(1).map((value, index) => value - closes[index]);
-      const recentChanges = changes.slice(-14);
-      const gains = recentChanges.reduce((sum, value) => sum + Math.max(value, 0), 0);
-      const losses = recentChanges.reduce((sum, value) => sum + Math.max(-value, 0), 0);
-      const rsi = recentChanges.length === 14 ? (losses === 0 ? 100 : 100 - (100 / (1 + (gains / 14) / (losses / 14)))) : null;
+      const indicators = calculateTechnicalIndicators(chartData);
+      const { closes, latestClose, previousClose, sma20, sma50, ema12, ema26, rsi14, macd, macdSignal, macdHistogram, bollingerUpper, bollingerMiddle, bollingerLower, vwap, atr14, stochasticK, obv } = indicators;
       const periodChange = closes.length > 1 ? closes[closes.length - 1] - closes[0] : null;
       const periodChangePct = closes.length > 1 && closes[0] ? (periodChange / closes[0]) * 100 : null;
-      const technicalSignal = sma20 == null || rsi == null || latestClose == null
+      const technicalSignal = latestClose == null || sma20 == null || rsi14 == null
         ? "Insufficient historical data"
-        : latestClose > sma20 && rsi >= 50 ? "Positive momentum"
-        : latestClose < sma20 && rsi < 50 ? "Negative momentum" : "Mixed / neutral";
+        : latestClose > sma20 && rsi14 >= 50 && (macdHistogram == null || macdHistogram >= 0) ? "Positive momentum"
+        : latestClose < sma20 && rsi14 < 50 && (macdHistogram == null || macdHistogram <= 0) ? "Negative momentum" : "Mixed / neutral";
       const tabButton = (id, label) => <button key={id} type="button" role="tab" onClick={() => setResearchTab(id)} aria-selected={researchTab === id} aria-controls="instrument-research-tabpanel" className={`instrument-research-tab${researchTab === id ? " is-active" : ""}`}>{label}</button>;
       const metricExplanations = {
         "Latest Traded Price (LTP)": "The most recent traded price reported by the quote provider. It may be delayed depending on the data subscription.",
@@ -2939,10 +3026,23 @@ function MarketsPage() {
           </>}
           {researchTab === "technical" && <>
             <h4 style={{ margin: "0 0 6px" }}>Technical Analysis</h4>
-            <p style={muted}>Indicators below are calculated only from the historical closing prices currently loaded.</p>
+            <p style={muted}>Indicators are calculated from the loaded historical OHLCV candles. A metric shows “Insufficient data” when its required lookback or source fields are missing; VWAP uses the loaded period's volume-weighted typical price.</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
-              {metric("20-day Average Price", sma20 != null ? money(sma20) : "Insufficient data", "Average of the last 20 available closes")}
-              {metric("RSI (14)", rsi != null ? rsi.toFixed(2) : "Insufficient data", "Simple 14-period gain/loss calculation")}
+              {metric("SMA (20)", sma20 != null ? money(sma20) : "Insufficient data", "20-candle simple moving average")}
+              {metric("SMA (50)", sma50 != null ? money(sma50) : "Insufficient data", "50-candle simple moving average")}
+              {metric("EMA (12)", ema12 != null ? money(ema12) : "Insufficient data", "12-candle exponential moving average")}
+              {metric("EMA (26)", ema26 != null ? money(ema26) : "Insufficient data", "26-candle exponential moving average")}
+              {metric("RSI (14)", rsi14 != null ? rsi14.toFixed(2) : "Insufficient data", "Wilder's smoothed Relative Strength Index (0–100)")}
+              {metric("MACD (12,26)", macd != null ? macd.toFixed(4) : "Insufficient data", "EMA 12 minus EMA 26")}
+              {metric("MACD Signal (9)", macdSignal != null ? macdSignal.toFixed(4) : "Insufficient data", "9-period EMA of MACD")}
+              {metric("MACD Histogram", macdHistogram != null ? macdHistogram.toFixed(4) : "Insufficient data", "MACD minus signal line")}
+              {metric("VWAP", vwap != null ? money(vwap) : "Volume data unavailable", "Volume-weighted average typical price for loaded candles")}
+              {metric("Bollinger Upper (20,2)", bollingerUpper != null ? money(bollingerUpper) : "Insufficient data", "20-period mean plus 2 population standard deviations")}
+              {metric("Bollinger Middle (20)", bollingerMiddle != null ? money(bollingerMiddle) : "Insufficient data", "20-period simple moving average")}
+              {metric("Bollinger Lower (20,2)", bollingerLower != null ? money(bollingerLower) : "Insufficient data", "20-period mean minus 2 population standard deviations")}
+              {metric("ATR (14)", atr14 != null ? money(atr14) : "Insufficient OHLC data", "Average of the latest 14 true ranges")}
+              {metric("Stochastic %K (14)", stochasticK != null ? stochasticK.toFixed(2) : "Insufficient OHLC data", "Close position within the latest 14-candle range")}
+              {metric("On-Balance Volume", closes.length > 1 && chartData.some((row) => Number.isFinite(Number(row.volume))) ? new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(obv) : "Volume data unavailable", "Cumulative volume signed by candle-to-candle close direction")}
               {metric("Last Price in Chart", latestClose != null ? money(latestClose) : "Unavailable", "Last close in the selected chart period")}
               {metric("Period Return", periodChangePct != null ? `${periodChangePct >= 0 ? "+" : ""}${periodChangePct.toFixed(2)}%` : "Unavailable", `Price change across selected ${chartRange} period`)}
             </div>

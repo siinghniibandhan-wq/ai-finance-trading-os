@@ -42,9 +42,23 @@ def _submission_matches_trade(submission, trade):
 
 
 def _trade_rows(response):
-    status = str(response.get("status", "")).strip().lower() if isinstance(response, dict) else ""
-    if not isinstance(response, dict) or status in {"error", "failed", "failure"}:
+    if not isinstance(response, dict):
         raise HTTPException(status_code=502, detail="Gateway returned a trade-book error; no fills were imported.")
+
+    # m.Stock errors can arrive inside an HTTP-200 envelope. Inspect only known
+    # response-wrapper objects, not individual trade rows (which may have their
+    # own execution status such as Complete, Rejected, or Pending).
+    wrappers = [response]
+    for parent in wrappers:
+        for key in ("data", "result", "response", "payload"):
+            nested = parent.get(key)
+            if isinstance(nested, dict):
+                wrappers.append(nested)
+    for envelope in wrappers:
+        status = str(envelope.get("status", "")).strip().lower()
+        if status in {"error", "failed", "failure"}:
+            raise HTTPException(status_code=502, detail="Gateway returned a trade-book error; no fills were imported.")
+
     for key in ("tradebook", "trades", "data", "items"):
         value = response.get(key)
         if isinstance(value, list) and all(isinstance(row, dict) for row in value):

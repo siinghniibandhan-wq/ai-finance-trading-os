@@ -122,6 +122,8 @@ def _enrich_trade_rows(rows, order_rows):
             continue
         original_request = requests_by_client.get(client_id, {})
         by_exchange_order_id[exch_id] = {
+            # Keep placement/order-book ID distinct from exchange order number.
+            "broker_order_id": order_id or by_logged_id.get(exch_id),
             "client_reference": client_id,
             "exchange": _book_value(order, "exchange", "EXCHANGE") or _book_value(original_request, "exchange"),
             "symbol": _book_value(order, "tradingsymbol", "symbol", "SYMBOL") or _book_value(original_request, "tradingsymbol"),
@@ -138,6 +140,7 @@ def _enrich_trade_rows(rows, order_rows):
             continue
         item = dict(row)
         item["exchange_order_id"] = exch_id
+        item["broker_order_id"] = matched["broker_order_id"]
         item["client_reference"] = matched["client_reference"]
         # Prefer the tradebook's SYMBOL code. /trades tradingsymbol may be a company name.
         item["symbol"] = _book_value(row, "SYMBOL", "symbol") or matched["symbol"]
@@ -220,6 +223,6 @@ def read_tradehistory():
 
 ## Application caveats
 - The uploaded gateway source confirms the logger writes `place_request` with `client_id` and submitted `exchange`, then `place_response` with the same `client_id` and broker response body. The log filename is the existing `ORDER_LOG` constant; this patch reads that constant rather than assuming a filename.
-- The mapping code joins the broker order-book row to a logged placement response by exact broker order ID, then enriches tradebook rows by exact exchange-order ID. It does not infer ownership from symbol, price, quantity, tag, or timestamp.
+- The mapping code joins the broker order-book row to a logged placement response by exact broker order ID, then enriches tradebook rows by exact exchange-order ID. It returns both `broker_order_id` (the placement/order-book ID) and `exchange_order_id` (the exchange's order number) as separate fields; the backend matches the stored placement ID only against `broker_order_id`. It does not infer ownership from symbol, price, quantity, tag, or timestamp.
 - The uploaded excerpts establish the logging format, but they do **not** include a real successful broker response payload or live orderbook/tradebook sample. Confirm the actual response contains a joinable order ID and that the live tradebook includes `EXCH_ORDER_NUMBER` and `TRADE_NUMBER` before enabling imports. Unmatched rows are skipped.
 - The endpoint paths are documented by m.Stock Type A API docs, but the patch has not been applied to AWS and must not be deployed without separate review.

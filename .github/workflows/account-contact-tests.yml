@@ -6,6 +6,7 @@ on:
       - "backend/app/routes/auth.py"
       - "backend/app/routes/profile.py"
       - "backend/app/models.py"
+      - "backend/app/main.py"
       - "backend/tests/test_auth_session_revocation.py"
       - "backend/migrations/*user_phone_number.sql"
       - ".github/workflows/account-contact-tests.yml"

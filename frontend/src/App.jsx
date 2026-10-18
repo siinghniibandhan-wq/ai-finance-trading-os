@@ -567,7 +567,7 @@ export default function App() {
  ) : activePage === "Investment Transactions" ? (
    <InvestmentTransactions />
 ) : activePage === "Markets" ? (
-   <MarketsPage />
+   <MarketsPage onNavigate={handleNavigation} />
 ) : activePage === "Playground" ? (
    <PlaygroundPage />
 ) : activePage === "Tax" ? (
@@ -2378,7 +2378,7 @@ function TaxPage() {
 // ============================================================
 // MARKETS WORKSPACE — existing read-only m.Stock/AWS APIs
 // ============================================================
-function MarketsPage() {
+function MarketsPage({ onNavigate }) {
   const API = "https://wealthmanager.duckdns.org";
   const [overview, setOverview] = useState(null);
   const [busy, setBusy] = useState(true);
@@ -2744,7 +2744,7 @@ function MarketsPage() {
       {searchError && <p role="status" style={{ color: "var(--finos-negative)", fontSize: "12px", marginTop: "12px" }}>{searchError}</p>}
       {searchWarning && <p role="status" style={{ color: "var(--finos-warning)", fontSize: "12px", marginTop: "8px" }}>Data freshness warning: {searchWarning}</p>}
       {results.length > 0 && <p style={{ ...muted, margin: "12px 0 4px" }}>{results.length} matching instruments · Select a result to open its quote and chart.</p>}
-      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.4)", boxShadow: "0 6px 18px rgba(16,185,129,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("BUY"); }}>BUY</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #b91c1c, #ef4444)", border: "1px solid rgba(248,113,113,0.4)", boxShadow: "0 6px 18px rgba(239,68,68,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("SELL"); }}>SELL</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
+      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="secondary-button" onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "ADD", symbol: selectedInstrument.symbol, name: selectedInstrument.name || selectedInstrument.symbol, exchange: selectedInstrument.exchange || "NSE", product_type: "Stocks" })); } catch {} onNavigate?.("Portfolio"); }} style={{ minWidth: "100px" }}>Add Instrument</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.4)", boxShadow: "0 6px 18px rgba(16,185,129,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("BUY"); }}>BUY</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #b91c1c, #ef4444)", border: "1px solid rgba(248,113,113,0.4)", boxShadow: "0 6px 18px rgba(239,68,68,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("SELL"); }}>SELL</button><button type="button" className="secondary-button" onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "EDIT", symbol: selectedInstrument.symbol, name: selectedInstrument.name || selectedInstrument.symbol, exchange: selectedInstrument.exchange || "NSE" })); } catch {} onNavigate?.("Portfolio"); }}>EDIT</button><button type="button" className="secondary-button" onClick={() => { try { sessionStorage.setItem("financialOS.portfolioAction", JSON.stringify({ type: "HISTORY", symbol: selectedInstrument.symbol, name: selectedInstrument.name || selectedInstrument.symbol, exchange: selectedInstrument.exchange || "NSE" })); } catch {} onNavigate?.("Portfolio"); }}>HISTORY</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
       {orderModalSide && selectedInstrument && <div className="broker-order-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !orderSubmitting) setOrderModalSide(""); }}>
         <form onSubmit={async (event) => {
           event.preventDefault();
@@ -6137,7 +6137,7 @@ useEffect(() => {
     // Keep the pending action until investments have finished loading.
     // If the instrument is not held yet, BUY starts the existing investment-entry
     // form (which creates the investment and its initial BUY ledger row exactly once).
-    if (intent.type === "BUY" && !loadingInvestments) {
+    if ((intent.type === "BUY" || intent.type === "ADD") && !loadingInvestments) {
       try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {}
       resetInvestmentForm();
       setInvestmentForm((previous) => ({
@@ -6162,8 +6162,10 @@ useEffect(() => {
   try { sessionStorage.removeItem("financialOS.portfolioAction"); } catch {}
   if (intent.type === "EDIT") {
     handleEditInvestment(matched);
-  } else {
-    openInvestmentTransaction(matched, intent.type === "SELL" ? "SELL" : "BUY");
+  } else if (intent.type === "HISTORY") {
+    openInvestmentTransactions(matched);
+  } else if (intent.type === "BUY" || intent.type === "SELL") {
+    openInvestmentTransaction(matched, intent.type);
   }
 }, [investments, loadingInvestments, investmentsLoadError]);
 

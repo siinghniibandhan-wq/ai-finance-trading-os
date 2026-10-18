@@ -100,6 +100,7 @@ def test_normalizes_documented_mstock_tradebook_sample():
     row = {
         "TRADE_NUMBER": "206465040",
         "EXCH_ORDER_NUMBER": "1100000048872942",
+        "broker_order_id": "1100000048872000",
         "client_reference": "financial-os-7-abc123",
         "SYMBOL": "IDEA",
         "FULL_SYMBOL": "VODAFONE IDEA LIMITED",
@@ -135,6 +136,7 @@ def test_reconciliation_defaults_to_dry_run_without_database_writes(monkeypatch)
             "data": [{
                 "TRADE_NUMBER": "T-DRY-1",
                 "EXCH_ORDER_NUMBER": "EX-DRY-1",
+                "broker_order_id": "BROKER-DRY-1",
                 "client_reference": "financial-os-7-test",
                 "SYMBOL": "RELIANCE",
                 "BUY_SELL": "B",
@@ -156,3 +158,23 @@ def test_reconciliation_defaults_to_dry_run_without_database_writes(monkeypatch)
     assert result["imported_count"] == 0
     assert result["preview_count"] == 1
     assert result["preview"][0]["trade_id"] == "T-DRY-1"
+
+
+
+def test_normalizer_keeps_broker_order_id_separate_from_exchange_order_id():
+    row = {
+        "TRADE_NUMBER": "T-ID-DISTINCT",
+        "EXCH_ORDER_NUMBER": "EXCHANGE-123",
+        "broker_order_id": "BROKER-456",
+        "client_reference": "financial-os-7-abc123",
+        "SYMBOL": "RELIANCE",
+        "BUY_SELL": "B",
+        "QUANTITY": "1",
+        "PRICE": "100",
+        "ORDER_DATE_TIME": "2026-10-17 10:15:00",
+        "EXCHANGE": "NSE",
+    }
+    normalized = _normalize_trade(row)
+    assert normalized is not None
+    assert normalized["exchange_order_id"] == "EXCHANGE-123"
+    assert normalized["broker_order_id"] == "BROKER-456"

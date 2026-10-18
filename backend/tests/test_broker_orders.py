@@ -474,3 +474,29 @@ def test_http_200_error_envelope_is_not_accepted_even_with_order_id(
     ).one()
     assert reservation.status == "REJECTED"
     assert reservation.gateway_order_id is None
+
+
+@pytest.mark.parametrize(
+    "gateway_result",
+    [
+        {"success": True, "order_id": "ORD-FALSE-ERROR", "error": False, "error_code": 0},
+        {"status": "accepted", "order_id": "ORD-NULL-ERROR", "error": None, "errorCode": "0"},
+    ],
+)
+def test_false_or_empty_gateway_error_fields_do_not_override_positive_ack(
+    monkeypatch, gateway_result, db_session
+):
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request", lambda *args, **kwargs: gateway_result
+    )
+    user = SimpleNamespace(id=86)
+    result = broker_orders.place_broker_order(
+        request_payload(f"false-error-flag-{gateway_result['order_id']}"),
+        db=db_session,
+        current_user=user,
+    )
+    assert result["order_id"] == gateway_result["order_id"]
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=user.id, client_id=f"false-error-flag-{gateway_result['order_id']}"
+    ).one()
+    assert reservation.status == "ACKNOWLEDGED"

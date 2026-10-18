@@ -233,3 +233,20 @@ def test_reconciliation_requires_exact_mapping_flag_value_one(monkeypatch, flag_
     assert result["mapping_verified"] is False
     assert result["imported_count"] == 0
 
+@pytest.mark.parametrize("field", ["broker_order_id", "client_reference"])
+def test_rejects_blank_normalized_order_references(field):
+    row = {
+        "TRADE_NUMBER": "T-BLANK-REF",
+        "EXCH_ORDER_NUMBER": "EX-BLANK-REF",
+        "broker_order_id": "BROKER-BLANK-REF",
+        "client_reference": "financial-os-7-abc123",
+        "SYMBOL": "RELIANCE",
+        "BUY_SELL": "B",
+        "QUANTITY": "1",
+        "PRICE": "100",
+        "ORDER_DATE_TIME": "2026-10-17 10:15:00",
+        "EXCHANGE": "NSE",
+    }
+    row[field] = "   "
+    assert _normalize_trade(row) is None
+

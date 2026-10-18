@@ -319,7 +319,7 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
                 CREATE OR REPLACE FUNCTION fail_mock_reconciliation_insert()
                 RETURNS trigger LANGUAGE plpgsql AS $func$
                 BEGIN
-                    IF NEW.notes LIKE '%MOCK-ROLLBACK-TRADE%' THEN
+                    IF NEW.notes LIKE '%%MOCK-ROLLBACK-TRADE%%' THEN
                         RAISE EXCEPTION 'simulated ledger write failure';
                     END IF;
                     RETURN NEW;

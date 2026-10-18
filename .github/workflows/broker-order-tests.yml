@@ -72,8 +72,8 @@ jobs:
           Base.metadata.create_all(engine)
           engine.dispose()
           PY
-          psql "$BROKER_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/20261018_add_broker_submission_investment_id.sql
-          psql "$BROKER_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/20261018_create_broker_reconciled_fills.sql
+          psql "postgresql://test:test@localhost:5432/testdb" -v ON_ERROR_STOP=1 -f migrations/20261018_add_broker_submission_investment_id.sql
+          psql "postgresql://test:test@localhost:5432/testdb" -v ON_ERROR_STOP=1 -f migrations/20261018_create_broker_reconciled_fills.sql
       - name: Run broker order and reconciliation tests with PostgreSQL migration coverage
         env:
           PYTHONPATH: .

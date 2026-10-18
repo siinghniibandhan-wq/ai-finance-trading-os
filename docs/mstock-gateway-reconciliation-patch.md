@@ -116,7 +116,7 @@ def _local_order_references():
     return by_order_id, requests_by_client
 
 
-def _enrich_trade_rows(rows, order_rows):
+def _enrich_trade_rows(rows, order_rows, trade_history=False):
     by_logged_id, requests_by_client = _local_order_references()
     by_exchange_order_id = {}
     for order in order_rows:
@@ -173,9 +173,8 @@ def _enrich_trade_rows(rows, order_rows):
         item["exchange_order_id"] = exch_id
         item["broker_order_id"] = matched["broker_order_id"]
         item["client_reference"] = matched["client_reference"]
-        # Prefer the tradebook's SYMBOL code. /trades tradingsymbol may be a company name.
-        # /trades documents tradingsymbol as a display name in some rows;
-        # only use the trade-book SYMBOL code, otherwise use the logged order symbol.
+        # /trades tradingsymbol may be a display name; use the trade-book
+        # SYMBOL code or the original locally submitted symbol instead.
         item["symbol"] = _book_value(row, "SYMBOL") or matched["symbol"]
         item["exchange"] = _book_value(row, "EXCHANGE", "exchange") or matched["exchange"]
         item["trade_id"] = _book_value(row, "TRADE_NUMBER", "trade_id", "tradeid", "fill_id")
@@ -203,7 +202,7 @@ def _read_trade_rows(url, keys, form_data=None, trade_history=False):
         order_rows = _list_from_book(order_body, ("orders", "orderbook", "order_book", "data"))
         if order_rows is None:
             return jsonify({"status": "error", "message": "Unsupported m.Stock order-book response shape"}), 502
-        return jsonify({"status": "success", "data": _enrich_trade_rows(rows, order_rows)})
+        return jsonify({"status": "success", "data": _enrich_trade_rows(rows, order_rows, trade_history=trade_history)})
     except PermissionError:
         return jsonify({"status": "error", "message": "m.Stock access token expired or invalid",
                         "code": "AUTH_REQUIRED"}), 401

@@ -64,8 +64,19 @@ def _parse_trade_date(value):
     raw = str(value or "").strip()
     if not raw:
         raise ValueError("missing trade date")
-    for fmt in (None, "%d-%m-%Y %H:%M:%S", "%d/%m/%Y %H:%M:%S",
-                "%Y-%m-%d %H:%M:%S", "%d-%m-%Y", "%d/%m/%Y", "%d-%b-%Y"):
+    for fmt in (
+        None,
+        "%d-%m-%Y %H:%M:%S",
+        "%d/%m/%Y %H:%M:%S",
+        "%Y-%m-%d %H:%M:%S",
+        "%d-%m-%Y %I:%M:%S %p",
+        "%d/%m/%Y %I:%M:%S %p",
+        "%d-%m-%Y %I:%M %p",
+        "%d/%m/%Y %I:%M %p",
+        "%d-%m-%Y",
+        "%d/%m/%Y",
+        "%d-%b-%Y",
+    ):
         try:
             if fmt is None:
                 return date.fromisoformat(raw[:10])
@@ -92,7 +103,14 @@ def _normalize_trade(row):
     side = row.get("side") or row.get("BUY_SELL") or row.get("transaction_type")
     quantity = row.get("quantity") or row.get("QUANTITY") or row.get("traded_quantity")
     price = row.get("price") or row.get("PRICE") or row.get("trade_price") or row.get("average_price")
-    trade_date = row.get("trade_date") or row.get("TRADE_DATE") or row.get("ORDER_DATE_TIME") or row.get("date")
+    trade_date = (
+        row.get("trade_date")
+        or row.get("TRADE_DATE")
+        or row.get("ORDER_DATE_TIME")
+        or row.get("order_timestamp")
+        or row.get("exchange_timestamp")
+        or row.get("date")
+    )
     exchange = row.get("exchange") or row.get("EXCHANGE")
     if not all((trade_id, exchange_order_id, broker_order_id, client_reference, symbol, side, quantity, price, trade_date)):
         return None

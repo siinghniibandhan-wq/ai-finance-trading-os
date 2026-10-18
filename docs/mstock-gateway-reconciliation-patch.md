@@ -219,7 +219,7 @@ def read_tradehistory():
 ```
 
 ## Application caveats
-- The existing shared-secret check is reused; trading-enabled is not required for read-only endpoints.
-- Client attribution requires an exact `exchange_order_id` match and a corresponding order response recorded in `orders.log.jsonl`. If m.Stock omits these IDs, rows are deliberately omitted rather than guessed.
-- Validate the upstream endpoint paths and response field names against the account's actual m.Stock API before applying.
-- This patch has not been applied to AWS and must not be deployed without separate review.
+- The uploaded gateway source confirms the logger writes `place_request` with `client_id` and submitted `exchange`, then `place_response` with the same `client_id` and broker response body. The log filename is the existing `ORDER_LOG` constant; this patch reads that constant rather than assuming a filename.
+- The mapping code joins the broker order-book row to a logged placement response by exact broker order ID, then enriches tradebook rows by exact exchange-order ID. It does not infer ownership from symbol, price, quantity, tag, or timestamp.
+- The uploaded excerpts establish the logging format, but they do **not** include a real successful broker response payload or live orderbook/tradebook sample. Confirm the actual response contains a joinable order ID and that the live tradebook includes `EXCH_ORDER_NUMBER` and `TRADE_NUMBER` before enabling imports. Unmatched rows are skipped.
+- The endpoint paths are documented by m.Stock Type A API docs, but the patch has not been applied to AWS and must not be deployed without separate review.

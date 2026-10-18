@@ -37,8 +37,12 @@ def read_only_precheck():
     return None
 
 
-def _mstock_get_json(url, params=None):
-    response = requests.get(url, headers=order_headers(), params=params, timeout=20)
+def _mstock_get_json(url, form_data=None):
+    headers = order_headers()
+    # Type A /trades documents a URL-encoded GET body, not query parameters.
+    if form_data is not None:
+        headers["Content-Type"] = "application/x-www-form-urlencoded"
+    response = requests.get(url, headers=headers, data=form_data, timeout=20)
     try:
         body = response.json()
     except ValueError as exc:
@@ -104,8 +108,11 @@ def _local_order_references():
                         order_id = _book_value(body, key) or _book_value(nested, key)
                         if order_id:
                             by_order_id[order_id] = client_id
-    except OSError:
-        pass
+    except OSError as exc:
+        # An unreadable log must not look like a valid empty order mapping.
+        raise RuntimeError(
+            "Gateway order log is unreadable; broker ownership cannot be verified"
+        ) from exc
     return by_order_id, requests_by_client
 
 
@@ -158,7 +165,12 @@ def _enrich_trade_rows(rows, order_rows):
         item["side"] = _book_value(row, "BUY_SELL", "side", "transaction_type")
         item["quantity"] = _book_value(row, "QUANTITY", "quantity", "traded_quantity")
         item["price"] = _book_value(row, "PRICE", "price", "trade_price", "average_price")
-        item["trade_date"] = _book_value(row, "TRADE_DATE", "ORDER_DATE_TIME", "trade_date", "date")
+        # Type A /trades documents order_timestamp/exchange_timestamp;
+        # /tradebook documents ORDER_DATE_TIME.
+        item["trade_date"] = _book_value(
+            row, "TRADE_DATE", "ORDER_DATE_TIME", "trade_date", "order_timestamp",
+            "exchange_timestamp", "date"
+        )
         if item["trade_id"]:
             enriched.append(item)
     return enriched
@@ -229,8 +241,11 @@ def read_tradehistory():
         time.strptime(to_date, "%Y-%m-%d")
     except ValueError:
         return jsonify({"status": "error", "message": "fromdate and todate must use YYYY-MM-DD"}), 400
-    return _read_trade_rows(MSTOCK_TRADE_HISTORY_URL, ("trades", "tradehistory", "items", "data"),
-                            {"fromdate": from_date, "todate": to_date})
+    return _read_trade_rows(
+        MSTOCK_TRADE_HISTORY_URL,
+        ("trades", "tradehistory", "items", "data"),
+        {"fromdate": from_date, "todate": to_date},
+    )
 ```
 
 ## Application caveats

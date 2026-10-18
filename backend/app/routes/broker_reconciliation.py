@@ -235,7 +235,7 @@ def reconcile_broker_fills(
                 # The gateway's client_reference is not trusted on its own:
                 # verify it belongs to this user in the backend's durable order table.
                 submission = db.execute(text("""
-                    SELECT id, investment_id, gateway_order_id, symbol, exchange, side, quantity
+                    SELECT id, investment_id, gateway_order_id, symbol, exchange, side, quantity, status
                     FROM broker_order_submissions
                     WHERE user_id = :user_id AND client_id = :client_reference
                     FOR UPDATE

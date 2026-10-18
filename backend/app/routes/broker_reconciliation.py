@@ -191,7 +191,7 @@ def reconcile_broker_fills(
                 }).first()
                 if marker is None:
                     duplicates.append(trade["trade_id"])
-                    raise _SkipFill()
+                    raise _SkipFill("duplicate")
 
                 # The gateway's client_reference is not trusted on its own:
                 # verify it belongs to this user in the backend's durable order table.

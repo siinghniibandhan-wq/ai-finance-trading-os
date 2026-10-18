@@ -271,7 +271,7 @@ def reconcile_broker_fills(
                     SET quantity = :quantity, updated_at = CURRENT_TIMESTAMP
                     WHERE id = :investment_id AND user_id = :user_id
                 """), {
-                    "quantity": new_quantity, "price": trade["price"],
+                    "quantity": new_quantity,
                     "investment_id": investment.id, "user_id": user_id,
                 })
                 db.execute(text("""

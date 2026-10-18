@@ -261,7 +261,7 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
                 raise HTTPException(status_code=409, detail="This client_id was already used for a different order.") from exc
             raise HTTPException(
                 status_code=409,
-                detail=f"Duplicate order blocked. Existing request status: {existing.status}. Check the broker order book before taking further action.",
+                detail=f"Duplicate order blocked. Existing request status: {existing.status}. Verify order status directly with the broker before taking further action.",
             ) from exc
         raise HTTPException(status_code=503, detail="Unable to verify order idempotency state; order was not submitted.") from exc
     except SQLAlchemyError as exc:
@@ -271,6 +271,17 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
 
     try:
         result = _gateway_request(GATEWAY_ORDER_PLACE_PATH, "POST", payload)
+    except HTTPException as exc:
+        # Explicit HTTP 4xx responses are definite gateway rejections. Keep
+        # timeouts and 5xx responses SUBMITTING because acceptance is ambiguous.
+        if 400 <= exc.status_code < 500:
+            reservation.status = "REJECTED"
+            reservation.response_json = json.dumps(
+                {"http_status": exc.status_code, "detail": exc.detail},
+                default=str,
+            )
+            db.commit()
+        raise
     except Exception:
         # A timeout may occur after broker acceptance. Keep the durable
         # SUBMITTING reservation and require reconciliation; never retry blindly.
@@ -339,10 +350,14 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         )
     )
     if not order_id or not positive_ack:
+        # Preserve acknowledgement evidence. Do not mark this rejected: the
+        # broker may have accepted the order despite an incomplete response.
+        reservation.response_json = json.dumps(result, default=str)
+        db.commit()
         logger.warning("m.Stock gateway returned an ambiguous placement response for user %s", current_user.id)
         raise HTTPException(
             status_code=502,
-            detail="The gateway response did not confirm acceptance with a broker order ID. Check the broker order book before retrying.",
+            detail="The gateway response did not confirm acceptance with a broker order ID. Do not resubmit until order status is verified directly with the broker.",
         )
 
     reservation.status = "ACKNOWLEDGED"

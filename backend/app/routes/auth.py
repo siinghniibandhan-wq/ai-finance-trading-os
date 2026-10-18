@@ -268,8 +268,9 @@ def update_contact(
         "user": {"id": user.id, "name": user.name, "email": user.email, "phone_number": user.phone_number, "currency": user.currency},
     }
     admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
-    if request.email is not None and admin_email and admin_email == old_email and user.email != old_email:
-        result["admin_notice"] = "Your email no longer matches ADMIN_EMAIL on the server. Update ADMIN_EMAIL to the new address and restart the backend, or admin-only features including live trading will be blocked."
+    admin_user_id = os.getenv("ADMIN_USER_ID", "").strip()
+    if not admin_user_id and request.email is not None and admin_email and admin_email == old_email and user.email != old_email:
+        result["admin_notice"] = "Your email no longer matches ADMIN_EMAIL on the server. Update ADMIN_EMAIL to the new address and restart the backend, or configure ADMIN_USER_ID to this account's database user ID to keep admin access stable."
     return result
 
 
@@ -318,11 +319,28 @@ def logout(
 # ============================================================
 
 def get_current_admin(user: User = Depends(get_current_user)) -> User:
+    # Prefer a stable database user ID when configured. Email-based admin
+    # checks otherwise break as soon as the administrator changes their login email.
+    admin_user_id = os.getenv("ADMIN_USER_ID", "").strip()
+    if admin_user_id:
+        try:
+            configured_user_id = int(admin_user_id)
+            if configured_user_id <= 0:
+                raise ValueError("ADMIN_USER_ID must be positive")
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="ADMIN_USER_ID must be a positive database user ID.",
+            ) from exc
+        if user.id != configured_user_id:
+            raise HTTPException(status_code=403, detail="Administrator access required.")
+        return user
+
     admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
     if not admin_email:
         raise HTTPException(
             status_code=503,
-            detail="Admin access is not configured. Set ADMIN_EMAIL on the backend.",
+            detail="Admin access is not configured. Set ADMIN_USER_ID or ADMIN_EMAIL on the backend.",
         )
     if (user.email or "").strip().lower() != admin_email:
         raise HTTPException(status_code=403, detail="Administrator access required.")

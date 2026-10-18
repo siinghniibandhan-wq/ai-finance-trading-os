@@ -256,6 +256,54 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
             """), {"uid": user_id, "iid": investment_id}).scalar_one()
             assert Decimal(str(quantity)) == Decimal("5.000000")
             assert ledger_count == 2
+
+        # A mocked SELL exceeding the available ledger must be skipped safely.
+        sell_client_id = f"pg-reconcile-sell-{uuid4().hex}"
+        with SessionFactory() as setup:
+            setup.add(models.BrokerOrderSubmission(
+                user_id=user_id, investment_id=investment_id, symbol="RELIANCE-EQ",
+                exchange="NSE", side="SELL", quantity=6, client_id=sell_client_id,
+                payload_hash="b" * 64, status="ACKNOWLEDGED",
+                gateway_order_id="MOCK-BROKER-SELL-1",
+            ))
+            setup.commit()
+        sell_row = {
+            "TRADE_NUMBER": "MOCK-SELL-TRADE-1",
+            "EXCH_ORDER_NUMBER": "MOCK-SELL-EXCHANGE-ORDER-1",
+            "broker_order_id": "MOCK-BROKER-SELL-1",
+            "client_reference": sell_client_id,
+            "SYMBOL": "RELIANCE-EQ",
+            "BUY_SELL": "SELL",
+            "QUANTITY": "6",
+            "PRICE": "102.00",
+            "ORDER_DATE_TIME": "2026-10-17 10:02:00",
+            "EXCHANGE": "NSE",
+        }
+        monkeypatch.setattr(
+            broker_reconciliation, "_gateway_request",
+            lambda path, method: {"success": True, "data": [sell_row]},
+        )
+        with SessionFactory() as session:
+            sell_result = broker_reconciliation.reconcile_broker_fills(
+                db=session, current_user=SimpleNamespace(id=user_id)
+            )
+            assert sell_result["imported_count"] == 0
+            assert sell_result["skipped_count"] == 1
+        with SessionFactory() as verify:
+            quantity = verify.execute(text(
+                "SELECT quantity FROM investments WHERE id=:id AND user_id=:uid"
+            ), {"id": investment_id, "uid": user_id}).scalar_one()
+            ledger_count = verify.execute(text("""
+                SELECT COUNT(*) FROM investment_transactions
+                WHERE user_id=:uid AND investment_id=:iid
+            """), {"uid": user_id, "iid": investment_id}).scalar_one()
+            marker_count = verify.execute(text("""
+                SELECT COUNT(*) FROM broker_reconciled_fills
+                WHERE user_id=:uid AND broker_trade_id='MOCK-SELL-TRADE-1'
+            """), {"uid": user_id}).scalar_one()
+            assert Decimal(str(quantity)) == Decimal("5.000000")
+            assert ledger_count == 2
+            assert marker_count == 0
     finally:
         # Disposable CI PostgreSQL only. Keep legacy tables out of Base metadata.
         Base.metadata.drop_all(engine)

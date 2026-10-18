@@ -2734,3 +2734,126 @@ input, textarea { color-scheme: light; }
   .account-contact-grid { grid-template-columns: minmax(0, 1fr); }
   .account-contact-form .primary-button { width: 100%; justify-content: center; }
 }
+
+
+/* Authentication screens: theme-token styling, responsive layout, and accessible states. */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  color: var(--finos-text, #f5f5ff);
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--finos-accent, #8b5cf6) 28%, transparent), transparent 42%),
+    var(--finos-page, #080a12);
+  font-family: var(--t-font, Inter, system-ui, sans-serif);
+}
+.auth-card {
+  width: min(100%, 440px);
+  padding: 28px;
+  border: 1px solid var(--finos-border, rgba(255,255,255,.12));
+  border-radius: var(--t-radius, 22px);
+  background: var(--t-card-bg, rgba(16,19,38,.94));
+  color: var(--finos-text, #f5f5ff);
+  box-shadow: var(--t-shadow, 0 24px 80px rgba(0,0,0,.3));
+}
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  color: inherit;
+  text-decoration: none;
+}
+.auth-brand-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--t-radius-sm, 14px);
+  background: linear-gradient(135deg, var(--finos-violet, #8b5cf6), var(--finos-accent, #ec4899), #f97316);
+  color: #fff;
+}
+.auth-brand strong, .auth-brand small { display: block; }
+.auth-brand strong { font-size: 19px; }
+.auth-brand small { margin-top: 3px; color: var(--finos-muted, #aeb5d0); }
+.auth-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--finos-accent, #b9a5ff);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+}
+.auth-card h1 { margin: 12px 0 8px; font-size: 29px; color: var(--finos-text, inherit); }
+.auth-description { margin: 0; color: var(--finos-muted, #aeb5d0); line-height: 1.55; }
+.auth-message {
+  padding: 12px;
+  margin: 16px 0;
+  border: 1px solid var(--finos-border, currentColor);
+  border-radius: var(--t-radius-sm, 10px);
+  overflow-wrap: anywhere;
+}
+.auth-message.is-error { color: var(--finos-danger, #b91c1c); background: var(--finos-danger-soft, rgba(248,113,113,.12)); }
+.auth-message.is-success { color: var(--finos-success, #047857); background: var(--finos-success-soft, rgba(52,211,153,.12)); }
+.auth-form { display: grid; gap: 14px; margin-top: 20px; }
+.auth-form > label { display: grid; gap: 7px; color: var(--finos-text, inherit); font-size: 13px; font-weight: 650; }
+.auth-form input, .auth-form select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--finos-border, #303650);
+  border-radius: var(--t-radius-sm, 10px);
+  padding: 12px 13px;
+  color: var(--finos-text, #f5f5ff);
+  background: var(--t-inner-bg, #0b0e1c);
+  outline-color: var(--finos-accent, #a78bfa);
+  font: inherit;
+}
+.auth-form input::placeholder { color: var(--finos-muted, #8f97b7); opacity: 1; }
+.auth-field-hint { color: var(--finos-muted, #8f97b7); font-weight: 400; }
+.auth-password-field { display: flex; position: relative; min-width: 0; }
+.auth-password-field input { padding-right: 44px; }
+.auth-password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--finos-muted, #aeb5d0);
+  background: transparent;
+}
+.auth-submit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  margin-top: 6px;
+  padding: 13px 16px;
+  border: var(--t-pri-border, 0);
+  border-radius: var(--t-radius-sm, 12px);
+  color: var(--t-pri-text, #fff);
+  background: var(--t-pri-bg, linear-gradient(100deg,#7c3aed,#db2777,#f97316));
+  font-weight: 750;
+}
+.auth-submit:disabled { cursor: wait; opacity: .7; }
+.auth-switch { margin-top: 22px; text-align: center; color: var(--finos-muted, #aeb5d0); font-size: 14px; }
+.auth-switch button {
+  padding: 2px 0;
+  border: 0;
+  color: var(--finos-accent, #d8b4fe);
+  background: transparent;
+  font-weight: 700;
+}
+.auth-security-note { margin: 20px 0 0; color: var(--finos-muted, #77809f); font-size: 11px; line-height: 1.5; }
+@media (max-width: 480px) {
+  .auth-page { padding: 12px; }
+  .auth-card { padding: 20px; }
+  .auth-card h1 { font-size: 25px; }
+}

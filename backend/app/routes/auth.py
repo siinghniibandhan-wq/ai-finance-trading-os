@@ -360,6 +360,8 @@ def admin_list_users(
 ):
     """List customer accounts for the configured administrator."""
     users = db.query(User).order_by(User.id.asc()).offset(offset).limit(limit).all()
+    admin_user_id = os.getenv("ADMIN_USER_ID", "").strip()
+    admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
     return {
         "items": [
             {
@@ -370,7 +372,7 @@ def admin_list_users(
                 "currency": item.currency,
                 "is_active": item.is_active,
                 "created_at": item.created_at.isoformat() if item.created_at else None,
-                "is_admin": (item.email or "").strip().lower() == (os.getenv("ADMIN_EMAIL", "").strip().lower()),
+                "is_admin": str(item.id) == admin_user_id if admin_user_id else (item.email or "").strip().lower() == admin_email,
             }
             for item in users
         ],

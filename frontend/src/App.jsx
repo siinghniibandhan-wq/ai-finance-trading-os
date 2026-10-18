@@ -3147,10 +3147,6 @@ function AIAssistantPage() {
 function PlaygroundPage() {
   const API = "https://wealthmanager.duckdns.org";
   const [status, setStatus] = useState(null);
-  const [tradingControl, setTradingControl] = useState(null);
-  const [tradingControlBusy, setTradingControlBusy] = useState(false);
-  const [tradingControlError, setTradingControlError] = useState("");
-  const [tradingControlNotice, setTradingControlNotice] = useState("");
   const [tab, setTab] = useState("Market Data");
   const [symbolsText, setSymbolsText] = useState("RELIANCE, TCS, INFY, HDFCBANK");
   const [quotes, setQuotes] = useState([]);
@@ -3166,42 +3162,6 @@ function PlaygroundPage() {
   const [notice, setNotice] = useState("");
   const symbols = () => [...new Set(symbolsText.split(/[\s,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean))].slice(0, 20);
   useEffect(() => { let cancelled=false; apiFetch(`${API}/api/vibe-trading/status`).then(async r=>{const d=await r.json(); if(!r.ok) throw new Error(d.detail||`Status ${r.status}`); return d;}).then(d=>{if(!cancelled)setStatus(d);}).catch(e=>{if(!cancelled)setError(`API status unavailable: ${e.message}`);}); return ()=>{cancelled=true;}; }, []);
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch(`${API}/api/broker-orders/trading-control`, { cache: "no-store" })
-      .then(async response => {
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.detail || `Trading control unavailable (${response.status})`);
-        return data;
-      })
-      .then(data => { if (!cancelled) setTradingControl(data); })
-      .catch(error => { if (!cancelled) setTradingControlError(error.message || "Unable to read live-trading status."); });
-    return () => { cancelled = true; };
-  }, []);
-
-  const toggleTradingControl = async () => {
-    if (!tradingControl || tradingControlBusy) return;
-    const enabled = !tradingControl.enabled;
-    if (enabled && !window.confirm("Enable new real-money orders through Financial OS? Check every order before submitting.")) return;
-    setTradingControlBusy(true);
-    setTradingControlError("");
-    setTradingControlNotice("");
-    try {
-      const response = await apiFetch(`${API}/api/broker-orders/trading-control`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ enabled }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || `Unable to update trading switch (${response.status})`);
-      setTradingControl(data);
-      setTradingControlNotice(enabled ? "New Financial OS real-money orders are enabled." : "New Financial OS real-money orders are blocked.");
-    } catch (error) {
-      setTradingControlError(error.message || "Unable to update live-trading status.");
-    } finally {
-      setTradingControlBusy(false);
-    }
-  };
   const loadQuotes = async (e) => { if(e)e.preventDefault(); const list=symbols(); if(!list.length){setError("Enter at least one symbol.");return;} setBusy(true);setError("");setNotice("");try{const r=await apiFetch(`${API}/api/vibe-trading/quotes`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({symbols:list})});const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||`Request failed (${r.status})`));setQuotes(Array.isArray(d.quotes)?d.quotes:[]);setUpdatedAt(new Date().toLocaleString());if(!d.quotes?.length)setError("No quote rows were returned.");}catch(e){setError(e.message||"Unable to load quotes.");}finally{setBusy(false);} };
   const runResearch = async (e) => { if(e)e.preventDefault();setBusy(true);setError("");setResearch("");try{const r=await apiFetch(`${API}/api/vibe-trading/research`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({question,symbols:symbols()})});const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||`Research failed (${r.status})`));setResearch(d.answer||"The research service returned no answer.");}catch(e){setError(e.message||"Research request failed.");}finally{setBusy(false);} };
   const panel={background:"rgba(255,255,255,.035)",border:"1px solid rgba(255,255,255,.10)",borderRadius:14,padding:16,minWidth:0};
@@ -3221,7 +3181,7 @@ function PlaygroundPage() {
     {tab==="Paper Trading"&&coming("Paper trading","Simulated orders, positions, fills, and P&L will be isolated from real holdings. No simulation is presented as active until its engine and persistence are implemented.")}
     {tab==="Risk Controls"&&<section style={panel}><h3 style={{marginTop:0}}>Risk controls draft</h3><p style={muted}>Set a draft risk budget. These values are not yet enforced by an execution engine.</p><label style={muted}>Risk per trade (%)<input type="number" min="0.1" max="5" step="0.1" value={riskPercent} onChange={e=>setRiskPercent(Number(e.target.value))} style={input}/></label><button type="button" style={btn} onClick={()=>setNotice(riskPercent>=0.1&&riskPercent<=5?`Draft risk budget: ${riskPercent}% per trade. Not enforced against orders.`:"Choose a risk budget from 0.1% to 5%.")}>Validate risk setting</button>{notice&&<p role="status" style={muted}>{notice}</p>}<ul style={muted}><li>Position-size limits — planned</li><li>Daily loss and drawdown limits — planned</li><li>Order validation and kill switch — required before live execution</li></ul></section>}
     {tab==="Agent Lab"&&coming("Multi-agent research lab","The planned roles are market researcher, news/fundamental analyst, strategy reviewer, and risk critic. Agent orchestration and source citations must be implemented before this panel runs agents.")}
-    {tab==="Execution"&&<section style={panel}><h3 style={{marginTop:0}}>Broker execution</h3><p style={muted}>Control whether new real-money orders can be submitted through Financial OS. Turning this OFF blocks new submissions; it does not cancel orders already accepted by the broker.</p><div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",marginTop:14}}><span role="status" aria-live="polite" style={{...btn,cursor:"default",borderColor:tradingControl?.enabled?"rgba(34,197,94,.65)":"rgba(239,68,68,.65)",background:tradingControl?.enabled?"rgba(34,197,94,.12)":"rgba(239,68,68,.10)"}}>{tradingControl===null?"LIVE TRADING STATUS UNKNOWN":tradingControl.enabled?"LIVE TRADING ON":"LIVE TRADING OFF"}</span><button type="button" onClick={toggleTradingControl} disabled={!tradingControl||tradingControlBusy} aria-pressed={Boolean(tradingControl?.enabled)} style={{...btn,opacity:(!tradingControl||tradingControlBusy)?0.55:1,cursor:!tradingControl||tradingControlBusy?"not-allowed":"pointer",borderColor:tradingControl?.enabled?"rgba(239,68,68,.65)":"rgba(34,197,94,.65)"}}>{tradingControlBusy?"Saving…":tradingControl?.enabled?"Turn LIVE TRADING OFF":"Turn LIVE TRADING ON"}</button></div>{tradingControlError&&<p role="alert" style={{color:"#fca5a5",marginBottom:0}}>{tradingControlError}</p>}{tradingControlNotice&&<p role="status" style={{color:"var(--finos-positive)",marginBottom:0}}>{tradingControlNotice}</p>}<p style={{...muted,marginBottom:0,marginTop:12}}>Admin-only persistent switch. If its database migration or API is unavailable, the control remains unavailable and new orders stay blocked.</p></section>}
+    {tab==="Execution"&&<section style={panel}><h3 style={{marginTop:0}}>Broker execution</h3><p style={muted}>Live-trading access is managed centrally in Settings. Open Settings → Live Trading to view or change the account-level switch. New orders remain blocked when the switch is OFF or unavailable.</p></section>}
     <section style={panel}><h3 style={{marginTop:0}}>Capability map</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:8}}>{tabs.map(t=><button type="button" key={t} onClick={()=>{setTab(t);setError("");setNotice("");}} style={{...btn,textAlign:"left"}}><strong>{t}</strong><div style={muted}>{t==="Market Data"||t==="AI Research"?"Connected API workflow":t==="Strategy Builder"||t==="Risk Controls"?"Interactive draft workspace":t==="Execution"?"Disabled for safety":"Visible workspace; engine pending"}</div></button>)}</div></section>
   </div>;
 }
@@ -8879,6 +8839,75 @@ function AccountCompletionPage() {
 // ACCOUNTS
 // ============================================================
 
+function TradingControlSettings() {
+  const API = "https://wealthmanager.duckdns.org";
+  const [tradingControl, setTradingControl] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch(`${API}/api/broker-orders/trading-control`, { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || `Trading control unavailable (${response.status})`);
+        return data;
+      })
+      .then((data) => { if (!cancelled) setTradingControl(data); })
+      .catch((err) => { if (!cancelled) setError(err.message || "Unable to read live-trading status."); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggleTradingControl = async () => {
+    if (!tradingControl || busy) return;
+    const enabled = !tradingControl.enabled;
+    if (enabled && !window.confirm("Enable new real-money orders through Financial OS? Check every order before submitting.")) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await apiFetch(`${API}/api/broker-orders/trading-control`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || `Unable to update trading switch (${response.status})`);
+      setTradingControl(data);
+      setNotice(enabled ? "New Financial OS real-money orders are enabled." : "New Financial OS real-money orders are blocked.");
+    } catch (err) {
+      setError(err.message || "Unable to update live-trading status.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const enabled = Boolean(tradingControl?.enabled);
+  return <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }} aria-labelledby="live-trading-settings-title">
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
+      <div style={{ minWidth: 0, flex: "1 1 280px" }}>
+        <p className="finos-theme-eyebrow">ACCOUNT SETTINGS</p>
+        <h3 id="live-trading-settings-title" style={{ marginTop: 4 }}>Live Trading</h3>
+        <p style={{ color: "var(--finos-muted, rgba(255,255,255,0.68))", lineHeight: 1.6, marginBottom: 0 }}>Control whether new real-money orders can be submitted through Financial OS. Turning this OFF blocks new submissions; it does not cancel orders already accepted by the broker.</p>
+      </div>
+      <span role="status" aria-live="polite" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 999, border: `1px solid ${tradingControl === null ? "var(--finos-border, rgba(255,255,255,0.2))" : enabled ? "rgba(34,197,94,.65)" : "rgba(239,68,68,.65)"}`, background: tradingControl === null ? "var(--finos-surface, rgba(255,255,255,.04))" : enabled ? "rgba(34,197,94,.12)" : "rgba(239,68,68,.10)", fontWeight: 700, fontSize: 12, letterSpacing: ".03em" }}>
+        <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "#ef4444" }} />
+        {tradingControl === null ? "STATUS UNAVAILABLE" : enabled ? "LIVE TRADING ON" : "LIVE TRADING OFF"}
+      </span>
+    </div>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
+      <button type="button" className={enabled ? "secondary-button" : "primary-button"} onClick={toggleTradingControl} disabled={!tradingControl || busy} aria-pressed={enabled}>
+        {busy ? "Saving…" : enabled ? "Turn LIVE TRADING OFF" : "Turn LIVE TRADING ON"}
+      </button>
+      <span style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", fontSize: 12 }}>{busy ? "Saving account setting…" : "Admin-only control · saved on the server"}</span>
+    </div>
+    {error && <p role="alert" style={{ color: "var(--finos-negative, #ef4444)", marginBottom: 0 }}>{error}</p>}
+    {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", marginBottom: 0 }}>{notice}</p>}
+    <p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", fontSize: 12, lineHeight: 1.6, marginBottom: 0, marginTop: 12 }}>If the API or database migration is unavailable, this control stays unavailable and new orders remain blocked. Enabling this switch permits new Financial OS submissions; review each order carefully.</p>
+  </section>;
+}
+
 function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
   return <div className="dashboard finos-settings-page">
     <section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Personalize your workspace. Your theme is saved on this device and applies throughout Financial OS.</p></div></section>
@@ -8893,6 +8922,7 @@ function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
       </div>
       <p className="finos-theme-footnote">Default remains the standard Financial OS look. Elegant Plain is a clean white theme with thin borders and minimal visual decoration. Theme selection changes appearance only, not your records or calculations.</p>
     </section>
+    <TradingControlSettings />
     <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }}><h3>Account Profile</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Manage your personal details, tax information, and salary setup. This is separate from your bank and investment accounts.</p><button className="primary-button" onClick={() => onNavigate("Account Profile")}>Open Account Profile</button></section>
     <section className="glass-card" style={{ padding: "22px" }}><h3>Finance Diary</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Read-only master history of account and transaction activity. Entries cannot be edited or deleted.</p><button className="primary-button" onClick={() => onNavigate("Finance Diary")}>Open Finance Diary</button></section>
   </div>;

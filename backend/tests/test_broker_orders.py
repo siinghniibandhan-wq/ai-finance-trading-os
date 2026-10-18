@@ -423,3 +423,54 @@ def test_cannot_submit_order_for_another_users_investment(monkeypatch, db_sessio
     assert db_session.query(models.BrokerOrderSubmission).filter_by(
         user_id=7, client_id="wrong-owner-investment"
     ).count() == 0
+
+
+def test_order_id_without_positive_acknowledgement_is_not_accepted(monkeypatch, db_session):
+    # A broker may issue an ID even when the order is not accepted. The ID
+    # alone must not move the reservation to ACKNOWLEDGED.
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request",
+        lambda *args, **kwargs: {"data": {"order_id": "ORD-AMBIGUOUS"}},
+    )
+    user = SimpleNamespace(id=84)
+    client_id = "order-id-without-ack-1"
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload(client_id), db=db_session, current_user=user
+        )
+
+    assert error.value.status_code == 502
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=user.id, client_id=client_id
+    ).one()
+    assert reservation.status == "SUBMITTING"
+    assert reservation.gateway_order_id is None
+
+
+@pytest.mark.parametrize(
+    "gateway_result",
+    [
+        {"success": True, "order_id": "ORD-ERROR", "error": "Rejected by broker"},
+        {"status": "success", "data": {"order_id": "ORD-ERROR", "error_code": "ORDER_REJECTED"}},
+    ],
+)
+def test_http_200_error_envelope_is_not_accepted_even_with_order_id(
+    monkeypatch, gateway_result, db_session
+):
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request", lambda *args, **kwargs: gateway_result
+    )
+    user = SimpleNamespace(id=85)
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload(), db=db_session, current_user=user
+        )
+
+    assert error.value.status_code == 502
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=user.id
+    ).one()
+    assert reservation.status == "REJECTED"
+    assert reservation.gateway_order_id is None

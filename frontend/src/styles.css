@@ -2703,3 +2703,34 @@ input, textarea { color-scheme: light; }
   .finos-select-menu { max-height: 42vh; }
   .finos-select-option { min-height: 46px; }
 }
+
+/* Account contact settings: all surfaces and text follow the active Financial OS theme. */
+.account-contact-settings {
+  padding: 22px;
+  margin: 0 0 16px;
+  background: var(--t-card-bg, var(--finos-surface, transparent));
+  color: var(--finos-text, inherit);
+  border: 1px solid var(--finos-border, currentColor);
+  border-radius: var(--t-radius, 14px);
+  box-shadow: var(--t-shadow, none);
+}
+.account-contact-heading h3 { margin: 0 0 7px; color: var(--finos-text, inherit); }
+.account-contact-heading p { margin: 0; max-width: 720px; color: var(--finos-muted, inherit); line-height: 1.55; font-size: 13px; }
+.account-contact-eyebrow { margin: 0 0 7px; color: var(--finos-accent, inherit); font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+.account-contact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.account-contact-form { display: grid; align-content: start; gap: 12px; min-width: 0; padding: 16px; border: 1px solid var(--finos-border, currentColor); border-radius: var(--t-radius-sm, 10px); background: var(--t-inner-bg, var(--t-card-bg, transparent)); color: var(--finos-text, inherit); }
+.account-contact-form h4 { margin: 0 0 2px; color: var(--finos-text, inherit); font-size: 14px; }
+.account-contact-form label { display: grid; gap: 7px; color: var(--finos-text, inherit); font-size: 12px; font-weight: 650; }
+.account-contact-form input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 42px; padding: 10px 12px; border: 1px solid var(--finos-border, currentColor); border-radius: var(--t-radius-sm, 9px); background: var(--t-inner-bg, var(--t-card-bg, transparent)); color: var(--finos-text, inherit); font: inherit; }
+.account-contact-form input:focus-visible { outline: 2px solid var(--finos-accent, currentColor); outline-offset: 2px; }
+.account-contact-form .primary-button { justify-self: start; max-width: 100%; }
+.account-contact-form button:disabled { opacity: .6; cursor: wait; }
+.account-contact-security, .account-contact-loading { margin: 14px 0 0; color: var(--finos-muted, inherit); font-size: 11px; line-height: 1.55; }
+.account-contact-message { margin-top: 14px; padding: 11px 13px; border: 1px solid var(--finos-border, currentColor); border-radius: var(--t-radius-sm, 9px); font-size: 12px; line-height: 1.5; }
+.account-contact-message.is-error { color: var(--finos-danger, #b42318); background: color-mix(in srgb, var(--finos-danger, #b42318) 8%, var(--t-card-bg, transparent)); }
+.account-contact-message.is-success { color: var(--finos-success, #087443); background: color-mix(in srgb, var(--finos-success, #087443) 8%, var(--t-card-bg, transparent)); }
+@media (max-width: 720px) {
+  .account-contact-settings { padding: 16px; }
+  .account-contact-grid { grid-template-columns: minmax(0, 1fr); }
+  .account-contact-form .primary-button { width: 100%; justify-content: center; }
+}

@@ -11,6 +11,7 @@ def test_normalizes_mstock_tradebook_fields_and_exchange_order_id():
     row = {
         "TRADE_NUMBER": "T-1001",
         "EXCH_ORDER_NUMBER": "EX-9001",
+        "broker_order_id": "BROKER-9001",
         "client_reference": "financial-os-7-abc123",
         "SYMBOL": "RELIANCE",
         "BUY_SELL": "B",
@@ -34,6 +35,7 @@ def test_does_not_use_tradingsymbol_company_name_as_holding_symbol():
     row = {
         "TRADE_NUMBER": "T-1002",
         "EXCH_ORDER_NUMBER": "EX-9002",
+        "broker_order_id": "BROKER-9002",
         "client_reference": "financial-os-7-abc123",
         "tradingsymbol": "Reliance Industries Limited",
         "BUY_SELL": "B",
@@ -49,6 +51,7 @@ def test_does_not_use_full_symbol_as_instrument_key():
     row = {
         "TRADE_NUMBER": "T-1003",
         "EXCH_ORDER_NUMBER": "EX-9003",
+        "broker_order_id": "BROKER-9003",
         "client_reference": "financial-os-7-abc123",
         "FULL_SYMBOL": "NSE:RELIANCE-EQ",
         "BUY_SELL": "B",

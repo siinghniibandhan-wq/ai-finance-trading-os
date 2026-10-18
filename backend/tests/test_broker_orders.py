@@ -2,7 +2,7 @@ from types import SimpleNamespace
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.database.database import Base
 from app import models
@@ -17,6 +17,10 @@ def db_session(tmp_path):
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, expire_on_commit=False)
     session = session_factory()
+    # Existing order tests explicitly exercise the enabled state. Dedicated
+    # tests below remove this row to verify the fail-closed default.
+    session.add(models.BrokerTradingControl(id=1, enabled=True, updated_by=7))
+    session.commit()
     try:
         yield session
     finally:
@@ -24,7 +28,49 @@ def db_session(tmp_path):
         engine.dispose()
 
 
-def request_payload(client_id=None):
+
+
+def test_live_trading_switch_defaults_off_and_blocks_order(monkeypatch, db_session):
+    db_session.query(models.BrokerTradingControl).delete()
+    db_session.commit()
+    gateway_calls = []
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request",
+        lambda *args, **kwargs: gateway_calls.append(args) or {"success": True, "order_id": "MUST-NOT-SEND"},
+    )
+
+    state = broker_orders.get_trading_control(
+        db=db_session, current_user=SimpleNamespace(id=7)
+    )
+    assert state["enabled"] is False
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload("blocked-while-off"), db=db_session,
+            current_user=SimpleNamespace(id=7),
+        )
+    assert error.value.status_code == 403
+    assert gateway_calls == []
+    assert db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=7, client_id="blocked-while-off"
+    ).count() == 0
+
+
+def test_admin_trading_switch_can_be_turned_on_and_off(db_session):
+    admin = SimpleNamespace(id=7)
+    enabled = broker_orders.update_trading_control(
+        broker_orders.BrokerTradingControlUpdate(enabled=True),
+        db=db_session, current_user=admin,
+    )
+    assert enabled["enabled"] is True
+
+    disabled = broker_orders.update_trading_control(
+        broker_orders.BrokerTradingControlUpdate(enabled=False),
+        db=db_session, current_user=admin,
+    )
+    assert disabled["enabled"] is False
+
+def request_payload(client_id=None, investment_id=None):
     return broker_orders.BrokerOrderRequest(
         side="BUY",
         symbol="RELIANCE-EQ",
@@ -35,6 +81,7 @@ def request_payload(client_id=None):
         quantity=1,
         quote_price=Decimal("1450.00"),
         client_id=client_id,
+        investment_id=investment_id,
     )
 
 
@@ -310,3 +357,146 @@ def test_ambiguous_gateway_exception_keeps_reservation_and_blocks_retry(monkeypa
         restarted_session.close()
 
     assert calls == [client_id]
+
+
+
+def _create_investments_table(db_session):
+    db_session.execute(text("""
+        CREATE TABLE investments (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            symbol VARCHAR(100),
+            quantity NUMERIC(18,6) NOT NULL DEFAULT 0
+        )
+    """))
+    db_session.commit()
+
+
+def test_selected_investment_is_validated_and_persisted(monkeypatch, db_session):
+    _create_investments_table(db_session)
+    db_session.execute(text("""
+        INSERT INTO investments (id, user_id, name, symbol, quantity)
+        VALUES (501, 7, 'Reliance', 'RELIANCE-EQ', 0)
+    """))
+    db_session.commit()
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request",
+        lambda *args, **kwargs: {"success": True, "order_id": "ORD-INVESTMENT"},
+    )
+
+    result = broker_orders.place_broker_order(
+        request_payload("investment-link-1", investment_id=501),
+        db=db_session,
+        current_user=SimpleNamespace(id=7),
+    )
+
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=7, client_id="investment-link-1"
+    ).one()
+    assert result["order_id"] == "ORD-INVESTMENT"
+    assert reservation.investment_id == 501
+
+
+def test_cannot_submit_order_for_another_users_investment(monkeypatch, db_session):
+    _create_investments_table(db_session)
+    db_session.execute(text("""
+        INSERT INTO investments (id, user_id, name, symbol, quantity)
+        VALUES (502, 999, 'Private holding', 'PRIVATE', 1)
+    """))
+    db_session.commit()
+    gateway_calls = []
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request",
+        lambda *args, **kwargs: gateway_calls.append(args) or {"success": True, "order_id": "SHOULD-NOT-SEND"},
+    )
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload("wrong-owner-investment", investment_id=502),
+            db=db_session,
+            current_user=SimpleNamespace(id=7),
+        )
+
+    assert error.value.status_code == 404
+    assert gateway_calls == []
+    assert db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=7, client_id="wrong-owner-investment"
+    ).count() == 0
+
+
+def test_order_id_without_positive_acknowledgement_is_not_accepted(monkeypatch, db_session):
+    # A broker may issue an ID even when the order is not accepted. The ID
+    # alone must not move the reservation to ACKNOWLEDGED.
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request",
+        lambda *args, **kwargs: {"data": {"order_id": "ORD-AMBIGUOUS"}},
+    )
+    user = SimpleNamespace(id=84)
+    client_id = "order-id-without-ack-1"
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload(client_id), db=db_session, current_user=user
+        )
+
+    assert error.value.status_code == 502
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=user.id, client_id=client_id
+    ).one()
+    assert reservation.status == "SUBMITTING"
+    assert reservation.gateway_order_id is None
+
+
+@pytest.mark.parametrize(
+    "gateway_result",
+    [
+        {"success": True, "order_id": "ORD-ERROR", "error": "Rejected by broker"},
+        {"status": "success", "data": {"order_id": "ORD-ERROR", "error_code": "ORDER_REJECTED"}},
+    ],
+)
+def test_http_200_error_envelope_is_not_accepted_even_with_order_id(
+    monkeypatch, gateway_result, db_session
+):
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request", lambda *args, **kwargs: gateway_result
+    )
+    user = SimpleNamespace(id=85)
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload(), db=db_session, current_user=user
+        )
+
+    assert error.value.status_code == 502
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=user.id
+    ).one()
+    assert reservation.status == "REJECTED"
+    assert reservation.gateway_order_id is None
+
+
+@pytest.mark.parametrize(
+    "gateway_result",
+    [
+        {"success": True, "order_id": "ORD-FALSE-ERROR", "error": False, "error_code": 0},
+        {"status": "accepted", "order_id": "ORD-NULL-ERROR", "error": None, "errorCode": "0"},
+    ],
+)
+def test_false_or_empty_gateway_error_fields_do_not_override_positive_ack(
+    monkeypatch, gateway_result, db_session
+):
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request", lambda *args, **kwargs: gateway_result
+    )
+    user = SimpleNamespace(id=86)
+    result = broker_orders.place_broker_order(
+        request_payload(f"false-error-flag-{gateway_result['order_id']}"),
+        db=db_session,
+        current_user=user,
+    )
+    assert result["order_id"] == gateway_result["order_id"]
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=user.id, client_id=f"false-error-flag-{gateway_result['order_id']}"
+    ).one()
+    assert reservation.status == "ACKNOWLEDGED"

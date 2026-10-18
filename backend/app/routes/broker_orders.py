@@ -18,12 +18,13 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, model_validator
 
 from app.routes.auth import get_current_user, get_current_admin
-from app.models import User, BrokerOrderSubmission
+from app.models import User, BrokerOrderSubmission, BrokerTradingControl
 from app.database.database import get_db
 
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
@@ -33,6 +34,10 @@ GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
 GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/order")
 GATEWAY_ORDER_BOOK_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_BOOK_PATH", "/orders")
 GATEWAY_TIMEOUT_SECONDS = 15
+
+
+class BrokerTradingControlUpdate(BaseModel):
+    enabled: bool
 
 
 class BrokerOrderRequest(BaseModel):
@@ -46,6 +51,7 @@ class BrokerOrderRequest(BaseModel):
     price: Decimal = Field(default=Decimal("0"), ge=0)
     quote_price: Decimal = Field(gt=0)
     client_id: str | None = Field(default=None, min_length=1, max_length=120)
+    investment_id: int | None = Field(default=None, gt=0)
 
     @model_validator(mode="after")
     def validate_order(self):
@@ -123,12 +129,76 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
         raise HTTPException(status_code=502, detail="Gateway timed out or returned invalid JSON; check broker order status before retrying.") from exc
 
 
+@router.get("/trading-control")
+def get_trading_control(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin),
+):
+    """Return the persistent Financial OS live-order switch; absent setting is OFF."""
+    try:
+        control = db.query(BrokerTradingControl).filter_by(id=1).first()
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=503, detail="Trading control storage is unavailable; live orders remain blocked.") from exc
+    return {
+        "enabled": bool(control.enabled) if control else False,
+        "updated_at": control.updated_at.isoformat() if control and control.updated_at else None,
+    }
+
+
+@router.put("/trading-control")
+def update_trading_control(
+    request: BrokerTradingControlUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin),
+):
+    """Change the Financial OS live-order switch. Disabling blocks new orders only."""
+    try:
+        control = db.query(BrokerTradingControl).filter_by(id=1).first()
+        if control is None:
+            control = BrokerTradingControl(id=1, enabled=request.enabled, updated_by=current_user.id)
+            db.add(control)
+        else:
+            control.enabled = request.enabled
+            control.updated_by = current_user.id
+        db.commit()
+        db.refresh(control)
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(status_code=503, detail="Unable to save trading control; live-order state was not changed.") from exc
+    return {
+        "enabled": bool(control.enabled),
+        "updated_at": control.updated_at.isoformat() if control.updated_at else None,
+    }
+
+
 @router.post("/", status_code=202)
 def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_admin)):
     """Submit a real-money order only for the configured platform owner."""
+    # The persistent kill switch defaults to OFF when no row exists. It is
+    # checked before investment validation, reservation creation, or gateway I/O.
+    try:
+        trading_control = db.query(BrokerTradingControl).filter_by(id=1).first()
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=503, detail="Trading control storage is unavailable; order was not submitted.") from exc
+    if trading_control is None or not trading_control.enabled:
+        raise HTTPException(status_code=403, detail="Live trading is OFF. Turn it ON in Settings > Live Trading before submitting new orders.")
     # Keep the API's canonical fields and also provide the field names used
     # by the deployed Flask gateway. This makes the contract explicit while
     # remaining compatible with existing backend callers.
+    # When an investment is selected, validate ownership before reserving or
+    # sending any order. The investment table is created by the investments API.
+    if request.investment_id is not None:
+        try:
+            owned_investment = db.execute(text("""
+                SELECT id FROM investments
+                WHERE id = :investment_id AND user_id = :user_id
+            """), {"investment_id": request.investment_id, "user_id": current_user.id}).first()
+        except SQLAlchemyError as exc:
+            db.rollback()
+            raise HTTPException(status_code=503, detail="Unable to validate the selected investment; order was not submitted.") from exc
+        if owned_investment is None:
+            raise HTTPException(status_code=404, detail="Selected investment was not found for this user.")
+
     gateway_product = {"DELIVERY": "CNC", "INTRADAY": "MIS"}[request.product_type]
     payload = {
         "side": request.side,
@@ -157,9 +227,21 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         sort_keys=True,
         separators=(",", ":"),
     )
+    # Investment selection is backend metadata, not a broker API field, but
+    # it is included in the idempotency hash so one client_id cannot be rebound.
+    canonical_payload = json.dumps(
+        {"order": json.loads(canonical_payload), "investment_id": request.investment_id},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
     payload_hash = hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
     reservation = BrokerOrderSubmission(
         user_id=current_user.id,
+        investment_id=request.investment_id,
+        symbol=request.symbol,
+        exchange=request.exchange,
+        side=request.side,
+        quantity=request.quantity,
         client_id=payload["client_id"],
         payload_hash=payload_hash,
         status="SUBMITTING",
@@ -179,7 +261,7 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
                 raise HTTPException(status_code=409, detail="This client_id was already used for a different order.") from exc
             raise HTTPException(
                 status_code=409,
-                detail=f"Duplicate order blocked. Existing request status: {existing.status}. Check the broker order book before taking further action.",
+                detail=f"Duplicate order blocked. Existing request status: {existing.status}. Verify order status directly with the broker before taking further action.",
             ) from exc
         raise HTTPException(status_code=503, detail="Unable to verify order idempotency state; order was not submitted.") from exc
     except SQLAlchemyError as exc:
@@ -189,6 +271,17 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
 
     try:
         result = _gateway_request(GATEWAY_ORDER_PLACE_PATH, "POST", payload)
+    except HTTPException as exc:
+        # Explicit HTTP 4xx responses are definite gateway rejections. Keep
+        # timeouts and 5xx responses SUBMITTING because acceptance is ambiguous.
+        if 400 <= exc.status_code < 500:
+            reservation.status = "REJECTED"
+            reservation.response_json = json.dumps(
+                {"http_status": exc.status_code, "detail": exc.detail},
+                default=str,
+            )
+            db.commit()
+        raise
     except Exception:
         # A timeout may occur after broker acceptance. Keep the durable
         # SUBMITTING reservation and require reconciliation; never retry blindly.
@@ -203,7 +296,25 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         nested_data.get("order_status"),
     ]
     rejected_statuses = {"error", "failed", "failure", "rejected", "not_accepted"}
-    if result.get("success") is False or nested_data.get("success") is False or any(
+    # A broker may return HTTP 200 and still include an error envelope or a
+    # rejection code. Never let an order_id alone override an explicit error.
+    error_values = [
+        result.get("error"), result.get("error_code"), result.get("errorCode"),
+        nested_data.get("error"), nested_data.get("error_code"), nested_data.get("errorCode"),
+    ]
+    def is_error_value(value):
+        # Some gateway wrappers always include error/error_code keys and use
+        # false, null, or zero to mean no error. Do not reject those responses.
+        if value is None or value is False:
+            return False
+        if isinstance(value, (int, float)) and value == 0:
+            return False
+        if isinstance(value, str) and value.strip().lower() in {"", "0", "false", "none", "null"}:
+            return False
+        return True
+
+    has_error = any(is_error_value(value) for value in error_values)
+    if has_error or result.get("success") is False or nested_data.get("success") is False or any(
         isinstance(status, str) and status.strip().lower() in rejected_statuses
         for status in status_values
     ):
@@ -225,27 +336,32 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         or nested_data.get("order_id")
         or nested_data.get("orderid")
     )
-    # Only say "accepted" when the gateway provides a positive acknowledgement.
-    # A generic/empty response must not be presented as a successful order.
+    # A broker order ID alone is not proof of acceptance: rejected orders may
+    # still receive an ID. Require both an identifier and a positive status.
+    # Missing/ambiguous acknowledgements stay SUBMITTING for manual reconciliation
+    # and are never automatically resubmitted.
     accepted_statuses = {"success", "accepted", "open", "pending", "submitted", "complete", "completed"}
-    explicitly_accepted = (
+    positive_ack = (
         result.get("success") is True
         or nested_data.get("success") is True
         or any(
             isinstance(status, str) and status.strip().lower() in accepted_statuses
             for status in status_values
         )
-        or bool(order_id)
     )
-    if not explicitly_accepted:
+    if not order_id or not positive_ack:
+        # Preserve acknowledgement evidence. Do not mark this rejected: the
+        # broker may have accepted the order despite an incomplete response.
+        reservation.response_json = json.dumps(result, default=str)
+        db.commit()
         logger.warning("m.Stock gateway returned an ambiguous placement response for user %s", current_user.id)
         raise HTTPException(
             status_code=502,
-            detail="The gateway response did not confirm whether the order was accepted. Check the broker order book before retrying.",
+            detail="The gateway response did not confirm acceptance with a broker order ID. Check the broker order book and do not resubmit until order status is verified directly with the broker.",
         )
 
     reservation.status = "ACKNOWLEDGED"
-    reservation.gateway_order_id = str(order_id) if order_id else None
+    reservation.gateway_order_id = str(order_id)
     reservation.response_json = json.dumps(result, default=str)
     db.commit()
 

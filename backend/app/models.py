@@ -433,6 +433,19 @@ class FinancialGoal(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+
+class BrokerTradingControl(Base):
+    """Persistent Financial OS live-order kill switch; missing row means OFF."""
+    __tablename__ = "broker_trading_control"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    updated_by: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+
 # ============================================================
 # LOANS & LIABILITIES
 # A loan is the detailed contract; its linked liability is the
@@ -799,6 +812,12 @@ class BrokerOrderSubmission(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    # Reconciliation requires explicit instrument identity; never infer when absent.
+    investment_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    symbol: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    exchange: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    side: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    quantity: Mapped[int | None] = mapped_column(Integer, nullable=True)
     client_id: Mapped[str] = mapped_column(String(120), nullable=False)
     payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="SUBMITTING")

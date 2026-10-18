@@ -513,6 +513,7 @@ export default function App() {
                 <div className="header-popover header-profile-popover" role="menu" aria-label="User menu">
                   <div className="header-profile-summary"><div className="profile-avatar">{(getCurrentUser()?.name || "U").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</div><div><strong>{getCurrentUser()?.name || "User"}</strong><span>{getCurrentUser()?.email || "Personal workspace"}</span></div></div>
                   <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Account Profile"); }}>Account profile</button>
+                  <div role="none"><TradingControlSettings compact /></div>
                   <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}><Settings size={16}/> Settings &amp; preferences <span>›</span></button>
                   <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}>Theme &amp; appearance <span>›</span></button>
                   <div className="header-profile-divider"/>
@@ -8841,6 +8842,88 @@ function AccountCompletionPage() {
 // ACCOUNTS
 // ============================================================
 
+
+function TradingControlSettings({ compact = false }) {
+  const API = API_BASE_URL;
+  const [tradingControl, setTradingControl] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch(`${API}/api/broker-orders/trading-control`, { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || `Trading control unavailable (${response.status})`);
+        return data;
+      })
+      .then((data) => { if (!cancelled) setTradingControl(data); })
+      .catch((err) => { if (!cancelled) setError(err.message || "Unable to read live-trading status."); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggleTradingControl = async () => {
+    if (!tradingControl || busy) return;
+    const enabled = !tradingControl.enabled;
+    if (enabled && !window.confirm("Enable new real-money orders through Financial OS? Check every order before submitting.")) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await apiFetch(`${API}/api/broker-orders/trading-control`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || `Unable to update trading switch (${response.status})`);
+      setTradingControl(data);
+      setNotice(enabled ? "New Financial OS real-money orders are enabled." : "New Financial OS real-money orders are blocked.");
+    } catch (err) {
+      setError(err.message || "Unable to update live-trading status.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const enabled = Boolean(tradingControl?.enabled);
+  if (compact) return <div style={{ padding: "10px 12px", borderTop: "1px solid var(--finos-border, rgba(255,255,255,.12))", borderBottom: "1px solid var(--finos-border, rgba(255,255,255,.12))" }} aria-labelledby="live-trading-settings-title">
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+      <strong id="live-trading-settings-title" style={{ fontSize: 13 }}>Live Trading</strong>
+      <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "#ef4444" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
+    </div>
+    <button type="button" onClick={toggleTradingControl} disabled={!tradingControl || busy} aria-pressed={enabled} style={{ width: "100%", marginTop: 8, padding: "9px 10px", borderRadius: 8, border: "1px solid var(--finos-border, rgba(255,255,255,.18))", background: enabled ? "rgba(239,68,68,.12)" : "rgba(34,197,94,.12)", color: "inherit", cursor: !tradingControl || busy ? "not-allowed" : "pointer", opacity: !tradingControl || busy ? .6 : 1, font: "inherit", fontSize: 12, fontWeight: 700 }}>
+      {busy ? "Saving…" : enabled ? "Turn LIVE TRADING OFF" : "Turn LIVE TRADING ON"}
+    </button>
+    {error && <p role="alert" style={{ color: "var(--finos-negative, #ef4444)", fontSize: 11, lineHeight: 1.4 }}>{error}</p>}
+    {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", fontSize: 11, lineHeight: 1.4 }}>{notice}</p>}
+    <p style={{ color: "var(--finos-muted, rgba(255,255,255,.62))", fontSize: 10, lineHeight: 1.4, marginBottom: 0 }}>Admin-only. OFF blocks new Financial OS orders.</p>
+  </div>;
+  return <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }} aria-labelledby="live-trading-settings-title">
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
+      <div style={{ minWidth: 0, flex: "1 1 280px" }}>
+        <p className="finos-theme-eyebrow">ACCOUNT SETTINGS</p>
+        <h3 id="live-trading-settings-title" style={{ marginTop: 4 }}>Live Trading</h3>
+        <p style={{ color: "var(--finos-muted, rgba(255,255,255,0.68))", lineHeight: 1.6, marginBottom: 0 }}>Control whether new real-money orders can be submitted through Financial OS. Turning this OFF blocks new submissions; it does not cancel orders already accepted by the broker.</p>
+      </div>
+      <span role="status" aria-live="polite" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 999, border: `1px solid ${tradingControl === null ? "var(--finos-border, rgba(255,255,255,0.2))" : enabled ? "rgba(34,197,94,.65)" : "rgba(239,68,68,.65)"}`, background: tradingControl === null ? "var(--finos-surface, rgba(255,255,255,.04))" : enabled ? "rgba(34,197,94,.12)" : "rgba(239,68,68,.10)", fontWeight: 700, fontSize: 12, letterSpacing: ".03em" }}>
+        <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "#ef4444" }} />
+        {tradingControl === null ? "STATUS UNAVAILABLE" : enabled ? "LIVE TRADING ON" : "LIVE TRADING OFF"}
+      </span>
+    </div>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
+      <button type="button" className={enabled ? "secondary-button" : "primary-button"} onClick={toggleTradingControl} disabled={!tradingControl || busy} aria-pressed={enabled}>
+        {busy ? "Saving…" : enabled ? "Turn LIVE TRADING OFF" : "Turn LIVE TRADING ON"}
+      </button>
+      <span style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", fontSize: 12 }}>{busy ? "Saving account setting…" : "Admin-only control · saved on the server"}</span>
+    </div>
+    {error && <p role="alert" style={{ color: "var(--finos-negative, #ef4444)", marginBottom: 0 }}>{error}</p>}
+    {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", marginBottom: 0 }}>{notice}</p>}
+    <p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", fontSize: 12, lineHeight: 1.6, marginBottom: 0, marginTop: 12 }}>If the API or database migration is unavailable, this control stays unavailable and new orders remain blocked. Enabling this switch permits new Financial OS submissions; review each order carefully.</p>
+  </section>;
+}
+
 function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
   return <div className="dashboard finos-settings-page">
     <section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Personalize your workspace. Your theme is saved on this device and applies throughout Financial OS.</p></div></section>
@@ -8855,6 +8938,7 @@ function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
       </div>
       <p className="finos-theme-footnote">Default remains the standard Financial OS look. Elegant Plain is a clean white theme with thin borders and minimal visual decoration. Theme selection changes appearance only, not your records or calculations.</p>
     </section>
+    <TradingControlSettings />
     <AccountContactSettings />
     <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }}><h3>Account Profile</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Manage your personal details, tax information, and salary setup. This is separate from your bank and investment accounts.</p><button className="primary-button" onClick={() => onNavigate("Account Profile")}>Open Account Profile</button></section>
     <section className="glass-card" style={{ padding: "22px" }}><h3>Finance Diary</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Read-only master history of account and transaction activity. Entries cannot be edited or deleted.</p><button className="primary-button" onClick={() => onNavigate("Finance Diary")}>Open Finance Diary</button></section>

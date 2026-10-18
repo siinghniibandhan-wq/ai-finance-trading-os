@@ -6164,6 +6164,9 @@ useEffect(() => {
     handleEditInvestment(matched);
   } else if (intent.type === "HISTORY") {
     openInvestmentTransactions(matched);
+  } else if (intent.type === "ADD") {
+    setTransactionMessage("This instrument is already in your portfolio. Opening its existing investment history instead of creating a duplicate.");
+    openInvestmentTransactions(matched);
   } else if (intent.type === "BUY" || intent.type === "SELL") {
     openInvestmentTransaction(matched, intent.type);
   }

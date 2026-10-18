@@ -2380,7 +2380,9 @@ function TaxPage() {
 // Pure, deterministic technical-indicator calculations over historical OHLCV candles.
 function calculateTechnicalIndicators(rows) {
   const numeric = (row, key) => {
-    const value = Number(row?.[key]);
+    const raw = row?.[key];
+    if (raw === null || raw === undefined || raw === "") return null;
+    const value = Number(raw);
     return Number.isFinite(value) ? value : null;
   };
   const closes = rows.map((row) => numeric(row, "close")).filter((value) => value !== null && value > 0);

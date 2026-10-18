@@ -110,6 +110,25 @@ def _apply_account_credit_limit_migration():
 
 _apply_account_credit_limit_migration()
 
+def _apply_user_phone_number_migration():
+    """Add the optional unique phone number column to existing user tables."""
+    table_name = "users"
+    inspector = inspect(engine)
+    if not inspector.has_table(table_name):
+        return
+    existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+    with engine.begin() as connection:
+        if "phone_number" not in existing_columns:
+            connection.execute(text("ALTER TABLE users ADD COLUMN phone_number VARCHAR(25)"))
+        if engine.dialect.name == "postgresql":
+            connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_phone_number ON users (phone_number)"))
+        else:
+            connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_phone_number ON users (phone_number)"))
+
+
+_apply_user_phone_number_migration()
+
+
 
 
 def _apply_hra_eligibility_schema_migration():

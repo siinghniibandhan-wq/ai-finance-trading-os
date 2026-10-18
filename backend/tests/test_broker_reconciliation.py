@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 from fastapi import HTTPException
 
-from app.routes.broker_reconciliation import _normalize_trade, _parse_trade_date, _trade_rows
+from app.routes.broker_reconciliation import _normalize_trade, _parse_trade_date, _submission_matches_trade, _trade_rows
 
 
 def test_normalizes_mstock_tradebook_fields_and_exchange_order_id():
@@ -384,3 +384,51 @@ def test_does_not_treat_trade_row_status_as_envelope_error():
     # A trade's own execution status is not the response-envelope status.
     rows = [{"TRADE_NUMBER": "T-2", "status": "Complete"}]
     assert _trade_rows({"status": "success", "data": rows}) == rows
+
+
+
+def test_submission_match_requires_durable_broker_acknowledgement():
+    from types import SimpleNamespace
+
+    trade = {
+        "broker_order_id": "BROKER-1",
+        "symbol": "RELIANCE",
+        "exchange": "NSE",
+        "side": "BUY",
+    }
+    submission = SimpleNamespace(
+        status="ACKNOWLEDGED",
+        gateway_order_id="BROKER-1",
+        investment_id=9,
+        symbol="RELIANCE",
+        exchange="NSE",
+        side="BUY",
+        quantity=2,
+    )
+    assert _submission_matches_trade(submission, trade) is True
+
+    # A SUBMITTING reservation can exist even when a placement timed out;
+    # never import a trade against that uncertain local state.
+    submission.status = "SUBMITTING"
+    assert _submission_matches_trade(submission, trade) is False
+
+
+def test_submission_match_rejects_wrong_broker_order_id():
+    from types import SimpleNamespace
+
+    submission = SimpleNamespace(
+        status="ACKNOWLEDGED",
+        gateway_order_id="BROKER-OTHER",
+        investment_id=9,
+        symbol="RELIANCE",
+        exchange="NSE",
+        side="BUY",
+        quantity=2,
+    )
+    trade = {
+        "broker_order_id": "BROKER-1",
+        "symbol": "RELIANCE",
+        "exchange": "NSE",
+        "side": "BUY",
+    }
+    assert _submission_matches_trade(submission, trade) is False

@@ -250,3 +250,49 @@ def test_rejects_blank_normalized_order_references(field):
     row[field] = "   "
     assert _normalize_trade(row) is None
 
+
+
+
+def test_submission_match_requires_exact_symbol_and_order_metadata():
+    from types import SimpleNamespace
+    from app.routes.broker_reconciliation import _submission_matches_trade
+
+    trade = {
+        "broker_order_id": "BROKER-1",
+        "symbol": "RELIANCE",
+        "exchange": "NSE",
+        "side": "BUY",
+    }
+    submission = SimpleNamespace(
+        gateway_order_id="BROKER-1",
+        investment_id=10,
+        symbol="RELIANCE",
+        exchange="NSE",
+        side="BUY",
+        quantity=2,
+    )
+    assert _submission_matches_trade(submission, trade) is True
+
+    submission.symbol = "TCS"
+    assert _submission_matches_trade(submission, trade) is False
+
+
+def test_submission_match_rejects_missing_symbol():
+    from types import SimpleNamespace
+    from app.routes.broker_reconciliation import _submission_matches_trade
+
+    trade = {
+        "broker_order_id": "BROKER-1",
+        "symbol": "RELIANCE",
+        "exchange": "NSE",
+        "side": "BUY",
+    }
+    submission = SimpleNamespace(
+        gateway_order_id="BROKER-1",
+        investment_id=10,
+        symbol=None,
+        exchange="NSE",
+        side="BUY",
+        quantity=2,
+    )
+    assert _submission_matches_trade(submission, trade) is False

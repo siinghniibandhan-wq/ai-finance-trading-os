@@ -116,8 +116,9 @@ def change_my_contact(payload: ContactChange, user: User = Depends(get_current_u
     db.refresh(user)
     result = {"status": "success", "user": {"id": user.id, "name": user.name, "email": user.email, "phone_number": user.phone_number, "currency": user.currency}}
     admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
-    if payload.email is not None and admin_email and admin_email == old_email and user.email != old_email:
-        result["admin_notice"] = "Your email no longer matches ADMIN_EMAIL on the server. Update ADMIN_EMAIL to the new address before relying on admin-only features."
+    admin_user_id = os.getenv("ADMIN_USER_ID", "").strip()
+    if not admin_user_id and payload.email is not None and admin_email and admin_email == old_email and user.email != old_email:
+        result["admin_notice"] = "Your email no longer matches ADMIN_EMAIL on the server. Update ADMIN_EMAIL to the new address, or configure ADMIN_USER_ID to this account's database user ID to keep admin access stable."
     return result
 
 
@@ -147,6 +148,7 @@ def change_my_email(payload: EmailChange, user: User = Depends(get_current_user)
     db.refresh(user)
     result = {"status": "saved", "user": {"id": user.id, "name": user.name, "email": user.email, "currency": user.currency}}
     admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
-    if admin_email and admin_email == old_email:
-        result["admin_notice"] = "Your email no longer matches ADMIN_EMAIL on the server. Update ADMIN_EMAIL to the new address and restart the backend, or admin-only features including live trading will be blocked."
+    admin_user_id = os.getenv("ADMIN_USER_ID", "").strip()
+    if not admin_user_id and admin_email and admin_email == old_email:
+        result["admin_notice"] = "Your email no longer matches ADMIN_EMAIL on the server. Update ADMIN_EMAIL to the new address and restart the backend, or configure ADMIN_USER_ID to this account's database user ID to keep admin access stable."
     return result

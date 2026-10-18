@@ -31,6 +31,9 @@ def _submission_matches_trade(submission, trade):
     """Require exact local submission identity and instrument metadata before importing a fill."""
     return bool(
         submission
+        # A local placement reservation is not proof that the broker accepted
+        # the order. Only reconcile fills against a durably acknowledged order.
+        and str(getattr(submission, "status", "") or "").strip().upper() == "ACKNOWLEDGED"
         and submission.gateway_order_id
         and str(submission.gateway_order_id).strip() == trade["broker_order_id"]
         and submission.investment_id

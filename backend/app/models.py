@@ -795,6 +795,10 @@ class BrokerOrderSubmission(Base):
     # Nullable for legacy/API callers that do not yet send an explicit investment.
     # Reconciliation must never infer an investment when this is NULL.
     investment_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    symbol: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    exchange: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    side: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    quantity: Mapped[int | None] = mapped_column(Integer, nullable=True)
     client_id: Mapped[str] = mapped_column(String(120), nullable=False)
     payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="SUBMITTING")

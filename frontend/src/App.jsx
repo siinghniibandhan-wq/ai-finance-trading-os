@@ -2759,12 +2759,25 @@ function MarketsPage({ onNavigate }) {
           if (orderDraft.order_type === "LIMIT" && (!Number.isFinite(Number(orderDraft.limit_price)) || Number(orderDraft.limit_price) <= 0)) { setOrderError("Enter a valid limit price."); return; }
           setOrderSubmitting(true);
           try {
+            // Link the broker submission to an existing portfolio instrument for
+            // reconciliation. Never fabricate a holding before a confirmed fill.
+            let orderInvestmentId = selectedSellInvestment?.id || null;
+            if (orderModalSide === "BUY" && !orderInvestmentId) {
+              const holdingsResponse = await apiFetch(`${API}/api/investments/?user_id=${getCurrentUserId()}`);
+              const holdingsPayload = await holdingsResponse.json().catch(() => ({}));
+              if (!holdingsResponse.ok) throw new Error(holdingsPayload?.detail || "Unable to verify the portfolio investment for this order.");
+              const holdings = Array.isArray(holdingsPayload) ? holdingsPayload : Array.isArray(holdingsPayload?.investments) ? holdingsPayload.investments : [];
+              const symbol = String(selectedInstrument.symbol || "").trim().toUpperCase();
+              const exchange = String(selectedInstrument.exchange || "NSE").trim().toUpperCase();
+              const existing = holdings.find((item) => String(item?.symbol || item?.tradingsymbol || "").trim().toUpperCase() === symbol && String(item?.exchange || "NSE").trim().toUpperCase() === exchange);
+              if (existing?.id) orderInvestmentId = existing.id;
+            }
             const response = await apiFetch(`${API}/api/broker-orders/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
               side: orderModalSide, symbol: selectedInstrument.symbol, exchange: selectedInstrument.exchange || "NSE",
               product_type: orderDraft.product_type, order_type: orderDraft.order_type, validity: orderDraft.validity,
               quantity, price: orderDraft.order_type === "LIMIT" ? Number(orderDraft.limit_price) : 0,
               quote_price: livePrice,
-              ...(selectedSellInvestment?.id ? { investment_id: selectedSellInvestment.id } : {}),
+              ...(orderInvestmentId ? { investment_id: orderInvestmentId } : {}),
               client_id: orderClientId || createOrderClientId()
             }) });
             const data = await response.json().catch(() => ({}));

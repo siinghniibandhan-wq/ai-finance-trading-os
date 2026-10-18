@@ -96,6 +96,7 @@ def _normalize_trade(row):
     if ":" in normalized_symbol:
         normalized_symbol = normalized_symbol.split(":", 1)[1]
     if (not str(trade_id).strip() or not str(exchange_order_id).strip()
+            or not str(broker_order_id).strip() or not str(client_reference).strip()
             or qty <= 0 or px <= 0 or normalized_side not in {"BUY", "SELL"}
             or normalized_exchange not in {"NSE", "BSE"} or not normalized_symbol):
         return None

@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.database.database import get_db
 from datetime import datetime
@@ -223,28 +224,32 @@ def update_contact(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Update one login contact after password re-authentication."""
+    """Update one login contact after password re-authentication and throttling."""
+    limit_key = f"contact-change:{user.id}"
+    _check_login_rate_limit(limit_key)
     credential = db.query(UserCredential).filter(UserCredential.user_id == user.id).first()
     if not credential or not _verify_password(request.current_password, credential.password_hash):
         raise HTTPException(status_code=401, detail="Current password is incorrect.")
 
+    _clear_login_rate_limit(limit_key)
     if (request.email is None) == (request.phone_number is None):
         raise HTTPException(status_code=422, detail="Update either email or phone number in one request.")
 
+    old_email = (user.email or "").strip().lower()
     if request.email is not None:
         email = request.email.strip().lower()
-        if "@" not in email or "." not in email.rsplit("@", 1)[-1] or len(email) > 255:
+        if len(email) > 255 or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
             raise HTTPException(status_code=422, detail="Enter a valid email address.")
-        duplicate = db.query(User).filter(User.email == email, User.id != user.id).first()
-        if duplicate:
-            raise HTTPException(status_code=409, detail="That email address is already registered.")
+        if email != old_email:
+            duplicate = db.query(User).filter(User.email == email, User.id != user.id).first()
+            if duplicate:
+                raise HTTPException(status_code=409, detail="That email address is already registered.")
         user.email = email
 
     if request.phone_number is not None:
-        import re
         phone = re.sub(r"[\s().-]", "", request.phone_number.strip())
-        if not re.fullmatch(r"\+?[0-9]{7,15}", phone):
-            raise HTTPException(status_code=422, detail="Enter a valid phone number with 7 to 15 digits.")
+        if not re.fullmatch(r"\+?[0-9]{10,15}", phone):
+            raise HTTPException(status_code=422, detail="Enter a valid phone number with 10 to 15 digits.")
         duplicate = db.query(User).filter(User.phone_number == phone, User.id != user.id).first()
         if duplicate:
             raise HTTPException(status_code=409, detail="That phone number is already registered.")
@@ -252,15 +257,19 @@ def update_contact(
 
     try:
         db.commit()
-    except Exception as exc:
+    except IntegrityError as exc:
         db.rollback()
-        raise HTTPException(status_code=409, detail="The contact detail could not be saved. Check whether it is already registered.") from exc
+        raise HTTPException(status_code=409, detail="The contact detail is already registered to another account.") from exc
     db.refresh(user)
-    return {
+    result = {
         "status": "success",
         "message": "Contact detail updated. You can use the new email or phone number to log in.",
         "user": {"id": user.id, "name": user.name, "email": user.email, "phone_number": user.phone_number, "currency": user.currency},
     }
+    admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    if request.email is not None and admin_email and admin_email == old_email and user.email != old_email:
+        result["admin_notice"] = "Your email no longer matches ADMIN_EMAIL on the server. Update ADMIN_EMAIL to the new address and restart the backend, or admin-only features including live trading will be blocked."
+    return result
 
 
 @router.post("/logout")

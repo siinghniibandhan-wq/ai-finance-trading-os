@@ -101,7 +101,7 @@ def test_login_logout_revokes_old_bearer_token():
 
 
 
-def test_account_contact_updates_email_and_phone_login():
+def test_account_contact_updates_email_and_phone_login(monkeypatch):
     original_email = "contact-update-test@example.test"
     new_email = "contact-update-new@example.test"
     phone = "+919876543210"
@@ -126,10 +126,21 @@ def test_account_contact_updates_email_and_phone_login():
     login_new_email = client.post("/api/auth/login", json={"email": new_email, "password": password})
     assert login_new_email.status_code == 200, login_new_email.text
 
+    # Admin status is configured by email, so the UI must warn if this address changes.
+    monkeypatch.setenv("ADMIN_EMAIL", new_email)
+    final_email = "contact-update-final@example.test"
+    update_admin_email = client.patch(
+        "/api/auth/contact",
+        headers=auth,
+        json={"email": final_email, "current_password": password},
+    )
+    assert update_admin_email.status_code == 200, update_admin_email.text
+    assert "ADMIN_EMAIL" in update_admin_email.json()["admin_notice"]
+
     update_phone = client.patch(
         "/api/auth/contact",
         headers=auth,
-        json={"phone_number": phone, "current_password": password},
+        json={"phone_number": "+91 98765-43210", "current_password": password},
     )
     assert update_phone.status_code == 200, update_phone.text
     assert update_phone.json()["user"]["phone_number"] == phone
@@ -143,3 +154,17 @@ def test_account_contact_updates_email_and_phone_login():
         json={"phone_number": "+919876543211", "current_password": "wrong-password"},
     )
     assert wrong_password.status_code == 401, wrong_password.text
+
+    for _ in range(4):
+        repeated_wrong_password = client.patch(
+            "/api/auth/contact",
+            headers=auth,
+            json={"phone_number": "+919876543212", "current_password": "wrong-password"},
+        )
+        assert repeated_wrong_password.status_code == 401, repeated_wrong_password.text
+    throttled = client.patch(
+        "/api/auth/contact",
+        headers=auth,
+        json={"phone_number": "+919876543212", "current_password": "wrong-password"},
+    )
+    assert throttled.status_code == 429, throttled.text

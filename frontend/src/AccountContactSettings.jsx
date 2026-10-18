@@ -70,11 +70,12 @@ export default function AccountContactSettings() {
       setEmail(data.user?.email || value);
       setPhone(data.user?.phone_number || phone);
       if (isEmail) setEmailPassword(""); else setPhonePassword("");
-      setNotice(isEmail
+      const baseNotice = isEmail
         ? "Email updated. Your new email can now be used to sign in with your existing password."
-        : "Phone number updated. Your new phone number can now be used to sign in with your existing password.");
+        : "Phone number updated. Your new phone number can now be used to sign in with your existing password.";
+      setNotice(data.admin_notice ? `${baseNotice} ${data.admin_notice}` : baseNotice);
       // The header reads the session snapshot at render time; refresh it after showing success.
-      window.setTimeout(() => window.location.reload(), 1400);
+      window.setTimeout(() => window.location.reload(), data.admin_notice ? 5000 : 1400);
     } catch (err) {
       setError(err?.message || "Unable to update contact details.");
     } finally {

@@ -17,12 +17,58 @@ def db_session(tmp_path):
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine, expire_on_commit=False)
     session = session_factory()
+    # Existing order tests explicitly exercise the enabled state. Dedicated
+    # tests below remove this row to verify the fail-closed default.
+    session.add(models.BrokerTradingControl(id=1, enabled=True, updated_by=7))
+    session.commit()
     try:
         yield session
     finally:
         session.close()
         engine.dispose()
 
+
+
+
+def test_live_trading_switch_defaults_off_and_blocks_order(monkeypatch, db_session):
+    db_session.query(models.BrokerTradingControl).delete()
+    db_session.commit()
+    gateway_calls = []
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request",
+        lambda *args, **kwargs: gateway_calls.append(args) or {"success": True, "order_id": "MUST-NOT-SEND"},
+    )
+
+    state = broker_orders.get_trading_control(
+        db=db_session, current_user=SimpleNamespace(id=7)
+    )
+    assert state["enabled"] is False
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload("blocked-while-off"), db=db_session,
+            current_user=SimpleNamespace(id=7),
+        )
+    assert error.value.status_code == 403
+    assert gateway_calls == []
+    assert db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=7, client_id="blocked-while-off"
+    ).count() == 0
+
+
+def test_admin_trading_switch_can_be_turned_on_and_off(db_session):
+    admin = SimpleNamespace(id=7)
+    enabled = broker_orders.update_trading_control(
+        broker_orders.BrokerTradingControlUpdate(enabled=True),
+        db=db_session, current_user=admin,
+    )
+    assert enabled["enabled"] is True
+
+    disabled = broker_orders.update_trading_control(
+        broker_orders.BrokerTradingControlUpdate(enabled=False),
+        db=db_session, current_user=admin,
+    )
+    assert disabled["enabled"] is False
 
 def request_payload(client_id=None, investment_id=None):
     return broker_orders.BrokerOrderRequest(

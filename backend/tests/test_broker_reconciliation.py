@@ -363,3 +363,24 @@ def test_rejects_case_insensitive_gateway_error_status(status):
         _trade_rows({"status": status, "data": []})
     assert exc.value.status_code == 502
 
+
+
+@pytest.mark.parametrize("nested_status", ["ERROR", "Failed", " FAILURE "])
+def test_rejects_nested_gateway_error_envelope(nested_status):
+    # HTTP 200 may still contain a provider error in a nested response object.
+    with pytest.raises(HTTPException) as exc:
+        _trade_rows({
+            "status": "success",
+            "data": {
+                "status": nested_status,
+                "message": "provider rejected request",
+                "data": None,
+            },
+        })
+    assert exc.value.status_code == 502
+
+
+def test_does_not_treat_trade_row_status_as_envelope_error():
+    # A trade's own execution status is not the response-envelope status.
+    rows = [{"TRADE_NUMBER": "T-2", "status": "Complete"}]
+    assert _trade_rows({"status": "success", "data": rows}) == rows

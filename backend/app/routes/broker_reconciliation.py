@@ -67,6 +67,9 @@ def _normalize_trade(row):
         return None
     trade_id = row.get("trade_id") or row.get("TRADE_NUMBER") or row.get("tradeid") or row.get("fill_id")
     exchange_order_id = row.get("exchange_order_id") or row.get("EXCH_ORDER_NUMBER")
+    # Distinct from exchange_order_id: only gateway-enriched data may provide
+    # broker_order_id after joining the order book to the local placement log.
+    broker_order_id = row.get("broker_order_id") or row.get("order_id") or row.get("ORDER_NUMBER")
     client_reference = row.get("client_reference") or row.get("client_id")
     # SYMBOL is the broker's instrument code. FULL_SYMBOL is a permitted fallback;
     # tradingsymbol from the /trades API is intentionally not used as a holding key.
@@ -76,7 +79,7 @@ def _normalize_trade(row):
     price = row.get("price") or row.get("PRICE") or row.get("trade_price") or row.get("average_price")
     trade_date = row.get("trade_date") or row.get("TRADE_DATE") or row.get("ORDER_DATE_TIME") or row.get("date")
     exchange = row.get("exchange") or row.get("EXCHANGE")
-    if not all((trade_id, exchange_order_id, client_reference, symbol, side, quantity, price, trade_date)):
+    if not all((trade_id, exchange_order_id, broker_order_id, client_reference, symbol, side, quantity, price, trade_date)):
         return None
     try:
         qty = Decimal(str(quantity))
@@ -98,6 +101,7 @@ def _normalize_trade(row):
     return {
         "trade_id": str(trade_id).strip(),
         "exchange_order_id": str(exchange_order_id).strip(),
+        "broker_order_id": str(broker_order_id).strip(),
         "client_reference": str(client_reference).strip(),
         "symbol": normalized_symbol,
         "side": normalized_side,
@@ -186,7 +190,7 @@ def reconcile_broker_fills(
                 if (
                     not submission
                     or not submission.gateway_order_id
-                    or str(submission.gateway_order_id) != trade["exchange_order_id"]
+                    or str(submission.gateway_order_id) != trade["broker_order_id"]
                     or not submission.investment_id
                     or (submission.exchange or "").upper() != trade["exchange"]
                     or (submission.side or "").upper() != trade["side"]

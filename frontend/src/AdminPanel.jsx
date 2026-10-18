@@ -13,6 +13,8 @@ async function readResponse(response) {
 
 export default function AdminPanel() {
   const [users, setUsers] = useState([]);
+  const [overview, setOverview] = useState(null);
+  const [auditLogs, setAuditLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingUserId, setSavingUserId] = useState(null);
   const [error, setError] = useState("");
@@ -23,9 +25,17 @@ export default function AdminPanel() {
     setLoading(true);
     setError("");
     try {
-      const response = await apiFetch(`${API_BASE_URL}/api/auth/admin/users?limit=500&offset=0`);
-      const data = await readResponse(response);
-      setUsers(Array.isArray(data.items) ? data.items : []);
+      const [usersResponse, overviewResponse, auditResponse] = await Promise.all([
+        apiFetch(`${API_BASE_URL}/api/auth/admin/users?limit=500&offset=0`),
+        apiFetch(`${API_BASE_URL}/api/auth/admin/overview`),
+        apiFetch(`${API_BASE_URL}/api/auth/admin/audit-logs?limit=100&offset=0`),
+      ]);
+      const [usersData, overviewData, auditData] = await Promise.all([
+        readResponse(usersResponse), readResponse(overviewResponse), readResponse(auditResponse),
+      ]);
+      setUsers(Array.isArray(usersData.items) ? usersData.items : []);
+      setOverview(overviewData);
+      setAuditLogs(Array.isArray(auditData.items) ? auditData.items : []);
     } catch (err) {
       setError(err?.message || "Unable to load customer accounts.");
     } finally {
@@ -36,11 +46,11 @@ export default function AdminPanel() {
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
   const counts = useMemo(() => ({
-    total: users.length,
-    active: users.filter((user) => user.is_active).length,
-    inactive: users.filter((user) => !user.is_active).length,
+    total: overview?.users_total ?? users.length,
+    active: overview?.users_active ?? users.filter((user) => user.is_active).length,
+    inactive: overview?.users_inactive ?? users.filter((user) => !user.is_active).length,
     admins: users.filter((user) => user.is_admin).length,
-  }), [users]);
+  }), [users, overview]);
 
   const visibleUsers = useMemo(() => users.filter((user) => {
     if (filter === "active") return user.is_active;
@@ -91,6 +101,25 @@ export default function AdminPanel() {
         <article className="admin-stat-card"><span className="admin-stat-icon"><UserCheck size={20} /></span><span className="admin-stat-label">Active accounts</span><strong>{loading ? "—" : counts.active}</strong><small>Currently enabled</small></article>
         <article className="admin-stat-card"><span className="admin-stat-icon"><UserX size={20} /></span><span className="admin-stat-label">Inactive accounts</span><strong>{loading ? "—" : counts.inactive}</strong><small>Sign-in disabled</small></article>
         <article className="admin-stat-card"><span className="admin-stat-icon"><ShieldCheck size={20} /></span><span className="admin-stat-label">Administrator accounts</span><strong>{loading ? "—" : counts.admins}</strong><small>Based on backend configuration</small></article>
+      </div>
+
+      <div className="admin-section-card admin-system-status">
+        <div className="admin-table-heading"><div><h2>System configuration health</h2><p>Only configuration status is shown; secret values are never exposed.</p></div></div>
+        <div className="admin-config-grid">
+          <div><span>Admin configuration</span><strong className={overview?.admin_configuration_present ? "is-good" : "is-bad"}>{overview?.admin_configuration_present ? "Configured" : "Missing"}</strong></div>
+          <div><span>Authentication secret</span><strong className={overview?.auth_secret_configured ? "is-good" : "is-bad"}>{overview?.auth_secret_configured ? "Configured" : "Missing / too short"}</strong></div>
+          <div><span>CORS allowlist</span><strong className={overview?.cors_configured ? "is-good" : "is-bad"}>{overview?.cors_configured ? "Configured" : "Using local defaults"}</strong></div>
+          <div><span>Active sessions</span><strong>{overview?.active_sessions ?? "—"}</strong></div>
+        </div>
+      </div>
+
+      <div className="admin-section-card">
+        <div className="admin-table-heading"><div><h2>Administrative audit log</h2><p>Recent account activation and deactivation actions.</p></div></div>
+        {loading ? <div className="admin-empty">Loading activity…</div> : auditLogs.length === 0 ? <div className="admin-empty"><Activity size={20} />No administrative actions recorded yet.</div> :
+          <div className="admin-table-wrap"><table className="admin-users-table">
+            <thead><tr><th>Time</th><th>Action</th><th>Administrator ID</th><th>Target user ID</th><th>Details</th></tr></thead>
+            <tbody>{auditLogs.map((row) => <tr key={row.id}><td>{row.created_at ? new Date(row.created_at).toLocaleString() : "—"}</td><td>{row.action.replaceAll("_", " ")}</td><td>{row.admin_user_id}</td><td>{row.target_user_id ?? "—"}</td><td>{row.details || "—"}</td></tr>)}</tbody>
+          </table></div>}
       </div>
 
       <div className="admin-section-card">

@@ -5,6 +5,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import "./account-layout.css";
+import AccountContactSettings from "./AccountContactSettings";
 import WealthManager from "./WealthManager";
 import LoanManagement from "./LoanManagement";
 import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession } from "./api";
@@ -8853,6 +8854,7 @@ function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
       </div>
       <p className="finos-theme-footnote">Default remains the standard Financial OS look. Elegant Plain is a clean white theme with thin borders and minimal visual decoration. Theme selection changes appearance only, not your records or calculations.</p>
     </section>
+    <AccountContactSettings />
     <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }}><h3>Account Profile</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Manage your personal details, tax information, and salary setup. This is separate from your bank and investment accounts.</p><button className="primary-button" onClick={() => onNavigate("Account Profile")}>Open Account Profile</button></section>
     <section className="glass-card" style={{ padding: "22px" }}><h3>Finance Diary</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Read-only master history of account and transaction activity. Entries cannot be edited or deleted.</p><button className="primary-button" onClick={() => onNavigate("Finance Diary")}>Open Finance Diary</button></section>
   </div>;

@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, model_validator
 
 from app.routes.auth import get_current_user, get_current_admin
-from app.models import User, BrokerOrderSubmission
+from app.models import User, BrokerOrderSubmission, BrokerTradingControl
 from app.database.database import get_db
 
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
@@ -34,6 +34,10 @@ GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
 GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/order")
 GATEWAY_ORDER_BOOK_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_BOOK_PATH", "/orders")
 GATEWAY_TIMEOUT_SECONDS = 15
+
+
+class BrokerTradingControlUpdate(BaseModel):
+    enabled: bool
 
 
 class BrokerOrderRequest(BaseModel):
@@ -125,9 +129,59 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
         raise HTTPException(status_code=502, detail="Gateway timed out or returned invalid JSON; check broker order status before retrying.") from exc
 
 
+@router.get("/trading-control")
+def get_trading_control(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin),
+):
+    """Return the persistent Financial OS live-order switch; absent setting is OFF."""
+    try:
+        control = db.query(BrokerTradingControl).filter_by(id=1).first()
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=503, detail="Trading control storage is unavailable; live orders remain blocked.") from exc
+    return {
+        "enabled": bool(control.enabled) if control else False,
+        "updated_at": control.updated_at.isoformat() if control and control.updated_at else None,
+    }
+
+
+@router.put("/trading-control")
+def update_trading_control(
+    request: BrokerTradingControlUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin),
+):
+    """Change the Financial OS live-order switch. Disabling blocks new orders only."""
+    try:
+        control = db.query(BrokerTradingControl).filter_by(id=1).first()
+        if control is None:
+            control = BrokerTradingControl(id=1, enabled=request.enabled, updated_by=current_user.id)
+            db.add(control)
+        else:
+            control.enabled = request.enabled
+            control.updated_by = current_user.id
+        db.commit()
+        db.refresh(control)
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(status_code=503, detail="Unable to save trading control; live-order state was not changed.") from exc
+    return {
+        "enabled": bool(control.enabled),
+        "updated_at": control.updated_at.isoformat() if control.updated_at else None,
+    }
+
+
 @router.post("/", status_code=202)
 def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_admin)):
     """Submit a real-money order only for the configured platform owner."""
+    # The persistent kill switch defaults to OFF when no row exists. It is
+    # checked before investment validation, reservation creation, or gateway I/O.
+    try:
+        trading_control = db.query(BrokerTradingControl).filter_by(id=1).first()
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=503, detail="Trading control storage is unavailable; order was not submitted.") from exc
+    if trading_control is None or not trading_control.enabled:
+        raise HTTPException(status_code=403, detail="Live trading is OFF. Turn it ON in Playground > Execution before submitting new orders.")
     # Keep the API's canonical fields and also provide the field names used
     # by the deployed Flask gateway. This makes the contract explicit while
     # remaining compatible with existing backend callers.

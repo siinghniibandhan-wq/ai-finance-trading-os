@@ -285,7 +285,17 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         nested_data.get("order_status"),
     ]
     rejected_statuses = {"error", "failed", "failure", "rejected", "not_accepted"}
-    if result.get("success") is False or nested_data.get("success") is False or any(
+    # A broker may return HTTP 200 and still include an error envelope or a
+    # rejection code. Never let an order_id alone override an explicit error.
+    error_values = [
+        result.get("error"), result.get("error_code"), result.get("errorCode"),
+        nested_data.get("error"), nested_data.get("error_code"), nested_data.get("errorCode"),
+    ]
+    has_error = any(
+        value is not None and str(value).strip() not in {"", "0", "None"}
+        for value in error_values
+    )
+    if has_error or result.get("success") is False or nested_data.get("success") is False or any(
         isinstance(status, str) and status.strip().lower() in rejected_statuses
         for status in status_values
     ):
@@ -307,27 +317,28 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         or nested_data.get("order_id")
         or nested_data.get("orderid")
     )
-    # Only say "accepted" when the gateway provides a positive acknowledgement.
-    # A generic/empty response must not be presented as a successful order.
+    # A broker order ID alone is not proof of acceptance: rejected orders may
+    # still receive an ID. Require both an identifier and a positive status.
+    # Missing/ambiguous acknowledgements stay SUBMITTING for manual reconciliation
+    # and are never automatically resubmitted.
     accepted_statuses = {"success", "accepted", "open", "pending", "submitted", "complete", "completed"}
-    explicitly_accepted = (
+    positive_ack = (
         result.get("success") is True
         or nested_data.get("success") is True
         or any(
             isinstance(status, str) and status.strip().lower() in accepted_statuses
             for status in status_values
         )
-        or bool(order_id)
     )
-    if not explicitly_accepted:
+    if not order_id or not positive_ack:
         logger.warning("m.Stock gateway returned an ambiguous placement response for user %s", current_user.id)
         raise HTTPException(
             status_code=502,
-            detail="The gateway response did not confirm whether the order was accepted. Check the broker order book before retrying.",
+            detail="The gateway response did not confirm acceptance with a broker order ID. Check the broker order book before retrying.",
         )
 
     reservation.status = "ACKNOWLEDGED"
-    reservation.gateway_order_id = str(order_id) if order_id else None
+    reservation.gateway_order_id = str(order_id)
     reservation.response_json = json.dumps(result, default=str)
     db.commit()
 

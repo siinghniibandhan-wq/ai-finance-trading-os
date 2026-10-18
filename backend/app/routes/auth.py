@@ -24,7 +24,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.database.database import get_db
 from datetime import datetime
-from app.models import User, UserCredential, AuthSession
+from app.models import User, UserCredential, AuthSession, AdminAuditLog
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -395,7 +395,67 @@ def admin_update_user_status(
     if target.id == admin.id and not request.is_active:
         raise HTTPException(status_code=400, detail="The administrator cannot deactivate their own account.")
     target.is_active = request.is_active
+    db.add(AdminAuditLog(
+        admin_user_id=admin.id,
+        action="user_activated" if request.is_active else "user_deactivated",
+        target_user_id=target.id,
+        details=f"Account status changed to {'active' if request.is_active else 'inactive'}.",
+    ))
     db.commit()
     db.refresh(target)
     return {"status": "success", "user_id": target.id, "is_active": target.is_active}
     
+
+
+@router.get("/admin/overview")
+def admin_overview(
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Return operational counts derived from the live database."""
+    total_users = db.query(User).count()
+    active_users = db.query(User).filter(User.is_active.is_(True)).count()
+    inactive_users = total_users - active_users
+    active_sessions = db.query(AuthSession).filter(
+        AuthSession.revoked_at.is_(None),
+        AuthSession.expires_at > datetime.utcnow(),
+    ).count()
+    return {
+        "users_total": total_users,
+        "users_active": active_users,
+        "users_inactive": inactive_users,
+        "active_sessions": active_sessions,
+        "admin_configuration_present": bool(
+            os.getenv("ADMIN_USER_ID", "").strip() or os.getenv("ADMIN_EMAIL", "").strip()
+        ),
+        "auth_secret_configured": len(os.getenv("AUTH_SECRET_KEY", "").strip()) >= 32,
+        "cors_configured": bool(os.getenv("CORS_ALLOWED_ORIGINS", "").strip()),
+    }
+
+
+@router.get("/admin/audit-logs")
+def admin_audit_logs(
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+):
+    """Return recent administrator activity, newest first."""
+    rows = db.query(AdminAuditLog).order_by(
+        AdminAuditLog.created_at.desc(), AdminAuditLog.id.desc()
+    ).offset(offset).limit(limit).all()
+    return {
+        "items": [
+            {
+                "id": row.id,
+                "admin_user_id": row.admin_user_id,
+                "action": row.action,
+                "target_user_id": row.target_user_id,
+                "details": row.details,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+            }
+            for row in rows
+        ],
+        "limit": limit,
+        "offset": offset,
+    }

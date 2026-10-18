@@ -198,3 +198,38 @@ def test_does_not_guess_broker_order_id_from_order_number():
         "EXCHANGE": "NSE",
     }
     assert _normalize_trade(row) is None
+
+@pytest.mark.parametrize("flag_value", ["true", "yes", "01", ""]) 
+def test_reconciliation_requires_exact_mapping_flag_value_one(monkeypatch, flag_value):
+    from types import SimpleNamespace
+    from app.routes import broker_reconciliation
+
+    monkeypatch.setenv("MSTOCK_ORDER_ID_MAPPING_VERIFIED", flag_value)
+    monkeypatch.setattr(
+        broker_reconciliation,
+        "_gateway_request",
+        lambda *args, **kwargs: {
+            "status": "success",
+            "data": [{
+                "TRADE_NUMBER": "T-FLAG-1",
+                "EXCH_ORDER_NUMBER": "EX-FLAG-1",
+                "broker_order_id": "BROKER-FLAG-1",
+                "client_reference": "financial-os-7-test",
+                "SYMBOL": "RELIANCE",
+                "BUY_SELL": "B",
+                "QUANTITY": "1",
+                "PRICE": "100",
+                "ORDER_DATE_TIME": "2026-10-17 10:15:00",
+                "EXCHANGE": "NSE",
+            }],
+        },
+    )
+
+    result = broker_reconciliation.reconcile_broker_fills(
+        db=object(), current_user=SimpleNamespace(id=7)
+    )
+
+    assert result["status"] == "dry_run"
+    assert result["mapping_verified"] is False
+    assert result["imported_count"] == 0
+

@@ -64,8 +64,16 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
+    # Kept as "email" for backwards compatibility with existing clients.
+    # On login this field accepts either the registered email or phone number.
     email: str = Field(min_length=5, max_length=255)
     password: str = Field(min_length=1, max_length=128)
+
+
+class ContactUpdate(BaseModel):
+    email: str | None = Field(default=None, max_length=255)
+    phone_number: str | None = Field(default=None, max_length=25)
+    current_password: str = Field(min_length=1, max_length=128)
 
 
 def _secret() -> bytes:
@@ -180,27 +188,79 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 
 @router.post("/login")
 def login(request: LoginRequest, http_request: Request, db: Session = Depends(get_db)):
-    email = str(request.email).strip().lower()
-    rate_limit_key = _login_rate_limit_key(http_request, email)
+    identifier = str(request.email).strip().lower()
+    if "@" not in identifier:
+        import re
+        identifier = re.sub(r"[\\s().-]", "", identifier)
+    rate_limit_key = _login_rate_limit_key(http_request, identifier)
     _check_login_rate_limit(rate_limit_key)
-    user = db.query(User).filter(User.email == email, User.is_active.is_(True)).first()
+    user = db.query(User).filter(
+        (User.email == identifier) | (User.phone_number == identifier),
+        User.is_active.is_(True),
+    ).first()
     credential = db.query(UserCredential).filter(UserCredential.user_id == user.id).first() if user else None
     if not user or not credential or not _verify_password(request.password, credential.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid email or password.")
+        raise HTTPException(status_code=401, detail="Invalid email/phone number or password.")
     _clear_login_rate_limit(rate_limit_key)
     return {
         "status": "success",
         "token_type": "Bearer",
         "access_token": _issue_token(user.id, db),
         "expires_in": 43200,
-        "user": {"id": user.id, "name": user.name, "email": user.email, "currency": user.currency},
+        "user": {"id": user.id, "name": user.name, "email": user.email, "phone_number": user.phone_number, "currency": user.currency},
         "subscription": {"status": "not_configured", "message": "Payment and plan activation are not implemented yet."},
     }
 
 
 @router.get("/me")
 def me(user: User = Depends(get_current_user)):
-    return {"id": user.id, "name": user.name, "email": user.email, "currency": user.currency}
+    return {"id": user.id, "name": user.name, "email": user.email, "phone_number": user.phone_number, "currency": user.currency}
+
+
+@router.patch("/contact")
+def update_contact(
+    request: ContactUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update one login contact after password re-authentication."""
+    credential = db.query(UserCredential).filter(UserCredential.user_id == user.id).first()
+    if not credential or not _verify_password(request.current_password, credential.password_hash):
+        raise HTTPException(status_code=401, detail="Current password is incorrect.")
+
+    if (request.email is None) == (request.phone_number is None):
+        raise HTTPException(status_code=422, detail="Update either email or phone number in one request.")
+
+    if request.email is not None:
+        email = request.email.strip().lower()
+        if "@" not in email or "." not in email.rsplit("@", 1)[-1] or len(email) > 255:
+            raise HTTPException(status_code=422, detail="Enter a valid email address.")
+        duplicate = db.query(User).filter(User.email == email, User.id != user.id).first()
+        if duplicate:
+            raise HTTPException(status_code=409, detail="That email address is already registered.")
+        user.email = email
+
+    if request.phone_number is not None:
+        import re
+        phone = re.sub(r"[\s().-]", "", request.phone_number.strip())
+        if not re.fullmatch(r"\+?[0-9]{7,15}", phone):
+            raise HTTPException(status_code=422, detail="Enter a valid phone number with 7 to 15 digits.")
+        duplicate = db.query(User).filter(User.phone_number == phone, User.id != user.id).first()
+        if duplicate:
+            raise HTTPException(status_code=409, detail="That phone number is already registered.")
+        user.phone_number = phone
+
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="The contact detail could not be saved. Check whether it is already registered.") from exc
+    db.refresh(user)
+    return {
+        "status": "success",
+        "message": "Contact detail updated. You can use the new email or phone number to log in.",
+        "user": {"id": user.id, "name": user.name, "email": user.email, "phone_number": user.phone_number, "currency": user.currency},
+    }
 
 
 @router.post("/logout")
@@ -278,6 +338,7 @@ def admin_list_users(
                 "id": item.id,
                 "name": item.name,
                 "email": item.email,
+                "phone_number": item.phone_number,
                 "currency": item.currency,
                 "is_active": item.is_active,
                 "created_at": item.created_at.isoformat() if item.created_at else None,

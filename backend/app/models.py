@@ -48,6 +48,13 @@ class User(Base):
         index=True,
     )
 
+    phone_number: Mapped[str | None] = mapped_column(
+        String(25),
+        unique=True,
+        nullable=True,
+        index=True,
+    )
+
     currency: Mapped[str] = mapped_column(
         String(10),
         default="INR",

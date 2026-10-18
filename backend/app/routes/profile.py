@@ -28,7 +28,7 @@ def get_my_profile(user: User = Depends(get_current_user), db: Session = Depends
             profile = json.loads(row.profile_json)
         except (TypeError, json.JSONDecodeError):
             raise HTTPException(status_code=500, detail="Saved profile data could not be read safely.")
-    return {"user": {"id": user.id, "name": user.name, "email": user.email, "currency": user.currency}, "profile": profile, "updated_at": row.updated_at.isoformat() if row and row.updated_at else None}
+    return {"user": {"id": user.id, "name": user.name, "email": user.email, "phone_number": user.phone_number, "currency": user.currency}, "profile": profile, "updated_at": row.updated_at.isoformat() if row and row.updated_at else None}
 
 
 @router.put("/me")

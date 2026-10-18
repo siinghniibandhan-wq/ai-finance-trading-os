@@ -229,6 +229,36 @@ def test_real_order_and_order_book_routes_require_admin():
     assert get_current_admin in route_dependencies["list_broker_orders"]
 
 
+def test_admin_user_id_keeps_admin_access_after_email_change(monkeypatch):
+    from app.routes.auth import get_current_admin
+
+    admin = SimpleNamespace(id=7, email="new-admin@example.com")
+    monkeypatch.setenv("ADMIN_USER_ID", "7")
+    monkeypatch.setenv("ADMIN_EMAIL", "old-admin@example.com")
+
+    assert get_current_admin(admin) is admin
+
+
+def test_admin_user_id_does_not_grant_access_to_other_users(monkeypatch):
+    from app.routes.auth import get_current_admin
+
+    monkeypatch.setenv("ADMIN_USER_ID", "7")
+    monkeypatch.setenv("ADMIN_EMAIL", "other@example.com")
+
+    with pytest.raises(HTTPException) as error:
+        get_current_admin(SimpleNamespace(id=8, email="other@example.com"))
+    assert error.value.status_code == 403
+
+
+def test_invalid_admin_user_id_fails_closed(monkeypatch):
+    from app.routes.auth import get_current_admin
+
+    monkeypatch.setenv("ADMIN_USER_ID", "not-a-number")
+    with pytest.raises(HTTPException) as error:
+        get_current_admin(SimpleNamespace(id=7, email="admin@example.com"))
+    assert error.value.status_code == 503
+
+
 def test_duplicate_client_id_is_blocked_from_persistent_database_record(monkeypatch, db_session):
     calls = []
 

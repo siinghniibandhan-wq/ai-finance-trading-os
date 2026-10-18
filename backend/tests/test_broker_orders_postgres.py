@@ -42,6 +42,8 @@ def test_postgres_blocks_simultaneous_duplicate_order(monkeypatch):
             setup.add(user)
             setup.commit()
             user_id = user.id
+            setup.add(models.BrokerTradingControl(id=1, enabled=True, updated_by=user_id))
+            setup.commit()
 
         def fake_gateway(path, method, payload):
             gateway_calls.append(payload["client_id"])

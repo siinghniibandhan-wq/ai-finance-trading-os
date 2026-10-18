@@ -434,3 +434,50 @@ def test_submission_match_rejects_wrong_broker_order_id():
         "side": "BUY",
     }
     assert _submission_matches_trade(submission, trade) is False
+
+
+# Reconciliation uses the same date-ordered ledger validator as manual BUY/SELL.
+# These tests cover partial fills and ensure a SELL cannot create negative holdings.
+from app.routes.investment_transactions import validate_transaction_timeline
+
+
+def test_reconciliation_timeline_allows_partial_buy_fills():
+    rows = [
+        {"id": 1, "transaction_type": "BUY", "quantity": Decimal("2"), "transaction_date": date(2026, 10, 17)},
+    ]
+    _, final_quantity = validate_transaction_timeline(
+        rows, "BUY", Decimal("1.5"), date(2026, 10, 18)
+    )
+    assert final_quantity == Decimal("3.5")
+
+
+def test_reconciliation_timeline_rejects_sell_above_available_holding():
+    rows = [
+        {"id": 1, "transaction_type": "BUY", "quantity": Decimal("2"), "transaction_date": date(2026, 10, 17)},
+    ]
+    with pytest.raises(ValueError, match="Insufficient holding quantity"):
+        validate_transaction_timeline(
+            rows, "SELL", Decimal("2.01"), date(2026, 10, 18)
+        )
+
+
+def test_reconciliation_timeline_rejects_sell_that_breaks_later_ledger():
+    rows = [
+        {"id": 1, "transaction_type": "BUY", "quantity": Decimal("5"), "transaction_date": date(2026, 10, 17)},
+        {"id": 2, "transaction_type": "SELL", "quantity": Decimal("4"), "transaction_date": date(2026, 10, 20)},
+    ]
+    with pytest.raises(ValueError, match="negative on"):
+        validate_transaction_timeline(
+            rows, "SELL", Decimal("2"), date(2026, 10, 18)
+        )
+
+
+def test_reconciliation_timeline_respects_partial_sell_balance():
+    rows = [
+        {"id": 1, "transaction_type": "BUY", "quantity": Decimal("5"), "transaction_date": date(2026, 10, 17)},
+        {"id": 2, "transaction_type": "SELL", "quantity": Decimal("1.25"), "transaction_date": date(2026, 10, 18)},
+    ]
+    _, final_quantity = validate_transaction_timeline(
+        rows, "SELL", Decimal("1.75"), date(2026, 10, 19)
+    )
+    assert final_quantity == Decimal("2")

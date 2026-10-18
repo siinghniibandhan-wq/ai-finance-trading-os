@@ -181,7 +181,7 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
     except SQLAlchemyError as exc:
         raise HTTPException(status_code=503, detail="Trading control storage is unavailable; order was not submitted.") from exc
     if trading_control is None or not trading_control.enabled:
-        raise HTTPException(status_code=403, detail="Live trading is OFF. Turn it ON in Playground > Execution before submitting new orders.")
+        raise HTTPException(status_code=403, detail="Live trading is OFF. Turn it ON in Settings > Live Trading before submitting new orders.")
     # Keep the API's canonical fields and also provide the field names used
     # by the deployed Flask gateway. This makes the contract explicit while
     # remaining compatible with existing backend callers.

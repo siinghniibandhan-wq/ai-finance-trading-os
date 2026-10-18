@@ -21,9 +21,16 @@ export default function AccountContactSettings() {
     let active = true;
     (async () => {
       try {
-        const response = await apiFetch(`${API_BASE_URL}/api/auth/me`);
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data?.detail || "Unable to load account details.");
+        let response = await apiFetch(`${API_BASE_URL}/api/auth/me`);
+        let data = await response.json().catch(() => ({}));
+        if (!response.ok && response.status === 404) {
+          response = await apiFetch(`${API_BASE_URL}/api/profile/me`);
+          const profileData = await response.json().catch(() => ({}));
+          if (response.ok) data = profileData.user || {};
+          else throw new Error(profileData?.detail || `Unable to load account details (${response.status}).`);
+        } else if (!response.ok) {
+          throw new Error(data?.detail || `Unable to load account details (${response.status}).`);
+        }
         if (!active) return;
         setEmail(data.email || "");
         setPhone(data.phone_number || "");
@@ -55,16 +62,27 @@ export default function AccountContactSettings() {
     }
     isEmail ? setSavingEmail(true) : setSavingPhone(true);
     try {
-      const response = await apiFetch(`${API_BASE_URL}/api/auth/contact`, {
+      const payload = {
+        ...(isEmail ? { email: value } : { phone_number: value }),
+        current_password: password,
+      };
+      let response = await apiFetch(`${API_BASE_URL}/api/auth/contact`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          ...(isEmail ? { email: value } : { phone_number: value }),
-          current_password: password,
-        }),
+        body: JSON.stringify(payload),
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.detail || "Unable to update contact details.");
+      let data = await response.json().catch(() => ({}));
+      // Older production backends may not yet expose /api/auth/contact.
+      // Retry only a 404 against the equivalent profile compatibility route.
+      if (response.status === 404) {
+        response = await apiFetch(`${API_BASE_URL}/api/profile/contact`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(payload),
+        });
+        data = await response.json().catch(() => ({}));
+      }
+      if (!response.ok) throw new Error(data?.detail || `Unable to update contact details (${response.status}).`);
       const current = readSessionUser() || getCurrentUser() || {};
       sessionStorage.setItem("financial_os_user", JSON.stringify({ ...current, ...data.user }));
       setEmail(data.user?.email || value);

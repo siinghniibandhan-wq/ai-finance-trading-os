@@ -4,9 +4,8 @@
 // ============================================================
 import React, { useCallback, useEffect, useState } from "react";
 import { RefreshCw, Pencil, Ban, Landmark, HandCoins, AlertTriangle } from "lucide-react";
-import { apiFetch, getCurrentUserId } from "./api";
+import { API_BASE_URL, apiFetch, getCurrentUserId } from "./api";
 
-const API_BASE_URL = "https://wealthmanager.duckdns.org";
 const USER_ID = getCurrentUserId();
 const money = (value) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value || 0));
 const inputStyle = { width: "100%", boxSizing: "border-box", padding: "10px", borderRadius: 9, border: "1px solid rgba(255,255,255,.16)", background: "#171729", color: "#fff" };

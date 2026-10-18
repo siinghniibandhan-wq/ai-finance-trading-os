@@ -315,17 +315,17 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
                 payload_hash="c" * 64, status="ACKNOWLEDGED",
                 gateway_order_id="MOCK-BROKER-ROLLBACK-1",
             ))
-            setup.execute(text("""
+            setup.connection().exec_driver_sql("""
                 CREATE OR REPLACE FUNCTION fail_mock_reconciliation_insert()
-                RETURNS trigger LANGUAGE plpgsql AS $
+                RETURNS trigger LANGUAGE plpgsql AS $func$
                 BEGIN
                     IF NEW.notes LIKE '%MOCK-ROLLBACK-TRADE%' THEN
                         RAISE EXCEPTION 'simulated ledger write failure';
                     END IF;
                     RETURN NEW;
                 END;
-                $
-            """))
+                $func$
+            """)
             setup.execute(text("""
                 DROP TRIGGER IF EXISTS fail_mock_reconciliation_insert_trigger
                 ON investment_transactions

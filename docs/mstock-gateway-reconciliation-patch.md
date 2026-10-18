@@ -150,16 +150,33 @@ def _enrich_trade_rows(rows, order_rows):
         if not isinstance(row, dict):
             continue
         exch_id = _book_value(row, "exchange_order_id", "EXCH_ORDER_NUMBER", "exchangeorderid")
-        matched = by_exchange_order_id.get(exch_id)
-        # No match = no ownership attribution. Never infer from a symbol or tag.
-        if not exch_id or not matched:
+        if trade_history:
+            # The documented /trades response exposes order_id; match it only
+            # to the exact ID recorded from the successful placement response.
+            logged_order_id = _book_value(row, "order_id", "orderid")
+            client_id = by_logged_id.get(logged_order_id) if logged_order_id else None
+            matched = None
+            if client_id:
+                original_request = requests_by_client.get(client_id, {})
+                matched = {
+                    "broker_order_id": logged_order_id,
+                    "client_reference": client_id,
+                    "exchange": _book_value(row, "exchange", "EXCHANGE") or _book_value(original_request, "exchange"),
+                    "symbol": _book_value(original_request, "tradingsymbol", "symbol"),
+                }
+        else:
+            matched = by_exchange_order_id.get(exch_id)
+        # No exact logged order match = no ownership attribution.
+        if not matched or (not trade_history and not exch_id):
             continue
         item = dict(row)
         item["exchange_order_id"] = exch_id
         item["broker_order_id"] = matched["broker_order_id"]
         item["client_reference"] = matched["client_reference"]
         # Prefer the tradebook's SYMBOL code. /trades tradingsymbol may be a company name.
-        item["symbol"] = _book_value(row, "SYMBOL", "symbol") or matched["symbol"]
+        # /trades documents tradingsymbol as a display name in some rows;
+        # only use the trade-book SYMBOL code, otherwise use the logged order symbol.
+        item["symbol"] = _book_value(row, "SYMBOL") or matched["symbol"]
         item["exchange"] = _book_value(row, "EXCHANGE", "exchange") or matched["exchange"]
         item["trade_id"] = _book_value(row, "TRADE_NUMBER", "trade_id", "tradeid", "fill_id")
         item["side"] = _book_value(row, "BUY_SELL", "side", "transaction_type")
@@ -176,9 +193,9 @@ def _enrich_trade_rows(rows, order_rows):
     return enriched
 
 
-def _read_trade_rows(url, keys, params=None):
+def _read_trade_rows(url, keys, form_data=None, trade_history=False):
     try:
-        body = _mstock_get_json(url, params=params)
+        body = _mstock_get_json(url, form_data=form_data)
         rows = _list_from_book(body, keys)
         if rows is None:
             return jsonify({"status": "error", "message": "Unsupported m.Stock broker-book response shape"}), 502
@@ -245,6 +262,7 @@ def read_tradehistory():
         MSTOCK_TRADE_HISTORY_URL,
         ("trades", "tradehistory", "items", "data"),
         {"fromdate": from_date, "todate": to_date},
+        trade_history=True,
     )
 ```
 

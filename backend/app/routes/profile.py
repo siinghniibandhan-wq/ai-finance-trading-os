@@ -40,6 +40,12 @@ class ProfileUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     profile: dict[str, Any] = Field(default_factory=dict)
 
+class ContactChange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    email: str | None = Field(default=None, max_length=255)
+    phone_number: str | None = Field(default=None, max_length=25)
+    current_password: str = Field(min_length=1, max_length=128)
+
 
 @router.get("/me")
 def get_my_profile(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -73,6 +79,46 @@ def save_my_profile(payload: ProfileUpdate, user: User = Depends(get_current_use
     db.refresh(row)
     return {"status": "saved", "profile": payload.profile, "updated_at": row.updated_at.isoformat() if row.updated_at else None}
 
+
+
+@router.patch("/contact")
+def change_my_contact(payload: ContactChange, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Compatibility contact endpoint for deployments using the profile API prefix."""
+    if (payload.email is None) == (payload.phone_number is None):
+        raise HTTPException(status_code=422, detail="Update either email or phone number in one request.")
+    limit_key = f"profile-contact-change:{user.id}"
+    _check_login_rate_limit(limit_key)
+    credential = db.query(UserCredential).filter(UserCredential.user_id == user.id).first()
+    if not credential or not _verify_password(payload.current_password, credential.password_hash):
+        raise HTTPException(status_code=401, detail="Current password is incorrect.")
+    _clear_login_rate_limit(limit_key)
+
+    old_email = (user.email or "").strip().lower()
+    if payload.email is not None:
+        email = payload.email.strip().lower()
+        if not _EMAIL_RE.fullmatch(email):
+            raise HTTPException(status_code=422, detail="Enter a valid email address.")
+        if db.query(User).filter(User.email == email, User.id != user.id).first():
+            raise HTTPException(status_code=409, detail="That email address is already used by another account.")
+        user.email = email
+
+    if payload.phone_number is not None:
+        phone = _normalize_phone(payload.phone_number)
+        if db.query(User).filter(User.phone_number == phone, User.id != user.id).first():
+            raise HTTPException(status_code=409, detail="That phone number is already used by another account.")
+        user.phone_number = phone
+
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="The contact detail is already registered to another account.") from exc
+    db.refresh(user)
+    result = {"status": "success", "user": {"id": user.id, "name": user.name, "email": user.email, "phone_number": user.phone_number, "currency": user.currency}}
+    admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    if payload.email is not None and admin_email and admin_email == old_email and user.email != old_email:
+        result["admin_notice"] = "Your email no longer matches ADMIN_EMAIL on the server. Update ADMIN_EMAIL to the new address before relying on admin-only features."
+    return result
 
 
 @router.put("/email")

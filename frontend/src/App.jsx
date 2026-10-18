@@ -9660,6 +9660,8 @@ const deleteAccount = async () => {
 
       </section>
 
+      {/* Contact details belong on the Accounts page as requested. */}
+      <AccountContactSettings />
 
       {/* ====================================================
           SUMMARY

@@ -27,6 +27,20 @@ class _SkipFill(Exception):
     """Rollback this fill's savepoint without aborting other valid fills."""
 
 
+def _submission_matches_trade(submission, trade):
+    """Require exact local submission identity and instrument metadata before importing a fill."""
+    return bool(
+        submission
+        and submission.gateway_order_id
+        and str(submission.gateway_order_id).strip() == trade["broker_order_id"]
+        and submission.investment_id
+        and (submission.symbol or "").strip().upper() == trade["symbol"]
+        and (submission.exchange or "").strip().upper() == trade["exchange"]
+        and (submission.side or "").strip().upper() == trade["side"]
+        and submission.quantity
+    )
+
+
 def _trade_rows(response):
     if not isinstance(response, dict) or response.get("status") == "error":
         raise HTTPException(status_code=502, detail="Gateway returned a trade-book error; no fills were imported.")
@@ -189,15 +203,7 @@ def reconcile_broker_fills(
                 """), {"user_id": user_id, "client_reference": trade["client_reference"]}).first()
                 # Never infer ownership or investment from symbol/price/time.
                 # The documented broker order-ID mapping must be verified separately.
-                if (
-                    not submission
-                    or not submission.gateway_order_id
-                    or str(submission.gateway_order_id) != trade["broker_order_id"]
-                    or not submission.investment_id
-                    or (submission.exchange or "").upper() != trade["exchange"]
-                    or (submission.side or "").upper() != trade["side"]
-                    or not submission.quantity
-                ):
+                if not _submission_matches_trade(submission, trade):
                     raise _SkipFill()
 
                 investment = db.execute(text("""
@@ -262,7 +268,7 @@ def reconcile_broker_fills(
                 }).first()
                 db.execute(text("""
                     UPDATE investments
-                    SET quantity = :quantity, current_price = :price, updated_at = CURRENT_TIMESTAMP
+                    SET quantity = :quantity, updated_at = CURRENT_TIMESTAMP
                     WHERE id = :investment_id AND user_id = :user_id
                 """), {
                     "quantity": new_quantity, "price": trade["price"],
@@ -278,9 +284,9 @@ def reconcile_broker_fills(
                     "investment_transaction_id": tx.id, "side": trade["side"],
                     "quantity": str(trade["quantity"]), "price": str(trade["price"]),
                 })
-        except _SkipFill:
-            # begin_nested rolls back only this fill; previously imported fills remain in session.
-            if not any(item.get("trade_id") == trade["trade_id"] for item in skipped):
+        except _SkipFill as exc:
+            # begin_nested rolls back only this fill; duplicates are counted separately.
+            if str(exc) != "duplicate" and not any(item.get("trade_id") == trade["trade_id"] for item in skipped):
                 skipped.append({"trade_id": trade["trade_id"], "reason": "unmatched_order_or_unsafe_position"})
             continue
         except HTTPException:

@@ -117,6 +117,36 @@ def reconcile_broker_fills(
     user_id = current_user.id
     response = _gateway_request(TRADE_BOOK_PATH, "GET")
     trades = _trade_rows(response)
+
+    # Fail closed until the broker's placement order_id is verified to match
+    # the order identifier exposed by the trade-book endpoint. Dry-run is the
+    # default and must not write markers, ledger rows, or holding quantities.
+    if os.getenv("MSTOCK_ORDER_ID_MAPPING_VERIFIED", "0") != "1":
+        preview = []
+        for raw in trades:
+            trade = _normalize_trade(raw)
+            if trade is None:
+                preview.append({"status": "skipped", "reason": "missing_or_invalid_tradebook_fields"})
+            else:
+                preview.append({
+                    "status": "would_match_only_if_order_id_mapping_verified",
+                    "trade_id": trade["trade_id"],
+                    "exchange_order_id": trade["exchange_order_id"],
+                    "client_reference_present": bool(trade["client_reference"]),
+                    "exchange": trade["exchange"],
+                    "side": trade["side"],
+                    "quantity": str(trade["quantity"]),
+                    "trade_date": trade["trade_date"].isoformat(),
+                })
+        return {
+            "status": "dry_run",
+            "mapping_verified": False,
+            "imported_count": 0,
+            "preview_count": len(preview),
+            "preview": preview,
+            "message": "No portfolio records were changed. Verify the broker order-ID mapping before enabling imports.",
+        }
+
     imported, duplicates, skipped = [], [], []
 
     for raw in trades:

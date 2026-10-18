@@ -69,7 +69,7 @@ def _normalize_trade(row):
     exchange_order_id = row.get("exchange_order_id") or row.get("EXCH_ORDER_NUMBER")
     # Distinct from exchange_order_id: only gateway-enriched data may provide
     # broker_order_id after joining the order book to the local placement log.
-    broker_order_id = row.get("broker_order_id") or row.get("order_id") or row.get("ORDER_NUMBER")
+    broker_order_id = row.get("broker_order_id")
     client_reference = row.get("client_reference") or row.get("client_id")
     # SYMBOL is the broker's instrument code. FULL_SYMBOL is a permitted fallback;
     # tradingsymbol from the /trades API is intentionally not used as a holding key.

@@ -2,7 +2,7 @@ from types import SimpleNamespace
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.database.database import Base
 from app import models
@@ -24,7 +24,7 @@ def db_session(tmp_path):
         engine.dispose()
 
 
-def request_payload(client_id=None):
+def request_payload(client_id=None, investment_id=None):
     return broker_orders.BrokerOrderRequest(
         side="BUY",
         symbol="RELIANCE-EQ",
@@ -35,6 +35,7 @@ def request_payload(client_id=None):
         quantity=1,
         quote_price=Decimal("1450.00"),
         client_id=client_id,
+        investment_id=investment_id,
     )
 
 
@@ -310,3 +311,69 @@ def test_ambiguous_gateway_exception_keeps_reservation_and_blocks_retry(monkeypa
         restarted_session.close()
 
     assert calls == [client_id]
+
+
+
+def _create_investments_table(db_session):
+    db_session.execute(text("""
+        CREATE TABLE investments (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            symbol VARCHAR(100),
+            quantity NUMERIC(18,6) NOT NULL DEFAULT 0
+        )
+    """))
+    db_session.commit()
+
+
+def test_selected_investment_is_validated_and_persisted(monkeypatch, db_session):
+    _create_investments_table(db_session)
+    db_session.execute(text("""
+        INSERT INTO investments (id, user_id, name, symbol, quantity)
+        VALUES (501, 7, 'Reliance', 'RELIANCE-EQ', 0)
+    """))
+    db_session.commit()
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request",
+        lambda *args, **kwargs: {"success": True, "order_id": "ORD-INVESTMENT"},
+    )
+
+    result = broker_orders.place_broker_order(
+        request_payload("investment-link-1", investment_id=501),
+        db=db_session,
+        current_user=SimpleNamespace(id=7),
+    )
+
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=7, client_id="investment-link-1"
+    ).one()
+    assert result["order_id"] == "ORD-INVESTMENT"
+    assert reservation.investment_id == 501
+
+
+def test_cannot_submit_order_for_another_users_investment(monkeypatch, db_session):
+    _create_investments_table(db_session)
+    db_session.execute(text("""
+        INSERT INTO investments (id, user_id, name, symbol, quantity)
+        VALUES (502, 999, 'Private holding', 'PRIVATE', 1)
+    """))
+    db_session.commit()
+    gateway_calls = []
+    monkeypatch.setattr(
+        broker_orders, "_gateway_request",
+        lambda *args, **kwargs: gateway_calls.append(args) or {"success": True, "order_id": "SHOULD-NOT-SEND"},
+    )
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload("wrong-owner-investment", investment_id=502),
+            db=db_session,
+            current_user=SimpleNamespace(id=7),
+        )
+
+    assert error.value.status_code == 404
+    assert gateway_calls == []
+    assert db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=7, client_id="wrong-owner-investment"
+    ).count() == 0

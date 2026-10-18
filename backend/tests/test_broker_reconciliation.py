@@ -338,3 +338,28 @@ def test_normalizes_documented_mstock_trade_history_fields():
 def test_parse_documented_mstock_order_timestamp_formats(raw, expected):
     assert _parse_trade_date(raw) == expected
 
+@pytest.mark.parametrize("field", ["QUANTITY", "PRICE"])
+@pytest.mark.parametrize("bad_value", ["NaN", "Infinity", "-Infinity"])
+def test_rejects_non_finite_broker_fill_values(field, bad_value):
+    row = {
+        "TRADE_NUMBER": "T-NON-FINITE",
+        "EXCH_ORDER_NUMBER": "EX-NON-FINITE",
+        "broker_order_id": "BROKER-NON-FINITE",
+        "client_reference": "financial-os-7-abc123",
+        "SYMBOL": "RELIANCE",
+        "BUY_SELL": "B",
+        "QUANTITY": "1",
+        "PRICE": "100",
+        "ORDER_DATE_TIME": "2026-10-17 10:15:00",
+        "EXCHANGE": "NSE",
+    }
+    row[field] = bad_value
+    assert _normalize_trade(row) is None
+
+
+@pytest.mark.parametrize("status", ["ERROR", "Failed", " FAILURE "])
+def test_rejects_case_insensitive_gateway_error_status(status):
+    with pytest.raises(HTTPException) as exc:
+        _trade_rows({"status": status, "data": []})
+    assert exc.value.status_code == 502
+

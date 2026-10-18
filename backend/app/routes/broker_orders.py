@@ -357,7 +357,7 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         logger.warning("m.Stock gateway returned an ambiguous placement response for user %s", current_user.id)
         raise HTTPException(
             status_code=502,
-            detail="The gateway response did not confirm acceptance with a broker order ID. Do not resubmit until order status is verified directly with the broker.",
+            detail="The gateway response did not confirm acceptance with a broker order ID. Check the broker order book and do not resubmit until order status is verified directly with the broker.",
         )
 
     reservation.status = "ACKNOWLEDGED"

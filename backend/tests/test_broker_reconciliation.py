@@ -119,3 +119,40 @@ def test_normalizes_documented_mstock_tradebook_sample():
     assert normalized["price"] == Decimal("6.98")
     assert normalized["trade_date"] == date(2025, 6, 10)
 
+
+
+
+def test_reconciliation_defaults_to_dry_run_without_database_writes(monkeypatch):
+    from types import SimpleNamespace
+    from app.routes import broker_reconciliation
+
+    monkeypatch.delenv("MSTOCK_ORDER_ID_MAPPING_VERIFIED", raising=False)
+    monkeypatch.setattr(
+        broker_reconciliation,
+        "_gateway_request",
+        lambda *args, **kwargs: {
+            "status": "success",
+            "data": [{
+                "TRADE_NUMBER": "T-DRY-1",
+                "EXCH_ORDER_NUMBER": "EX-DRY-1",
+                "client_reference": "financial-os-7-test",
+                "SYMBOL": "RELIANCE",
+                "BUY_SELL": "B",
+                "QUANTITY": "1",
+                "PRICE": "100",
+                "ORDER_DATE_TIME": "2026-10-17 10:15:00",
+                "EXCHANGE": "NSE",
+            }],
+        },
+    )
+
+    # An opaque object proves the default path returns before any DB access.
+    result = broker_reconciliation.reconcile_broker_fills(
+        db=object(), current_user=SimpleNamespace(id=7)
+    )
+
+    assert result["status"] == "dry_run"
+    assert result["mapping_verified"] is False
+    assert result["imported_count"] == 0
+    assert result["preview_count"] == 1
+    assert result["preview"][0]["trade_id"] == "T-DRY-1"

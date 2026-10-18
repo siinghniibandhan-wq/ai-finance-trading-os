@@ -481,3 +481,23 @@ def test_reconciliation_timeline_respects_partial_sell_balance():
         rows, "SELL", Decimal("1.75"), date(2026, 10, 19)
     )
     assert final_quantity == Decimal("2")
+
+
+@pytest.mark.parametrize("envelope", [
+    {"success": False, "data": []},
+    {"error": "provider unavailable", "data": []},
+    {"error_code": "E401", "data": []},
+    {"data": {"success": False, "trades": []}},
+    {"result": {"errorCode": "E500", "data": []}},
+])
+def test_rejects_false_success_and_error_code_tradebook_envelopes(envelope):
+    with pytest.raises(HTTPException) as exc:
+        _trade_rows(envelope)
+    assert exc.value.status_code == 502
+
+
+@pytest.mark.parametrize("value", [None, False, 0, "0", "false", "null", ""])
+def test_allows_non_error_tradebook_error_flags(value):
+    rows = [{"TRADE_NUMBER": "T-FLAG", "status": "Complete"}]
+    response = {"success": True, "error": value, "data": rows}
+    assert _trade_rows(response) == rows

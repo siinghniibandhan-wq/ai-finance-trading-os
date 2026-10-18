@@ -338,6 +338,7 @@ def admin_list_users(
                 "id": item.id,
                 "name": item.name,
                 "email": item.email,
+                "phone_number": item.phone_number,
                 "currency": item.currency,
                 "is_active": item.is_active,
                 "created_at": item.created_at.isoformat() if item.created_at else None,

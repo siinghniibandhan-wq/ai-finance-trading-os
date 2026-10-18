@@ -42,7 +42,8 @@ def _submission_matches_trade(submission, trade):
 
 
 def _trade_rows(response):
-    if not isinstance(response, dict) or response.get("status") == "error":
+    status = str(response.get("status", "")).strip().lower() if isinstance(response, dict) else ""
+    if not isinstance(response, dict) or status in {"error", "failed", "failure"}:
         raise HTTPException(status_code=502, detail="Gateway returned a trade-book error; no fills were imported.")
     for key in ("tradebook", "trades", "data", "items"):
         value = response.get(key)
@@ -127,7 +128,10 @@ def _normalize_trade(row):
     # If FULL_SYMBOL is qualified (e.g. NSE:ABC-EQ), strip only the exchange prefix.
     if ":" in normalized_symbol:
         normalized_symbol = normalized_symbol.split(":", 1)[1]
-    if (not str(trade_id).strip() or not str(exchange_order_id).strip()
+    # Decimal accepts NaN and Infinity as valid values; reject them explicitly
+    # before comparisons or database writes so malformed broker payloads skip safely.
+    if (not qty.is_finite() or not px.is_finite()
+            or not str(trade_id).strip() or not str(exchange_order_id).strip()
             or not str(broker_order_id).strip() or not str(client_reference).strip()
             or qty <= 0 or px <= 0 or normalized_side not in {"BUY", "SELL"}
             or normalized_exchange not in {"NSE", "BSE"} or not normalized_symbol):

@@ -304,6 +304,81 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
             assert Decimal(str(quantity)) == Decimal("5.000000")
             assert ledger_count == 2
             assert marker_count == 0
+
+        # Force a ledger insert failure in PostgreSQL and prove the savepoint
+        # and outer transaction leave neither a fill marker nor a quantity change.
+        rollback_client_id = f"pg-reconcile-rollback-{uuid4().hex}"
+        with SessionFactory() as setup:
+            setup.add(models.BrokerOrderSubmission(
+                user_id=user_id, investment_id=investment_id, symbol="RELIANCE-EQ",
+                exchange="NSE", side="BUY", quantity=1, client_id=rollback_client_id,
+                payload_hash="c" * 64, status="ACKNOWLEDGED",
+                gateway_order_id="MOCK-BROKER-ROLLBACK-1",
+            ))
+            setup.execute(text("""
+                CREATE OR REPLACE FUNCTION fail_mock_reconciliation_insert()
+                RETURNS trigger LANGUAGE plpgsql AS $
+                BEGIN
+                    IF NEW.notes LIKE '%MOCK-ROLLBACK-TRADE%' THEN
+                        RAISE EXCEPTION 'simulated ledger write failure';
+                    END IF;
+                    RETURN NEW;
+                END;
+                $
+            """))
+            setup.execute(text("""
+                DROP TRIGGER IF EXISTS fail_mock_reconciliation_insert_trigger
+                ON investment_transactions
+            """))
+            setup.execute(text("""
+                CREATE TRIGGER fail_mock_reconciliation_insert_trigger
+                BEFORE INSERT ON investment_transactions
+                FOR EACH ROW EXECUTE FUNCTION fail_mock_reconciliation_insert()
+            """))
+            setup.commit()
+        rollback_row = {
+            "TRADE_NUMBER": "MOCK-ROLLBACK-TRADE",
+            "EXCH_ORDER_NUMBER": "MOCK-ROLLBACK-EXCHANGE-ORDER",
+            "broker_order_id": "MOCK-BROKER-ROLLBACK-1",
+            "client_reference": rollback_client_id,
+            "SYMBOL": "RELIANCE-EQ",
+            "BUY_SELL": "BUY",
+            "QUANTITY": "1",
+            "PRICE": "103.00",
+            "ORDER_DATE_TIME": "2026-10-17 10:03:00",
+            "EXCHANGE": "NSE",
+        }
+        monkeypatch.setattr(
+            broker_reconciliation, "_gateway_request",
+            lambda path, method: {"success": True, "data": [rollback_row]},
+        )
+        with SessionFactory() as session:
+            with pytest.raises(HTTPException) as failed_import:
+                broker_reconciliation.reconcile_broker_fills(
+                    db=session, current_user=SimpleNamespace(id=user_id)
+                )
+            assert failed_import.value.status_code == 500
+        with SessionFactory() as verify:
+            quantity = verify.execute(text(
+                "SELECT quantity FROM investments WHERE id=:id AND user_id=:uid"
+            ), {"id": investment_id, "uid": user_id}).scalar_one()
+            ledger_count = verify.execute(text("""
+                SELECT COUNT(*) FROM investment_transactions
+                WHERE user_id=:uid AND investment_id=:iid
+            """), {"uid": user_id, "iid": investment_id}).scalar_one()
+            marker_count = verify.execute(text("""
+                SELECT COUNT(*) FROM broker_reconciled_fills
+                WHERE user_id=:uid AND broker_trade_id='MOCK-ROLLBACK-TRADE'
+            """), {"uid": user_id}).scalar_one()
+            assert Decimal(str(quantity)) == Decimal("5.000000")
+            assert ledger_count == 2
+            assert marker_count == 0
+            verify.execute(text("""
+                DROP TRIGGER IF EXISTS fail_mock_reconciliation_insert_trigger
+                ON investment_transactions
+            """))
+            verify.execute(text("DROP FUNCTION IF EXISTS fail_mock_reconciliation_insert()"))
+            verify.commit()
     finally:
         # Disposable CI PostgreSQL only. Keep legacy tables out of Base metadata.
         Base.metadata.drop_all(engine)

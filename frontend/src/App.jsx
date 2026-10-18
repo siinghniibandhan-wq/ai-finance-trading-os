@@ -8750,6 +8750,11 @@ function AccountCompletionPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [activeSection, setActiveSection] = useState("Basic Profile");
+  const [accountEmail, setAccountEmail] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailMsg, setEmailMsg] = useState({ kind: "", text: "" });
   const sections = ["Basic Profile", "KYC", "Employment & Income", "Tax Information", "Salary Setup", "Financial Connections"];
   useEffect(() => {
     let active = true;
@@ -8757,7 +8762,7 @@ function AccountCompletionPage() {
       .then(async response => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.detail || `Profile load failed (${response.status})`);
-        if (active) setProfile({ ...emptyProfile, ...(data.profile || {}) });
+        if (active) { setProfile({ ...emptyProfile, ...(data.profile || {}) }); setAccountEmail(data.user?.email || ""); }
       })
       .catch(err => { if (active) setError(err.message || "Unable to load profile."); })
       .finally(() => { if (active) setLoading(false); });
@@ -8769,6 +8774,7 @@ function AccountCompletionPage() {
       ["legal_name", "Full legal name", "text", "Name as shown on PAN"],
       ["display_name", "Display name / nickname", "text", "Optional"],
       ["date_of_birth", "Date of birth", "date", ""],
+      ["phone", "Phone number", "tel", "e.g. +919876543210"],
       ["tax_residency", "Tax residency", "select", ["India", "Non-resident / other"]]
     ],
     "KYC": [
@@ -8821,6 +8827,31 @@ function AccountCompletionPage() {
     } catch (err) { setError(err.message || "Unable to save profile."); }
     finally { setSaving(false); }
   };
+  const changeEmail = async () => {
+    setEmailMsg({ kind: "", text: "" });
+    if (!newEmail.trim() || !emailPassword) {
+      setEmailMsg({ kind: "error", text: "Enter the new email and your current password." });
+      return;
+    }
+    setEmailBusy(true);
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/profile/email`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ new_email: newEmail.trim(), current_password: emailPassword }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : `Email change failed (${response.status})`);
+      setAccountEmail(data.user?.email || newEmail.trim().toLowerCase());
+      setNewEmail("");
+      setEmailPassword("");
+      setEmailMsg({ kind: "ok", text: `Email updated. Use the new address next time you sign in.${data.admin_notice ? " " + data.admin_notice : ""}` });
+    } catch (err) {
+      setEmailMsg({ kind: "error", text: err.message || "Unable to change email." });
+    } finally {
+      setEmailBusy(false);
+    }
+  };
   const inputStyle = { width: "100%", boxSizing: "border-box", borderRadius: "10px", padding: "11px 12px", color: "var(--finos-text, inherit)", background: "var(--t-inner-bg, var(--t-card-bg, transparent))", border: "1px solid var(--finos-border, currentColor)" };
   return <div className="dashboard">
     <section className="welcome-section"><div><p className="welcome-label">ACCOUNT</p><h2>Account <span>completion.</span></h2><p className="welcome-description">Complete your profile once. These details will support KYC, tax preparation, and future account connections.</p></div></section>
@@ -8829,6 +8860,16 @@ function AccountCompletionPage() {
     <section className="glass-card" style={{ padding: "18px", marginBottom: "18px" }}><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>{sections.map(section => <button key={section} type="button" onClick={() => setActiveSection(section)} className={activeSection === section ? "primary-button" : "secondary-button"} style={{ padding: "9px 12px" }}>{section}{sectionComplete(section) ? " ✓" : ""}</button>)}</div></section>
     <section className="glass-card" style={{ padding: "22px" }}><h3 style={{ marginTop: 0 }}>{activeSection}</h3>
       {loading ? <p>Loading your profile…</p> : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>{visibleFields.map(([key, label, type, hint]) => <label key={key} style={{ display: "grid", gap: "7px", fontSize: "13px", color: "var(--finos-text, inherit)" }}><span>{label}</span>{type === "select" ? <StyledSelect value={profile[key] || ""} onChange={e => update(key, e.target.value)}>{hint.map(option => <option key={option} value={option}>{option === "salaried" ? "Salaried" : option === "self_employed" ? "Self-employed / professional" : option === "business_owner" ? "Business owner" : option === "undecided" ? "Not decided" : option === "new" ? "New regime" : option === "old" ? "Old regime" : option.replaceAll("_", " ")}</option>)}</StyledSelect> : <input style={inputStyle} type={type} value={profile[key] ?? ""} placeholder={hint || "Enter value"} onChange={e => update(key, e.target.value)} min={type === "number" ? "0" : undefined} />}</label>)}</div>}
+      {activeSection === "Basic Profile" && !loading && <div style={{ marginTop: "22px", paddingTop: "18px", borderTop: "1px solid var(--finos-border, rgba(255,255,255,0.12))" }}>
+        <h4 style={{ margin: "0 0 4px" }}>Email address</h4>
+        <p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", fontSize: "13px", margin: "0 0 12px" }}>Current: <strong>{accountEmail || "not set"}</strong>. This is your sign-in email. Changing it needs your current password.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
+          <input type="email" autoComplete="email" placeholder="New email address" value={newEmail} onChange={e => setNewEmail(e.target.value)} style={inputStyle} />
+          <input type="password" autoComplete="current-password" placeholder="Current password" value={emailPassword} onChange={e => setEmailPassword(e.target.value)} style={inputStyle} />
+        </div>
+        <button type="button" className="secondary-button" style={{ marginTop: "12px" }} disabled={emailBusy} onClick={changeEmail}>{emailBusy ? "Updating…" : "Update email"}</button>
+        {emailMsg.text && <p role={emailMsg.kind === "error" ? "alert" : "status"} style={{ color: emailMsg.kind === "error" ? "var(--finos-negative, #ef4444)" : "var(--finos-positive, #22c55e)", marginTop: "10px" }}>{emailMsg.text}</p>}
+      </div>}
       {activeSection === "KYC" && <p style={{ color: "var(--finos-muted, inherit)", lineHeight: 1.6, marginTop: "18px" }}>PAN and legal-name similarity can flag a mismatch, but cannot prove identity or PAN ownership. Official PAN verification and DigiLocker consent-based verification are not connected yet. Do not enter your full Aadhaar number here.</p>}
       {activeSection === "Salary Setup" && <p style={{ color: "var(--finos-muted, inherit)", lineHeight: 1.6, marginTop: "18px" }}>Enter the structure manually if you do not have Form 16 or a salary slip. Salary transactions remain separate: recording ₹25,000 received will not create another income record when you save this structure. Upload and reconciliation are planned, not active in this build.</p>}
       {error && <p role="alert" style={{ color: "var(--finos-danger, #b42318)", marginTop: "16px" }}>{error}</p>}{notice && <p role="status" style={{ color: "var(--finos-success, #087443)", marginTop: "16px" }}>{notice}</p>}

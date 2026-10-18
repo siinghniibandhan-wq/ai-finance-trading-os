@@ -188,11 +188,14 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 
 @router.post("/login")
 def login(request: LoginRequest, http_request: Request, db: Session = Depends(get_db)):
-    email = str(request.email).strip().lower()
-    rate_limit_key = _login_rate_limit_key(http_request, email)
+    identifier = str(request.email).strip().lower()
+    if "@" not in identifier:
+        import re
+        identifier = re.sub(r"[\\s().-]", "", identifier)
+    rate_limit_key = _login_rate_limit_key(http_request, identifier)
     _check_login_rate_limit(rate_limit_key)
     user = db.query(User).filter(
-        (User.email == email) | (User.phone_number == email),
+        (User.email == identifier) | (User.phone_number == identifier),
         User.is_active.is_(True),
     ).first()
     credential = db.query(UserCredential).filter(UserCredential.user_id == user.id).first() if user else None

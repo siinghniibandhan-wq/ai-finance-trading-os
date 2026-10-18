@@ -5,6 +5,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import "./account-layout.css";
+import AdminPanel from "./AdminPanel";
 import AccountContactSettings from "./AccountContactSettings";
 import WealthManager from "./WealthManager";
 import LoanManagement from "./LoanManagement";
@@ -32,7 +33,8 @@ import {
   Landmark,
   CreditCard,
   CircleDollarSign,
-  Trash2
+  Trash2,
+  ShieldCheck
 } from "lucide-react";
 
 
@@ -258,6 +260,7 @@ const PRODUCT_TYPES_BY_ASSET_CLASS = {
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [headerPanel, setHeaderPanel] = useState("");
   const [headerSearch, setHeaderSearch] = useState("");
   const headerActionsRef = useRef(null);
@@ -282,7 +285,7 @@ export default function App() {
     "Dashboard", "Wealth Manager", "Accounts", "Account Profile", "Transactions", "Ledger", "Chart of Accounts",
     "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio",
     "Holdings", "Investment Transactions", "Markets", "Goals",
-    "AI Assistant", "Tax", "Playground", "Settings", "Finance Diary"
+    "AI Assistant", "Tax", "Playground", "Settings", "Finance Diary", "Admin Panel"
   ]);
   const getPageFromLocation = () => {
     const params = new URLSearchParams(window.location.search);
@@ -291,6 +294,24 @@ export default function App() {
   };
   const [activePage, setActivePage] = useState(getPageFromLocation);
   const [selectedTheme, setSelectedTheme] = useState(readFinosTheme);
+
+  useEffect(() => {
+    let cancelled = false;
+    const checkAdminAccess = async () => {
+      try {
+        const response = await apiFetch(`${API_BASE_URL}/api/auth/admin/users?limit=1&offset=0`);
+        if (!cancelled) setIsAdmin(response.ok);
+      } catch {
+        if (!cancelled) setIsAdmin(false);
+      }
+    };
+    if (getCurrentUserId()) checkAdminAccess();
+    return () => { cancelled = true; };
+  }, []);
+
+  const visibleNavigation = isAdmin
+    ? [...navigation, { section: "Administration", items: [{ name: "Admin Panel", icon: ShieldCheck }] }]
+    : navigation;
 
   useEffect(() => { applyFinosTheme(selectedTheme); }, [selectedTheme]);
   const changeTheme = (theme) => { setSelectedTheme(theme); applyFinosTheme(theme); };
@@ -370,7 +391,7 @@ export default function App() {
 
         <div className="navigation">
 
-          {navigation.map((group) => (
+          {visibleNavigation.map((group) => (
 
             <div
               className="navigation-group"
@@ -579,6 +600,8 @@ export default function App() {
    <AIAssistantPage />
 ) : activePage === "Finance Diary" ? (
    <FinanceDiaryPage />
+) : activePage === "Admin Panel" ? (
+   isAdmin ? <AdminPanel /> : <div className="admin-access-denied" role="alert">Administrator access is required. Your backend admin configuration must be set before this panel is available.</div>
 ) : activePage === "Settings" ? (
    <SettingsPage onNavigate={handleNavigation} selectedTheme={selectedTheme} onThemeChange={changeTheme} />
 ) : (

@@ -50,7 +50,8 @@ def _mstock_get_json(url, form_data=None):
     if response.status_code == 401:
         raise PermissionError("m.Stock access token expired or invalid")
     if response.status_code != 200:
-        raise RuntimeError(str(body.get("message", "m.Stock broker-book request failed"))[:200])
+        message = body.get("message", "m.Stock broker-book request failed") if isinstance(body, dict) else "m.Stock broker-book request failed"
+        raise RuntimeError(str(message)[:200])
     # Some provider errors use HTTP 200, so inspect the JSON status too.
     if isinstance(body, dict) and str(body.get("status", "")).lower() in {"error", "failed", "failure"}:
         raise RuntimeError(str(body.get("message", "m.Stock broker-book request failed"))[:200])
@@ -119,6 +120,7 @@ def _local_order_references():
 def _enrich_trade_rows(rows, order_rows, trade_history=False):
     by_logged_id, requests_by_client = _local_order_references()
     by_exchange_order_id = {}
+    by_broker_order_id = {}
     for order in order_rows:
         if not isinstance(order, dict):
             continue
@@ -137,13 +139,16 @@ def _enrich_trade_rows(rows, order_rows, trade_history=False):
             continue
 
         original_request = requests_by_client.get(client_id, {})
-        by_exchange_order_id[exch_id] = {
+        mapped_order = {
             # This exact placement-response ID is used for the local match.
             "broker_order_id": matched_logged_id,
             "client_reference": client_id,
+            "exchange_order_id": exch_id,
             "exchange": _book_value(order, "exchange", "EXCHANGE") or _book_value(original_request, "exchange"),
             "symbol": _book_value(order, "tradingsymbol", "symbol", "SYMBOL") or _book_value(original_request, "tradingsymbol"),
         }
+        by_exchange_order_id[exch_id] = mapped_order
+        by_broker_order_id[matched_logged_id] = mapped_order
 
     enriched = []
     for row in rows:
@@ -151,23 +156,16 @@ def _enrich_trade_rows(rows, order_rows, trade_history=False):
             continue
         exch_id = _book_value(row, "exchange_order_id", "EXCH_ORDER_NUMBER", "exchangeorderid")
         if trade_history:
-            # The documented /trades response exposes order_id; match it only
-            # to the exact ID recorded from the successful placement response.
+            # /trades has order_id; join it to a logged placement response and
+            # then to the matching order-book row to recover exchange_order_id.
             logged_order_id = _book_value(row, "order_id", "orderid")
-            client_id = by_logged_id.get(logged_order_id) if logged_order_id else None
-            matched = None
-            if client_id:
-                original_request = requests_by_client.get(client_id, {})
-                matched = {
-                    "broker_order_id": logged_order_id,
-                    "client_reference": client_id,
-                    "exchange": _book_value(row, "exchange", "EXCHANGE") or _book_value(original_request, "exchange"),
-                    "symbol": _book_value(original_request, "tradingsymbol", "symbol"),
-                }
+            matched = by_broker_order_id.get(logged_order_id) if logged_order_id else None
+            if matched and not exch_id:
+                exch_id = matched["exchange_order_id"]
         else:
             matched = by_exchange_order_id.get(exch_id)
         # No exact logged order match = no ownership attribution.
-        if not matched or (not trade_history and not exch_id):
+        if not matched or not exch_id:
             continue
         item = dict(row)
         item["exchange_order_id"] = exch_id

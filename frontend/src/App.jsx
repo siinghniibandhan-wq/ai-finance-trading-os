@@ -8896,7 +8896,29 @@ function TradingControlSettings({ compact = false }) {
   }, []);
 
   const toggleTradingControl = async () => {
-    if (!tradingControl || busy) return;
+    if (busy) return;
+
+    // If the initial status request failed (for example, the deployed backend
+    // still returns 404), keep this control clickable so an admin can retry.
+    // Never send a PUT or infer the current switch state while status is unknown.
+    if (!tradingControl) {
+      setBusy(true);
+      setError("");
+      setNotice("");
+      try {
+        const response = await apiFetch(`${API}/api/broker-orders/trading-control`, { cache: "no-store" });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || `Trading control unavailable (${response.status})`);
+        setTradingControl(data);
+        setNotice("Trading status refreshed. Review the displayed state before changing it.");
+      } catch (err) {
+        setError(err.message || "Unable to read live-trading status.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     const enabled = !tradingControl.enabled;
     if (enabled && !window.confirm("Enable new real-money orders through Financial OS? Check every order before submitting.")) return;
     setBusy(true);
@@ -8925,8 +8947,8 @@ function TradingControlSettings({ compact = false }) {
       <strong id="live-trading-settings-title" style={{ fontSize: 13 }}>Live Trading</strong>
       <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "#ef4444" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
     </div>
-    <button type="button" onClick={toggleTradingControl} disabled={!tradingControl || busy} aria-pressed={enabled} style={{ width: "100%", marginTop: 8, padding: "9px 10px", borderRadius: 8, border: "1px solid var(--finos-border, rgba(255,255,255,.18))", background: enabled ? "rgba(239,68,68,.12)" : "rgba(34,197,94,.12)", color: "inherit", cursor: !tradingControl || busy ? "not-allowed" : "pointer", opacity: !tradingControl || busy ? .6 : 1, font: "inherit", fontSize: 12, fontWeight: 700 }}>
-      {busy ? "Saving…" : enabled ? "Turn LIVE TRADING OFF" : "Turn LIVE TRADING ON"}
+    <button type="button" onClick={toggleTradingControl} disabled={busy} aria-pressed={enabled} style={{ width: "100%", marginTop: 8, padding: "9px 10px", borderRadius: 8, border: "1px solid var(--finos-border, rgba(255,255,255,.18))", background: enabled ? "rgba(239,68,68,.12)" : "rgba(34,197,94,.12)", color: "inherit", cursor: busy ? "not-allowed" : "pointer", opacity: busy ? .6 : 1, font: "inherit", fontSize: 12, fontWeight: 700 }}>
+      {busy ? (tradingControl ? "Saving…" : "Checking…") : tradingControl === null ? "Retry status check" : enabled ? "Turn LIVE TRADING OFF" : "Turn LIVE TRADING ON"}
     </button>
     {error && <p role="alert" style={{ color: "var(--finos-negative, #ef4444)", fontSize: 11, lineHeight: 1.4 }}>{error}</p>}
     {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", fontSize: 11, lineHeight: 1.4 }}>{notice}</p>}
@@ -8945,7 +8967,7 @@ function TradingControlSettings({ compact = false }) {
       </span>
     </div>
     <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
-      <button type="button" className={enabled ? "secondary-button" : "primary-button"} onClick={toggleTradingControl} disabled={!tradingControl || busy} aria-pressed={enabled}>
+      <button type="button" className={enabled ? "secondary-button" : "primary-button"} onClick={toggleTradingControl} disabled={busy} aria-pressed={enabled}>
         {busy ? "Saving…" : enabled ? "Turn LIVE TRADING OFF" : "Turn LIVE TRADING ON"}
       </button>
       <span style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", fontSize: 12 }}>{busy ? "Saving account setting…" : "Admin-only control · saved on the server"}</span>

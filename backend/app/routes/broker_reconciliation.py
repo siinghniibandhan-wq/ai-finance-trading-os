@@ -176,27 +176,49 @@ def reconcile_broker_fills(
                 # The gateway's client_reference is not trusted on its own:
                 # verify it belongs to this user in the backend's durable order table.
                 submission = db.execute(text("""
-                    SELECT id FROM broker_order_submissions
+                    SELECT id, investment_id, gateway_order_id, symbol, exchange, side, quantity
+                    FROM broker_order_submissions
                     WHERE user_id = :user_id AND client_id = :client_reference
+                    FOR UPDATE
                 """), {"user_id": user_id, "client_reference": trade["client_reference"]}).first()
-                if not submission:
+                # Never infer ownership or investment from symbol/price/time.
+                # The documented broker order-ID mapping must be verified separately.
+                if (
+                    not submission
+                    or not submission.gateway_order_id
+                    or str(submission.gateway_order_id) != trade["exchange_order_id"]
+                    or not submission.investment_id
+                    or (submission.exchange or "").upper() != trade["exchange"]
+                    or (submission.side or "").upper() != trade["side"]
+                    or not submission.quantity
+                ):
                     raise _SkipFill()
 
                 investment = db.execute(text("""
                     SELECT id, quantity, name
                     FROM investments
-                    WHERE user_id = :user_id
-                      AND UPPER(COALESCE(symbol, '')) = :symbol
-                      AND UPPER(COALESCE(exchange, '')) = :exchange
-                    ORDER BY id
-                    LIMIT 1
+                    WHERE id = :investment_id AND user_id = :user_id
                     FOR UPDATE
-                """), {"user_id": user_id, "symbol": trade["symbol"], "exchange": trade["exchange"]}).first()
+                """), {"user_id": user_id, "investment_id": submission.investment_id}).first()
 
                 if investment is None:
-                    # Never create a zero-quantity shell holding during reconciliation.
-                    # A fill without an existing ledger-aware position is flagged for
-                    # manual portfolio setup/review rather than silently changing holdings.
+                    raise _SkipFill()
+
+                already_filled = db.execute(text("""
+                    SELECT COALESCE(SUM(it.quantity), 0)
+                    FROM broker_reconciled_fills brf
+                    JOIN investment_transactions it
+                      ON it.id = brf.investment_transaction_id
+                    WHERE brf.user_id = :user_id
+                      AND brf.client_reference = :client_reference
+                      AND brf.exchange_order_id = :exchange_order_id
+                """), {
+                    "user_id": user_id,
+                    "client_reference": trade["client_reference"],
+                    "exchange_order_id": trade["exchange_order_id"],
+                }).scalar() or 0
+                if Decimal(str(already_filled)) + trade["quantity"] > Decimal(str(submission.quantity)):
+                    skipped.append({"trade_id": trade["trade_id"], "reason": "cumulative_fill_exceeds_order_quantity"})
                     raise _SkipFill()
 
                 ledger_count = db.execute(text("""

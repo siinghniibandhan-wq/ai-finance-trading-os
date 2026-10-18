@@ -3147,6 +3147,10 @@ function AIAssistantPage() {
 function PlaygroundPage() {
   const API = "https://wealthmanager.duckdns.org";
   const [status, setStatus] = useState(null);
+  const [tradingControl, setTradingControl] = useState(null);
+  const [tradingControlBusy, setTradingControlBusy] = useState(false);
+  const [tradingControlError, setTradingControlError] = useState("");
+  const [tradingControlNotice, setTradingControlNotice] = useState("");
   const [tab, setTab] = useState("Market Data");
   const [symbolsText, setSymbolsText] = useState("RELIANCE, TCS, INFY, HDFCBANK");
   const [quotes, setQuotes] = useState([]);
@@ -3162,6 +3166,42 @@ function PlaygroundPage() {
   const [notice, setNotice] = useState("");
   const symbols = () => [...new Set(symbolsText.split(/[\s,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean))].slice(0, 20);
   useEffect(() => { let cancelled=false; apiFetch(`${API}/api/vibe-trading/status`).then(async r=>{const d=await r.json(); if(!r.ok) throw new Error(d.detail||`Status ${r.status}`); return d;}).then(d=>{if(!cancelled)setStatus(d);}).catch(e=>{if(!cancelled)setError(`API status unavailable: ${e.message}`);}); return ()=>{cancelled=true;}; }, []);
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch(`${API}/api/broker-orders/trading-control`, { cache: "no-store" })
+      .then(async response => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || `Trading control unavailable (${response.status})`);
+        return data;
+      })
+      .then(data => { if (!cancelled) setTradingControl(data); })
+      .catch(error => { if (!cancelled) setTradingControlError(error.message || "Unable to read live-trading status."); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggleTradingControl = async () => {
+    if (!tradingControl || tradingControlBusy) return;
+    const enabled = !tradingControl.enabled;
+    if (enabled && !window.confirm("Enable new real-money orders through Financial OS? Check every order before submitting.")) return;
+    setTradingControlBusy(true);
+    setTradingControlError("");
+    setTradingControlNotice("");
+    try {
+      const response = await apiFetch(`${API}/api/broker-orders/trading-control`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.detail || `Unable to update trading switch (${response.status})`);
+      setTradingControl(data);
+      setTradingControlNotice(enabled ? "New Financial OS real-money orders are enabled." : "New Financial OS real-money orders are blocked.");
+    } catch (error) {
+      setTradingControlError(error.message || "Unable to update live-trading status.");
+    } finally {
+      setTradingControlBusy(false);
+    }
+  };
   const loadQuotes = async (e) => { if(e)e.preventDefault(); const list=symbols(); if(!list.length){setError("Enter at least one symbol.");return;} setBusy(true);setError("");setNotice("");try{const r=await apiFetch(`${API}/api/vibe-trading/quotes`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({symbols:list})});const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||`Request failed (${r.status})`));setQuotes(Array.isArray(d.quotes)?d.quotes:[]);setUpdatedAt(new Date().toLocaleString());if(!d.quotes?.length)setError("No quote rows were returned.");}catch(e){setError(e.message||"Unable to load quotes.");}finally{setBusy(false);} };
   const runResearch = async (e) => { if(e)e.preventDefault();setBusy(true);setError("");setResearch("");try{const r=await apiFetch(`${API}/api/vibe-trading/research`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({question,symbols:symbols()})});const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||`Research failed (${r.status})`));setResearch(d.answer||"The research service returned no answer.");}catch(e){setError(e.message||"Research request failed.");}finally{setBusy(false);} };
   const panel={background:"rgba(255,255,255,.035)",border:"1px solid rgba(255,255,255,.10)",borderRadius:14,padding:16,minWidth:0};
@@ -3181,7 +3221,7 @@ function PlaygroundPage() {
     {tab==="Paper Trading"&&coming("Paper trading","Simulated orders, positions, fills, and P&L will be isolated from real holdings. No simulation is presented as active until its engine and persistence are implemented.")}
     {tab==="Risk Controls"&&<section style={panel}><h3 style={{marginTop:0}}>Risk controls draft</h3><p style={muted}>Set a draft risk budget. These values are not yet enforced by an execution engine.</p><label style={muted}>Risk per trade (%)<input type="number" min="0.1" max="5" step="0.1" value={riskPercent} onChange={e=>setRiskPercent(Number(e.target.value))} style={input}/></label><button type="button" style={btn} onClick={()=>setNotice(riskPercent>=0.1&&riskPercent<=5?`Draft risk budget: ${riskPercent}% per trade. Not enforced against orders.`:"Choose a risk budget from 0.1% to 5%.")}>Validate risk setting</button>{notice&&<p role="status" style={muted}>{notice}</p>}<ul style={muted}><li>Position-size limits — planned</li><li>Daily loss and drawdown limits — planned</li><li>Order validation and kill switch — required before live execution</li></ul></section>}
     {tab==="Agent Lab"&&coming("Multi-agent research lab","The planned roles are market researcher, news/fundamental analyst, strategy reviewer, and risk critic. Agent orchestration and source citations must be implemented before this panel runs agents.")}
-    {tab==="Execution"&&<section style={panel}><h3 style={{marginTop:0}}>Broker execution</h3><p style={muted}>Real-order execution is intentionally disabled. It will require explicit approval, authenticated broker session checks, order previews, risk validation, audit logs, and a kill switch.</p><button type="button" disabled style={{...btn,opacity:.55,cursor:"not-allowed"}}>Live execution unavailable — safety gate</button></section>}
+    {tab==="Execution"&&<section style={panel}><h3 style={{marginTop:0}}>Broker execution</h3><p style={muted}>Control whether new real-money orders can be submitted through Financial OS. Turning this OFF blocks new submissions; it does not cancel orders already accepted by the broker.</p><div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",marginTop:14}}><span role="status" aria-live="polite" style={{...btn,cursor:"default",borderColor:tradingControl?.enabled?"rgba(34,197,94,.65)":"rgba(239,68,68,.65)",background:tradingControl?.enabled?"rgba(34,197,94,.12)":"rgba(239,68,68,.10)"}}>{tradingControl===null?"LIVE TRADING STATUS UNKNOWN":tradingControl.enabled?"LIVE TRADING ON":"LIVE TRADING OFF"}</span><button type="button" onClick={toggleTradingControl} disabled={!tradingControl||tradingControlBusy} aria-pressed={Boolean(tradingControl?.enabled)} style={{...btn,opacity:!tradingControl||tradingControlBusy?.55:1,cursor:!tradingControl||tradingControlBusy?"not-allowed":"pointer",borderColor:tradingControl?.enabled?"rgba(239,68,68,.65)":"rgba(34,197,94,.65)"}}>{tradingControlBusy?"Saving…":tradingControl?.enabled?"Turn LIVE TRADING OFF":"Turn LIVE TRADING ON"}</button></div>{tradingControlError&&<p role="alert" style={{color:"#fca5a5",marginBottom:0}}>{tradingControlError}</p>}{tradingControlNotice&&<p role="status" style={{color:"var(--finos-positive)",marginBottom:0}}>{tradingControlNotice}</p>}<p style={{...muted,marginBottom:0,marginTop:12}}>Admin-only persistent switch. If its database migration or API is unavailable, the control remains unavailable and new orders stay blocked.</p></section>}
     <section style={panel}><h3 style={{marginTop:0}}>Capability map</h3><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:8}}>{tabs.map(t=><button type="button" key={t} onClick={()=>{setTab(t);setError("");setNotice("");}} style={{...btn,textAlign:"left"}}><strong>{t}</strong><div style={muted}>{t==="Market Data"||t==="AI Research"?"Connected API workflow":t==="Strategy Builder"||t==="Risk Controls"?"Interactive draft workspace":t==="Execution"?"Disabled for safety":"Visible workspace; engine pending"}</div></button>)}</div></section>
   </div>;
 }

@@ -74,7 +74,7 @@ export default function AuthPage({ initialMode = "login" }) {
 
         <form onSubmit={submit} style={{ display: "grid", gap: 14, marginTop: 20 }}>
           {mode === "register" && <label style={labelStyle}>Full name<input autoComplete="name" required maxLength={150} value={name} onChange={e => setName(e.target.value)} placeholder="Your name" style={inputStyle} /></label>}
-          <label style={labelStyle}>Email address<input autoComplete="email" type="email" required maxLength={255} value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle} /></label>
+          <label style={labelStyle}>{mode === "register" ? "Email address" : "Email or phone number"}<input autoComplete={mode === "register" ? "email" : "username"} type={mode === "register" ? "email" : "text"} required minLength={mode === "register" ? 5 : 5} maxLength={255} value={email} onChange={e => setEmail(e.target.value)} placeholder={mode === "register" ? "you@example.com" : "Email address or phone number"} style={inputStyle} /></label>
           <label style={labelStyle}>Password <span style={{ color: "#8f97b7", fontWeight: 400 }}>{mode === "register" ? "(minimum 12 characters)" : ""}</span>
             <span style={{ display: "flex", position: "relative" }}>
               <input autoComplete={mode === "register" ? "new-password" : "current-password"} type={showPassword ? "text" : "password"} required minLength={mode === "register" ? 12 : 1} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === "register" ? "At least 12 characters" : "Enter your password"} style={{ ...inputStyle, paddingRight: 44 }} />

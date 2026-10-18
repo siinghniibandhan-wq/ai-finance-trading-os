@@ -197,14 +197,14 @@ def reconcile_broker_fills(
             skipped.append({"reason": "missing_or_invalid_tradebook_fields"})
             continue
         try:
-            # A unique broker_trade_id is the final race-safe duplicate guard.
+            # A composite fill identity is the final race-safe duplicate guard.
             # The marker, investment transaction, and holding update share a savepoint.
             with db.begin_nested():
                 marker = db.execute(text("""
                     INSERT INTO broker_reconciled_fills
                       (user_id, broker_trade_id, exchange_order_id, client_reference)
                     VALUES (:user_id, :trade_id, :exchange_order_id, :client_reference)
-                    ON CONFLICT (broker_trade_id) DO NOTHING
+                    ON CONFLICT (user_id, broker_trade_id, exchange_order_id) DO NOTHING
                     RETURNING id
                 """), {
                     "user_id": user_id, "trade_id": trade["trade_id"],

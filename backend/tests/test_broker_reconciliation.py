@@ -181,3 +181,20 @@ def test_normalizer_keeps_broker_order_id_separate_from_exchange_order_id():
     assert normalized is not None
     assert normalized["exchange_order_id"] == "EXCHANGE-123"
     assert normalized["broker_order_id"] == "BROKER-456"
+
+
+
+def test_does_not_guess_broker_order_id_from_order_number():
+    row = {
+        "TRADE_NUMBER": "T-NO-GUESS",
+        "EXCH_ORDER_NUMBER": "EXCHANGE-123",
+        "ORDER_NUMBER": "POSSIBLY-EXCHANGE-ID",
+        "client_reference": "financial-os-7-abc123",
+        "SYMBOL": "RELIANCE",
+        "BUY_SELL": "B",
+        "QUANTITY": "1",
+        "PRICE": "100",
+        "ORDER_DATE_TIME": "2026-10-17 10:15:00",
+        "EXCHANGE": "NSE",
+    }
+    assert _normalize_trade(row) is None

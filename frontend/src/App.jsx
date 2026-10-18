@@ -2764,7 +2764,7 @@ function MarketsPage({ onNavigate }) {
               product_type: orderDraft.product_type, order_type: orderDraft.order_type, validity: orderDraft.validity,
               quantity, price: orderDraft.order_type === "LIMIT" ? Number(orderDraft.limit_price) : 0,
               quote_price: livePrice,
-              ...(orderModalSide === "SELL" && selectedSellInvestment?.id ? { investment_id: selectedSellInvestment.id } : {}),
+              ...(selectedSellInvestment?.id ? { investment_id: selectedSellInvestment.id } : {}),
               client_id: orderClientId || createOrderClientId()
             }) });
             const data = await response.json().catch(() => ({}));

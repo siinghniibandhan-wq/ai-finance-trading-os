@@ -1,0 +1,46 @@
+name: Account contact settings tests
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/routes/auth.py"
+      - "backend/app/routes/profile.py"
+      - "backend/app/models.py"
+      - "backend/tests/test_auth_session_revocation.py"
+      - "backend/migrations/*user_phone_number.sql"
+      - ".github/workflows/account-contact-tests.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/app/routes/auth.py"
+      - "backend/app/routes/profile.py"
+      - "backend/app/models.py"
+      - "backend/tests/test_auth_session_revocation.py"
+      - "backend/migrations/*user_phone_number.sql"
+      - ".github/workflows/account-contact-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  account-contact-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      AUTH_SECRET_KEY: local-test-secret-change-me-1234567890
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install backend dependencies
+        run: pip install -r requirements.txt
+      - name: Run authentication and contact-update regression tests
+        run: pytest -q tests/test_auth_session_revocation.py

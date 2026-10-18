@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { API_BASE_URL, apiFetch, getCurrentUser } from "./api";
-import "./account-contact-settings.css";
 
 function readSessionUser() {
   try { return JSON.parse(sessionStorage.getItem("financial_os_user") || "null"); }

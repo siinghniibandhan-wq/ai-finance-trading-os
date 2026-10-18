@@ -94,3 +94,28 @@ def test_rejects_http_200_error_payload_shape():
 def test_reads_nested_tradebook_rows():
     rows = [{"TRADE_NUMBER": "T-1"}]
     assert _trade_rows({"status": "success", "data": {"tradebook": rows}}) == rows
+
+def test_normalizes_documented_mstock_tradebook_sample():
+    # Shape documented by m.Stock Type A tradebook API.
+    row = {
+        "TRADE_NUMBER": "206465040",
+        "EXCH_ORDER_NUMBER": "1100000048872942",
+        "client_reference": "financial-os-7-abc123",
+        "SYMBOL": "IDEA",
+        "FULL_SYMBOL": "VODAFONE IDEA LIMITED",
+        "BUY_SELL": "Sell",
+        "QUANTITY": 4,
+        "PRICE": 6.98,
+        "ORDER_DATE_TIME": "10-06-2025 13:08:42",
+        "EXCHANGE": "NSE",
+    }
+    normalized = _normalize_trade(row)
+    assert normalized is not None
+    assert normalized["trade_id"] == "206465040"
+    assert normalized["exchange_order_id"] == "1100000048872942"
+    assert normalized["symbol"] == "IDEA"
+    assert normalized["side"] == "SELL"
+    assert normalized["quantity"] == Decimal("4")
+    assert normalized["price"] == Decimal("6.98")
+    assert normalized["trade_date"] == date(2025, 6, 10)
+

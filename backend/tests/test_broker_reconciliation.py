@@ -264,6 +264,7 @@ def test_submission_match_requires_exact_symbol_and_order_metadata():
         "side": "BUY",
     }
     submission = SimpleNamespace(
+        status="ACKNOWLEDGED",
         gateway_order_id="BROKER-1",
         investment_id=10,
         symbol="RELIANCE",
@@ -288,6 +289,7 @@ def test_submission_match_rejects_missing_symbol():
         "side": "BUY",
     }
     submission = SimpleNamespace(
+        status="ACKNOWLEDGED",
         gateway_order_id="BROKER-1",
         investment_id=10,
         symbol=None,

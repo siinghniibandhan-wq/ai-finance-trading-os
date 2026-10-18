@@ -327,3 +327,14 @@ def test_normalizes_documented_mstock_trade_history_fields():
     assert normalized["price"] == Decimal("145.45")
     assert normalized["trade_date"] == date(2024, 2, 14)
 
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("23-01-2025 02:55:55 PM", date(2025, 1, 23)),
+        ("23-01-2025 02:55 PM", date(2025, 1, 23)),
+        ("23/01/2025 02:55:55 PM", date(2025, 1, 23)),
+    ],
+)
+def test_parse_documented_mstock_order_timestamp_formats(raw, expected):
+    assert _parse_trade_date(raw) == expected
+

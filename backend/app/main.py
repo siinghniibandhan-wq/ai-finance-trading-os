@@ -21,7 +21,6 @@ from app.routes import (
     auth,
     profile,
     ai_assistant,
-    vibe_trading,
     broker_orders,
     users,
     loans,
@@ -276,7 +275,6 @@ def database_status():
 app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(ai_assistant.router)
-app.include_router(vibe_trading.router)
 app.include_router(broker_orders.router)
 
 app.include_router(users.router)

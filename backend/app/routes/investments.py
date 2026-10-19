@@ -406,26 +406,23 @@ def create_investment(
     # Never trust user_id supplied in the request body.
     user_id = current_user.id
 
-    # Mandatory broker validation; reject whitespace-only values.
-    if not data.broker.strip():
-        raise HTTPException(status_code=422, detail="Broker is required.")
-
     ensure_investments_table(db)
 
-    # If a matching broker cash account exists, purchases must be funded from it.
-    broker_account = None
-    broker_name = data.broker.strip()
+    # The selected account ID is authoritative; broker names are display-only.
+    if not data.investment_account_id:
+        raise HTTPException(status_code=409, detail="Select an active Investment / Broker Cash account from Money → Accounts.")
     broker_account = db.query(Account).filter(
+        Account.id == data.investment_account_id,
         Account.user_id == user_id,
         Account.account_type == "investment",
-        (Account.name.ilike(broker_name)) | (Account.institution.ilike(broker_name)),
         Account.is_active.is_(True),
-    ).order_by(Account.id).first()
+    ).with_for_update().first()
     if broker_account is None:
-        raise HTTPException(status_code=409, detail="Create an Investment / Broker Cash account for this broker in Money → Accounts, then transfer funds into it before recording a purchase.")
-    purchase_cost = (data.quantity * data.buy_price) + data.fees
+        raise HTTPException(status_code=409, detail="Selected account must be an active Investment account owned by the logged-in user.")
+    broker_name = (broker_account.institution or broker_account.name).strip()
+    purchase_cost = ((data.quantity * data.buy_price) + data.fees).quantize(Decimal("0.01"))
     if Decimal(str(broker_account.balance or 0)) < purchase_cost:
-        raise HTTPException(status_code=409, detail=f"Insufficient cash in {broker_account.name}. Transfer funds into the broker investment account before buying.")
+        raise HTTPException(status_code=409, detail=f"Insufficient cash in {broker_account.name}. Transfer funds into this Investment account before buying.")
 
     normalized_type = data.investment_type.strip().lower()
     if normalized_type in {"stocks", "stock", "etfs", "etf", "equity mutual funds"}:
@@ -565,6 +562,8 @@ def create_investment(
                 if data.broker
                 else None,
 
+            "investment_account_id": selected_account_id,
+
             "fees": data.fees,
             "notes": data.notes,
             "asset_class": asset_class,
@@ -642,6 +641,7 @@ def refresh_market_prices(
                 current_price,
                 buy_date,
                 broker,
+                investment_account_id,
                 fees,
                 notes,
                 created_at,
@@ -1241,7 +1241,7 @@ def update_investment(
     existing = db.execute(
         text(
             """
-            SELECT id, investment_type, symbol, buy_date, broker
+            SELECT id, investment_type, symbol, buy_date, broker, investment_account_id
             FROM investments
             WHERE id = :investment_id AND user_id = :user_id
             """
@@ -1253,11 +1253,21 @@ def update_investment(
     ).first()
 
     if not existing:
+        raise HTTPException(status_code=404, detail="Investment not found.")
 
-        raise HTTPException(
-            status_code=404,
-            detail="Investment not found.",
-        )
+    selected_account_id = data.investment_account_id or existing.investment_account_id
+    if not selected_account_id:
+        raise HTTPException(status_code=409, detail="Select an active Investment / Broker Cash account to link this position.")
+    selected_account = db.query(Account).filter(
+        Account.id == selected_account_id,
+        Account.user_id == user_id,
+        Account.account_type == "investment",
+        Account.is_active.is_(True),
+    ).with_for_update().first()
+    if selected_account is None:
+        raise HTTPException(status_code=409, detail="Selected account must be an active Investment account owned by the logged-in user.")
+    if existing.investment_account_id is not None and existing.investment_account_id != selected_account_id:
+        raise HTTPException(status_code=409, detail="A linked investment cannot be reassigned to another cash account. Keep its original broker-account linkage.")
 
     # A ledger-backed position is derived from its BUY/SELL history. Do not
     # silently overwrite its quantity/cost basis or change the broker/security
@@ -1335,6 +1345,8 @@ def update_investment(
                 buy_date = :buy_date,
 
                 broker = :broker,
+
+                investment_account_id = :investment_account_id,
 
                 fees = :fees,
 

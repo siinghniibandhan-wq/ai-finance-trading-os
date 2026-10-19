@@ -79,12 +79,12 @@ def create_account(account_data: AccountCreate, db: Session = Depends(get_db), c
 @router.get("/", response_model=list[AccountResponse])
 def list_accounts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Return only the authenticated customer's accounts."""
-    return db.query(Account).filter(Account.user_id == current_user.id).order_by(Account.id.desc()).all()
+    return db.query(Account).filter(Account.user_id == current_user.id, Account.is_deleted.is_(False)).order_by(Account.id.desc()).all()
 
 
 @router.get("/{account_id}", response_model=AccountResponse)
 def get_account(account_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    account = db.query(Account).filter(Account.id == account_id, Account.user_id == current_user.id).first()
+    account = db.query(Account).filter(Account.id == account_id, Account.user_id == current_user.id, Account.is_deleted.is_(False)).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found.")
     return account
@@ -130,20 +130,41 @@ def update_account(account_id: int, account_data: AccountUpdate, db: Session = D
 
 @router.delete("/{account_id}")
 def delete_account(account_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    account = db.query(Account).filter(Account.id == account_id, Account.user_id == current_user.id).first()
+    """Remove an archived account from the UI without deleting its ledger history."""
+    account = db.query(Account).filter(
+        Account.id == account_id,
+        Account.user_id == current_user.id,
+        Account.is_deleted.is_(False),
+    ).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found.")
-    # Permit closing an empty broker account, but preserve its row and history.
-    # Open holdings or remaining cash must be resolved before deactivation.
-    if (account.account_type or "").strip().lower() == "investment" and _has_linked_investments(db, current_user.id, account.id):
-        has_open_positions = _has_open_linked_investments(db, current_user.id, account.id)
-        if has_open_positions or account.balance != 0:
-            raise HTTPException(
-                status_code=409,
-                detail="Transfer out the remaining cash and sell/close all holdings before closing this Broker Account. When its balance and open holdings are both zero, you can close it; its history will be preserved.",
-            )
-    # Keep account rows as inactive so references and historical balances remain stable.
-    account.is_active = False
-    record_finance_event(db, user_id=account.user_id, event_type="deactivated", entity_type="account", entity_id=account.id, description=f"Account deactivated (not physically deleted): {account.name}", snapshot={"id": account.id, "name": account.name, "account_type": account.account_type, "balance": account.balance})
+
+    if account.is_active:
+        raise HTTPException(
+            status_code=409,
+            detail="Archive this account first. Accounts can only be removed from the Archive tab.",
+        )
+
+    # This is a logical removal, not a SQL DELETE. Transactions, investments,
+    # transfers, and Finance Diary snapshots keep their account references.
+    before = {
+        "id": account.id,
+        "name": account.name,
+        "account_type": account.account_type,
+        "institution": account.institution,
+        "currency": account.currency,
+        "balance": account.balance,
+        "is_active": account.is_active,
+    }
+    account.is_deleted = True
+    record_finance_event(
+        db,
+        user_id=account.user_id,
+        event_type="removed_from_accounts",
+        entity_type="account",
+        entity_id=account.id,
+        description=f"Account removed from Accounts view: {account.name}; financial history preserved",
+        snapshot={"account": before, "history_preserved": True},
+    )
     db.commit()
-    return {"status": "deactivated", "account_id": account_id, "history_preserved": True}
+    return {"status": "removed", "account_id": account_id, "history_preserved": True}

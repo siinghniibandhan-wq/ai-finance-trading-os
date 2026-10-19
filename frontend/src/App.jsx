@@ -9199,7 +9199,6 @@ function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
 
 function FinanceDiaryPage() {
   const API_BASE_URL = "https://wealthmanager.duckdns.org";
-  const USER_ID = getCurrentUserId();
   const [entries, setEntries] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -9209,7 +9208,7 @@ function FinanceDiaryPage() {
     (async () => {
       try {
         setLoading(true);
-        const response = await apiFetch(`${API_BASE_URL}/api/finance-diary/?user_id=${USER_ID}&limit=500`);
+        const response = await apiFetch(`${API_BASE_URL}/api/finance-diary/?limit=500`);
         const data = await response.json().catch(() => []);
         if (!response.ok) throw new Error(data?.detail || "Unable to load Finance Diary.");
         if (active) setEntries(Array.isArray(data) ? data : []);
@@ -9219,7 +9218,7 @@ function FinanceDiaryPage() {
     return () => { active = false; };
   }, []);
   const filtered = entries.filter((entry) => `${entry.event_type} ${entry.entity_type} ${entry.entity_id} ${entry.description} ${entry.snapshot_json || ""}`.toLowerCase().includes(search.toLowerCase()));
-  return <div className="dashboard"><section className="welcome-section"><div><p className="welcome-label">PERMANENT HISTORY</p><h2>Finance Diary</h2><p className="welcome-description">Read-only activity history. Existing entries are never edited or deleted through this interface.</p></div></section><section className="glass-card" style={{ padding: "20px" }}><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." style={{ width: "100%", boxSizing: "border-box", padding: "12px", borderRadius: "10px", marginBottom: "16px" }} />{loading ? <p>Loading history…</p> : error ? <p>{error}</p> : filtered.length === 0 ? <p>No diary entries found. New account and transaction activity will appear here when recorded by the backend.</p> : <div style={{ display: "grid", gap: "10px" }}>{filtered.map((entry) => <article key={entry.id} style={{ padding: "14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.09)", background: "rgba(255,255,255,0.025)" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}><strong>{entry.event_type} · {entry.entity_type} #{entry.entity_id || "—"}</strong><span style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px" }}>{entry.created_at ? new Date(entry.created_at).toLocaleString() : "—"}</span></div><p style={{ margin: "8px 0", color: "rgba(255,255,255,0.72)" }}>{entry.description}</p>{entry.snapshot_json && <details><summary style={{ cursor: "pointer" }}>View event details</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "11px" }}>{(() => { try { return JSON.stringify(JSON.parse(entry.snapshot_json), null, 2); } catch { return entry.snapshot_json; } })()}</pre></details>}</article>)}</div>}</section></div>;
+  return <div className="dashboard"><section className="welcome-section"><div><p className="welcome-label">PERMANENT HISTORY</p><h2>Finance Diary</h2><p className="welcome-description">Read-only activity history. Existing entries are never edited or deleted through this interface.</p></div></section><section className="glass-card" style={{ padding: "20px" }}><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." style={{ width: "100%", boxSizing: "border-box", padding: "12px", borderRadius: "10px", marginBottom: "16px" }} />{loading ? <p>Loading history…</p> : error ? <p>{error}</p> : filtered.length === 0 ? <p>No diary entries found yet. Account, transaction and investment activity recorded by the system will appear here.</p> : <div style={{ display: "grid", gap: "10px" }}>{filtered.map((entry) => <article key={entry.id} style={{ padding: "14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.09)", background: "rgba(255,255,255,0.025)" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}><strong>{entry.event_type} · {entry.entity_type} #{entry.entity_id || "—"}</strong><span style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px" }}>{entry.created_at ? new Date(entry.created_at).toLocaleString() : "—"}</span></div><p style={{ margin: "8px 0", color: "rgba(255,255,255,0.72)" }}>{entry.description}</p>{entry.snapshot_json && <details><summary style={{ cursor: "pointer" }}>View event details</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "11px" }}>{(() => { try { return JSON.stringify(JSON.parse(entry.snapshot_json), null, 2); } catch { return entry.snapshot_json; } })()}</pre></details>}</article>)}</div>}</section></div>;
 }
 
 

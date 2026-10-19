@@ -309,12 +309,11 @@ export default function App() {
     return () => { cancelled = true; };
   }, []);
 
-  // Keep the Admin Panel entry visible so the user can discover it.
-  // Actual access remains protected by the backend and the route-level check below.
-  const visibleNavigation = [
-    ...navigation,
-    { section: "Administration", items: [{ name: "Admin Panel", icon: ShieldCheck }] }
-  ];
+  // Show the Admin Panel navigation only when the backend confirms administrator access.
+  // The backend remains the security boundary for every administrative API request.
+  const visibleNavigation = isAdmin
+    ? [...navigation, { section: "Administration", items: [{ name: "Admin Panel", icon: ShieldCheck }] }]
+    : navigation;
 
   useEffect(() => { applyFinosTheme(selectedTheme); }, [selectedTheme]);
   const changeTheme = (theme) => { setSelectedTheme(theme); applyFinosTheme(theme); };

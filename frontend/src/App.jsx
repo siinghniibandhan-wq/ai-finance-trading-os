@@ -10215,7 +10215,7 @@ const deleteAccount = async () => {
                 }}
               >
                 {account.is_active
-                  ? "Deactivate"
+                  ? "Archive"
                   : "Activate"}
               </button>
           

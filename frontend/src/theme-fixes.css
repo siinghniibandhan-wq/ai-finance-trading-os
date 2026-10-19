@@ -2640,3 +2640,89 @@
   color: var(--market-muted) !important;
   -webkit-text-fill-color: var(--market-muted) !important;
 }
+
+
+/* Dark theme only — unify card surfaces and prevent light/white cards leaking
+   into the dark interface. Every selector is explicitly scoped to dark theme. */
+:root[data-finos-theme="dark"] {
+  --finos-page: #080d19;
+  --finos-surface: #111827;
+  --finos-surface-raised: #172033;
+  --finos-card: #111827;
+  --finos-text: #f1f5ff;
+  --finos-muted: #a8b4cc;
+  --finos-border: #303b52;
+  --finos-accent: #a78bfa;
+  --t-page-bg: #080d19;
+  --t-card-bg: #111827;
+  --t-inner-bg: #172033;
+  --t-text: #f1f5ff;
+  --t-muted: #a8b4cc;
+  --t-border: 1px solid #303b52;
+}
+
+/* Main cards, nested cards, statistic tiles and module panels. */
+:root[data-finos-theme="dark"] :is(
+  .card, .panel, .stat-card, .metric-card, .summary-card, .chart-card,
+  .section-card, .glass-card, .account-card, .goal-card, .budget-card,
+  .holding-card, .portfolio-card, .transaction-card, .tax-card,
+  .loan-card, .bill-card, .investment-card, .dashboard-card,
+  [class*="-stat-card"], [class*="-metric-card"], [class*="-summary-card"],
+  [class*="-chart-card"], [class*="-info-card"], [class*="-panel"],
+  [class*="summary-tile"], [class*="overview-card"]
+) {
+  color: var(--finos-text, #f1f5ff);
+  background-color: var(--t-card-bg, #111827);
+  background-image: linear-gradient(145deg, rgba(167,139,250,.045), transparent 65%);
+  border-color: var(--finos-border, #303b52);
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+}
+
+/* Inner surfaces should be visibly distinct but remain dark. */
+:root[data-finos-theme="dark"] :is(
+  .card, .panel, .stat-card, .metric-card, .summary-card, .chart-card,
+  .section-card, .glass-card, .account-card, .goal-card, .budget-card,
+  .holding-card, .portfolio-card, .transaction-card, .tax-card,
+  .loan-card, .bill-card, .investment-card, .dashboard-card
+) :is(.card, .panel, [class*="-card"], [class*="-panel"], .inner, .nested-card) {
+  color: var(--finos-text, #f1f5ff);
+  background-color: var(--t-inner-bg, #172033);
+  background-image: none;
+  border-color: var(--finos-border, #303b52);
+}
+
+/* Make text readable when a component has hard-coded light-theme text colours. */
+:root[data-finos-theme="dark"] :is(
+  .card, .panel, .stat-card, .metric-card, .summary-card, .chart-card,
+  .section-card, .glass-card, .account-card, .goal-card, .budget-card,
+  .holding-card, .portfolio-card, .transaction-card, .tax-card,
+  .loan-card, .bill-card, .investment-card, .dashboard-card
+) :is(h1,h2,h3,h4,h5,h6,strong,b,label,dt,dd,th,td) {
+  color: var(--finos-text, #f1f5ff);
+  -webkit-text-fill-color: var(--finos-text, #f1f5ff);
+}
+:root[data-finos-theme="dark"] :is(
+  .card, .panel, .stat-card, .metric-card, .summary-card, .chart-card,
+  .section-card, .glass-card, .account-card, .goal-card, .budget-card,
+  .holding-card, .portfolio-card, .transaction-card, .tax-card,
+  .loan-card, .bill-card, .investment-card, .dashboard-card
+) :is(p,small,caption,.muted,.subtitle,.description,.helper-text) {
+  color: var(--finos-muted, #a8b4cc);
+  -webkit-text-fill-color: var(--finos-muted, #a8b4cc);
+}
+
+/* Keep fields and dropdowns dark inside dark-theme cards. */
+:root[data-finos-theme="dark"] :is(
+  .card, .panel, .stat-card, .metric-card, .summary-card, .chart-card,
+  .section-card, .glass-card, .account-card, .goal-card, .budget-card,
+  .holding-card, .portfolio-card, .transaction-card, .tax-card,
+  .loan-card, .bill-card, .investment-card, .dashboard-card
+) :is(input,select,textarea,[role="listbox"],[role="option"]) {
+  color: var(--finos-text, #f1f5ff);
+  background-color: var(--t-inner-bg, #172033);
+  border-color: var(--finos-border, #303b52);
+}
+:root[data-finos-theme="dark"] :is(input,textarea)::placeholder {
+  color: var(--finos-muted, #a8b4cc);
+  opacity: 1;
+}

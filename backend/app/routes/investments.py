@@ -557,10 +557,7 @@ def create_investment(
 
             "buy_date": data.buy_date,
 
-            "broker":
-                data.broker.strip()
-                if data.broker
-                else None,
+            "broker": broker_name,
 
             "fees": data.fees,
             "notes": data.notes,
@@ -1300,7 +1297,10 @@ def update_investment(
             identity_changed = (
                 data.investment_type.strip() != (existing.investment_type or "").strip()
                 or (data.symbol or "").strip().upper() != (existing.symbol or "").strip().upper()
-                or data.broker.strip() != (existing.broker or "").strip()
+                or (
+                    data.broker.strip() != (existing.broker or "").strip()
+                    and existing.investment_account_id is not None
+                )
                 or data.buy_date != existing.buy_date
             )
             if quantity_changed or cost_changed or identity_changed:
@@ -1368,6 +1368,7 @@ def update_investment(
                 current_price,
                 buy_date,
                 broker,
+                investment_account_id,
                 fees,
                 notes,
                 created_at,

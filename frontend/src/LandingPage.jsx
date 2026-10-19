@@ -37,89 +37,13 @@ export default function LandingPage() {
   const [showAllThemes, setShowAllThemes] = useState(false);
   const [demoMode, setDemoMode] = useState("overview");
   const [isLight, setIsLight] = useState(false);
-  const [checkoutPlan, setCheckoutPlan] = useState(null);
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [checkoutBusy, setCheckoutBusy] = useState(false);
-  const [checkoutMessage, setCheckoutMessage] = useState("");
   const prices = { monthly: [69, 199, 399], halfYearly: [null, null, null], annually: [null, null, null] };
   const billingLabel = billing === "monthly" ? "/ month" : billing === "halfYearly" ? "/ 6 months" : "/ year";
   const displayedThemes = showAllThemes ? themes : themes.slice(0, 5);
   const goApp = () => { window.location.href = "/login"; };
   const goPlans = () => document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" });
-  const startCheckout = (plan) => {
-    setCheckoutPlan(plan);
-    setCheckoutMessage("");
-  };
-  const ensureRazorpayScript = () => new Promise((resolve, reject) => {
-    if (window.Razorpay) return resolve();
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Unable to load secure checkout. Please try again."));
-    document.body.appendChild(script);
-  });
-  const payForPlan = async (event) => {
-    event.preventDefault();
-    if (!checkoutPlan || checkoutBusy) return;
-    setCheckoutBusy(true);
-    setCheckoutMessage("");
-    try {
-      await ensureRazorpayScript();
-      const orderResponse = await fetch(`${API_BASE_URL}/api/payments/create-order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          plan: checkoutPlan.name.toLowerCase(),
-          customer_name: customerName.trim(),
-          customer_email: customerEmail.trim(),
-          customer_phone: customerPhone.trim() || null,
-        }),
-      });
-      const order = await orderResponse.json().catch(() => ({}));
-      if (!orderResponse.ok) throw new Error(order.detail || "Could not start payment. Please contact support.");
-      const razorpay = new window.Razorpay({
-        key: order.key_id,
-        amount: order.amount,
-        currency: order.currency,
-        name: "Financial OS",
-        description: `${checkoutPlan.name} plan`,
-        order_id: order.order_id,
-        prefill: { name: customerName.trim(), email: customerEmail.trim(), contact: customerPhone.trim() },
-        notes: { plan: checkoutPlan.name },
-        theme: { color: "#8b5cf6" },
-        handler: async (response) => {
-          try {
-            const verifyResponse = await fetch(`${API_BASE_URL}/api/payments/verify`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Accept: "application/json" },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
-            const verified = await verifyResponse.json().catch(() => ({}));
-            if (!verifyResponse.ok) throw new Error(verified.detail || "Payment verification failed. Contact support before retrying.");
-            setCheckoutMessage("Payment verified. Keep your payment ID: " + response.razorpay_payment_id + ". For plan activation, contact support if your workspace is not updated.");
-          } catch (error) {
-            setCheckoutMessage(error.message || "Payment was submitted but could not be verified. Please contact support with your payment ID.");
-          } finally {
-            setCheckoutBusy(false);
-          }
-        },
-        modal: { ondismiss: () => setCheckoutBusy(false) },
-      });
-      razorpay.on("payment.failed", (response) => {
-        setCheckoutMessage(response.error?.description || "Payment did not complete. Please try again.");
-        setCheckoutBusy(false);
-      });
-      razorpay.open();
-    } catch (error) {
-      setCheckoutMessage(error.message || "Unable to start checkout.");
-      setCheckoutBusy(false);
-    }
+  const startCheckout = () => {
+    window.alert("Online subscription payments are currently unavailable. Please contact Financial OS support for plan activation.");
   };
 
   return <div className={`fos-site ${isLight ? "fos-site-light" : ""}`}>
@@ -148,21 +72,21 @@ export default function LandingPage() {
 
       <section className="fos-theme-section fos-container" id="themes"><div className="fos-section-head"><div><div className="fos-eyebrow">MAKE IT YOURS</div><h2>Your workspace.<br/><span>Your kind of focus.</span></h2></div><p>Choose a visual style that fits how you like to work. The current Financial OS Default theme stays available alongside the Light theme and other styles.</p></div><div className="fos-theme-layout"><div className={`fos-theme-preview fos-theme-${theme.toLowerCase().replaceAll(" ", "-")}`}><div className="fos-theme-preview-nav"><span className="fos-theme-dot-logo"><Layers3 size={16}/></span><b>Financial OS</b><span className="fos-theme-user">U</span></div><div className="fos-theme-preview-main"><small>YOUR OVERVIEW</small><h3>{theme} theme</h3><p>Everything you need, in your style.</p><div className="fos-theme-stat-row"><div><small>Net worth</small><strong>₹12,45,300</strong></div><div><small>Monthly savings</small><strong>28%</strong></div></div><div className="fos-theme-fake-chart">{[40,52,44,66,57,72,60,88,74,96].map((n,i)=><i key={i} style={{height:`${n}%`}}/>)}</div><div className="fos-theme-lines"><i/><i/><i/></div></div></div><div className="fos-theme-options"><div className="fos-theme-options-head"><div><h3>Choose your look</h3><p>Preview a style</p></div><button onClick={() => setShowAllThemes(!showAllThemes)}>{showAllThemes ? "Show fewer" : "View all 10"} <ArrowRight size={14}/></button></div><div className="fos-theme-list">{displayedThemes.map((t,i)=><button key={t} className={`fos-theme-choice ${theme===t?"chosen":""}`} onClick={()=>setTheme(t)}><span className={`fos-theme-swatch fos-swatch-${t.toLowerCase().replaceAll(" ","-")}`}><i/><i/><i/></span><span><strong>{t}</strong><small>{["Current Financial OS look","Bright and clean","Low-glare focus","Purple-pink gradients","Nature-inspired green","Calm professional blue","Warm gradient accents","Simple and quiet","Terminal-inspired","Translucent surfaces"][i]}</small></span>{theme===t && <Check size={17}/>}</button>)}</div><p className="fos-theme-note">Theme preview only. Your selected theme will be saved in Settings once user accounts and preferences are connected.</p></div></div></section>
 
-      <section className="fos-pricing-section" id="plans"><div className="fos-container"><div className="fos-section-head fos-section-head-center"><div><div className="fos-eyebrow">STRAIGHTFORWARD PLANS</div><h2>Start small. Grow <span>with confidence.</span></h2></div><p>Choose the level of tools that fits you today. You can compare what each plan is intended to include before subscribing.</p></div><div className="fos-billing-switch" role="note" aria-label="Billing period"><span className="active">Monthly billing</span><span className="fos-billing-coming-soon">Half-yearly and annual plans coming soon</span></div><div className="fos-plan-grid">{plans.map((plan,i)=><article className={`fos-plan-card ${plan.popular?"fos-plan-popular":""}`} key={plan.name}>{plan.popular&&<div className="fos-popular-label">MOST POPULAR</div>}<div className="fos-plan-top"><span className={`fos-plan-icon fos-plan-icon-${i}`}>{i===0?<Wallet/>:i===1?<TrendingUp/>:<Sparkles/>}</span><h3>{plan.name}</h3><p>{plan.tagline}</p></div><div className="fos-price">{prices[billing][i] ? <><strong>₹{prices[billing][i]}</strong><span>{billingLabel}</span></> : <><strong className="fos-price-tbd">Coming soon</strong><span>{billingLabel}</span></>}</div>{billing!=="monthly"&&<p className="fos-price-note">{billing==="halfYearly"?"6-month billing price to be finalised":"Annual billing price to be finalised"}</p>}<button className={plan.popular?"fos-cta fos-plan-button":"fos-plan-button fos-plan-button-outline"} onClick={() => billing === "monthly" ? startCheckout(plan) : setCheckoutMessage("Only monthly checkout is currently available. Please select Monthly to continue.")}> {billing==="monthly"?`Choose ${plan.name}`:"Monthly checkout only"} <ArrowRight size={16}/></button><div className="fos-plan-divider"/><p className="fos-includes">WHAT'S INCLUDED</p><ul>{plan.features.map(f=><li key={f}><Check size={15}/>{f}</li>)}</ul></article>)}</div><p className="fos-pricing-footnote">Prices shown are monthly plan prices in INR. Half-yearly and annual billing are not available yet. Plan access is subject to confirmation and activation by support.</p></div></section>
+      <section className="fos-pricing-section" id="plans"><div className="fos-container"><div className="fos-section-head fos-section-head-center"><div><div className="fos-eyebrow">STRAIGHTFORWARD PLANS</div><h2>Start small. Grow <span>with confidence.</span></h2></div><p>Choose the level of tools that fits you today. You can compare what each plan is intended to include before subscribing.</p></div><div className="fos-billing-switch" role="note" aria-label="Billing period"><span className="active">Monthly billing</span><span className="fos-billing-coming-soon">Half-yearly and annual plans coming soon</span></div><div className="fos-plan-grid">{plans.map((plan,i)=><article className={`fos-plan-card ${plan.popular?"fos-plan-popular":""}`} key={plan.name}>{plan.popular&&<div className="fos-popular-label">MOST POPULAR</div>}<div className="fos-plan-top"><span className={`fos-plan-icon fos-plan-icon-${i}`}>{i===0?<Wallet/>:i===1?<TrendingUp/>:<Sparkles/>}</span><h3>{plan.name}</h3><p>{plan.tagline}</p></div><div className="fos-price">{prices[billing][i] ? <><strong>₹{prices[billing][i]}</strong><span>{billingLabel}</span></> : <><strong className="fos-price-tbd">Coming soon</strong><span>{billingLabel}</span></>}</div>{billing!=="monthly"&&<p className="fos-price-note">{billing==="halfYearly"?"6-month billing price to be finalised":"Annual billing price to be finalised"}</p>}<button className={plan.popular?"fos-cta fos-plan-button":"fos-plan-button fos-plan-button-outline"} onClick={() => startCheckout()}> {billing==="monthly"?`Choose ${plan.name}`:"Monthly checkout only"} <ArrowRight size={16}/></button><div className="fos-plan-divider"/><p className="fos-includes">WHAT'S INCLUDED</p><ul>{plan.features.map(f=><li key={f}><Check size={15}/>{f}</li>)}</ul></article>)}</div><p className="fos-pricing-footnote">Prices shown are indicative monthly plan prices in INR. Online subscription payments are currently unavailable. Contact support to enquire about plan access.</p></div></section>
 
       <section className="fos-privacy-section fos-container" id="privacy"><div className="fos-privacy-icon"><ShieldCheck size={27}/></div><div><div className="fos-eyebrow">PRIVACY IS PART OF THE DESIGN</div><h2>Your financial world should stay <span>yours.</span></h2><p>Financial OS is being built around account-level data separation and controlled access. The backend must enforce ownership on every request, and AI should only receive the information needed for an authorised task. Final privacy commitments will reflect the deployed implementation and provider terms.</p></div><div className="fos-privacy-points"><span><Check/> Individual user workspaces</span><span><Check/> Controlled AI data access</span><span><Check/> Subscription-based permissions</span></div></section>
 
       <section className="fos-faq-section fos-container" id="faq"><div className="fos-section-head"><div><div className="fos-eyebrow">GOOD QUESTIONS</div><h2>Know before<br/><span>you get started.</span></h2></div><p>Some capabilities and subscription rules are still being built. We aim to make the details clear before you purchase.</p></div><div className="fos-faq-list">{faqs.map(([q,a],i)=><article className={`fos-faq-item ${faqOpen===i?"open":""}`} key={q}><button onClick={()=>setFaqOpen(faqOpen===i?-1:i)}><span>{q}</span><ChevronDown size={19}/></button>{faqOpen===i&&<p>{a}</p>}</article>)}</div></section>
 
-      <section className="fos-final-cta fos-container"><div className="fos-final-glow"/><div className="fos-eyebrow">YOUR NEXT STEP STARTS HERE</div><h2>Make room for a clearer<br/><span>financial future.</span></h2><p>Bring your money, investments and plans into one connected workspace.</p><button className="fos-cta" onClick={goApp}>Create your account <ArrowRight size={18}/></button><small>Secure checkout is available for monthly plans. Plan activation may require support confirmation.</small></section>
+      <section className="fos-final-cta fos-container"><div className="fos-final-glow"/><div className="fos-eyebrow">YOUR NEXT STEP STARTS HERE</div><h2>Make room for a clearer<br/><span>financial future.</span></h2><p>Bring your money, investments and plans into one connected workspace.</p><button className="fos-cta" onClick={goApp}>Create your account <ArrowRight size={18}/></button><small>Online subscription payments are currently unavailable. Contact support for plan enquiries.</small></section>
       <section className="fos-refund-section fos-container" id="payment-policy">
         <div className="fos-eyebrow">PAYMENT INFORMATION</div>
         <h2>Payment Methods &amp; Billing Policy</h2>
         <p className="fos-refund-owner"><strong>Service provider: KPMC Enterprises</strong> — Financial OS is part of KPMC Enterprises.</p>
         <div className="fos-refund-grid">
-          <article><h3>1. Available payment methods</h3><p>Payments for eligible online purchases are processed securely through Razorpay. Depending on availability at checkout, supported methods may include UPI, debit and credit cards, and net banking. The payment options displayed by Razorpay at checkout determine which methods are available for your transaction.</p></article>
+          <article><h3>1. Available payment methods</h3><p>Online payment processing is currently unavailable on this website. Contact support to enquire about subscription availability before making any payment.</p></article>
           <article><h3>2. Prices and currency</h3><p>Subscription prices displayed on this website are in Indian Rupees (INR). Review the selected plan, amount, and billing period before confirming payment. The amount shown in the payment checkout is the amount requested for that order.</p></article>
-          <article><h3>3. Payment confirmation</h3><p>A payment is treated as confirmed only after the server verifies the payment response. Do not share your UPI PIN, card PIN, passwords, or one-time passwords with anyone. Keep your order ID or payment ID for support enquiries.</p></article>
+          <article><h3>3. Payment confirmation</h3><p>Do not send money or share payment credentials unless Financial OS support has confirmed an authorised payment process. Never share your UPI PIN, card PIN, passwords, or one-time passwords.</p></article>
           <article><h3>4. Digital service delivery</h3><p>Financial OS subscriptions provide access to digital features. Payment verification and subscription activation may not happen at the same moment. If payment is successful but access is not updated, contact support and provide your order ID or payment ID before attempting another payment.</p></article>
           <article><h3>5. Payment disputes and support</h3><p>For a duplicate debit, failed transaction, incorrect amount, or payment-status question, contact support at +91 76448 41104 or WhatsApp. We will review the available transaction details and advise on the next steps.</p></article>
           <article><h3>6. Refunds</h3><p>Refund eligibility and the request process are described in our <a href="#refund-policy">Refund &amp; Cancellation Policy</a>. Any approved refund is generally initiated to the original payment method where supported; the time for credit depends on the payment provider and bank.</p></article>
@@ -190,7 +114,7 @@ export default function LandingPage() {
         <div className="fos-refund-grid">
           <article><h3>1. Information collected</h3><p>Depending on how you use the service, we may process account details, contact information, financial records you enter, subscription details, and payment/order references needed to provide the service and support transactions. Do not enter information you do not have permission to provide.</p></article>
           <article><h3>2. How information is used</h3><p>Information may be used to operate your account, provide requested features, verify payments, manage subscriptions, respond to support requests, protect the service, and meet applicable legal obligations.</p></article>
-          <article><h3>3. Payment information</h3><p>Payments are processed by Razorpay. Financial OS does not ask you to provide your UPI PIN, card PIN, password, or OTP to our support team. Payment processing is also subject to the payment provider's applicable terms and privacy practices.</p></article>
+          <article><h3>3. Payment information</h3><p>Online payment processing is currently unavailable on this website. If a payment method is introduced later, the applicable provider and privacy terms will be published before use. Financial OS support will never ask for your UPI PIN, card PIN, password, or OTP.</p></article>
           <article><h3>4. Sharing and service providers</h3><p>Information may be shared with service providers only as needed to operate the website, authenticate users, process payments, provide support, maintain security, or comply with law. We do not state that any system is risk-free; reasonable safeguards are intended to protect information.</p></article>
           <article><h3>5. Security and retention</h3><p>We use technical and organisational measures intended to protect information. Information may be retained for as long as needed to provide the service, resolve disputes, maintain business records, or comply with applicable requirements.</p></article>
           <article><h3>6. Requests and contact</h3><p>For questions or requests about your information, contact Financial OS support at +91 76448 41104 or WhatsApp. We may need to verify your identity before responding to a request about an account.</p></article>
@@ -233,22 +157,6 @@ export default function LandingPage() {
         <p className="fos-company-note">Financial OS is part of KPMC Enterprises.</p>
       </section>
     </main>
-    {checkoutPlan && <div className="fos-checkout-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !checkoutBusy) setCheckoutPlan(null); }}>
-      <section className="fos-checkout-modal" role="dialog" aria-modal="true" aria-labelledby="fos-checkout-title">
-        <button type="button" className="fos-checkout-close" aria-label="Close checkout" disabled={checkoutBusy} onClick={() => setCheckoutPlan(null)}>×</button>
-        <div className="fos-eyebrow">SECURE PAYMENT BY RAZORPAY</div><h2 id="fos-checkout-title">Subscribe to {checkoutPlan.name}</h2>
-        <p className="fos-checkout-price">₹{checkoutPlan.price.toLocaleString("en-IN")} <span>/ month</span></p>
-        <p className="fos-checkout-note">Pay securely using UPI, credit/debit cards, or net banking. Your payment will be verified by our server.</p>
-        <form onSubmit={payForPlan} className="fos-checkout-form">
-          <label>Full name<input required maxLength="150" autoComplete="name" value={customerName} onChange={e => setCustomerName(e.target.value)} /></label>
-          <label>Email address<input required type="email" maxLength="255" autoComplete="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} /></label>
-          <label>Phone number (optional)<input type="tel" maxLength="20" autoComplete="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} /></label>
-          {checkoutMessage && <p className="fos-checkout-message" role="status">{checkoutMessage}</p>}
-          <button className="fos-cta fos-checkout-submit" type="submit" disabled={checkoutBusy}>{checkoutBusy ? "Connecting to Razorpay…" : "Continue to payment"} <ArrowRight size={17}/></button>
-        </form>
-        <small className="fos-checkout-legal">By continuing, you agree to contact support for subscription activation or payment issues. Payments are processed by Razorpay.</small>
-      </section>
-    </div>}
     <footer className="fos-footer"><div className="fos-container fos-footer-main"><a className="fos-brand" href="#top"><span className="fos-brand-mark"><Layers3 size={20}/></span><span>Financial<span className="fos-brand-accent">OS</span><small>YOUR MONEY. ONE WORKSPACE.</small></span></a><p>One workspace for money management, investing and planning.</p><div className="fos-footer-links"><a href="#features">Features</a><a href="#plans">Pricing</a><a href="#faq">FAQ</a><a href="#privacy-policy">Privacy Policy</a><a href="#terms">Terms &amp; Conditions</a><a href="#payment-policy">Payment Policy</a><a href="#refund-policy">Refund Policy</a><a href="#contact">Contact</a></div></div><div className="fos-container fos-footer-bottom"><span>© {new Date().getFullYear()} Financial OS. All rights reserved.</span><span>Part of KPMC Enterprises · Illustrative previews only. Not investment advice.</span></div></footer>
   </div>;
 }

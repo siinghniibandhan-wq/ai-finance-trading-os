@@ -119,7 +119,7 @@ def _cash_effect(transaction_type: str, quantity: Decimal, price: Decimal, fees:
 
 def _lock_investment_cash_account(db: Session, user_id: int, account_id: int | None):
     if not account_id:
-        raise HTTPException(status_code=409, detail="This investment is not linked to a broker cash account. Link an active Investment account before recording BUY/SELL activity.")
+        raise HTTPException(status_code=409, detail="This investment is not linked to a Broker Account. Link an active Investment account from Money → Accounts before recording BUY/SELL activity.")
     account = db.execute(text("""
         SELECT id, balance FROM accounts
         WHERE id = :account_id AND user_id = :user_id
@@ -127,7 +127,7 @@ def _lock_investment_cash_account(db: Session, user_id: int, account_id: int | N
         FOR UPDATE
     """), {"account_id": account_id, "user_id": user_id}).first()
     if not account:
-        raise HTTPException(status_code=409, detail="The linked broker cash account is unavailable, inactive, or is not an Investment account.")
+        raise HTTPException(status_code=409, detail="The linked Broker Account is unavailable, inactive, or is not an Investment account.")
     return account
 
 
@@ -136,7 +136,7 @@ def _apply_cash_delta(db: Session, account, delta: Decimal) -> Decimal:
     current = Decimal(str(account.balance or 0)).quantize(Decimal("0.01"))
     delta = delta.quantize(Decimal("0.01"))
     if delta < 0 and current < -delta:
-        raise HTTPException(status_code=409, detail=f"Insufficient cash in the linked broker account. Available: {current}; required: {-delta}.")
+        raise HTTPException(status_code=409, detail=f"Insufficient funds in the linked Investment account. Available: {current}; required: {-delta}.")
     updated = (current + delta).quantize(Decimal("0.01"))
     db.execute(text("UPDATE accounts SET balance = :balance WHERE id = :account_id"), {"balance": updated, "account_id": account.id})
     return updated

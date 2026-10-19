@@ -1255,7 +1255,7 @@ def update_investment(
     selected_account = db.query(Account).filter(
         Account.id == selected_account_id,
         Account.user_id == user_id,
-        Account.account_type == "investment",
+        func.lower(func.trim(Account.account_type)) == "investment",
         Account.is_active.is_(True),
     ).with_for_update().first()
     if selected_account is None:

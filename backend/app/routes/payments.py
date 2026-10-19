@@ -10,7 +10,7 @@ import os
 from urllib.error import HTTPError, URLError
 from urllib.request import Request as URLRequest, urlopen
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
@@ -146,3 +146,65 @@ def verify_payment(payload: VerifyPaymentRequest, db: Session = Depends(get_db))
         "payment_id": record.razorpay_payment_id,
         "message": "Payment signature verified. Subscription activation may require support confirmation.",
     }
+
+
+
+@router.post("/webhook")
+async def razorpay_webhook(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Verify Razorpay webhook signatures and safely process payment/refund events."""
+    webhook_secret = os.getenv("RAZORPAY_WEBHOOK_SECRET", "").strip()
+    if not webhook_secret:
+        raise HTTPException(status_code=503, detail="Razorpay webhook secret is not configured.")
+
+    signature = request.headers.get("X-Razorpay-Signature", "").strip()
+    if not signature:
+        raise HTTPException(status_code=400, detail="Missing Razorpay webhook signature.")
+
+    raw_body = await request.body()
+    expected = hmac.new(
+        webhook_secret.encode("utf-8"), raw_body, hashlib.sha256
+    ).hexdigest()
+    if not hmac.compare_digest(expected, signature):
+        raise HTTPException(status_code=400, detail="Invalid Razorpay webhook signature.")
+
+    try:
+        event = json.loads(raw_body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid webhook payload.") from exc
+
+    event_name = event.get("event")
+    payload = event.get("payload") or {}
+
+    if event_name in ("payment.captured", "payment.failed"):
+        payment = ((payload.get("payment") or {}).get("entity") or {})
+        order_id = payment.get("order_id")
+        if order_id:
+            record = db.query(PaymentOrder).filter(
+                PaymentOrder.razorpay_order_id == order_id
+            ).first()
+            if record:
+                if event_name == "payment.captured":
+                    # Do not downgrade a paid/refunded order on delayed events.
+                    if record.status not in ("paid", "refunded"):
+                        record.razorpay_payment_id = payment.get("id") or record.razorpay_payment_id
+                        record.status = "paid"
+                elif record.status == "created":
+                    record.status = "failed"
+                db.commit()
+
+    elif event_name == "refund.processed":
+        refund = ((payload.get("refund") or {}).get("entity") or {})
+        payment_id = refund.get("payment_id")
+        if payment_id:
+            record = db.query(PaymentOrder).filter(
+                PaymentOrder.razorpay_payment_id == payment_id
+            ).first()
+            if record and record.status != "refunded":
+                record.status = "refunded"
+                db.commit()
+
+    # Acknowledge valid events, including events not used by this application.
+    return {"received": True, "event": event_name}

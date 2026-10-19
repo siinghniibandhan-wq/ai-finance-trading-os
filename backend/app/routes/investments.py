@@ -569,15 +569,12 @@ def create_investment(
         },
     )
 
-    # The frontend immediately creates the initial BUY ledger row. Cash is
-    # deducted exactly once by /api/investment-transactions/ after that row is
-    # validated, avoiding duplicate debits for the same purchase.
-    db.commit()
-
+    # The frontend creates the initial BUY ledger row after this request
+    # returns. Cash is deducted exactly once by the transaction endpoint.
     investment = result.first()
 
     if not investment:
-
+        db.rollback()
         raise HTTPException(
             status_code=500,
             detail="Unable to create investment.",

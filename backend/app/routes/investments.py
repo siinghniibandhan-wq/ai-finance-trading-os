@@ -410,7 +410,7 @@ def create_investment(
 
     # The selected account ID is authoritative; broker names are display-only.
     if not data.investment_account_id:
-        raise HTTPException(status_code=409, detail="Select an active Investment / Broker Cash account from Money → Accounts.")
+        raise HTTPException(status_code=409, detail="Select an active Investment account from Money → Accounts to use as the Broker Account.")
     broker_account = db.query(Account).filter(
         Account.id == data.investment_account_id,
         Account.user_id == user_id,
@@ -1251,7 +1251,7 @@ def update_investment(
 
     selected_account_id = data.investment_account_id or existing.investment_account_id
     if not selected_account_id:
-        raise HTTPException(status_code=409, detail="Select an active Investment / Broker Cash account to link this position.")
+        raise HTTPException(status_code=409, detail="Select an active Investment account from Money → Accounts to link this position.")
     selected_account = db.query(Account).filter(
         Account.id == selected_account_id,
         Account.user_id == user_id,

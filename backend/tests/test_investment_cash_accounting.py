@@ -3,7 +3,12 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 
+from app.database.database import Base
+from app.models import Account, User
+from app.routes.accounts import delete_account, _has_linked_investments
 from app.routes.investment_transactions import _apply_cash_delta, _cash_effect
 
 
@@ -42,3 +47,43 @@ def test_cash_delta_rejects_overdraw_without_writing():
 
     assert error.value.status_code == 409
     assert db.calls == []
+
+
+
+def test_linked_investment_account_is_detected_and_cannot_be_deactivated():
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    SessionFactory = sessionmaker(bind=engine)
+    with SessionFactory() as db:
+        user = User(name="Broker Account Guard Test", currency="INR")
+        db.add(user)
+        db.flush()
+        account = Account(
+            user_id=user.id,
+            name="Broker Cash",
+            account_type="Investment",
+            balance=Decimal("1000.00"),
+            is_active=True,
+        )
+        db.add(account)
+        db.flush()
+        db.execute(text("""
+            CREATE TABLE investments (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                investment_account_id INTEGER NOT NULL
+            )
+        """))
+        db.execute(
+            text("INSERT INTO investments (id, user_id, investment_account_id) VALUES (1, :user_id, :account_id)"),
+            {"user_id": user.id, "account_id": account.id},
+        )
+        db.commit()
+
+        assert _has_linked_investments(db, user.id, account.id) is True
+        with pytest.raises(HTTPException) as error:
+            delete_account(account.id, db=db, current_user=user)
+
+        assert error.value.status_code == 409
+        db.refresh(account)
+        assert account.is_active is True

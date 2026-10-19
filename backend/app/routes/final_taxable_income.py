@@ -403,6 +403,7 @@ def load_investment_transactions(
                 notes
             FROM investment_transactions
             WHERE user_id = :user_id
+              AND status = 'ACTIVE'
             ORDER BY transaction_date ASC, id ASC
             """
         ),

@@ -155,6 +155,49 @@ export default function LandingPage() {
       <section className="fos-faq-section fos-container" id="faq"><div className="fos-section-head"><div><div className="fos-eyebrow">GOOD QUESTIONS</div><h2>Know before<br/><span>you get started.</span></h2></div><p>Some capabilities and subscription rules are still being built. We aim to make the details clear before you purchase.</p></div><div className="fos-faq-list">{faqs.map(([q,a],i)=><article className={`fos-faq-item ${faqOpen===i?"open":""}`} key={q}><button onClick={()=>setFaqOpen(faqOpen===i?-1:i)}><span>{q}</span><ChevronDown size={19}/></button>{faqOpen===i&&<p>{a}</p>}</article>)}</div></section>
 
       <section className="fos-final-cta fos-container"><div className="fos-final-glow"/><div className="fos-eyebrow">YOUR NEXT STEP STARTS HERE</div><h2>Make room for a clearer<br/><span>financial future.</span></h2><p>Bring your money, investments and plans into one connected workspace.</p><button className="fos-cta" onClick={goApp}>Create your account <ArrowRight size={18}/></button><small>Secure checkout is available for monthly plans. Plan activation may require support confirmation.</small></section>
+      <section className="fos-refund-section fos-container" id="payment-policy">
+        <div className="fos-eyebrow">PAYMENT INFORMATION</div>
+        <h2>Payment Methods &amp; Billing Policy</h2>
+        <p className="fos-refund-owner"><strong>Service provider: KPMC Enterprises</strong> — Financial OS is part of KPMC Enterprises.</p>
+        <div className="fos-refund-grid">
+          <article><h3>1. Available payment methods</h3><p>Payments for eligible online purchases are processed securely through Razorpay. Depending on availability at checkout, supported methods may include UPI, debit and credit cards, and net banking. The payment options displayed by Razorpay at checkout determine which methods are available for your transaction.</p></article>
+          <article><h3>2. Prices and currency</h3><p>Subscription prices displayed on this website are in Indian Rupees (INR). Review the selected plan, amount, and billing period before confirming payment. The amount shown in the payment checkout is the amount requested for that order.</p></article>
+          <article><h3>3. Payment confirmation</h3><p>A payment is treated as confirmed only after the server verifies the payment response. Do not share your UPI PIN, card PIN, passwords, or one-time passwords with anyone. Keep your order ID or payment ID for support enquiries.</p></article>
+          <article><h3>4. Digital service delivery</h3><p>Financial OS subscriptions provide access to digital features. Payment verification and subscription activation may not happen at the same moment. If payment is successful but access is not updated, contact support and provide your order ID or payment ID before attempting another payment.</p></article>
+          <article><h3>5. Payment disputes and support</h3><p>For a duplicate debit, failed transaction, incorrect amount, or payment-status question, contact support at +91 76448 41104 or WhatsApp. We will review the available transaction details and advise on the next steps.</p></article>
+          <article><h3>6. Refunds</h3><p>Refund eligibility and the request process are described in our <a href="#refund-policy">Refund &amp; Cancellation Policy</a>. Any approved refund is generally initiated to the original payment method where supported; the time for credit depends on the payment provider and bank.</p></article>
+        </div>
+      </section>
+
+      <section className="fos-refund-section fos-container" id="terms">
+        <div className="fos-eyebrow">WEBSITE TERMS</div>
+        <h2>Terms &amp; Conditions</h2>
+        <p className="fos-refund-owner"><strong>Service provider: KPMC Enterprises</strong> — Financial OS is part of KPMC Enterprises.</p>
+        <div className="fos-refund-grid">
+          <article><h3>1. Using Financial OS</h3><p>Financial OS provides digital tools to help users organise and review personal financial information. You are responsible for providing accurate account and checkout information and for keeping your sign-in credentials secure.</p></article>
+          <article><h3>2. Plans and payment</h3><p>Available plan features and prices are shown on the website and at checkout. A purchase is subject to successful payment verification and any required account or plan activation steps. Do not assume a plan is active until access is confirmed.</p></article>
+          <article><h3>3. Acceptable use and account security</h3><p>Do not misuse the service, attempt unauthorised access, interfere with other users, or submit information you are not authorised to use. We may restrict access where reasonably necessary for security, misuse prevention, or legal compliance.</p></article>
+          <article><h3>4. Financial information disclaimer</h3><p>Financial OS tools and AI-generated information are provided for organisation and informational purposes. They are not a guarantee of investment performance, tax outcomes, or financial results. Review important information independently and consult a qualified professional where appropriate.</p></article>
+          <article><h3>5. Cancellation and refunds</h3><p>Requests relating to cancellations, failed payments, duplicate charges, or refunds are handled under the <a href="#refund-policy">Refund &amp; Cancellation Policy</a>. Nothing in these terms limits rights that cannot legally be excluded.</p></article>
+          <article><h3>6. Contact and updates</h3><p>We may update the service or these terms as the product and applicable requirements evolve. For questions about these terms, payments, or access, contact support at +91 76448 41104 or via WhatsApp using the contact section below.</p></article>
+        </div>
+      </section>
+
+      <section className="fos-refund-section fos-container" id="privacy-policy">
+        <div className="fos-eyebrow">YOUR INFORMATION</div>
+        <h2>Privacy Policy</h2>
+        <p className="fos-refund-owner"><strong>Policy owner: KPMC Enterprises</strong> — Financial OS is part of KPMC Enterprises.</p>
+        <div className="fos-refund-grid">
+          <article><h3>1. Information collected</h3><p>Depending on how you use the service, we may process account details, contact information, financial records you enter, subscription details, and payment/order references needed to provide the service and support transactions. Do not enter information you do not have permission to provide.</p></article>
+          <article><h3>2. How information is used</h3><p>Information may be used to operate your account, provide requested features, verify payments, manage subscriptions, respond to support requests, protect the service, and meet applicable legal obligations.</p></article>
+          <article><h3>3. Payment information</h3><p>Payments are processed by Razorpay. Financial OS does not ask you to provide your UPI PIN, card PIN, password, or OTP to our support team. Payment processing is also subject to the payment provider's applicable terms and privacy practices.</p></article>
+          <article><h3>4. Sharing and service providers</h3><p>Information may be shared with service providers only as needed to operate the website, authenticate users, process payments, provide support, maintain security, or comply with law. We do not state that any system is risk-free; reasonable safeguards are intended to protect information.</p></article>
+          <article><h3>5. Security and retention</h3><p>We use technical and organisational measures intended to protect information. Information may be retained for as long as needed to provide the service, resolve disputes, maintain business records, or comply with applicable requirements.</p></article>
+          <article><h3>6. Requests and contact</h3><p>For questions or requests about your information, contact Financial OS support at +91 76448 41104 or WhatsApp. We may need to verify your identity before responding to a request about an account.</p></article>
+        </div>
+        <p className="fos-refund-disclaimer">This policy describes the intended handling of information for the service. Final practices should be checked against the live technical setup, service providers, and the registered business entity before accepting public sign-ups.</p>
+      </section>
+
       <section className="fos-refund-section fos-container" id="refund-policy">
         <div className="fos-eyebrow">BILLING TRANSPARENCY</div>
         <h2>Refund &amp; Cancellation Policy</h2>
@@ -206,6 +249,6 @@ export default function LandingPage() {
         <small className="fos-checkout-legal">By continuing, you agree to contact support for subscription activation or payment issues. Payments are processed by Razorpay.</small>
       </section>
     </div>}
-    <footer className="fos-footer"><div className="fos-container fos-footer-main"><a className="fos-brand" href="#top"><span className="fos-brand-mark"><Layers3 size={20}/></span><span>Financial<span className="fos-brand-accent">OS</span><small>YOUR MONEY. ONE WORKSPACE.</small></span></a><p>One workspace for money management, investing and planning.</p><div className="fos-footer-links"><a href="#features">Features</a><a href="#plans">Pricing</a><a href="#faq">FAQ</a><a href="#privacy">Privacy</a><a href="#refund-policy">Refund Policy</a><a href="#contact">Contact</a></div></div><div className="fos-container fos-footer-bottom"><span>© {new Date().getFullYear()} Financial OS. All rights reserved.</span><span>Part of KPMC Enterprises · Illustrative previews only. Not investment advice.</span></div></footer>
+    <footer className="fos-footer"><div className="fos-container fos-footer-main"><a className="fos-brand" href="#top"><span className="fos-brand-mark"><Layers3 size={20}/></span><span>Financial<span className="fos-brand-accent">OS</span><small>YOUR MONEY. ONE WORKSPACE.</small></span></a><p>One workspace for money management, investing and planning.</p><div className="fos-footer-links"><a href="#features">Features</a><a href="#plans">Pricing</a><a href="#faq">FAQ</a><a href="#privacy-policy">Privacy Policy</a><a href="#terms">Terms &amp; Conditions</a><a href="#payment-policy">Payment Policy</a><a href="#refund-policy">Refund Policy</a><a href="#contact">Contact</a></div></div><div className="fos-container fos-footer-bottom"><span>© {new Date().getFullYear()} Financial OS. All rights reserved.</span><span>Part of KPMC Enterprises · Illustrative previews only. Not investment advice.</span></div></footer>
   </div>;
 }

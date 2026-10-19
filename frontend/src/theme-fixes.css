@@ -3092,3 +3092,190 @@
   background: var(--market-accent) !important;
   border-color: var(--market-accent) !important;
 }
+
+
+/* Tax Centre: restore contrast for visually dark accent themes only.
+   Default/Dark and every light theme are deliberately excluded. */
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre {
+  --tax-ink: var(--finos-text, #f3f5ff);
+  --tax-muted: var(--finos-muted, #b8c3d8);
+  --tax-surface: var(--t-card-bg, rgba(12, 18, 34, .92));
+  --tax-raised: var(--t-inner-bg, rgba(255, 255, 255, .055));
+  --tax-border: var(--finos-border, rgba(255, 255, 255, .17));
+  --tax-accent: var(--finos-accent, #a78bfa);
+  color: var(--tax-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre > section,
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre .glass-card,
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre [class*="tax-card"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre [class*="metric"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre [class*="summary"] {
+  color: var(--tax-ink) !important;
+  background: var(--tax-surface) !important;
+  background-image: none !important;
+  border-color: var(--tax-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre nav[aria-label="Tax sections"] {
+  background: var(--tax-surface) !important;
+  border-color: var(--tax-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre :is(h1,h2,h3,h4,h5,h6,strong,b,label,th,td,.card-label,[class*="title"],[class*="label"]) {
+  color: var(--tax-ink) !important;
+  -webkit-text-fill-color: var(--tax-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre :is(p,small,caption,.muted,.subtitle,.description,.helper-text,[class*="description"],[class*="subtitle"]) {
+  color: var(--tax-muted) !important;
+  -webkit-text-fill-color: var(--tax-muted) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre :is(input:not([type="checkbox"]),select,textarea) {
+  color: var(--tax-ink) !important;
+  -webkit-text-fill-color: var(--tax-ink) !important;
+  background: var(--tax-raised) !important;
+  border-color: var(--tax-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre :is(input,textarea)::placeholder {
+  color: var(--tax-muted) !important;
+  -webkit-text-fill-color: var(--tax-muted) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre nav[aria-label="Tax sections"] button:not([aria-pressed="true"]) {
+  color: var(--tax-ink) !important;
+  background: var(--tax-raised) !important;
+  border-color: var(--tax-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre nav[aria-label="Tax sections"] button[aria-pressed="true"] {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  background: var(--tax-accent) !important;
+  border-color: var(--tax-accent) !important;
+}

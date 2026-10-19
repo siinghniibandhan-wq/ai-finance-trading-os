@@ -104,7 +104,7 @@ def test_empty_linked_investment_account_can_be_closed_and_history_preserved():
             name="Old Broker Cash",
             account_type="Investment",
             balance=Decimal("0.00"),
-            is_active=True,
+            is_active=False,
         )
         db.add(account)
         db.flush()
@@ -124,7 +124,8 @@ def test_empty_linked_investment_account_can_be_closed_and_history_preserved():
 
         result = delete_account(account.id, db=db, current_user=user)
 
-        assert result == {"status": "deactivated", "account_id": account.id, "history_preserved": True}
+        assert result == {"status": "removed", "account_id": account.id, "history_preserved": True}
         db.refresh(account)
         assert account.is_active is False
+        assert account.is_deleted is True
         assert db.execute(text("SELECT id FROM investments WHERE id = 1")).first() is not None

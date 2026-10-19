@@ -24,6 +24,7 @@ jobs:
         working-directory: backend
     env:
       AUTH_SECRET_KEY: local-test-secret-change-me-1234567890
+      DATABASE_URL: sqlite:////tmp/financial-os-ci.db
       PYTHONPATH: ${{ github.workspace }}/backend
     steps:
       - name: Checkout

@@ -5780,6 +5780,7 @@ function Portfolio() {
     current_price: "",
     buy_date: getLocalDateString(),
     broker: "",
+    investment_account_id: "",
     fees: "",
     notes: "",
   });
@@ -5793,21 +5794,20 @@ function Portfolio() {
   const selectedInstrumentQuoteRef = useRef("");
   const transactionQuoteRequestRef = useRef(0);
   const activeTransactionInstrumentRef = useRef("");
-  const [brokerChoice, setBrokerChoice] = useState("");
-  const [customBroker, setCustomBroker] = useState("");
+  const [brokerAccounts, setBrokerAccounts] = useState([]);
+  const [brokerAccountsLoading, setBrokerAccountsLoading] = useState(false);
+  const [brokerAccountsError, setBrokerAccountsError] = useState("");
 
   // Reset every add/edit field so the two form modes never leak into each other.
   const resetInvestmentForm = () => {
     instrumentSearchRequestRef.current += 1;
     selectedInstrumentQuoteRef.current = "";
     setLiveInstrumentQuoteLoading(false);
-    setInvestmentForm({ name: "", exchange: "", asset_class: "Equity", investment_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: getLocalDateString(), broker: "", fees: "", notes: "" });
+    setInvestmentForm({ name: "", exchange: "", asset_class: "Equity", investment_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: getLocalDateString(), broker: "", investment_account_id: "", fees: "", notes: "" });
     setInstrumentQuery("");
     setInstrumentResults([]);
     setInstrumentSearchError("");
     setInstrumentSearchBusy(false);
-    setBrokerChoice("");
-    setCustomBroker("");
     setEditingInvestmentId(null);
   };
 
@@ -6126,6 +6126,7 @@ const handleEditInvestment = (investment) => {
     current_price: investment.current_price || "",
     buy_date: investment.buy_date || "",
     broker: investment.broker || "",
+    investment_account_id: investment.investment_account_id ? String(investment.investment_account_id) : "",
     fees: investment.fees || "",
     notes: investment.notes || "",
   });
@@ -6553,8 +6554,27 @@ const handleInvestmentTransactionSubmit =
 
   };
   
+  const loadBrokerAccounts = async () => {
+    setBrokerAccountsLoading(true);
+    setBrokerAccountsError("");
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/accounts/`);
+      const data = await response.json().catch(() => []);
+      if (!response.ok) throw new Error(data?.detail || "Unable to load broker cash accounts.");
+      setBrokerAccounts((Array.isArray(data) ? data : []).filter(
+        (account) => String(account.account_type || "").trim().toLowerCase() === "investment" && account.is_active !== false
+      ));
+    } catch (error) {
+      setBrokerAccountsError(error?.message || "Unable to load broker cash accounts.");
+      setBrokerAccounts([]);
+    } finally {
+      setBrokerAccountsLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadInvestments();
+    loadBrokerAccounts();
   }, []);
   
   // ----------------------------------------------------------
@@ -6624,8 +6644,8 @@ const handleInvestmentTransactionSubmit =
         return;
       }
 
-      if (!investmentForm.broker.trim()) {
-        alert("Please select or enter a broker before saving.");
+      if (!investmentForm.investment_account_id) {
+        alert("Please select an active Investment / Broker Cash account. Fund it through Money → Transfers before buying.");
         return;
       }
       if (!editingInvestmentId && (!investmentForm.name.trim() || !investmentForm.symbol.trim())) {
@@ -6637,8 +6657,21 @@ const handleInvestmentTransactionSubmit =
       // INVESTMENT PAYLOAD
       // --------------------------------------------------------
 
+      const selectedBrokerAccount = brokerAccounts.find(
+        (account) => Number(account.id) === Number(investmentForm.investment_account_id)
+      );
+      if (!selectedBrokerAccount) {
+        alert("The selected broker cash account is unavailable. Refresh the account list and select an active Investment account.");
+        return;
+      }
+      const existingInvestment = editingInvestmentId
+        ? investments.find((item) => Number(item.id) === Number(editingInvestmentId))
+        : null;
+      const selectedBrokerLabel = selectedBrokerAccount.institution || selectedBrokerAccount.name;
+
       const payload = {
         user_id: USER_ID,
+        investment_account_id: Number(selectedBrokerAccount.id),
 
         name:
           investmentForm.name.trim(),
@@ -6670,7 +6703,7 @@ const handleInvestmentTransactionSubmit =
           investmentForm.buy_date,
 
         broker:
-          investmentForm.broker.trim() || null,
+          (editingInvestmentId ? existingInvestment?.broker : selectedBrokerLabel) || selectedBrokerLabel,
 
         fees:
           Number(investmentForm.fees || 0),
@@ -7322,24 +7355,35 @@ const summaryCards = [
             />
 
 
-            {/* BROKER — mandatory dropdown, with explicit custom broker option */}
+            {/* BROKER CASH ACCOUNT — sourced from Money → Accounts; no provider names hardcoded */}
             <div>
-              <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Broker / Platform (required)</label>
+              <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Broker cash account (required)</label>
               <StyledSelect className="finos-select"
-                value={brokerChoice || (investmentForm.broker && !["Zerodha", "Groww", "Upstox", "Angel One", "ICICI Direct", "HDFC Securities", "Kotak Securities", "m.Stock", "Other"].includes(investmentForm.broker) ? "Other" : investmentForm.broker)}
+                value={String(investmentForm.investment_account_id || "")}
                 onChange={(event) => {
-                  const value = event.target.value;
-                  setBrokerChoice(value);
-                  setCustomBroker(value === "Other" ? (customBroker || "") : "");
-                  setInvestmentForm((previous) => ({ ...previous, broker: value === "Other" ? "" : value }));
+                  const accountId = event.target.value;
+                  const account = brokerAccounts.find((item) => String(item.id) === String(accountId));
+                  setInvestmentForm((previous) => ({
+                    ...previous,
+                    investment_account_id: accountId,
+                    broker: account ? (account.institution || account.name) : "",
+                  }));
                 }}
+                disabled={brokerAccountsLoading || brokerAccounts.length === 0}
                 required
+                aria-label="Broker cash account"
                 style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px", outline: "none" }}
               >
-                <option value="">Select broker…</option>
-                <option value="Zerodha">Zerodha</option><option value="Groww">Groww</option><option value="Upstox">Upstox</option><option value="Angel One">Angel One</option><option value="ICICI Direct">ICICI Direct</option><option value="HDFC Securities">HDFC Securities</option><option value="Kotak Securities">Kotak Securities</option><option value="m.Stock">m.Stock (Mirae Asset)</option><option value="Other">Other (enter broker)</option>
+                <option value="">{brokerAccountsLoading ? "Loading Investment accounts…" : "Select broker cash account…"}</option>
+                {brokerAccounts.map((account) => (
+                  <option key={account.id} value={String(account.id)}>
+                    {account.name}{account.institution ? ` — ${account.institution}` : ""} · Available ₹{Number(account.balance || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                  </option>
+                ))}
               </StyledSelect>
-              {brokerChoice === "Other" && <input type="text" placeholder="Enter broker name (required)" value={customBroker} onChange={(event) => { setCustomBroker(event.target.value); setInvestmentForm((previous) => ({ ...previous, broker: event.target.value })); }} required style={{ width: "100%", boxSizing: "border-box", marginTop: "8px", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px" }} />}
+              {brokerAccountsError && <p role="alert" style={{ margin: "6px 0 0", color: "var(--finos-danger, #dc2626)", fontSize: "12px" }}>{brokerAccountsError}</p>}
+              {!brokerAccountsLoading && brokerAccounts.length === 0 && <p style={{ margin: "6px 0 0", color: "var(--finos-muted)", fontSize: "12px" }}>Create an account with type “Investment” in Money → Accounts, then transfer funds into it.</p>}
+              <p style={{ margin: "6px 0 0", color: "var(--finos-muted)", fontSize: "11px" }}>BUY and SELL cash movements affect only this selected Investment account.</p>
             </div>
 
             {/* FEES */}

@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models import User
 from app.routes.auth import get_current_user
+from app.finance_diary import record_finance_event
 
 
 # ============================================================
@@ -470,6 +471,16 @@ def create_transaction(
             "user_id": user_id,
         },
     )
+    record_finance_event(
+        db, user_id=user_id, event_type="created", entity_type="investment_transaction",
+        entity_id=transaction.id,
+        description=f"{transaction_type} investment transaction recorded",
+        snapshot={
+            "investment_id": data.investment_id, "transaction_type": transaction_type,
+            "quantity": data.quantity, "price": data.price, "fees": data.fees,
+            "cash_account_id": cash_account.id, "cash_effect_amount": cash_effect,
+        },
+    )
 
     # --------------------------------------------------------
     # COMMIT
@@ -600,13 +611,15 @@ def update_transaction(
     cash_effect_applied = bool(existing.cash_effect_applied)
     cash_account_id = existing.cash_account_id
     cash_effect_amount = existing.cash_effect_amount
+    cash_delta = Decimal("0.00")
     if cash_effect_applied:
         if cash_account_id != locked_investment.investment_account_id:
             raise HTTPException(status_code=409, detail="Transaction cash account no longer matches the investment's linked broker account.")
         cash_account = _lock_investment_cash_account(db, user_id, cash_account_id)
         previous_effect = Decimal(str(cash_effect_amount or 0)).quantize(Decimal("0.01"))
         next_effect = _cash_effect(transaction_type, data.quantity, data.price, data.fees)
-        _apply_cash_delta(db, cash_account, next_effect - previous_effect)
+        cash_delta = next_effect - previous_effect
+        _apply_cash_delta(db, cash_account, cash_delta)
         cash_effect_amount = next_effect
 
     updated = db.execute(text("""
@@ -644,6 +657,15 @@ def update_transaction(
         UPDATE investments SET quantity = :quantity, updated_at = CURRENT_TIMESTAMP
         WHERE id = :investment_id AND user_id = :user_id
     """), {"quantity": Decimal(str(active_balance.quantity or 0)), "investment_id": existing.investment_id, "user_id": user_id})
+    record_finance_event(
+        db, user_id=user_id, event_type="updated", entity_type="investment_transaction",
+        entity_id=transaction_id, description="Investment transaction edited",
+        snapshot={
+            "before": {"transaction_type": existing.transaction_type, "quantity": existing.quantity, "price": existing.price, "fees": existing.fees},
+            "after": {"transaction_type": transaction_type, "quantity": data.quantity, "price": data.price, "fees": data.fees},
+            "cash_account_id": cash_account_id, "cash_delta": cash_delta,
+        },
+    )
     db.commit()
     return dict(updated._mapping)
 
@@ -706,12 +728,14 @@ def void_transaction(
         if running < 0:
             raise HTTPException(status_code=409, detail="Voiding this transaction would make later SELL activity exceed available BUY quantity. Correct or reverse dependent transactions first.")
 
+    cash_reversal_amount = Decimal("0.00")
     if bool(existing.cash_effect_applied):
         if existing.cash_account_id != locked_investment.investment_account_id:
             raise HTTPException(status_code=409, detail="Transaction cash account no longer matches the investment's linked broker account.")
         cash_account = _lock_investment_cash_account(db, user_id, existing.cash_account_id)
         original_effect = Decimal(str(existing.cash_effect_amount or 0)).quantize(Decimal("0.01"))
-        _apply_cash_delta(db, cash_account, -original_effect)
+        cash_reversal_amount = -original_effect
+        _apply_cash_delta(db, cash_account, cash_reversal_amount)
 
     db.execute(text("""
         UPDATE investment_transactions
@@ -730,6 +754,15 @@ def void_transaction(
         UPDATE investments SET quantity = :quantity, updated_at = CURRENT_TIMESTAMP
         WHERE id = :investment_id AND user_id = :user_id
     """), {"quantity": Decimal(str(balance.quantity or 0)), "investment_id": existing.investment_id, "user_id": user_id})
+    record_finance_event(
+        db, user_id=user_id, event_type="voided", entity_type="investment_transaction",
+        entity_id=transaction_id, description="Investment transaction voided",
+        snapshot={
+            "reason": data.reason.strip(), "transaction_type": existing.transaction_type,
+            "quantity": existing.quantity, "price": existing.price, "fees": existing.fees,
+            "cash_account_id": existing.cash_account_id, "cash_reversal_amount": cash_reversal_amount,
+        },
+    )
     db.commit()
     return {"status": "voided", "transaction_id": transaction_id, "reason": data.reason.strip(), "active_quantity": str(balance.quantity or 0)}
 

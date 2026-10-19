@@ -5,7 +5,6 @@
 @media(prefers-reduced-motion:reduce){.fos-site *{scroll-behavior:auto!important;transition:none!important}}
 
 
-/* Public launch essentials: contact and hosted checkout */
 .fos-contact-section{padding:25px 0 78px;display:grid;grid-template-columns:.8fr 1.2fr;gap:22px;align-items:start}
 .fos-contact-copy h2{font:800 clamp(28px,3vw,42px)/1.12 Manrope,sans-serif;letter-spacing:-1.5px;margin:13px 0}
 .fos-contact-copy h2 span{background:linear-gradient(95deg,#a78bfa,#ed8bcf);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -16,24 +15,7 @@
 .fos-contact-card span{font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
 .fos-contact-card:hover{border-color:#9b7cff;transform:translateY(-1px)}
 .fos-company-note{grid-column:1/-1;margin:0}
-.fos-checkout-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:rgba(3,6,15,.78);backdrop-filter:blur(8px);overflow:auto}
-.fos-checkout-modal{position:relative;width:min(100%,480px);max-height:calc(100vh - 36px);overflow:auto;border:1px solid var(--line);border-radius:18px;padding:27px;background:var(--panel);color:var(--text);box-shadow:0 28px 100px #0009}
-.fos-checkout-close{position:absolute;right:13px;top:10px;width:34px;height:34px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--text);font-size:25px}
-.fos-checkout-modal h2{font:800 25px/1.2 Manrope,sans-serif;letter-spacing:-.8px;margin:14px 35px 10px 0}
-.fos-checkout-price{font:800 31px Manrope,sans-serif;margin:12px 0}
-.fos-checkout-price span{font:500 12px 'DM Sans',sans-serif;color:var(--muted)}
-.fos-checkout-note,.fos-checkout-legal{display:block;font-size:12px;line-height:1.7;color:var(--muted)}
-.fos-checkout-form{display:grid;gap:13px;margin-top:20px}
-.fos-checkout-form label{display:grid;gap:7px;font-size:12px;font-weight:650;color:var(--text)}
-.fos-checkout-form input{width:100%;min-height:43px;border:1px solid var(--line);border-radius:9px;padding:11px 12px;background:var(--bg);color:var(--text);font:inherit;outline-color:var(--purple)}
-.fos-checkout-submit{width:100%;margin-top:3px;min-height:45px}
-.fos-checkout-submit:disabled{opacity:.65;cursor:wait}
-.fos-checkout-message{padding:11px 12px;border:1px solid #9b7cff66;border-radius:9px;color:var(--text);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
-.fos-checkout-legal{margin-top:15px;font-size:10px}
-.fos-site-light .fos-contact-card,.fos-site-light .fos-checkout-modal{background:#fff;color:#172033;border-color:#d8deea}
-.fos-site-light .fos-checkout-form label{color:#172033}
-.fos-site-light .fos-checkout-form input{background:#f8fafc;color:#172033;border-color:#d8deea}
-@media(max-width:760px){.fos-contact-section{grid-template-columns:1fr;padding-bottom:55px}.fos-contact-actions{grid-template-columns:1fr}.fos-contact-card{padding:14px}.fos-checkout-modal{padding:22px 18px}}
+@media(max-width:760px){.fos-contact-section{grid-template-columns:1fr;padding-bottom:55px}.fos-contact-actions{grid-template-columns:1fr}.fos-contact-card{padding:14px}}
 
 
 .fos-billing-switch span.active{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;border-radius:8px;background:#8b5cf62b;color:var(--text);font-size:11px;font-weight:700}

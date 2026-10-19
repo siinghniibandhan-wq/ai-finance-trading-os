@@ -5797,6 +5797,7 @@ function Portfolio() {
   const [brokerAccounts, setBrokerAccounts] = useState([]);
   const [brokerAccountsLoading, setBrokerAccountsLoading] = useState(false);
   const [brokerAccountsError, setBrokerAccountsError] = useState("");
+  const investmentSubmitInFlightRef = useRef(false);
 
   // Reset every add/edit field so the two form modes never leak into each other.
   const resetInvestmentForm = () => {
@@ -6599,6 +6600,8 @@ const handleInvestmentTransactionSubmit =
   // ==========================================================
 
   const handleInvestmentSubmit = async () => {
+    if (investmentSubmitInFlightRef.current) return;
+    investmentSubmitInFlightRef.current = true;
     try {
       // --------------------------------------------------------
       // VALIDATION
@@ -6875,6 +6878,8 @@ const handleInvestmentTransactionSubmit =
         err?.message ||
           "Unable to save investment."
       );
+    } finally {
+      investmentSubmitInFlightRef.current = false;
     }
   };
 

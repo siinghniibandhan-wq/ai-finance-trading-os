@@ -2726,3 +2726,61 @@
   color: var(--finos-muted, #a8b4cc);
   opacity: 1;
 }
+
+
+/* Final dark-theme enforcement: several legacy cards use inline light
+   backgrounds, so theme tokens alone cannot override them. Keep this override
+   strictly dark-scoped and preserve semantic positive/negative indicators. */
+:root[data-finos-theme="dark"] .content :is(
+  .glass-card, .large-card, .ai-card, .module-overview-card,
+  .wc-primary-card, .wc-shortcut-tile, .wc-welcome, .welcome-section,
+  .dashboard-clickable-card, .balance-summary, .balance-sheet-summary,
+  .net-worth-summary, .asset-liability-summary, .financial-summary-strip,
+  .summary-strip, .overview-card, .overview-panel, .account-summary,
+  .account-type-card, .form-card, .settings-card, .data-card, .table-card,
+  .empty-state-card, .activity-card, .diary-card, .history-card
+) {
+  color: var(--finos-text, #f1f5ff) !important;
+  background: var(--t-card-bg, #111827) !important;
+  background-image: linear-gradient(145deg, rgba(167,139,250,.045), transparent 65%) !important;
+  border-color: var(--finos-border, #303b52) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22) !important;
+}
+:root[data-finos-theme="dark"] .content :is(
+  .glass-card, .large-card, .ai-card, .module-overview-card,
+  .wc-primary-card, .wc-shortcut-tile, .wc-welcome, .welcome-section,
+  .dashboard-clickable-card, .balance-summary, .balance-sheet-summary,
+  .net-worth-summary, .asset-liability-summary, .financial-summary-strip,
+  .summary-strip, .overview-card, .overview-panel, .account-summary,
+  .account-type-card, .form-card, .settings-card, .data-card, .table-card,
+  .empty-state-card, .activity-card, .diary-card, .history-card
+) :is(.card,.panel,[class*="-card"],[class*="-panel"],.inner,.nested-card) {
+  color: var(--finos-text, #f1f5ff) !important;
+  background: var(--t-inner-bg, #172033) !important;
+  background-image: none !important;
+  border-color: var(--finos-border, #303b52) !important;
+}
+:root[data-finos-theme="dark"] .content :is(
+  .glass-card, .large-card, .ai-card, .module-overview-card,
+  .wc-primary-card, .wc-shortcut-tile, .wc-welcome, .welcome-section,
+  .dashboard-clickable-card, .balance-summary, .balance-sheet-summary,
+  .net-worth-summary, .asset-liability-summary, .financial-summary-strip,
+  .summary-strip, .overview-card, .overview-panel, .account-summary,
+  .account-type-card, .form-card, .settings-card, .data-card, .table-card,
+  .empty-state-card, .activity-card, .diary-card, .history-card
+) :is(h1,h2,h3,h4,h5,h6,strong,b,label,dt,dd,th,td) {
+  color: var(--finos-text, #f1f5ff) !important;
+  -webkit-text-fill-color: var(--finos-text, #f1f5ff) !important;
+}
+:root[data-finos-theme="dark"] .content :is(
+  .glass-card, .large-card, .ai-card, .module-overview-card,
+  .wc-primary-card, .wc-shortcut-tile, .wc-welcome, .welcome-section,
+  .dashboard-clickable-card, .balance-summary, .balance-sheet-summary,
+  .net-worth-summary, .asset-liability-summary, .financial-summary-strip,
+  .summary-strip, .overview-card, .overview-panel, .account-summary,
+  .account-type-card, .form-card, .settings-card, .data-card, .table-card,
+  .empty-state-card, .activity-card, .diary-card, .history-card
+) :is(p,small,caption,.muted,.subtitle,.description,.helper-text) {
+  color: var(--finos-muted, #a8b4cc) !important;
+  -webkit-text-fill-color: var(--finos-muted, #a8b4cc) !important;
+}

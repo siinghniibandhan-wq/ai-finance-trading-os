@@ -2858,3 +2858,237 @@
     padding: 13px;
   }
 }
+
+
+/* Markets: preserve each non-default dark theme instead of forcing white cards.
+   Scoped only to visually dark themes; Light-family themes and Default/Dark keep
+   their existing Markets appearance. Use each theme's existing palette tokens. */
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace {
+  --market-ink: var(--finos-text, #f1f5f9);
+  --market-muted: var(--finos-muted, #b7c2d5);
+  --market-surface: var(--t-card-bg, rgba(17, 24, 39, .88));
+  --market-raised: var(--t-inner-bg, rgba(255, 255, 255, .06));
+  --market-line: var(--finos-border, rgba(255, 255, 255, .16));
+  --market-accent: var(--finos-accent, #a78bfa);
+  color: var(--market-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market overview"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market instrument search"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Major Indian market indices"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market breadth"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market news"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="My watchlist"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market movers"] {
+  color: var(--market-ink) !important;
+  background: var(--market-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+  box-shadow: var(--t-shadow, 0 8px 24px rgba(0, 0, 0, .24)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market overview"] {
+  background: var(--market-surface) !important;
+  background-image: none !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(
+  .card, .panel, .market-card, .market-news, .market-watchlist-item,
+  [role="status"], [role="alert"],
+  section[aria-label="Major Indian market indices"] > div,
+  section[aria-label="Market breadth"] > div,
+  section[aria-label="Market movers"] > div
+) {
+  color: var(--market-ink) !important;
+  background: var(--market-raised) !important;
+  background-image: none !important;
+  border-color: var(--market-line) !important;
+  box-shadow: none;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(h1,h2,h3,h4,h5,strong,b,th) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(p,span,small,label,dt,dd,td,.muted,.text-muted) {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input,select,textarea) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+  background: var(--market-raised) !important;
+  border-color: var(--market-line) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input,textarea)::placeholder {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(button:not(.primary-button):not([data-variant="primary"])) {
+  color: var(--market-ink) !important;
+  background: var(--market-raised) !important;
+  border-color: var(--market-line) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(button.primary-button,button[data-variant="primary"],button[aria-label*="Search"]) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: var(--market-accent) !important;
+  border-color: var(--market-accent) !important;
+}

@@ -63,7 +63,6 @@ class AccountUpdate(BaseModel):
     balance: Decimal | None = None
     credit_limit: Decimal | None = None
     is_active: bool | None = None
-    is_deleted: bool | None = None
 
 
 class AccountResponse(BaseModel):

@@ -35,6 +35,7 @@ jobs:
       - name: Run cash-accounting unit tests
         env:
           DATABASE_URL: postgresql+psycopg://test:test@localhost:5432/test
+          PYTHONPATH: .
         run: pytest -q tests/test_investment_cash_accounting.py
 
   frontend-production-build:

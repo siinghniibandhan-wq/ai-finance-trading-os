@@ -127,6 +127,29 @@ def _apply_account_logical_delete_migration():
 _apply_account_logical_delete_migration()
 
 
+def _apply_account_details_migration():
+    """Add optional bank and broker identity fields to existing account rows."""
+    inspector = inspect(engine)
+    if not inspector.has_table("accounts"):
+        return
+    columns = {column["name"] for column in inspector.get_columns("accounts")}
+    definitions = {
+        "ifsc_code": "VARCHAR(20)",
+        "nominee_name": "VARCHAR(150)",
+        "bo_id": "VARCHAR(100)",
+        "linked_mobile_number": "VARCHAR(25)",
+        "linked_email": "VARCHAR(255)",
+        "is_deleted": "BOOLEAN NOT NULL DEFAULT FALSE",
+    }
+    with engine.begin() as connection:
+        for column_name, sql_type in definitions.items():
+            if column_name not in columns:
+                connection.execute(text(f"ALTER TABLE accounts ADD COLUMN {column_name} {sql_type}"))
+
+
+_apply_account_details_migration()
+
+
 def _apply_user_phone_number_migration():
     """Add the optional unique phone number column to existing user tables."""
     table_name = "users"

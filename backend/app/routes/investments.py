@@ -636,7 +636,6 @@ def refresh_market_prices(
                 current_price,
                 buy_date,
                 broker,
-                investment_account_id,
                 fees,
                 notes,
                 created_at,

@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models import User
 from app.routes.auth import get_current_user
+from app.routes.investments import ensure_investments_table
 from app.finance_diary import record_finance_event
 
 
@@ -102,7 +103,6 @@ def ensure_transaction_table(db: Session):
     db.execute(text("ALTER TABLE investment_transactions ADD COLUMN IF NOT EXISTS cash_account_id INTEGER"))
     db.execute(text("ALTER TABLE investment_transactions ADD COLUMN IF NOT EXISTS cash_effect_amount NUMERIC(18,2)"))
     db.execute(text("ALTER TABLE investment_transactions ADD COLUMN IF NOT EXISTS cash_effect_applied BOOLEAN NOT NULL DEFAULT FALSE"))
-    db.execute(text("ALTER TABLE investments ADD COLUMN IF NOT EXISTS investment_account_id INTEGER"))
     db.commit()
 
 
@@ -315,6 +315,7 @@ def create_transaction(
 ):
     # Ignore any user_id in the request body; derive ownership from the token.
     user_id = current_user.id
+    ensure_investments_table(db)
     ensure_transaction_table(db)
 
     # --------------------------------------------------------
@@ -558,6 +559,7 @@ def update_transaction(
     current_user: User = Depends(get_current_user),
 ):
     user_id = current_user.id
+    ensure_investments_table(db)
     ensure_transaction_table(db)
     transaction_type = data.transaction_type.strip().upper()
     if transaction_type not in {"BUY", "SELL"}:
@@ -683,6 +685,7 @@ def void_transaction(
     current_user: User = Depends(get_current_user),
 ):
     user_id = current_user.id
+    ensure_investments_table(db)
     ensure_transaction_table(db)
     # Resolve the parent investment first, then acquire the same parent-row
     # lock used by create_transaction. All ledger mutations for one investment

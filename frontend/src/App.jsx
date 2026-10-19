@@ -6558,7 +6558,7 @@ const handleInvestmentTransactionSubmit =
     try {
       const response = await apiFetch(`${API_BASE_URL}/api/accounts/`);
       const data = await response.json().catch(() => []);
-      if (!response.ok) throw new Error(data?.detail || "Unable to load broker cash accounts.");
+      if (!response.ok) throw new Error(data?.detail || "Unable to load Investment accounts.");
       setBrokerAccounts((Array.isArray(data) ? data : []).filter(
         (account) => String(account.account_type || "").trim().toLowerCase() === "investment" && account.is_active !== false
       ));
@@ -6645,7 +6645,7 @@ const handleInvestmentTransactionSubmit =
       }
 
       if (!investmentForm.investment_account_id) {
-        alert("Please select an active Investment / Broker Cash account. Fund it through Money → Transfers before buying.");
+        alert("Please select a Broker Account from Money → Accounts. Fund it through Money → Transfers before buying.");
         return;
       }
       if (!editingInvestmentId && (!investmentForm.name.trim() || !investmentForm.symbol.trim())) {
@@ -6661,7 +6661,7 @@ const handleInvestmentTransactionSubmit =
         (account) => Number(account.id) === Number(investmentForm.investment_account_id)
       );
       if (!selectedBrokerAccount) {
-        alert("The selected broker cash account is unavailable. Refresh the account list and select an active Investment account.");
+        alert("The selected Investment account is unavailable. Refresh the account list and select an active account.");
         return;
       }
       const existingInvestment = editingInvestmentId
@@ -7357,9 +7357,9 @@ const summaryCards = [
             />
 
 
-            {/* BROKER CASH ACCOUNT — sourced from Money → Accounts; no provider names hardcoded */}
+            {/* BROKER ACCOUNT — selected dynamically from Money → Accounts; no provider names hardcoded */}
             <div>
-              <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Broker cash account (required)</label>
+              <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Broker Account (Money → Accounts)</label>
               <StyledSelect className="finos-select"
                 value={String(investmentForm.investment_account_id || "")}
                 onChange={(event) => {
@@ -7376,7 +7376,7 @@ const summaryCards = [
                 aria-label="Broker cash account"
                 style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px", outline: "none" }}
               >
-                <option value="">{brokerAccountsLoading ? "Loading Investment accounts…" : "Select broker cash account…"}</option>
+                <option value="">{brokerAccountsLoading ? "Loading Investment accounts…" : "Select Broker Account…"}</option>
                 {brokerAccounts.map((account) => (
                   <option key={account.id} value={String(account.id)}>
                     {account.name}{account.institution ? ` — ${account.institution}` : ""} · Available ₹{Number(account.balance || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
@@ -7384,7 +7384,7 @@ const summaryCards = [
                 ))}
               </StyledSelect>
               {brokerAccountsError && <p role="alert" style={{ margin: "6px 0 0", color: "var(--finos-danger, #dc2626)", fontSize: "12px" }}>{brokerAccountsError}</p>}
-              {!brokerAccountsLoading && brokerAccounts.length === 0 && <p style={{ margin: "6px 0 0", color: "var(--finos-muted)", fontSize: "12px" }}>Create an account with type “Investment” in Money → Accounts, then transfer funds into it.</p>}
+              {!brokerAccountsLoading && brokerAccounts.length === 0 && <p style={{ margin: "6px 0 0", color: "var(--finos-muted)", fontSize: "12px" }}>Create a Money → Accounts record with type “Investment”, then use Money → Transfers to fund the Broker Account.</p>}
               <p style={{ margin: "6px 0 0", color: "var(--finos-muted)", fontSize: "11px" }}>BUY and SELL cash movements affect only this selected Investment account.</p>
             </div>
 

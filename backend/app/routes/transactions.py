@@ -534,6 +534,15 @@ def update_transaction(
     new_type = update_data.get("transaction_type", transaction.transaction_type)
     new_amount = update_data.get("amount", transaction.amount)
 
+    # Transfers must be created through the dedicated flow, which validates and
+    # updates both accounts atomically. Never convert an ordinary transaction
+    # into a transfer through this single-account edit endpoint.
+    if str(new_type or "").strip().lower() == "transfer":
+        raise HTTPException(
+            status_code=409,
+            detail="Transactions cannot be changed to Transfer in place. Create a new transfer using the Transfer form.",
+        )
+
     if new_account_id is None:
         raise HTTPException(status_code=422, detail="An account is required")
     if new_type is None:

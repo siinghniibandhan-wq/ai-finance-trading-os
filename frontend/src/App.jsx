@@ -6702,8 +6702,13 @@ const handleInvestmentTransactionSubmit =
         buy_date:
           investmentForm.buy_date,
 
+        // Preserve the existing display label for linked holdings. When
+        // linking a legacy holding for the first time, show the selected
+        // Money account's label so it matches the authoritative account ID.
         broker:
-          (editingInvestmentId ? existingInvestment?.broker : selectedBrokerLabel) || selectedBrokerLabel,
+          (editingInvestmentId && existingInvestment?.investment_account_id
+            ? existingInvestment?.broker
+            : selectedBrokerLabel) || selectedBrokerLabel,
 
         fees:
           Number(investmentForm.fees || 0),

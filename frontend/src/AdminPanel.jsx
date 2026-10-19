@@ -142,15 +142,6 @@ export default function AdminPanel() {
       </div>
 
       <div className="admin-section-card">
-        <div className="admin-table-heading"><div><h2>Administrative audit log</h2><p>Recent account activation and deactivation actions.</p></div></div>
-        {loading ? <div className="admin-empty">Loading activity…</div> : auditLogs.length === 0 ? <div className="admin-empty"><Activity size={20} />No administrative actions recorded yet.</div> :
-          <div className="admin-table-wrap"><table className="admin-users-table">
-            <thead><tr><th>Time</th><th>Action</th><th>Administrator ID</th><th>Target user ID</th><th>Details</th></tr></thead>
-            <tbody>{auditLogs.map((row) => <tr key={row.id}><td>{row.created_at ? new Date(row.created_at).toLocaleString() : "—"}</td><td>{row.action.replaceAll("_", " ")}</td><td>{row.admin_user_id}</td><td>{row.target_user_id ?? "—"}</td><td>{row.details || "—"}</td></tr>)}</tbody>
-          </table></div>}
-      </div>
-
-      <div className="admin-section-card">
         <div className="admin-table-heading">
           <div><h2>Customer management</h2><p>Account status changes are enforced by the backend.</p></div>
           <label className="admin-filter-label">Filter
@@ -173,6 +164,15 @@ export default function AdminPanel() {
             </tr>)}</tbody>
           </table></div>}
       </div>
+      <div className="admin-section-card">
+        <div className="admin-table-heading"><div><h2>Administrative audit log</h2><p>Recent account activation and deactivation actions.</p></div></div>
+        {loading ? <div className="admin-empty">Loading activity…</div> : auditLogs.length === 0 ? <div className="admin-empty"><Activity size={20} />No administrative actions recorded yet.</div> :
+          <div className="admin-table-wrap"><table className="admin-users-table">
+            <thead><tr><th>Time</th><th>Action</th><th>Administrator ID</th><th>Target user ID</th><th>Details</th></tr></thead>
+            <tbody>{auditLogs.map((row) => <tr key={row.id}><td>{row.created_at ? new Date(row.created_at).toLocaleString() : "—"}</td><td>{row.action.replaceAll("_", " ")}</td><td>{row.admin_user_id}</td><td>{row.target_user_id ?? "—"}</td><td>{row.details || "—"}</td></tr>)}</tbody>
+          </table></div>}
+      </div>
+
       <p className="admin-security-note"><ShieldCheck size={16} /> This page relies on server-side authorization. Hiding the menu is not the security boundary; the backend validates every administrative request.</p>
     </section>
   );

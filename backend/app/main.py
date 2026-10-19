@@ -262,7 +262,7 @@ app.add_middleware(
     allow_origins=CORS_ALLOWED_ORIGINS,
     # Accept Amplify branch/app domains even if the exact generated frontend
     # hostname changes. Keep this restricted to HTTPS Amplify domains.
-    allow_origin_regex=r"https://([a-zA-Z0-9-]+\\.)+amplifyapp\\.com",
+    allow_origin_regex=r"https://([a-zA-Z0-9-]+\.)+amplifyapp\.com",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept", "Origin"],

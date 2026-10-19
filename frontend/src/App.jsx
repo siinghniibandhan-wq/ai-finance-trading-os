@@ -309,9 +309,12 @@ export default function App() {
     return () => { cancelled = true; };
   }, []);
 
-  const visibleNavigation = isAdmin
-    ? [...navigation, { section: "Administration", items: [{ name: "Admin Panel", icon: ShieldCheck }] }]
-    : navigation;
+  // Keep the Admin Panel entry visible so the user can discover it.
+  // Actual access remains protected by the backend and the route-level check below.
+  const visibleNavigation = [
+    ...navigation,
+    { section: "Administration", items: [{ name: "Admin Panel", icon: ShieldCheck }] }
+  ];
 
   useEffect(() => { applyFinosTheme(selectedTheme); }, [selectedTheme]);
   const changeTheme = (theme) => { setSelectedTheme(theme); applyFinosTheme(theme); };

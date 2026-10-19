@@ -195,11 +195,28 @@ def login(request: LoginRequest, http_request: Request, db: Session = Depends(ge
         import re
         identifier = re.sub(r"[\\s().-]", "", identifier)
     rate_limit_key = _login_rate_limit_key(http_request, identifier)
-    _check_login_rate_limit(rate_limit_key)
     user = db.query(User).filter(
         (User.email == identifier) | (User.phone_number == identifier),
         User.is_active.is_(True),
     ).first()
+
+    # The configured administrator must be able to recover access even when
+    # repeated attempts have triggered the customer login cooldown. Admin
+    # identity is resolved from the backend's existing ADMIN_USER_ID /
+    # ADMIN_EMAIL configuration; no frontend-supplied role is trusted.
+    admin_user_id = os.getenv("ADMIN_USER_ID", "").strip()
+    admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    is_configured_admin = bool(
+        user
+        and (
+            (admin_user_id and str(user.id) == admin_user_id)
+            or (not admin_user_id and admin_email and (user.email or "").strip().lower() == admin_email)
+        )
+    )
+
+    if not is_configured_admin:
+        _check_login_rate_limit(rate_limit_key)
+
     credential = db.query(UserCredential).filter(UserCredential.user_id == user.id).first() if user else None
     if not user or not credential or not _verify_password(request.password, credential.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email/phone number or password.")

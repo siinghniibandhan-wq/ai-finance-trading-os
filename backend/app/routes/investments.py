@@ -562,8 +562,6 @@ def create_investment(
                 if data.broker
                 else None,
 
-            "investment_account_id": selected_account_id,
-
             "fees": data.fees,
             "notes": data.notes,
             "asset_class": asset_class,
@@ -1407,6 +1405,8 @@ def update_investment(
                 data.broker.strip()
                 if data.broker
                 else None,
+
+            "investment_account_id": selected_account_id,
 
             "fees":
                 data.fees,

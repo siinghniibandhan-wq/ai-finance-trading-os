@@ -36,7 +36,7 @@ jobs:
         env:
           DATABASE_URL: postgresql+psycopg://test:test@localhost:5432/test
           PYTHONPATH: .
-        run: pytest -q tests/test_investment_cash_accounting.py tests/test_investment_transaction_timeline.py tests/test_investment_portfolio_valuation.py tests/test_broker_reconciliation.py
+        run: pytest -q tests/test_investment_cash_accounting.py tests/test_investment_transaction_timeline.py tests/test_investment_portfolio_valuation.py tests/test_broker_reconciliation.py tests/test_money_transfer_and_finance_diary.py tests/test_capital_gains_date_classification.py tests/test_final_tax_liability_capital_gains_review.py tests/test_tax_capital_gains_safety.py tests/test_tax_income_safety.py tests/test_tax_calculation_eligibility_safeguards.py
 
   frontend-production-build:
     runs-on: ubuntu-latest

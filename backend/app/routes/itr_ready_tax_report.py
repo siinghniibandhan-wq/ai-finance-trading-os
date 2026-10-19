@@ -289,6 +289,7 @@ def load_investment_transactions(db: Session, user_id: int):
             transaction_date
         FROM investment_transactions
         WHERE user_id = :user_id
+          AND status = 'ACTIVE'
         ORDER BY transaction_date, id
         """
     )

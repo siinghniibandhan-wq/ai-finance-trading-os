@@ -6112,9 +6112,6 @@ const handleEditInvestment = (investment) => {
   setInstrumentQuery("");
   setInstrumentResults([]);
   setInstrumentSearchError("");
-  const standardBrokers = ["Zerodha", "Groww", "Upstox", "Angel One", "ICICI Direct", "HDFC Securities", "Kotak Securities", "m.Stock"];
-  setBrokerChoice(standardBrokers.includes(investment.broker) ? investment.broker : (investment.broker ? "Other" : ""));
-  setCustomBroker(standardBrokers.includes(investment.broker) ? "" : (investment.broker || ""));
   setInvestmentForm({
     name: investment.name || "",
     exchange: investment.exchange || investment.instrument_exchange || "",

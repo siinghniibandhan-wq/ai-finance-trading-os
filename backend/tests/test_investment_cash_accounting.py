@@ -50,7 +50,7 @@ def test_cash_delta_rejects_overdraw_without_writing():
 
 
 
-def test_linked_investment_account_is_detected_and_cannot_be_deactivated():
+def test_linked_investment_account_with_cash_and_open_position_cannot_be_deactivated():
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
     SessionFactory = sessionmaker(bind=engine)
@@ -71,11 +71,12 @@ def test_linked_investment_account_is_detected_and_cannot_be_deactivated():
             CREATE TABLE investments (
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER NOT NULL,
-                investment_account_id INTEGER NOT NULL
+                investment_account_id INTEGER NOT NULL,
+                quantity NUMERIC(18, 4) NOT NULL DEFAULT 0
             )
         """))
         db.execute(
-            text("INSERT INTO investments (id, user_id, investment_account_id) VALUES (1, :user_id, :account_id)"),
+            text("INSERT INTO investments (id, user_id, investment_account_id, quantity) VALUES (1, :user_id, :account_id, 10)"),
             {"user_id": user.id, "account_id": account.id},
         )
         db.commit()
@@ -87,3 +88,43 @@ def test_linked_investment_account_is_detected_and_cannot_be_deactivated():
         assert error.value.status_code == 409
         db.refresh(account)
         assert account.is_active is True
+
+
+
+def test_empty_linked_investment_account_can_be_closed_and_history_preserved():
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    SessionFactory = sessionmaker(bind=engine)
+    with SessionFactory() as db:
+        user = User(name="Empty Broker Account Test", currency="INR")
+        db.add(user)
+        db.flush()
+        account = Account(
+            user_id=user.id,
+            name="Old Broker Cash",
+            account_type="Investment",
+            balance=Decimal("0.00"),
+            is_active=True,
+        )
+        db.add(account)
+        db.flush()
+        db.execute(text("""
+            CREATE TABLE investments (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                investment_account_id INTEGER NOT NULL,
+                quantity NUMERIC(18, 4) NOT NULL DEFAULT 0
+            )
+        """))
+        db.execute(text("""
+            INSERT INTO investments (id, user_id, investment_account_id, quantity)
+            VALUES (1, :user_id, :account_id, 0)
+        """), {"user_id": user.id, "account_id": account.id})
+        db.commit()
+
+        result = delete_account(account.id, db=db, current_user=user)
+
+        assert result == {"status": "deactivated", "account_id": account.id, "history_preserved": True}
+        db.refresh(account)
+        assert account.is_active is False
+        assert db.execute(text("SELECT id FROM investments WHERE id = 1")).first() is not None

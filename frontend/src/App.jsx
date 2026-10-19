@@ -7371,7 +7371,7 @@ const summaryCards = [
                     broker: account ? (account.institution || account.name) : "",
                   }));
                 }}
-                disabled={brokerAccountsLoading || brokerAccounts.length === 0}
+                disabled={brokerAccountsLoading || brokerAccounts.length === 0 || (Boolean(editingInvestmentId) && Boolean(investmentForm.investment_account_id))}
                 required
                 aria-label="Broker cash account"
                 style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px", outline: "none" }}

@@ -110,6 +110,23 @@ def _apply_account_credit_limit_migration():
 
 _apply_account_credit_limit_migration()
 
+
+def _apply_account_logical_delete_migration():
+    """Add an account tombstone flag without deleting linked ledger rows."""
+    inspector = inspect(engine)
+    if not inspector.has_table("accounts"):
+        return
+    columns = {column["name"] for column in inspector.get_columns("accounts")}
+    if "is_deleted" not in columns:
+        with engine.begin() as connection:
+            connection.execute(
+                text("ALTER TABLE accounts ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE")
+            )
+
+
+_apply_account_logical_delete_migration()
+
+
 def _apply_user_phone_number_migration():
     """Add the optional unique phone number column to existing user tables."""
     table_name = "users"

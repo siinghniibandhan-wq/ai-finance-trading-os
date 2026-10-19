@@ -10412,14 +10412,11 @@ const deleteAccount = async () => {
                   onClick={handleAccountSubmit}
                   disabled={accountSaving || !accountForm.name.trim() || accountForm.balance === ""}
                 >{accountSaving ? "Saving…" : editingAccount ? "Save changes" : "Save account"}</button>
-                   </div>
-          </div>
-        ), document.body)}
-
-ter>
+              </footer>
             </section>
           </div>
-        )}
+          </div>
+        ), document.body)}
 
       {/* ACCOUNT DELETE CONFIRMATION MODAL */}
       {accountToDelete && (

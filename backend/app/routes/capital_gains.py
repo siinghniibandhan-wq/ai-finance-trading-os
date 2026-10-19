@@ -152,6 +152,7 @@ def load_transactions(
                 transaction_date
             FROM investment_transactions
             WHERE user_id = :user_id
+              AND status = 'ACTIVE'
               AND transaction_date <= :end_date
             ORDER BY
                 transaction_date ASC,

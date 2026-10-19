@@ -109,3 +109,68 @@
     padding: 14px !important;
   }
 }
+
+
+/* Money > Accounts: keep the account form a true modal in every theme.
+   These base rules intentionally do not depend on data-finos-theme being set. */
+.money-accounts .account-form-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  background: var(--finos-modal-backdrop, rgba(8, 12, 24, .68));
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+}
+
+.money-accounts .account-form-dialog {
+  position: relative;
+  box-sizing: border-box;
+  width: min(100%, 620px);
+  max-height: min(88dvh, 760px);
+  overflow-y: auto;
+  margin: auto;
+  padding: clamp(18px, 4vw, 28px);
+  color: var(--finos-text, var(--t-text, inherit));
+  background: var(--t-card-bg, var(--finos-surface, #fff));
+  border: 1px solid var(--finos-border, var(--t-border, rgba(127, 127, 127, .3)));
+  border-radius: var(--t-radius, 18px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+}
+
+.money-accounts .account-form-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 16px;
+}
+
+.money-accounts .account-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.money-accounts .account-form-close {
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .money-accounts .account-form-overlay {
+    align-items: flex-start;
+    padding: 10px;
+  }
+  .money-accounts .account-form-dialog {
+    max-height: calc(100dvh - 20px);
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .money-accounts .account-form-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

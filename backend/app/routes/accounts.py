@@ -145,6 +145,17 @@ def delete_account(account_id: int, db: Session = Depends(get_db), current_user:
             detail="Archive this account first. Accounts can only be removed from the Archive tab.",
         )
 
+    if account.balance != 0:
+        raise HTTPException(
+            status_code=409,
+            detail="Transfer the remaining balance out before removing this account from Archive.",
+        )
+    if (account.account_type or "").strip().lower() == "investment" and _has_open_linked_investments(db, current_user.id, account.id):
+        raise HTTPException(
+            status_code=409,
+            detail="Close all holdings linked to this Broker Account before removing it from Archive.",
+        )
+
     # This is a logical removal, not a SQL DELETE. Transactions, investments,
     # transfers, and Finance Diary snapshots keep their account references.
     before = {

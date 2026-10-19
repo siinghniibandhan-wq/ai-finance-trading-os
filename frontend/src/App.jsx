@@ -9411,6 +9411,11 @@ function Accounts() {
     account_type: "bank",
     institution: "",
     account_number: "",
+    ifsc_code: "",
+    nominee_name: "",
+    bo_id: "",
+    linked_mobile_number: "",
+    linked_email: "",
     currency: "INR",
     balance: "",
     credit_limit: "",
@@ -9515,8 +9520,12 @@ const handleAccountSubmit = async () => {
           name: accountForm.name.trim(),
           account_type: accountForm.account_type,
           institution: accountForm.institution.trim(),
-          account_number:
-            accountForm.account_number.trim(),
+          account_number: accountForm.account_number.trim(),
+          ifsc_code: accountForm.ifsc_code.trim(),
+          nominee_name: accountForm.nominee_name.trim(),
+          bo_id: accountForm.bo_id.trim(),
+          linked_mobile_number: accountForm.linked_mobile_number.trim(),
+          linked_email: accountForm.linked_email.trim(),
           currency: accountForm.currency,
           balance: accountForm.account_type === "loan" ? Number(accountForm.loan_principal) : Number(accountForm.balance),
           credit_limit: isCreditAccount ? Number(accountForm.credit_limit) : null,
@@ -9527,6 +9536,11 @@ const handleAccountSubmit = async () => {
           account_type: accountForm.account_type,
           institution: accountForm.institution.trim(),
           account_number: accountForm.account_number.trim(),
+          ifsc_code: accountForm.ifsc_code.trim(),
+          nominee_name: accountForm.nominee_name.trim(),
+          bo_id: accountForm.bo_id.trim(),
+          linked_mobile_number: accountForm.linked_mobile_number.trim(),
+          linked_email: accountForm.linked_email.trim(),
           currency: accountForm.currency,
           balance: accountForm.account_type === "loan" ? Number(accountForm.loan_principal) : Number(accountForm.balance),
           credit_limit: isCreditAccount ? Number(accountForm.credit_limit) : null,
@@ -9586,19 +9600,21 @@ const handleAccountSubmit = async () => {
 
     setAccounts((previous) =>
       isEditing
-        ? previous.map((account) =>
-            account.id === data.id
-              ? data
-              : account
-          )
+        ? previous.map((account) => account.id === data.id ? data : account)
         : [data, ...previous]
     );
+    window.dispatchEvent(new Event("financial-os:accounts-changed"));
 
     setAccountForm({
       name: "",
       account_type: "bank",
       institution: "",
       account_number: "",
+      ifsc_code: "",
+      nominee_name: "",
+      bo_id: "",
+      linked_mobile_number: "",
+      linked_email: "",
       currency: "INR",
       balance: "",
       credit_limit: "",
@@ -9710,6 +9726,11 @@ const handleEditAccount = (account) => {
     account_type: account.account_type || "bank",
     institution: account.institution || "",
     account_number: account.account_number || "",
+    ifsc_code: account.ifsc_code || "",
+    nominee_name: account.nominee_name || "",
+    bo_id: account.bo_id || "",
+    linked_mobile_number: account.linked_mobile_number || "",
+    linked_email: account.linked_email || "",
     currency: account.currency || "INR",
     balance: account.balance ?? "",
     credit_limit: account.credit_limit ?? "",
@@ -10295,7 +10316,18 @@ const deleteAccount = async () => {
                   { key: "name", label: "Account name *", placeholder: "e.g. Salary Account", type: "text", required: true },
                   { key: "account_type", label: "Account type *", type: "select", required: true },
                   { key: "institution", label: "Bank / Institution", placeholder: "e.g. HDFC Bank", type: "text" },
-                  { key: "account_number", label: "Account number", placeholder: "Enter account number (optional)", type: "text" },
+                  ...(accountForm.account_type === "bank" ? [
+                    { key: "account_number", label: "Bank A/C number", placeholder: "Enter bank account number", type: "text" },
+                    { key: "ifsc_code", label: "IFSC Code", placeholder: "e.g. HDFC0001234", type: "text" },
+                    { key: "nominee_name", label: "Nominee name", placeholder: "Enter nominee name (optional)", type: "text" },
+                  ] : []),
+                  ...(accountForm.account_type === "investment" ? [
+                    { key: "bo_id", label: "BO ID / Demat ID", placeholder: "Enter broker BO ID (optional)", type: "text" },
+                    { key: "linked_mobile_number", label: "Broker-linked mobile", placeholder: "Mobile number registered with broker", type: "tel" },
+                    { key: "linked_email", label: "Broker-linked email", placeholder: "Email registered with broker", type: "email" },
+                  ] : accountForm.account_type !== "bank" ? [
+                    { key: "account_number", label: "Account number (optional)", placeholder: "Enter account number", type: "text" },
+                  ] : []),
                   ...(accountForm.account_type !== "loan" ? [{ key: "balance", label: ["credit_card", "credit_line"].includes(accountForm.account_type) ? "Opening outstanding amount (₹) *" : "Opening balance (₹) *", placeholder: "0.00", type: "number", required: true }] : []),
                   ...(["credit_card", "credit_line"].includes(accountForm.account_type) ? [
                     { key: "credit_limit", label: "Approved credit limit (₹) *", placeholder: "e.g. 100000", type: "number", required: true },
@@ -10664,6 +10696,11 @@ async function loadTransactions() {
     loadBudgets();
     loadCategories();
     loadTransactions();
+    const handleAccountsChanged = () => {
+      refreshTransactionAccounts().catch((err) => console.error("Transaction account refresh error:", err));
+    };
+    window.addEventListener("financial-os:accounts-changed", handleAccountsChanged);
+    return () => window.removeEventListener("financial-os:accounts-changed", handleAccountsChanged);
 
   }, []);
 
@@ -11725,6 +11762,14 @@ const isLoanDisbursement = categories.some((category) =>
 
   const loanInputStyle = { width: "100%", boxSizing: "border-box", display: "block", marginTop: "6px", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "#151525", color: "#fff", outline: "none" };
 
+  const refreshTransactionAccounts = async () => {
+    const response = await apiFetch(`${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`);
+    if (!response.ok) throw new Error(`Accounts API error: ${response.status}`);
+    const data = await response.json();
+    // Archived accounts remain in valuations/history, but cannot be used for new transactions.
+    setAccounts(Array.isArray(data) ? data.filter((account) => account.is_active !== false && account.is_deleted !== true) : []);
+  };
+
   // ----------------------------------------------------------
   // LOAD TRANSACTIONS
   // ----------------------------------------------------------
@@ -11750,11 +11795,7 @@ const isLoanDisbursement = categories.some((category) =>
 
         const data = await response.json();
         setTransactions(data);
-        const accountsResponse = await apiFetch(`${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`);
-        if (accountsResponse.ok) {
-          const accountsData = await accountsResponse.json();
-          setAccounts(Array.isArray(accountsData) ? accountsData : []);
-        }
+        await refreshTransactionAccounts();
 
       } catch (err) {
 

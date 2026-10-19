@@ -9391,6 +9391,7 @@ function Accounts() {
 
   const [accounts, setAccounts] = useState([]);
   const [activeAccountTab, setActiveAccountTab] = useState("bank");
+  const [accountStatusTab, setAccountStatusTab] = useState("active");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -9761,7 +9762,7 @@ const deleteAccount = async () => {
 
     await loadAccounts();
 
-    setMessage("Account deleted successfully.");
+    setMessage("Account removed from Accounts. Financial Diary and linked transaction history are preserved.");
   } catch (err) {
     console.error("Delete account error:", err);
 
@@ -9814,7 +9815,11 @@ const deleteAccount = async () => {
   ));
   const accountTabFor = (account) => accountTabs.find((tab) => tab.id !== "other" && tab.types.includes(accountTypeKey(account)))?.id || "other";
   const selectedAccountTab = accountTabs.find((tab) => tab.id === activeAccountTab) || accountTabs[0];
-  const visibleAccounts = accounts.filter((account) => accountTabFor(account) === selectedAccountTab.id);
+  const visibleAccounts = accounts.filter((account) =>
+    account.is_deleted !== true &&
+    accountTabFor(account) === selectedAccountTab.id &&
+    Boolean(account.is_active) === (accountStatusTab === "active")
+  );
 
   // ----------------------------------------------------------
   // RENDER
@@ -9989,6 +9994,17 @@ const deleteAccount = async () => {
 {/* --------------------------------------------------
     ACCOUNT CARDS
 -------------------------------------------------- */}
+
+<div role="tablist" aria-label="Account status" style={{ display: "flex", gap: "8px", margin: "4px 0 12px" }}>
+  {[
+    { id: "active", label: "Active", count: accounts.filter((account) => account.is_deleted !== true && account.is_active).length },
+    { id: "archive", label: "Archive", count: accounts.filter((account) => account.is_deleted !== true && !account.is_active).length },
+  ].map((tab) => (
+    <button key={tab.id} type="button" role="tab" aria-selected={accountStatusTab === tab.id} onClick={() => setAccountStatusTab(tab.id)} className={accountStatusTab === tab.id ? "primary-button" : "secondary-button"} style={{ padding: "9px 13px" }}>
+      {tab.label} <span style={{ opacity: .75, marginLeft: "4px" }}>{tab.count}</span>
+    </button>
+  ))}
+</div>
 
 <div role="tablist" aria-label="Account categories" style={{ display: "flex", flexWrap: "wrap", gap: "8px", margin: "4px 0 16px" }}>
         {accountTabs.map((tab) => {
@@ -10203,23 +10219,24 @@ const deleteAccount = async () => {
                   : "Activate"}
               </button>
           
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() =>
-              setAccountToDelete(account)
-            }
-            disabled={accountDeleting}
-            style={{
-  width: "100%",
-  padding: "7px 12px",
-  fontSize: "11px",
-  color: "#fb7185",
-  borderColor: "rgba(251,113,133,0.25)",
-}}
-          >
-            Delete
-          </button>
+          {!account.is_active && (
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setAccountToDelete(account)}
+              disabled={accountDeleting || Number(account.balance || 0) !== 0}
+              title={Number(account.balance || 0) !== 0 ? "Transfer out the remaining balance before removing this account." : "Remove from Accounts while preserving financial history."}
+              style={{
+                width: "100%",
+                padding: "7px 12px",
+                fontSize: "11px",
+                color: "#fb7185",
+                borderColor: "rgba(251,113,133,0.25)",
+              }}
+            >
+              Remove
+            </button>
+          )}
 
         </div>
       </div>
@@ -10407,11 +10424,11 @@ const deleteAccount = async () => {
                 marginTop: "16px",
               }}
             >
-              Are you sure you want to delete{" "}
+              Remove{" "}
               <strong style={{ color: "#ffffff" }}>
                 {accountToDelete.name}
               </strong>
-              ?
+              {" "}from the Accounts view?
             </p>
 
             <p
@@ -10421,7 +10438,7 @@ const deleteAccount = async () => {
                 marginTop: "8px",
               }}
             >
-              This action cannot be undone.
+              The account will disappear from Accounts. Financial Diary, transfers and investment history will be preserved.
             </p>
 
             <div
@@ -10452,8 +10469,8 @@ const deleteAccount = async () => {
                 }}
               >
                 {accountDeleting
-                  ? "Deleting..."
-                  : "Delete Account"}
+                  ? "Removing..."
+                  : "Remove Account"}
               </button>
             </div>
           </div>

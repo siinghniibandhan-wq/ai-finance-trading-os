@@ -4,6 +4,7 @@
 // ============================================================
 
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "./account-layout.css";
 import AdminPanel from "./AdminPanel";
 import AccountContactSettings from "./AccountContactSettings";
@@ -10275,7 +10276,8 @@ const deleteAccount = async () => {
             ACCOUNT FORM MODAL — compact, responsive dialog
             Existing save/edit handlers and API payload are preserved.
         ================================================== */}
-        {showAccountForm && (
+        {showAccountForm && createPortal((
+          <div className="money-accounts account-form-portal-scope" style={{ display: "contents" }}>
           <div
             role="presentation"
             onMouseDown={(event) => {
@@ -10410,7 +10412,11 @@ const deleteAccount = async () => {
                   onClick={handleAccountSubmit}
                   disabled={accountSaving || !accountForm.name.trim() || accountForm.balance === ""}
                 >{accountSaving ? "Saving…" : editingAccount ? "Save changes" : "Save account"}</button>
-              </footer>
+                   </div>
+          </div>
+        ), document.body)}
+
+ter>
             </section>
           </div>
         )}

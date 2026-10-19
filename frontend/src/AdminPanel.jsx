@@ -80,6 +80,34 @@ export default function AdminPanel() {
     }
   };
 
+  const deleteUser = async (user) => {
+    const label = user.email || user.name || `user #${user.id}`;
+    if (!window.confirm(`Permanently delete ${label} (ID ${user.id})? This cannot be undone.`)) return;
+    setSavingUserId(user.id);
+    setError("");
+    setNotice("");
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/auth/admin/users/${encodeURIComponent(user.id)}`, {
+        method: "DELETE",
+        headers: { Accept: "application/json" },
+      });
+      await readResponse(response);
+      setUsers((current) => current.filter((item) => item.id !== user.id));
+      setOverview((current) => current ? {
+        ...current,
+        users_total: Math.max(0, (current.users_total ?? users.length) - 1),
+        users_active: Math.max(0, (current.users_active ?? users.filter((item) => item.is_active).length) - (user.is_active ? 1 : 0)),
+        users_inactive: Math.max(0, (current.users_inactive ?? users.filter((item) => !item.is_active).length) - (user.is_active ? 0 : 1)),
+      } : current);
+      setNotice(`${label}: user permanently deleted.`);
+      await loadUsers();
+    } catch (err) {
+      setError(err?.message || "Unable to delete this account.");
+    } finally {
+      setSavingUserId(null);
+    }
+  };
+
   return (
     <section className="admin-panel" aria-labelledby="admin-panel-title">
       <header className="admin-panel-header">
@@ -141,7 +169,7 @@ export default function AdminPanel() {
               <td><span className={`admin-role-pill ${user.is_admin ? "is-admin" : ""}`}>{user.is_admin ? "Admin" : "Customer"}</span></td>
               <td><span className={`admin-status-pill ${user.is_active ? "is-active" : "is-inactive"}`}>{user.is_active ? "Active" : "Inactive"}</span></td>
               <td>{user.created_at ? new Date(user.created_at).toLocaleDateString() : "—"}</td>
-              <td><button type="button" className={`admin-status-button ${user.is_active ? "is-disable" : "is-enable"}`} disabled={savingUserId === user.id || user.is_admin} title={user.is_admin ? "Administrator accounts cannot be changed here" : undefined} onClick={() => updateStatus(user)}>{savingUserId === user.id ? "Saving…" : user.is_active ? "Deactivate" : "Activate"}</button></td>
+              <td className="admin-user-actions"><button type="button" className={`admin-status-button ${user.is_active ? "is-disable" : "is-enable"}`} disabled={savingUserId === user.id || user.is_admin} title={user.is_admin ? "Administrator accounts cannot be changed here" : undefined} onClick={() => updateStatus(user)}>{savingUserId === user.id ? "Saving…" : user.is_active ? "Deactivate" : "Activate"}</button><button type="button" className="admin-status-button is-delete" disabled={savingUserId === user.id || user.is_admin} title={user.is_admin ? "Administrator accounts cannot be deleted here" : "Permanently delete this user"} onClick={() => deleteUser(user)}>{savingUserId === user.id ? "Working…" : "Delete"}</button></td>
             </tr>)}</tbody>
           </table></div>}
       </div>

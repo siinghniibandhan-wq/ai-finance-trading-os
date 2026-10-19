@@ -138,6 +138,12 @@ class Account(Base):
         nullable=True,
     )
 
+    ifsc_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    nominee_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    bo_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    linked_mobile_number: Mapped[str | None] = mapped_column(String(25), nullable=True)
+    linked_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
     currency: Mapped[str] = mapped_column(
         String(10),
         default="INR",

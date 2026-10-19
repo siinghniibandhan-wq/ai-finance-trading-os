@@ -407,6 +407,46 @@ def admin_update_user_status(
     
 
 
+@router.delete("/admin/users/{user_id}")
+def admin_delete_user(
+    user_id: int,
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Permanently delete a non-admin user when related records allow safe deletion."""
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found.")
+    if target.id == admin.id:
+        raise HTTPException(status_code=400, detail="The administrator cannot delete their own account.")
+    admin_user_id = os.getenv("ADMIN_USER_ID", "").strip()
+    admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    target_is_admin = (
+        str(target.id) == admin_user_id if admin_user_id
+        else (target.email or "").strip().lower() == admin_email
+    )
+    if target_is_admin:
+        raise HTTPException(status_code=400, detail="Administrator accounts cannot be deleted here.")
+    try:
+        # ORM relationships cascade owned accounts, transactions, and categories.
+        # The transaction ensures no partial deletion is committed.
+        db.delete(target)
+        db.add(AdminAuditLog(
+            admin_user_id=admin.id,
+            action="user_deleted",
+            target_user_id=target.id,
+            details="User account permanently deleted by administrator.",
+        ))
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="This user has related records that prevent safe deletion. No changes were committed.",
+        ) from exc
+    return {"status": "success", "user_id": user_id, "deleted": True}
+
+
 @router.get("/admin/overview")
 def admin_overview(
     admin: User = Depends(get_current_admin),

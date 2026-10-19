@@ -237,21 +237,25 @@ app = FastAPI(
 import os
 
 _raw_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").strip()
-if _raw_cors_origins:
-    CORS_ALLOWED_ORIGINS = [
-        origin.strip().rstrip("/")
-        for origin in _raw_cors_origins.split(",")
-        if origin.strip()
-    ]
-else:
-    # Fail closed to local development origins if not configured.
-    # Production deployments must explicitly set CORS_ALLOWED_ORIGINS.
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-    ]
+
+# Keep the existing DuckDNS API/domain setup. Explicitly trust the deployed
+# Amplify frontend origin so browser login/API calls are not rejected by CORS.
+# Any additional production frontend origins can still be configured through
+# CORS_ALLOWED_ORIGINS.
+CORS_ALLOWED_ORIGINS = [
+    origin.strip().rstrip("/")
+    for origin in _raw_cors_origins.split(",")
+    if origin.strip()
+]
+CORS_ALLOWED_ORIGINS.extend([
+    "https://main.d1qcu413dz9f9e.amplifyapp.com",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+])
+# Remove duplicates while preserving order.
+CORS_ALLOWED_ORIGINS = list(dict.fromkeys(CORS_ALLOWED_ORIGINS))
 
 app.add_middleware(
     CORSMiddleware,

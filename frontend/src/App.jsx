@@ -10412,7 +10412,7 @@ const deleteAccount = async () => {
                 </p>
 
                 <h3>
-                  Delete Account
+                  Remove Account
                 </h3>
               </div>
             </div>

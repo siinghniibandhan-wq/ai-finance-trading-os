@@ -66,6 +66,13 @@ class User(Base):
         default=True,
         nullable=False,
     )
+    # Logical removal from the Accounts UI. Keep the row as a tombstone so
+    # historical transactions and investment records retain valid account IDs.
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -131,6 +138,12 @@ class Account(Base):
         nullable=True,
     )
 
+    ifsc_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    nominee_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    bo_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    linked_mobile_number: Mapped[str | None] = mapped_column(String(25), nullable=True)
+    linked_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
     currency: Mapped[str] = mapped_column(
         String(10),
         default="INR",
@@ -149,6 +162,13 @@ class Account(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
+        nullable=False,
+    )
+
+    # Logical removal from Accounts UI; keep financial history and references.
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
         nullable=False,
     )
 

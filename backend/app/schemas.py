@@ -39,6 +39,11 @@ class AccountCreate(BaseModel):
     account_type: str
     institution: str | None = None
     account_number: str | None = None
+    ifsc_code: str | None = None
+    nominee_name: str | None = None
+    bo_id: str | None = None
+    linked_mobile_number: str | None = None
+    linked_email: str | None = None
     currency: str = "INR"
     balance: Decimal = Decimal("0.00")
     credit_limit: Decimal | None = None
@@ -49,6 +54,11 @@ class AccountUpdate(BaseModel):
     account_type: str | None = None
     institution: str | None = None
     account_number: str | None = None
+    ifsc_code: str | None = None
+    nominee_name: str | None = None
+    bo_id: str | None = None
+    linked_mobile_number: str | None = None
+    linked_email: str | None = None
     currency: str | None = None
     balance: Decimal | None = None
     credit_limit: Decimal | None = None
@@ -68,6 +78,12 @@ class AccountResponse(BaseModel):
     balance: Decimal
     credit_limit: Decimal | None = None
     is_active: bool
+    is_deleted: bool = False
+    ifsc_code: str | None = None
+    nominee_name: str | None = None
+    bo_id: str | None = None
+    linked_mobile_number: str | None = None
+    linked_email: str | None = None
     
 # ============================================================
 # CATEGORY SCHEMAS

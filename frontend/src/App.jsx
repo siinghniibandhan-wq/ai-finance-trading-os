@@ -5780,6 +5780,7 @@ function Portfolio() {
     current_price: "",
     buy_date: getLocalDateString(),
     broker: "",
+    investment_account_id: "",
     fees: "",
     notes: "",
   });
@@ -5793,21 +5794,21 @@ function Portfolio() {
   const selectedInstrumentQuoteRef = useRef("");
   const transactionQuoteRequestRef = useRef(0);
   const activeTransactionInstrumentRef = useRef("");
-  const [brokerChoice, setBrokerChoice] = useState("");
-  const [customBroker, setCustomBroker] = useState("");
+  const [brokerAccounts, setBrokerAccounts] = useState([]);
+  const [brokerAccountsLoading, setBrokerAccountsLoading] = useState(false);
+  const [brokerAccountsError, setBrokerAccountsError] = useState("");
+  const investmentSubmitInFlightRef = useRef(false);
 
   // Reset every add/edit field so the two form modes never leak into each other.
   const resetInvestmentForm = () => {
     instrumentSearchRequestRef.current += 1;
     selectedInstrumentQuoteRef.current = "";
     setLiveInstrumentQuoteLoading(false);
-    setInvestmentForm({ name: "", exchange: "", asset_class: "Equity", investment_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: getLocalDateString(), broker: "", fees: "", notes: "" });
+    setInvestmentForm({ name: "", exchange: "", asset_class: "Equity", investment_type: "Stocks", symbol: "", quantity: "", buy_price: "", current_price: "", buy_date: getLocalDateString(), broker: "", investment_account_id: "", fees: "", notes: "" });
     setInstrumentQuery("");
     setInstrumentResults([]);
     setInstrumentSearchError("");
     setInstrumentSearchBusy(false);
-    setBrokerChoice("");
-    setCustomBroker("");
     setEditingInvestmentId(null);
   };
 
@@ -6111,9 +6112,6 @@ const handleEditInvestment = (investment) => {
   setInstrumentQuery("");
   setInstrumentResults([]);
   setInstrumentSearchError("");
-  const standardBrokers = ["Zerodha", "Groww", "Upstox", "Angel One", "ICICI Direct", "HDFC Securities", "Kotak Securities", "m.Stock"];
-  setBrokerChoice(standardBrokers.includes(investment.broker) ? investment.broker : (investment.broker ? "Other" : ""));
-  setCustomBroker(standardBrokers.includes(investment.broker) ? "" : (investment.broker || ""));
   setInvestmentForm({
     name: investment.name || "",
     exchange: investment.exchange || investment.instrument_exchange || "",
@@ -6126,6 +6124,7 @@ const handleEditInvestment = (investment) => {
     current_price: investment.current_price || "",
     buy_date: investment.buy_date || "",
     broker: investment.broker || "",
+    investment_account_id: investment.investment_account_id ? String(investment.investment_account_id) : "",
     fees: investment.fees || "",
     notes: investment.notes || "",
   });
@@ -6553,8 +6552,27 @@ const handleInvestmentTransactionSubmit =
 
   };
   
+  const loadBrokerAccounts = async () => {
+    setBrokerAccountsLoading(true);
+    setBrokerAccountsError("");
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/accounts/`);
+      const data = await response.json().catch(() => []);
+      if (!response.ok) throw new Error(data?.detail || "Unable to load Investment accounts.");
+      setBrokerAccounts((Array.isArray(data) ? data : []).filter(
+        (account) => String(account.account_type || "").trim().toLowerCase() === "investment" && account.is_active !== false
+      ));
+    } catch (error) {
+      setBrokerAccountsError(error?.message || "Unable to load broker cash accounts.");
+      setBrokerAccounts([]);
+    } finally {
+      setBrokerAccountsLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadInvestments();
+    loadBrokerAccounts();
   }, []);
   
   // ----------------------------------------------------------
@@ -6579,6 +6597,8 @@ const handleInvestmentTransactionSubmit =
   // ==========================================================
 
   const handleInvestmentSubmit = async () => {
+    if (investmentSubmitInFlightRef.current) return;
+    investmentSubmitInFlightRef.current = true;
     try {
       // --------------------------------------------------------
       // VALIDATION
@@ -6624,8 +6644,8 @@ const handleInvestmentTransactionSubmit =
         return;
       }
 
-      if (!investmentForm.broker.trim()) {
-        alert("Please select or enter a broker before saving.");
+      if (!investmentForm.investment_account_id) {
+        alert("Please select a Broker Account from Money → Accounts. Fund it through Money → Transfers before buying.");
         return;
       }
       if (!editingInvestmentId && (!investmentForm.name.trim() || !investmentForm.symbol.trim())) {
@@ -6637,8 +6657,21 @@ const handleInvestmentTransactionSubmit =
       // INVESTMENT PAYLOAD
       // --------------------------------------------------------
 
+      const selectedBrokerAccount = brokerAccounts.find(
+        (account) => Number(account.id) === Number(investmentForm.investment_account_id)
+      );
+      if (!selectedBrokerAccount) {
+        alert("The selected Investment account is unavailable. Refresh the account list and select an active account.");
+        return;
+      }
+      const existingInvestment = editingInvestmentId
+        ? investments.find((item) => Number(item.id) === Number(editingInvestmentId))
+        : null;
+      const selectedBrokerLabel = selectedBrokerAccount.institution || selectedBrokerAccount.name;
+
       const payload = {
         user_id: USER_ID,
+        investment_account_id: Number(selectedBrokerAccount.id),
 
         name:
           investmentForm.name.trim(),
@@ -6669,8 +6702,13 @@ const handleInvestmentTransactionSubmit =
         buy_date:
           investmentForm.buy_date,
 
+        // Preserve the existing display label for linked holdings. When
+        // linking a legacy holding for the first time, show the selected
+        // Money account's label so it matches the authoritative account ID.
         broker:
-          investmentForm.broker.trim() || null,
+          (editingInvestmentId && existingInvestment?.investment_account_id
+            ? existingInvestment?.broker
+            : selectedBrokerLabel) || selectedBrokerLabel,
 
         fees:
           Number(investmentForm.fees || 0),
@@ -6842,6 +6880,8 @@ const handleInvestmentTransactionSubmit =
         err?.message ||
           "Unable to save investment."
       );
+    } finally {
+      investmentSubmitInFlightRef.current = false;
     }
   };
 
@@ -7322,24 +7362,35 @@ const summaryCards = [
             />
 
 
-            {/* BROKER — mandatory dropdown, with explicit custom broker option */}
+            {/* BROKER ACCOUNT — selected dynamically from Money → Accounts; no provider names hardcoded */}
             <div>
-              <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Broker / Platform (required)</label>
+              <label style={{ display: "block", marginBottom: "6px", color: "var(--finos-muted)", fontSize: "12px" }}>Broker Account (Money → Accounts)</label>
               <StyledSelect className="finos-select"
-                value={brokerChoice || (investmentForm.broker && !["Zerodha", "Groww", "Upstox", "Angel One", "ICICI Direct", "HDFC Securities", "Kotak Securities", "m.Stock", "Other"].includes(investmentForm.broker) ? "Other" : investmentForm.broker)}
+                value={String(investmentForm.investment_account_id || "")}
                 onChange={(event) => {
-                  const value = event.target.value;
-                  setBrokerChoice(value);
-                  setCustomBroker(value === "Other" ? (customBroker || "") : "");
-                  setInvestmentForm((previous) => ({ ...previous, broker: value === "Other" ? "" : value }));
+                  const accountId = event.target.value;
+                  const account = brokerAccounts.find((item) => String(item.id) === String(accountId));
+                  setInvestmentForm((previous) => ({
+                    ...previous,
+                    investment_account_id: accountId,
+                    broker: account ? (account.institution || account.name) : "",
+                  }));
                 }}
+                disabled={brokerAccountsLoading || brokerAccounts.length === 0 || (Boolean(editingInvestmentId) && Boolean(investmentForm.investment_account_id))}
                 required
+                aria-label="Broker cash account"
                 style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px", outline: "none" }}
               >
-                <option value="">Select broker…</option>
-                <option value="Zerodha">Zerodha</option><option value="Groww">Groww</option><option value="Upstox">Upstox</option><option value="Angel One">Angel One</option><option value="ICICI Direct">ICICI Direct</option><option value="HDFC Securities">HDFC Securities</option><option value="Kotak Securities">Kotak Securities</option><option value="m.Stock">m.Stock (Mirae Asset)</option><option value="Other">Other (enter broker)</option>
+                <option value="">{brokerAccountsLoading ? "Loading Investment accounts…" : "Select Broker Account…"}</option>
+                {brokerAccounts.map((account) => (
+                  <option key={account.id} value={String(account.id)}>
+                    {account.name}{account.institution ? ` — ${account.institution}` : ""} · Available ₹{Number(account.balance || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                  </option>
+                ))}
               </StyledSelect>
-              {brokerChoice === "Other" && <input type="text" placeholder="Enter broker name (required)" value={customBroker} onChange={(event) => { setCustomBroker(event.target.value); setInvestmentForm((previous) => ({ ...previous, broker: event.target.value })); }} required style={{ width: "100%", boxSizing: "border-box", marginTop: "8px", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-border)", background: "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))", color: "var(--finos-text)", fontSize: "12px" }} />}
+              {brokerAccountsError && <p role="alert" style={{ margin: "6px 0 0", color: "var(--finos-danger, #dc2626)", fontSize: "12px" }}>{brokerAccountsError}</p>}
+              {!brokerAccountsLoading && brokerAccounts.length === 0 && <p style={{ margin: "6px 0 0", color: "var(--finos-muted)", fontSize: "12px" }}>Create a Money → Accounts record with type “Investment”, then use Money → Transfers to fund the Broker Account.</p>}
+              <p style={{ margin: "6px 0 0", color: "var(--finos-muted)", fontSize: "11px" }}>BUY and SELL cash movements affect only this selected Investment account.</p>
             </div>
 
             {/* FEES */}
@@ -9340,6 +9391,7 @@ function Accounts() {
 
   const [accounts, setAccounts] = useState([]);
   const [activeAccountTab, setActiveAccountTab] = useState("bank");
+  const [accountStatusTab, setAccountStatusTab] = useState("active");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -9359,6 +9411,11 @@ function Accounts() {
     account_type: "bank",
     institution: "",
     account_number: "",
+    ifsc_code: "",
+    nominee_name: "",
+    bo_id: "",
+    linked_mobile_number: "",
+    linked_email: "",
     currency: "INR",
     balance: "",
     credit_limit: "",
@@ -9463,8 +9520,12 @@ const handleAccountSubmit = async () => {
           name: accountForm.name.trim(),
           account_type: accountForm.account_type,
           institution: accountForm.institution.trim(),
-          account_number:
-            accountForm.account_number.trim(),
+          account_number: accountForm.account_number.trim(),
+          ifsc_code: accountForm.ifsc_code.trim(),
+          nominee_name: accountForm.nominee_name.trim(),
+          bo_id: accountForm.bo_id.trim(),
+          linked_mobile_number: accountForm.linked_mobile_number.trim(),
+          linked_email: accountForm.linked_email.trim(),
           currency: accountForm.currency,
           balance: accountForm.account_type === "loan" ? Number(accountForm.loan_principal) : Number(accountForm.balance),
           credit_limit: isCreditAccount ? Number(accountForm.credit_limit) : null,
@@ -9475,6 +9536,11 @@ const handleAccountSubmit = async () => {
           account_type: accountForm.account_type,
           institution: accountForm.institution.trim(),
           account_number: accountForm.account_number.trim(),
+          ifsc_code: accountForm.ifsc_code.trim(),
+          nominee_name: accountForm.nominee_name.trim(),
+          bo_id: accountForm.bo_id.trim(),
+          linked_mobile_number: accountForm.linked_mobile_number.trim(),
+          linked_email: accountForm.linked_email.trim(),
           currency: accountForm.currency,
           balance: accountForm.account_type === "loan" ? Number(accountForm.loan_principal) : Number(accountForm.balance),
           credit_limit: isCreditAccount ? Number(accountForm.credit_limit) : null,
@@ -9534,19 +9600,21 @@ const handleAccountSubmit = async () => {
 
     setAccounts((previous) =>
       isEditing
-        ? previous.map((account) =>
-            account.id === data.id
-              ? data
-              : account
-          )
+        ? previous.map((account) => account.id === data.id ? data : account)
         : [data, ...previous]
     );
+    window.dispatchEvent(new Event("financial-os:accounts-changed"));
 
     setAccountForm({
       name: "",
       account_type: "bank",
       institution: "",
       account_number: "",
+      ifsc_code: "",
+      nominee_name: "",
+      bo_id: "",
+      linked_mobile_number: "",
+      linked_email: "",
       currency: "INR",
       balance: "",
       credit_limit: "",
@@ -9658,6 +9726,11 @@ const handleEditAccount = (account) => {
     account_type: account.account_type || "bank",
     institution: account.institution || "",
     account_number: account.account_number || "",
+    ifsc_code: account.ifsc_code || "",
+    nominee_name: account.nominee_name || "",
+    bo_id: account.bo_id || "",
+    linked_mobile_number: account.linked_mobile_number || "",
+    linked_email: account.linked_email || "",
     currency: account.currency || "INR",
     balance: account.balance ?? "",
     credit_limit: account.credit_limit ?? "",
@@ -9710,7 +9783,7 @@ const deleteAccount = async () => {
 
     await loadAccounts();
 
-    setMessage("Account deleted successfully.");
+    setMessage("Account removed from Accounts. Financial Diary and linked transaction history are preserved.");
   } catch (err) {
     console.error("Delete account error:", err);
 
@@ -9763,7 +9836,11 @@ const deleteAccount = async () => {
   ));
   const accountTabFor = (account) => accountTabs.find((tab) => tab.id !== "other" && tab.types.includes(accountTypeKey(account)))?.id || "other";
   const selectedAccountTab = accountTabs.find((tab) => tab.id === activeAccountTab) || accountTabs[0];
-  const visibleAccounts = accounts.filter((account) => accountTabFor(account) === selectedAccountTab.id);
+  const visibleAccounts = accounts.filter((account) =>
+    account.is_deleted !== true &&
+    accountTabFor(account) === selectedAccountTab.id &&
+    Boolean(account.is_active) === (accountStatusTab === "active")
+  );
 
   // ----------------------------------------------------------
   // RENDER
@@ -9938,6 +10015,17 @@ const deleteAccount = async () => {
 {/* --------------------------------------------------
     ACCOUNT CARDS
 -------------------------------------------------- */}
+
+<div role="tablist" aria-label="Account status" style={{ display: "flex", gap: "8px", margin: "4px 0 12px" }}>
+  {[
+    { id: "active", label: "Active", count: accounts.filter((account) => account.is_deleted !== true && account.is_active).length },
+    { id: "archive", label: "Archive", count: accounts.filter((account) => account.is_deleted !== true && !account.is_active).length },
+  ].map((tab) => (
+    <button key={tab.id} type="button" role="tab" aria-selected={accountStatusTab === tab.id} onClick={() => setAccountStatusTab(tab.id)} className={accountStatusTab === tab.id ? "primary-button" : "secondary-button"} style={{ padding: "9px 13px" }}>
+      {tab.label} <span style={{ opacity: .75, marginLeft: "4px" }}>{tab.count}</span>
+    </button>
+  ))}
+</div>
 
 <div role="tablist" aria-label="Account categories" style={{ display: "flex", flexWrap: "wrap", gap: "8px", margin: "4px 0 16px" }}>
         {accountTabs.map((tab) => {
@@ -10148,27 +10236,28 @@ const deleteAccount = async () => {
                 }}
               >
                 {account.is_active
-                  ? "Deactivate"
+                  ? "Archive"
                   : "Activate"}
               </button>
           
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() =>
-              setAccountToDelete(account)
-            }
-            disabled={accountDeleting}
-            style={{
-  width: "100%",
-  padding: "7px 12px",
-  fontSize: "11px",
-  color: "#fb7185",
-  borderColor: "rgba(251,113,133,0.25)",
-}}
-          >
-            Delete
-          </button>
+          {!account.is_active && (
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setAccountToDelete(account)}
+              disabled={accountDeleting || Number(account.balance || 0) !== 0}
+              title={Number(account.balance || 0) !== 0 ? "Transfer out the remaining balance before removing this account." : "Remove from Accounts while preserving financial history."}
+              style={{
+                width: "100%",
+                padding: "7px 12px",
+                fontSize: "11px",
+                color: "#fb7185",
+                borderColor: "rgba(251,113,133,0.25)",
+              }}
+            >
+              Remove
+            </button>
+          )}
 
         </div>
       </div>
@@ -10227,7 +10316,18 @@ const deleteAccount = async () => {
                   { key: "name", label: "Account name *", placeholder: "e.g. Salary Account", type: "text", required: true },
                   { key: "account_type", label: "Account type *", type: "select", required: true },
                   { key: "institution", label: "Bank / Institution", placeholder: "e.g. HDFC Bank", type: "text" },
-                  { key: "account_number", label: "Account number", placeholder: "Enter account number (optional)", type: "text" },
+                  ...(accountForm.account_type === "bank" ? [
+                    { key: "account_number", label: "Bank A/C number", placeholder: "Enter bank account number", type: "text" },
+                    { key: "ifsc_code", label: "IFSC Code", placeholder: "e.g. HDFC0001234", type: "text" },
+                    { key: "nominee_name", label: "Nominee name", placeholder: "Enter nominee name (optional)", type: "text" },
+                  ] : []),
+                  ...(accountForm.account_type === "investment" ? [
+                    { key: "bo_id", label: "BO ID / Demat ID", placeholder: "Enter broker BO ID (optional)", type: "text" },
+                    { key: "linked_mobile_number", label: "Broker-linked mobile", placeholder: "Mobile number registered with broker", type: "tel" },
+                    { key: "linked_email", label: "Broker-linked email", placeholder: "Email registered with broker", type: "email" },
+                  ] : accountForm.account_type !== "bank" ? [
+                    { key: "account_number", label: "Account number (optional)", placeholder: "Enter account number", type: "text" },
+                  ] : []),
                   ...(accountForm.account_type !== "loan" ? [{ key: "balance", label: ["credit_card", "credit_line"].includes(accountForm.account_type) ? "Opening outstanding amount (₹) *" : "Opening balance (₹) *", placeholder: "0.00", type: "number", required: true }] : []),
                   ...(["credit_card", "credit_line"].includes(accountForm.account_type) ? [
                     { key: "credit_limit", label: "Approved credit limit (₹) *", placeholder: "e.g. 100000", type: "number", required: true },
@@ -10344,7 +10444,7 @@ const deleteAccount = async () => {
                 </p>
 
                 <h3>
-                  Delete Account
+                  Remove Account
                 </h3>
               </div>
             </div>
@@ -10356,11 +10456,11 @@ const deleteAccount = async () => {
                 marginTop: "16px",
               }}
             >
-              Are you sure you want to delete{" "}
+              Remove{" "}
               <strong style={{ color: "#ffffff" }}>
                 {accountToDelete.name}
               </strong>
-              ?
+              {" "}from the Accounts view?
             </p>
 
             <p
@@ -10370,7 +10470,7 @@ const deleteAccount = async () => {
                 marginTop: "8px",
               }}
             >
-              This action cannot be undone.
+              The account will disappear from Accounts. Financial Diary, transfers and investment history will be preserved.
             </p>
 
             <div
@@ -10401,8 +10501,8 @@ const deleteAccount = async () => {
                 }}
               >
                 {accountDeleting
-                  ? "Deleting..."
-                  : "Delete Account"}
+                  ? "Removing..."
+                  : "Remove Account"}
               </button>
             </div>
           </div>
@@ -10596,6 +10696,11 @@ async function loadTransactions() {
     loadBudgets();
     loadCategories();
     loadTransactions();
+    const handleAccountsChanged = () => {
+      refreshTransactionAccounts().catch((err) => console.error("Transaction account refresh error:", err));
+    };
+    window.addEventListener("financial-os:accounts-changed", handleAccountsChanged);
+    return () => window.removeEventListener("financial-os:accounts-changed", handleAccountsChanged);
 
   }, []);
 
@@ -11657,6 +11762,14 @@ const isLoanDisbursement = categories.some((category) =>
 
   const loanInputStyle = { width: "100%", boxSizing: "border-box", display: "block", marginTop: "6px", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "#151525", color: "#fff", outline: "none" };
 
+  const refreshTransactionAccounts = async () => {
+    const response = await apiFetch(`${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`);
+    if (!response.ok) throw new Error(`Accounts API error: ${response.status}`);
+    const data = await response.json();
+    // Archived accounts remain in valuations/history, but cannot be used for new transactions.
+    setAccounts(Array.isArray(data) ? data.filter((account) => account.is_active !== false && account.is_deleted !== true) : []);
+  };
+
   // ----------------------------------------------------------
   // LOAD TRANSACTIONS
   // ----------------------------------------------------------
@@ -11682,11 +11795,7 @@ const isLoanDisbursement = categories.some((category) =>
 
         const data = await response.json();
         setTransactions(data);
-        const accountsResponse = await apiFetch(`${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`);
-        if (accountsResponse.ok) {
-          const accountsData = await accountsResponse.json();
-          setAccounts(Array.isArray(accountsData) ? accountsData : []);
-        }
+        await refreshTransactionAccounts();
 
       } catch (err) {
 

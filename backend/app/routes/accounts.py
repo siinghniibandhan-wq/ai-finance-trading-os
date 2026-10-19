@@ -4,6 +4,7 @@
 # ============================================================
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -13,6 +14,36 @@ from app.finance_diary import record_finance_event
 from app.schemas import AccountCreate, AccountResponse, AccountUpdate
 
 router = APIRouter(prefix="/api/accounts", tags=["Accounts"])
+
+
+def _has_linked_investments(db: Session, user_id: int, account_id: int) -> bool:
+    """Detect any holdings/history that must retain the Investment account identity."""
+    if not inspect(db.get_bind()).has_table("investments"):
+        return False
+    return db.execute(
+        text("""
+            SELECT 1 FROM investments
+            WHERE user_id = :user_id AND investment_account_id = :account_id
+            LIMIT 1
+        """),
+        {"user_id": user_id, "account_id": account_id},
+    ).first() is not None
+
+
+def _has_open_linked_investments(db: Session, user_id: int, account_id: int) -> bool:
+    """A broker account cannot be closed while it still owns a positive holding."""
+    if not inspect(db.get_bind()).has_table("investments"):
+        return False
+    return db.execute(
+        text("""
+            SELECT 1 FROM investments
+            WHERE user_id = :user_id
+              AND investment_account_id = :account_id
+              AND COALESCE(quantity, 0) > 0
+            LIMIT 1
+        """),
+        {"user_id": user_id, "account_id": account_id},
+    ).first() is not None
 
 
 @router.post("/", response_model=AccountResponse)
@@ -33,6 +64,11 @@ def create_account(account_data: AccountCreate, db: Session = Depends(get_db), c
         account_type=account_data.account_type,
         institution=account_data.institution,
         account_number=account_data.account_number,
+        ifsc_code=account_data.ifsc_code,
+        nominee_name=account_data.nominee_name,
+        bo_id=account_data.bo_id,
+        linked_mobile_number=account_data.linked_mobile_number,
+        linked_email=account_data.linked_email,
         currency=account_data.currency,
         balance=account_data.balance,
         credit_limit=account_data.credit_limit,
@@ -48,12 +84,12 @@ def create_account(account_data: AccountCreate, db: Session = Depends(get_db), c
 @router.get("/", response_model=list[AccountResponse])
 def list_accounts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Return only the authenticated customer's accounts."""
-    return db.query(Account).filter(Account.user_id == current_user.id).order_by(Account.id.desc()).all()
+    return db.query(Account).filter(Account.user_id == current_user.id, Account.is_deleted.is_(False)).order_by(Account.id.desc()).all()
 
 
 @router.get("/{account_id}", response_model=AccountResponse)
 def get_account(account_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    account = db.query(Account).filter(Account.id == account_id, Account.user_id == current_user.id).first()
+    account = db.query(Account).filter(Account.id == account_id, Account.user_id == current_user.id, Account.is_deleted.is_(False)).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found.")
     return account
@@ -75,6 +111,19 @@ def update_account(account_id: int, account_data: AccountUpdate, db: Session = D
             raise HTTPException(status_code=422, detail="Outstanding amount must be between zero and the approved credit limit.")
     elif next_limit is not None:
         raise HTTPException(status_code=422, detail="Credit limit is only valid for Credit Card or Credit Line accounts.")
+    linked_investments = _has_linked_investments(db, current_user.id, account.id)
+    if linked_investments and next_type != "investment":
+        raise HTTPException(
+            status_code=409,
+            detail="This account has portfolio history. Its Investment account type must be preserved for audit and reconciliation.",
+        )
+    if linked_investments and update_data.get("is_active") is False:
+        has_open_positions = _has_open_linked_investments(db, current_user.id, account.id)
+        if has_open_positions or account.balance != 0:
+            raise HTTPException(
+                status_code=409,
+                detail="Transfer out the remaining cash and sell/close all holdings before closing this Broker Account. When its balance and open holdings are both zero, you can close it; its history will be preserved.",
+            )
     before = {"id": account.id, "name": account.name, "account_type": account.account_type, "institution": account.institution, "currency": account.currency, "balance": account.balance, "is_active": account.is_active}
     for field, value in update_data.items():
         setattr(account, field, value)
@@ -86,11 +135,52 @@ def update_account(account_id: int, account_data: AccountUpdate, db: Session = D
 
 @router.delete("/{account_id}")
 def delete_account(account_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    account = db.query(Account).filter(Account.id == account_id, Account.user_id == current_user.id).first()
+    """Remove an archived account from the UI without deleting its ledger history."""
+    account = db.query(Account).filter(
+        Account.id == account_id,
+        Account.user_id == current_user.id,
+        Account.is_deleted.is_(False),
+    ).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found.")
-    # Keep account rows as inactive so references and historical balances remain stable.
-    account.is_active = False
-    record_finance_event(db, user_id=account.user_id, event_type="deactivated", entity_type="account", entity_id=account.id, description=f"Account deactivated (not physically deleted): {account.name}", snapshot={"id": account.id, "name": account.name, "account_type": account.account_type, "balance": account.balance})
+
+    if account.is_active:
+        raise HTTPException(
+            status_code=409,
+            detail="Archive this account first. Accounts can only be removed from the Archive tab.",
+        )
+
+    if account.balance != 0:
+        raise HTTPException(
+            status_code=409,
+            detail="Transfer the remaining balance out before removing this account from Archive.",
+        )
+    if (account.account_type or "").strip().lower() == "investment" and _has_open_linked_investments(db, current_user.id, account.id):
+        raise HTTPException(
+            status_code=409,
+            detail="Close all holdings linked to this Broker Account before removing it from Archive.",
+        )
+
+    # This is a logical removal, not a SQL DELETE. Transactions, investments,
+    # transfers, and Finance Diary snapshots keep their account references.
+    before = {
+        "id": account.id,
+        "name": account.name,
+        "account_type": account.account_type,
+        "institution": account.institution,
+        "currency": account.currency,
+        "balance": account.balance,
+        "is_active": account.is_active,
+    }
+    account.is_deleted = True
+    record_finance_event(
+        db,
+        user_id=account.user_id,
+        event_type="removed_from_accounts",
+        entity_type="account",
+        entity_id=account.id,
+        description=f"Account removed from Accounts view: {account.name}; financial history preserved",
+        snapshot={"account": before, "history_preserved": True},
+    )
     db.commit()
-    return {"status": "deactivated", "account_id": account_id, "history_preserved": True}
+    return {"status": "removed", "account_id": account_id, "history_preserved": True}

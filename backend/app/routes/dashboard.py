@@ -79,7 +79,8 @@ def get_dashboard_summary(
         db.query(func.coalesce(func.sum(Account.balance), 0))
         .filter(
             Account.user_id == user_id,
-            Account.is_active == True,
+            Account.is_deleted.is_(False),
+            # Archived accounts still hold real assets and remain part of total balance.
             func.lower(Account.account_type).notin_([
                 "loan", "loan_account", "personal_loan", "home_loan", "term_loan",
                 "credit_card", "creditcard", "credit_card_account", "credit_line", "creditline", "credit line",
@@ -146,6 +147,7 @@ def get_dashboard_summary(
         .filter(
             Account.user_id == user_id,
             Account.is_active == True,
+            Account.is_deleted.is_(False),
         )
         .scalar()
     )

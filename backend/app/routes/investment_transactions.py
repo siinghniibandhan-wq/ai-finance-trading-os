@@ -25,6 +25,8 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models import User
 from app.routes.auth import get_current_user
+from app.routes.investments import ensure_investments_table
+from app.finance_diary import record_finance_event
 
 
 # ============================================================
@@ -98,12 +100,47 @@ def ensure_transaction_table(db: Session):
     db.execute(text("ALTER TABLE investment_transactions ADD COLUMN IF NOT EXISTS status VARCHAR(12) NOT NULL DEFAULT 'ACTIVE'"))
     db.execute(text("ALTER TABLE investment_transactions ADD COLUMN IF NOT EXISTS void_reason TEXT"))
     db.execute(text("ALTER TABLE investment_transactions ADD COLUMN IF NOT EXISTS voided_at TIMESTAMP"))
+    db.execute(text("ALTER TABLE investment_transactions ADD COLUMN IF NOT EXISTS cash_account_id INTEGER"))
+    db.execute(text("ALTER TABLE investment_transactions ADD COLUMN IF NOT EXISTS cash_effect_amount NUMERIC(18,2)"))
+    db.execute(text("ALTER TABLE investment_transactions ADD COLUMN IF NOT EXISTS cash_effect_applied BOOLEAN NOT NULL DEFAULT FALSE"))
     db.commit()
 
 
 # ============================================================
 # PYDANTIC SCHEMA
 # ============================================================
+
+def _cash_effect(transaction_type: str, quantity: Decimal, price: Decimal, fees: Decimal) -> Decimal:
+    """Signed broker-cash effect: negative debits cash, positive credits cash."""
+    gross = quantity * price
+    amount = -(gross + fees) if transaction_type == "BUY" else (gross - fees)
+    return amount.quantize(Decimal("0.01"))
+
+
+def _lock_investment_cash_account(db: Session, user_id: int, account_id: int | None):
+    if not account_id:
+        raise HTTPException(status_code=409, detail="This investment is not linked to a Broker Account. Link an active Investment account from Money → Accounts before recording BUY/SELL activity.")
+    account = db.execute(text("""
+        SELECT id, balance FROM accounts
+        WHERE id = :account_id AND user_id = :user_id
+          AND LOWER(TRIM(account_type)) = 'investment' AND is_active IS TRUE
+        FOR UPDATE
+    """), {"account_id": account_id, "user_id": user_id}).first()
+    if not account:
+        raise HTTPException(status_code=409, detail="The linked Broker Account is unavailable, inactive, or is not an Investment account.")
+    return account
+
+
+def _apply_cash_delta(db: Session, account, delta: Decimal) -> Decimal:
+    """Apply a signed cash change after checking available broker cash."""
+    current = Decimal(str(account.balance or 0)).quantize(Decimal("0.01"))
+    delta = delta.quantize(Decimal("0.01"))
+    if delta < 0 and current < -delta:
+        raise HTTPException(status_code=409, detail=f"Insufficient funds in the linked Investment account. Available: {current}; required: {-delta}.")
+    updated = (current + delta).quantize(Decimal("0.01"))
+    db.execute(text("UPDATE accounts SET balance = :balance WHERE id = :account_id"), {"balance": updated, "account_id": account.id})
+    return updated
+
 
 class InvestmentTransactionCreate(BaseModel):
 
@@ -278,6 +315,7 @@ def create_transaction(
 ):
     # Ignore any user_id in the request body; derive ownership from the token.
     user_id = current_user.id
+    ensure_investments_table(db)
     ensure_transaction_table(db)
 
     # --------------------------------------------------------
@@ -302,7 +340,8 @@ def create_transaction(
             SELECT
                 id,
                 user_id,
-                quantity
+                quantity,
+                investment_account_id
             FROM investments
             WHERE id = :investment_id
               AND user_id = :user_id
@@ -318,10 +357,11 @@ def create_transaction(
     investment = investment_result.first()
 
     if not investment:
-        raise HTTPException(
-            status_code=404,
-            detail="Investment not found for this user.",
-        )
+        raise HTTPException(status_code=404, detail="Investment not found for this user.")
+
+    # Cash must come only from this position's linked Investment account.
+    cash_account = _lock_investment_cash_account(db, user_id, investment.investment_account_id)
+    cash_effect = _cash_effect(transaction_type, data.quantity, data.price, data.fees)
 
     # --------------------------------------------------------
     # VALIDATE THE COMPLETE ACTIVE LEDGER IN DATE ORDER
@@ -369,30 +409,19 @@ def create_transaction(
                 price,
                 fees,
                 transaction_date,
-                notes
+                notes,
+                cash_account_id,
+                cash_effect_amount,
+                cash_effect_applied
             )
             VALUES (
-                :user_id,
-                :investment_id,
-                :transaction_type,
-                :quantity,
-                :price,
-                :fees,
-                :transaction_date,
-                :notes
+                :user_id, :investment_id, :transaction_type, :quantity, :price,
+                :fees, :transaction_date, :notes, :cash_account_id, :cash_effect_amount, TRUE
             )
             RETURNING
-                id,
-                user_id,
-                investment_id,
-                transaction_type,
-                quantity,
-                price,
-                fees,
-                transaction_date,
-                notes,
-                created_at,
-                updated_at
+                id, user_id, investment_id, transaction_type, quantity, price,
+                fees, transaction_date, notes, cash_account_id, cash_effect_amount,
+                cash_effect_applied, created_at, updated_at
             """
         ),
         {
@@ -404,6 +433,8 @@ def create_transaction(
             "fees": data.fees,
             "transaction_date": data.transaction_date,
             "notes": data.notes,
+            "cash_account_id": cash_account.id,
+            "cash_effect_amount": cash_effect,
         },
     )
 
@@ -416,6 +447,9 @@ def create_transaction(
             status_code=500,
             detail="Unable to create investment transaction.",
         )
+
+    # Cash and ledger mutation share the same database transaction.
+    _apply_cash_delta(db, cash_account, cash_effect)
 
     # --------------------------------------------------------
     # SYNC INVESTMENT QUANTITY
@@ -436,6 +470,16 @@ def create_transaction(
             "quantity": new_quantity,
             "investment_id": data.investment_id,
             "user_id": user_id,
+        },
+    )
+    record_finance_event(
+        db, user_id=user_id, event_type="created", entity_type="investment_transaction",
+        entity_id=transaction.id,
+        description=f"{transaction_type} investment transaction recorded",
+        snapshot={
+            "investment_id": data.investment_id, "transaction_type": transaction_type,
+            "quantity": data.quantity, "price": data.price, "fees": data.fees,
+            "cash_account_id": cash_account.id, "cash_effect_amount": cash_effect,
         },
     )
 
@@ -515,6 +559,7 @@ def update_transaction(
     current_user: User = Depends(get_current_user),
 ):
     user_id = current_user.id
+    ensure_investments_table(db)
     ensure_transaction_table(db)
     transaction_type = data.transaction_type.strip().upper()
     if transaction_type not in {"BUY", "SELL"}:
@@ -531,7 +576,7 @@ def update_transaction(
         raise HTTPException(status_code=404, detail="Investment transaction not found.")
 
     locked_investment = db.execute(text("""
-        SELECT id FROM investments
+        SELECT id, investment_account_id FROM investments
         WHERE id = :investment_id AND user_id = :user_id
         FOR UPDATE
     """), {"investment_id": locator.investment_id, "user_id": user_id}).first()
@@ -565,6 +610,20 @@ def update_transaction(
         if running < 0:
             raise HTTPException(status_code=400, detail="This edit would create a negative holding. Review subsequent SELL transactions first.")
 
+    cash_effect_applied = bool(existing.cash_effect_applied)
+    cash_account_id = existing.cash_account_id
+    cash_effect_amount = existing.cash_effect_amount
+    cash_delta = Decimal("0.00")
+    if cash_effect_applied:
+        if cash_account_id != locked_investment.investment_account_id:
+            raise HTTPException(status_code=409, detail="Transaction cash account no longer matches the investment's linked broker account.")
+        cash_account = _lock_investment_cash_account(db, user_id, cash_account_id)
+        previous_effect = Decimal(str(cash_effect_amount or 0)).quantize(Decimal("0.01"))
+        next_effect = _cash_effect(transaction_type, data.quantity, data.price, data.fees)
+        cash_delta = next_effect - previous_effect
+        _apply_cash_delta(db, cash_account, cash_delta)
+        cash_effect_amount = next_effect
+
     updated = db.execute(text("""
         UPDATE investment_transactions SET
             transaction_type = :transaction_type,
@@ -573,6 +632,9 @@ def update_transaction(
             fees = :fees,
             transaction_date = :transaction_date,
             notes = :notes,
+            cash_account_id = :cash_account_id,
+            cash_effect_amount = :cash_effect_amount,
+            cash_effect_applied = :cash_effect_applied,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = :id AND user_id = :user_id
         RETURNING id, user_id, investment_id, transaction_type, quantity,
@@ -583,6 +645,9 @@ def update_transaction(
         "transaction_type": transaction_type, "quantity": data.quantity,
         "price": data.price, "fees": data.fees,
         "transaction_date": data.transaction_date, "notes": data.notes,
+        "cash_account_id": cash_account_id,
+        "cash_effect_amount": cash_effect_amount,
+        "cash_effect_applied": cash_effect_applied,
     }).first()
 
     active_balance = db.execute(text("""
@@ -594,6 +659,15 @@ def update_transaction(
         UPDATE investments SET quantity = :quantity, updated_at = CURRENT_TIMESTAMP
         WHERE id = :investment_id AND user_id = :user_id
     """), {"quantity": Decimal(str(active_balance.quantity or 0)), "investment_id": existing.investment_id, "user_id": user_id})
+    record_finance_event(
+        db, user_id=user_id, event_type="updated", entity_type="investment_transaction",
+        entity_id=transaction_id, description="Investment transaction edited",
+        snapshot={
+            "before": {"transaction_type": existing.transaction_type, "quantity": existing.quantity, "price": existing.price, "fees": existing.fees},
+            "after": {"transaction_type": transaction_type, "quantity": data.quantity, "price": data.price, "fees": data.fees},
+            "cash_account_id": cash_account_id, "cash_delta": cash_delta,
+        },
+    )
     db.commit()
     return dict(updated._mapping)
 
@@ -611,6 +685,7 @@ def void_transaction(
     current_user: User = Depends(get_current_user),
 ):
     user_id = current_user.id
+    ensure_investments_table(db)
     ensure_transaction_table(db)
     # Resolve the parent investment first, then acquire the same parent-row
     # lock used by create_transaction. All ledger mutations for one investment
@@ -623,7 +698,7 @@ def void_transaction(
         raise HTTPException(status_code=404, detail="Investment transaction not found.")
 
     locked_investment = db.execute(text("""
-        SELECT id FROM investments
+        SELECT id, investment_account_id FROM investments
         WHERE id = :investment_id AND user_id = :user_id
         FOR UPDATE
     """), {"investment_id": locator.investment_id, "user_id": user_id}).first()
@@ -656,6 +731,15 @@ def void_transaction(
         if running < 0:
             raise HTTPException(status_code=409, detail="Voiding this transaction would make later SELL activity exceed available BUY quantity. Correct or reverse dependent transactions first.")
 
+    cash_reversal_amount = Decimal("0.00")
+    if bool(existing.cash_effect_applied):
+        if existing.cash_account_id != locked_investment.investment_account_id:
+            raise HTTPException(status_code=409, detail="Transaction cash account no longer matches the investment's linked broker account.")
+        cash_account = _lock_investment_cash_account(db, user_id, existing.cash_account_id)
+        original_effect = Decimal(str(existing.cash_effect_amount or 0)).quantize(Decimal("0.01"))
+        cash_reversal_amount = -original_effect
+        _apply_cash_delta(db, cash_account, cash_reversal_amount)
+
     db.execute(text("""
         UPDATE investment_transactions
         SET status = 'VOIDED', void_reason = :reason,
@@ -673,6 +757,15 @@ def void_transaction(
         UPDATE investments SET quantity = :quantity, updated_at = CURRENT_TIMESTAMP
         WHERE id = :investment_id AND user_id = :user_id
     """), {"quantity": Decimal(str(balance.quantity or 0)), "investment_id": existing.investment_id, "user_id": user_id})
+    record_finance_event(
+        db, user_id=user_id, event_type="voided", entity_type="investment_transaction",
+        entity_id=transaction_id, description="Investment transaction voided",
+        snapshot={
+            "reason": data.reason.strip(), "transaction_type": existing.transaction_type,
+            "quantity": existing.quantity, "price": existing.price, "fees": existing.fees,
+            "cash_account_id": existing.cash_account_id, "cash_reversal_amount": cash_reversal_amount,
+        },
+    )
     db.commit()
     return {"status": "voided", "transaction_id": transaction_id, "reason": data.reason.strip(), "active_quantity": str(balance.quantity or 0)}
 

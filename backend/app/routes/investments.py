@@ -36,7 +36,7 @@ from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import inspect, text
+from sqlalchemy import func, inspect, text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -414,12 +414,12 @@ def create_investment(
     broker_account = db.query(Account).filter(
         Account.id == data.investment_account_id,
         Account.user_id == user_id,
-        Account.account_type == "investment",
+        func.lower(func.trim(Account.account_type)) == "investment",
         Account.is_active.is_(True),
     ).with_for_update().first()
     if broker_account is None:
         raise HTTPException(status_code=409, detail="Selected account must be an active Investment account owned by the logged-in user.")
-    broker_name = (broker_account.institution or broker_account.name).strip()
+    broker_name = (broker_account.institution or "").strip() or broker_account.name.strip()
     purchase_cost = ((data.quantity * data.buy_price) + data.fees).quantize(Decimal("0.01"))
     if Decimal(str(broker_account.balance or 0)) < purchase_cost:
         raise HTTPException(status_code=409, detail=f"Insufficient cash in {broker_account.name}. Transfer funds into this Investment account before buying.")

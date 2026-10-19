@@ -52,7 +52,8 @@ class AccountUpdate(BaseModel):
     currency: str | None = None
     balance: Decimal | None = None
     credit_limit: Decimal | None = None
-    is_active: bool | None = None
+    is_active: bool
+    is_deleted: bool = False | None = None
 
 
 class AccountResponse(BaseModel):

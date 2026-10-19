@@ -261,6 +261,7 @@ const PRODUCT_TYPES_BY_ASSET_CLASS = {
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminAccessChecked, setAdminAccessChecked] = useState(false);
   const [headerPanel, setHeaderPanel] = useState("");
   const [headerSearch, setHeaderSearch] = useState("");
   const headerActionsRef = useRef(null);
@@ -303,9 +304,16 @@ export default function App() {
         if (!cancelled) setIsAdmin(response.ok);
       } catch {
         if (!cancelled) setIsAdmin(false);
+      } finally {
+        if (!cancelled) setAdminAccessChecked(true);
       }
     };
-    if (getCurrentUserId()) checkAdminAccess();
+    if (getCurrentUserId()) {
+      checkAdminAccess();
+    } else {
+      setIsAdmin(false);
+      setAdminAccessChecked(true);
+    }
     return () => { cancelled = true; };
   }, []);
 
@@ -336,6 +344,17 @@ export default function App() {
     setActivePage(nextPage);
     setSidebarOpen(false);
   };
+
+  // Direct links must not expose the Admin Panel to unauthorised sessions.
+  // Wait for backend authorization before redirecting the configured admin.
+  useEffect(() => {
+    if (activePage === "Admin Panel" && adminAccessChecked && !isAdmin) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("page", "Wealth Manager");
+      window.history.replaceState({ page: "Wealth Manager" }, "", `${url.pathname}${url.search}${url.hash}`);
+      setActivePage("Wealth Manager");
+    }
+  }, [activePage, adminAccessChecked, isAdmin]);
 
   // ----------------------------------------------------------
   // RENDER

@@ -4,6 +4,7 @@
 # ============================================================
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -13,6 +14,20 @@ from app.finance_diary import record_finance_event
 from app.schemas import AccountCreate, AccountResponse, AccountUpdate
 
 router = APIRouter(prefix="/api/accounts", tags=["Accounts"])
+
+
+def _has_linked_investments(db: Session, user_id: int, account_id: int) -> bool:
+    """Keep linked broker accounts usable while investment history references them."""
+    if not inspect(db.get_bind()).has_table("investments"):
+        return False
+    return db.execute(
+        text("""
+            SELECT 1 FROM investments
+            WHERE user_id = :user_id AND investment_account_id = :account_id
+            LIMIT 1
+        """),
+        {"user_id": user_id, "account_id": account_id},
+    ).first() is not None
 
 
 @router.post("/", response_model=AccountResponse)
@@ -75,6 +90,15 @@ def update_account(account_id: int, account_data: AccountUpdate, db: Session = D
             raise HTTPException(status_code=422, detail="Outstanding amount must be between zero and the approved credit limit.")
     elif next_limit is not None:
         raise HTTPException(status_code=422, detail="Credit limit is only valid for Credit Card or Credit Line accounts.")
+    linked_investments = _has_linked_investments(db, current_user.id, account.id)
+    if linked_investments and (
+        next_type != "investment"
+        or update_data.get("is_active") is False
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="This Investment account is linked to portfolio holdings or transaction history. Keep it active and retain its Investment account type so BUY/SELL cash reconciliation remains available.",
+        )
     before = {"id": account.id, "name": account.name, "account_type": account.account_type, "institution": account.institution, "currency": account.currency, "balance": account.balance, "is_active": account.is_active}
     for field, value in update_data.items():
         setattr(account, field, value)
@@ -89,6 +113,13 @@ def delete_account(account_id: int, db: Session = Depends(get_db), current_user:
     account = db.query(Account).filter(Account.id == account_id, Account.user_id == current_user.id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found.")
+    # A linked broker account must remain active: BUY/SELL/edit/void cash
+    # reconciliation requires this account, including for closed positions.
+    if (account.account_type or "").strip().lower() == "investment" and _has_linked_investments(db, current_user.id, account.id):
+        raise HTTPException(
+            status_code=409,
+            detail="This Investment account is linked to portfolio holdings or transaction history. Close/reconcile the positions and preserve the account instead of deactivating it.",
+        )
     # Keep account rows as inactive so references and historical balances remain stable.
     account.is_active = False
     record_finance_event(db, user_id=account.user_id, event_type="deactivated", entity_type="account", entity_id=account.id, description=f"Account deactivated (not physically deleted): {account.name}", snapshot={"id": account.id, "name": account.name, "account_type": account.account_type, "balance": account.balance})

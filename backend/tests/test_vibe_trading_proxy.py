@@ -112,3 +112,15 @@ def test_get_run_uses_vibe_api(monkeypatch):
     result = vibe_trading.get_run("run_123", _user=None)
     assert result == {"id": "run_123", "status": "completed"}
     assert captured == {"path": "/runs/run_123", "method": "GET"}
+
+
+
+def test_session_events_can_request_active_attempt_replay(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(vibe_trading, "_base_url", lambda: "https://vibe.example.test")
+    monkeypatch.setattr(vibe_trading, "urlopen", lambda request, timeout: captured.update(
+        url=request.full_url, timeout=timeout
+    ) or FakeResponse({}))
+    response = vibe_trading.session_events("session_123", replay="active", _user=None)
+    assert captured["url"] == "https://vibe.example.test/sessions/session_123/events?replay=active"
+    assert response.media_type == "text/event-stream"

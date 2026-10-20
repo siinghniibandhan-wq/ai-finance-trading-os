@@ -209,7 +209,7 @@ const navigation = [
 
 
 // Appearance themes are local preferences; they do not change financial data or calculations.
-const FINOS_THEMES = ["Default","Light","Dark","Aurora","Emerald","Ocean","Sunset","Minimal","Retro Terminal","Glass","Skeuomorphism","Neumorphism","Glassmorphism","Claymorphism","Brutalism","Maximalism","Liquid Glass","Bento Grid","Elegant Plain"];
+const FINOS_THEMES = ["Default","Light","Dark","Aurora","Emerald","Ocean","Sunset","Minimal","Retro Terminal","Glass","Neumorphism","Glassmorphism","Claymorphism","Brutalism","Maximalism","Liquid Glass","Bento Grid","Elegant Plain"];
 const FINOS_THEME_DESCRIPTIONS = {
   "Default": "The original Financial OS dark-purple workspace.",
   "Light": "Bright, clean surfaces with dark readable text.",
@@ -221,7 +221,6 @@ const FINOS_THEME_DESCRIPTIONS = {
   "Minimal": "Quiet, reduced visual decoration.",
   "Retro Terminal": "Terminal-inspired green and monospace details.",
   "Glass": "Translucent panels and soft depth.",
-  "Skeuomorphism": "Tactile surfaces with subtle inset and raised depth.",
   "Neumorphism": "Soft, low-contrast raised and inset surfaces.",
   "Glassmorphism": "Frosted translucent cards and blur.",
   "Claymorphism": "Rounded, soft, pillowy card surfaces.",
@@ -240,7 +239,7 @@ const readFinosTheme = () => {
 const applyFinosTheme = (theme) => {
   const nextTheme = FINOS_THEMES.includes(theme) ? theme : "Default";
   document.documentElement.dataset.finosTheme = nextTheme.toLowerCase().replaceAll(" ", "-");
-  document.documentElement.style.colorScheme = ["Light", "Elegant Plain", "Minimal", "Skeuomorphism", "Neumorphism", "Claymorphism", "Bento Grid"].includes(nextTheme) ? "light" : "dark";
+  document.documentElement.style.colorScheme = ["Light", "Elegant Plain", "Minimal", "Neumorphism", "Claymorphism", "Bento Grid"].includes(nextTheme) ? "light" : "dark";
   try { window.localStorage.setItem("financial-os-theme", nextTheme); } catch { /* Theme still applies for this session. */ }
 };
 

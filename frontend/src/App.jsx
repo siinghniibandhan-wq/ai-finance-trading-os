@@ -13863,9 +13863,9 @@ function Category() {
           HEADER
       ==================================================== */}
 
-      <section className="welcome-section">
+      <section className="welcome-section categories-page-header">
 
-        <div>
+        <div className="categories-page-heading">
 
           <p className="welcome-label">
             MONEY
@@ -13988,7 +13988,7 @@ function Category() {
           CATEGORY LIST
       ==================================================== */}
 
-      <section className="glass-card category-list-section">
+      <section className="glass-card category-list-section categories-list-panel">
 
         <div className="card-header">
 
@@ -14049,7 +14049,7 @@ function Category() {
 
         {!loading && (
           <>
-            <div style={{ display: "flex", gap: "10px", marginTop: "20px", marginBottom: "22px" }}>
+            <div className="category-type-tabs" role="group" aria-label="Filter categories by type">
               {[
                 { value: "income", label: "Income", icon: "↑" },
                 { value: "expense", label: "Expense", icon: "↓" },
@@ -14070,16 +14070,16 @@ function Category() {
                       gap: "9px",
                       padding: "14px 16px",
                       borderRadius: "14px",
-                      border: selected ? "1px solid rgba(190,100,255,.55)" : "1px solid rgba(255,255,255,.10)",
-                      background: selected ? "linear-gradient(135deg, rgba(168,85,247,.28), rgba(236,72,153,.16))" : "rgba(255,255,255,.035)",
-                      color: "#fff",
+                      border: selected ? "1px solid var(--th-accent)" : "1px solid var(--th-border)",
+                      background: selected ? "var(--th-accent)" : "var(--th-card)",
+                      color: selected ? "var(--th-on-accent, #fff)" : "var(--th-text)",
                       fontWeight: 700,
                       cursor: "pointer",
                     }}
                   >
                     <span style={{ fontSize: "18px" }}>{tab.icon}</span>
                     <span>{tab.label}</span>
-                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,.62)", fontWeight: 600 }}>{count}</span>
+                    <span className="category-tab-count">{count}</span>
                   </button>
                 );
               })}
@@ -14088,7 +14088,7 @@ function Category() {
             <section style={{ marginBottom: "24px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
                 <span style={{ fontSize: "18px" }}>⭐</span>
-                <h4 style={{ margin: 0, color: "#fff", fontSize: "15px" }}>Favorite {activeCategoryTab === "income" ? "Income" : "Expense"} Categories</h4>
+                <h4 className="category-favorites-title">Favorite {activeCategoryTab === "income" ? "Income" : "Expense"} Categories</h4>
                 <span style={{ fontSize: "11px", color: "rgba(255,255,255,.5)" }}>Top 4</span>
               </div>
               <div style={{ display: "grid", gap: "10px" }}>

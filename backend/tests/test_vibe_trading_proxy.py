@@ -71,6 +71,7 @@ def test_live_order_endpoints_are_not_registered_by_this_router():
     assert "/api/playground/vibe/sessions/{session_id}/cancel" in paths
     assert "/api/playground/vibe/swarm/runs" in paths
     assert "/api/playground/vibe/swarm/runs/{run_id}" in paths
+    assert "/api/playground/vibe/swarm/runs/{run_id}/events" in paths
     assert "/api/playground/vibe/runs/{run_id}" in paths
     assert not any("order" in path.lower() or "broker" in path.lower() for path in paths)
 
@@ -149,3 +150,19 @@ def test_cancel_session_uses_vibe_endpoint(monkeypatch):
     monkeypatch.setattr(vibe_trading, "_request", lambda path, method="GET", payload=None, query=None: captured.update(path=path, method=method) or {"status": "cancelled"})
     assert vibe_trading.cancel_session("session_123", _user=None) == {"status": "cancelled"}
     assert captured == {"path": "/sessions/session_123/cancel", "method": "POST"}
+
+
+
+def test_swarm_run_events_proxies_sse_stream(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(vibe_trading, "_base_url", lambda: "https://vibe.example.test")
+    monkeypatch.setattr(vibe_trading, "urlopen", lambda request, timeout: captured.update(
+        url=request.full_url, accept=request.headers.get("Accept"), timeout=timeout
+    ) or FakeResponse({}))
+    response = vibe_trading.swarm_run_events("swarm_123", _user=None)
+    assert captured == {
+        "url": "https://vibe.example.test/swarm/runs/swarm_123/events",
+        "accept": "text/event-stream",
+        "timeout": 30,
+    }
+    assert response.media_type == "text/event-stream"

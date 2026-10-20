@@ -3303,7 +3303,7 @@ function PlaygroundPage() {
   const [slowPeriod, setSlowPeriod] = useState(30);
   const [riskPercent, setRiskPercent] = useState(1);
   const [notice, setNotice] = useState("");
-  const symbols = [...new Set(symbolsText.split(/[\\s,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean))].slice(0, 20);
+  const symbols = [...new Set(symbolsText.split(/[\s,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean))].slice(0, 20);
   const tabs = ["Market Data", "AI Research", "Strategy Builder", "Backtesting", "Paper Trading", "Risk Controls", "Multi-Agent Research", "Trade Journal", "Alpha Library", "Live Execution"];
   const coming = (name, desc) => <section className="vt-panel"><p className="vt-eyebrow">VIBE TRADING · PLAYGROUND</p><h3>{name}</h3><p className="vt-muted">{desc}</p><div className="vt-feature-grid">{["Inputs & configuration", "Results & diagnostics", "Saved workspace"].map(x => <div className="vt-feature" key={x}><strong>{x}</strong><p className="vt-muted">Frontend layout only. No backend calculation, persistence, market request, or broker action is connected.</p></div>)}</div><p className="vt-muted">Status: frontend scaffold. Backend/API contract to be discussed before implementation.</p></section>;
   const inputProps = { className: "vt-input" };

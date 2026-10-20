@@ -1,0 +1,20 @@
+/* Vibe Trading Playground only. All colors inherit the selected Financial OS theme. */
+.vt-playground{display:grid;gap:14px;min-width:0;color:var(--th-text);color:var(--finos-text,var(--th-text))}
+.vt-panel{min-width:0;padding:18px;border:1px solid var(--th-border);border-radius:16px;background:var(--th-card);color:var(--th-text)}
+.vt-playground h2,.vt-playground h3{margin:4px 0 10px;color:var(--th-text)}
+.vt-eyebrow{margin:0 0 6px;color:var(--th-accent);font-size:11px;font-weight:750;letter-spacing:1.2px}
+.vt-muted{margin:8px 0;color:var(--th-muted,var(--th-text));opacity:.82;font-size:13px;line-height:1.65}
+.vt-badges,.vt-tabs,.vt-symbol-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.vt-badges span,.vt-symbol{border:1px solid var(--th-border);border-radius:999px;padding:6px 10px;background:var(--th-inner,var(--th-card));font-size:12px}
+.vt-tabs{margin:0}
+.vt-tab,.vt-button{border:1px solid var(--th-border);border-radius:10px;padding:10px 13px;background:var(--th-card);color:var(--th-text);cursor:pointer}
+.vt-tab.active{border-color:var(--th-accent);background:color-mix(in srgb,var(--th-accent) 13%,var(--th-card));}
+.vt-button:disabled{opacity:.55;cursor:not-allowed}
+.vt-label{display:grid;gap:6px;margin:12px 0;color:var(--th-text);font-size:13px}
+.vt-input{display:block;width:100%;min-width:0;padding:11px 12px;border:1px solid var(--th-border);border-radius:10px;background:var(--th-inner,var(--th-card));color:var(--th-text);font:inherit}
+.vt-input:focus{outline:2px solid color-mix(in srgb,var(--th-accent) 55%,transparent);outline-offset:1px}
+.vt-form-grid,.vt-feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}
+.vt-feature{padding:12px;border:1px solid var(--th-border);border-radius:12px;background:var(--th-inner,var(--th-card))}
+.vt-notice{margin-top:12px;padding:11px 12px;border:1px solid var(--th-border);border-radius:10px;background:var(--th-inner,var(--th-card));color:var(--th-text);font-size:13px;line-height:1.6}
+.vt-playground code{font-family:ui-monospace,SFMono-Regular,monospace}
+@media(max-width:600px){.vt-panel{padding:14px}.vt-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.vt-tab{min-width:0;overflow-wrap:anywhere}.vt-badges span{max-width:100%;overflow-wrap:anywhere}}

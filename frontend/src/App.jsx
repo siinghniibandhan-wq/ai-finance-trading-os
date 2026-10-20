@@ -545,12 +545,10 @@ export default function App() {
                 <div className="profile-info"><strong>{getCurrentUser()?.name || "User"}</strong><span>{getCurrentUser()?.email || "Personal workspace"}</span></div>
               </button>
               {headerPanel === "profile" && (
-                <div className="header-popover header-profile-popover" role="menu" aria-label="User menu" style={{ width: "min(280px, calc(100vw - 24px))", maxWidth: "280px", boxSizing: "border-box" }}>
+                <div className="header-popover header-profile-popover" role="menu" aria-label="User menu">
                   <div className="header-profile-summary"><div className="profile-avatar">{(getCurrentUser()?.name || "U").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</div><div><strong>{getCurrentUser()?.name || "User"}</strong><span>{getCurrentUser()?.email || "Personal workspace"}</span></div></div>
-                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Account Profile"); }}>Account profile</button>
                   <div role="none"><TradingControlSettings compact /></div>
-                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}><Settings size={16}/> Settings &amp; preferences <span>›</span></button>
-                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}>Theme &amp; appearance <span>›</span></button>
+                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}><Settings size={16}/> Settings <span>›</span></button>
                   <div className="header-profile-divider"/>
                   <button type="button" role="menuitem" className="header-signout" onClick={() => {
                     const token = sessionStorage.getItem("financial_os_access_token") || "";
@@ -9132,17 +9130,19 @@ function TradingControlSettings({ compact = false }) {
   };
 
   const enabled = Boolean(tradingControl?.enabled);
-  if (compact) return <div style={{ padding: "10px 12px", borderTop: "1px solid var(--finos-border, rgba(255,255,255,.12))", borderBottom: "1px solid var(--finos-border, rgba(255,255,255,.12))" }} aria-labelledby="live-trading-settings-title">
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-      <strong id="live-trading-settings-title" style={{ fontSize: 13 }}>Live Trading</strong>
-      <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "#ef4444" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
+  if (compact) return <div className="header-live-trading" aria-labelledby="live-trading-settings-title">
+    <div className="header-live-trading-copy">
+      <strong id="live-trading-settings-title">Live Trading</strong>
+      <span role="status" aria-live="polite">{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
     </div>
-    <button type="button" onClick={toggleTradingControl} disabled={busy} aria-pressed={enabled} style={{ width: "auto", maxWidth: "100%", marginTop: 8, padding: "6px 9px", minHeight: 30, borderRadius: 8, border: "1px solid var(--finos-border, rgba(255,255,255,.18))", background: enabled ? "rgba(239,68,68,.12)" : "rgba(34,197,94,.12)", color: "inherit", cursor: busy ? "not-allowed" : "pointer", opacity: busy ? .6 : 1, font: "inherit", fontSize: 11, lineHeight: 1.2, fontWeight: 700, whiteSpace: "normal" }}>
-      {busy ? (tradingControl ? "Saving…" : "Checking…") : tradingControl === null ? "Retry status check" : enabled ? "Turn Trading OFF" : "Turn Trading ON"}
-    </button>
-    {error && <p role="alert" style={{ color: "var(--finos-negative, #ef4444)", fontSize: 11, lineHeight: 1.4 }}>{error}</p>}
-    {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", fontSize: 11, lineHeight: 1.4 }}>{notice}</p>}
-    <p style={{ color: "var(--finos-muted, rgba(255,255,255,.62))", fontSize: 10, lineHeight: 1.4, marginBottom: 0 }}>Admin-only. OFF blocks new Financial OS orders.</p>
+    <label className={`theme-toggle-switch ${enabled ? "is-on" : ""} ${busy || tradingControl === null ? "is-disabled" : ""}`} title={tradingControl === null ? "Trading status unavailable" : enabled ? "Disable live trading" : "Enable live trading"}>
+      <input type="checkbox" role="switch" aria-label="Live Trading" checked={enabled} onChange={toggleTradingControl} disabled={busy || tradingControl === null} />
+      <span className="theme-toggle-track" aria-hidden="true"><span className="theme-toggle-thumb" /></span>
+    </label>
+    {tradingControl === null && <button type="button" className="header-live-trading-retry" onClick={toggleTradingControl} disabled={busy}>Retry status</button>}
+    {error && <p role="alert" className="header-live-trading-message">{error}</p>}
+    {notice && <p role="status" className="header-live-trading-message">{notice}</p>}
+    <p className="header-live-trading-note">Admin-only. OFF blocks new Financial OS orders.</p>
   </div>;
   return <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }} aria-labelledby="live-trading-settings-title">
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>

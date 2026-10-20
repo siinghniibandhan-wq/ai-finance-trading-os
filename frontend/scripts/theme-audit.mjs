@@ -5,10 +5,9 @@ const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
 const css = readFileSync(new URL("../src/visual-design.css", import.meta.url), "utf8");
 
 const expectedThemes = [
-  "Default", "Light", "Dark", "Aurora", "Emerald", "Ocean", "Sunset",
-  "Minimal", "Retro Terminal", "Glass", "Skeuomorphism", "Neumorphism",
-  "Glassmorphism", "Claymorphism", "Brutalism", "Maximalism",
-  "Liquid Glass", "Bento Grid", "Elegant Plain",
+  "Default", "Light", "Dark", "Skeuomorphism", "Neumorphism",
+  "Brutalism", "Retro Terminal", "Elegant Plain", "Bento Grid",
+  "Nordic", "Editorial",
 ];
 const slugs = expectedThemes.map((theme) => theme.toLowerCase().replaceAll(" ", "-"));
 

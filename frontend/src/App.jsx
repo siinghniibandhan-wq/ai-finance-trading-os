@@ -209,25 +209,19 @@ const navigation = [
 
 
 // Appearance themes are local preferences; they do not change financial data or calculations.
-const FINOS_THEMES = ["Default","Light","Dark","Aurora","Emerald","Ocean","Sunset","Minimal","Retro Terminal","Glass","Neumorphism","Claymorphism","Brutalism","Maximalism","Liquid Glass","Bento Grid","Elegant Plain"];
+const FINOS_THEMES = ["Default","Light","Dark","Skeuomorphism","Neumorphism","Brutalism","Retro Terminal","Elegant Plain","Bento Grid","Nordic","Editorial"];
 const FINOS_THEME_DESCRIPTIONS = {
-  "Default": "The original Financial OS dark-purple workspace.",
-  "Light": "Bright, clean surfaces with dark readable text.",
-  "Dark": "A low-glare dark workspace.",
-  "Aurora": "Purple and pink gradient accents.",
-  "Emerald": "Nature-inspired green accents.",
-  "Ocean": "Calm professional blue accents.",
-  "Sunset": "Warm amber and coral accents.",
-  "Minimal": "Quiet, reduced visual decoration.",
-  "Retro Terminal": "Terminal-inspired green and monospace details.",
-  "Glass": "Translucent panels and soft depth.",
-  "Neumorphism": "Soft, low-contrast raised and inset surfaces.",
-  "Claymorphism": "Rounded, soft, pillowy card surfaces.",
-  "Brutalism": "Bold borders, hard contrast, and square edges.",
-  "Maximalism": "Expressive gradients and vivid accent colors.",
-  "Liquid Glass": "Glossy translucent surfaces with fluid highlights.",
-  "Bento Grid": "Clean modular panels with clear visual grouping.",
-  "Elegant Plain": "Plain white, thin borders, restrained spacing, and elegant typography."
+  "Default": "The original Financial OS identity, with deep violet surfaces and a vivid purple accent.",
+  "Light": "A clear, bright workspace with crisp white surfaces and readable ink.",
+  "Dark": "A restrained charcoal workspace with cool blue accents and low-glare surfaces.",
+  "Skeuomorphism": "Tactile, physical-inspired controls with layered surfaces, inset details, and realistic depth.",
+  "Neumorphism": "Soft raised and inset surfaces built from a unified low-contrast base, with readable text and clear focus states.",
+  "Brutalism": "Bold ink borders, square geometry, high contrast, and offset shadows.",
+  "Retro Terminal": "Black canvas, phosphor-green accents, monospace typography, and terminal-inspired controls.",
+  "Elegant Plain": "Quiet editorial typography, generous whitespace, fine separators, and restrained monochrome accents.",
+  "Bento Grid": "A modular dashboard language with deliberate grid rhythm and clearly grouped panels.",
+  "Nordic": "Cool stone and ice tones, calm blue-teal accents, clean spacing, and quiet depth.",
+  "Editorial": "Warm paper surfaces, ink typography, serif display headings, and restrained copper accents."
 };
 const readFinosTheme = () => {
   try {
@@ -238,7 +232,7 @@ const readFinosTheme = () => {
 const applyFinosTheme = (theme) => {
   const nextTheme = FINOS_THEMES.includes(theme) ? theme : "Default";
   document.documentElement.dataset.finosTheme = nextTheme.toLowerCase().replaceAll(" ", "-");
-  document.documentElement.style.colorScheme = ["Light", "Elegant Plain", "Minimal", "Neumorphism", "Claymorphism", "Bento Grid"].includes(nextTheme) ? "light" : "dark";
+  document.documentElement.style.colorScheme = ["Light", "Skeuomorphism", "Neumorphism", "Elegant Plain", "Bento Grid", "Nordic", "Editorial"].includes(nextTheme) ? "light" : "dark";
   try { window.localStorage.setItem("financial-os-theme", nextTheme); } catch { /* Theme still applies for this session. */ }
 };
 

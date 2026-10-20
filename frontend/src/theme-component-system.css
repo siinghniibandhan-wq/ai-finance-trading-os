@@ -1,0 +1,66 @@
+/* Shared component contract. Loaded after legacy styles so common components use the active theme tokens. */
+:root[data-finos-theme] .content :is(.tab,.tab-button,[role="tab"],.finos-tab),
+:root[data-finos-theme] .tax-centre nav[aria-label="Tax sections"] button,
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button {
+  background: var(--th-tab-bg) !important;
+  color: var(--th-tab-text) !important;
+  border: 1px solid var(--th-tab-border) !important;
+  border-radius: var(--th-tab-radius) !important;
+  box-shadow: var(--th-tab-shadow, none) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content :is(.tab,.tab-button,[role="tab"],.finos-tab):is(.active,.is-active,[aria-selected="true"],[aria-pressed="true"]),
+:root[data-finos-theme] .tax-centre nav[aria-label="Tax sections"] button:is(.active,.is-active,[aria-selected="true"],[aria-pressed="true"]),
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:is(.active,.is-active,[aria-selected="true"]),
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button:is(.active,.is-active,[aria-pressed="true"]) {
+  background: var(--th-tab-active-bg) !important;
+  color: var(--th-tab-active-text) !important;
+  border-color: var(--th-accent) !important;
+  box-shadow: var(--th-tab-active-shadow, var(--th-tab-shadow, none)) !important;
+}
+:root[data-finos-theme] .content :is(.tab,.tab-button,[role="tab"],.finos-tab):hover,
+:root[data-finos-theme] .tax-centre nav[aria-label="Tax sections"] button:hover,
+:root[data-finos-theme] .instrument-research-panel .instrument-research-tab:hover,
+:root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button:hover {
+  background: var(--th-hover-surface) !important;
+  color: var(--th-text) !important;
+}
+:root[data-finos-theme] .content :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea),
+:root[data-finos-theme] .tax-centre :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea),
+:root[data-finos-theme] .markets-workspace :is(input,select,textarea) {
+  background: var(--th-input-surface) !important;
+  color: var(--th-input-text) !important;
+  border-color: var(--th-input-border) !important;
+  border-radius: var(--th-control-radius) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content :is(input,select,textarea):focus-visible,
+:root[data-finos-theme] .tax-centre :is(input,select,textarea):focus-visible,
+:root[data-finos-theme] .markets-workspace :is(input,select,textarea):focus-visible {
+  outline: 2px solid var(--th-focus) !important;
+  outline-offset: 2px !important;
+}
+:root[data-finos-theme] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.module-overview-card,.wc-primary-card,.wc-shortcut-tile,.wc-welcome,.welcome-section,.dashboard-clickable-card),
+:root[data-finos-theme] .tax-centre :is(.tax-card,.tax-panel,.tax-section-card) {
+  background: var(--th-surface-raised) !important;
+  color: var(--th-text) !important;
+  border: 1px solid var(--th-border) !important;
+  border-radius: var(--th-radius) !important;
+  box-shadow: var(--th-card-shadow) !important;
+}
+:root[data-finos-theme] .content :is(svg.lucide,.lucide),
+:root[data-finos-theme] .tax-centre .lucide,
+:root[data-finos-theme] .markets-workspace .lucide { flex-shrink: 0; }
+:root[data-finos-theme] :is(button,a,[role="button"],[role="tab"]):focus-visible {
+  outline: 2px solid var(--th-focus);
+  outline-offset: 2px;
+}
+:root[data-finos-theme="neumorphism"] .content :is(.tab,.tab-button,[role="tab"],.finos-tab),
+:root[data-finos-theme="neumorphism"] .tax-centre nav[aria-label="Tax sections"] button { border-color: transparent !important; }
+:root[data-finos-theme="brutalism"] .content :is(.tab,.tab-button,[role="tab"],.finos-tab),
+:root[data-finos-theme="brutalism"] .tax-centre nav[aria-label="Tax sections"] button { border-width: 2px !important; font-weight: 700 !important; }
+:root[data-finos-theme="retro-terminal"] .content :is(.tab,.tab-button,[role="tab"],.finos-tab),
+:root[data-finos-theme="retro-terminal"] .tax-centre nav[aria-label="Tax sections"] button { font-family: var(--th-font) !important; text-transform: uppercase; letter-spacing: .035em; }
+:root[data-finos-theme="elegant-plain"] .content :is(.tab,.tab-button,[role="tab"],.finos-tab),
+:root[data-finos-theme="elegant-plain"] .tax-centre nav[aria-label="Tax sections"] button { border-width: 0 0 2px !important; }

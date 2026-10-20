@@ -67,5 +67,6 @@ def test_session_message_uses_upstream_content_contract():
 def test_live_order_endpoints_are_not_registered_by_this_router():
     paths = {route.path for route in vibe_trading.router.routes}
     assert "/api/playground/vibe/sessions" in paths
+    assert "/api/playground/vibe/sessions/{session_id}/messages" in paths
     assert "/api/playground/vibe/swarm/runs" in paths
     assert not any("order" in path.lower() or "broker" in path.lower() for path in paths)

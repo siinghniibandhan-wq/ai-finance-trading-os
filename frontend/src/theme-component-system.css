@@ -122,3 +122,22 @@
 :root[data-finos-theme] :is(button,a,[role="button"],[role="tab"]) svg.lucide {
   color: inherit !important;
 }
+
+/* Tab semantics win over generic primary/secondary button variants in every module. */
+:root[data-finos-theme] .content :is(.tab,.tab-button,[role="tab"],.finos-tab).primary-button,
+:root[data-finos-theme] .content :is(.tab,.tab-button,[role="tab"],.finos-tab).active,
+:root[data-finos-theme] .content :is(.tab,.tab-button,[role="tab"],.finos-tab)[aria-selected="true"],
+:root[data-finos-theme] .tax-centre nav[aria-label="Tax sections"] button.primary-button {
+  background: var(--th-tab-active-bg) !important;
+  color: var(--th-tab-active-text) !important;
+  border-color: var(--th-accent) !important;
+  box-shadow: var(--th-tab-active-shadow, var(--th-tab-shadow, none)) !important;
+}
+:root[data-finos-theme] .content :is(.tab,.tab-button,[role="tab"],.finos-tab).secondary-button,
+:root[data-finos-theme] .content :is(.tab,.tab-button,[role="tab"],.finos-tab):not(.active):not(.is-active):not([aria-selected="true"]),
+:root[data-finos-theme] .tax-centre nav[aria-label="Tax sections"] button.secondary-button {
+  background: var(--th-tab-bg) !important;
+  color: var(--th-tab-text) !important;
+  border-color: var(--th-tab-border) !important;
+  box-shadow: var(--th-tab-shadow, none) !important;
+}

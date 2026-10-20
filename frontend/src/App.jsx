@@ -9188,7 +9188,7 @@ function SettingsPage({ onNavigate, onOpenProfileSection, selectedTheme, onTheme
   ];
   return <div className="dashboard finos-settings-page">
     {showThemePicker ? <>
-      <section className="welcome-section">
+      <section className="welcome-section" style={{ padding: "20px 22px", marginBottom: "18px" }}>
         <div style={{ width: "100%" }}>
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "10px" }}>
             <button type="button" className="secondary-button" onClick={() => setShowThemePicker(false)} aria-label="Close theme selection" title="Close theme selection" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "38px", height: "38px", padding: 0, fontSize: "22px", lineHeight: 1 }}>×</button>
@@ -9196,16 +9196,19 @@ function SettingsPage({ onNavigate, onOpenProfileSection, selectedTheme, onTheme
           <p className="welcome-label">APPEARANCE</p><h2>Choose Theme</h2><p className="welcome-description">Select a theme for the entire Financial OS workspace.</p>
         </div>
       </section>
-      <section className="finos-theme-settings glass-card">
-        <div className="finos-theme-settings-heading"><div><p className="finos-theme-eyebrow">THEME PREFERENCES</p><h3>Available themes</h3><p>The selected style applies throughout Financial OS.</p></div><span className="finos-theme-current">Current: {selectedTheme}</span></div>
-        <div className="finos-theme-settings-grid">
-          {FINOS_THEMES.map((theme) => <button type="button" key={theme} aria-pressed={selectedTheme === theme} onClick={() => onThemeChange(theme)} className={`finos-theme-option finos-theme-option-${theme.toLowerCase().replaceAll(" ", "-")} ${selectedTheme === theme ? "is-active" : ""}`}>
-            <span className="finos-theme-sample" aria-hidden="true"><i/><i/><i/><b/></span>
-            <span className="finos-theme-option-copy"><strong>{theme}</strong><small>{FINOS_THEME_DESCRIPTIONS[theme]}</small></span>
-            <span className="finos-theme-radio" aria-hidden="true">{selectedTheme === theme ? "✓" : ""}</span>
+      <section className="finos-theme-settings glass-card" style={{ padding: "clamp(14px, 3vw, 24px)", marginBottom: "18px", minWidth: 0 }}>
+        <div className="finos-theme-settings-heading" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "14px", flexWrap: "wrap", marginBottom: "18px" }}>
+          <div style={{ minWidth: 0 }}><p className="finos-theme-eyebrow">THEME PREFERENCES</p><h3 style={{ margin: "4px 0 8px" }}>Available themes</h3><p style={{ margin: 0, lineHeight: 1.5 }}>Choose the appearance that works best for you.</p></div>
+          <span className="finos-theme-current" style={{ flexShrink: 0, padding: "8px 12px", borderRadius: "999px", border: "1px solid var(--finos-border, var(--th-border))", background: "var(--t-inner-bg, transparent)", fontSize: "12px" }}>Current: {selectedTheme}</span>
+        </div>
+        <div className="finos-theme-settings-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: "12px", alignItems: "stretch" }}>
+          {FINOS_THEMES.map((theme) => <button type="button" key={theme} aria-pressed={selectedTheme === theme} onClick={() => onThemeChange(theme)} className={`finos-theme-option finos-theme-option-${theme.toLowerCase().replaceAll(" ", "-")} ${selectedTheme === theme ? "is-active" : ""}`} style={{ display: "grid", gridTemplateColumns: "76px minmax(0, 1fr) 22px", alignItems: "center", gap: "14px", width: "100%", minWidth: 0, minHeight: "124px", padding: "14px", textAlign: "left", boxSizing: "border-box", overflow: "hidden" }}>
+            <span className="finos-theme-sample" aria-hidden="true" style={{ width: "76px", minWidth: "76px", height: "58px", display: "flex", alignItems: "center", justifyContent: "center" }}><i/><i/><i/><b/></span>
+            <span className="finos-theme-option-copy" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "6px", minWidth: 0, overflowWrap: "anywhere" }}><strong style={{ fontSize: "14px", lineHeight: 1.3 }}>{theme}</strong><small style={{ display: "block", fontSize: "12px", lineHeight: 1.45, whiteSpace: "normal" }}>{FINOS_THEME_DESCRIPTIONS[theme]}</small></span>
+            <span className="finos-theme-radio" aria-hidden="true" style={{ justifySelf: "center", flexShrink: 0 }}>{selectedTheme === theme ? "✓" : ""}</span>
           </button>)}
         </div>
-        <p className="finos-theme-footnote">Theme selection changes appearance only, not your records or calculations.</p>
+        <p className="finos-theme-footnote" style={{ marginTop: "18px", lineHeight: 1.5 }}>Theme selection changes appearance only, not your records or calculations.</p>
       </section>
     </> : <>
       <section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Manage personal information, KYC and tax details, appearance, and financial history.</p></div></section>

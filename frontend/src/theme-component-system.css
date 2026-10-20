@@ -42,7 +42,9 @@
   outline-offset: 2px !important;
 }
 :root[data-finos-theme] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.module-overview-card,.wc-primary-card,.wc-shortcut-tile,.wc-welcome,.welcome-section,.dashboard-clickable-card),
-:root[data-finos-theme] .tax-centre :is(.tax-card,.tax-panel,.tax-section-card) {
+:root[data-finos-theme] .tax-centre :is(.tax-card,.tax-panel,.tax-section-card,.tax-calculation-settings,.tax-calculation-results,.tax-paid-section,.tax-credit-section,.tax-income-aggregation,.tax-business-income-review,.tax-house-property-panel,.tax-hra-panel),
+:root[data-finos-theme] .markets-workspace > section,
+:root[data-finos-theme] .markets-workspace :is(.market-card,.instrument-chart-panel,.instrument-research-panel,.instrument-ltp-panel,.instrument-watchlist-card,.instrument-market-news-panel,.instrument-search-panel) {
   background: var(--th-surface-raised) !important;
   color: var(--th-text) !important;
   border: 1px solid var(--th-border) !important;
@@ -108,3 +110,15 @@
 :root[data-finos-theme] .content :is(.icon-positive,.finos-icon-positive) { color: var(--th-pos) !important; }
 :root[data-finos-theme] .content :is(.icon-negative,.finos-icon-negative) { color: var(--th-neg) !important; }
 :root[data-finos-theme] .content :is(.icon-warning,.finos-icon-warning) { color: var(--th-warn) !important; }
+
+/* Standalone icons use the theme accent; icons inside controls inherit that control's text colour. */
+:root[data-finos-theme] .content svg.lucide,
+:root[data-finos-theme] .sidebar svg.lucide,
+:root[data-finos-theme] .tax-centre svg.lucide,
+:root[data-finos-theme] .markets-workspace svg.lucide {
+  color: var(--th-icon) !important;
+  stroke: currentColor;
+}
+:root[data-finos-theme] :is(button,a,[role="button"],[role="tab"]) svg.lucide {
+  color: inherit !important;
+}

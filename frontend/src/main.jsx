@@ -159,7 +159,7 @@ function RootRouter() {
 try {
   const savedTheme = localStorage.getItem("financial-os-theme");
   if (savedTheme) {
-    document.documentElement.dataset.finosTheme = savedTheme.toLowerCase().trim().replace(/\\s+/g, "-");
+    document.documentElement.dataset.finosTheme = savedTheme.toLowerCase().trim().replace(/\s+/g, "-");
   }
 } catch { /* Storage may be unavailable in restricted browser contexts. */ }
 

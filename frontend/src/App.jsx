@@ -14121,18 +14121,18 @@ function Category() {
       </section>
 
       {!loading && otherCategories.length > 0 && (
-        <section className="glass-card category-list-section" style={{ marginTop: "18px" }}>
-          <div className="card-header">
+        <section className="glass-card category-list-section categories-additional-panel">
+          <div className="card-header categories-additional-header">
             <div>
               <p className="card-label">ADDITIONAL CATEGORIES</p>
-              <h3 style={{ margin: 0 }}>Other / Transfers</h3>
+              <h3>Other / Transfers</h3>
+              <p className="categories-additional-description">
+                Transfer and settlement categories stay separate from income and expense.
+              </p>
             </div>
-            <span className="score">{otherCategories.length}</span>
+            <span className="score" aria-label={`${otherCategories.length} additional categories`}>{otherCategories.length}</span>
           </div>
-          <p style={{ color: "rgba(255,255,255,.55)", fontSize: "12px", marginTop: "10px" }}>
-            Transfer and settlement categories stay separate from income and expense.
-          </p>
-          <div style={{ display: "grid", gap: "10px", marginTop: "14px" }}>
+          <div className="categories-additional-list">
             {otherCategories.map(renderCategoryCard)}
           </div>
         </section>

@@ -283,9 +283,6 @@
   border-radius: var(--th-control-radius) !important;
   -webkit-text-fill-color: var(--th-button-secondary-text) !important;
 }
-:root[data-finos-theme] .markets-workspace :is(button.secondary-button,.secondary-button) {
-  background: var(--th-button-secondary-bg) !important;
-}
 :root[data-finos-theme] .markets-workspace :is(h1,h2,h3,h4,h5,h6,strong,b) {
   color: var(--th-text) !important;
   -webkit-text-fill-color: var(--th-text) !important;

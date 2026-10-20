@@ -96,4 +96,18 @@ assert.ok(!main.includes('import "./holdings-dark-cards.css";'), "Deprecated hol
 assert.ok(/replace\(\/\\s\+\/g, "-"/.test(main), "Saved theme slug must normalize whitespace");
 console.log("PASS: startup theme tokens, deprecated stylesheet imports, and saved theme slug are checked.");
 
+
+const colourFiles = [
+  "App.jsx", "styles.css", "visual-design.css", "theme-fixes.css", "theme-styles.css", "theme-components.css",
+].map((name) => ({
+  name,
+  content: readFileSync(new URL(`../src/${name}`, import.meta.url), "utf8"),
+}));
+const literalColourDeclaration = /(?:^|[;{])\s*(?:color|background(?:-color)?|border(?:-[a-z]+)?-color|outline-color|fill|stroke|box-shadow|text-shadow)\s*:\s*[^;{}]*(?:#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\s*\()/gim;
+for (const file of colourFiles) {
+  const matches = [...file.content.matchAll(literalColourDeclaration)].slice(0, 5);
+  assert.equal(matches.length, 0, `Hard-coded colour declaration found in ${file.name}: ${matches.map((m) => m[0].trim()).join(" | ")}`);
+}
+console.log("PASS: colour declarations use tokens outside the approved token stylesheet.");
+
 console.log("NOTE: These are static regression checks; they do not replace real-browser visual/accessibility testing.");

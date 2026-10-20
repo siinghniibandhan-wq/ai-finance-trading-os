@@ -92,7 +92,7 @@ console.log("PASS: deprecated Glass theme is removed and gallery count is 18.");
 assert.ok(main.includes('import "./theme-tokens.css";'), "main.jsx must load the theme token contract");
 assert.ok(main.includes('import "./theme-components.css";'), "main.jsx must load shared token-based component styles");
 assert.ok(!main.includes('import "./instrument-interaction-contrast.css";'), "Deprecated instrument contrast stylesheet import remains");
-assert.ok(!main.includes('import "./holdings-dark-cards.css";'), "Deprecated holdings stylesheet import remains");
+assert.ok(main.includes('import "./holdings-dark-cards.css";'), "Existing Holdings dark-card styling must remain loaded");
 assert.ok(/replace\(\/\\s\+\/g, "-"/.test(main), "Saved theme slug must normalize whitespace");
 console.log("PASS: startup theme tokens, deprecated stylesheet imports, and saved theme slug are checked.");
 

@@ -846,7 +846,7 @@ function Dashboard() {
           <div><p className="card-label">MONEY • OUTSTANDING</p><h3>Receivables & Payables</h3></div>
           <span className="small-button">{receivablePayable.items.length} open items</span>
         </div>
-        {settlementError && <p role="alert" style={{ color: "#fca5a5" }}>{settlementError}</p>}
+        {settlementError && <p role="alert" style={{ color: "var(--finos-status-danger-soft)" }}>{settlementError}</p>}
         {receivablePayable.items.length === 0 ? (
           <p className="chart-footnote">No outstanding receivables or payables. Add one from Money → Transactions → Add Transaction.</p>
         ) : (
@@ -1077,7 +1077,7 @@ class TaxSectionErrorBoundary extends React.Component {
             borderRadius: "14px",
             border: "1px solid rgba(239,68,68,0.3)",
             background: "rgba(239,68,68,0.08)",
-            color: "#fca5a5",
+            color: "var(--finos-status-danger-soft)",
             lineHeight: 1.7,
           }}
         >
@@ -1537,7 +1537,7 @@ function TaxPage() {
           <div style={cardStyle}><div style={labelStyle}>House property income counted</div><div style={valueStyle}>{head.available ? formatCurrency(head.amount) : "Not available"}</div>{!head.available && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", marginTop: 4 }}>{safeText(head.reason, "No verified record yet.")}</div>}</div>
           {head.available && Number(head.loss_not_set_off) > 0 && <div style={cardStyle}><div style={labelStyle}>Loss not set off</div><div style={valueStyle}>{formatCurrency(head.loss_not_set_off)}</div><div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", marginTop: 4 }}>Above the allowed limit, or not allowed in this regime. Carry-forward is not calculated here.</div></div>}
         </div>
-        {Number(head.money_rent_transactions_detected) > 0 && <div style={{ color: "#fbbf24", fontSize: 12, marginBottom: 12 }}>{head.money_rent_transactions_detected} rent receipt(s) totalling {formatCurrency(head.money_rent_total_detected)} are recorded in Money under House Property. They are not counted until you add and verify a house property record.</div>}
+        {Number(head.money_rent_transactions_detected) > 0 && <div style={{ color: "var(--finos-status-warning)", fontSize: 12, marginBottom: 12 }}>{head.money_rent_transactions_detected} rent receipt(s) totalling {formatCurrency(head.money_rent_total_detected)} are recorded in Money under House Property. They are not counted until you add and verify a house property record.</div>}
         <div style={{ display: "grid", gap: "8px" }}>
           <select aria-label="Property type" style={box} value={hpForm.property_type} onChange={(e) => setHpForm((f) => ({ ...f, property_type: e.target.value }))}>
             <option value="let_out">Let-out property (rented to someone)</option>
@@ -1549,8 +1549,8 @@ function TaxPage() {
           {isLetOut && <input aria-label="Municipal taxes paid" style={box} type="number" min="0" step="0.01" placeholder="Municipal taxes paid by you (₹, optional)" value={hpForm.municipal_taxes_paid} onChange={(e) => setHpForm((f) => ({ ...f, municipal_taxes_paid: e.target.value }))} />}
           {!isNone && <input aria-label="Home loan interest" style={box} type="number" min="0" step="0.01" placeholder="Home loan interest paid in the year (₹, optional)" value={hpForm.interest_on_housing_loan} onChange={(e) => setHpForm((f) => ({ ...f, interest_on_housing_loan: e.target.value }))} />}
           <button type="button" className="primary-button" disabled={hpBusy} onClick={addHouseProperty}>Add house property record</button>
-          {hpError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px" }}>{hpError}</div>}
-          {hpMessage && <div role="status" style={{ color: "#86efac", fontSize: "12px" }}>{hpMessage}</div>}
+          {hpError && <div role="alert" style={{ color: "var(--finos-status-danger-soft)", fontSize: "12px" }}>{hpError}</div>}
+          {hpMessage && <div role="status" style={{ color: "var(--finos-status-success-soft)", fontSize: "12px" }}>{hpMessage}</div>}
         </div>
         <div style={{ display: "grid", gap: "10px", marginTop: "14px" }}>
           {hpRecords.length === 0 && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>No house property records for this year.</div>}
@@ -1618,7 +1618,7 @@ function TaxPage() {
       <div style={{ ...cardStyle, padding: "13px", marginTop: "14px", borderColor: info.complete ? "rgba(34,197,94,0.35)" : "rgba(255,255,255,0.12)" }}>
         <div style={{ fontWeight: 750, fontSize: "12px" }}>{info.complete ? "Section complete" : info.confirmed_by_user ? "Confirmation saved · review still pending" : "Your confirmation is required"}</div>
         <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "11px", lineHeight: 1.6, margin: "7px 0" }}>{description}</p>
-        <p style={{ color: info.complete ? "#86efac" : "#fbbf24", fontSize: "11px", margin: "6px 0" }}>{info.reason || "Review status is not available yet."}</p>
+        <p style={{ color: info.complete ? "var(--finos-status-success-soft)" : "var(--finos-status-warning)", fontSize: "11px", margin: "6px 0" }}>{info.reason || "Review status is not available yet."}</p>
         <button type="button" className="secondary-button" disabled={taxReviewBusy} onClick={() => changeTaxReview(sectionKey, !info.confirmed_by_user)}>
           {info.confirmed_by_user ? "Undo my confirmation" : buttonLabel}
         </button>
@@ -1685,8 +1685,8 @@ function TaxPage() {
           <input aria-label="Credit amount" style={box} type="number" min="0" step="0.01" placeholder="Amount (₹)" value={creditForm.amount} onChange={(e) => setCreditForm((f) => ({ ...f, amount: e.target.value }))} />
           <input aria-label="Credit reference" style={box} type="text" maxLength={200} placeholder="Challan / certificate reference (needed to verify)" value={creditForm.source_reference} onChange={(e) => setCreditForm((f) => ({ ...f, source_reference: e.target.value }))} />
           <button type="button" className="primary-button" disabled={creditBusy} onClick={addTaxCredit}>Add tax credit</button>
-          {creditError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px" }}>{creditError}</div>}
-          {creditMessage && <div role="status" style={{ color: "#86efac", fontSize: "12px" }}>{creditMessage}</div>}
+          {creditError && <div role="alert" style={{ color: "var(--finos-status-danger-soft)", fontSize: "12px" }}>{creditError}</div>}
+          {creditMessage && <div role="status" style={{ color: "var(--finos-status-success-soft)", fontSize: "12px" }}>{creditMessage}</div>}
         </div>
         <div style={{ display: "grid", gap: "10px", marginTop: "14px" }}>
           {taxCredits.length === 0 && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>No tax credits added for this year.</div>}
@@ -1815,7 +1815,7 @@ function TaxPage() {
           These are unlinked Money transactions that may be business or professional income. Being listed here does not make them business income, and nothing is saved or verified automatically. Only verified records count as business income. An entry filed under an Other Sources category may already be counted above as other-source income.
         </p>
         {businessIncomeData?.status === "unavailable" ? (
-          <p role="status" style={{ color: "#fbbf24", fontSize: 12 }}>Review candidates could not be loaded: {safeText(businessIncomeData.message, "endpoint unavailable")}</p>
+          <p role="status" style={{ color: "var(--finos-status-warning)", fontSize: 12 }}>Review candidates could not be loaded: {safeText(businessIncomeData.message, "endpoint unavailable")}</p>
         ) : !Array.isArray(businessIncomeData?.unlinked_money_transactions) || businessIncomeData.unlinked_money_transactions.length === 0 ? (
           <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>No unlinked Money transactions were returned for this financial year.</p>
         ) : (
@@ -1829,7 +1829,7 @@ function TaxPage() {
                   <td style={tableCellStyle}>{safeText(row.category)}</td>
                   <td style={tableCellStyle}>{safeText(row.description)}</td>
                   <td style={tableCellStyle}>{formatCurrency(row.amount)}</td>
-                  <td style={tableCellStyle}><span style={{ color: "#fbbf24" }}>Review required</span></td>
+                  <td style={tableCellStyle}><span style={{ color: "var(--finos-status-warning)" }}>Review required</span></td>
                 </tr>
               ))}</tbody>
             </table>
@@ -1949,8 +1949,8 @@ function TaxPage() {
           <input aria-label="Claim amount" style={box} type="number" min="0.01" step="0.01" placeholder="Amount (₹)" value={dedForm.claimed_amount} onChange={(e) => setDedForm((f) => ({ ...f, claimed_amount: e.target.value }))} />
           <input aria-label="Evidence reference" style={box} type="text" maxLength={2000} placeholder="Receipt / policy / certificate reference" value={dedForm.evidence_reference} onChange={(e) => setDedForm((f) => ({ ...f, evidence_reference: e.target.value }))} />
           <button type="button" className="primary-button" disabled={dedBusy} onClick={addDedClaim}>{dedBusy ? "Saving..." : "Add deduction claim"}</button>
-          {dedError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px" }}>{dedError}</div>}
-          {dedMessage && <div role="status" style={{ color: "#86efac", fontSize: "12px" }}>{dedMessage}</div>}
+          {dedError && <div role="alert" style={{ color: "var(--finos-status-danger-soft)", fontSize: "12px" }}>{dedError}</div>}
+          {dedMessage && <div role="status" style={{ color: "var(--finos-status-success-soft)", fontSize: "12px" }}>{dedMessage}</div>}
         </div>
         <div style={{ overflowX: "auto", marginTop: "14px" }}>
           {dedClaims.length === 0 ? <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>No deduction claims recorded for this financial year.</p> : (
@@ -1961,7 +1961,7 @@ function TaxPage() {
                   <td style={tableCellStyle}>{safeText(claim.section || claim.deduction_key)}<div style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)" }}>{claim.tax_regime === "old" ? "Old regime" : "New regime"}</div></td>
                   <td style={tableCellStyle}>{formatCurrency(claim.claimed_amount)}</td>
                   <td style={tableCellStyle}><input aria-label={`Evidence reference for claim ${claim.id}`} style={{ ...box, minWidth: "160px" }} maxLength={2000} value={claim.evidence_reference || ""} onChange={(e) => setDedClaims((items) => items.map((item) => item.id === claim.id ? { ...item, evidence_reference: e.target.value } : item))} /></td>
-                  <td style={tableCellStyle}><span style={{ color: claim.status === "verified" ? "#86efac" : "#fbbf24" }}>{claim.status === "verified" ? "Verified" : "Pending review"}</span></td>
+                  <td style={tableCellStyle}><span style={{ color: claim.status === "verified" ? "var(--finos-status-success-soft)" : "var(--finos-status-warning)" }}>{claim.status === "verified" ? "Verified" : "Pending review"}</span></td>
                   <td style={tableCellStyle}><div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                     {claim.status === "verified"
                       ? <button type="button" className="secondary-button" disabled={dedBusy} onClick={() => unverifyDedClaim(claim.id)}>Set pending</button>
@@ -1974,8 +1974,8 @@ function TaxPage() {
           )}
         </div>
         {renderTaxReviewConfirm("tds_advance_tax", "Confirm only after every TDS, advance-tax and self-assessment payment for this financial year is entered and verified. Any pending entry blocks completion.", "I have entered all tax already paid")}
-        {taxReviewError && <div role="alert" style={{ color: "#fca5a5", fontSize: "11px", marginTop: "8px" }}>{taxReviewError}</div>}
-        {taxReviewMessage && <div role="status" style={{ color: "#86efac", fontSize: "11px", marginTop: "8px" }}>{taxReviewMessage}</div>}
+        {taxReviewError && <div role="alert" style={{ color: "var(--finos-status-danger-soft)", fontSize: "11px", marginTop: "8px" }}>{taxReviewError}</div>}
+        {taxReviewMessage && <div role="status" style={{ color: "var(--finos-status-success-soft)", fontSize: "11px", marginTop: "8px" }}>{taxReviewMessage}</div>}
       </div>
     );
   };
@@ -1999,7 +1999,7 @@ function TaxPage() {
             <div key={item.section} style={{ ...cardStyle, padding: "14px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "start" }}>
                 <strong style={{ fontSize: "13px" }}>{safeText(item.section)} · {safeText(item.name)}</strong>
-                <span style={{ fontSize: "10px", color: "#fbbf24", whiteSpace: "nowrap" }}>Needs verification</span>
+                <span style={{ fontSize: "10px", color: "var(--finos-status-warning)", whiteSpace: "nowrap" }}>Needs verification</span>
               </div>
               <div style={{ color: "rgba(255,255,255,0.58)", fontSize: "11px", lineHeight: 1.5, marginTop: "8px" }}>Limit: {item.maximum_amount == null ? "Subject to rules" : formatCurrency(item.maximum_amount)}</div>
               <div style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px", marginTop: "5px" }}>Basis: {safeText(item.basis, "Eligibility conditions apply")}</div>
@@ -2100,7 +2100,7 @@ function TaxPage() {
               {hraCityCatalog.non_metro.map((item) => <option key={item.name} value={item.name} label="Non-metro" />)}
             </datalist>
             <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Choose a suggestion or type an unlisted city. Unlisted cities default to Non-metro.</span>
-            {hraCityCatalogError && <span role="status" style={{ color: "#fbbf24", fontSize: "10px" }}>{hraCityCatalogError}</span>}
+            {hraCityCatalogError && <span role="status" style={{ color: "var(--finos-status-warning)", fontSize: "10px" }}>{hraCityCatalogError}</span>}
           </label>
           <div className="tax-hra-classification" style={fieldStyle}>Tax-rule classification
             <div aria-live="polite" style={{ ...inputStyle, minHeight: "40px", display: "flex", alignItems: "center", borderColor: hraInputs.city.trim() ? "rgba(34,197,94,0.28)" : "rgba(255,255,255,0.14)" }}>
@@ -2115,7 +2115,7 @@ function TaxPage() {
           <button type="button" className="secondary-button" onClick={() => { setHraInputs({ gross_salary: "", annual_basic_salary: "", annual_da_forming_retirement_benefits: "0", annual_commission_on_turnover_at_fixed_percentage: "0", annual_hra_received: "", annual_rent_paid: "", city: "", city_classification: "non_metro" }); setHraResult(null); setHraError(""); setHraSalaryMessage(""); setHraSalaryError(""); }}>Clear inputs</button>
         </div>
       </form>
-      {hraError && <div role="alert" style={{ marginTop: "14px", padding: "12px", borderRadius: "10px", color: "#fca5a5", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12px" }}>{hraError}</div>}
+      {hraError && <div role="alert" style={{ marginTop: "14px", padding: "12px", borderRadius: "10px", color: "var(--finos-status-danger-soft)", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12px" }}>{hraError}</div>}
       {hraResult && <div aria-live="polite" style={{ marginTop: "18px", display: "grid", gap: "12px" }}>
         <div style={{ ...cardStyle, borderColor: "rgba(34,197,94,0.25)" }}><div style={labelStyle}>Indicative HRA exemption</div><div style={valueStyle}>{formatCurrency(hraResult.calculated_exemption)}</div><div style={{ color: "rgba(255,255,255,0.52)", fontSize: "11px", marginTop: "8px" }}>FY {safeText(hraResult.financial_year)} · Old Regime · Estimate only</div></div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "10px" }}>
@@ -2131,13 +2131,13 @@ function TaxPage() {
           <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Keep this separate from the salary statement reference. Verification records your confirmation; the app does not inspect documents.</span>
         </label>
         <button type="button" className="primary-button" disabled={hraSalarySaving || taxRegime !== "old"} onClick={saveAndVerifyHraSalary}>{hraSalarySaving ? "Saving salary and HRA claim…" : "Save salary & verify HRA claim"}</button>
-        {hraSalaryError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px" }}>{hraSalaryError}</div>}
-        {hraSalaryMessage && <div role="status" style={{ color: "#86efac", fontSize: "12px" }}>{hraSalaryMessage}</div>}
+        {hraSalaryError && <div role="alert" style={{ color: "var(--finos-status-danger-soft)", fontSize: "12px" }}>{hraSalaryError}</div>}
+        {hraSalaryMessage && <div role="status" style={{ color: "var(--finos-status-success-soft)", fontSize: "12px" }}>{hraSalaryMessage}</div>}
       </div>}
       <div style={{ marginTop: "18px", display: "grid", gap: "8px" }}>
         <button type="button" className="secondary-button" disabled={hraSalarySaving} onClick={undoHraSalaryVerification}>Undo verification (salary &amp; HRA)</button>
-        {!hraResult && hraSalaryError && <div role="alert" style={{ color: "#fca5a5", fontSize: "12px" }}>{hraSalaryError}</div>}
-        {!hraResult && hraSalaryMessage && <div role="status" style={{ color: "#86efac", fontSize: "12px" }}>{hraSalaryMessage}</div>}
+        {!hraResult && hraSalaryError && <div role="alert" style={{ color: "var(--finos-status-danger-soft)", fontSize: "12px" }}>{hraSalaryError}</div>}
+        {!hraResult && hraSalaryMessage && <div role="status" style={{ color: "var(--finos-status-success-soft)", fontSize: "12px" }}>{hraSalaryMessage}</div>}
       </div>
     </section>;
   };
@@ -2150,7 +2150,7 @@ function TaxPage() {
           This uses the existing liability engine for the selected tax year and taxpayer inputs. Missing income heads, unverified claims, capital-gains eligibility or tax credits can keep the result provisional.
         </p>
         {finalLiabilityData?.status === "rules_not_configured" || finalLiabilityData?.status === "unavailable" ? (
-          <div style={{ color: "#fbbf24", fontSize: "12px" }}>{safeText(finalLiabilityData?.message, "Final liability is not available for these settings.")}</div>
+          <div style={{ color: "var(--finos-status-warning)", fontSize: "12px" }}>{safeText(finalLiabilityData?.message, "Final liability is not available for these settings.")}</div>
         ) : finalLiabilityData ? (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "12px" }}>
@@ -2170,7 +2170,7 @@ function TaxPage() {
               </div>
             )}
             {finalLiabilityData?.scope?.final_liability_complete === false && (
-              <div style={{ marginTop: "10px", color: "#fca5a5", fontSize: "12px" }}>The engine explicitly marks this result incomplete. Do not use it as a final ITR liability without resolving the missing data and review flags.</div>
+              <div style={{ marginTop: "10px", color: "var(--finos-status-danger-soft)", fontSize: "12px" }}>The engine explicitly marks this result incomplete. Do not use it as a final ITR liability without resolving the missing data and review flags.</div>
             )}
           </>
         ) : <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Choose a regime to load the estimate.</div>}
@@ -2396,8 +2396,8 @@ function TaxPage() {
         {sections.map((item) => <button key={item} type="button" onClick={() => setSection(item)} className={section === item ? "primary-button" : "secondary-button"} style={{ padding: "10px 13px", fontSize: "12px" }}>{item}</button>)}
       </nav>
 
-      {error && <div style={{ padding: "13px 15px", borderRadius: "12px", border: "1px solid rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.08)", color: "#fca5a5", fontSize: "13px" }}>{error}</div>}
-      {notice && !error && <div style={{ color: "#86efac", fontSize: "12px" }}>{notice}</div>}
+      {error && <div style={{ padding: "13px 15px", borderRadius: "12px", border: "1px solid rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.08)", color: "var(--finos-status-danger-soft)", fontSize: "13px" }}>{error}</div>}
+      {notice && !error && <div style={{ color: "var(--finos-status-success-soft)", fontSize: "12px" }}>{notice}</div>}
       {loading && !taxData && <div className="glass-card" style={{ padding: "18px" }}>Loading tax data from the Financial OS API...</div>}
 
       <TaxSectionErrorBoundary key={section}>
@@ -2884,7 +2884,7 @@ function MarketsPage() {
       {searchError && <p role="status" style={{ color: "var(--finos-negative)", fontSize: "12px", marginTop: "12px" }}>{searchError}</p>}
       {searchWarning && <p role="status" style={{ color: "var(--finos-warning)", fontSize: "12px", marginTop: "8px" }}>Data freshness warning: {searchWarning}</p>}
       {results.length > 0 && <p style={{ ...muted, margin: "12px 0 4px" }}>{results.length} matching instruments · Select a result to open its quote and chart.</p>}
-      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.4)", boxShadow: "0 6px 18px rgba(16,185,129,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("BUY"); }}>BUY</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #b91c1c, #ef4444)", border: "1px solid rgba(248,113,113,0.4)", boxShadow: "0 6px 18px rgba(239,68,68,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("SELL"); }}>SELL</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
+      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.4)", boxShadow: "0 6px 18px rgba(16,185,129,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("BUY"); }}>BUY</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #b91c1c, var(--finos-status-danger))", border: "1px solid rgba(248,113,113,0.4)", boxShadow: "0 6px 18px rgba(239,68,68,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("SELL"); }}>SELL</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
       {orderModalSide && selectedInstrument && <div className="broker-order-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !orderSubmitting) setOrderModalSide(""); }}>
         <form onSubmit={async (event) => {
           event.preventDefault();
@@ -3220,8 +3220,8 @@ function PlanPage() {
       <div><p className="card-label">FINANCIAL OS · PLAN</p><h2 style={{ margin: "6px 0" }}>Plan & Goals</h2><p style={{ ...muted, maxWidth: "680px", fontSize: "13px" }}>Create and save goals, track progress, and calculate the contribution required to reach your target. Goals are stored separately and do not change account balances.</p></div>
       <button type="button" onClick={refreshAll} disabled={loading} className="secondary-button">{loading ? "Refreshing…" : "Refresh goals"}</button>
     </section>
-    {error && <div role="alert" style={{ ...card, borderColor: "rgba(248,113,113,.45)", color: "#fca5a5" }}>{error}</div>}
-    {success && <div role="status" style={{ ...card, borderColor: "rgba(74,222,128,.35)", color: "#86efac" }}>{success}</div>}
+    {error && <div role="alert" style={{ ...card, borderColor: "rgba(248,113,113,.45)", color: "var(--finos-status-danger-soft)" }}>{error}</div>}
+    {success && <div role="status" style={{ ...card, borderColor: "rgba(74,222,128,.35)", color: "var(--finos-status-success-soft)" }}>{success}</div>}
 
     <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: "12px" }}>
       {[{ label: "Active goals", value: goals.filter(g => g.status === "active").length }, { label: "Total target amount", value: money(totalTarget) }, { label: "Saved / allocated", value: money(totalSaved) }, { label: "Planned monthly total", value: money(totalMonthly) }].map(item => <div key={item.label} style={card}><div style={muted}>{item.label}</div><div style={{ fontSize: "clamp(21px,3vw,28px)", fontWeight: 800, marginTop: "8px" }}>{item.value}</div></div>)}
@@ -3282,7 +3282,7 @@ function AIAssistantPage() {
       {messages.length === 0 && <p style={{ color: "rgba(255,255,255,.55)" }}>Example: “Help me create a monthly budget”</p>}
       {messages.map((item, index) => <div key={index} style={{ alignSelf: item.role === "you" ? "flex-end" : "stretch", maxWidth: "95%", padding: 12, borderRadius: 12, background: item.role === "you" ? "rgba(168,85,247,.20)" : "rgba(255,255,255,.06)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}><strong style={{ display: "block", fontSize: 12, opacity: .7, marginBottom: 5 }}>{item.role === "you" ? "YOU" : "GEMINI"}</strong>{item.text}</div>)}
       {busy && <p style={{ color: "rgba(255,255,255,.65)" }}>Gemini is thinking…</p>}</div>
-      {error && <p role="alert" style={{ color: "#fb7185" }}>{error}</p>}
+      {error && <p role="alert" style={{ color: "var(--finos-status-danger)" }}>{error}</p>}
       <form onSubmit={sendMessage} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}><input aria-label="Message Gemini" value={message} onChange={e => setMessage(e.target.value)} placeholder="Ask your financial assistant…" maxLength={8000} style={{ flex: "1 1 260px", minWidth: 0, padding: "13px 14px", borderRadius: 10, color: "inherit", background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.14)" }} /><button type="submit" className="primary-button" disabled={busy || !message.trim()}>{busy ? "Sending…" : "Ask Gemini"}</button></form>
     </div></div>;
 }
@@ -3320,7 +3320,7 @@ function PlaygroundPage() {
   return <div style={{display:"grid",gap:14,minWidth:0}}>
     <section style={panel}><p className="card-label">FINANCIAL OS / PLAYGROUND</p><h2 style={{margin:"5px 0"}}>Trading & Research Playground</h2><p style={muted}>One workspace for market data, AI research, strategy design, backtesting, paper trading, risk controls, agent research, and execution readiness. Each section is selectable; unfinished engines are labelled rather than pretending to work.</p><div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}><span style={muted}>API: {status?.status||"Checking…"}</span><span style={muted}>Provider: {status?.market_provider||"m.Stock gateway"}</span><span style={muted}>Real orders: disabled</span></div></section>
     <nav aria-label="Playground tools" style={{display:"flex",gap:8,flexWrap:"wrap"}}>{tabs.map(t=><button key={t} type="button" onClick={()=>{setTab(t);setError("");setNotice("");}} aria-pressed={tab===t} style={{...btn,background:tab===t?"rgba(168,85,247,.24)":"rgba(255,255,255,.05)",borderColor:tab===t?"rgba(168,85,247,.7)":"rgba(255,255,255,.15)"}}>{t}{["Strategy Builder","Backtesting","Paper Trading","Risk Controls","Agent Lab","Execution"].includes(t)?" ·":""}</button>)}</nav>
-    {error&&<div role="alert" style={{...panel,color:"#fca5a5"}}>{error}</div>}
+    {error&&<div role="alert" style={{...panel,color:"var(--finos-status-danger-soft)"}}>{error}</div>}
     {tab==="Market Data"&&<><section style={panel}><h3 style={{marginTop:0}}>Market quotes</h3><p style={muted}>Enter up to 20 NSE symbols. Requests use the existing Vibe Trading batch endpoint.</p><form onSubmit={loadQuotes} style={{display:"grid",gap:10}}><label style={muted}>Symbols<input aria-label="Market symbols" value={symbolsText} onChange={e=>setSymbolsText(e.target.value)} style={input} placeholder="RELIANCE, TCS, INFY"/></label><button className="primary-button" type="submit" disabled={busy}>{busy?"Loading…":"Load market data"}</button></form>{updatedAt&&<p style={muted}>Retrieved by this page: {updatedAt}. Retrieval time is not a verified exchange timestamp.</p>}</section>{quotes.length>0&&<section style={{...panel,overflowX:"auto"}}><h3>Quote results ({quotes.length})</h3><table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}><thead><tr>{["Symbol","Status","Price","Provider timestamp","Details"].map(h=><th key={h} style={{textAlign:"left",padding:8,borderBottom:"1px solid rgba(255,255,255,.14)"}}>{h}</th>)}</tr></thead><tbody>{quotes.map((q,i)=><tr key={`${q.symbol}-${i}`}>{[q.symbol||"—",q.status||"unknown",q.quote?.last_price??q.price??q.last_price??"—",q.provider_market_timestamp||"Not supplied",q.error||(q.cache_hit?"Cached":"API response")].map((v,j)=><td key={j} style={{padding:8,borderBottom:"1px solid rgba(255,255,255,.07)"}}>{String(v)}</td>)}</tr>)}</tbody></table><p style={muted}>No provider timestamp means live-price freshness is unverified.</p></section>}</>}
     {tab==="AI Research"&&<section style={panel}><h3 style={{marginTop:0}}>Evidence-grounded AI research</h3><p style={muted}>Gemini analyses your question using successfully retrieved quotes where available. It does not place orders.</p><form onSubmit={runResearch} style={{display:"grid",gap:10}}><label style={muted}>Symbols<input value={symbolsText} onChange={e=>setSymbolsText(e.target.value)} style={input}/></label><label style={muted}>Research question<textarea value={question} onChange={e=>setQuestion(e.target.value)} rows={4} style={{...input,resize:"vertical"}}/></label><button className="primary-button" disabled={busy||question.trim().length<3}>{busy?"Researching…":"Run AI research"}</button></form>{research&&<div style={{marginTop:14,padding:14,borderRadius:10,background:"rgba(255,255,255,.04)",whiteSpace:"pre-wrap",lineHeight:1.7}}><strong>Research result</strong><p>{research}</p></div>}</section>}
     {tab==="Strategy Builder"&&<section style={panel}><h3 style={{marginTop:0}}>Strategy builder</h3><p style={muted}>Configure a draft strategy. This currently saves only in this page's state; it does not create signals or submit orders.</p><label style={muted}>Strategy template<select value={strategyName} onChange={e=>setStrategyName(e.target.value)} style={input}><option>Moving average crossover</option><option>Momentum watchlist</option><option>Mean reversion</option><option>Breakout watchlist</option></select></label><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10}}><label style={muted}>Fast period<input type="number" min="1" max="200" value={fastPeriod} onChange={e=>setFastPeriod(Number(e.target.value))} style={input}/></label><label style={muted}>Slow period<input type="number" min="2" max="500" value={slowPeriod} onChange={e=>setSlowPeriod(Number(e.target.value))} style={input}/></label></div><button style={btn} type="button" onClick={()=>setNotice(fastPeriod>0&&slowPeriod>fastPeriod?`Draft configured: ${strategyName}, fast ${fastPeriod}, slow ${slowPeriod}. No signal has been generated.`:"Set valid periods: fast must be positive and slow must be greater than fast.")}>Validate draft</button>{notice&&<p role="status" style={muted}>{notice}</p>}</section>}
@@ -4104,7 +4104,7 @@ function InvestmentTransactions() {
                 "rgba(239,68,68,0.10)",
               border:
                 "1px solid rgba(239,68,68,0.20)",
-              color: "#fca5a5",
+              color: "var(--finos-status-danger-soft)",
               fontSize: "13px",
             }}
           >
@@ -4287,8 +4287,8 @@ function InvestmentTransactions() {
                             marginTop: "5px",
                             color:
                               isBuy
-                                ? "#86efac"
-                                : "#fca5a5",
+                                ? "var(--finos-status-success-soft)"
+                                : "var(--finos-status-danger-soft)",
                           }}
                         >
                           {
@@ -4351,12 +4351,12 @@ function InvestmentTransactions() {
 
                       {/* STATUS AND ACTIONS */}
                       <div className="investment-transaction-actions" style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-start", minWidth: 0 }}>
-                        <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", padding: "4px 8px", borderRadius: "999px", background: transaction.status === "VOIDED" ? "rgba(248,113,113,0.14)" : "rgba(134,239,172,0.12)", color: transaction.status === "VOIDED" ? "#fca5a5" : "#86efac" }}>
+                        <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", padding: "4px 8px", borderRadius: "999px", background: transaction.status === "VOIDED" ? "rgba(248,113,113,0.14)" : "rgba(134,239,172,0.12)", color: transaction.status === "VOIDED" ? "var(--finos-status-danger-soft)" : "var(--finos-status-success-soft)" }}>
                           {transaction.status || "ACTIVE"}
                         </span>
                         {(transaction.status || "ACTIVE") === "ACTIVE" && <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                           <button type="button" className="secondary-button" onClick={() => editInvestmentTransaction(transaction)} style={{ padding: "6px 9px", fontSize: "11px" }}>Edit</button>
-                          <button type="button" className="secondary-button" onClick={() => voidInvestmentTransaction(transaction)} style={{ padding: "6px 9px", fontSize: "11px", color: "#fca5a5" }}>Void</button>
+                          <button type="button" className="secondary-button" onClick={() => voidInvestmentTransaction(transaction)} style={{ padding: "6px 9px", fontSize: "11px", color: "var(--finos-status-danger-soft)" }}>Void</button>
                         </div>}
                         {transaction.status === "VOIDED" && transaction.void_reason && <small style={{ color: "var(--finos-muted, #64748b)" }}>Reason: {transaction.void_reason}</small>}
                       </div>
@@ -4395,7 +4395,7 @@ function InvestmentTransactions() {
                 <textarea rows={3} value={editForm.notes} onChange={event => setEditForm(current => ({ ...current, notes: event.target.value }))} maxLength={2000} style={{ width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 9, border: "1px solid rgba(255,255,255,.16)", background: "#191b2b", color: "white", resize: "vertical" }} />
               </label>
             </div>
-            {editError && <p role="alert" style={{ color: "#fca5a5", fontSize: 13 }}>{editError}</p>}
+            {editError && <p role="alert" style={{ color: "var(--finos-status-danger-soft)", fontSize: 13 }}>{editError}</p>}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
               <button type="button" className="secondary-button" disabled={savingEdit} onClick={() => setEditingTransaction(null)}>Cancel</button>
               <button type="submit" className="primary-button" disabled={savingEdit}>{savingEdit ? "Saving…" : "Save changes"}</button>
@@ -4592,8 +4592,8 @@ function Holdings() {
 
   const pnlColor = (value) =>
     Number(value || 0) >= 0
-      ? "#86efac"
-      : "#fca5a5";
+      ? "var(--finos-status-success-soft)"
+      : "var(--finos-status-danger-soft)";
 
   // ----------------------------------------------------------
   // LOAD HOLDINGS + PORTFOLIO RECORDS
@@ -4861,7 +4861,7 @@ function Holdings() {
             padding: "14px 16px",
             border:
               "1px solid rgba(239,68,68,0.25)",
-            color: "#fca5a5",
+            color: "var(--finos-status-danger-soft)",
             fontSize: "13px",
           }}
         >
@@ -9141,12 +9141,12 @@ function TradingControlSettings({ compact = false }) {
   if (compact) return <div style={{ padding: "10px 12px", borderTop: "1px solid var(--finos-border, rgba(255,255,255,.12))", borderBottom: "1px solid var(--finos-border, rgba(255,255,255,.12))" }} aria-labelledby="live-trading-settings-title">
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
       <strong id="live-trading-settings-title" style={{ fontSize: 13 }}>Live Trading</strong>
-      <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "#ef4444" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
+      <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "var(--finos-status-danger)" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
     </div>
     <button type="button" onClick={toggleTradingControl} disabled={busy} aria-pressed={enabled} style={{ width: "auto", maxWidth: "100%", marginTop: 8, padding: "6px 9px", minHeight: 30, borderRadius: 8, border: "1px solid var(--finos-border, rgba(255,255,255,.18))", background: enabled ? "rgba(239,68,68,.12)" : "rgba(34,197,94,.12)", color: "inherit", cursor: busy ? "not-allowed" : "pointer", opacity: busy ? .6 : 1, font: "inherit", fontSize: 11, lineHeight: 1.2, fontWeight: 700, whiteSpace: "normal" }}>
       {busy ? (tradingControl ? "Saving…" : "Checking…") : tradingControl === null ? "Retry status check" : enabled ? "Turn Trading OFF" : "Turn Trading ON"}
     </button>
-    {error && <p role="alert" style={{ color: "var(--finos-negative, #ef4444)", fontSize: 11, lineHeight: 1.4 }}>{error}</p>}
+    {error && <p role="alert" style={{ color: "var(--finos-negative, var(--finos-status-danger))", fontSize: 11, lineHeight: 1.4 }}>{error}</p>}
     {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", fontSize: 11, lineHeight: 1.4 }}>{notice}</p>}
     <p style={{ color: "var(--finos-muted, rgba(255,255,255,.62))", fontSize: 10, lineHeight: 1.4, marginBottom: 0 }}>Admin-only. OFF blocks new Financial OS orders.</p>
   </div>;
@@ -9158,7 +9158,7 @@ function TradingControlSettings({ compact = false }) {
         <p style={{ color: "var(--finos-muted, rgba(255,255,255,0.68))", lineHeight: 1.6, marginBottom: 0 }}>Control whether new real-money orders can be submitted through Financial OS. Turning this OFF blocks new submissions; it does not cancel orders already accepted by the broker.</p>
       </div>
       <span role="status" aria-live="polite" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 999, border: `1px solid ${tradingControl === null ? "var(--finos-border, rgba(255,255,255,0.2))" : enabled ? "rgba(34,197,94,.65)" : "rgba(239,68,68,.65)"}`, background: tradingControl === null ? "var(--finos-surface, rgba(255,255,255,.04))" : enabled ? "rgba(34,197,94,.12)" : "rgba(239,68,68,.10)", fontWeight: 700, fontSize: 12, letterSpacing: ".03em" }}>
-        <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "#ef4444" }} />
+        <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "var(--finos-status-danger)" }} />
         {tradingControl === null ? "STATUS UNAVAILABLE" : enabled ? "LIVE TRADING ON" : "LIVE TRADING OFF"}
       </span>
     </div>
@@ -9168,7 +9168,7 @@ function TradingControlSettings({ compact = false }) {
       </button>
       <span style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", fontSize: 12 }}>{busy ? "Saving account setting…" : "Admin-only control · saved on the server"}</span>
     </div>
-    {error && <p role="alert" style={{ color: "var(--finos-negative, #ef4444)", marginBottom: 0 }}>{error}</p>}
+    {error && <p role="alert" style={{ color: "var(--finos-negative, var(--finos-status-danger))", marginBottom: 0 }}>{error}</p>}
     {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", marginBottom: 0 }}>{notice}</p>}
     <p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", fontSize: 12, lineHeight: 1.6, marginBottom: 0, marginTop: 12 }}>If the API or database migration is unavailable, this control stays unavailable and new orders remain blocked. Enabling this switch permits new Financial OS submissions; review each order carefully.</p>
   </section>;
@@ -9287,7 +9287,7 @@ function ChartOfAccountsPage() {
       </tr></thead><tbody>{accounts.map((row) => <tr key={row.id} style={{ background: row.is_enabled ? "transparent" : "rgba(255,255,255,0.018)" }}>
         <td style={{ ...cell, color: "#c4b5fd", fontVariantNumeric: "tabular-nums" }}>{row.code}</td><td style={{ ...cell, color: "rgba(255,255,255,0.94)" }}>{row.name}{row.is_system ? <span style={{ marginLeft: 8, color: "#a99acb", fontSize: 10 }}>Standard</span> : null}</td>
         <td style={cell}>{rows.find((candidate) => candidate.id === row.parent_id)?.name || "—"}</td><td style={cell}>{row.tax_mapping_key || "—"}</td>
-        <td style={cell}><span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: row.is_enabled ? "#86efac" : "#fca5a5" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: row.is_enabled ? "#34d399" : "#f87171" }} />{row.is_enabled ? "Enabled" : "Disabled"}</span></td><td style={cell}><button type="button" className={row.is_enabled ? "secondary-button" : "primary-button"} onClick={() => toggleAccount(row)} style={{ padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}>{row.is_enabled ? "Disable" : "Enable"}</button></td>
+        <td style={cell}><span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: row.is_enabled ? "var(--finos-status-success-soft)" : "var(--finos-status-danger-soft)" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: row.is_enabled ? "#34d399" : "#f87171" }} />{row.is_enabled ? "Enabled" : "Disabled"}</span></td><td style={cell}><button type="button" className={row.is_enabled ? "secondary-button" : "primary-button"} onClick={() => toggleAccount(row)} style={{ padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}>{row.is_enabled ? "Disable" : "Enable"}</button></td>
       </tr>)}</tbody></table></div>
     </div>)}
     {!loading && !rows.length && <div className="glass-card" style={card}>No accounts found.</div>}
@@ -9362,10 +9362,10 @@ function LedgerPage() {
       <div style={card}><div style={muted}>Ledger lines</div><strong style={{ display: "block", fontSize: "25px", marginTop: "8px" }}>{loading ? "Loading…" : entries.length}</strong></div>
       <div style={card}><div style={muted}>Total debits</div><strong style={{ display: "block", fontSize: "25px", marginTop: "8px" }}>{loading ? "Loading…" : money(totalDebit)}</strong></div>
       <div style={card}><div style={muted}>Total credits</div><strong style={{ display: "block", fontSize: "25px", marginTop: "8px" }}>{loading ? "Loading…" : money(totalCredit)}</strong></div>
-      <div style={card}><div style={muted}>Ledger status</div><strong style={{ display: "block", fontSize: "20px", marginTop: "8px", color: isBalanced ? "#86efac" : "#fca5a5" }}>{loading ? "Checking…" : isBalanced ? "Balanced" : "Needs review"}</strong></div>
+      <div style={card}><div style={muted}>Ledger status</div><strong style={{ display: "block", fontSize: "20px", marginTop: "8px", color: isBalanced ? "var(--finos-status-success-soft)" : "var(--finos-status-danger-soft)" }}>{loading ? "Checking…" : isBalanced ? "Balanced" : "Needs review"}</strong></div>
     </section>
-    {message && <div role="status" style={{ ...card, color: "#86efac" }}>{message}</div>}
-    {error && <div role="alert" style={{ ...card, color: "#fca5a5" }}>{error}</div>}
+    {message && <div role="status" style={{ ...card, color: "var(--finos-status-success-soft)" }}>{message}</div>}
+    {error && <div role="alert" style={{ ...card, color: "var(--finos-status-danger-soft)" }}>{error}</div>}
     <section className="glass-card" style={{ overflowX: "auto" }}>
       <div className="card-header"><div><p className="card-label">DOUBLE-ENTRY ACCOUNTING</p><h3>Ledger Entries</h3></div><span className="score">{entries.length}</span></div>
       <p style={{ ...muted, margin: "0 0 14px" }}>Each source transaction is represented by balanced debit and credit lines. Historical transactions can be posted once using the button above; unsupported legacy records are reported for review.</p>
@@ -10122,7 +10122,7 @@ const deleteAccount = async () => {
                 gap: "5px",
                 marginTop: "6px",
                 fontSize: "10px",
-                color: account.is_active ? "#4ade80" : "#f87171",
+                color: account.is_active ? "var(--finos-status-success)" : "#f87171",
               }}
             >
               <span
@@ -10131,7 +10131,7 @@ const deleteAccount = async () => {
                   width: "6px",
                   height: "6px",
                   borderRadius: "50%",
-                  background: account.is_active ? "#4ade80" : "#f87171",
+                  background: account.is_active ? "var(--finos-status-success)" : "#f87171",
                 }}
               />
               {account.is_active ? "Active" : "Inactive"}
@@ -10224,8 +10224,8 @@ const deleteAccount = async () => {
                   padding: "7px 12px",
                   fontSize: "11px",
                   color: account.is_active
-                    ? "#fbbf24"
-                    : "#4ade80",
+                    ? "var(--finos-status-warning)"
+                    : "var(--finos-status-success)",
                   borderColor: account.is_active
                     ? "rgba(251,191,36,0.25)"
                     : "rgba(74,222,128,0.25)",
@@ -10247,7 +10247,7 @@ const deleteAccount = async () => {
                 width: "100%",
                 padding: "7px 12px",
                 fontSize: "11px",
-                color: "#fb7185",
+                color: "var(--finos-status-danger)",
                 borderColor: "rgba(251,113,133,0.25)",
               }}
             >
@@ -10494,7 +10494,7 @@ const deleteAccount = async () => {
                 onClick={deleteAccount}
                 disabled={accountDeleting}
                 style={{
-                  color: "#fb7185",
+                  color: "var(--finos-status-danger)",
                   borderColor: "rgba(251,113,133,0.25)",
                 }}
               >
@@ -11651,7 +11651,7 @@ function getActualSpending(categoryId, month) {
                 onClick={deleteBudget}
                 disabled={budgetDeleting}
                 style={{
-                  color: "#fb7185",
+                  color: "var(--finos-status-danger)",
                   borderColor:
                     "rgba(251,113,133,0.30)",
                 }}
@@ -12664,7 +12664,7 @@ const transactionFormModal = showForm && (
       borderRadius: "12px",
       background: "rgba(239,68,68,0.12)",
       border: "1px solid rgba(239,68,68,0.25)",
-      color: "#fca5a5",
+      color: "var(--finos-status-danger-soft)",
       fontSize: "13px",
     }}
   >
@@ -13057,7 +13057,7 @@ const transactionFormModal = showForm && (
                             fontWeight:
                               800,
                             color:
-                              transaction.transaction_type === "transfer" ? "#93c5fd" : (income ? "#4ade80" : "#fb7185"),
+                              transaction.transaction_type === "transfer" ? "#93c5fd" : (income ? "var(--finos-status-success)" : "var(--finos-status-danger)"),
                             whiteSpace:
                               "nowrap",
                           }}
@@ -13111,7 +13111,7 @@ const transactionFormModal = showForm && (
                               "1px solid rgba(251,113,133,0.25)",
                             background:
                               "rgba(251,113,133,0.08)",
-                            color: "#fb7185",
+                            color: "var(--finos-status-danger)",
                             cursor: deletingTransaction
                               ? "not-allowed"
                               : "pointer",
@@ -13158,12 +13158,12 @@ const transactionFormModal = showForm && (
               <label style={{ display: "block", color: "rgba(255,255,255,.76)", fontSize: 12 }}>Gross Salary (₹)<input type="number" min="0" step="0.01" value={salaryComponents.gross_salary} onChange={(e) => { const gross = Math.max(0, Number(e.target.value) || 0); const basic = Math.round(gross * .4 * 100) / 100; const hra = Math.round(basic * .4 * 100) / 100; setSalaryComponents((p) => ({ ...p, gross_salary: e.target.value, basic: String(basic), hra: String(hra), allowances: String(Math.round((gross - basic - hra - (Number(p.da) || 0) - (Number(p.bonus) || 0) - (Number(p.commission) || 0) - (Number(p.perquisites) || 0) - (Number(p.other) || 0)) * 100) / 100) })); }} style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.14)", background: "#151525", color: "#fff" }} /></label>
               <label style={{ display: "block", color: "rgba(255,255,255,.76)", fontSize: 12 }}>Salary Received / Net Salary Credited (₹)<input id="salary-components-received" name="salary_received" type="text" inputMode="decimal" autoComplete="off" readOnly={false} aria-readonly="false" value={salaryComponents.salary_received ?? ""} onChange={(e) => { const value = e.target.value.replace(/[^0-9.]/g, ""); setSalaryComponents((p) => ({ ...p, salary_received: value })); }} placeholder="Type actual salary received" style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.14)", background: "#151525", color: "#fff", pointerEvents: "auto", opacity: 1 }} /><span style={{ display: "block", marginTop: 4, color: "rgba(255,255,255,.58)", fontSize: 11 }}>Editable field. Enter the actual net salary credited. Applying components does not overwrite the transaction amount.</span></label>
               <div style={{ gridColumn: "1 / -1", marginTop: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(34,197,94,.28)", background: "rgba(34,197,94,.07)" }}>
-                <h4 style={{ margin: 0, color: "#86efac", fontSize: 13 }}>INCOME COMPONENTS</h4>
+                <h4 style={{ margin: 0, color: "var(--finos-status-success-soft)", fontSize: 13 }}>INCOME COMPONENTS</h4>
                 <p style={{ margin: "5px 0 0", color: "rgba(255,255,255,.58)", fontSize: 11, lineHeight: 1.5 }}>Salary and benefit components. These may already be included in Gross Salary—enter each amount according to your payslip/Form 16 to avoid double counting.</p>
               </div>
               {[ ["basic", "Basic Salary"], ["da", "DA"], ["hra", "HRA"], ["allowances", "Other Allowances"], ["bonus", "Bonus"], ["commission", "Commission"], ["perquisites", "Perquisites (taxable value, if applicable)"], ["other", "Other Salary Components"] ].map(([key, label]) => <label key={key} style={{ display: "block", color: "rgba(255,255,255,.76)", fontSize: 12 }}>{label}<input type="number" min="0" step="0.01" value={salaryComponents[key]} onChange={(e) => setSalaryComponents((p) => { const next = { ...p, [key]: e.target.value }; if (["basic", "da", "hra", "bonus", "commission", "perquisites", "other"].includes(key)) { const gross = Number(p.gross_salary) || 0; const fixed = ["basic", "da", "hra", "bonus", "commission", "perquisites", "other"].reduce((sum, k) => sum + (Number(next[k]) || 0), 0); if (key !== "allowances") next.allowances = String(Math.round((gross - fixed) * 100) / 100); } return next; })} style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.14)", background: "#151525", color: "#fff" }} /></label>)}
               <div style={{ gridColumn: "1 / -1", marginTop: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(248,113,113,.28)", background: "rgba(248,113,113,.07)" }}>
-                <h4 style={{ margin: 0, color: "#fca5a5", fontSize: 13 }}>DEDUCTIONS & RECONCILIATION</h4>
+                <h4 style={{ margin: 0, color: "var(--finos-status-danger-soft)", fontSize: 13 }}>DEDUCTIONS & RECONCILIATION</h4>
                 <p style={{ margin: "5px 0 0", color: "rgba(255,255,255,.58)", fontSize: 11, lineHeight: 1.5 }}>Enter actual amounts from your payslip. TDS is part of total deductions where applicable—do not count it twice. An unexplained gross-to-net difference is not automatically a deduction.</p>
               </div>
               {[ ["deductions", "Total Payroll Deductions (reference)"], ["tds", "TDS (included in deductions if applicable)"] ].map(([key, label]) => <label key={key} style={{ display: "block", color: "rgba(255,255,255,.76)", fontSize: 12 }}>{label}<input type="number" min="0" step="0.01" value={salaryComponents[key]} onChange={(e) => setSalaryComponents((p) => ({ ...p, [key]: e.target.value }))} style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.14)", background: "#151525", color: "#fff" }} /></label>)}
@@ -14375,7 +14375,7 @@ function Category() {
                 onClick={deleteCategory}
                 disabled={deleting}
                 style={{
-                  color: "#fb7185",
+                  color: "var(--finos-status-danger)",
                   borderColor:
                     "rgba(251,113,133,0.30)",
                 }}
@@ -15090,7 +15090,7 @@ function Bills() {
       if (status === "active") {
 
         return {
-          color: "#4ade80",
+          color: "var(--finos-status-success)",
           background:
             "rgba(74,222,128,0.10)",
           borderColor:
@@ -15102,7 +15102,7 @@ function Bills() {
       if (status === "paused") {
 
         return {
-          color: "#fbbf24",
+          color: "var(--finos-status-warning)",
           background:
             "rgba(251,191,36,0.10)",
           borderColor:
@@ -15112,7 +15112,7 @@ function Bills() {
       }
 
       return {
-        color: "#fb7185",
+        color: "var(--finos-status-danger)",
         background:
           "rgba(251,113,133,0.10)",
         borderColor:
@@ -15279,7 +15279,7 @@ function Bills() {
               fontSize: "24px",
               fontWeight: 800,
               marginTop: "8px",
-              color: "#4ade80",
+              color: "var(--finos-status-success)",
             }}
           >
             {activeBills.length}
@@ -15329,7 +15329,7 @@ function Bills() {
           style={{
             marginTop: "18px",
             padding: "14px 16px",
-            color: "#fb7185",
+            color: "var(--finos-status-danger)",
             border:
               "1px solid rgba(251,113,133,0.25)",
           }}
@@ -15347,7 +15347,7 @@ function Bills() {
           style={{
             marginTop: "18px",
             padding: "14px 16px",
-            color: "#4ade80",
+            color: "var(--finos-status-success)",
             border:
               "1px solid rgba(74,222,128,0.25)",
           }}
@@ -15648,7 +15648,7 @@ function Bills() {
                       padding:
                         "7px 12px",
                       fontSize: "11px",
-                      color: "#fb7185",
+                      color: "var(--finos-status-danger)",
                       borderColor:
                         "rgba(251,113,133,0.25)",
                     }}
@@ -16069,7 +16069,7 @@ function Bills() {
                 }
                 disabled={deleting}
                 style={{
-                  color: "#fb7185",
+                  color: "var(--finos-status-danger)",
                   borderColor:
                     "rgba(251,113,133,0.30)",
                 }}

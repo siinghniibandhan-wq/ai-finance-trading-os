@@ -3638,3 +3638,28 @@
   color: var(--th-button-secondary-text, var(--th-text)) !important;
   -webkit-text-fill-color: var(--th-button-secondary-text, var(--th-text)) !important;
 }
+
+
+/* Final override: Tax has older, high-specificity wildcard rules that force
+   button text to --th-text. Match the shared button foreground tokens with
+   enough specificity to override those legacy rules in every theme. */
+:root[data-finos-theme][data-finos-theme][data-finos-theme] .tax-centre button.primary-button,
+:root[data-finos-theme][data-finos-theme][data-finos-theme] .tax-centre button[type="submit"],
+:root[data-finos-theme][data-finos-theme][data-finos-theme] .tax-centre .finos-button-primary {
+  color: var(--th-button-primary-text, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--th-button-primary-text, var(--th-on-accent)) !important;
+}
+:root[data-finos-theme][data-finos-theme][data-finos-theme] .tax-centre nav[aria-label="Tax sections"] button:is(.active,.is-active,[aria-selected="true"],[aria-pressed="true"],.primary-button) {
+  color: var(--th-tab-active-text, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--th-tab-active-text, var(--th-on-accent)) !important;
+}
+:root[data-finos-theme][data-finos-theme][data-finos-theme] .tax-centre nav[aria-label="Tax sections"] button:not(.active):not(.is-active):not([aria-selected="true"]):not([aria-pressed="true"]):not(.primary-button) {
+  color: var(--th-tab-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--th-tab-text, var(--th-text)) !important;
+}
+:root[data-finos-theme][data-finos-theme][data-finos-theme] .tax-centre button.secondary-button,
+:root[data-finos-theme][data-finos-theme][data-finos-theme] .tax-centre button.icon-button,
+:root[data-finos-theme][data-finos-theme][data-finos-theme] .tax-centre button.small-button {
+  color: var(--th-button-secondary-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--th-button-secondary-text, var(--th-text)) !important;
+}

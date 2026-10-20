@@ -14103,14 +14103,14 @@ function Category() {
               { title: "Business", items: businessCategories, icon: "🏢" },
             ].map((group) => (
               <section key={group.title} style={{ marginBottom: "24px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                  <span style={{ fontSize: "17px" }}>{group.icon}</span>
-                  <h4 style={{ margin: 0, color: "#fff", fontSize: "15px" }}>{group.title} {activeCategoryTab === "income" ? "Income" : "Expense"}</h4>
-                  <span style={{ fontSize: "11px", color: "rgba(255,255,255,.5)" }}>{group.items.length}</span>
+                <div className="category-group-heading">
+                  <span className="category-group-icon" aria-hidden="true">{group.icon}</span>
+                  <h4>{group.title} {activeCategoryTab === "income" ? "Income" : "Expense"}</h4>
+                  <span className="category-group-count">{group.items.length}</span>
                 </div>
                 {group.items.length > 0
-                  ? <div style={{ display: "grid", gap: "10px" }}>{group.items.map(renderCategoryCard)}</div>
-                  : <p style={{ color: "rgba(255,255,255,.45)", fontSize: "12px", margin: "0 0 4px" }}>No categories in this section yet.</p>}
+                  ? <div className="category-group-items">{group.items.map(renderCategoryCard)}</div>
+                  : <p className="category-group-empty">No categories in this section yet.</p>}
               </section>
             ))}
 

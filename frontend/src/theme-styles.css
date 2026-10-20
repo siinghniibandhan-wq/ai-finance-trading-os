@@ -1073,7 +1073,7 @@
   color: var(--finos-color-10468279) !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card [style*="rgba(110, 231, 183"], 
-:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card [style*="var(--finos-color-6c1d54f1)"] {
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card [style*="#a7f3d0"] {
   color: var(--finos-color-1eaf53c8) !important;
   -webkit-text-fill-color: var(--finos-color-1eaf53c8) !important;
 }
@@ -1190,9 +1190,9 @@
   -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
   opacity: 1 !important;
 }
-:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card :is(.card-label,small,p,.holdings-row div[style*="var(--finos-color-2e41203f) {
-  color: var(--finos-color-10468279) !important;
-  -webkit-text-fill-color: var(--finos-color-10468279) !important;
+:root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card :is(.card-label,small,p,.holdings-row div[style*="rgba(255,255,255"]) {
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row > div:nth-child(4) {
@@ -1320,9 +1320,9 @@
   -webkit-text-fill-color: var(--finos-color-1975b964) !important;
   opacity: 1 !important;
 }
-:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row :is(.card-label,small,p,div[style*="var(--finos-color-2e41203f) {
-  color: var(--finos-color-1c032a87) !important;
-  -webkit-text-fill-color: var(--finos-color-1c032a87) !important;
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row :is(.card-label,small,p,div[style*="rgba(255,255,255"]) {
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid {
@@ -1378,9 +1378,9 @@
   -webkit-text-fill-color: var(--finos-color-1c032a87) !important;
   opacity: 1 !important;
 }
-:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card :is(.holdings-row > div > div[style*="rgba(255,255,255"], .holdings-row > div > div[style*="color: var(--finos-color-2e41203f) {
-  color: var(--finos-color-1c032a87) !important;
-  -webkit-text-fill-color: var(--finos-color-1c032a87) !important;
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card :is(.holdings-row > div > div[style*="rgba(255,255,255"], .holdings-row > div > div[style*="color: rgba(255,255,255"]) {
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .card-label[style*="110, 231, 183"] {
@@ -1523,10 +1523,10 @@
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history :is(button,.small-button,.primary-button,.secondary-button):hover {
   background-color: var(--finos-color-63317fa3);
 }
-:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history div[style*="color: var(--finos-color-ee646b69)"] {
+:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history div[style*="color: rgb(134, 239, 172)"] {
   color: var(--finos-color-2491c6c5) !important;
 }
-:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history div[style*="color: var(--finos-color-d8c9906)"] {
+:root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history div[style*="color: rgb(252, 165, 165)"] {
   color: var(--finos-color-618afddd) !important;
 }
 
@@ -1615,7 +1615,7 @@
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions button {
   color: var(--finos-text, var(--finos-color-1975b964)) !important;
 }
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions button[style*="var(--finos-color-5b598103)"] {
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions button[style*="#fca5a5"] {
   color: var(--finos-color-60c28330) !important;
   -webkit-text-fill-color: var(--finos-color-60c28330) !important;
 }
@@ -1635,11 +1635,11 @@
   -webkit-text-fill-color: currentColor !important;
   opacity: 1 !important;
 }
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row strong[style*="var(--finos-color-307ae789)"] {
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row strong[style*="#86efac"] {
   color: var(--finos-color-2491c6c5) !important;
   -webkit-text-fill-color: var(--finos-color-2491c6c5) !important;
 }
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row :is(strong[style*="var(--finos-color-5b598103)"],button[style*="var(--finos-color-5b598103)"]) {
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row :is(strong[style*="#fca5a5"],button[style*="#fca5a5"]) {
   color: var(--finos-color-60c28330) !important;
   -webkit-text-fill-color: var(--finos-color-60c28330) !important;
 }
@@ -1647,7 +1647,7 @@
   color: var(--finos-color-2491c6c5) !important;
   -webkit-text-fill-color: var(--finos-color-2491c6c5) !important;
 }
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions > span[style*="var(--finos-color-5b598103)"] {
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions > span[style*="#fca5a5"] {
   color: var(--finos-color-60c28330) !important;
   -webkit-text-fill-color: var(--finos-color-60c28330) !important;
 }
@@ -2864,12 +2864,12 @@
   background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
   color: var(--finos-text) !important;
 }
-:root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions > span[style*="var(--finos-color-5b598103)"] {
+:root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions > span[style*="#fca5a5"] {
   color: var(--finos-negative, var(--finos-color-6842389e)) !important;
   border-color: color-mix(in srgb, var(--finos-negative, var(--finos-color-6842389e)) 28%, var(--finos-border));
   background: color-mix(in srgb, var(--finos-negative, var(--finos-color-6842389e)) 8%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
 }
-:root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions > span[style*="var(--finos-color-307ae789)"] {
+:root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions > span[style*="#86efac"] {
   color: var(--finos-positive, var(--finos-color-24930dda)) !important;
   border-color: color-mix(in srgb, var(--finos-positive, var(--finos-color-24930dda)) 28%, var(--finos-border));
   background: color-mix(in srgb, var(--finos-positive, var(--finos-color-24930dda)) 8%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
@@ -2887,7 +2887,7 @@
   border-color: var(--finos-accent) !important;
   background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 8%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
 }
-:root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions button[style*="var(--finos-color-5b598103)"] {
+:root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions button[style*="#fca5a5"] {
   color: var(--finos-negative, var(--finos-color-6842389e)) !important;
   border-color: color-mix(in srgb, var(--finos-negative, var(--finos-color-6842389e)) 30%, var(--finos-border)) !important;
 }

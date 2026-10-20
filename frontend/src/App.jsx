@@ -9179,34 +9179,49 @@ function TradingControlSettings({ compact = false }) {
 }
 
 function SettingsPage({ onNavigate, onOpenProfileSection, selectedTheme, onThemeChange }) {
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const settingsCardStyle = { padding: "20px", minWidth: 0, border: "1px solid var(--finos-border, var(--th-border))", background: "var(--finos-surface, var(--th-card))", color: "var(--finos-text, var(--th-text))", borderRadius: "var(--finos-radius, 14px)" };
   const settingsCategories = [
-    { title: "Personal Details", description: "Name, email, contact information and address.", action: () => onOpenProfileSection("Basic Profile"), button: "Manage personal details" },
+    { title: "Personal Details", description: "Manage your profile, login email, mobile number and personal information.", action: () => onOpenProfileSection("Basic Profile"), button: "Manage personal details" },
     { title: "KYC / Tax Information", description: "KYC details, tax regime, financial year and salary setup.", action: () => onOpenProfileSection("KYC"), button: "Manage KYC & tax" },
     { title: "Financial Diary", description: "View the read-only history of account and transaction activity.", action: () => onNavigate("Finance Diary"), button: "Open Financial Diary" },
   ];
   return <div className="dashboard finos-settings-page">
-    <section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Manage personal information, KYC and tax details, appearance, and financial history.</p></div></section>
-    <section className="finos-settings-categories" aria-label="Settings categories" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 14, marginBottom: 18 }}>
-      {settingsCategories.map((category) => <article key={category.title} className="glass-card finos-settings-category" style={settingsCardStyle}>
-        <h3 style={{ marginTop: 0, color: "var(--finos-text, var(--th-text))" }}>{category.title}</h3>
-        <p style={{ color: "var(--finos-muted, var(--th-muted))", lineHeight: 1.6, minHeight: 42 }}>{category.description}</p>
-        <button type="button" className="primary-button" onClick={category.action}>{category.button}</button>
-      </article>)}
-    </section>
-    <section className="finos-theme-settings glass-card">
-      <div className="finos-theme-settings-heading"><div><p className="finos-theme-eyebrow">APPEARANCE</p><h3>Theme</h3><p>Choose a theme. The selected style applies throughout Financial OS.</p></div><span className="finos-theme-current">Current: {selectedTheme}</span></div>
-      <div className="finos-theme-settings-grid">
-        {FINOS_THEMES.map((theme) => <button type="button" key={theme} aria-pressed={selectedTheme === theme} onClick={() => onThemeChange(theme)} className={`finos-theme-option finos-theme-option-${theme.toLowerCase().replaceAll(" ", "-")} ${selectedTheme === theme ? "is-active" : ""}`}>
-          <span className="finos-theme-sample" aria-hidden="true"><i/><i/><i/><b/></span>
-          <span className="finos-theme-option-copy"><strong>{theme}</strong><small>{FINOS_THEME_DESCRIPTIONS[theme]}</small></span>
-          <span className="finos-theme-radio" aria-hidden="true">{selectedTheme === theme ? "✓" : ""}</span>
-        </button>)}
-      </div>
-      <p className="finos-theme-footnote">Theme selection changes appearance only, not your records or calculations.</p>
-    </section>
-    <TradingControlSettings />
-    <AccountContactSettings />
+    {showThemePicker ? <>
+      <section className="welcome-section">
+        <div style={{ width: "100%" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "10px" }}>
+            <button type="button" className="secondary-button" onClick={() => setShowThemePicker(false)} aria-label="Close theme selection" title="Close theme selection" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "38px", height: "38px", padding: 0, fontSize: "22px", lineHeight: 1 }}>×</button>
+          </div>
+          <p className="welcome-label">APPEARANCE</p><h2>Choose Theme</h2><p className="welcome-description">Select a theme for the entire Financial OS workspace.</p>
+        </div>
+      </section>
+      <section className="finos-theme-settings glass-card">
+        <div className="finos-theme-settings-heading"><div><p className="finos-theme-eyebrow">THEME PREFERENCES</p><h3>Available themes</h3><p>The selected style applies throughout Financial OS.</p></div><span className="finos-theme-current">Current: {selectedTheme}</span></div>
+        <div className="finos-theme-settings-grid">
+          {FINOS_THEMES.map((theme) => <button type="button" key={theme} aria-pressed={selectedTheme === theme} onClick={() => onThemeChange(theme)} className={`finos-theme-option finos-theme-option-${theme.toLowerCase().replaceAll(" ", "-")} ${selectedTheme === theme ? "is-active" : ""}`}>
+            <span className="finos-theme-sample" aria-hidden="true"><i/><i/><i/><b/></span>
+            <span className="finos-theme-option-copy"><strong>{theme}</strong><small>{FINOS_THEME_DESCRIPTIONS[theme]}</small></span>
+            <span className="finos-theme-radio" aria-hidden="true">{selectedTheme === theme ? "✓" : ""}</span>
+          </button>)}
+        </div>
+        <p className="finos-theme-footnote">Theme selection changes appearance only, not your records or calculations.</p>
+      </section>
+    </> : <>
+      <section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Manage personal information, KYC and tax details, appearance, and financial history.</p></div></section>
+      <section className="finos-settings-categories" aria-label="Settings categories" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 14, marginBottom: 18 }}>
+        {settingsCategories.map((category) => <article key={category.title} className="glass-card finos-settings-category" style={settingsCardStyle}>
+          <h3 style={{ marginTop: 0, color: "var(--finos-text, var(--th-text))" }}>{category.title}</h3>
+          <p style={{ color: "var(--finos-muted, var(--th-muted))", lineHeight: 1.6, minHeight: 42 }}>{category.description}</p>
+          <button type="button" className="primary-button" onClick={category.action}>{category.button}</button>
+        </article>)}
+        <article className="glass-card finos-settings-category" style={settingsCardStyle}>
+          <h3 style={{ marginTop: 0, color: "var(--finos-text, var(--th-text))" }}>Theme</h3>
+          <p style={{ color: "var(--finos-muted, var(--th-muted))", lineHeight: 1.6, minHeight: 42 }}>Preview and choose how Financial OS looks. Current theme: {selectedTheme}.</p>
+          <button type="button" className="primary-button" onClick={() => setShowThemePicker(true)}>Choose Theme</button>
+        </article>
+      </section>
+    </>}
   </div>;
 }
 

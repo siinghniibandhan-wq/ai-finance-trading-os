@@ -276,7 +276,8 @@
   border-radius: var(--th-control-radius) !important;
   -webkit-text-fill-color: var(--th-button-primary-text) !important;
 }
-:root[data-finos-theme] .markets-workspace :is(button.secondary-button,.secondary-button,button:not(.primary-button):not([type="submit"])) {
+:root[data-finos-theme] .markets-workspace :is(button.secondary-button,.secondary-button) {
+  background: var(--th-button-secondary-bg) !important;
   color: var(--th-button-secondary-text) !important;
   border-color: var(--th-border) !important;
   border-radius: var(--th-control-radius) !important;
@@ -303,4 +304,13 @@
 }
 :root[data-finos-theme] .markets-workspace :is(a,.link-button) {
   color: var(--th-accent);
+}
+
+/* All Market buttons use semantic variants only; neutral buttons retain their own
+   component role and are not force-recoloured as secondary actions. */
+:root[data-finos-theme] .markets-workspace button:not(.primary-button):not(.secondary-button):not([type="submit"]) {
+  color: var(--th-text);
+  border-color: var(--th-border);
+  border-radius: var(--th-control-radius);
+  -webkit-text-fill-color: currentColor;
 }

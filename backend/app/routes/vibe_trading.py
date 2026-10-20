@@ -73,9 +73,8 @@ class SessionMessage(BaseModel):
 
 
 class SwarmRunRequest(BaseModel):
-    preset: str | None = None
-    prompt: str = Field(min_length=1, max_length=12000)
-    config: dict = Field(default_factory=dict)
+    preset_name: str = Field(default="investment_committee", min_length=1, max_length=120)
+    user_vars: dict = Field(default_factory=dict)
 
 
 @router.get("/status")
@@ -121,10 +120,7 @@ def send_session_message(session_id: str, body: SessionMessage, _user=Depends(ge
 
 @router.post("/swarm/runs")
 def start_swarm_run(body: SwarmRunRequest, _user=Depends(get_current_user)):
-    payload = {"prompt": body.prompt, "config": body.config}
-    if body.preset:
-        payload["preset"] = body.preset
-    return _request("/swarm/runs", method="POST", payload=payload)
+    return _request("/swarm/runs", method="POST", payload={"preset_name": body.preset_name, "user_vars": body.user_vars})
 
 
 

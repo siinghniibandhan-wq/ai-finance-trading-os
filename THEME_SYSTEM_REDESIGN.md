@@ -28,15 +28,17 @@ The main stylesheet imports seven CSS files, with `theme-unify.css` last. Loadin
 ## Proposed intentional theme lineup
 
 Keep a smaller, visibly differentiated set:
-1. **Default** — preserve the existing Financial OS identity.
-2. **Dark** — neutral low-glare charcoal, distinct from Default.
-3. **Neumorphism** — tactile raised/inset surfaces, carefully preserved readable contrast.
-4. **Brutalism** — hard edges, bold ink borders, high-contrast accent, offset shadows.
-5. **Retro Terminal** — black/green phosphor palette, monospace, terminal-like controls.
-6. **Elegant Plain** — restrained editorial typography, quiet surfaces, thin separators.
-7. **Bento Grid** — modular, intentionally varied grid/card hierarchy.
-8. **Nordic** *(new)* — calm, light stone/ice palette, clear spacing and subtle blue/teal accents.
-9. **Editorial** *(new)* — warm paper/ink palette, refined typography and restrained accent colour.
+1. **Default** — deep violet identity, with contrast-tuned accent.
+2. **Light** — bright white surfaces and readable ink.
+3. **Dark** — neutral low-glare charcoal, distinct from Default.
+4. **Skeuomorphism** — tactile, physical-inspired layered surfaces and depth.
+5. **Neumorphism** — raised/inset surfaces with explicit readability and focus treatment.
+6. **Brutalism** — hard edges, bold ink borders, high-contrast accent, offset shadows.
+7. **Retro Terminal** — black/green phosphor palette, monospace, terminal-like controls.
+8. **Elegant Plain** — restrained editorial typography, quiet surfaces, thin separators.
+9. **Bento Grid** — modular, intentionally varied grid/card hierarchy.
+10. **Nordic** *(new)* — calm, light stone/ice palette, clear spacing and blue/teal accents.
+11. **Editorial** *(new)* — warm paper/ink palette, refined typography and restrained copper accent.
 
 This lineup preserves the user's named favourites and keeps Default and Dark as independent designs—not visual references. Other similar or redundant variants are candidates for removal from the selector. Legacy selector cleanup must be coordinated with the registry and tests.
 

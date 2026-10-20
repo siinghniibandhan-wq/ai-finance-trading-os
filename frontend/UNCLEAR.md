@@ -10,9 +10,9 @@
 - Replaced repeated semantic success/danger/warning colours in `App.jsx` with shared tokens.
 
 ## Not yet safe to call complete
-- `App.jsx` still contains hard-coded colours for neutral surfaces, text, borders, charts and one-off inline styles. These require context-aware replacements; global replacements could damage financial status meaning, contrast, or individual theme appearance.
-- `styles.css`, `visual-design.css`, `theme-fixes.css`, and `theme-styles.css` still contain many literal colour values. Some are intentional theme definitions and should be centralised in tokens; others are old overrides and need review.
-- The current audit checks theme registration, token presence, selected component selectors, startup wiring, CSS brace balance, and BUY/SELL regression guards. It does **not** yet enforce a zero-hardcoded-colour rule across every file.
+- Literal colour values in `App.jsx`, `styles.css`, `visual-design.css`, `theme-fixes.css`, and `theme-styles.css` have been moved behind named tokens in `theme-tokens.css`. Values are currently preserved to avoid an unreviewed visual redesign; the next step is to consolidate these into semantic, theme-specific tokens.
+- The CSS still contains many `!important` declarations. They have **not** been removed automatically because removing them wholesale can change cascade and theme behaviour; these need selector-by-selector review.
+- The audit now checks that colour declarations outside `theme-tokens.css` do not contain literal hex/RGB/HSL values, in addition to theme registration, token presence, selected component selectors, startup wiring, CSS brace balance, and BUY/SELL regression guards. Confirm this audit passes on the latest commit.
 - Browser visual/accessibility checks across all 18 themes have not been run from this workflow. Build success alone does not prove visual parity.
 
 ## Required before merge

@@ -68,6 +68,7 @@ def test_live_order_endpoints_are_not_registered_by_this_router():
     paths = {route.path for route in vibe_trading.router.routes}
     assert "/api/playground/vibe/sessions" in paths
     assert "/api/playground/vibe/sessions/{session_id}/messages" in paths
+    assert "/api/playground/vibe/sessions/{session_id}/cancel" in paths
     assert "/api/playground/vibe/swarm/runs" in paths
     assert "/api/playground/vibe/swarm/runs/{run_id}" in paths
     assert "/api/playground/vibe/runs/{run_id}" in paths
@@ -140,3 +141,11 @@ def test_get_swarm_run_uses_swarm_endpoint(monkeypatch):
     monkeypatch.setattr(vibe_trading, "_request", lambda path, method="GET", payload=None, query=None: captured.update(path=path) or {"id": "swarm_123"})
     assert vibe_trading.get_swarm_run("swarm_123", _user=None) == {"id": "swarm_123"}
     assert captured == {"path": "/swarm/runs/swarm_123"}
+
+
+
+def test_cancel_session_uses_vibe_endpoint(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(vibe_trading, "_request", lambda path, method="GET", payload=None, query=None: captured.update(path=path, method=method) or {"status": "cancelled"})
+    assert vibe_trading.cancel_session("session_123", _user=None) == {"status": "cancelled"}
+    assert captured == {"path": "/sessions/session_123/cancel", "method": "POST"}

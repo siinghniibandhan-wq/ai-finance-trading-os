@@ -10,9 +10,9 @@ import { API_BASE_URL, apiFetch, clearSession, getAccessToken } from "./api";
 import "./styles.css";
 import "./visual-design.css";
 import "./theme-fixes.css";
+import "./theme-tokens.css";
+import "./theme-components.css";
 import "./theme-styles.css";
-import "./instrument-interaction-contrast.css";
-import "./holdings-dark-cards.css";
 
 class AppRenderBoundary extends React.Component {
   constructor(props) {
@@ -154,6 +154,14 @@ function RootRouter() {
   if (path === "/register") return <AuthPage initialMode="register" />;
   return <LandingPage />;
 }
+
+// Apply the saved visual theme before React renders to avoid a first-paint theme flash.
+try {
+  const savedTheme = localStorage.getItem("financial-os-theme");
+  if (savedTheme) {
+    document.documentElement.dataset.finosTheme = savedTheme.toLowerCase().trim().replace(/\\s+/g, "-");
+  }
+} catch { /* Storage may be unavailable in restricted browser contexts. */ }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

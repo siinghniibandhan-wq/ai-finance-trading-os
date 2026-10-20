@@ -1073,172 +1073,68 @@ svg { flex-shrink: 0; }
 /* Theme tokens and component-level adaptations. Default intentionally preserves
    the existing dark-violet Financial OS design. */
 :root { --finos-text:#f4f5ff; --finos-card:rgba(255,255,255,.025); --finos-accent:#a78bfa; }
-:root[data-finos-theme="light"],:root[data-finos-theme="elegant-plain"],:root[data-finos-theme="minimal"],:root[data-finos-theme="skeuomorphism"],:root[data-finos-theme="neumorphism"],:root[data-finos-theme="claymorphism"],:root[data-finos-theme="bento-grid"] {
-  color-scheme:light; --finos-text:#172033; --finos-muted:#64748b; --finos-card:#fff; --finos-border:#e5e7eb; --finos-accent:#64748b;
-}
-:root[data-finos-theme="light"] body,:root[data-finos-theme="elegant-plain"] body,:root[data-finos-theme="minimal"] body,:root[data-finos-theme="skeuomorphism"] body,:root[data-finos-theme="neumorphism"] body,:root[data-finos-theme="claymorphism"] body,:root[data-finos-theme="bento-grid"] body {
-  background:#f8fafc!important; color:#172033!important;
-}
-:root[data-finos-theme="light"] .sidebar,:root[data-finos-theme="elegant-plain"] .sidebar,:root[data-finos-theme="minimal"] .sidebar,:root[data-finos-theme="skeuomorphism"] .sidebar,:root[data-finos-theme="neumorphism"] .sidebar,:root[data-finos-theme="claymorphism"] .sidebar,:root[data-finos-theme="bento-grid"] .sidebar {
-  background:#fff!important; color:#172033!important; border-right:1px solid #e5e7eb!important; box-shadow:2px 0 14px #0f172a08!important;
-}
-:root[data-finos-theme="light"] .content,:root[data-finos-theme="elegant-plain"] .content,:root[data-finos-theme="minimal"] .content,:root[data-finos-theme="skeuomorphism"] .content,:root[data-finos-theme="neumorphism"] .content,:root[data-finos-theme="claymorphism"] .content,:root[data-finos-theme="bento-grid"] .content { color:#172033; }
-:root[data-finos-theme="light"] .glass-card,:root[data-finos-theme="elegant-plain"] .glass-card,:root[data-finos-theme="minimal"] .glass-card,:root[data-finos-theme="skeuomorphism"] .glass-card,:root[data-finos-theme="neumorphism"] .glass-card,:root[data-finos-theme="claymorphism"] .glass-card,:root[data-finos-theme="bento-grid"] .glass-card,
-:root[data-finos-theme="light"] .card,:root[data-finos-theme="elegant-plain"] .card,:root[data-finos-theme="minimal"] .card,:root[data-finos-theme="skeuomorphism"] .card,:root[data-finos-theme="neumorphism"] .card,:root[data-finos-theme="claymorphism"] .card,:root[data-finos-theme="bento-grid"] .card,
-:root[data-finos-theme="light"] .panel,:root[data-finos-theme="elegant-plain"] .panel,:root[data-finos-theme="minimal"] .panel,:root[data-finos-theme="skeuomorphism"] .panel,:root[data-finos-theme="neumorphism"] .panel,:root[data-finos-theme="claymorphism"] .panel,:root[data-finos-theme="bento-grid"] .panel {
-  background:#fff!important; color:#172033!important; border:1px solid #e5e7eb!important; box-shadow:0 2px 8px #0f172a06!important;
-}
-:root[data-finos-theme="light"] .welcome-description,:root[data-finos-theme="elegant-plain"] .welcome-description,:root[data-finos-theme="minimal"] .welcome-description,:root[data-finos-theme="skeuomorphism"] .welcome-description,:root[data-finos-theme="neumorphism"] .welcome-description,:root[data-finos-theme="claymorphism"] .welcome-description,:root[data-finos-theme="bento-grid"] .welcome-description,
-:root[data-finos-theme="light"] .welcome-label,:root[data-finos-theme="elegant-plain"] .welcome-label,:root[data-finos-theme="minimal"] .welcome-label,:root[data-finos-theme="skeuomorphism"] .welcome-label,:root[data-finos-theme="neumorphism"] .welcome-label,:root[data-finos-theme="claymorphism"] .welcome-label,:root[data-finos-theme="bento-grid"] .welcome-label { color:#64748b!important; }
-:root[data-finos-theme="light"] h1,:root[data-finos-theme="light"] h2,:root[data-finos-theme="light"] h3,:root[data-finos-theme="light"] h4,
-:root[data-finos-theme="elegant-plain"] h1,:root[data-finos-theme="elegant-plain"] h2,:root[data-finos-theme="elegant-plain"] h3,:root[data-finos-theme="elegant-plain"] h4,
-:root[data-finos-theme="minimal"] h1,:root[data-finos-theme="minimal"] h2,:root[data-finos-theme="minimal"] h3,:root[data-finos-theme="minimal"] h4,
-:root[data-finos-theme="skeuomorphism"] h1,:root[data-finos-theme="skeuomorphism"] h2,:root[data-finos-theme="skeuomorphism"] h3,:root[data-finos-theme="skeuomorphism"] h4,
-:root[data-finos-theme="neumorphism"] h1,:root[data-finos-theme="neumorphism"] h2,:root[data-finos-theme="neumorphism"] h3,:root[data-finos-theme="neumorphism"] h4,
-:root[data-finos-theme="claymorphism"] h1,:root[data-finos-theme="claymorphism"] h2,:root[data-finos-theme="claymorphism"] h3,:root[data-finos-theme="claymorphism"] h4,
-:root[data-finos-theme="bento-grid"] h1,:root[data-finos-theme="bento-grid"] h2,:root[data-finos-theme="bento-grid"] h3,:root[data-finos-theme="bento-grid"] h4 { color:#172033!important; }
-:root[data-finos-theme="elegant-plain"] .glass-card,:root[data-finos-theme="elegant-plain"] .card,:root[data-finos-theme="elegant-plain"] .panel,:root[data-finos-theme="elegant-plain"] .stat-card,:root[data-finos-theme="elegant-plain"] .metric-card {
-  border-radius:10px!important; box-shadow:none!important; border-color:#e6e8ec!important; background:#fff!important;
-}
-:root[data-finos-theme="elegant-plain"] button { box-shadow:none!important; }
-:root[data-finos-theme="elegant-plain"] .primary-button,:root[data-finos-theme="elegant-plain"] .button-primary { background:#202938!important; color:#fff!important; border:1px solid #202938!important; }
-:root[data-finos-theme="minimal"] .glass-card,:root[data-finos-theme="minimal"] .card,:root[data-finos-theme="minimal"] .panel { border-radius:8px!important; box-shadow:none!important; }
-:root[data-finos-theme="skeuomorphism"] .glass-card,:root[data-finos-theme="skeuomorphism"] .card,:root[data-finos-theme="skeuomorphism"] .panel { box-shadow:inset 0 1px 0 #fff,0 3px 7px #0f172a18!important; border-radius:12px!important; }
-:root[data-finos-theme="neumorphism"] body { background:#e8edf3!important; }
-:root[data-finos-theme="neumorphism"] .glass-card,:root[data-finos-theme="neumorphism"] .card,:root[data-finos-theme="neumorphism"] .panel { background:#e8edf3!important; border:0!important; border-radius:18px!important; box-shadow:7px 7px 15px #bec5ce,-7px -7px 15px #fff!important; }
-:root[data-finos-theme="claymorphism"] .glass-card,:root[data-finos-theme="claymorphism"] .card,:root[data-finos-theme="claymorphism"] .panel { border-radius:22px!important; box-shadow:0 5px 0 #cbd5e1,0 9px 20px #0f172a12!important; }
-:root[data-finos-theme="bento-grid"] .glass-card,:root[data-finos-theme="bento-grid"] .card,:root[data-finos-theme="bento-grid"] .panel { border-radius:8px!important; border-color:#cbd5e1!important; }
-:root[data-finos-theme="dark"] body { background:#07090f!important; }
-:root[data-finos-theme="aurora"] body { background:radial-gradient(ellipse at 10% 0%,#54246c 0,transparent 38%),radial-gradient(ellipse at 95% 10%,#173b63 0,transparent 35%),#090b17!important; }
-:root[data-finos-theme="emerald"] { --finos-accent:#34d399; --finos-violet:#34d399; --finos-cyan:#6ee7b7; }
-:root[data-finos-theme="emerald"] body { background:radial-gradient(ellipse at 10% 0%,#064e3b 0,transparent 35%),#07120f!important; }
-:root[data-finos-theme="ocean"] { --finos-accent:#38bdf8; --finos-violet:#38bdf8; --finos-cyan:#7dd3fc; }
-:root[data-finos-theme="ocean"] body { background:radial-gradient(ellipse at 8% 0%,#123f68 0,transparent 35%),#07111f!important; }
-:root[data-finos-theme="sunset"] { --finos-accent:#fb923c; --finos-violet:#fb923c; --finos-pink:#fb7185; }
-:root[data-finos-theme="sunset"] body { background:radial-gradient(ellipse at 0% 0%,#7c2d12 0,transparent 38%),#160b12!important; }
-:root[data-finos-theme="retro-terminal"] { --finos-accent:#4ade80; --finos-violet:#4ade80; --finos-cyan:#86efac; }
-:root[data-finos-theme="retro-terminal"] body { background:#050b07!important; font-family:ui-monospace,SFMono-Regular,Menlo,monospace!important; }
-:root[data-finos-theme="retro-terminal"] .glass-card,:root[data-finos-theme="retro-terminal"] .card,:root[data-finos-theme="retro-terminal"] .panel { border-radius:2px!important; border-color:#166534!important; }
-:root[data-finos-theme="glass"],:root[data-finos-theme="glassmorphism"],:root[data-finos-theme="liquid-glass"] { --finos-accent:#a5f3fc; --finos-violet:#a5b4fc; --finos-cyan:#a5f3fc; }
-:root[data-finos-theme="glass"] body,:root[data-finos-theme="glassmorphism"] body,:root[data-finos-theme="liquid-glass"] body { background:radial-gradient(ellipse at 20% 0%,#3730a3 0,transparent 38%),radial-gradient(ellipse at 90% 10%,#155e75 0,transparent 35%),#080d1b!important; }
-:root[data-finos-theme="glass"] .glass-card,:root[data-finos-theme="glassmorphism"] .glass-card,:root[data-finos-theme="liquid-glass"] .glass-card { backdrop-filter:blur(18px); background:rgba(255,255,255,.07)!important; border-color:rgba(255,255,255,.22)!important; }
-:root[data-finos-theme="skeuomorphism"] .sidebar { box-shadow:inset -1px 0 #fff,2px 0 6px #0f172a12!important; }
-:root[data-finos-theme="brutalism"] { --finos-accent:#facc15; --finos-violet:#facc15; --finos-pink:#fb7185; }
-:root[data-finos-theme="brutalism"] body { background:#fefce8!important; color:#171717!important; }
-:root[data-finos-theme="brutalism"] .sidebar { background:#fff!important; color:#171717!important; border-right:3px solid #171717!important; }
-:root[data-finos-theme="brutalism"] .glass-card,:root[data-finos-theme="brutalism"] .card,:root[data-finos-theme="brutalism"] .panel { background:#fff!important; color:#171717!important; border:2px solid #171717!important; border-radius:0!important; box-shadow:4px 4px 0 #171717!important; }
-:root[data-finos-theme="brutalism"] h1,:root[data-finos-theme="brutalism"] h2,:root[data-finos-theme="brutalism"] h3 { color:#171717!important; }
-:root[data-finos-theme="maximalism"] { --finos-accent:#f0abfc; --finos-violet:#c4b5fd; --finos-pink:#fb7185; --finos-cyan:#67e8f9; }
-:root[data-finos-theme="maximalism"] body { background:radial-gradient(ellipse at 5% 5%,#7e22ce 0,transparent 34%),radial-gradient(ellipse at 95% 8%,#be123c 0,transparent 32%),radial-gradient(ellipse at 70% 90%,#0369a1 0,transparent 34%),#10051b!important; }
-:root[data-finos-theme="maximalism"] .glass-card,:root[data-finos-theme="maximalism"] .card,:root[data-finos-theme="maximalism"] .panel { border-color:rgba(244,114,182,.38)!important; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* Accessibility fix: keep navigation, tabs and placeholder pages readable
    in light-surface themes. Palette/theme identities remain unchanged. */
-:root[data-finos-theme="light"] .navigation-title,
-:root[data-finos-theme="elegant-plain"] .navigation-title,
-:root[data-finos-theme="minimal"] .navigation-title,
-:root[data-finos-theme="skeuomorphism"] .navigation-title,
-:root[data-finos-theme="neumorphism"] .navigation-title,
-:root[data-finos-theme="claymorphism"] .navigation-title,
-:root[data-finos-theme="bento-grid"] .navigation-title {
-  color: #64748b !important;
-}
-:root[data-finos-theme="light"] .navigation-item,
-:root[data-finos-theme="elegant-plain"] .navigation-item,
-:root[data-finos-theme="minimal"] .navigation-item,
-:root[data-finos-theme="skeuomorphism"] .navigation-item,
-:root[data-finos-theme="neumorphism"] .navigation-item,
-:root[data-finos-theme="claymorphism"] .navigation-item,
-:root[data-finos-theme="bento-grid"] .navigation-item {
-  color: #334155 !important;
-  background: transparent;
-}
-:root[data-finos-theme="light"] .navigation-item:hover,
-:root[data-finos-theme="elegant-plain"] .navigation-item:hover,
-:root[data-finos-theme="minimal"] .navigation-item:hover,
-:root[data-finos-theme="skeuomorphism"] .navigation-item:hover,
-:root[data-finos-theme="neumorphism"] .navigation-item:hover,
-:root[data-finos-theme="claymorphism"] .navigation-item:hover,
-:root[data-finos-theme="bento-grid"] .navigation-item:hover {
-  color: #111827 !important;
-  background: #eef2f7 !important;
-}
-:root[data-finos-theme="light"] .navigation-item.active,
-:root[data-finos-theme="elegant-plain"] .navigation-item.active,
-:root[data-finos-theme="minimal"] .navigation-item.active,
-:root[data-finos-theme="skeuomorphism"] .navigation-item.active,
-:root[data-finos-theme="neumorphism"] .navigation-item.active,
-:root[data-finos-theme="claymorphism"] .navigation-item.active,
-:root[data-finos-theme="bento-grid"] .navigation-item.active {
-  color: #ffffff !important;
-  background: #334155 !important;
-}
-:root[data-finos-theme="light"] .placeholder-card,
-:root[data-finos-theme="elegant-plain"] .placeholder-card,
-:root[data-finos-theme="minimal"] .placeholder-card,
-:root[data-finos-theme="skeuomorphism"] .placeholder-card,
-:root[data-finos-theme="neumorphism"] .placeholder-card,
-:root[data-finos-theme="claymorphism"] .placeholder-card,
-:root[data-finos-theme="bento-grid"] .placeholder-card {
-  color: #172033 !important;
-  background: #ffffff !important;
-}
-:root[data-finos-theme="light"] .placeholder-card p,
-:root[data-finos-theme="elegant-plain"] .placeholder-card p,
-:root[data-finos-theme="minimal"] .placeholder-card p,
-:root[data-finos-theme="skeuomorphism"] .placeholder-card p,
-:root[data-finos-theme="neumorphism"] .placeholder-card p,
-:root[data-finos-theme="claymorphism"] .placeholder-card p,
-:root[data-finos-theme="bento-grid"] .placeholder-card p,
-:root[data-finos-theme="light"] .placeholder-card h2,
-:root[data-finos-theme="elegant-plain"] .placeholder-card h2,
-:root[data-finos-theme="minimal"] .placeholder-card h2,
-:root[data-finos-theme="skeuomorphism"] .placeholder-card h2,
-:root[data-finos-theme="neumorphism"] .placeholder-card h2,
-:root[data-finos-theme="claymorphism"] .placeholder-card h2,
-:root[data-finos-theme="bento-grid"] .placeholder-card h2 {
-  color: #172033 !important;
-}
-:root[data-finos-theme="light"] .placeholder-card p:not(.card-label),
-:root[data-finos-theme="elegant-plain"] .placeholder-card p:not(.card-label),
-:root[data-finos-theme="minimal"] .placeholder-card p:not(.card-label),
-:root[data-finos-theme="skeuomorphism"] .placeholder-card p:not(.card-label),
-:root[data-finos-theme="neumorphism"] .placeholder-card p:not(.card-label),
-:root[data-finos-theme="claymorphism"] .placeholder-card p:not(.card-label),
-:root[data-finos-theme="bento-grid"] .placeholder-card p:not(.card-label) {
-  color: #475569 !important;
-}
+
+
+
+
+
+
+
 /* Keep tab labels and form hints legible on light backgrounds. */
-:root[data-finos-theme="light"] [role="tab"],
-:root[data-finos-theme="elegant-plain"] [role="tab"],
-:root[data-finos-theme="minimal"] [role="tab"],
-:root[data-finos-theme="skeuomorphism"] [role="tab"],
-:root[data-finos-theme="neumorphism"] [role="tab"],
-:root[data-finos-theme="claymorphism"] [role="tab"],
-:root[data-finos-theme="bento-grid"] [role="tab"] {
-  color: #334155;
-}
-:root[data-finos-theme="light"] input::placeholder,
-:root[data-finos-theme="elegant-plain"] input::placeholder,
-:root[data-finos-theme="minimal"] input::placeholder,
-:root[data-finos-theme="skeuomorphism"] input::placeholder,
-:root[data-finos-theme="neumorphism"] input::placeholder,
-:root[data-finos-theme="claymorphism"] input::placeholder,
-:root[data-finos-theme="bento-grid"] input::placeholder {
-  color: #64748b !important;
-  opacity: 1;
-}
+
+
 /* Brutalism intentionally keeps its cream/yellow/black identity, with readable
    navigation and placeholder text instead of washed-out inherited colours. */
-:root[data-finos-theme="brutalism"] .navigation-title { color: #525252 !important; }
-:root[data-finos-theme="brutalism"] .navigation-item { color: #171717 !important; }
-:root[data-finos-theme="brutalism"] .navigation-item:hover { background: #fef08a !important; color: #171717 !important; }
-:root[data-finos-theme="brutalism"] .navigation-item.active { background: #facc15 !important; color: #171717 !important; }
-:root[data-finos-theme="brutalism"] .placeholder-card { color: #171717 !important; background: #fff !important; }
-:root[data-finos-theme="brutalism"] .placeholder-card h2,
-:root[data-finos-theme="brutalism"] .placeholder-card p { color: #171717 !important; }
-:root[data-finos-theme="brutalism"] .placeholder-card p:not(.card-label) { color: #404040 !important; }
+
+
+
+
+
+
+
 
 
 /* ============================================================
@@ -1246,250 +1142,63 @@ svg { flex-shrink: 0; }
    Keep each theme's identity, but override legacy dark-only text
    colours on navigation, tabs, and placeholder pages.
    ============================================================ */
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .brand-text,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .navigation-title,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .navigation-item {
-  color: #334155 !important;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .brand-text span {
-  color: #64748b !important;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .navigation-item:hover {
-  color: #0f172a !important;
-  background: #e9edf5 !important;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .sidebar .navigation-item.active {
-  color: #312e81 !important;
-  background: #ede9fe !important;
-  border-color: #c4b5fd !important;
-  box-shadow: none !important;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .placeholder-card,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .placeholder-card h2,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .placeholder-card p {
-  color: #172033 !important;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .placeholder-card p:last-child {
-  color: #475569 !important;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) [role="tab"],
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tab,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tab-button {
-  color: #334155;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) [role="tab"][aria-selected="true"],
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tab.active,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tab-button.active {
-  color: #312e81;
-}
-:root[data-finos-theme="brutalism"] .sidebar .brand-text,
-:root[data-finos-theme="brutalism"] .sidebar .navigation-title,
-:root[data-finos-theme="brutalism"] .sidebar .navigation-item,
-:root[data-finos-theme="brutalism"] .placeholder-card,
-:root[data-finos-theme="brutalism"] .placeholder-card h2,
-:root[data-finos-theme="brutalism"] .placeholder-card p {
-  color: #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .sidebar .brand-text span,
-:root[data-finos-theme="brutalism"] .placeholder-card p:last-child {
-  color: #404040 !important;
-}
+
+
+
+
+
+
+
+
+
+
 
 
 /* Theme-aware foregrounds for common controls and icons.
    Keep each theme's background/accent identity; only correct unreadable
    foreground colours inherited from the original dark interface. */
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) {
-  --finos-text: #172033;
-  --finos-muted: #475569;
-  --finos-border: #cbd5e1;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content p,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content label,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content th,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content td {
-  color: var(--finos-text);
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content svg {
-  color: currentColor;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content input,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content select,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content textarea {
-  color: #172033;
-  background-color: #fff;
-  border-color: #cbd5e1;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content input::placeholder,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content textarea::placeholder {
-  color: #64748b;
-  opacity: 1;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content button:not(.primary-button):not(.button-primary) {
-  color: #334155;
-}
-:root[data-finos-theme="elegant-plain"] .content .primary-button,
-:root[data-finos-theme="elegant-plain"] .content .button-primary {
-  color: #fff !important;
-  background: #202938 !important;
-}
-:root[data-finos-theme="brutalism"] .content p,
-:root[data-finos-theme="brutalism"] .content label,
-:root[data-finos-theme="brutalism"] .content th,
-:root[data-finos-theme="brutalism"] .content td,
-:root[data-finos-theme="brutalism"] .content button:not(.primary-button):not(.button-primary) {
-  color: #171717;
-}
-:root[data-finos-theme="brutalism"] .content input,
-:root[data-finos-theme="brutalism"] .content select,
-:root[data-finos-theme="brutalism"] .content textarea {
-  color: #171717;
-  background: #fff;
-  border-color: #525252;
-}
+
+
+
+
+
+
+
+
+
 
 
 /* ============================================================
    Theme identity: use each theme's own accent instead of the
    original purple accent bleeding into every design.
    ============================================================ */
-:root[data-finos-theme="light"],
-:root[data-finos-theme="elegant-plain"],
-:root[data-finos-theme="minimal"] {
-  --finos-accent: #475569;
-  --finos-violet: #64748b;
-  --finos-pink: #94a3b8;
-  --finos-cyan: #cbd5e1;
-}
-:root[data-finos-theme="dark"] {
-  --finos-accent: #94a3b8;
-  --finos-violet: #64748b;
-  --finos-pink: #cbd5e1;
-  --finos-cyan: #7dd3fc;
-}
-:root[data-finos-theme="aurora"] {
-  --finos-accent: #e879f9;
-  --finos-violet: #c084fc;
-  --finos-pink: #f472b6;
-  --finos-cyan: #67e8f9;
-}
-:root[data-finos-theme="emerald"] {
-  --finos-accent: #10b981;
-  --finos-violet: #34d399;
-  --finos-pink: #6ee7b7;
-  --finos-cyan: #a7f3d0;
-}
-:root[data-finos-theme="ocean"] {
-  --finos-accent: #0ea5e9;
-  --finos-violet: #38bdf8;
-  --finos-pink: #7dd3fc;
-  --finos-cyan: #67e8f9;
-}
-:root[data-finos-theme="sunset"] {
-  --finos-accent: #f97316;
-  --finos-violet: #fb923c;
-  --finos-pink: #fb7185;
-  --finos-cyan: #fcd34d;
-}
-:root[data-finos-theme="retro-terminal"] {
-  --finos-accent: #22c55e;
-  --finos-violet: #4ade80;
-  --finos-pink: #86efac;
-  --finos-cyan: #bbf7d0;
-}
-:root[data-finos-theme="glass"],
-:root[data-finos-theme="glassmorphism"],
-:root[data-finos-theme="liquid-glass"] {
-  --finos-accent: #67e8f9;
-  --finos-violet: #a5b4fc;
-  --finos-pink: #c4b5fd;
-  --finos-cyan: #67e8f9;
-}
-:root[data-finos-theme="skeuomorphism"] {
-  --finos-accent: #475569;
-  --finos-violet: #64748b;
-  --finos-pink: #94a3b8;
-  --finos-cyan: #0ea5e9;
-}
-:root[data-finos-theme="neumorphism"] {
-  --finos-accent: #475569;
-  --finos-violet: #64748b;
-  --finos-pink: #94a3b8;
-  --finos-cyan: #0f766e;
-}
-:root[data-finos-theme="claymorphism"] {
-  --finos-accent: #0f766e;
-  --finos-violet: #14b8a6;
-  --finos-pink: #f472b6;
-  --finos-cyan: #67e8f9;
-}
-:root[data-finos-theme="brutalism"] {
-  --finos-accent: #ca8a04;
-  --finos-violet: #eab308;
-  --finos-pink: #f97316;
-  --finos-cyan: #0f766e;
-}
-:root[data-finos-theme="maximalism"] {
-  --finos-accent: #f472b6;
-  --finos-violet: #a78bfa;
-  --finos-pink: #fb7185;
-  --finos-cyan: #22d3ee;
-}
-:root[data-finos-theme="bento-grid"] {
-  --finos-accent: #0f766e;
-  --finos-violet: #0d9488;
-  --finos-pink: #14b8a6;
-  --finos-cyan: #5eead4;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Apply the active theme accent to shared interactive components. */
-:root[data-finos-theme]:not([data-finos-theme="default"]) .navigation-item.active {
-  border-color: color-mix(in srgb, var(--finos-accent) 35%, transparent);
-}
-:root[data-finos-theme]:not([data-finos-theme="default"]) .finos-theme-eyebrow,
-:root[data-finos-theme]:not([data-finos-theme="default"]) .placeholder-icon {
-  color: var(--finos-accent) !important;
-}
-:root[data-finos-theme]:not([data-finos-theme="default"]) .primary-button,
-:root[data-finos-theme]:not([data-finos-theme="default"]) .button-primary {
-  background: var(--finos-accent) !important;
-  border-color: var(--finos-accent) !important;
-  color: #fff !important;
-}
-:root[data-finos-theme="light"] .primary-button,
-:root[data-finos-theme="elegant-plain"] .primary-button,
-:root[data-finos-theme="minimal"] .primary-button,
-:root[data-finos-theme="skeuomorphism"] .primary-button,
-:root[data-finos-theme="neumorphism"] .primary-button,
-:root[data-finos-theme="claymorphism"] .primary-button,
-:root[data-finos-theme="bento-grid"] .primary-button,
-:root[data-finos-theme="brutalism"] .primary-button {
-  color: #fff !important;
-}
+
+
+
+
 
 /* Light themes use a light header with matching readable controls. */
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar {
-  background: rgba(255,255,255,.94) !important;
-  border-bottom-color: #dbe2ea !important;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .eyebrow {
-  color: #64748b !important;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .page-title h1,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .icon-button,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .menu-button,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .profile {
-  color: #172033 !important;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .icon-button,
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .topbar .menu-button {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-}
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) .mobile-close {
-  color: #334155 !important;
-}
+
+
+
+
+
 
 /* Mobile: the page's own heading is enough; keep the top bar uncluttered. */
 @media (max-width: 800px) {
@@ -1519,226 +1228,67 @@ svg { flex-shrink: 0; }
   --finos-chart-series-4: #38bdf8;
   --finos-chart-series-5: #fbbf24;
 }
-:root:is([data-finos-theme="light"],[data-finos-theme="elegant-plain"],[data-finos-theme="minimal"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="brutalism"]) {
-  color-scheme: light;
-  --finos-control-bg: #ffffff;
-  --finos-control-text: #172033;
-  --finos-control-muted: #475569;
-  --finos-control-border: #cbd5e1;
-  --finos-chart-bg: #ffffff;
-  --finos-chart-text: #172033;
-  --finos-chart-muted: #475569;
-  --finos-chart-grid: rgba(71, 85, 105, .22);
-  --finos-chart-series-1: var(--finos-accent, #475569);
-  --finos-chart-series-2: #be123c;
-  --finos-chart-series-3: #047857;
-  --finos-chart-series-4: #0369a1;
-  --finos-chart-series-5: #a16207;
-}
-:root[data-finos-theme="aurora"] {
-  --finos-chart-series-1: #e879f9; --finos-chart-series-2: #fb7185;
-  --finos-chart-series-3: #67e8f9; --finos-chart-series-4: #a78bfa; --finos-chart-series-5: #f0abfc;
-}
-:root[data-finos-theme="emerald"] {
-  --finos-chart-series-1: #34d399; --finos-chart-series-2: #fda4af;
-  --finos-chart-series-3: #a3e635; --finos-chart-series-4: #38bdf8; --finos-chart-series-5: #fbbf24;
-}
-:root[data-finos-theme="ocean"] {
-  --finos-chart-series-1: #38bdf8; --finos-chart-series-2: #fb7185;
-  --finos-chart-series-3: #2dd4bf; --finos-chart-series-4: #818cf8; --finos-chart-series-5: #fbbf24;
-}
-:root[data-finos-theme="sunset"] {
-  --finos-chart-series-1: #fb923c; --finos-chart-series-2: #fb7185;
-  --finos-chart-series-3: #fcd34d; --finos-chart-series-4: #38bdf8; --finos-chart-series-5: #c084fc;
-}
-:root[data-finos-theme="retro-terminal"] {
-  --finos-chart-series-1: #4ade80; --finos-chart-series-2: #f87171;
-  --finos-chart-series-3: #a3e635; --finos-chart-series-4: #22d3ee; --finos-chart-series-5: #facc15;
-}
-:root:is([data-finos-theme="glass"],[data-finos-theme="glassmorphism"],[data-finos-theme="liquid-glass"]) {
-  --finos-chart-series-1: #67e8f9; --finos-chart-series-2: #f0abfc;
-  --finos-chart-series-3: #6ee7b7; --finos-chart-series-4: #93c5fd; --finos-chart-series-5: #fde68a;
-}
-:root[data-finos-theme="claymorphism"] {
-  --finos-chart-series-1: #0f766e; --finos-chart-series-2: #be185d;
-  --finos-chart-series-3: #15803d; --finos-chart-series-4: #0369a1; --finos-chart-series-5: #a16207;
-}
-:root[data-finos-theme="bento-grid"] {
-  --finos-chart-series-1: #0f766e; --finos-chart-series-2: #be123c;
-  --finos-chart-series-3: #047857; --finos-chart-series-4: #0369a1; --finos-chart-series-5: #a16207;
-}
-:root[data-finos-theme="brutalism"] {
-  --finos-chart-series-1: #a16207; --finos-chart-series-2: #be123c;
-  --finos-chart-series-3: #166534; --finos-chart-series-4: #1d4ed8; --finos-chart-series-5: #171717;
-}
-:root[data-finos-theme="maximalism"] {
-  --finos-chart-series-1: #f0abfc; --finos-chart-series-2: #fb7185;
-  --finos-chart-series-3: #34d399; --finos-chart-series-4: #22d3ee; --finos-chart-series-5: #fbbf24;
-}
+
+
+
+
+
+
+
+
+
+
+
 
 /* Native and custom form controls: keep the opened options readable too. */
-:root[data-finos-theme] select,
-:root[data-finos-theme] input,
-:root[data-finos-theme] textarea,
-:root[data-finos-theme] [role="combobox"] {
-  color: var(--finos-control-text);
-  background-color: var(--finos-control-bg);
-  border-color: var(--finos-control-border);
-}
-:root[data-finos-theme] select option,
-:root[data-finos-theme] optgroup {
-  color: var(--finos-control-text);
-  background-color: var(--finos-control-bg);
-}
-:root[data-finos-theme] input::placeholder,
-:root[data-finos-theme] textarea::placeholder {
-  color: var(--finos-control-muted);
-  opacity: 1;
-}
+
+
+
 
 /* Chart typography, canvas surfaces, legends and controls follow theme tokens. */
-:root[data-finos-theme] .wc-chart-subtitle,
-:root[data-finos-theme] .wc-note,
-:root[data-finos-theme] .wc-chart-stat span,
-:root[data-finos-theme] .wc-flow-stats span,
-:root[data-finos-theme] .wc-chart-legend span,
-:root[data-finos-theme] .wc-pie-legend span,
-:root[data-finos-theme] .dashboard-overview .chart-legend,
-:root[data-finos-theme] .wc-chart-empty {
-  color: var(--finos-chart-muted) !important;
-}
-:root[data-finos-theme] .wc-history-chart {
-  background: var(--finos-chart-bg) !important;
-  color: var(--finos-chart-text);
-  border: 1px solid var(--finos-control-border);
-}
-:root[data-finos-theme] .wc-periods button,
-:root[data-finos-theme] .wc-chart-types button {
-  color: var(--finos-chart-text);
-  background: var(--finos-control-bg);
-  border-color: var(--finos-control-border);
-}
-:root[data-finos-theme] .wc-periods button.active,
-:root[data-finos-theme] .wc-chart-types button.active {
-  color: #fff;
-  background: var(--finos-accent);
-  border-color: var(--finos-accent);
-}
-:root[data-finos-theme] .wc-chart-empty {
-  border-color: var(--finos-control-border);
-}
-:root[data-finos-theme] .wc-chart-svg circle {
-  stroke: var(--finos-chart-bg);
-}
-:root[data-finos-theme] .wc-line-chart .wc-line-income { stroke: var(--finos-chart-series-1); }
-:root[data-finos-theme] .wc-line-chart .wc-line-expense { stroke: var(--finos-chart-series-2); }
-:root[data-finos-theme] .wc-line-chart .wc-line-net { stroke: var(--finos-chart-series-3); }
-:root[data-finos-theme] .wc-pie-legend i { background: var(--finos-chart-series-1); }
-:root[data-finos-theme] .wc-pie-legend i.investments { background: var(--finos-chart-series-3); }
-:root[data-finos-theme] .wc-pie-legend i.receivables { background: var(--finos-chart-series-4); }
-:root[data-finos-theme] .wc-line-chart .wc-line-point {
-  background: var(--finos-chart-series-1);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--finos-chart-series-1) 18%, transparent);
-}
-:root[data-finos-theme] .chart-legend .legend-income { background-color: var(--finos-chart-series-1); }
-:root[data-finos-theme] .chart-legend .legend-expense { background-color: var(--finos-chart-series-2); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* Theme tokens must win over legacy inline colours on form controls. */
-:root[data-finos-theme] select,
-:root[data-finos-theme] input,
-:root[data-finos-theme] textarea,
-:root[data-finos-theme] [role="combobox"] {
-  color: var(--finos-control-text) !important;
-  background-color: var(--finos-control-bg) !important;
-  border-color: var(--finos-control-border) !important;
-  caret-color: var(--finos-control-text);
-}
-:root[data-finos-theme] select option,
-:root[data-finos-theme] optgroup {
-  color: var(--finos-control-text) !important;
-  background-color: var(--finos-control-bg) !important;
-}
-:root[data-finos-theme] input::placeholder,
-:root[data-finos-theme] textarea::placeholder {
-  color: var(--finos-control-muted) !important;
-  opacity: 1;
-}
+
+
+
 
 
 /* Additional audit fixes for the custom SVG price chart and chart labels. */
-:root[data-finos-theme] .content svg[role="img"] line {
-  stroke: var(--finos-chart-grid) !important;
-}
-:root[data-finos-theme] .content svg[role="img"] polyline {
-  stroke: var(--finos-chart-series-1) !important;
-}
-:root[data-finos-theme] .content svg[role="img"] text {
-  fill: var(--finos-chart-muted) !important;
-}
-:root[data-finos-theme] .content svg[role="img"] circle {
-  stroke: var(--finos-chart-bg) !important;
-}
-:root[data-finos-theme] .wc-chart-stat strong,
-:root[data-finos-theme] .wc-flow-stats strong,
-:root[data-finos-theme] .wc-pie-legend strong {
-  color: var(--finos-chart-text);
-}
-:root[data-finos-theme] .wc-chart-subtitle,
-:root[data-finos-theme] .wc-note,
-:root[data-finos-theme] .wc-chart-empty {
-  background-color: transparent;
-}
-:root[data-finos-theme="light"] .wc-history-chart,
-:root[data-finos-theme="elegant-plain"] .wc-history-chart,
-:root[data-finos-theme="minimal"] .wc-history-chart,
-:root[data-finos-theme="skeuomorphism"] .wc-history-chart,
-:root[data-finos-theme="neumorphism"] .wc-history-chart,
-:root[data-finos-theme="claymorphism"] .wc-history-chart,
-:root[data-finos-theme="bento-grid"] .wc-history-chart,
-:root[data-finos-theme="brutalism"] .wc-history-chart {
-  box-shadow: none;
-}
+
+
+
+
+
+
+
 
 /* Final component pass: remove fixed dark chart details that clash with light themes. */
-:root[data-finos-theme] .wc-asset-pie::before,
-:root[data-finos-theme] .wc-wealth-pie::before {
-  background: var(--finos-chart-bg) !important;
-  border-color: var(--finos-control-border);
-}
-:root[data-finos-theme] .wc-chart-surface {
-  border-top-color: var(--finos-control-border);
-}
-:root[data-finos-theme] .wc-asset-pie small,
-:root[data-finos-theme] .wc-wealth-pie small,
-:root[data-finos-theme] .wc-history-column,
-:root[data-finos-theme] .wc-history-column small,
-:root[data-finos-theme] .wc-allocation-arrow {
-  color: var(--finos-chart-muted);
-}
-:root[data-finos-theme] .wc-history-bars {
-  border-bottom-color: var(--finos-chart-grid);
-}
-:root[data-finos-theme] .wc-history-column:hover,
-:root[data-finos-theme] .wc-history-column:focus-visible {
-  border-color: var(--finos-control-border);
-  background: color-mix(in srgb, var(--finos-accent) 10%, transparent);
-}
-:root[data-finos-theme] .wc-balance-track {
-  background: color-mix(in srgb, var(--finos-chart-muted) 16%, transparent);
-}
-:root[data-finos-theme] .wc-balance-track > span {
-  background: var(--finos-chart-series-1);
-}
-:root[data-finos-theme] .wc-balance-row.liabilities .wc-balance-track > span {
-  background: var(--finos-chart-series-2);
-}
-:root[data-finos-theme] .wc-balance-row.net-worth .wc-balance-track > span {
-  background: var(--finos-chart-series-3);
-}
-:root[data-finos-theme] .wc-chart-surface .wc-panel-heading {
-  border-bottom-color: var(--finos-control-border);
-}
+
+
+
+
+
+
+
+
+
+
 @media (max-width: 760px) {
   .finos-theme-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .finos-theme-option { grid-template-columns: 58px minmax(0, 1fr) 18px; gap: 9px; padding: 10px; }
@@ -1749,26 +1299,7 @@ svg { flex-shrink: 0; }
 }
 
 /* Selected chart controls need legible text against each theme's own accent. */
-:root[data-finos-theme="emerald"] .wc-periods button.active,
-:root[data-finos-theme="emerald"] .wc-chart-types button.active,
-:root[data-finos-theme="ocean"] .wc-periods button.active,
-:root[data-finos-theme="ocean"] .wc-chart-types button.active,
-:root[data-finos-theme="sunset"] .wc-periods button.active,
-:root[data-finos-theme="sunset"] .wc-chart-types button.active,
-:root[data-finos-theme="retro-terminal"] .wc-periods button.active,
-:root[data-finos-theme="retro-terminal"] .wc-chart-types button.active,
-:root[data-finos-theme="brutalism"] .wc-periods button.active,
-:root[data-finos-theme="brutalism"] .wc-chart-types button.active,
-:root[data-finos-theme="maximalism"] .wc-periods button.active,
-:root[data-finos-theme="maximalism"] .wc-chart-types button.active,
-:root[data-finos-theme="glass"] .wc-periods button.active,
-:root[data-finos-theme="glass"] .wc-chart-types button.active,
-:root[data-finos-theme="glassmorphism"] .wc-periods button.active,
-:root[data-finos-theme="glassmorphism"] .wc-chart-types button.active,
-:root[data-finos-theme="liquid-glass"] .wc-periods button.active,
-:root[data-finos-theme="liquid-glass"] .wc-chart-types button.active {
-  color: #101827;
-}
+
 
 
 
@@ -1779,781 +1310,115 @@ svg { flex-shrink: 0; }
    legible even where legacy components used dark-theme colours.
    ============================================================ */
 
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) {
-  color-scheme: light;
-  --finos-text: #172033;
-  --finos-muted: #475569;
-  --finos-border: #cbd5e1;
-  --finos-control-bg: #ffffff;
-  --finos-control-text: #172033;
-  --finos-control-muted: #64748b;
-  --finos-control-border: #cbd5e1;
-  --finos-chart-bg: #ffffff;
-  --finos-chart-text: #172033;
-  --finos-chart-muted: #475569;
-  --finos-chart-grid: rgba(51, 65, 85, .22);
-}
+
 
 /* Light — cool white, blue-violet accents. */
-:root[data-finos-theme="light"] {
-  --finos-accent: #5b45c6;
-  --finos-violet: #6d5ce7;
-  --finos-pink: #b23b86;
-  --finos-cyan: #087eaa;
-  --finos-page: #f3f6fc;
-  --finos-surface: #ffffff;
-  --finos-surface-raised: #ffffff;
-  --finos-soft-accent: #e9eaff;
-  --finos-icon-bg: #e8eaff;
-  --finos-border: #cbd5e1;
-}
+
 /* Minimal — almost-white, flat surfaces and restrained slate accents. */
-:root[data-finos-theme="minimal"] {
-  --finos-accent: #475569;
-  --finos-violet: #475569;
-  --finos-pink: #64748b;
-  --finos-cyan: #0369a1;
-  --finos-page: #f8fafc;
-  --finos-surface: #ffffff;
-  --finos-surface-raised: #ffffff;
-  --finos-soft-accent: #eef2f6;
-  --finos-icon-bg: #f1f5f9;
-  --finos-border: #d8dee7;
-}
+
 /* Elegant Plain — warm paper, charcoal typography and fine lines. */
-:root[data-finos-theme="elegant-plain"] {
-  --finos-accent: #334155;
-  --finos-violet: #475569;
-  --finos-pink: #78716c;
-  --finos-cyan: #0f766e;
-  --finos-page: #faf9f6;
-  --finos-surface: #fffefa;
-  --finos-surface-raised: #ffffff;
-  --finos-soft-accent: #f1efe9;
-  --finos-icon-bg: #f1efe9;
-  --finos-border: #dedbd3;
-}
+
 /* Skeuomorphism — ivory panels, blue steel and subtle raised edges. */
-:root[data-finos-theme="skeuomorphism"] {
-  --finos-accent: #245a91;
-  --finos-violet: #376da5;
-  --finos-pink: #9c426d;
-  --finos-cyan: #087e8b;
-  --finos-page: #e8edf2;
-  --finos-surface: #f8fafc;
-  --finos-surface-raised: #ffffff;
-  --finos-soft-accent: #e1eaf4;
-  --finos-icon-bg: #dce8f5;
-  --finos-border: #b9c7d6;
-}
+
 /* Neumorphism — soft cool-grey canvas, dark slate text and clear inset fields. */
-:root[data-finos-theme="neumorphism"] {
-  --finos-accent: #315b78;
-  --finos-violet: #426b88;
-  --finos-pink: #9b5576;
-  --finos-cyan: #087e8b;
-  --finos-page: #e5e9ef;
-  --finos-surface: #edf1f6;
-  --finos-surface-raised: #f1f4f8;
-  --finos-soft-accent: #dce5ee;
-  --finos-icon-bg: #dce5ee;
-  --finos-border: #c5ced9;
-}
+
 /* Claymorphism — warm lilac page with crisp, readable pastel cards. */
-:root[data-finos-theme="claymorphism"] {
-  --finos-accent: #8b3f91;
-  --finos-violet: #854caa;
-  --finos-pink: #b83280;
-  --finos-cyan: #087e8b;
-  --finos-page: #f5effb;
-  --finos-surface: #fffaff;
-  --finos-surface-raised: #ffffff;
-  --finos-soft-accent: #f0e2fa;
-  --finos-icon-bg: #efe1f8;
-  --finos-border: #d8c4e8;
-}
+
 /* Bento Grid — pale mint page, modular white panels and deep teal accents. */
-:root[data-finos-theme="bento-grid"] {
-  --finos-accent: #0f766e;
-  --finos-violet: #0f766e;
-  --finos-pink: #a33b72;
-  --finos-cyan: #0369a1;
-  --finos-page: #edf7f4;
-  --finos-surface: #ffffff;
-  --finos-surface-raised: #f9fffd;
-  --finos-soft-accent: #d9f0e9;
-  --finos-icon-bg: #d9f0e9;
-  --finos-border: #b8d9d0;
-}
+
 /* Brutalism — warm cream, ink-black text, hard edges and yellow accent. */
-:root[data-finos-theme="brutalism"] {
-  --finos-accent: #a16207;
-  --finos-violet: #a16207;
-  --finos-pink: #be123c;
-  --finos-cyan: #0369a1;
-  --finos-page: #fffbea;
-  --finos-surface: #ffffff;
-  --finos-surface-raised: #ffffff;
-  --finos-soft-accent: #fef3c7;
-  --finos-icon-bg: #fef3c7;
-  --finos-border: #292524;
-}
+
 
 /* Establish an actual light canvas instead of recolouring text over dark layers. */
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) body {
-  color: var(--finos-text) !important;
-  background: var(--finos-page) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .app-shell,
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .main-area,
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content {
-  color: var(--finos-text);
-  background-color: transparent;
-}
+
+
 
 /* Sidebar and topbar use the palette of the selected light theme. */
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .sidebar {
-  background: var(--finos-surface) !important;
-  border-right: 1px solid var(--finos-border) !important;
-  box-shadow: 4px 0 18px rgba(15, 23, 42, .035);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .topbar {
-  background: color-mix(in srgb, var(--finos-surface) 94%, transparent) !important;
-  border-bottom-color: var(--finos-border) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .sidebar .brand-text,
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .topbar,
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .page-title h1 {
-  color: var(--finos-text) !important;
-}
+
+
+
 
 /* Ensure primary content, helper text, labels and table details are readable. */
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(h1,h2,h3,h4,h5,h6,strong,b,th,td,label,legend,dt,dd),
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(p,small,li,figcaption,.muted,.subtitle,.description,.helper-text,.empty-state,.metric-label,.card-label,.eyebrow,.welcome-description,.wc-card-label,.wc-card-subtitle,.wc-chart-subtitle,.wc-note,.wc-panel-heading,.wc-detail-row > div > span,.wc-latest-main span,.wc-latest-amount,.wc-category-label,.wc-flow-stats span,.wc-chart-stat span,.wc-chart-legend span,.wc-pie-legend span,.wc-history-column,.wc-history-column small) {
-  color: var(--finos-muted);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(h1,h2,h3,h4,h5,h6,strong,b,td,th,label,legend,dt,dd) {
-  color: var(--finos-text);
-}
+
+
 
 /* Cards and information panels must be visibly separated from the page. */
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.module-overview-card,.notifications-card,.goals-summary-card,.health-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-chart-stat,.wc-flow-stats > div,.wc-shortcut-tile,.wc-breakdown-category,.wc-chart-surface,.wc-chart-empty,.finos-theme-settings) {
-  color: var(--finos-text);
-  background-color: var(--finos-surface) !important;
-  border-color: var(--finos-border) !important;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, .055);
-}
-:root[data-finos-theme="minimal"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
-  box-shadow: none;
-  border-radius: 10px;
-}
-:root[data-finos-theme="elegant-plain"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
-  box-shadow: none;
-  border-radius: 8px;
-}
-:root[data-finos-theme="skeuomorphism"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
-  box-shadow: inset 0 1px rgba(255,255,255,.9), 0 3px 8px rgba(15,23,42,.09);
-  border-radius: 12px;
-}
-:root[data-finos-theme="neumorphism"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
-  border-color: transparent !important;
-  box-shadow: 5px 5px 12px rgba(139,150,166,.24), -5px -5px 12px rgba(255,255,255,.88);
-  border-radius: 16px;
-}
-:root[data-finos-theme="claymorphism"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
-  box-shadow: 0 7px 0 color-mix(in srgb, var(--finos-accent) 10%, white), 0 12px 24px rgba(72,36,90,.08);
-  border-radius: 18px;
-}
-:root[data-finos-theme="bento-grid"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
-  border-radius: 14px;
-  box-shadow: 0 3px 12px rgba(15,118,110,.055);
-}
-:root[data-finos-theme="brutalism"] .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,.wc-primary-card,.wc-shortcut-tile) {
-  border: 2px solid #292524 !important;
-  border-radius: 2px;
-  box-shadow: 4px 4px 0 rgba(41,37,36,.12);
-}
+
+
+
+
+
+
+
+
 
 /* Navigation, icons, secondary actions and selected states use theme accents. */
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .navigation-item {
-  color: var(--finos-muted) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .navigation-item.active {
-  color: var(--finos-accent) !important;
-  background: var(--finos-soft-accent) !important;
-  border-color: var(--finos-border) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(.metric-icon,.chart-icon,.wc-card-icon,.wc-shortcut-icon,.placeholder-icon) {
-  color: var(--finos-accent) !important;
-  background: var(--finos-icon-bg) !important;
-  border-color: var(--finos-border) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(button:not(.primary-button):not(.button-primary),[role="tab"],.tab,.tab-button,.wc-periods button,.wc-chart-types button,.finos-select-trigger,.secondary-button,.small-button,.icon-button) {
-  color: var(--finos-text);
-  border-color: var(--finos-border);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(.wc-periods button.active,.wc-chart-types button.active,[role="tab"][aria-selected="true"],.tab.active,.tab-button.active) {
-  color: #ffffff !important;
-  background: var(--finos-accent) !important;
-  border-color: var(--finos-accent) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(.primary-button,.button-primary) {
-  color: #ffffff !important;
-  background: var(--finos-accent) !important;
-  border-color: var(--finos-accent) !important;
-  box-shadow: none;
-}
-:root[data-finos-theme="brutalism"] .content :is(button,.primary-button,.button-primary) {
-  border-radius: 2px !important;
-  border: 2px solid #292524 !important;
-  box-shadow: 2px 2px 0 rgba(41,37,36,.14);
-}
-:root[data-finos-theme="elegant-plain"] .content :is(.primary-button,.button-primary) {
-  background: #334155 !important;
-  border-color: #334155 !important;
-}
+
+
+
+
+
+
+
+
 
 /* Inputs, custom dropdowns, table rows and chart surfaces stay visible. */
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(input,select,textarea,[role="combobox"],.finos-select-trigger) {
-  color: var(--finos-control-text) !important;
-  background: var(--finos-control-bg) !important;
-  border-color: var(--finos-control-border) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(input,textarea)::placeholder {
-  color: var(--finos-control-muted) !important;
-  opacity: 1;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .finos-select-menu {
-  color: var(--finos-text);
-  background: var(--finos-surface-raised) !important;
-  border-color: var(--finos-border) !important;
-  box-shadow: 0 14px 30px rgba(15,23,42,.14);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .finos-select-option {
-  color: var(--finos-text) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .finos-select-option:hover,
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .finos-select-option.is-selected {
-  color: var(--finos-text) !important;
-  background: var(--finos-soft-accent) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content table {
-  color: var(--finos-text);
-  border-color: var(--finos-border);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(thead th,tbody td) {
-  border-color: var(--finos-border);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content tbody tr:hover {
-  background: var(--finos-soft-accent);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(.wc-chart-stat,.wc-flow-stats > div,.wc-chart-empty,.wc-chart-surface,.wc-history-chart) {
-  color: var(--finos-chart-text);
-  background: var(--finos-chart-bg) !important;
-  border-color: var(--finos-control-border) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content svg text {
-  fill: var(--finos-chart-muted);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"],
-  [data-finos-theme="brutalism"]
-) .content :is(.wc-chart-legend span,.wc-pie-legend span,.chart-legend) {
-  color: var(--finos-chart-muted) !important;
-}
+
+
+
+
+
+
+
+
+
+
+
 
 /* Keep the plain themes plain; use distinctive surfaces, not extra decoration. */
-:root[data-finos-theme="minimal"] .content :is(.wc-card-icon,.metric-icon,.chart-icon) {
-  border-radius: 8px;
-}
-:root[data-finos-theme="elegant-plain"] .content :is(.wc-card-icon,.metric-icon,.chart-icon) {
-  border-radius: 6px;
-}
-:root[data-finos-theme="bento-grid"] .content .wc-primary-card {
-  border-top: 3px solid var(--finos-accent) !important;
-}
+
+
+
 
 
 /* ELEGANT PLAIN — focused ivory / stone / charcoal contrast refinements.
    Scoped only to Elegant Plain; the Default pink/purple theme and other themes are unchanged. */
-:root[data-finos-theme="elegant-plain"] {
-  color-scheme: light;
-  --t-bg: #f5f5f2;
-  --t-text: #242424;
-  --t-text-2: #525252;
-  --t-muted: #737373;
-  --t-border: #e5e5e0;
-  --t-surface: #ffffff;
-  --t-card: #ffffff;
-  --t-accent: #303030;
-  --t-accent-soft: #525252;
-  --t-accent-2: #73736d;
-  --t-sidebar-bg: #fafaf8;
-  --t-topbar-bg: rgba(250,250,248,.96);
-  --t-input-bg: #ffffff;
-  --t-input-border: #c9c9c2;
-  --t-btn-bg: #303030;
-  --t-btn-shadow: none;
-  --t-radius: 5px;
-  --t-btn-radius: 3px;
-  --t-radius-sm: 3px;
-  --t-nav-active-bg: #eaeae5;
-  --t-nav-active-text: #242424;
-  --t-heading-font: Georgia, "Times New Roman", serif;
-}
-:root[data-finos-theme="elegant-plain"] body { background: #f5f5f2 !important; color: #242424; }
-:root[data-finos-theme="elegant-plain"] .glass-card,
-:root[data-finos-theme="elegant-plain"] .metric-card,
-:root[data-finos-theme="elegant-plain"] .dashboard-card,
-:root[data-finos-theme="elegant-plain"] .stat-card,
-:root[data-finos-theme="elegant-plain"] .content-card,
-:root[data-finos-theme="elegant-plain"] .panel,
-:root[data-finos-theme="elegant-plain"] .modal-content,
-:root[data-finos-theme="elegant-plain"] .dropdown-menu,
-:root[data-finos-theme="elegant-plain"] .dropdown-content,
-:root[data-finos-theme="elegant-plain"] [role="menu"],
-:root[data-finos-theme="elegant-plain"] [role="listbox"] {
-  color: #242424 !important;
-  background: #fff !important;
-  border-color: #e5e5e0 !important;
-  box-shadow: 0 2px 8px rgba(36,36,36,.045) !important;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-:root[data-finos-theme="elegant-plain"] h1,
-:root[data-finos-theme="elegant-plain"] h2,
-:root[data-finos-theme="elegant-plain"] h3,
-:root[data-finos-theme="elegant-plain"] h4 { color: #242424 !important; }
-:root[data-finos-theme="elegant-plain"] p,
-:root[data-finos-theme="elegant-plain"] label,
-:root[data-finos-theme="elegant-plain"] .card-label,
-:root[data-finos-theme="elegant-plain"] .metric-label,
-:root[data-finos-theme="elegant-plain"] .text-muted,
-:root[data-finos-theme="elegant-plain"] small { color: #525252; }
-:root[data-finos-theme="elegant-plain"] button.primary-button,
-:root[data-finos-theme="elegant-plain"] .primary-button,
-:root[data-finos-theme="elegant-plain"] button[type="submit"] {
-  color: #fff !important; background: #303030 !important; border: 1px solid #303030 !important;
-  box-shadow: none !important; text-shadow: none !important;
-}
-:root[data-finos-theme="elegant-plain"] .primary-button:hover,
-:root[data-finos-theme="elegant-plain"] button[type="submit"]:hover { background: #171717 !important; border-color: #171717 !important; }
-:root[data-finos-theme="elegant-plain"] .secondary-button,
-:root[data-finos-theme="elegant-plain"] .small-button,
-:root[data-finos-theme="elegant-plain"] .icon-button,
-:root[data-finos-theme="elegant-plain"] .menu-button {
-  color: #303030 !important; background: #fff !important; border: 1px solid #c9c9c2 !important; box-shadow: none !important;
-}
-:root[data-finos-theme="elegant-plain"] .secondary-button:hover,
-:root[data-finos-theme="elegant-plain"] .small-button:hover,
-:root[data-finos-theme="elegant-plain"] .icon-button:hover,
-:root[data-finos-theme="elegant-plain"] .menu-button:hover { background: #f0f0eb !important; }
-:root[data-finos-theme="elegant-plain"] .brand-icon,
-:root[data-finos-theme="elegant-plain"] .profile-avatar { background: #303030 !important; color: #fff !important; box-shadow: none !important; }
-:root[data-finos-theme="elegant-plain"] .navigation-item { color: #525252 !important; border-radius: 3px !important; }
-:root[data-finos-theme="elegant-plain"] .navigation-item:hover,
-:root[data-finos-theme="elegant-plain"] .navigation-item.active { background: #eaeae5 !important; color: #242424 !important; border-color: #d4d4cd !important; box-shadow: none !important; }
-:root[data-finos-theme="elegant-plain"] input,
-:root[data-finos-theme="elegant-plain"] textarea,
-:root[data-finos-theme="elegant-plain"] select {
-  color: #242424 !important; background: #fff !important; border-color: #c9c9c2 !important;
-}
-:root[data-finos-theme="elegant-plain"] input::placeholder,
-:root[data-finos-theme="elegant-plain"] textarea::placeholder { color: #737373 !important; opacity: 1; }
-:root[data-finos-theme="elegant-plain"] select option,
-:root[data-finos-theme="elegant-plain"] [role="option"],
-:root[data-finos-theme="elegant-plain"] [role="menuitem"] { color: #242424 !important; background: #fff !important; }
-:root[data-finos-theme="elegant-plain"] [role="option"]:hover,
-:root[data-finos-theme="elegant-plain"] [role="option"][aria-selected="true"],
-:root[data-finos-theme="elegant-plain"] [role="menuitem"]:hover { color: #242424 !important; background: #eaeae5 !important; }
-:root[data-finos-theme="elegant-plain"] :focus-visible { outline: 2px solid #525252 !important; outline-offset: 2px; }
-:root[data-finos-theme="elegant-plain"] table thead,
-:root[data-finos-theme="elegant-plain"] th { color: #303030 !important; background: #f0f0eb !important; }
-:root[data-finos-theme="elegant-plain"] td,
-:root[data-finos-theme="elegant-plain"] th { border-color: #e5e5e0 !important; }
-:root[data-finos-theme="elegant-plain"] .welcome-section h2 span { background: none !important; color: #242424 !important; -webkit-text-fill-color: currentColor !important; }
-:root[data-finos-theme="elegant-plain"] svg { filter: none; }
-:root[data-finos-theme="elegant-plain"] .finos-theme-option-elegant-plain .finos-theme-sample { --s-bg: #f5f5f2; --s-border: 1px solid #e5e5e0; --s-radius: 3px; --s-line: #303030; --s-line-radius: 0; --s-btn: #303030; --s-btn-radius: 2px; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* LIGHT THEME — restore readable text and stable card layouts across every module. */
-:root[data-finos-theme="light"] {
-  color-scheme: light;
-  --finos-bg: #f4f6fb;
-  --finos-surface: #ffffff;
-  --finos-card: #ffffff;
-  --finos-text: #202738;
-  --finos-text-primary: #202738;
-  --finos-muted: #667085;
-  --finos-border: #e1e6ef;
-  --finos-accent: #5b4bdb;
-}
-:root[data-finos-theme="light"] .welcome-section,
-:root[data-finos-theme="light"] .page-hero,
-:root[data-finos-theme="light"] .module-hero,
-:root[data-finos-theme="light"] .accounts-hero {
-  color: #202738 !important;
-}
-:root[data-finos-theme="light"] .welcome-section p,
-:root[data-finos-theme="light"] .welcome-section small,
-:root[data-finos-theme="light"] .welcome-section .eyebrow,
-:root[data-finos-theme="light"] .welcome-section .subtitle,
-:root[data-finos-theme="light"] .welcome-section .description,
-:root[data-finos-theme="light"] .welcome-section span:not(.gradient-text),
-:root[data-finos-theme="light"] .page-hero p,
-:root[data-finos-theme="light"] .module-hero p {
-  color: #e8eaf1 !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: currentColor !important;
-}
-:root[data-finos-theme="light"] .glass-card,
-:root[data-finos-theme="light"] .metric-card,
-:root[data-finos-theme="light"] .dashboard-card,
-:root[data-finos-theme="light"] .stat-card,
-:root[data-finos-theme="light"] .content-card,
-:root[data-finos-theme="light"] .panel,
-:root[data-finos-theme="light"] .account-card,
-:root[data-finos-theme="light"] .transaction-card,
-:root[data-finos-theme="light"] .account-list-item,
-:root[data-finos-theme="light"] .chart-of-accounts-card {
-  color: #202738;
-  background-color: #ffffff;
-  border-color: #e1e6ef;
-}
-:root[data-finos-theme="light"] .glass-card :is(h1,h2,h3,h4,h5,strong,b,th),
-:root[data-finos-theme="light"] .metric-card :is(h1,h2,h3,h4,h5,strong,b),
-:root[data-finos-theme="light"] .dashboard-card :is(h1,h2,h3,h4,h5,strong,b),
-:root[data-finos-theme="light"] .content-card :is(h1,h2,h3,h4,h5,strong,b),
-:root[data-finos-theme="light"] .account-card :is(h1,h2,h3,h4,h5,strong,b),
-:root[data-finos-theme="light"] .transaction-card :is(h1,h2,h3,h4,h5,strong,b) {
-  color: #202738 !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: currentColor !important;
-}
-:root[data-finos-theme="light"] .glass-card :is(p,small,label,span,td,li),
-:root[data-finos-theme="light"] .metric-card :is(p,small,label,span),
-:root[data-finos-theme="light"] .dashboard-card :is(p,small,label,span),
-:root[data-finos-theme="light"] .content-card :is(p,small,label,span),
-:root[data-finos-theme="light"] .account-card :is(p,small,label,span),
-:root[data-finos-theme="light"] .transaction-card :is(p,small,label,span) {
-  color: #596579;
-  opacity: 1;
-  -webkit-text-fill-color: currentColor;
-}
-:root[data-finos-theme="light"] .chart-of-accounts-card *,
-:root[data-finos-theme="light"] .accounts-list *,
-:root[data-finos-theme="light"] .transactions-list * {
-  opacity: 1;
-}
-:root[data-finos-theme="light"] input,
-:root[data-finos-theme="light"] textarea,
-:root[data-finos-theme="light"] select,
-:root[data-finos-theme="light"] [contenteditable="true"] {
-  color: #202738 !important;
-  background-color: #ffffff !important;
-  border-color: #cbd3e1 !important;
-}
-:root[data-finos-theme="light"] input::placeholder,
-:root[data-finos-theme="light"] textarea::placeholder { color: #687386 !important; opacity: 1 !important; }
-:root[data-finos-theme="light"] .topbar-actions { position: relative; }
-:root[data-finos-theme="light"] .header-popover {
-  position: absolute;
-  z-index: 1000;
-  top: calc(100% + 10px);
-  right: 0;
-  width: min(330px, calc(100vw - 28px));
-  padding: 14px;
-  border: 1px solid #e1e6ef;
-  border-radius: 12px;
-  background: #ffffff;
-  color: #202738;
-  box-shadow: 0 14px 36px rgba(25,35,55,.16);
-}
+
+
+
+
+
+
+
+
+
+
+
 .header-action-wrap { position: relative; display: flex; align-items: center; }
 .header-search-popover label { display:block; margin:0 0 8px; font-size:12px; font-weight:700; color:#344054; }
 .header-search-popover input { width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #cbd3e1; border-radius:8px; background:#fff; color:#202738; }
@@ -2575,8 +1440,8 @@ svg { flex-shrink: 0; }
 .header-profile-summary span { color:#667085; font-size:11px; overflow-wrap:anywhere; }
 .header-profile-divider { height:1px; margin:6px 0; background:#e1e6ef; }
 .header-profile-popover .header-signout { color:#b42318; font-weight:700; }
-:root[data-finos-theme="light"] .topbar-actions .profile-info strong { color:#202738; }
-:root[data-finos-theme="light"] .topbar-actions .profile-info span { color:#667085; }
+
+
 @media (max-width: 600px) {
   .header-profile-popover { right:0; }
   .header-search-popover { right:-90px; }
@@ -2619,183 +1484,57 @@ svg { flex-shrink: 0; }
 }
 
 /* Light theme: use the same readable, predictable surfaces across modules. */
-:root[data-finos-theme="light"] {
-  --finos-bg: #f4f6fb;
-  --finos-surface: #ffffff;
-  --finos-card: #ffffff;
-  --finos-text: #202738;
-  --finos-text-primary: #202738;
-  --finos-muted: #667085;
-  --finos-border: #e1e6ef;
-  --finos-accent: #5b4bdb;
-}
-:root[data-finos-theme="light"] .dashboard,
-:root[data-finos-theme="light"] .dashboard > section,
-:root[data-finos-theme="light"] .page-content,
-:root[data-finos-theme="light"] .content-area { color:#202738; }
-:root[data-finos-theme="light"] .dashboard .glass-card,
-:root[data-finos-theme="light"] .dashboard .metric-card,
-:root[data-finos-theme="light"] .dashboard .dashboard-card,
-:root[data-finos-theme="light"] .dashboard .stat-card,
-:root[data-finos-theme="light"] .dashboard .content-card,
-:root[data-finos-theme="light"] .dashboard .panel,
-:root[data-finos-theme="light"] .dashboard .account-card,
-:root[data-finos-theme="light"] .dashboard .transaction-card,
-:root[data-finos-theme="light"] .dashboard .account-list-item,
-:root[data-finos-theme="light"] .dashboard .chart-of-accounts-card {
-  color:#202738 !important;
-  background:#fff !important;
-  border-color:#e1e6ef !important;
-  box-shadow:0 2px 8px rgba(32,39,56,.045) !important;
-}
-:root[data-finos-theme="light"] .dashboard .glass-card :is(h1,h2,h3,h4,h5,strong,b,th),
-:root[data-finos-theme="light"] .dashboard .metric-card :is(h1,h2,h3,h4,h5,strong,b),
-:root[data-finos-theme="light"] .dashboard .dashboard-card :is(h1,h2,h3,h4,h5,strong,b),
-:root[data-finos-theme="light"] .dashboard .content-card :is(h1,h2,h3,h4,h5,strong,b),
-:root[data-finos-theme="light"] .dashboard .account-card :is(h1,h2,h3,h4,h5,strong,b),
-:root[data-finos-theme="light"] .dashboard .transaction-card :is(h1,h2,h3,h4,h5,strong,b) {
-  color:#202738 !important; opacity:1 !important; -webkit-text-fill-color:currentColor !important;
-}
-:root[data-finos-theme="light"] .dashboard .glass-card :is(p,small,label,span,td,li),
-:root[data-finos-theme="light"] .dashboard .metric-card :is(p,small,label,span),
-:root[data-finos-theme="light"] .dashboard .dashboard-card :is(p,small,label,span),
-:root[data-finos-theme="light"] .dashboard .content-card :is(p,small,label,span),
-:root[data-finos-theme="light"] .dashboard .account-card :is(p,small,label,span),
-:root[data-finos-theme="light"] .dashboard .transaction-card :is(p,small,label,span) {
-  color:#596579; opacity:1 !important; -webkit-text-fill-color:currentColor !important;
-}
-:root[data-finos-theme="light"] .dashboard .welcome-section,
-:root[data-finos-theme="light"] .dashboard .page-hero,
-:root[data-finos-theme="light"] .dashboard .module-hero,
-:root[data-finos-theme="light"] .dashboard .accounts-hero {
-  color:#202738 !important;
-}
-:root[data-finos-theme="light"] .dashboard .welcome-section :is(p,small,.eyebrow,.subtitle,.description),
-:root[data-finos-theme="light"] .dashboard .page-hero p,
-:root[data-finos-theme="light"] .dashboard .module-hero p {
-  color:#e8eaf1 !important; opacity:1 !important; -webkit-text-fill-color:currentColor !important;
-}
+
+
+
+
+
+
+
 
 /* Account rows were built with dark inline gradients; normalize them in Light
    and stack action controls below details on narrow screens. */
-:root[data-finos-theme="light"] .dashboard .glass-card > div[style*="grid-template-columns"] {
-  grid-template-columns:minmax(0,1fr) !important;
-  gap:12px !important;
-  background:#fff !important;
-  border:1px solid #e1e6ef !important;
-  border-radius:12px !important;
-  box-shadow:0 2px 8px rgba(32,39,56,.05) !important;
-  color:#202738 !important;
-}
-:root[data-finos-theme="light"] .dashboard .glass-card > div[style*="grid-template-columns"] * {
-  color:#344054;
-}
-:root[data-finos-theme="light"] .dashboard .glass-card > div[style*="grid-template-columns"] button {
-  color:#344054 !important;
-  background:#fff !important;
-  border-color:#cbd3e1 !important;
-}
-:root[data-finos-theme="light"] .dashboard .glass-card > div[style*="grid-template-columns"] button:hover {
-  background:#f0f2f8 !important;
-}
-@media (min-width: 760px) {
-  :root[data-finos-theme="light"] .dashboard .glass-card > div[style*="grid-template-columns"] {
-    grid-template-columns:minmax(0,1fr) minmax(150px,1fr) 110px !important;
-  }
-}
+
+
+
+
+
 
 /* Chart of Accounts uses inline dark colors for the original Default theme.
    Override those presentational values only when Light is selected. */
-:root[data-finos-theme="light"] .dashboard label[style*="rgba(255,255,255"] {
-  color:#344054 !important; background:#f8f9fc !important; border-color:#e1e6ef !important;
-}
-:root[data-finos-theme="light"] .dashboard table { color:#344054 !important; background:#fff !important; }
-:root[data-finos-theme="light"] .dashboard table thead,
-:root[data-finos-theme="light"] .dashboard table th { color:#344054 !important; background:#f2f4f8 !important; }
-:root[data-finos-theme="light"] .dashboard table td { color:#596579 !important; border-bottom-color:#e1e6ef !important; }
-:root[data-finos-theme="light"] .dashboard table td:nth-child(1) { color:#5145cd !important; }
-:root[data-finos-theme="light"] .dashboard table td:nth-child(2) { color:#202738 !important; }
-:root[data-finos-theme="light"] .dashboard table td span { color:#667085 !important; }
-:root[data-finos-theme="light"] .dashboard table tbody tr { background:#fff !important; }
-:root[data-finos-theme="light"] .dashboard table tbody tr:hover { background:#f8f9fc !important; }
-:root[data-finos-theme="light"] .dashboard input[type="checkbox"] { accent-color:#5b4bdb !important; }
-:root[data-finos-theme="light"] .dashboard .welcome-label,
-:root[data-finos-theme="light"] .dashboard .welcome-description { color:#667085 !important; -webkit-text-fill-color:currentColor !important; }
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* LIGHT THEME FOLLOW-UP: account cards, custom dropdown direction, and accounting tables. */
-:root[data-finos-theme="light"] .finos-select-wrap { position: relative !important; min-width: 0; width: 100%; }
-:root[data-finos-theme="light"] .finos-select-trigger {
-  display: flex !important; flex-direction: row !important; align-items: center !important;
-  justify-content: space-between !important; gap: 10px !important; width: 100% !important;
-  min-width: 0; text-align: left; color: #202738 !important; background: #fff !important;
-  border: 1px solid #cbd3e1 !important; border-radius: 9px !important; padding: 10px 12px !important;
-  white-space: normal; box-shadow: none !important;
-}
-:root[data-finos-theme="light"] .finos-select-trigger > span:first-child { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; color: #202738 !important; }
-:root[data-finos-theme="light"] .finos-select-chevron { flex: 0 0 auto; margin-left: auto; color: #596579 !important; }
-:root[data-finos-theme="light"] .finos-select-menu {
-  position: absolute !important; inset: calc(100% + 5px) 0 auto auto !important;
-  left: 0 !important; right: 0 !important; top: calc(100% + 5px) !important; bottom: auto !important;
-  z-index: 1200 !important; display: flex !important; flex-direction: column !important;
-  align-items: stretch !important; gap: 2px !important; width: 100% !important; max-height: min(300px, 55vh) !important;
-  overflow-y: auto !important; overflow-x: hidden !important; padding: 5px !important;
-  background: #fff !important; color: #202738 !important; border: 1px solid #d8deea !important;
-  border-radius: 10px !important; box-shadow: 0 12px 30px rgba(25,35,55,.16) !important;
-}
-:root[data-finos-theme="light"] .finos-select-option {
-  display: flex !important; flex-direction: row !important; align-items: center !important;
-  justify-content: space-between !important; gap: 10px !important; width: 100% !important;
-  min-height: 38px; padding: 9px 10px !important; text-align: left !important; white-space: normal !important;
-  color: #344054 !important; background: #fff !important; border: 0 !important; border-radius: 7px !important;
-}
-:root[data-finos-theme="light"] .finos-select-option:hover,
-:root[data-finos-theme="light"] .finos-select-option.is-selected { color: #312e81 !important; background: #f0efff !important; }
-:root[data-finos-theme="light"] .finos-select-check { flex: 0 0 auto; color: #5145cd !important; }
-:root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] {
-  grid-template-columns: minmax(0, 1fr) minmax(88px, .65fr) minmax(82px, 90px) !important;
-  gap: 12px !important; padding: 16px !important; background: #fff !important;
-  border: 1px solid #e1e6ef !important; border-radius: 13px !important;
-  box-shadow: 0 3px 12px rgba(31,41,55,.055) !important; min-width: 0;
-}
-:root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] > div:first-child > div:nth-child(2) {
-  color: #202738 !important; -webkit-text-fill-color: #202738 !important;
-}
-:root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] > div:first-child > div:nth-child(2) > div {
-  color: #596579 !important; -webkit-text-fill-color: #596579 !important;
-}
-:root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] > div:nth-child(2) > div:first-child {
-  color: #667085 !important; -webkit-text-fill-color: #667085 !important;
-}
-:root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] > div:nth-child(2) > div:last-child {
-  color: #202738 !important; -webkit-text-fill-color: #202738 !important;
-}
-:root[data-finos-theme="light"] .glass-card table,
-:root[data-finos-theme="light"] .glass-card table tbody,
-:root[data-finos-theme="light"] .glass-card table tr { background: #fff !important; color: #344054 !important; }
-:root[data-finos-theme="light"] .glass-card table th {
-  color: #344054 !important; background: #f4f6fa !important; border-color: #e1e6ef !important;
-  opacity: 1 !important; -webkit-text-fill-color: #344054 !important;
-}
-:root[data-finos-theme="light"] .glass-card table td {
-  color: #596579 !important; border-color: #e8ecf3 !important; opacity: 1 !important;
-  -webkit-text-fill-color: #596579 !important;
-}
-:root[data-finos-theme="light"] .glass-card table button { color: #344054 !important; background: #fff !important; border-color: #d7deea !important; }
-:root[data-finos-theme="light"] .glass-card .score,
-:root[data-finos-theme="light"] .glass-card .card-label { color: #667085 !important; -webkit-text-fill-color: #667085 !important; }
-@media (max-width: 700px) {
-  :root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] {
-    grid-template-columns: minmax(0, 1fr) minmax(76px, auto) !important;
-    align-items: start !important; column-gap: 10px !important; row-gap: 12px !important;
-  }
-  :root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] > div:first-child { grid-column: 1 / -1; }
-  :root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] > div:nth-child(2) { text-align: left !important; min-width: 0 !important; }
-  :root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] > div:last-child {
-    grid-column: 1 / -1; flex-direction: row !important; justify-content: flex-start; flex-wrap: wrap; gap: 8px !important;
-  }
-  :root[data-finos-theme="light"] .glass-card > div[style*="grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr) 90px"] > div:last-child button { width: auto !important; flex: 1 1 72px; }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* Theme tokens for account cards: JSX consumes these variables instead of fixed colors. */
@@ -2809,193 +1548,36 @@ svg { flex-shrink: 0; }
   --finos-account-muted: #aebbd3;
   --finos-account-subtle: #8997b2;
 }
-:root[data-finos-theme="light"],
-:root[data-finos-theme="minimal"],
-:root[data-finos-theme="skeuomorphism"],
-:root[data-finos-theme="neumorphism"],
-:root[data-finos-theme="claymorphism"],
-:root[data-finos-theme="bento-grid"] {
-  --finos-account-card-bg: var(--finos-surface, #fff);
-  --finos-account-card-border: var(--finos-border, #e1e6ef);
-  --finos-account-card-shadow: 0 3px 12px rgba(31,41,55,.055);
-  --finos-account-icon-bg: var(--finos-accent-soft, #f0efff);
-  --finos-account-icon-border: var(--finos-border, #e1e6ef);
-  --finos-account-title: var(--finos-text, #202738);
-  --finos-account-muted: var(--finos-muted, #596579);
-  --finos-account-subtle: var(--finos-muted, #667085);
-}
-:root[data-finos-theme="elegant-plain"] {
-  --finos-account-card-bg: #fff;
-  --finos-account-card-border: #e5e5e0;
-  --finos-account-card-shadow: 0 2px 8px rgba(36,36,36,.045);
-  --finos-account-icon-bg: #f0f0eb;
-  --finos-account-icon-border: #e5e5e0;
-  --finos-account-title: #242424;
-  --finos-account-muted: #525252;
-  --finos-account-subtle: #737373;
-}
+
+
 
 
 /* Wealth Manager balance sheet: honor the selected light-family theme.
    These are the actual component classes used by WealthManager.jsx. */
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .wc-balance-row {
-  color: var(--finos-text, #252a32);
-  border-color: var(--finos-border, #dfe3e8);
-  background: var(--t-card-bg, #fff);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .wc-balance-row:hover {
-  background: var(--finos-soft-accent, #f2f3f5);
-  border-color: var(--finos-border, #dfe3e8);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .wc-balance-label small {
-  color: var(--finos-muted, #626b78);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .wc-balance-track {
-  background: var(--finos-border, #e2e5e9);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .wc-balance-equation {
-  background: var(--t-inner-bg, #f4f5f7);
-  border-color: var(--finos-border, #dfe3e8);
-  color: var(--finos-muted, #626b78);
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .wc-balance-equation strong {
-  color: var(--finos-text, #252a32);
-}
+
+
+
+
+
+
 /* Elegant Plain uses restrained neutral bars rather than dark-theme grey. */
-:root[data-finos-theme="elegant-plain"] .wc-balance-track { background: #e8e5dd; }
-:root[data-finos-theme="elegant-plain"] .wc-balance-row.assets .wc-balance-track > span { background: #5c6470; }
-:root[data-finos-theme="elegant-plain"] .wc-balance-row.liabilities .wc-balance-track > span { background: #b7a18c; }
-:root[data-finos-theme="elegant-plain"] .wc-balance-row.net-worth .wc-balance-track > span { background: #6b8f80; }
+
+
+
+
 
 
 /* Chart of Accounts: restore readable contrast and mobile table usability.
    Scoped to this module; account data and accounting behavior are unchanged. */
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .chart-of-accounts-card {
-  color: var(--finos-text, #252a32) !important;
-  background: var(--t-card-bg, #fff) !important;
-  border-color: var(--finos-border, #dedfe4) !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: currentColor;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .chart-of-accounts-card :is(table,thead,tbody,tr,th,td,label,small,p,span,strong,b) {
-  opacity: 1 !important;
-  -webkit-text-fill-color: currentColor;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .chart-of-accounts-card :is(th,td) {
-  color: var(--finos-text, #252a32) !important;
-  border-color: var(--finos-border, #e1e4e9) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .chart-of-accounts-card :is(th) {
-  background: var(--t-inner-bg, #f0f1ed) !important;
-  color: var(--finos-text, #252a32) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .chart-of-accounts-card :is(td, .text-muted, .muted, small) {
-  color: var(--finos-muted, #5f6876) !important;
-}
-:root[data-finos-theme="elegant-plain"] .chart-of-accounts-card {
-  --finos-text: #292b30;
-  --finos-muted: #62666d;
-  --finos-border: #e2ded4;
-  --t-inner-bg: #f0efe9;
-}
-:root[data-finos-theme="elegant-plain"] .chart-of-accounts-card :is(th, thead) {
-  background: #efefe9 !important;
-  color: #292b30 !important;
-}
-:root[data-finos-theme="elegant-plain"] .chart-of-accounts-card :is(td, small, p, span) {
-  color: #62666d !important;
-}
-:root[data-finos-theme="elegant-plain"] .chart-of-accounts-card :is(td strong, td b, th strong, th b) {
-  color: #292b30 !important;
-}
+
+
+
+
+
+
+
+
+
 @media (max-width: 760px) {
   .chart-of-accounts-card {
     max-width: 100%;
@@ -3081,11 +1663,10 @@ svg { flex-shrink: 0; }
 .coa-table td:nth-child(6) button { max-width: 100%; }
 .coa-table tbody tr:hover { background: var(--finos-soft-accent, rgba(148,163,184,.07)) !important; }
 .coa-table tbody tr:last-child td { border-bottom: 0 !important; }
-:root[data-finos-theme="elegant-plain"] .coa-table th { background: #efeee8 !important; }
-:root[data-finos-theme="elegant-plain"] .coa-table td:nth-child(1) { color: #6b6578 !important; }
-:root[data-finos-theme="elegant-plain"] .coa-table td:nth-child(2) { color: #292b30 !important; }
-:root[data-finos-theme="elegant-plain"] .coa-table td:nth-child(3),
-:root[data-finos-theme="elegant-plain"] .coa-table td:nth-child(4) { color: #62666d !important; }
+
+
+
+
 @media (max-width: 760px) {
   .coa-page-heading { align-items: flex-start !important; }
   .coa-filter { max-width: 100%; }
@@ -3147,236 +1728,41 @@ svg { flex-shrink: 0; }
 }
 
 /* Light-family themes use dark foregrounds on their light theme surfaces. */
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .header-profile-popover {
-  background: var(--finos-surface, #fff) !important;
-  color: var(--finos-text, #202738) !important;
-  border-color: var(--finos-border, #e1e6ef) !important;
-  box-shadow: 0 12px 32px rgba(25,35,55,.16) !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .header-profile-popover .header-profile-summary strong,
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .header-profile-popover .header-popover-heading strong,
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .header-profile-popover > button {
-  color: var(--finos-text, #202738) !important;
-  -webkit-text-fill-color: currentColor !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .header-profile-popover .header-profile-summary span,
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .header-profile-popover .header-popover-heading span {
-  color: var(--finos-muted, #596579) !important;
-  -webkit-text-fill-color: currentColor !important;
-}
-:root:is(
-  [data-finos-theme="light"],
-  [data-finos-theme="minimal"],
-  [data-finos-theme="elegant-plain"],
-  [data-finos-theme="skeuomorphism"],
-  [data-finos-theme="neumorphism"],
-  [data-finos-theme="claymorphism"],
-  [data-finos-theme="bento-grid"]
-) .header-profile-popover > button:hover {
-  background: var(--finos-soft-accent, #f0efff) !important;
-  color: var(--finos-text, #202738) !important;
-}
-:root[data-finos-theme="elegant-plain"] .header-profile-popover .header-popover-primary {
-  background: #f0f0eb !important;
-  color: #343434 !important;
-  border-color: #e5e5e0 !important;
-}
+
+
+
+
+
 
 
 /* BRUTALISM THEME — Wealth Manager charts, balance sheet and cash-flow surfaces.
    Fix theme-mismatched white cards with pale text; preserve existing data and layout. */
-:root[data-finos-theme="brutalism"] .wealth-centre,
-:root[data-finos-theme="brutalism"] .wealth-centre :is(section,article,div,button,p,span,small,strong,b,label) {
-  -webkit-text-fill-color: currentColor;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre {
-  color: #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  .wc-welcome,.wc-info-panel,.wc-chart-panel,.wc-breakdown,.wc-next-phase,
-  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart,
-  .wc-flow-stats > div,.wc-chart-stat,.wc-chart-empty,.wc-breakdown-category
-) {
-  background: #ffffff !important;
-  color: #171717 !important;
-  border: 2px solid #171717 !important;
-  border-radius: 0 !important;
-  box-shadow: 4px 4px 0 #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  .wc-panel-heading,.wc-welcome,.wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
-) {
-  border-color: #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  h1,h2,h3,h4,strong,b,.wc-panel-heading h3,.wc-card-value,
-  .wc-balance-label strong,.wc-balance-value,.wc-flow-stats strong,
-  .wc-chart-stat strong,.wc-total-row strong
-) {
-  color: #171717 !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  p,small,label,.wc-chart-subtitle,.wc-note,.wc-card-label,.wc-card-subtitle,
-  .wc-balance-label small,.wc-flow-stats span,.wc-chart-stat span,
-  .wc-category-label,.wc-latest-main span,.wc-detail-row > div > span
-) {
-  color: #404040 !important;
-  opacity: 1 !important;
-  -webkit-text-fill-color: #404040 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-row {
-  background: #ffffff !important;
-  color: #171717 !important;
-  border: 2px solid #171717 !important;
-  border-radius: 0 !important;
-  box-shadow: 3px 3px 0 #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-row:hover {
-  background: #fef9c3 !important;
-  border-color: #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  .wc-balance-track,.wc-category-track,.wc-goal-track
-) {
-  background: #e5e5e5 !important;
-  border: 1px solid #171717 !important;
-  border-radius: 0 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  .wc-chart-empty,.wc-flow-stats > div,.wc-chart-stat
-) {
-  background: #fff !important;
-  color: #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  button,select,input
-) {
-  color: #171717 !important;
-  background: #ffffff !important;
-  border: 2px solid #171717 !important;
-  border-radius: 0 !important;
-  box-shadow: 2px 2px 0 #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre button:is(.active,[aria-pressed="true"]) {
-  background: #facc15 !important;
-  color: #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-chart-svg text {
-  fill: #171717 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-chart-svg :is(path,line,polyline) {
-  stroke: #171717;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-equation {
-  background: #fef9c3 !important;
-  color: #171717 !important;
-  border: 2px solid #171717 !important;
-  border-radius: 0 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-equation :is(strong,span) {
-  color: #171717 !important;
-  -webkit-text-fill-color: #171717 !important;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* BRUTALISM — strengthen text contrast in Wealth Manager's white chart panels.
    These targeted overrides address nested/low-opacity labels that remain pale on white. */
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-chart-surface,
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-asset-composition,
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-sheet-chart {
-  background: #ffffff !important;
-  color: #111111 !important;
-  border: 2px solid #111111 !important;
-  border-radius: 0 !important;
-  box-shadow: 5px 5px 0 #111111 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-chart-surface *,
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-asset-composition *,
-:root[data-finos-theme="brutalism"] .wealth-centre .wc-balance-sheet-chart * {
-  opacity: 1 !important;
-  text-shadow: none !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
-) :is(h1,h2,h3,h4,h5,strong,b,em,p,span,small,label,div,button,td,th,li) {
-  -webkit-text-fill-color: currentColor;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
-) :is(h1,h2,h3,h4,h5,strong,b) {
-  color: #111111 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
-) :is(p,span,small,label,li,td,th) {
-  color: #333333 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
-) :is(svg text) {
-  fill: #111111 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
-) :is(input,select,button) {
-  background: #ffffff !important;
-  color: #111111 !important;
-  border: 2px solid #111111 !important;
-  border-radius: 0 !important;
-}
-:root[data-finos-theme="brutalism"] .wealth-centre :is(
-  .wc-chart-surface,.wc-asset-composition,.wc-balance-sheet-chart
-) :is(button.active,button[aria-pressed="true"]) {
-  background: #facc15 !important;
-}
+
+
+
+
+
+
+
+
 

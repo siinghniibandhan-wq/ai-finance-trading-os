@@ -267,7 +267,7 @@ export default function App() {
     "Dashboard", "Wealth Manager", "Accounts", "Account Profile", "Transactions", "Ledger", "Chart of Accounts",
     "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio",
     "Holdings", "Investment Transactions", "Markets", "Goals",
-    "AI Assistant", "Tax", "Playground", "Settings", "Finance Diary", "Admin Panel"
+    "AI Assistant", "Tax", "Settings", "Finance Diary", "Admin Panel"
   ]);
   const getPageFromLocation = () => {
     const params = new URLSearchParams(window.location.search);
@@ -505,11 +505,11 @@ export default function App() {
                   <label htmlFor="global-page-search">Search Financial OS</label>
                   <input id="global-page-search" autoFocus value={headerSearch} onChange={(event) => setHeaderSearch(event.target.value)} placeholder="Search pages…" />
                   <div className="header-search-results">
-                    {["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Playground", "Settings", "Finance Diary", "Account Profile"]
+                    {["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"]
                       .filter((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase()))
                       .slice(0, 8)
                       .map((page) => <button type="button" key={page} onClick={() => { setHeaderPanel(""); setHeaderSearch(""); handleNavigation(page); }}>{page}</button>)}
-                    {headerSearch.trim() && !["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Playground", "Settings", "Finance Diary", "Account Profile"].some((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase())) && <p className="header-popover-empty">No matching pages found.</p>}
+                    {headerSearch.trim() && !["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"].some((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase())) && <p className="header-popover-empty">No matching pages found.</p>}
                   </div>
                 </div>
               )}
@@ -591,8 +591,6 @@ export default function App() {
    <InvestmentTransactions />
 ) : activePage === "Markets" ? (
    <MarketsPage />
-) : activePage === "Playground" ? (
-   <PlaygroundPage />
 ) : activePage === "Tax" ? (
    <TaxPage />
 ) : activePage === "Goals" ? (
@@ -3275,33 +3273,6 @@ function AIAssistantPage() {
     </div></div>;
 }
 
-// ============================================================
-// FINANCIAL OS PLAYGROUND — standalone research and simulation workspace
-function PlaygroundPage() {
-  const [tab, setTab] = useState("Overview");
-  const [symbols, setSymbols] = useState("RELIANCE, TCS, INFY, HDFCBANK");
-  const [strategy, setStrategy] = useState("Moving average crossover");
-  const [fastPeriod, setFastPeriod] = useState(10);
-  const [slowPeriod, setSlowPeriod] = useState(30);
-  const tabs = ["Overview", "Market Data", "Strategy Builder", "Backtesting", "Paper Trading", "Risk Controls"];
-  const panel = (title, description) => <section className="glass-card" style={{ padding: 20, marginTop: 16 }}><h3>{title}</h3><p>{description}</p></section>;
-  return <div style={{ maxWidth: 1100, margin: "0 auto", padding: "8px 0 24px" }}>
-    <section className="glass-card" style={{ padding: 22, marginBottom: 16 }}>
-      <p className="card-label">FINANCIAL OS / PLAYGROUND</p><h2 style={{ margin: "6px 0" }}>Research & Paper Trading Playground</h2>
-      <p style={{ opacity: .75 }}>Standalone workspace. No external trading engine, AI provider, or broker order endpoint is connected here. Live execution is disabled.</p>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><span>Paper trading only</span><span>·</span><span>Live orders disabled</span><span>·</span><span>Market data depends on configured providers</span></div>
-    </section>
-    <nav aria-label="Playground sections" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-      {tabs.map(item => <button key={item} type="button" className={tab === item ? "primary-button" : "secondary-button"} onClick={() => setTab(item)} aria-pressed={tab === item}>{item}</button>)}
-    </nav>
-    {tab === "Overview" && panel("Workspace status", "This workspace is independent of external trading engines. Configure market data in the existing Markets module; this Playground does not invent prices or submit real orders.")}
-    {tab === "Market Data" && <section className="glass-card" style={{ padding: 20 }}><h3>Market data watchlist</h3><p>Symbols below are local input only. No quote is shown until a verified market-data source is connected.</p><label style={{ display: "block" }}>Symbols<input value={symbols} onChange={e => setSymbols(e.target.value)} aria-label="Market symbols" style={{ display: "block", width: "100%", marginTop: 8, padding: 10 }} /></label><p style={{ opacity: .75 }}>Data status: not fetched by this Playground.</p></section>}
-    {tab === "Strategy Builder" && <section className="glass-card" style={{ padding: 20 }}><h3>Strategy draft</h3><label style={{ display: "block", marginBottom: 12 }}>Strategy<select value={strategy} onChange={e => setStrategy(e.target.value)} style={{ display: "block", padding: 10, marginTop: 6 }}><option>Moving average crossover</option><option>Momentum watchlist</option><option>Mean reversion</option><option>Breakout watchlist</option></select></label><label>Fast period <input type="number" min="1" max="200" value={fastPeriod} onChange={e => setFastPeriod(Number(e.target.value))} /></label><label style={{ marginLeft: 12 }}>Slow period <input type="number" min="2" max="500" value={slowPeriod} onChange={e => setSlowPeriod(Number(e.target.value))} /></label><p>{slowPeriod > fastPeriod && fastPeriod > 0 ? "Draft parameters valid; no signal generated." : "Set slow period greater than fast period."}</p></section>}
-    {tab === "Backtesting" && panel("Backtesting", "Backtests require validated historical prices, fees, slippage, and a simulation engine. No results are generated until those are connected and verified.")}
-    {tab === "Paper Trading" && panel("Paper trading", "Reserved for simulated orders and fills only. No broker API is called and no real order can be submitted from this workspace.")}
-    {tab === "Risk Controls" && panel("Risk controls", "Risk limits and a kill switch must be enforced by the execution backend before any live-trading capability is considered. Live execution remains disabled.")}
-  </div>;
-}
 function PlaceholderPage({ title }) {
 
   return (

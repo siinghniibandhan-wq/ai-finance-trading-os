@@ -10,7 +10,7 @@ import "./landing.css";
 const plans = [
   { name: "Orbit", price: 69, tagline: "Essential money management", popular: false, features: ["Accounts module", "Budget creation and tracking", "Account balances and summaries", "Basic income and expense tracking"] },
   { name: "Nova", price: 199, tagline: "Complete personal finance workspace", popular: true, features: ["Everything in Orbit", "All standard Financial OS modules", "Transactions, transfers and categories", "Investments, holdings and portfolio tracking", "Markets, instrument search and watchlists", "Loans, goals and financial planning", "Dashboards and analytics", "Available tax calculations and planning tools", "Standard AI tools and themes"] },
-  { name: "Galaxy", price: 399, tagline: "Premium financial intelligence", popular: false, features: ["Everything in Nova", "Wealth Manager tools", "Advanced wealth analytics", "Advanced AI and Research Playground tools where available", "Priority support"] },
+  { name: "Galaxy", price: 399, tagline: "Premium financial intelligence", popular: false, features: ["Everything in Nova", "Wealth Manager tools", "Advanced wealth analytics", "Advanced AI-assisted financial insights where available", "Priority support"] },
 ];
 const features = [
   { icon: Wallet, title: "Money, organised", text: "Bring accounts, transactions, budgets and bills into one clear workspace." },

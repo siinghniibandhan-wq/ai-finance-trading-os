@@ -82,6 +82,7 @@ from app.routes import (
     tax_business_income,
     tax_house_property,
     tax_review,
+    vibe_trading,
 )
 
 
@@ -363,6 +364,7 @@ app.include_router(auth.router)
 app.include_router(payments.router)
 app.include_router(profile.router)
 app.include_router(ai_assistant.router)
+app.include_router(vibe_trading.router)
 app.include_router(broker_orders.router)
 app.include_router(broker_reconciliation.router)
 

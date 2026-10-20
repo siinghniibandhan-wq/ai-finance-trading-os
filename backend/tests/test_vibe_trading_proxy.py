@@ -166,3 +166,18 @@ def test_swarm_run_events_proxies_sse_stream(monkeypatch):
         "timeout": 30,
     }
     assert response.media_type == "text/event-stream"
+
+
+
+def test_status_checks_actual_vibe_connectivity(monkeypatch):
+    monkeypatch.setenv("VIBE_TRADING_BASE_URL", "https://vibe.example.test")
+    monkeypatch.setenv("VIBE_TRADING_API_KEY", "test-secret")
+    calls = {}
+    def fake_request(path, method="GET", payload=None, query=None, timeout=20):
+        calls.update(path=path, method=method, query=query, timeout=timeout)
+        return []
+    monkeypatch.setattr(vibe_trading, "_request", fake_request)
+    result = vibe_trading.status(_user=None)
+    assert result["connected"] is True
+    assert result["configured"] is True
+    assert calls == {"path": "/runs", "method": "GET", "query": {"limit": 1}, "timeout": 3}

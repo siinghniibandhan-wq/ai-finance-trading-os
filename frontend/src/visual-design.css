@@ -3650,3 +3650,47 @@ svg { flex-shrink: 0; }
   .finos-theme-settings-heading { gap: 10px; }
   .finos-theme-current { white-space: normal; }
 }
+
+
+/* Tax Centre header and period card: theme-token driven for every theme. */
+.tax-centre .tax-centre-heading { min-width: 0; }
+.tax-centre .tax-centre-heading h2 { color: var(--finos-text, var(--th-text)) !important; }
+.tax-centre .tax-centre-heading p { color: var(--finos-muted, var(--th-muted)) !important; }
+.tax-centre .tax-period-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.2fr);
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--finos-border, var(--th-border));
+  border-radius: var(--finos-radius, 14px);
+  background: var(--finos-surface, var(--th-card));
+  color: var(--finos-text, var(--th-text));
+  box-sizing: border-box;
+}
+.tax-centre .tax-period-item { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.tax-centre .tax-period-label {
+  color: var(--finos-muted, var(--th-muted)) !important;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.tax-centre .tax-period-value {
+  color: var(--finos-text, var(--th-text)) !important;
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.tax-centre .tax-period-divider { width: 1px; align-self: stretch; min-height: 34px; background: var(--finos-border, var(--th-border)); }
+@media (max-width: 600px) {
+  .tax-centre .tax-period-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px 16px;
+  }
+  .tax-centre .tax-period-divider { width: 100%; height: 1px; min-height: 0; }
+  .tax-centre .tax-period-value { font-size: 14px; }
+}

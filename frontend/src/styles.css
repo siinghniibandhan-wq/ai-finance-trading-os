@@ -2707,13 +2707,14 @@ input, textarea { color-scheme: light; }
 .account-contact-heading h3 { margin: 0 0 7px; color: var(--finos-text, inherit); }
 .account-contact-heading p { margin: 0; max-width: 720px; color: var(--finos-muted, inherit); line-height: 1.55; font-size: 13px; }
 .account-contact-eyebrow { margin: 0 0 7px; color: var(--finos-accent, inherit); font-size: 10px; font-weight: 800; letter-spacing: .12em; }
-.account-contact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
-.account-contact-form { display: grid; align-content: start; gap: 12px; min-width: 0; padding: 16px; border: 1px solid var(--finos-border, currentColor); border-radius: var(--t-radius-sm, 10px); background: var(--t-inner-bg, var(--t-card-bg, transparent)); color: var(--finos-text, inherit); }
-.account-contact-form h4 { margin: 0 0 2px; color: var(--finos-text, inherit); font-size: 14px; }
-.account-contact-form label { display: grid; gap: 7px; color: var(--finos-text, inherit); font-size: 12px; font-weight: 650; }
-.account-contact-form input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 42px; padding: 10px 12px; border: 1px solid var(--finos-border, currentColor); border-radius: var(--t-radius-sm, 9px); background: var(--t-inner-bg, var(--t-card-bg, transparent)); color: var(--finos-text, inherit); font: inherit; }
-.account-contact-form input:focus-visible { outline: 2px solid var(--finos-accent, currentColor); outline-offset: 2px; }
-.account-contact-form .primary-button { justify-self: start; max-width: 100%; }
+.account-contact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; align-items: stretch; }
+.account-contact-form { display: grid; grid-template-rows: auto auto auto 1fr; align-content: start; gap: 12px; min-width: 0; height: 100%; box-sizing: border-box; padding: 16px; border: 1px solid var(--th-border); border-radius: var(--t-radius-sm, 10px); background: var(--th-card); color: var(--th-text); }
+.account-contact-form h4 { margin: 0 0 2px; color: var(--th-text); font-size: 14px; }
+.account-contact-form label { display: grid; gap: 7px; color: var(--th-text); font-size: 12px; font-weight: 650; }
+.account-contact-form input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 42px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--th-text) 32%, var(--th-border)) !important; border-radius: var(--t-radius-sm, 9px); background: var(--th-page); color: var(--th-text); font: inherit; }
+.account-contact-form input::placeholder { color: var(--th-muted); opacity: 1; }
+.account-contact-form input:focus-visible { outline: 2px solid var(--th-accent); outline-offset: 2px; border-color: var(--th-accent) !important; }
+.account-contact-form .primary-button { justify-self: start; align-self: end; max-width: 100%; }
 .account-contact-form button:disabled { opacity: .6; cursor: wait; }
 .account-contact-security, .account-contact-loading { margin: 14px 0 0; color: var(--finos-muted, inherit); font-size: 11px; line-height: 1.55; }
 .account-contact-message { margin-top: 14px; padding: 11px 13px; border: 1px solid var(--finos-border, currentColor); border-radius: var(--t-radius-sm, 9px); font-size: 12px; line-height: 1.5; }

@@ -109,6 +109,19 @@ def list_alphas(limit: int = Query(50, ge=1, le=200), zoo: str | None = None, th
     return _request("/alpha/list", query={"limit": limit, "zoo": zoo, "theme": theme, "universe": universe})
 
 
+@router.get("/swarm/runs")
+def list_swarm_runs(limit: int = Query(20, ge=1, le=100), _user=Depends(get_current_user)):
+    return _request("/swarm/runs", query={"limit": limit})
+
+
+@router.get("/swarm/runs/{run_id}")
+def get_swarm_run(run_id: str, _user=Depends(get_current_user)):
+    safe_id = run_id.strip()
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", safe_id):
+        raise HTTPException(status_code=400, detail="Invalid Vibe Trading swarm run ID.")
+    return _request(f"/swarm/runs/{safe_id}")
+
+
 @router.get("/swarm/presets")
 def swarm_presets(_user=Depends(get_current_user)):
     return _request("/swarm/presets")

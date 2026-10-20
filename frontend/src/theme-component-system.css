@@ -234,3 +234,80 @@
   border-color: var(--th-tab-border) !important;
   box-shadow: var(--th-tab-shadow, none) !important;
 }
+
+
+/* Market module: use the same shared theme-token contract in every theme.
+   Keep theme-specific palette values in theme-unify.css; do not define
+   separate per-theme Market colours here. Visual-only rules; no data/API changes. */
+:root[data-finos-theme] .markets-workspace {
+  color: var(--th-text) !important;
+  font-family: var(--th-font);
+}
+:root[data-finos-theme] .markets-workspace :is(
+  .market-card,.glass-card,.panel,.data-card,.card,
+  .instrument-chart-panel,.instrument-research-panel,.instrument-ltp-panel,
+  .instrument-watchlist-card,.instrument-market-news-panel,.instrument-search-panel,
+  .instrument-search-results,.instrument-search-result,
+  [aria-label="Market instrument search"],[aria-label="Selected instrument"]
+) {
+  background-color: var(--th-surface-raised) !important;
+  color: var(--th-text) !important;
+  border-color: var(--th-border) !important;
+  border-radius: var(--th-radius) !important;
+  box-shadow: var(--th-card-shadow) !important;
+}
+:root[data-finos-theme] .markets-workspace :is(input,select,textarea,[role="combobox"],.finos-select-trigger) {
+  background: var(--th-input-surface) !important;
+  color: var(--th-input-text) !important;
+  border-color: var(--th-input-border) !important;
+  border-radius: var(--th-control-radius) !important;
+  -webkit-text-fill-color: var(--th-input-text) !important;
+}
+:root[data-finos-theme] .markets-workspace input::placeholder,
+:root[data-finos-theme] .markets-workspace textarea::placeholder {
+  color: var(--th-muted) !important;
+  -webkit-text-fill-color: var(--th-muted) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme] .markets-workspace :is(button.primary-button,.primary-button,button[type="submit"]) {
+  background: var(--th-button-primary-bg) !important;
+  color: var(--th-button-primary-text) !important;
+  border-color: var(--th-accent) !important;
+  border-radius: var(--th-control-radius) !important;
+  -webkit-text-fill-color: var(--th-button-primary-text) !important;
+}
+:root[data-finos-theme] .markets-workspace :is(button.secondary-button,.secondary-button) {
+  background: var(--th-button-secondary-bg) !important;
+  color: var(--th-button-secondary-text) !important;
+  border-color: var(--th-border) !important;
+  border-radius: var(--th-control-radius) !important;
+  -webkit-text-fill-color: var(--th-button-secondary-text) !important;
+}
+:root[data-finos-theme] .markets-workspace :is(h1,h2,h3,h4,h5,h6,strong,b) {
+  color: var(--th-text) !important;
+  -webkit-text-fill-color: var(--th-text) !important;
+}
+:root[data-finos-theme] .markets-workspace :is(p,small,label,dt,dd,th,td,.muted,.text-muted,.market-label,.instrument-label) {
+  color: var(--th-muted) !important;
+  -webkit-text-fill-color: var(--th-muted) !important;
+}
+:root[data-finos-theme] .markets-workspace :is(.price-positive,.positive,.text-positive,[data-tone="positive"],[data-direction="up"]) {
+  color: var(--th-pos) !important;
+  -webkit-text-fill-color: var(--th-pos) !important;
+}
+:root[data-finos-theme] .markets-workspace :is(.price-negative,.negative,.text-negative,[data-tone="negative"],[data-direction="down"]) {
+  color: var(--th-neg) !important;
+  -webkit-text-fill-color: var(--th-neg) !important;
+}
+:root[data-finos-theme] .markets-workspace :is(a,.link-button) {
+  color: var(--th-accent);
+}
+
+/* All Market buttons use semantic variants only; neutral buttons retain their own
+   component role and are not force-recoloured as secondary actions. */
+:root[data-finos-theme] .markets-workspace button:not(.primary-button):not(.secondary-button):not([type="submit"]) {
+  color: var(--th-text);
+  border-color: var(--th-border);
+  border-radius: var(--th-control-radius);
+  -webkit-text-fill-color: currentColor;
+}

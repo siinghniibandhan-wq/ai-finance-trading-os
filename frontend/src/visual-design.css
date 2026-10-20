@@ -3385,3 +3385,63 @@ svg { flex-shrink: 0; }
 /* New theme identities: layout remains shared; palette and component tokens live centrally. */
 :root[data-finos-theme="nordic"] body { background: var(--th-page); color: var(--th-text); font-family: var(--th-font); }
 :root[data-finos-theme="editorial"] body { background: var(--th-page); color: var(--th-text); font-family: var(--th-font); }
+
+
+/* Nordic and Editorial: keep the shared topbar dimensions while giving each
+   theme a clearly visible, theme-matched header surface and title treatment. */
+@media (min-width: 801px) {
+  :root[data-finos-theme="nordic"] .topbar {
+    height: 82px;
+    min-height: 82px;
+    box-sizing: border-box;
+    padding: 0 30px;
+    background: var(--th-card) !important;
+    border-bottom: 1px solid var(--th-border) !important;
+    box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--th-accent) 12%, transparent);
+  }
+  :root[data-finos-theme="nordic"] .topbar .page-title h1 {
+    color: var(--th-text) !important;
+    font-family: var(--th-font);
+    font-size: 19px;
+    line-height: 1.25;
+    font-weight: 650;
+  }
+  :root[data-finos-theme="nordic"] .topbar .eyebrow {
+    color: var(--th-muted) !important;
+    font-size: 8px;
+    line-height: 1.3;
+  }
+
+  :root[data-finos-theme="editorial"] .topbar {
+    height: 82px;
+    min-height: 82px;
+    box-sizing: border-box;
+    padding: 0 30px;
+    background: var(--th-card) !important;
+    border-bottom: 1px solid var(--th-border) !important;
+    box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--th-accent) 18%, transparent);
+  }
+  :root[data-finos-theme="editorial"] .topbar .page-title h1 {
+    color: var(--th-text) !important;
+    font-family: var(--th-font);
+    font-size: 20px;
+    line-height: 1.25;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+  :root[data-finos-theme="editorial"] .topbar .eyebrow {
+    color: var(--th-muted) !important;
+    font-size: 8px;
+    line-height: 1.3;
+    letter-spacing: 1.5px;
+  }
+}
+
+@media (max-width: 800px) {
+  :root[data-finos-theme="nordic"] .topbar,
+  :root[data-finos-theme="editorial"] .topbar {
+    min-height: 70px;
+    background: var(--th-card) !important;
+    border-bottom: 1px solid var(--th-border) !important;
+  }
+}

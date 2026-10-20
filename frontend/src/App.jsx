@@ -580,7 +580,7 @@ export default function App() {
 ) : activePage === "Accounts" ? (
   <Accounts />
 ) : activePage === "Account Profile" ? (
-  <AccountCompletionPage initialSection={profileInitialSection} />
+  <AccountCompletionPage initialSection={profileInitialSection} onNavigate={handleNavigation} />
 ) : activePage === "Transactions" ? (
   <Transactions />
 ) : activePage === "Ledger" ? (
@@ -8922,7 +8922,7 @@ const holdingReturn =
 // salary structure, and connection readiness in one guided page.
 // Profile data is persisted by the authenticated backend identity.
 // ============================================================
-function AccountCompletionPage({ initialSection = "Basic Profile" }) {
+function AccountCompletionPage({ initialSection = "Basic Profile", onNavigate }) {
   const emptyProfile = {
     legal_name: "", display_name: "", date_of_birth: "", pan: "", aadhaar_last4: "",
     kyc_method: "manual", kyc_status: "not_verified", tax_residency: "India",
@@ -9044,7 +9044,15 @@ function AccountCompletionPage({ initialSection = "Basic Profile" }) {
   };
   const inputStyle = { width: "100%", boxSizing: "border-box", borderRadius: "10px", padding: "11px 12px", color: "var(--finos-text, inherit)", background: "var(--t-inner-bg, var(--t-card-bg, transparent))", border: "1px solid var(--finos-border, currentColor)" };
   return <div className="dashboard">
-    <section className="welcome-section"><div><p className="welcome-label">ACCOUNT</p><h2>Account <span>completion.</span></h2><p className="welcome-description">Complete your profile once. These details will support KYC, tax preparation, and future account connections.</p></div></section>
+    <section className="welcome-section">
+      <div style={{ width: "100%" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "10px" }}>
+          <button type="button" className="secondary-button" onClick={() => onNavigate?.("Settings")} style={{ display: "inline-flex", alignItems: "center", gap: "6px", minHeight: "36px" }} aria-label="Back to Settings">← Back to Settings</button>
+          <button type="button" className="secondary-button" onClick={() => onNavigate?.("Settings")} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "36px", height: "36px", padding: 0, fontSize: "20px", lineHeight: 1 }} aria-label="Close account profile" title="Close account profile">×</button>
+        </div>
+        <p className="welcome-label">ACCOUNT</p><h2>Account <span>completion.</span></h2><p className="welcome-description">Complete your profile once. These details will support KYC, tax preparation, and future account connections.</p>
+      </div>
+    </section>
     <AccountContactSettings />
     <section className="metrics-grid"><MetricCard title="Profile progress" value={`${Math.round(completed / totalSections * 100)}%`} change={`${completed} of ${totalSections} sections ready`} positive icon={CircleDollarSign} /><MetricCard title="KYC status" value={profile.kyc_status === "verified" ? "Verified" : "Not verified"} change="Name/PAN entry alone does not verify identity" icon={Receipt} /></section>
     <section className="glass-card" style={{ padding: "18px", marginBottom: "18px" }}><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>{sections.map(section => <button key={section} type="button" onClick={() => setActiveSection(section)} className={activeSection === section ? "primary-button" : "secondary-button"} style={{ padding: "9px 12px" }}>{section}{sectionComplete(section) ? " ✓" : ""}</button>)}</div></section>

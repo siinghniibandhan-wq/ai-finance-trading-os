@@ -721,7 +721,7 @@ function Dashboard() {
   const formatCurrency = (value) => new Intl.NumberFormat("en-IN", {
     style: "currency", currency: "INR", maximumFractionDigits: 0,
   }).format(Number(value) || 0);
-  const dashboardInputStyle = { width: "100%", boxSizing: "border-box", display: "block", marginTop: "6px", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "#151525", color: "#fff", outline: "none" };
+  const dashboardInputStyle = { width: "100%", boxSizing: "border-box", display: "block", marginTop: "6px", padding: "10px 11px", borderRadius: "9px", border: "1px solid var(--finos-color-1466bbb7)", background: "var(--finos-color-247d2301)", color: "var(--finos-color-7c4b7360)", outline: "none" };
 
   const submitOutstandingSettlement = async (event) => {
     event.preventDefault();
@@ -852,7 +852,7 @@ function Dashboard() {
         ) : (
           <div style={{ display: "grid", gap: "10px" }}>
             {receivablePayable.items.map((item) => (
-              <div key={item.id} style={{ border: "1px solid rgba(255,255,255,0.10)", borderRadius: "12px", padding: "12px 14px" }}>
+              <div key={item.id} style={{ border: "1px solid var(--finos-color-1466bb33)", borderRadius: "12px", padding: "12px 14px" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
                   <div>
                     <strong>{item.type === "receivable" ? "To receive" : "To pay"} · {item.party_name || item.description || `Transaction #${item.id}`}</strong>
@@ -1075,8 +1075,8 @@ class TaxSectionErrorBoundary extends React.Component {
           style={{
             padding: "18px",
             borderRadius: "14px",
-            border: "1px solid rgba(239,68,68,0.3)",
-            background: "rgba(239,68,68,0.08)",
+            border: "1px solid var(--finos-color-3196ea8b)",
+            background: "var(--finos-color-647441f0)",
             color: "var(--finos-status-danger-soft)",
             lineHeight: 1.7,
           }}
@@ -1524,7 +1524,7 @@ function TaxPage() {
   const deleteHouseProperty = (id) => { if (window.confirm("Delete this house property record?")) hpCall(`${API_BASE_URL}/api/tax-house-property/${id}`, { method: "DELETE" }, "Record deleted."); };
 
   const renderHouseProperty = () => {
-    const box = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(12,16,30,0.72)", color: "inherit" };
+    const box = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid var(--finos-color-1466bbb7)", background: "var(--finos-color-f17fdd02)", color: "inherit" };
     const head = incomeData?.income_heads?.house_property || {};
     const typeNames = { let_out: "Let-out property", self_occupied: "Self-occupied property", none: "No house property income" };
     const isNone = hpForm.property_type === "none";
@@ -1532,10 +1532,10 @@ function TaxPage() {
     return (
       <section className="tax-house-property-panel" style={{ ...panelStyle, marginTop: 0 }}>
         <h3 style={{ marginTop: 0 }}>House property income</h3>
-        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: 12, lineHeight: 1.6 }}>Add each property for {financialYear}, or confirm that you have none. A record counts in your taxable income only after you verify it. Rent receipts in Money are never counted automatically. The app does not inspect documents.</p>
+        <p style={{ color: "var(--finos-color-1466cb3f)", fontSize: 12, lineHeight: 1.6 }}>Add each property for {financialYear}, or confirm that you have none. A record counts in your taxable income only after you verify it. Rent receipts in Money are never counted automatically. The app does not inspect documents.</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "10px", marginBottom: "12px" }}>
-          <div style={cardStyle}><div style={labelStyle}>House property income counted</div><div style={valueStyle}>{head.available ? formatCurrency(head.amount) : "Not available"}</div>{!head.available && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", marginTop: 4 }}>{safeText(head.reason, "No verified record yet.")}</div>}</div>
-          {head.available && Number(head.loss_not_set_off) > 0 && <div style={cardStyle}><div style={labelStyle}>Loss not set off</div><div style={valueStyle}>{formatCurrency(head.loss_not_set_off)}</div><div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", marginTop: 4 }}>Above the allowed limit, or not allowed in this regime. Carry-forward is not calculated here.</div></div>}
+          <div style={cardStyle}><div style={labelStyle}>House property income counted</div><div style={valueStyle}>{head.available ? formatCurrency(head.amount) : "Not available"}</div>{!head.available && <div style={{ color: "var(--finos-color-c28ec047)", fontSize: "11px", marginTop: 4 }}>{safeText(head.reason, "No verified record yet.")}</div>}</div>
+          {head.available && Number(head.loss_not_set_off) > 0 && <div style={cardStyle}><div style={labelStyle}>Loss not set off</div><div style={valueStyle}>{formatCurrency(head.loss_not_set_off)}</div><div style={{ color: "var(--finos-color-c28ec047)", fontSize: "11px", marginTop: 4 }}>Above the allowed limit, or not allowed in this regime. Carry-forward is not calculated here.</div></div>}
         </div>
         {Number(head.money_rent_transactions_detected) > 0 && <div style={{ color: "var(--finos-status-warning)", fontSize: 12, marginBottom: 12 }}>{head.money_rent_transactions_detected} rent receipt(s) totalling {formatCurrency(head.money_rent_total_detected)} are recorded in Money under House Property. They are not counted until you add and verify a house property record.</div>}
         <div style={{ display: "grid", gap: "8px" }}>
@@ -1553,14 +1553,14 @@ function TaxPage() {
           {hpMessage && <div role="status" style={{ color: "var(--finos-status-success-soft)", fontSize: "12px" }}>{hpMessage}</div>}
         </div>
         <div style={{ display: "grid", gap: "10px", marginTop: "14px" }}>
-          {hpRecords.length === 0 && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>No house property records for this year.</div>}
+          {hpRecords.length === 0 && <div style={{ color: "var(--finos-color-c28ec047)", fontSize: "12px" }}>No house property records for this year.</div>}
           {hpRecords.map((r) => (
             <div key={r.id} style={{ ...cardStyle, padding: "13px" }}>
               <div style={labelStyle}>{typeNames[r.property_type] || r.property_type}{r.property_label ? ` · ${r.property_label}` : ""} · {r.status === "verified" ? "Verified" : "Pending review"}</div>
-              {r.property_type !== "none" && <div style={{ color: "rgba(255,255,255,0.62)", fontSize: "12px", margin: "6px 0" }}>
+              {r.property_type !== "none" && <div style={{ color: "var(--finos-color-1466d076)", fontSize: "12px", margin: "6px 0" }}>
                 {r.property_type === "let_out" && <>Rent {formatCurrency(r.annual_rent_received)} · Municipal taxes {formatCurrency(r.municipal_taxes_paid)} · </>}Loan interest {formatCurrency(r.interest_on_housing_loan)}
               </div>}
-              {r.property_type !== "none" && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", marginBottom: "8px" }}>Estimated income from this property (old regime): {formatCurrency(r.estimated_income_old_regime)}</div>}
+              {r.property_type !== "none" && <div style={{ color: "var(--finos-color-c28ec047)", fontSize: "11px", marginBottom: "8px" }}>Estimated income from this property (old regime): {formatCurrency(r.estimated_income_old_regime)}</div>}
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 {r.status === "verified"
                   ? <button type="button" className="secondary-button" disabled={hpBusy} onClick={() => unverifyHouseProperty(r.id)}>Set back to pending</button>
@@ -1615,9 +1615,9 @@ function TaxPage() {
   const renderTaxReviewConfirm = (sectionKey, description, buttonLabel) => {
     const info = taxReviewState?.[sectionKey] || {};
     return (
-      <div style={{ ...cardStyle, padding: "13px", marginTop: "14px", borderColor: info.complete ? "rgba(34,197,94,0.35)" : "rgba(255,255,255,0.12)" }}>
+      <div style={{ ...cardStyle, padding: "13px", marginTop: "14px", borderColor: info.complete ? "var(--finos-color-abc6ee13)" : "var(--finos-color-1466baf1)" }}>
         <div style={{ fontWeight: 750, fontSize: "12px" }}>{info.complete ? "Section complete" : info.confirmed_by_user ? "Confirmation saved · review still pending" : "Your confirmation is required"}</div>
-        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "11px", lineHeight: 1.6, margin: "7px 0" }}>{description}</p>
+        <p style={{ color: "var(--finos-color-1466cb3f)", fontSize: "11px", lineHeight: 1.6, margin: "7px 0" }}>{description}</p>
         <p style={{ color: info.complete ? "var(--finos-status-success-soft)" : "var(--finos-status-warning)", fontSize: "11px", margin: "6px 0" }}>{info.reason || "Review status is not available yet."}</p>
         <button type="button" className="secondary-button" disabled={taxReviewBusy} onClick={() => changeTaxReview(sectionKey, !info.confirmed_by_user)}>
           {info.confirmed_by_user ? "Undo my confirmation" : buttonLabel}
@@ -1661,16 +1661,16 @@ function TaxPage() {
   const deleteTaxCredit = (id) => { if (window.confirm("Delete this tax credit entry?")) creditCall(`${API_BASE_URL}/api/final-tax-liability/credits/${id}?user_id=${USER_ID}`, { method: "DELETE" }, "Entry deleted."); };
 
   const renderTaxCredits = () => {
-    const box = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(12,16,30,0.72)", color: "inherit" };
+    const box = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid var(--finos-color-1466bbb7)", background: "var(--finos-color-f17fdd02)", color: "inherit" };
     const names = { tds: "TDS", advance_tax: "Advance tax", self_assessment_tax: "Self-assessment tax" };
     return (
       <div style={panelStyle}>
         <h3 style={{ marginTop: 0 }}>Tax already paid (TDS and advance tax)</h3>
-        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", lineHeight: 1.6 }}>Add tax already paid for {financialYear}. An entry reduces your tax only after you verify it with a challan or Form 26AS / AIS reference. The app does not inspect documents.</p>
+        <p style={{ color: "var(--finos-color-1466cb3f)", fontSize: "12px", lineHeight: 1.6 }}>Add tax already paid for {financialYear}. An entry reduces your tax only after you verify it with a challan or Form 26AS / AIS reference. The app does not inspect documents.</p>
         <div style={{ ...cardStyle, padding: "13px", marginBottom: "12px" }}>
           <div style={labelStyle}>Check against Form 26AS / AIS · comparison only</div>
-          <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "11px", lineHeight: 1.6, marginTop: 0 }}>Compare the total shown in Form 26AS / AIS with the verified tax-credit entries below. This does not import data or change tax calculations.</p>
-          <label style={{ display: "grid", gap: "6px", fontSize: "11px", color: "rgba(255,255,255,0.7)" }}>Total tax credits shown in Form 26AS / AIS (₹)
+          <p style={{ color: "var(--finos-color-1466cb3f)", fontSize: "11px", lineHeight: 1.6, marginTop: 0 }}>Compare the total shown in Form 26AS / AIS with the verified tax-credit entries below. This does not import data or change tax calculations.</p>
+          <label style={{ display: "grid", gap: "6px", fontSize: "11px", color: "var(--finos-color-c28ec005)" }}>Total tax credits shown in Form 26AS / AIS (₹)
             <input aria-label="Form 26AS AIS tax credit total" style={box} type="number" min="0" step="0.01" value={form26asTotal} onChange={(event) => setForm26asTotal(event.target.value)} placeholder="Enter the total to compare" />
           </label>
           <div style={{ marginTop: "9px", fontSize: "12px" }}>Verified entries in Financial OS: <strong>{formatCurrency(taxCredits.filter((c) => c?.status === "verified").reduce((sum, c) => sum + (Number(c.amount) || 0), 0))}</strong></div>
@@ -1689,12 +1689,12 @@ function TaxPage() {
           {creditMessage && <div role="status" style={{ color: "var(--finos-status-success-soft)", fontSize: "12px" }}>{creditMessage}</div>}
         </div>
         <div style={{ display: "grid", gap: "10px", marginTop: "14px" }}>
-          {taxCredits.length === 0 && <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>No tax credits added for this year.</div>}
+          {taxCredits.length === 0 && <div style={{ color: "var(--finos-color-c28ec047)", fontSize: "12px" }}>No tax credits added for this year.</div>}
           {taxCredits.map((c) => (
             <div key={c.id} style={{ ...cardStyle, padding: "13px" }}>
               <div style={labelStyle}>{names[c.credit_type] || c.credit_type} · {c.status === "verified" ? "Verified" : "Pending review"}</div>
               <div style={valueStyle}>{formatCurrency(c.amount)}</div>
-              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", margin: "4px 0 8px" }}>{c.source_reference || "No reference yet"}</div>
+              <div style={{ color: "var(--finos-color-c28ec047)", fontSize: "11px", margin: "4px 0 8px" }}>{c.source_reference || "No reference yet"}</div>
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 {c.status === "verified"
                   ? <button type="button" className="secondary-button" disabled={creditBusy} onClick={() => unverifyTaxCredit(c.id)}>Set back to pending</button>
@@ -1729,14 +1729,14 @@ function TaxPage() {
   }, [taxRegime, financialYear, residentialStatus, ageCategory, sttConfirmed]);
 
   const cardStyle = {
-    border: "1px solid rgba(255,255,255,0.09)",
+    border: "1px solid var(--finos-color-1466c65b)",
     borderRadius: "16px",
     padding: "18px",
-    background: "linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.025))",
+    background: "linear-gradient(135deg, var(--finos-color-1466c795), var(--finos-color-a13fb4c5))",
     minWidth: 0,
   };
   const labelStyle = {
-    color: "rgba(255,255,255,0.48)",
+    color: "var(--finos-color-1466d7be)",
     fontSize: "10px",
     letterSpacing: "0.08em",
     textTransform: "uppercase",
@@ -1744,14 +1744,14 @@ function TaxPage() {
   };
   const valueStyle = { fontSize: "21px", fontWeight: 800, overflowWrap: "anywhere" };
   const panelStyle = {
-    border: "1px solid rgba(255,255,255,0.08)",
+    border: "1px solid var(--finos-color-1466c6ba)",
     borderRadius: "16px",
     padding: "18px",
-    background: "rgba(255,255,255,0.025)",
+    background: "var(--finos-color-a13fb4c5)",
   };
   const tableCellStyle = {
     padding: "11px 10px",
-    borderBottom: "1px solid rgba(255,255,255,0.07)",
+    borderBottom: "1px solid var(--finos-color-1466c795)",
     textAlign: "left",
     fontSize: "12px",
     verticalAlign: "top",
@@ -1777,14 +1777,14 @@ function TaxPage() {
   const renderOverview = () => (
     <>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "14px" }}>
-        <div style={cardStyle}><div style={labelStyle}>Indicative capital-gains tax + cess</div><div style={valueStyle}>{formatCurrency(taxSummary.tax_plus_cess)}</div><div style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", marginTop: "8px" }}>Special-rate calculation only</div></div>
-        <div style={cardStyle}><div style={labelStyle}>Provisional taxable income</div><div style={valueStyle}>{formatCurrency(taxable.provisional_taxable_income)}</div><div style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", marginTop: "8px" }}>{taxable.status || "Not yet classified"}</div></div>
-        <div style={cardStyle}><div style={labelStyle}>STCG gain</div><div style={valueStyle}>{formatCurrency(capitalGains.stcg)}</div><div style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", marginTop: "8px" }}>STT confirmation: {sttConfirmed ? "Confirmed" : "Not confirmed"}</div></div>
-        <div style={cardStyle}><div style={labelStyle}>LTCG gain</div><div style={valueStyle}>{formatCurrency(capitalGains.ltcg)}</div><div style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", marginTop: "8px" }}>Section 112A treatment shown by engine</div></div>
+        <div style={cardStyle}><div style={labelStyle}>Indicative capital-gains tax + cess</div><div style={valueStyle}>{formatCurrency(taxSummary.tax_plus_cess)}</div><div style={{ color: "var(--finos-color-1466d7be)", fontSize: "11px", marginTop: "8px" }}>Special-rate calculation only</div></div>
+        <div style={cardStyle}><div style={labelStyle}>Provisional taxable income</div><div style={valueStyle}>{formatCurrency(taxable.provisional_taxable_income)}</div><div style={{ color: "var(--finos-color-1466d7be)", fontSize: "11px", marginTop: "8px" }}>{taxable.status || "Not yet classified"}</div></div>
+        <div style={cardStyle}><div style={labelStyle}>STCG gain</div><div style={valueStyle}>{formatCurrency(capitalGains.stcg)}</div><div style={{ color: "var(--finos-color-1466d7be)", fontSize: "11px", marginTop: "8px" }}>STT confirmation: {sttConfirmed ? "Confirmed" : "Not confirmed"}</div></div>
+        <div style={cardStyle}><div style={labelStyle}>LTCG gain</div><div style={valueStyle}>{formatCurrency(capitalGains.ltcg)}</div><div style={{ color: "var(--finos-color-1466d7be)", fontSize: "11px", marginTop: "8px" }}>Section 112A treatment shown by engine</div></div>
       </div>
       <div style={panelStyle}>
         <h3 style={{ marginTop: 0 }}>Tax readiness</h3>
-        <p style={{ color: "rgba(255,255,255,0.62)", lineHeight: 1.7, fontSize: "13px" }}>
+        <p style={{ color: "var(--finos-color-1466d076)", lineHeight: 1.7, fontSize: "13px" }}>
           This page combines the current capital-gains calculation and provisional taxable-income framework. It is not a complete ITR filing or a final tax demand. Salary, house-property and business/professional income may remain unavailable until their source data is added.
         </p>
         <button className="secondary-button" type="button" onClick={() => setSection("Tax Report")}>Open Tax Report</button>
@@ -1796,7 +1796,7 @@ function TaxPage() {
     <div className="tax-income-layout" style={{ display: "grid", gap: "18px" }}>
     <section className="tax-income-aggregation" style={panelStyle}>
       <h3 style={{ marginTop: 0 }}>Income aggregation</h3>
-      <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "12px", lineHeight: 1.6 }}>Amounts are taken from the existing final taxable-income engine. Missing income heads are shown as unavailable rather than assumed to be zero.</p>
+      <p style={{ color: "var(--finos-color-1466cb92)", fontSize: "12px", lineHeight: 1.6 }}>Amounts are taken from the existing final taxable-income engine. Missing income heads are shown as unavailable rather than assumed to be zero.</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "12px" }}>
         {[
           ["Other-source income", otherSources.income],
@@ -1807,21 +1807,21 @@ function TaxPage() {
           ["Available gross income", taxable.available_gross_income],
         ].map(([label, value]) => <div key={label} style={cardStyle}><div style={labelStyle}>{label}</div><div style={{ fontSize: "18px", fontWeight: 750 }}>{value == null ? "Unavailable" : formatCurrency(value)}</div></div>)}
       </div>
-      <div style={{ marginTop: "16px", color: "rgba(255,255,255,0.55)", fontSize: "12px" }}>Salary, house-property and business/profession income must not be treated as zero if the engine marks those heads unavailable.</div>
+      <div style={{ marginTop: "16px", color: "var(--finos-color-1466cb92)", fontSize: "12px" }}>Salary, house-property and business/profession income must not be treated as zero if the engine marks those heads unavailable.</div>
     </section>
     <section className="tax-business-income-review" style={{ ...panelStyle, marginTop: 0 }}>
         <h3 style={{ marginTop: 0 }}>Money transactions awaiting business-income review</h3>
-        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: 12, lineHeight: 1.6 }}>
+        <p style={{ color: "var(--finos-color-1466cb3f)", fontSize: 12, lineHeight: 1.6 }}>
           These are unlinked Money transactions that may be business or professional income. Being listed here does not make them business income, and nothing is saved or verified automatically. Only verified records count as business income. An entry filed under an Other Sources category may already be counted above as other-source income.
         </p>
         {businessIncomeData?.status === "unavailable" ? (
           <p role="status" style={{ color: "var(--finos-status-warning)", fontSize: 12 }}>Review candidates could not be loaded: {safeText(businessIncomeData.message, "endpoint unavailable")}</p>
         ) : !Array.isArray(businessIncomeData?.unlinked_money_transactions) || businessIncomeData.unlinked_money_transactions.length === 0 ? (
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>No unlinked Money transactions were returned for this financial year.</p>
+          <p style={{ color: "var(--finos-color-c28ec047)", fontSize: 12 }}>No unlinked Money transactions were returned for this financial year.</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr>{["Date", "Type", "Category", "Description", "Amount", "Status"].map((label) => <th key={label} style={{ ...tableCellStyle, color: "rgba(255,255,255,0.55)" }}>{label}</th>)}</tr></thead>
+              <thead><tr>{["Date", "Type", "Category", "Description", "Amount", "Status"].map((label) => <th key={label} style={{ ...tableCellStyle, color: "var(--finos-color-1466cb92)" }}>{label}</th>)}</tr></thead>
               <tbody>{businessIncomeData.unlinked_money_transactions.map((row) => (
                 <tr key={row.source_transaction_id}>
                   <td style={tableCellStyle}>{safeText(row.transaction_date)}</td>
@@ -1850,7 +1850,7 @@ function TaxPage() {
       </div>
       <div style={panelStyle}>
         <h3 style={{ marginTop: 0 }}>Realised transaction details</h3>
-        {gainRows.length === 0 ? <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px" }}>No realised transaction rows were returned for this financial year.</p> : <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse" }}><thead><tr>{["Investment", "Date", "Asset class", "Classification", "Realised gain/loss"].map(x => <th key={x} style={{ ...tableCellStyle, color: "rgba(255,255,255,0.55)" }}>{x}</th>)}</tr></thead><tbody>{gainRows.map((row, index) => <tr key={row.id || `${row.investment_id || "gain"}-${index}`}><td style={tableCellStyle}>{safeText(row.name ?? row.symbol ?? row.investment_name, `Investment ${safeText(row.investment_id, "")}`)}</td><td style={tableCellStyle}>{safeText(row.transaction_date ?? row.sell_date ?? row.date)}</td><td style={tableCellStyle}>{safeText(row.asset_class)}</td><td style={tableCellStyle}>{safeText(row.capital_gain_classification ?? row.classification)}</td><td style={tableCellStyle}>{formatCurrency(row.realised_gain_loss ?? row.gain_loss)}</td></tr>)}</tbody></table></div>}
+        {gainRows.length === 0 ? <p style={{ color: "var(--finos-color-c28ec047)", fontSize: "13px" }}>No realised transaction rows were returned for this financial year.</p> : <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse" }}><thead><tr>{["Investment", "Date", "Asset class", "Classification", "Realised gain/loss"].map(x => <th key={x} style={{ ...tableCellStyle, color: "var(--finos-color-1466cb92)" }}>{x}</th>)}</tr></thead><tbody>{gainRows.map((row, index) => <tr key={row.id || `${row.investment_id || "gain"}-${index}`}><td style={tableCellStyle}>{safeText(row.name ?? row.symbol ?? row.investment_name, `Investment ${safeText(row.investment_id, "")}`)}</td><td style={tableCellStyle}>{safeText(row.transaction_date ?? row.sell_date ?? row.date)}</td><td style={tableCellStyle}>{safeText(row.asset_class)}</td><td style={tableCellStyle}>{safeText(row.capital_gain_classification ?? row.classification)}</td><td style={tableCellStyle}>{formatCurrency(row.realised_gain_loss ?? row.gain_loss)}</td></tr>)}</tbody></table></div>}
       </div>
     </>
   );
@@ -1932,13 +1932,13 @@ function TaxPage() {
   };
 
   const renderDeductionClaims = () => {
-    const box = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(12,16,30,0.72)", color: "inherit" };
+    const box = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid var(--finos-color-1466bbb7)", background: "var(--finos-color-f17fdd02)", color: "inherit" };
     const options = (Array.isArray(deductionData?.applicable_deductions) ? deductionData.applicable_deductions : [])
       .filter((item) => item.deduction_key && item.deduction_key !== "hra_exemption");
     return (
       <div style={{ marginTop: "18px" }}>
         <h4 style={{ margin: "0 0 8px" }}>Your deduction claims · {financialYear}</h4>
-        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", lineHeight: 1.6, marginTop: 0 }}>
+        <p style={{ color: "var(--finos-color-1466cb3f)", fontSize: "12px", lineHeight: 1.6, marginTop: 0 }}>
           Add a receipt, policy or certificate reference. Claims affect taxable income only when verified and eligible under the selected regime. The app does not independently verify documents. HRA is handled in the HRA Calculator.
         </p>
         <div style={{ display: "grid", gap: "8px" }}>
@@ -1953,12 +1953,12 @@ function TaxPage() {
           {dedMessage && <div role="status" style={{ color: "var(--finos-status-success-soft)", fontSize: "12px" }}>{dedMessage}</div>}
         </div>
         <div style={{ overflowX: "auto", marginTop: "14px" }}>
-          {dedClaims.length === 0 ? <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>No deduction claims recorded for this financial year.</p> : (
+          {dedClaims.length === 0 ? <p style={{ color: "var(--finos-color-c28ec047)", fontSize: "12px" }}>No deduction claims recorded for this financial year.</p> : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr>{["Deduction", "Claimed", "Evidence reference", "Status", "Actions"].map((label) => <th key={label} style={{ ...tableCellStyle, color: "rgba(255,255,255,0.55)", textAlign: "left" }}>{label}</th>)}</tr></thead>
+              <thead><tr>{["Deduction", "Claimed", "Evidence reference", "Status", "Actions"].map((label) => <th key={label} style={{ ...tableCellStyle, color: "var(--finos-color-1466cb92)", textAlign: "left" }}>{label}</th>)}</tr></thead>
               <tbody>{dedClaims.map((claim) => (
                 <tr key={claim.id}>
-                  <td style={tableCellStyle}>{safeText(claim.section || claim.deduction_key)}<div style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)" }}>{claim.tax_regime === "old" ? "Old regime" : "New regime"}</div></td>
+                  <td style={tableCellStyle}>{safeText(claim.section || claim.deduction_key)}<div style={{ fontSize: "10px", color: "var(--finos-color-1466d7d3)" }}>{claim.tax_regime === "old" ? "Old regime" : "New regime"}</div></td>
                   <td style={tableCellStyle}>{formatCurrency(claim.claimed_amount)}</td>
                   <td style={tableCellStyle}><input aria-label={`Evidence reference for claim ${claim.id}`} style={{ ...box, minWidth: "160px" }} maxLength={2000} value={claim.evidence_reference || ""} onChange={(e) => setDedClaims((items) => items.map((item) => item.id === claim.id ? { ...item, evidence_reference: e.target.value } : item))} /></td>
                   <td style={tableCellStyle}><span style={{ color: claim.status === "verified" ? "var(--finos-status-success-soft)" : "var(--finos-status-warning)" }}>{claim.status === "verified" ? "Verified" : "Pending review"}</span></td>
@@ -1986,10 +1986,10 @@ function TaxPage() {
     <div style={panelStyle}>
       <h3 style={{ marginTop: 0 }}>Deductions and exempt income</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "12px" }}>
-        <div style={cardStyle}><div style={labelStyle}>Verified deductions</div><div style={valueStyle}>{formatCurrency(deductions.verified_amount)}</div><div style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", marginTop: "8px" }}>{deductions.status || "Status unavailable"}</div></div>
-        <div style={cardStyle}><div style={labelStyle}>Verified exempt income</div><div style={valueStyle}>{formatCurrency(exemptIncome.verified_amount)}</div><div style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", marginTop: "8px" }}>{exemptIncome.status || "Status unavailable"}</div></div>
+        <div style={cardStyle}><div style={labelStyle}>Verified deductions</div><div style={valueStyle}>{formatCurrency(deductions.verified_amount)}</div><div style={{ color: "var(--finos-color-1466d7be)", fontSize: "11px", marginTop: "8px" }}>{deductions.status || "Status unavailable"}</div></div>
+        <div style={cardStyle}><div style={labelStyle}>Verified exempt income</div><div style={valueStyle}>{formatCurrency(exemptIncome.verified_amount)}</div><div style={{ color: "var(--finos-color-1466d7be)", fontSize: "11px", marginTop: "8px" }}>{exemptIncome.status || "Status unavailable"}</div></div>
       </div>
-      <p style={{ color: "rgba(255,255,255,0.62)", fontSize: "13px", lineHeight: 1.7 }}>
+      <p style={{ color: "var(--finos-color-1466d076)", fontSize: "13px", lineHeight: 1.7 }}>
         The list below is filtered for the selected regime. “Potentially available” does not mean the deduction is claimed or approved. The current repository does not yet store verified claim amounts and evidence, so unverified deductions are not silently subtracted from taxable income.
       </p>
       <h4 style={{ margin: "18px 0 10px" }}>Applicable deduction catalogue · {taxRegime === "new" ? "New" : "Old"} regime</h4>
@@ -2001,13 +2001,13 @@ function TaxPage() {
                 <strong style={{ fontSize: "13px" }}>{safeText(item.section)} · {safeText(item.name)}</strong>
                 <span style={{ fontSize: "10px", color: "var(--finos-status-warning)", whiteSpace: "nowrap" }}>Needs verification</span>
               </div>
-              <div style={{ color: "rgba(255,255,255,0.58)", fontSize: "11px", lineHeight: 1.5, marginTop: "8px" }}>Limit: {item.maximum_amount == null ? "Subject to rules" : formatCurrency(item.maximum_amount)}</div>
-              <div style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px", marginTop: "5px" }}>Basis: {safeText(item.basis, "Eligibility conditions apply")}</div>
-              <div style={{ color: "rgba(255,255,255,0.58)", fontSize: "11px", marginTop: "8px" }}>Verified claim: {formatCurrency(item.verified_claimed_amount ?? 0)}</div>
+              <div style={{ color: "var(--finos-color-1466cb3f)", fontSize: "11px", lineHeight: 1.5, marginTop: "8px" }}>Limit: {item.maximum_amount == null ? "Subject to rules" : formatCurrency(item.maximum_amount)}</div>
+              <div style={{ color: "var(--finos-color-1466d7be)", fontSize: "10px", marginTop: "5px" }}>Basis: {safeText(item.basis, "Eligibility conditions apply")}</div>
+              <div style={{ color: "var(--finos-color-1466cb3f)", fontSize: "11px", marginTop: "8px" }}>Verified claim: {formatCurrency(item.verified_claimed_amount ?? 0)}</div>
             </div>
           ))}
         </div>
-      ) : <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Deduction catalogue is unavailable from the backend. Refresh the tax data or check that the deductions endpoint is deployed.</p>}
+      ) : <p style={{ color: "var(--finos-color-c28ec047)", fontSize: "12px" }}>Deduction catalogue is unavailable from the backend. Refresh the tax data or check that the deductions endpoint is deployed.</p>}
       {renderDeductionClaims()}
       {renderTaxReviewConfirm("deductions_exemptions", "Confirm only after all deductions and exempt-income claims you want to make are saved and verified. Any pending claim blocks completion.", "I have added all my deductions")}
       <h4 style={{ margin: "20px 0 10px" }}>Exempt-income / allowance checks</h4>
@@ -2015,14 +2015,14 @@ function TaxPage() {
         {(Array.isArray(deductionData?.exempt_income) ? deductionData.exempt_income : []).map((item) => (
           <div key={`${item.section}-${item.category}`} style={{ ...cardStyle, padding: "13px" }}>
             <strong style={{ fontSize: "12px" }}>{safeText(item.section)} · {safeText(item.category)}</strong>
-            <div style={{ color: "rgba(255,255,255,0.52)", fontSize: "11px", marginTop: "7px" }}>No verified amount connected</div>
+            <div style={{ color: "var(--finos-color-1466cbf5)", fontSize: "11px", marginTop: "7px" }}>No verified amount connected</div>
           </div>
         ))}
       </div>
-      {deductionData?.rule_year_status && <p style={{ color: "rgba(255,255,255,0.42)", fontSize: "10px", lineHeight: 1.5, marginTop: "12px" }}>Rules status: {safeText(deductionData.rule_year_status)}</p>}
+      {deductionData?.rule_year_status && <p style={{ color: "var(--finos-color-1466d874)", fontSize: "10px", lineHeight: 1.5, marginTop: "12px" }}>Rules status: {safeText(deductionData.rule_year_status)}</p>}
       {Array.isArray(deductionData?.regime_restricted_deductions) && deductionData.regime_restricted_deductions.length > 0 && (
         <details style={{ marginTop: "14px" }}>
-          <summary style={{ cursor: "pointer", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Show deductions restricted under this regime ({deductionData.regime_restricted_deductions.length})</summary>
+          <summary style={{ cursor: "pointer", color: "var(--finos-color-1466cf51)", fontSize: "12px" }}>Show deductions restricted under this regime ({deductionData.regime_restricted_deductions.length})</summary>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px", marginTop: "10px" }}>
             {deductionData.regime_restricted_deductions.map((item) => <div key={item.section} style={{ ...cardStyle, padding: "12px", opacity: 0.7 }}><strong style={{ fontSize: "12px" }}>{safeText(item.section)} · {safeText(item.name)}</strong><div style={{ fontSize: "10px", marginTop: "5px" }}>Not available under the selected regime framework</div></div>)}
           </div>
@@ -2056,8 +2056,8 @@ function TaxPage() {
   };
 
   const renderHraCalculator = () => {
-    const inputStyle = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(12,16,30,0.72)", color: "inherit" };
-    const fieldStyle = { display: "grid", gap: "7px", color: "rgba(255,255,255,0.72)", fontSize: "12px" };
+    const inputStyle = { width: "100%", boxSizing: "border-box", padding: "10px 11px", borderRadius: "9px", border: "1px solid var(--finos-color-1466bbb7)", background: "var(--finos-color-f17fdd02)", color: "inherit" };
+    const fieldStyle = { display: "grid", gap: "7px", color: "var(--finos-color-1466c3f7)", fontSize: "12px" };
     const fields = [
       ["gross_salary", "Annual gross salary (₹) — before deductions", "number", true],
       ["annual_basic_salary", "Annual basic salary (₹)", "number", true],
@@ -2069,12 +2069,12 @@ function TaxPage() {
     return <section className="tax-hra-panel" style={panelStyle}>
       <header className="tax-hra-heading">
       <h3 style={{ marginTop: 0 }}>HRA exemption calculator</h3>
-      <p style={{ color: "rgba(255,255,255,0.62)", fontSize: "13px", lineHeight: 1.7 }}>Calculate the potential exemption under section 10(13A). To connect salary to the taxable-income engine, enter gross salary from your salary statement/Form 16 and save a salary-source evidence reference below. Bank deposits are not treated as gross salary.</p>
+      <p style={{ color: "var(--finos-color-1466d076)", fontSize: "13px", lineHeight: 1.7 }}>Calculate the potential exemption under section 10(13A). To connect salary to the taxable-income engine, enter gross salary from your salary statement/Form 16 and save a salary-source evidence reference below. Bank deposits are not treated as gross salary.</p>
       </header>
-      {taxRegime !== "old" && <div role="status" style={{ padding: "12px 14px", borderRadius: "10px", marginBottom: "14px", background: "rgba(245,158,11,0.10)", border: "1px solid rgba(245,158,11,0.28)", color: "#fcd34d", fontSize: "12px" }}>Select Old Regime above to calculate HRA exemption. HRA exemption is not available under the New Regime.</div>}
-      <section className="tax-hra-salary-section" style={{ ...panelStyle, marginBottom: "16px", border: "1px solid rgba(168,85,247,0.24)" }}>
+      {taxRegime !== "old" && <div role="status" style={{ padding: "12px 14px", borderRadius: "10px", marginBottom: "14px", background: "var(--finos-color-4467442e)", border: "1px solid var(--finos-color-44673025)", color: "var(--finos-color-5b5b0244)", fontSize: "12px" }}>Select Old Regime above to calculate HRA exemption. HRA exemption is not available under the New Regime.</div>}
+      <section className="tax-hra-salary-section" style={{ ...panelStyle, marginBottom: "16px", border: "1px solid var(--finos-color-2e9c75a5)" }}>
         <h3 style={{ marginTop: 0 }}>Salary components</h3>
-        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", lineHeight: 1.6 }}>Enter employer and gross salary. A suggested breakdown is generated using editable defaults (Basic 40% of gross; HRA 40% of Basic; DA 0%; other allowances balance). These percentages are not statutory Indian salary limits. Adjust figures to match actual payroll/Form 16. The actual net salary remains the existing Money income transaction; this form does not create or change a transaction.</p>
+        <p style={{ color: "var(--finos-color-1466cb3f)", fontSize: "12px", lineHeight: 1.6 }}>Enter employer and gross salary. A suggested breakdown is generated using editable defaults (Basic 40% of gross; HRA 40% of Basic; DA 0%; other allowances balance). These percentages are not statutory Indian salary limits. Adjust figures to match actual payroll/Form 16. The actual net salary remains the existing Money income transaction; this form does not create or change a transaction.</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "12px" }}>
           {[["employer_name", "Company / employer name", "text"], ["gross_salary", "Gross salary (₹)", "number"], ["basic_salary", "Basic salary (₹)", "number"], ["hra", "HRA received (₹)", "number"], ["da", "DA (₹)", "number"], ["other_allowances", "Other allowances (₹)", "number"], ["employee_pf", "Employee PF (₹)", "number"], ["professional_tax", "Professional tax (₹)", "number"], ["tds", "TDS (₹)", "number"]].map(([key, label, type]) => <label key={key} style={fieldStyle}>{label}<input type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "0.01" : undefined} value={salaryProfile[key]} onChange={(event) => updateSalaryProfile(key, event.target.value)} placeholder={key === "employer_name" ? "Employer name" : "0.00"} style={inputStyle} /></label>)}
         </div>
@@ -2083,7 +2083,7 @@ function TaxPage() {
           <div style={cardStyle}><div style={labelStyle}>Gross less components</div><div style={valueStyle}>{formatCurrency((Number(salaryProfile.gross_salary) || 0) - ["basic_salary", "hra", "da", "other_allowances"].reduce((sum, key) => sum + (Number(salaryProfile[key]) || 0), 0))}</div></div>
           <div style={cardStyle}><div style={labelStyle}>Gross less entered deductions</div><div style={valueStyle}>{formatCurrency((Number(salaryProfile.gross_salary) || 0) - ["employee_pf", "professional_tax", "tds"].reduce((sum, key) => sum + (Number(salaryProfile[key]) || 0), 0))}</div></div>
         </div>
-        <p style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px", lineHeight: 1.5, marginBottom: 0 }}>PF, professional tax and TDS are not automatically assumed from gross salary because eligibility and rates depend on applicable rules and payroll facts. Enter verified amounts. Unreconciled differences are shown, not silently classified as deductions. Actual salary received must remain the amount of the existing Money income transaction; this tax panel does not create or change that transaction.</p>
+        <p style={{ color: "var(--finos-color-1466d7be)", fontSize: "10px", lineHeight: 1.5, marginBottom: 0 }}>PF, professional tax and TDS are not automatically assumed from gross salary because eligibility and rates depend on applicable rules and payroll facts. Enter verified amounts. Unreconciled differences are shown, not silently classified as deductions. Actual salary received must remain the amount of the existing Money income transaction; this tax panel does not create or change that transaction.</p>
       </section>
       <form className="tax-hra-form" onSubmit={calculateHra} style={{ display: "grid", gap: "14px" }}>
         <section className="tax-hra-rent-section">
@@ -2099,14 +2099,14 @@ function TaxPage() {
               {hraCityCatalog.metro.map((item) => <option key={item.name} value={item.name} label="Metro" />)}
               {hraCityCatalog.non_metro.map((item) => <option key={item.name} value={item.name} label="Non-metro" />)}
             </datalist>
-            <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Choose a suggestion or type an unlisted city. Unlisted cities default to Non-metro.</span>
+            <span style={{ color: "var(--finos-color-1466d7be)", fontSize: "10px" }}>Choose a suggestion or type an unlisted city. Unlisted cities default to Non-metro.</span>
             {hraCityCatalogError && <span role="status" style={{ color: "var(--finos-status-warning)", fontSize: "10px" }}>{hraCityCatalogError}</span>}
           </label>
           <div className="tax-hra-classification" style={fieldStyle}>Tax-rule classification
-            <div aria-live="polite" style={{ ...inputStyle, minHeight: "40px", display: "flex", alignItems: "center", borderColor: hraInputs.city.trim() ? "rgba(34,197,94,0.28)" : "rgba(255,255,255,0.14)" }}>
+            <div aria-live="polite" style={{ ...inputStyle, minHeight: "40px", display: "flex", alignItems: "center", borderColor: hraInputs.city.trim() ? "var(--finos-color-abc6e17f)" : "var(--finos-color-1466bbb7)" }}>
               {hraInputs.city.trim() ? (hraInputs.city_classification === "metro" ? "Metro · 50% salary limit" : "Non-metro · 40% salary limit") : "Select or enter a city"}
             </div>
-            <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Classification is determined by the backend tax-rules mapping; it cannot be selected manually.</span>
+            <span style={{ color: "var(--finos-color-1466d7be)", fontSize: "10px" }}>Classification is determined by the backend tax-rules mapping; it cannot be selected manually.</span>
           </div>
         </div>
         </section>
@@ -2115,20 +2115,20 @@ function TaxPage() {
           <button type="button" className="secondary-button" onClick={() => { setHraInputs({ gross_salary: "", annual_basic_salary: "", annual_da_forming_retirement_benefits: "0", annual_commission_on_turnover_at_fixed_percentage: "0", annual_hra_received: "", annual_rent_paid: "", city: "", city_classification: "non_metro" }); setHraResult(null); setHraError(""); setHraSalaryMessage(""); setHraSalaryError(""); }}>Clear inputs</button>
         </div>
       </form>
-      {hraError && <div role="alert" style={{ marginTop: "14px", padding: "12px", borderRadius: "10px", color: "var(--finos-status-danger-soft)", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12px" }}>{hraError}</div>}
+      {hraError && <div role="alert" style={{ marginTop: "14px", padding: "12px", borderRadius: "10px", color: "var(--finos-status-danger-soft)", background: "var(--finos-color-647441f0)", border: "1px solid var(--finos-color-6474499f)", fontSize: "12px" }}>{hraError}</div>}
       {hraResult && <div aria-live="polite" style={{ marginTop: "18px", display: "grid", gap: "12px" }}>
-        <div style={{ ...cardStyle, borderColor: "rgba(34,197,94,0.25)" }}><div style={labelStyle}>Indicative HRA exemption</div><div style={valueStyle}>{formatCurrency(hraResult.calculated_exemption)}</div><div style={{ color: "rgba(255,255,255,0.52)", fontSize: "11px", marginTop: "8px" }}>FY {safeText(hraResult.financial_year)} · Old Regime · Estimate only</div></div>
+        <div style={{ ...cardStyle, borderColor: "var(--finos-color-abc6e1d2)" }}><div style={labelStyle}>Indicative HRA exemption</div><div style={valueStyle}>{formatCurrency(hraResult.calculated_exemption)}</div><div style={{ color: "var(--finos-color-1466cbf5)", fontSize: "11px", marginTop: "8px" }}>FY {safeText(hraResult.financial_year)} · Old Regime · Estimate only</div></div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "10px" }}>
           {Object.entries(hraResult.limits || {}).map(([key, value]) => <div key={key} style={{ ...cardStyle, padding: "13px" }}><div style={labelStyle}>{key.replaceAll("_", " ")}</div><div style={{ fontWeight: 750, marginTop: "7px" }}>{formatCurrency(value)}</div></div>)}
         </div>
-        <p style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", lineHeight: 1.6, marginBottom: 0 }}>{safeText(hraResult.verification_notice, "Verify salary components, residence and rent evidence before filing.")} The calculator result alone does not change taxable income.</p>
+        <p style={{ color: "var(--finos-color-1466d7be)", fontSize: "11px", lineHeight: 1.6, marginBottom: 0 }}>{safeText(hraResult.verification_notice, "Verify salary components, residence and rent evidence before filing.")} The calculator result alone does not change taxable income.</p>
         <label style={fieldStyle}>Salary statement / Form 16 evidence reference
           <input aria-label="Salary statement or Form 16 evidence reference" type="text" maxLength={2000} value={hraSalaryEvidence} onChange={(event) => setHraSalaryEvidence(event.target.value)} placeholder="e.g. Form 16 FY 2026-27, employer statement reference" style={inputStyle} />
-          <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Your confirmation marks this salary record verified; the app does not inspect the document.</span>
+          <span style={{ color: "var(--finos-color-1466d7be)", fontSize: "10px" }}>Your confirmation marks this salary record verified; the app does not inspect the document.</span>
         </label>
         <label style={fieldStyle}>Separate HRA / rent evidence reference
           <input aria-label="HRA rent evidence reference" type="text" maxLength={2000} value={hraRentEvidence} onChange={(event) => setHraRentEvidence(event.target.value)} placeholder="e.g. rent receipts and rental agreement reference" style={inputStyle} />
-          <span style={{ color: "rgba(255,255,255,0.48)", fontSize: "10px" }}>Keep this separate from the salary statement reference. Verification records your confirmation; the app does not inspect documents.</span>
+          <span style={{ color: "var(--finos-color-1466d7be)", fontSize: "10px" }}>Keep this separate from the salary statement reference. Verification records your confirmation; the app does not inspect documents.</span>
         </label>
         <button type="button" className="primary-button" disabled={hraSalarySaving || taxRegime !== "old"} onClick={saveAndVerifyHraSalary}>{hraSalarySaving ? "Saving salary and HRA claim…" : "Save salary & verify HRA claim"}</button>
         {hraSalaryError && <div role="alert" style={{ color: "var(--finos-status-danger-soft)", fontSize: "12px" }}>{hraSalaryError}</div>}
@@ -2146,7 +2146,7 @@ function TaxPage() {
     <>
       <div className="tax-calculation-liability" style={panelStyle}>
         <h3 style={{ marginTop: 0 }}>Final tax liability estimate</h3>
-        <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", lineHeight: 1.6 }}>
+        <p style={{ color: "var(--finos-color-1466cb3f)", fontSize: "12px", lineHeight: 1.6 }}>
           This uses the existing liability engine for the selected tax year and taxpayer inputs. Missing income heads, unverified claims, capital-gains eligibility or tax credits can keep the result provisional.
         </p>
         {finalLiabilityData?.status === "rules_not_configured" || finalLiabilityData?.status === "unavailable" ? (
@@ -2158,14 +2158,14 @@ function TaxPage() {
               <div style={cardStyle}><div style={labelStyle}>Tax credits</div><div style={valueStyle}>{formatCurrency(finalLiabilityData?.tax_credits?.total)}</div></div>
               <div style={cardStyle}><div style={labelStyle}>Balance payable / refund</div><div style={valueStyle}>{formatCurrency(finalLiabilityData?.balance_after_credits?.amount)}</div></div>
             </div>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px", marginBottom: 0 }}>Engine status: {safeText(finalLiabilityData?.liability_status ?? finalLiabilityData?.engine_status, "Review required")}. Verify all warnings and source data before relying on the estimate.</p>
+            <p style={{ color: "var(--finos-color-c28ec047)", fontSize: "11px", marginBottom: 0 }}>Engine status: {safeText(finalLiabilityData?.liability_status ?? finalLiabilityData?.engine_status, "Review required")}. Verify all warnings and source data before relying on the estimate.</p>
             {Array.isArray(finalLiabilityData?.missing_data?.income_heads) && finalLiabilityData.missing_data.income_heads.length > 0 && (
-              <div style={{ marginTop: "12px", padding: "12px", borderRadius: "10px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", color: "#fcd34d", fontSize: "12px", lineHeight: 1.6 }}>
+              <div style={{ marginTop: "12px", padding: "12px", borderRadius: "10px", background: "var(--finos-color-446738a7)", border: "1px solid var(--finos-color-44672e88)", color: "var(--finos-color-5b5b0244)", fontSize: "12px", lineHeight: 1.6 }}>
                 <strong>Incomplete income data:</strong> {finalLiabilityData.missing_data.income_heads.map(safeText).join(", ")}. These heads are unavailable, so this is not a final filing amount.
               </div>
             )}
             {Array.isArray(finalLiabilityData?.capital_gains_review?.reasons) && finalLiabilityData.capital_gains_review.reasons.length > 0 && (
-              <div style={{ marginTop: "10px", color: "#fcd34d", fontSize: "12px", lineHeight: 1.6 }}>
+              <div style={{ marginTop: "10px", color: "var(--finos-color-5b5b0244)", fontSize: "12px", lineHeight: 1.6 }}>
                 <strong>Capital-gains review required:</strong> {finalLiabilityData.capital_gains_review.reasons.map(safeText).join("; ")}
               </div>
             )}
@@ -2173,27 +2173,27 @@ function TaxPage() {
               <div style={{ marginTop: "10px", color: "var(--finos-status-danger-soft)", fontSize: "12px" }}>The engine explicitly marks this result incomplete. Do not use it as a final ITR liability without resolving the missing data and review flags.</div>
             )}
           </>
-        ) : <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px" }}>Choose a regime to load the estimate.</div>}
+        ) : <div style={{ color: "var(--finos-color-c28ec047)", fontSize: "12px" }}>Choose a regime to load the estimate.</div>}
       </div>
       <div className="tax-calculation-settings" style={panelStyle}>
         <h3 style={{ marginTop: 0 }}>Calculation settings</h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px", alignItems: "end" }}>
-          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "rgba(255,255,255,0.65)" }}>Financial year<StyledSelect value={financialYear} onChange={e => setFinancialYear(e.target.value)}><option value="2026-27">2026-27</option></StyledSelect></label>
-          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "rgba(255,255,255,0.65)" }}>Tax regime framework<StyledSelect value={taxRegime} onChange={e => setTaxRegime(e.target.value)}><option value="new">New regime</option><option value="old">Old regime</option></StyledSelect></label>
-          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "rgba(255,255,255,0.65)" }}>Residential status<StyledSelect value={residentialStatus} onChange={e => setResidentialStatus(e.target.value)}><option value="resident">Resident</option><option value="non_resident">Non-resident</option></StyledSelect></label>
-          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "rgba(255,255,255,0.65)" }}>Age group<StyledSelect value={ageCategory} onChange={e => setAgeCategory(e.target.value)}><option value="under_60">Under 60</option><option value="60_to_79">60–79</option><option value="80_plus">80+</option></StyledSelect></label>
-          <label style={{ display: "flex", alignItems: "center", gap: "9px", fontSize: "12px", color: "rgba(255,255,255,0.65)", minHeight: "42px" }}><input type="checkbox" checked={sttConfirmed} onChange={e => setSttConfirmed(e.target.checked)} /> Confirm applicable STT condition for STCG</label>
+          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "var(--finos-color-1466cf51)" }}>Financial year<StyledSelect value={financialYear} onChange={e => setFinancialYear(e.target.value)}><option value="2026-27">2026-27</option></StyledSelect></label>
+          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "var(--finos-color-1466cf51)" }}>Tax regime framework<StyledSelect value={taxRegime} onChange={e => setTaxRegime(e.target.value)}><option value="new">New regime</option><option value="old">Old regime</option></StyledSelect></label>
+          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "var(--finos-color-1466cf51)" }}>Residential status<StyledSelect value={residentialStatus} onChange={e => setResidentialStatus(e.target.value)}><option value="resident">Resident</option><option value="non_resident">Non-resident</option></StyledSelect></label>
+          <label style={{ display: "grid", gap: "7px", fontSize: "12px", color: "var(--finos-color-1466cf51)" }}>Age group<StyledSelect value={ageCategory} onChange={e => setAgeCategory(e.target.value)}><option value="under_60">Under 60</option><option value="60_to_79">60–79</option><option value="80_plus">80+</option></StyledSelect></label>
+          <label style={{ display: "flex", alignItems: "center", gap: "9px", fontSize: "12px", color: "var(--finos-color-1466cf51)", minHeight: "42px" }}><input type="checkbox" checked={sttConfirmed} onChange={e => setSttConfirmed(e.target.checked)} /> Confirm applicable STT condition for STCG</label>
           <button type="button" className="primary-button" onClick={loadTaxData} disabled={loading}>{loading ? "Calculating..." : "Refresh / Calculate"}</button>
         </div>
       </div>
       <div className="tax-calculation-breakdown" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
-        <div style={cardStyle}><div style={labelStyle}>STCG tax</div><div style={valueStyle}>{formatCurrency(tax?.stcg?.tax)}</div><div style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", marginTop: "8px" }}>{tax?.stcg?.status || "Awaiting calculation"}</div></div>
-        <div style={cardStyle}><div style={labelStyle}>LTCG tax</div><div style={valueStyle}>{formatCurrency(tax?.ltcg?.tax)}</div><div style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px", marginTop: "8px" }}>Taxable gain: {formatCurrency(tax?.ltcg?.taxable_gain)}</div></div>
+        <div style={cardStyle}><div style={labelStyle}>STCG tax</div><div style={valueStyle}>{formatCurrency(tax?.stcg?.tax)}</div><div style={{ color: "var(--finos-color-1466d7be)", fontSize: "11px", marginTop: "8px" }}>{tax?.stcg?.status || "Awaiting calculation"}</div></div>
+        <div style={cardStyle}><div style={labelStyle}>LTCG tax</div><div style={valueStyle}>{formatCurrency(tax?.ltcg?.tax)}</div><div style={{ color: "var(--finos-color-1466d7be)", fontSize: "11px", marginTop: "8px" }}>Taxable gain: {formatCurrency(tax?.ltcg?.taxable_gain)}</div></div>
         <div style={cardStyle}><div style={labelStyle}>Base tax</div><div style={valueStyle}>{formatCurrency(taxSummary.base_tax)}</div></div>
         <div style={cardStyle}><div style={labelStyle}>Health & education cess</div><div style={valueStyle}>{formatCurrency(taxSummary.health_education_cess)}</div></div>
         <div style={cardStyle}><div style={labelStyle}>Total calculated tax + cess</div><div style={valueStyle}>{formatCurrency(taxSummary.tax_plus_cess)}</div></div>
       </div>
-      <div className="tax-calculation-scope" style={{ ...panelStyle, color: "rgba(255,255,255,0.6)", fontSize: "12px", lineHeight: 1.7 }}>This tax-calculation endpoint estimates tax on qualifying realised capital gains only. It does not calculate complete ITR liability, slab-rate tax, surcharge, rebate or all deductions. The selected tax regime is used by the provisional taxable-income endpoint and does not convert this special-rate calculation into a complete tax assessment.</div>
+      <div className="tax-calculation-scope" style={{ ...panelStyle, color: "var(--finos-color-c28ec064)", fontSize: "12px", lineHeight: 1.7 }}>This tax-calculation endpoint estimates tax on qualifying realised capital gains only. It does not calculate complete ITR liability, slab-rate tax, surcharge, rebate or all deductions. The selected tax regime is used by the provisional taxable-income endpoint and does not convert this special-rate calculation into a complete tax assessment.</div>
       {renderTaxCredits()}
     </>
   );
@@ -2219,13 +2219,13 @@ function TaxPage() {
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Financial OS — Tax Summary</title>
       <style>
         @page { size: A4; margin: 14mm; }
-        body { font: 12px Arial, sans-serif; color: #172033; margin: 0; }
-        h1 { font-size: 20px; margin: 0 0 5px; } .muted { color: #5b6475; }
+        body { font: 12px Arial, sans-serif; color: var(--finos-color-245a79c2); margin: 0; }
+        h1 { font-size: 20px; margin: 0 0 5px; } .muted { color: var(--finos-color-180ff2d1); }
         .meta { margin: 0 0 18px; line-height: 1.6; }
         table { border-collapse: collapse; width: 100%; margin: 14px 0; }
-        th, td { padding: 9px; border-bottom: 1px solid #dce1e8; text-align: left; }
-        th { background: #f2f4f8; } td:last-child { text-align: right; }
-        .note { font-size: 10px; line-height: 1.6; color: #596273; margin-top: 20px; }
+        th, td { padding: 9px; border-bottom: 1px solid var(--finos-color-56b14fc8); text-align: left; }
+        th { background: var(--finos-color-57bf9f9e); } td:last-child { text-align: right; }
+        .note { font-size: 10px; line-height: 1.6; color: var(--finos-color-1c03364a); margin-top: 20px; }
       </style></head><body>
       <h1>Financial OS — Tax Summary</h1>
       <p class="meta muted">Financial year: ${esc(financialYear)}<br>Regime: ${esc((taxpayer.regime || taxRegime) === "old" ? "Old regime" : "New regime")}<br>Assessment year: ${esc(reportData?.assessment_year || "Unavailable")}</p>
@@ -2246,7 +2246,7 @@ function TaxPage() {
   const renderReport = () => (
     <div style={panelStyle}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-        <div><h3 style={{ margin: "0 0 6px" }}>ITR readiness report</h3><p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", margin: 0 }}>Financial year {financialYear} · {taxRegime === "new" ? "New" : "Old"} regime framework</p></div>
+        <div><h3 style={{ margin: "0 0 6px" }}>ITR readiness report</h3><p style={{ color: "var(--finos-color-c28ec047)", fontSize: "12px", margin: 0 }}>Financial year {financialYear} · {taxRegime === "new" ? "New" : "Old"} regime framework</p></div>
         <button className="secondary-button" type="button" onClick={loadTaxData} disabled={loading}>{loading ? "Refreshing..." : "Refresh report"}</button><button className="secondary-button" type="button" onClick={printTaxSummary}>Print / save as PDF</button>
       </div>
       {reportData && (() => {
@@ -2262,23 +2262,23 @@ function TaxPage() {
           ["Business / profession", reportIncome.business_or_profession],
           ["Other sources", reportIncome.other_sources],
         ];
-        const smallLabel = { color: "rgba(255,255,255,0.5)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" };
+        const smallLabel = { color: "var(--finos-color-c28ec047)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" };
         const reportValue = { fontSize: "16px", fontWeight: 750, overflowWrap: "anywhere" };
         const safeAmount = (value) => value == null || value === "" ? "Unavailable" : formatCurrency(value);
         return <div style={{ display: "grid", gap: "14px", marginTop: "18px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: "10px" }}>
-            <div style={cardStyle}><div style={smallLabel}>Report status</div><div style={reportValue}>{String(reportData.status || "Unknown")}</div><div style={{ color: "rgba(134,239,172,0.9)", fontSize: "11px", marginTop: "6px" }}>{reportData.read_only ? "Read-only report" : "Review report"}</div></div>
+            <div style={cardStyle}><div style={smallLabel}>Report status</div><div style={reportValue}>{String(reportData.status || "Unknown")}</div><div style={{ color: "var(--finos-color-a8a98d03)", fontSize: "11px", marginTop: "6px" }}>{reportData.read_only ? "Read-only report" : "Review report"}</div></div>
             <div style={cardStyle}><div style={smallLabel}>Financial year</div><div style={reportValue}>{reportData.financial_year || financialYear}</div></div>
             <div style={cardStyle}><div style={smallLabel}>Assessment year</div><div style={reportValue}>{reportData.assessment_year || "Unavailable"}</div></div>
             <div style={cardStyle}><div style={smallLabel}>Tax regime</div><div style={reportValue}>{taxpayer.regime === "old" ? "Old regime" : taxpayer.regime === "new" ? "New regime" : taxRegime === "new" ? "New regime" : "Old regime"}</div></div>
           </div>
           <div style={panelStyle}>
             <h4 style={{ margin: "0 0 12px" }}>Old vs New regime comparison</h4>
-            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "12px", lineHeight: 1.6, marginTop: 0 }}>Both estimates use the current report engine and the same source data. Because some income heads, verified deductions and tax credits are not connected, this is an indicative comparison—not a final regime recommendation.</p>
+            <p style={{ color: "var(--finos-color-1466cb92)", fontSize: "12px", lineHeight: 1.6, marginTop: 0 }}>Both estimates use the current report engine and the same source data. Because some income heads, verified deductions and tax credits are not connected, this is an indicative comparison—not a final regime recommendation.</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px" }}>
-              <div style={cardStyle}><div style={smallLabel}>Old regime · calculated tax</div><div style={reportValue}>{safeAmount((taxpayer.regime === "old" ? reportData : comparisonReportData)?.tax_liability?.total_tax_payable)}</div><div style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px", marginTop: "5px" }}>{taxpayer.regime === "old" ? "Selected regime" : "Alternative estimate"}</div></div>
-              <div style={cardStyle}><div style={smallLabel}>New regime · calculated tax</div><div style={reportValue}>{safeAmount((taxpayer.regime === "new" ? reportData : comparisonReportData)?.tax_liability?.total_tax_payable)}</div><div style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px", marginTop: "5px" }}>{taxpayer.regime === "new" ? "Selected regime" : "Alternative estimate"}</div></div>
-              <div style={cardStyle}><div style={smallLabel}>Difference</div><div style={reportValue}>{(() => { const oldTax = Number((taxpayer.regime === "old" ? reportData : comparisonReportData)?.tax_liability?.total_tax_payable); const newTax = Number((taxpayer.regime === "new" ? reportData : comparisonReportData)?.tax_liability?.total_tax_payable); return Number.isFinite(oldTax) && Number.isFinite(newTax) ? formatCurrency(Math.abs(oldTax - newTax)) : "Unavailable"; })()}</div><div style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px", marginTop: "5px" }}>Before missing data and credits are resolved</div></div>
+              <div style={cardStyle}><div style={smallLabel}>Old regime · calculated tax</div><div style={reportValue}>{safeAmount((taxpayer.regime === "old" ? reportData : comparisonReportData)?.tax_liability?.total_tax_payable)}</div><div style={{ color: "var(--finos-color-c28ec047)", fontSize: "10px", marginTop: "5px" }}>{taxpayer.regime === "old" ? "Selected regime" : "Alternative estimate"}</div></div>
+              <div style={cardStyle}><div style={smallLabel}>New regime · calculated tax</div><div style={reportValue}>{safeAmount((taxpayer.regime === "new" ? reportData : comparisonReportData)?.tax_liability?.total_tax_payable)}</div><div style={{ color: "var(--finos-color-c28ec047)", fontSize: "10px", marginTop: "5px" }}>{taxpayer.regime === "new" ? "Selected regime" : "Alternative estimate"}</div></div>
+              <div style={cardStyle}><div style={smallLabel}>Difference</div><div style={reportValue}>{(() => { const oldTax = Number((taxpayer.regime === "old" ? reportData : comparisonReportData)?.tax_liability?.total_tax_payable); const newTax = Number((taxpayer.regime === "new" ? reportData : comparisonReportData)?.tax_liability?.total_tax_payable); return Number.isFinite(oldTax) && Number.isFinite(newTax) ? formatCurrency(Math.abs(oldTax - newTax)) : "Unavailable"; })()}</div><div style={{ color: "var(--finos-color-c28ec047)", fontSize: "10px", marginTop: "5px" }}>Before missing data and credits are resolved</div></div>
             </div>
           </div>
           <div style={panelStyle}>
@@ -2292,21 +2292,21 @@ function TaxPage() {
           </div>
           <div style={panelStyle}>
             <h4 style={{ margin: "0 0 12px" }}>ITR form preparation</h4>
-            <p style={{ color: "rgba(255,255,255,0.58)", fontSize: "12px", lineHeight: 1.6, marginTop: 0 }}>These are preliminary form guides, not a final eligibility decision or electronic filing. Eligibility requires complete income, residency, asset and business details.</p>
+            <p style={{ color: "var(--finos-color-1466cb3f)", fontSize: "12px", lineHeight: 1.6, marginTop: 0 }}>These are preliminary form guides, not a final eligibility decision or electronic filing. Eligibility requires complete income, residency, asset and business details.</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "10px" }}>
-              {Object.entries(reportData.itr_forms || {}).filter(([key]) => ["ITR-1", "ITR-2", "ITR-3"].includes(key)).map(([formName, info]) => <div key={formName} style={cardStyle}><div style={smallLabel}>{formName}</div><div style={{ ...reportValue, fontSize: "13px" }}>{safeText(info.status)}</div><div style={{ color: "rgba(255,255,255,0.58)", fontSize: "11px", lineHeight: 1.55, marginTop: "7px" }}>{safeText(info.note)}</div></div>)}
+              {Object.entries(reportData.itr_forms || {}).filter(([key]) => ["ITR-1", "ITR-2", "ITR-3"].includes(key)).map(([formName, info]) => <div key={formName} style={cardStyle}><div style={smallLabel}>{formName}</div><div style={{ ...reportValue, fontSize: "13px" }}>{safeText(info.status)}</div><div style={{ color: "var(--finos-color-1466cb3f)", fontSize: "11px", lineHeight: 1.55, marginTop: "7px" }}>{safeText(info.note)}</div></div>)}
             </div>
           </div>
           <div style={panelStyle}>
             <h4 style={{ margin: "0 0 12px" }}>Income information</h4>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))", gap: "10px" }}>
-              {incomeHeads.map(([label, item]) => <div key={label} style={cardStyle}><div style={smallLabel}>{label}</div><div style={reportValue}>{safeAmount(item?.amount)}</div><div style={{ color: "rgba(255,255,255,0.55)", fontSize: "11px", marginTop: "6px" }}>{item?.available === true ? "Available" : item?.available === false ? "Source data unavailable" : "Status unavailable"}</div></div>)}
+              {incomeHeads.map(([label, item]) => <div key={label} style={cardStyle}><div style={smallLabel}>{label}</div><div style={reportValue}>{safeAmount(item?.amount)}</div><div style={{ color: "var(--finos-color-1466cb92)", fontSize: "11px", marginTop: "6px" }}>{item?.available === true ? "Available" : item?.available === false ? "Source data unavailable" : "Status unavailable"}</div></div>)}
             </div>
-            <div style={{ marginTop: "12px", color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>Other sources total: <strong>{safeAmount(reportIncome.other_sources?.total)}</strong></div>
+            <div style={{ marginTop: "12px", color: "var(--finos-color-c28ec064)", fontSize: "12px" }}>Other sources total: <strong>{safeAmount(reportIncome.other_sources?.total)}</strong></div>
           </div>
           <div style={panelStyle}>
             <h4 style={{ margin: "0 0 12px" }}>Money transaction classification checks</h4>
-            <p style={{ color: "rgba(255,255,255,0.56)", fontSize: "12px", lineHeight: 1.6, marginTop: 0 }}>Loan proceeds identified from transaction category or description are excluded from taxable income. Keyword matches and conflicts are review aids; check them before relying on the report.</p>
+            <p style={{ color: "var(--finos-color-1466cb71)", fontSize: "12px", lineHeight: 1.6, marginTop: 0 }}>Loan proceeds identified from transaction category or description are excluded from taxable income. Keyword matches and conflicts are review aids; check them before relying on the report.</p>
             {(() => {
               const excludedLoans = Array.isArray(reportIncome.excluded_loan_proceeds) ? reportIncome.excluded_loan_proceeds : [];
               const conflicts = Array.isArray(reportIncome.classification_review) ? reportIncome.classification_review : [];
@@ -2315,9 +2315,9 @@ function TaxPage() {
                   <div style={cardStyle}><div style={smallLabel}>Loan proceeds excluded</div><div style={reportValue}>{excludedLoans.length}</div></div>
                   <div style={cardStyle}><div style={smallLabel}>Classification conflicts</div><div style={reportValue}>{conflicts.length}</div></div>
                 </div>
-                {excludedLoans.length > 0 && <div style={{ overflowX: "auto", marginTop: "12px" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: "420px" }}><thead><tr>{["Date", "Category", "Description", "Excluded amount"].map(label => <th key={label} style={{ ...tableCellStyle, color: "rgba(255,255,255,0.55)" }}>{label}</th>)}</tr></thead><tbody>{excludedLoans.map((row) => <tr key={row.transaction_id}><td style={tableCellStyle}>{safeText(row.date)}</td><td style={tableCellStyle}>{safeText(row.category)}</td><td style={tableCellStyle}>{safeText(row.description)}</td><td style={tableCellStyle}>{safeAmount(row.amount)}</td></tr>)}</tbody></table></div>}
-                {conflicts.length > 0 && <div style={{ overflowX: "auto", marginTop: "12px" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: "420px" }}><thead><tr>{["Date", "Current type", "Description", "Suggested head"].map(label => <th key={label} style={{ ...tableCellStyle, color: "rgba(255,255,255,0.55)" }}>{label}</th>)}</tr></thead><tbody>{conflicts.map((row) => <tr key={row.transaction_id}><td style={tableCellStyle}>{safeText(row.date)}</td><td style={tableCellStyle}>{safeText(row.type)}</td><td style={tableCellStyle}>{safeText(row.description)}</td><td style={tableCellStyle}>{safeText(row.suggested_head)}</td></tr>)}</tbody></table></div>}
-                {excludedLoans.length === 0 && conflicts.length === 0 && <p style={{ color: "rgba(255,255,255,0.48)", fontSize: "12px", marginBottom: 0 }}>No loan-proceeds exclusions or classification conflicts were detected by the current keyword checks.</p>}
+                {excludedLoans.length > 0 && <div style={{ overflowX: "auto", marginTop: "12px" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: "420px" }}><thead><tr>{["Date", "Category", "Description", "Excluded amount"].map(label => <th key={label} style={{ ...tableCellStyle, color: "var(--finos-color-1466cb92)" }}>{label}</th>)}</tr></thead><tbody>{excludedLoans.map((row) => <tr key={row.transaction_id}><td style={tableCellStyle}>{safeText(row.date)}</td><td style={tableCellStyle}>{safeText(row.category)}</td><td style={tableCellStyle}>{safeText(row.description)}</td><td style={tableCellStyle}>{safeAmount(row.amount)}</td></tr>)}</tbody></table></div>}
+                {conflicts.length > 0 && <div style={{ overflowX: "auto", marginTop: "12px" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: "420px" }}><thead><tr>{["Date", "Current type", "Description", "Suggested head"].map(label => <th key={label} style={{ ...tableCellStyle, color: "var(--finos-color-1466cb92)" }}>{label}</th>)}</tr></thead><tbody>{conflicts.map((row) => <tr key={row.transaction_id}><td style={tableCellStyle}>{safeText(row.date)}</td><td style={tableCellStyle}>{safeText(row.type)}</td><td style={tableCellStyle}>{safeText(row.description)}</td><td style={tableCellStyle}>{safeText(row.suggested_head)}</td></tr>)}</tbody></table></div>}
+                {excludedLoans.length === 0 && conflicts.length === 0 && <p style={{ color: "var(--finos-color-1466d7be)", fontSize: "12px", marginBottom: 0 }}>No loan-proceeds exclusions or classification conflicts were detected by the current keyword checks.</p>}
               </>;
             })()}
           </div>
@@ -2326,26 +2326,26 @@ function TaxPage() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))", gap: "10px" }}>
               {[["STCG before set-off", reportGains.stcg_before_setoff], ["LTCG before set-off", reportGains.ltcg_before_setoff], ["STCG after set-off", reportGains.stcg_after_setoff], ["LTCG after set-off", reportGains.ltcg_after_setoff], ["Unclassified gain", reportGains.unclassified_gain]].map(([label, value]) => <div key={label} style={cardStyle}><div style={smallLabel}>{label}</div><div style={reportValue}>{safeAmount(value)}</div></div>)}
             </div>
-            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "12px", marginBottom: 0 }}>Sales reported: {Number(reportGains.sales_count ?? reportSales.length)}</p>
-            {reportSales.length > 0 && <div style={{ overflowX: "auto", marginTop: "12px" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: "460px" }}><thead><tr>{["Investment", "Sale date", "Quantity", "Gain", "Class"].map(label => <th key={label} style={{ ...tableCellStyle, color: "rgba(255,255,255,0.55)" }}>{label}</th>)}</tr></thead><tbody>{reportSales.map((sale, index) => <tr key={sale.sale_transaction_id || `${sale.investment_id || "sale"}-${index}`}><td style={tableCellStyle}>{sale.name || sale.symbol || `Investment ${sale.investment_id ?? ""}`}</td><td style={tableCellStyle}>{sale.sale_date || "—"}</td><td style={tableCellStyle}>{sale.quantity ?? "—"}</td><td style={tableCellStyle}>{safeAmount(sale.gain)}</td><td style={tableCellStyle}>{sale.classification || "—"}</td></tr>)}</tbody></table></div>}
+            <p style={{ color: "var(--finos-color-1466cb92)", fontSize: "12px", marginBottom: 0 }}>Sales reported: {Number(reportGains.sales_count ?? reportSales.length)}</p>
+            {reportSales.length > 0 && <div style={{ overflowX: "auto", marginTop: "12px" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: "460px" }}><thead><tr>{["Investment", "Sale date", "Quantity", "Gain", "Class"].map(label => <th key={label} style={{ ...tableCellStyle, color: "var(--finos-color-1466cb92)" }}>{label}</th>)}</tr></thead><tbody>{reportSales.map((sale, index) => <tr key={sale.sale_transaction_id || `${sale.investment_id || "sale"}-${index}`}><td style={tableCellStyle}>{sale.name || sale.symbol || `Investment ${sale.investment_id ?? ""}`}</td><td style={tableCellStyle}>{sale.sale_date || "—"}</td><td style={tableCellStyle}>{sale.quantity ?? "—"}</td><td style={tableCellStyle}>{safeAmount(sale.gain)}</td><td style={tableCellStyle}>{sale.classification || "—"}</td></tr>)}</tbody></table></div>}
           </div>
           <div style={panelStyle}>
             <h4 style={{ margin: "0 0 12px" }}>Tax liability and credits</h4>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
               {[["Normal slab tax", reportData.tax_liability?.normal_slab_tax], ["Special-rate tax", reportData.tax_liability?.special_rate_tax], ["Rebate", reportData.tax_liability?.rebate_87a], ["Surcharge", reportData.tax_liability?.surcharge], ["Cess", reportData.tax_liability?.cess], ["Calculated tax", reportData.tax_liability?.total_tax_payable], ["TDS credit", reportData.tax_credits?.tds], ["Advance tax", reportData.tax_credits?.advance_tax], ["Self-assessment tax", reportData.tax_credits?.self_assessment_tax], ["Balance payable / refund", reportData.tax_credits?.balance_payable_or_refund]].map(([label, value]) => <div key={label} style={cardStyle}><div style={smallLabel}>{label}</div><div style={reportValue}>{safeAmount(value)}</div></div>)}
             </div>
-            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "11px", lineHeight: 1.6, marginBottom: 0, marginTop: "12px" }}>Tax credits are shown as unavailable until TDS certificates, advance-tax and self-assessment payment records are connected. “Calculated tax” is provisional while income heads and deductions are incomplete.</p>
+            <p style={{ color: "var(--finos-color-1466cb92)", fontSize: "11px", lineHeight: 1.6, marginBottom: 0, marginTop: "12px" }}>Tax credits are shown as unavailable until TDS certificates, advance-tax and self-assessment payment records are connected. “Calculated tax” is provisional while income heads and deductions are incomplete.</p>
           </div>
-          <details style={{ ...panelStyle, color: "rgba(255,255,255,0.65)" }}><summary style={{ cursor: "pointer", fontWeight: 700 }}>Advanced: view raw report data</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "11px", lineHeight: 1.5, marginTop: "12px" }}>{JSON.stringify(reportData, null, 2)}</pre></details>
+          <details style={{ ...panelStyle, color: "var(--finos-color-1466cf51)" }}><summary style={{ cursor: "pointer", fontWeight: 700 }}>Advanced: view raw report data</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "11px", lineHeight: 1.5, marginTop: "12px" }}>{JSON.stringify(reportData, null, 2)}</pre></details>
         </div>;
       })()}
-      {!reportData && <div style={{ marginTop: "18px", padding: "14px", borderRadius: "12px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#fcd34d", fontSize: "12px", lineHeight: 1.7 }}>The ITR report endpoint did not return data. Check that the report route is deployed and review the API error. The provisional income summary below is still available when its endpoint succeeds.</div>}
+      {!reportData && <div style={{ marginTop: "18px", padding: "14px", borderRadius: "12px", background: "var(--finos-color-446738a7)", border: "1px solid var(--finos-color-a4fb5e9d)", color: "var(--finos-color-5b5b0244)", fontSize: "12px", lineHeight: 1.7 }}>The ITR report endpoint did not return data. Check that the report route is deployed and review the API error. The provisional income summary below is still available when its endpoint succeeds.</div>}
       <div style={{ marginTop: "18px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
         <div style={cardStyle}><div style={labelStyle}>Provisional taxable income</div><div style={valueStyle}>{formatCurrency(taxable.provisional_taxable_income)}</div></div>
         <div style={cardStyle}><div style={labelStyle}>Verified deductions</div><div style={valueStyle}>{formatCurrency(deductions.verified_amount)}</div></div>
         <div style={cardStyle}><div style={labelStyle}>Indicative capital-gains tax + cess</div><div style={valueStyle}>{formatCurrency(taxSummary.tax_plus_cess)}</div></div>
       </div>
-      <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "12px", lineHeight: 1.7, marginBottom: 0 }}>This is a review aid, not a filed return or tax-professional certification. Verify income heads, deductions, tax regime, realised transactions and applicable law before filing.</p>
+      <p style={{ color: "var(--finos-color-1466cb92)", fontSize: "12px", lineHeight: 1.7, marginBottom: 0 }}>This is a review aid, not a filed return or tax-professional certification. Verify income heads, deductions, tax regime, realised transactions and applicable law before filing.</p>
     </div>
   );
 
@@ -2356,7 +2356,7 @@ function TaxPage() {
         <section className="glass-card" style={{ padding: "24px", borderRadius: "18px" }}>
           <p className="card-label">FINANCIAL OS / TAX SETUP</p>
           <h2 style={{ margin: "6px 0 8px", fontSize: "28px", fontWeight: 800 }}>Choose your tax regime</h2>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "14px", lineHeight: 1.7, marginTop: 0 }}>
+          <p style={{ color: "var(--finos-color-1466cf51)", fontSize: "14px", lineHeight: 1.7, marginTop: 0 }}>
             Choose a regime to begin. The Tax Centre will use this selection for its current calculations. You can change it later and refresh the report.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px", marginTop: "18px" }}>
@@ -2369,7 +2369,7 @@ function TaxPage() {
               <span style={{ display: "block", fontSize: "12px", lineHeight: 1.6, opacity: 0.8 }}>Higher slab rates with eligible deductions and exemptions.</span>
             </button>
           </div>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "11px", lineHeight: 1.6, marginBottom: 0, marginTop: "16px" }}>
+          <p style={{ color: "var(--finos-color-1466d7d3)", fontSize: "11px", lineHeight: 1.6, marginBottom: 0, marginTop: "16px" }}>
             This selection starts the review only; it does not elect a regime with the Income Tax Department or file a return.
           </p>
         </section>
@@ -2381,14 +2381,14 @@ function TaxPage() {
     <div className="tax-centre" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
       {/* Tax Centre header */}
       <section style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
-        <div><p className="card-label">FINANCIAL OS / TAX</p><h2 style={{ margin: "4px 0 6px", fontSize: "28px", fontWeight: 800 }}>Tax Centre</h2><p style={{ margin: 0, color: "rgba(255,255,255,0.55)", fontSize: "13px" }}>Income, capital gains, deductions and tax-report readiness in one place.</p></div>
+        <div><p className="card-label">FINANCIAL OS / TAX</p><h2 style={{ margin: "4px 0 6px", fontSize: "28px", fontWeight: 800 }}>Tax Centre</h2><p style={{ margin: 0, color: "var(--finos-color-1466cb92)", fontSize: "13px" }}>Income, capital gains, deductions and tax-report readiness in one place.</p></div>
         <button className="secondary-button" type="button" onClick={loadTaxData} disabled={loading}>{loading ? "Loading..." : "Refresh tax data"}</button>
       </section>
 
       {/* Financial year and regime quick selectors */}
       <section style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>FINANCIAL YEAR</span>
-        <strong>{financialYear}</strong><span style={{ color: "rgba(255,255,255,0.3)" }}>•</span><span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>{taxRegime === "new" ? "New regime framework" : "Old regime framework"}</span>
+        <span style={{ color: "var(--finos-color-c28ec047)", fontSize: "11px" }}>FINANCIAL YEAR</span>
+        <strong>{financialYear}</strong><span style={{ color: "var(--finos-color-c28ebf81)" }}>•</span><span style={{ color: "var(--finos-color-c28ec064)", fontSize: "12px" }}>{taxRegime === "new" ? "New regime framework" : "Old regime framework"}</span>
       </section>
 
       {/* Six section tabs */}
@@ -2396,7 +2396,7 @@ function TaxPage() {
         {sections.map((item) => <button key={item} type="button" onClick={() => setSection(item)} className={section === item ? "primary-button" : "secondary-button"} style={{ padding: "10px 13px", fontSize: "12px" }}>{item}</button>)}
       </nav>
 
-      {error && <div style={{ padding: "13px 15px", borderRadius: "12px", border: "1px solid rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.08)", color: "var(--finos-status-danger-soft)", fontSize: "13px" }}>{error}</div>}
+      {error && <div style={{ padding: "13px 15px", borderRadius: "12px", border: "1px solid var(--finos-color-6474499f)", background: "var(--finos-color-647441f0)", color: "var(--finos-status-danger-soft)", fontSize: "13px" }}>{error}</div>}
       {notice && !error && <div style={{ color: "var(--finos-status-success-soft)", fontSize: "12px" }}>{notice}</div>}
       {loading && !taxData && <div className="glass-card" style={{ padding: "18px" }}>Loading tax data from the Financial OS API...</div>}
 
@@ -2859,21 +2859,21 @@ function MarketsPage() {
       </div>
     </section>
       <section aria-label="Major Indian market indices" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" }}>
-        {requestedIndices.map((item, i) => <div key={item.label} style={{ ...card, position: "relative", overflow: "hidden", padding: "15px", borderRadius: "18px", border: "1px solid rgba(167,139,250,.18)", background: i % 2 === 0 ? "linear-gradient(145deg, rgba(124,58,237,0.24), rgba(13,18,38,.78))" : "linear-gradient(145deg, rgba(14,165,233,0.18), rgba(13,18,38,.78))", boxShadow: "0 12px 28px rgba(0,0,0,.12)" }}>
+        {requestedIndices.map((item, i) => <div key={item.label} style={{ ...card, position: "relative", overflow: "hidden", padding: "15px", borderRadius: "18px", border: "1px solid var(--finos-color-9dbc3b45)", background: i % 2 === 0 ? "linear-gradient(145deg, var(--finos-color-1ce91e6a), var(--finos-color-74bdb51f))" : "linear-gradient(145deg, var(--finos-color-604dd70c), var(--finos-color-74bdb51f))", boxShadow: "0 12px 28px var(--finos-color-88afa943)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}><strong style={{ fontSize: "11px", letterSpacing: ".07em" }}>{item.label}</strong><span style={{ ...muted, fontSize: "10px" }}>{item.data?.status || (busy ? "Loading" : "Market index")}</span></div>
           <div style={{ fontSize: "clamp(20px, 4vw, 27px)", fontWeight: 850, marginTop: "12px", letterSpacing: "-.04em", overflowWrap: "anywhere" }}>{item.data?.last_price != null && Number.isFinite(Number(item.data.last_price)) ? Number(item.data.last_price).toLocaleString("en-IN", { maximumFractionDigits: 2 }) : busy ? "Loading…" : "Unavailable"}</div>
           <div style={{ ...muted, marginTop: "5px", fontSize: "11px" }}>{item.data ? `${item.data.exchange || "Indian market"} · Latest available` : "Not currently returned by market API"}</div>
-          <div aria-hidden="true" style={{ height: "3px", borderRadius: "9px", marginTop: "14px", background: "linear-gradient(90deg, rgba(167,139,250,.95), rgba(56,189,248,.35), transparent)" }} />
+          <div aria-hidden="true" style={{ height: "3px", borderRadius: "9px", marginTop: "14px", background: "linear-gradient(90deg, var(--finos-color-9dbc5c20), var(--finos-color-2c50affb), transparent)" }} />
         </div>)}
       </section>
-    <section className="instrument-search-panel" aria-label="Market instrument search" style={{ padding: "4px 0 18px", borderBottom: "1px solid rgba(255,255,255,.07)" }}>
+    <section className="instrument-search-panel" aria-label="Market instrument search" style={{ padding: "4px 0 18px", borderBottom: "1px solid var(--finos-color-c2896ec5)" }}>
       <div style={{ marginBottom: "12px" }}>
         <h3 style={{ margin: "0 0 8px", fontSize: "19px", fontWeight: 800, letterSpacing: "-.02em" }}>Find an instrument</h3>
       </div>
       <form onSubmit={search} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: "10px", alignItems: "stretch" }}>
         <div style={{ position: "relative", minWidth: 0 }}>
           <Search aria-hidden="true" size={22} style={{ position: "absolute", left: "17px", top: "50%", transform: "translateY(-50%)", color: "var(--finos-accent)", pointerEvents: "none" }} />
-          <input aria-label="Search company, stock or instrument" autoComplete="off" style={{ ...input, width: "100%", minHeight: "60px", padding: "15px 18px 15px 50px", borderRadius: "18px", border: "1px solid rgba(167,139,250,.62)", background: "linear-gradient(115deg, rgba(124,58,237,.22), rgba(15,23,42,.94) 72%)", boxShadow: "0 0 0 4px rgba(124,58,237,.07), 0 14px 32px rgba(0,0,0,.16)", fontSize: "16px" }} value={query} onChange={e => setQuery(e.target.value)} placeholder="Try Reliance, HDFC Bank, TCS…" />
+          <input aria-label="Search company, stock or instrument" autoComplete="off" style={{ ...input, width: "100%", minHeight: "60px", padding: "15px 18px 15px 50px", borderRadius: "18px", border: "1px solid var(--finos-color-9dbc2d88)", background: "linear-gradient(115deg, var(--finos-color-b3523b3c), var(--finos-color-81dab1be) 72%)", boxShadow: "0 0 0 4px var(--finos-color-b352325b), 0 14px 32px var(--finos-color-88afa9c7)", fontSize: "16px" }} value={query} onChange={e => setQuery(e.target.value)} placeholder="Try Reliance, HDFC Bank, TCS…" />
         </div>
         <button className="primary-button" type="submit" disabled={searchBusy} style={{ minWidth: "118px", minHeight: "60px", padding: "0 18px", borderRadius: "16px", fontSize: "14px", fontWeight: 750, whiteSpace: "nowrap" }}>
           {searchBusy ? "Searching…" : <><Search size={17} style={{ marginRight: "7px", verticalAlign: "middle" }} />Search</>}
@@ -2884,7 +2884,7 @@ function MarketsPage() {
       {searchError && <p role="status" style={{ color: "var(--finos-negative)", fontSize: "12px", marginTop: "12px" }}>{searchError}</p>}
       {searchWarning && <p role="status" style={{ color: "var(--finos-warning)", fontSize: "12px", marginTop: "8px" }}>Data freshness warning: {searchWarning}</p>}
       {results.length > 0 && <p style={{ ...muted, margin: "12px 0 4px" }}>{results.length} matching instruments · Select a result to open its quote and chart.</p>}
-      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #059669, #10b981)", border: "1px solid rgba(52,211,153,0.4)", boxShadow: "0 6px 18px rgba(16,185,129,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("BUY"); }}>BUY</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, #b91c1c, var(--finos-status-danger))", border: "1px solid rgba(248,113,113,0.4)", boxShadow: "0 6px 18px rgba(239,68,68,0.18)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("SELL"); }}>SELL</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
+      {selectedInstrument && <div style={{ ...card, marginTop: "12px", padding: "12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><div style={muted}>Selected instrument</div><strong>{selectedInstrument.symbol}</strong><div style={muted}>{selectedInstrument.name || "Company name unavailable"} · {selectedInstrument.exchange || "NSE"}</div></div><div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, var(--finos-color-1dca5963), var(--finos-color-24cecef5))", border: "1px solid var(--finos-color-1608a336)", boxShadow: "0 6px 18px var(--finos-color-f844f7e8)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("BUY"); }}>BUY</button><button type="button" className="primary-button" style={{ minWidth: "88px", padding: "10px 20px", fontWeight: 800, letterSpacing: "0.04em", background: "linear-gradient(135deg, var(--finos-color-618afddd), var(--finos-status-danger))", border: "1px solid var(--finos-color-faf5498a)", boxShadow: "0 6px 18px var(--finos-color-64743571)" }} onClick={() => { setOrderError(""); setOrderSuccess(null); setOrderClientId(createOrderClientId()); setOrderDraft((previous) => ({ ...previous, quantity: previous.quantity || "1", limit_price: "" })); setOrderModalSide("SELL"); }}>SELL</button><button type="button" className="secondary-button" onClick={() => addToWatchlist(selectedInstrument)} disabled={watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase())}>{watchlist.some((item) => String(item.symbol).toUpperCase() === String(selectedInstrument.symbol).toUpperCase() && String(item.exchange || "NSE").toUpperCase() === String(selectedInstrument.exchange || "NSE").toUpperCase()) ? "In watchlist" : "Add to watchlist"}</button><button type="button" className="secondary-button" onClick={() => { setSelectedInstrument(null); setQuote(null); setQuoteError(""); setChartData([]); setChartInfo(null); setChartError(""); }}>Back to Markets</button></div></div>}
       {orderModalSide && selectedInstrument && <div className="broker-order-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !orderSubmitting) setOrderModalSide(""); }}>
         <form onSubmit={async (event) => {
           event.preventDefault();
@@ -2933,7 +2933,7 @@ function MarketsPage() {
           <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}><button type="submit" className="primary-button" disabled={orderSubmitting || Boolean(orderSuccess)} style={{ flex: 1 }}>{orderSubmitting ? "Submitting…" : orderSuccess ? "Order submitted" : `Confirm ${orderModalSide}`}</button><button type="button" className="secondary-button" disabled={orderSubmitting} onClick={() => setOrderModalSide("")}>Cancel</button></div>
         </form>
       </div>}
-      {results.map((row, i) => <div key={`${row.exchange || "NSE"}-${row.symbol || row.instrument_token || i}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "13px 12px", marginTop: "8px", borderRadius: "12px", border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.025)", flexWrap: "wrap" }}><button type="button" onClick={() => selectInstrument(row)} aria-label={`Select ${row.name || row.symbol}`} style={{ flex: "1 1 180px", textAlign: "left", padding: "4px 0", border: 0, background: "transparent", color: "inherit", cursor: "pointer" }}><strong>{row.symbol || "Unknown symbol"}</strong><div style={muted}>{row.name || "Company name unavailable"} · {row.exchange || "Exchange unavailable"}{(row.series || row.instrument_type) ? ` · ${row.series || row.instrument_type}` : ""}</div><div style={{ ...muted, marginTop: "3px" }}>Tap to open this instrument</div></button><div style={{ display: "flex", gap: "10px", alignItems: "center" }}><strong style={{ fontSize: "12px" }}>{money(row.last_price)}</strong><button type="button" className="secondary-button" onClick={() => selectInstrument(row)}>Select</button></div></div>)}
+      {results.map((row, i) => <div key={`${row.exchange || "NSE"}-${row.symbol || row.instrument_token || i}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "13px 12px", marginTop: "8px", borderRadius: "12px", border: "1px solid var(--finos-color-c2896dea)", background: "var(--finos-color-13b74615)", flexWrap: "wrap" }}><button type="button" onClick={() => selectInstrument(row)} aria-label={`Select ${row.name || row.symbol}`} style={{ flex: "1 1 180px", textAlign: "left", padding: "4px 0", border: 0, background: "transparent", color: "inherit", cursor: "pointer" }}><strong>{row.symbol || "Unknown symbol"}</strong><div style={muted}>{row.name || "Company name unavailable"} · {row.exchange || "Exchange unavailable"}{(row.series || row.instrument_type) ? ` · ${row.series || row.instrument_type}` : ""}</div><div style={{ ...muted, marginTop: "3px" }}>Tap to open this instrument</div></button><div style={{ display: "flex", gap: "10px", alignItems: "center" }}><strong style={{ fontSize: "12px" }}>{money(row.last_price)}</strong><button type="button" className="secondary-button" onClick={() => selectInstrument(row)}>Select</button></div></div>)}
     </section>
     {overviewError && <div role="status" className="instrument-provider-error">{overviewError}</div>}
     {!selectedInstrument && <>
@@ -3156,9 +3156,9 @@ function PlanPage() {
   const [form, setForm] = useState(emptyForm);
 
   const money = (value) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Number(value || 0));
-  const card = { padding: "18px", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.035)", minWidth: 0 };
-  const muted = { color: "rgba(255,255,255,0.62)", fontSize: "12px", lineHeight: 1.6 };
-  const field = { width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(5,10,22,0.75)", color: "inherit", marginTop: "7px" };
+  const card = { padding: "18px", borderRadius: "16px", border: "1px solid var(--finos-color-1466bb33)", background: "var(--finos-color-a13fa884)", minWidth: 0 };
+  const muted = { color: "var(--finos-color-1466d076)", fontSize: "12px", lineHeight: 1.6 };
+  const field = { width: "100%", boxSizing: "border-box", padding: "11px 12px", borderRadius: "10px", border: "1px solid var(--finos-color-1466bbb7)", background: "var(--finos-color-fc422cf6)", color: "inherit", marginTop: "7px" };
 
   const loadGoals = async () => {
     const response = await apiFetch(`${API_BASE_URL}/api/goals/?user_id=${USER_ID}`);
@@ -3220,8 +3220,8 @@ function PlanPage() {
       <div><p className="card-label">FINANCIAL OS · PLAN</p><h2 style={{ margin: "6px 0" }}>Plan & Goals</h2><p style={{ ...muted, maxWidth: "680px", fontSize: "13px" }}>Create and save goals, track progress, and calculate the contribution required to reach your target. Goals are stored separately and do not change account balances.</p></div>
       <button type="button" onClick={refreshAll} disabled={loading} className="secondary-button">{loading ? "Refreshing…" : "Refresh goals"}</button>
     </section>
-    {error && <div role="alert" style={{ ...card, borderColor: "rgba(248,113,113,.45)", color: "var(--finos-status-danger-soft)" }}>{error}</div>}
-    {success && <div role="status" style={{ ...card, borderColor: "rgba(74,222,128,.35)", color: "var(--finos-status-success-soft)" }}>{success}</div>}
+    {error && <div role="alert" style={{ ...card, borderColor: "var(--finos-color-faeba76f)", color: "var(--finos-status-danger-soft)" }}>{error}</div>}
+    {success && <div role="status" style={{ ...card, borderColor: "var(--finos-color-b663161c)", color: "var(--finos-status-success-soft)" }}>{success}</div>}
 
     <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: "12px" }}>
       {[{ label: "Active goals", value: goals.filter(g => g.status === "active").length }, { label: "Total target amount", value: money(totalTarget) }, { label: "Saved / allocated", value: money(totalSaved) }, { label: "Planned monthly total", value: money(totalMonthly) }].map(item => <div key={item.label} style={card}><div style={muted}>{item.label}</div><div style={{ fontSize: "clamp(21px,3vw,28px)", fontWeight: 800, marginTop: "8px" }}>{item.value}</div></div>)}
@@ -3244,14 +3244,14 @@ function PlanPage() {
 
     <section style={card}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center", flexWrap: "wrap" }}><h3 style={{ margin: 0 }}>My saved goals</h3><span style={muted}>{goals.length} saved</span></div>
-      {loading ? <p style={muted}>Loading saved goals…</p> : goals.length === 0 ? <div style={{ marginTop: "14px", padding: "18px", borderRadius: "12px", background: "rgba(255,255,255,.025)", border: "1px dashed rgba(255,255,255,.14)" }}><strong>No saved goals yet</strong><p style={muted}>Use the form above to create your first goal. Suggested categories include Emergency Fund, House, Car, Education, Retirement and Financial Independence.</p><button type="button" className="primary-button" onClick={() => { updateForm("name", "Emergency Fund"); updateForm("category", "Emergency Fund"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Start with an emergency fund</button></div> : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "12px", marginTop: "14px" }}>{goals.map(goal => { const pct = Math.min(100, Number(goal.progress_percent || 0)); return <article key={goal.id} style={{ ...card, padding: "15px" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "10px", alignItems: "flex-start" }}><div><span style={{ ...muted, textTransform: "uppercase", letterSpacing: ".06em" }}>{goal.category} · {goal.status}</span><h4 style={{ margin: "7px 0" }}>{goal.name}</h4></div><Target size={19} /></div><div style={{ fontSize: "22px", fontWeight: 800 }}>{money(goal.current_amount)} <span style={{ ...muted, fontWeight: 400 }}>of {money(goal.target_amount)}</span></div><div style={{ display: "flex", justifyContent: "space-between", ...muted, margin: "10px 0 6px" }}><span>Progress</span><strong>{pct.toFixed(1)}%</strong></div><div style={{ height: "8px", background: "rgba(255,255,255,.10)", borderRadius: "99px", overflow: "hidden" }}><div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg,#a855f7,#ec4899)" }} /></div><div style={{ ...muted, marginTop: "10px" }}>Remaining: {money(goal.remaining_amount)}<br/>Monthly contribution: {money(goal.monthly_contribution)}<br/>Target date: {goal.target_date || "Not set"}</div>{goal.notes && <p style={muted}>{goal.notes}</p>}<div style={{ display: "flex", gap: "8px", marginTop: "12px" }}><button type="button" className="secondary-button" onClick={() => editGoal(goal)}>Edit</button><button type="button" className="secondary-button" onClick={() => removeGoal(goal)}>Delete</button></div></article>; })}</div>}
+      {loading ? <p style={muted}>Loading saved goals…</p> : goals.length === 0 ? <div style={{ marginTop: "14px", padding: "18px", borderRadius: "12px", background: "var(--finos-color-13b74615)", border: "1px dashed var(--finos-color-c28962e7)" }}><strong>No saved goals yet</strong><p style={muted}>Use the form above to create your first goal. Suggested categories include Emergency Fund, House, Car, Education, Retirement and Financial Independence.</p><button type="button" className="primary-button" onClick={() => { updateForm("name", "Emergency Fund"); updateForm("category", "Emergency Fund"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Start with an emergency fund</button></div> : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "12px", marginTop: "14px" }}>{goals.map(goal => { const pct = Math.min(100, Number(goal.progress_percent || 0)); return <article key={goal.id} style={{ ...card, padding: "15px" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "10px", alignItems: "flex-start" }}><div><span style={{ ...muted, textTransform: "uppercase", letterSpacing: ".06em" }}>{goal.category} · {goal.status}</span><h4 style={{ margin: "7px 0" }}>{goal.name}</h4></div><Target size={19} /></div><div style={{ fontSize: "22px", fontWeight: 800 }}>{money(goal.current_amount)} <span style={{ ...muted, fontWeight: 400 }}>of {money(goal.target_amount)}</span></div><div style={{ display: "flex", justifyContent: "space-between", ...muted, margin: "10px 0 6px" }}><span>Progress</span><strong>{pct.toFixed(1)}%</strong></div><div style={{ height: "8px", background: "var(--finos-color-c2896263)", borderRadius: "99px", overflow: "hidden" }}><div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg,var(--finos-color-6d1d8f4e),var(--finos-color-665a694c))" }} /></div><div style={{ ...muted, marginTop: "10px" }}>Remaining: {money(goal.remaining_amount)}<br/>Monthly contribution: {money(goal.monthly_contribution)}<br/>Target date: {goal.target_date || "Not set"}</div>{goal.notes && <p style={muted}>{goal.notes}</p>}<div style={{ display: "flex", gap: "8px", marginTop: "12px" }}><button type="button" className="secondary-button" onClick={() => editGoal(goal)}>Edit</button><button type="button" className="secondary-button" onClick={() => removeGoal(goal)}>Delete</button></div></article>; })}</div>}
     </section>
 
     <section style={card}>
       <p className="card-label">PLANNING TOOL</p><h3 style={{ margin: "5px 0 8px" }}>Contribution calculator</h3><p style={muted}>The calculator uses the same inputs as the goal form and assumes no interest or investment return.</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: "12px", marginTop: "14px" }}>
         {[{label:"Amount remaining",value:money(remaining)},{label:"Required monthly contribution",value:requiredMonthly === null ? "Set target date" : money(requiredMonthly)},{label:"Estimated time at planned amount",value:remaining === 0 ? "Goal reached" : monthsNeeded === null ? "Enter contribution" : `${monthsNeeded} months`}].map(x => <div key={x.label} style={{ ...card, padding: "14px" }}><div style={muted}>{x.label}</div><div style={{ fontSize: "clamp(18px,3vw,25px)", fontWeight: 800, marginTop: "7px" }}>{x.value}</div></div>)}
-      </div><div style={{ marginTop: "14px" }}><div style={{ display: "flex", justifyContent: "space-between", ...muted, marginBottom: "7px" }}><span>Current goal progress (form values)</span><strong>{progress.toFixed(1)}%</strong></div><div style={{ height: "8px", background: "rgba(255,255,255,.10)", borderRadius: "99px", overflow: "hidden" }}><div style={{ width: `${progress}%`, height: "100%", background: "linear-gradient(90deg,#a855f7,#ec4899)" }} /></div></div>
+      </div><div style={{ marginTop: "14px" }}><div style={{ display: "flex", justifyContent: "space-between", ...muted, marginBottom: "7px" }}><span>Current goal progress (form values)</span><strong>{progress.toFixed(1)}%</strong></div><div style={{ height: "8px", background: "var(--finos-color-c2896263)", borderRadius: "99px", overflow: "hidden" }}><div style={{ width: `${progress}%`, height: "100%", background: "linear-gradient(90deg,var(--finos-color-6d1d8f4e),var(--finos-color-665a694c))" }} /></div></div>
       <p style={{ ...muted, marginBottom: 0, marginTop: "12px" }}>{plan?.investment_planning?.monthly_contribution_capacity != null ? `The existing planning API estimates monthly contribution capacity at ${money(plan.investment_planning.monthly_contribution_capacity)}. This is a suggestion, not a saved allocation.` : "Planning assumptions are unavailable; goal calculations still work from your inputs."} Goal records do not change your bank or investment balances.</p>
     </section>
   </div>;
@@ -3277,13 +3277,13 @@ function AIAssistantPage() {
     } catch (err) { setError(err.message || "Unable to reach Gemini."); } finally { setBusy(false); }
   }
   return <div style={{ maxWidth: 980, margin: "0 auto", padding: "8px 0 24px" }}>
-    <div className="glass-card" style={{ padding: 22, marginBottom: 16 }}><p className="card-label">GOOGLE GEMINI</p><h2 style={{ margin: "6px 0" }}>AI Financial Assistant</h2><p style={{ color: "rgba(255,255,255,.65)", lineHeight: 1.6, marginBottom: 0 }}>Ask about budgeting, investing concepts, financial goals, or planning. This initial connection does not automatically access your private Financial OS records or live market data.</p></div>
+    <div className="glass-card" style={{ padding: 22, marginBottom: 16 }}><p className="card-label">GOOGLE GEMINI</p><h2 style={{ margin: "6px 0" }}>AI Financial Assistant</h2><p style={{ color: "var(--finos-color-c2897681)", lineHeight: 1.6, marginBottom: 0 }}>Ask about budgeting, investing concepts, financial goals, or planning. This initial connection does not automatically access your private Financial OS records or live market data.</p></div>
     <div className="glass-card" style={{ padding: 18 }}><div style={{ minHeight: 180, maxHeight: 430, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
-      {messages.length === 0 && <p style={{ color: "rgba(255,255,255,.55)" }}>Example: “Help me create a monthly budget”</p>}
-      {messages.map((item, index) => <div key={index} style={{ alignSelf: item.role === "you" ? "flex-end" : "stretch", maxWidth: "95%", padding: 12, borderRadius: 12, background: item.role === "you" ? "rgba(168,85,247,.20)" : "rgba(255,255,255,.06)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}><strong style={{ display: "block", fontSize: 12, opacity: .7, marginBottom: 5 }}>{item.role === "you" ? "YOU" : "GEMINI"}</strong>{item.text}</div>)}
-      {busy && <p style={{ color: "rgba(255,255,255,.65)" }}>Gemini is thinking…</p>}</div>
+      {messages.length === 0 && <p style={{ color: "var(--finos-color-c28972c2)" }}>Example: “Help me create a monthly budget”</p>}
+      {messages.map((item, index) => <div key={index} style={{ alignSelf: item.role === "you" ? "flex-end" : "stretch", maxWidth: "95%", padding: 12, borderRadius: 12, background: item.role === "you" ? "var(--finos-color-d2e99e91)" : "var(--finos-color-c2896f24)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}><strong style={{ display: "block", fontSize: 12, opacity: .7, marginBottom: 5 }}>{item.role === "you" ? "YOU" : "GEMINI"}</strong>{item.text}</div>)}
+      {busy && <p style={{ color: "var(--finos-color-c2897681)" }}>Gemini is thinking…</p>}</div>
       {error && <p role="alert" style={{ color: "var(--finos-status-danger)" }}>{error}</p>}
-      <form onSubmit={sendMessage} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}><input aria-label="Message Gemini" value={message} onChange={e => setMessage(e.target.value)} placeholder="Ask your financial assistant…" maxLength={8000} style={{ flex: "1 1 260px", minWidth: 0, padding: "13px 14px", borderRadius: 10, color: "inherit", background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.14)" }} /><button type="submit" className="primary-button" disabled={busy || !message.trim()}>{busy ? "Sending…" : "Ask Gemini"}</button></form>
+      <form onSubmit={sendMessage} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}><input aria-label="Message Gemini" value={message} onChange={e => setMessage(e.target.value)} placeholder="Ask your financial assistant…" maxLength={8000} style={{ flex: "1 1 260px", minWidth: 0, padding: "13px 14px", borderRadius: 10, color: "inherit", background: "var(--finos-color-c2896f24)", border: "1px solid var(--finos-color-c28962e7)" }} /><button type="submit" className="primary-button" disabled={busy || !message.trim()}>{busy ? "Sending…" : "Ask Gemini"}</button></form>
     </div></div>;
 }
 
@@ -3311,18 +3311,18 @@ function PlaygroundPage() {
   useEffect(() => { let cancelled=false; apiFetch(`${API}/api/vibe-trading/status`).then(async r=>{const d=await r.json(); if(!r.ok) throw new Error(d.detail||`Status ${r.status}`); return d;}).then(d=>{if(!cancelled)setStatus(d);}).catch(e=>{if(!cancelled)setError(`API status unavailable: ${e.message}`);}); return ()=>{cancelled=true;}; }, []);
   const loadQuotes = async (e) => { if(e)e.preventDefault(); const list=symbols(); if(!list.length){setError("Enter at least one symbol.");return;} setBusy(true);setError("");setNotice("");try{const r=await apiFetch(`${API}/api/vibe-trading/quotes`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({symbols:list})});const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||`Request failed (${r.status})`));setQuotes(Array.isArray(d.quotes)?d.quotes:[]);setUpdatedAt(new Date().toLocaleString());if(!d.quotes?.length)setError("No quote rows were returned.");}catch(e){setError(e.message||"Unable to load quotes.");}finally{setBusy(false);} };
   const runResearch = async (e) => { if(e)e.preventDefault();setBusy(true);setError("");setResearch("");try{const r=await apiFetch(`${API}/api/vibe-trading/research`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({question,symbols:symbols()})});const d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||`Research failed (${r.status})`));setResearch(d.answer||"The research service returned no answer.");}catch(e){setError(e.message||"Research request failed.");}finally{setBusy(false);} };
-  const panel={background:"rgba(255,255,255,.035)",border:"1px solid rgba(255,255,255,.10)",borderRadius:14,padding:16,minWidth:0};
-  const muted={color:"rgba(255,255,255,.65)",fontSize:13,lineHeight:1.65};
-  const input={width:"100%",minWidth:0,padding:"12px 13px",borderRadius:10,color:"inherit",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.16)",marginTop:6};
+  const panel={background:"var(--finos-color-13b739d4)",border:"1px solid var(--finos-color-c2896263)",borderRadius:14,padding:16,minWidth:0};
+  const muted={color:"var(--finos-color-c2897681)",fontSize:13,lineHeight:1.65};
+  const input={width:"100%",minWidth:0,padding:"12px 13px",borderRadius:10,color:"inherit",background:"var(--finos-color-c2896f24)",border:"1px solid var(--finos-color-c28962a5)",marginTop:6};
   const tabs=["Market Data","AI Research","Strategy Builder","Backtesting","Paper Trading","Risk Controls","Agent Lab","Execution"];
-  const btn={padding:"10px 12px",borderRadius:9,border:"1px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.05)",color:"inherit",cursor:"pointer"};
-  const coming=(name,desc)=> <section style={panel}><p className="card-label">PLAYGROUND WORKSPACE</p><h3 style={{marginTop:4}}>{name}</h3><p style={muted}>{desc}</p><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10,marginTop:14}}>{["Inputs & configuration","Results & diagnostics","Saved workspace"].map(x=><div key={x} style={{padding:12,borderRadius:10,border:"1px solid rgba(255,255,255,.10)"}}><strong>{x}</strong><p style={muted}>Workspace section reserved and visible. This feature is not connected to a calculation or storage engine yet.</p></div>)}</div><p style={muted}>Availability: interface scaffold only. No fabricated backtest, paper order, strategy signal, or broker action is produced.</p><button type="button" style={btn} onClick={()=>setNotice(`${name}: workspace selected. Backend implementation is the next development step.`)}>Check workspace status</button>{notice&&<p role="status" style={muted}>{notice}</p>}</section>;
+  const btn={padding:"10px 12px",borderRadius:9,border:"1px solid var(--finos-color-c28962c6)",background:"var(--finos-color-c2896f07)",color:"inherit",cursor:"pointer"};
+  const coming=(name,desc)=> <section style={panel}><p className="card-label">PLAYGROUND WORKSPACE</p><h3 style={{marginTop:4}}>{name}</h3><p style={muted}>{desc}</p><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10,marginTop:14}}>{["Inputs & configuration","Results & diagnostics","Saved workspace"].map(x=><div key={x} style={{padding:12,borderRadius:10,border:"1px solid var(--finos-color-c2896263)"}}><strong>{x}</strong><p style={muted}>Workspace section reserved and visible. This feature is not connected to a calculation or storage engine yet.</p></div>)}</div><p style={muted}>Availability: interface scaffold only. No fabricated backtest, paper order, strategy signal, or broker action is produced.</p><button type="button" style={btn} onClick={()=>setNotice(`${name}: workspace selected. Backend implementation is the next development step.`)}>Check workspace status</button>{notice&&<p role="status" style={muted}>{notice}</p>}</section>;
   return <div style={{display:"grid",gap:14,minWidth:0}}>
     <section style={panel}><p className="card-label">FINANCIAL OS / PLAYGROUND</p><h2 style={{margin:"5px 0"}}>Trading & Research Playground</h2><p style={muted}>One workspace for market data, AI research, strategy design, backtesting, paper trading, risk controls, agent research, and execution readiness. Each section is selectable; unfinished engines are labelled rather than pretending to work.</p><div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}><span style={muted}>API: {status?.status||"Checking…"}</span><span style={muted}>Provider: {status?.market_provider||"m.Stock gateway"}</span><span style={muted}>Real orders: disabled</span></div></section>
-    <nav aria-label="Playground tools" style={{display:"flex",gap:8,flexWrap:"wrap"}}>{tabs.map(t=><button key={t} type="button" onClick={()=>{setTab(t);setError("");setNotice("");}} aria-pressed={tab===t} style={{...btn,background:tab===t?"rgba(168,85,247,.24)":"rgba(255,255,255,.05)",borderColor:tab===t?"rgba(168,85,247,.7)":"rgba(255,255,255,.15)"}}>{t}{["Strategy Builder","Backtesting","Paper Trading","Risk Controls","Agent Lab","Execution"].includes(t)?" ·":""}</button>)}</nav>
+    <nav aria-label="Playground tools" style={{display:"flex",gap:8,flexWrap:"wrap"}}>{tabs.map(t=><button key={t} type="button" onClick={()=>{setTab(t);setError("");setNotice("");}} aria-pressed={tab===t} style={{...btn,background:tab===t?"var(--finos-color-d2e99f15)":"var(--finos-color-c2896f07)",borderColor:tab===t?"var(--finos-color-c854a804)":"var(--finos-color-c28962c6)"}}>{t}{["Strategy Builder","Backtesting","Paper Trading","Risk Controls","Agent Lab","Execution"].includes(t)?" ·":""}</button>)}</nav>
     {error&&<div role="alert" style={{...panel,color:"var(--finos-status-danger-soft)"}}>{error}</div>}
-    {tab==="Market Data"&&<><section style={panel}><h3 style={{marginTop:0}}>Market quotes</h3><p style={muted}>Enter up to 20 NSE symbols. Requests use the existing Vibe Trading batch endpoint.</p><form onSubmit={loadQuotes} style={{display:"grid",gap:10}}><label style={muted}>Symbols<input aria-label="Market symbols" value={symbolsText} onChange={e=>setSymbolsText(e.target.value)} style={input} placeholder="RELIANCE, TCS, INFY"/></label><button className="primary-button" type="submit" disabled={busy}>{busy?"Loading…":"Load market data"}</button></form>{updatedAt&&<p style={muted}>Retrieved by this page: {updatedAt}. Retrieval time is not a verified exchange timestamp.</p>}</section>{quotes.length>0&&<section style={{...panel,overflowX:"auto"}}><h3>Quote results ({quotes.length})</h3><table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}><thead><tr>{["Symbol","Status","Price","Provider timestamp","Details"].map(h=><th key={h} style={{textAlign:"left",padding:8,borderBottom:"1px solid rgba(255,255,255,.14)"}}>{h}</th>)}</tr></thead><tbody>{quotes.map((q,i)=><tr key={`${q.symbol}-${i}`}>{[q.symbol||"—",q.status||"unknown",q.quote?.last_price??q.price??q.last_price??"—",q.provider_market_timestamp||"Not supplied",q.error||(q.cache_hit?"Cached":"API response")].map((v,j)=><td key={j} style={{padding:8,borderBottom:"1px solid rgba(255,255,255,.07)"}}>{String(v)}</td>)}</tr>)}</tbody></table><p style={muted}>No provider timestamp means live-price freshness is unverified.</p></section>}</>}
-    {tab==="AI Research"&&<section style={panel}><h3 style={{marginTop:0}}>Evidence-grounded AI research</h3><p style={muted}>Gemini analyses your question using successfully retrieved quotes where available. It does not place orders.</p><form onSubmit={runResearch} style={{display:"grid",gap:10}}><label style={muted}>Symbols<input value={symbolsText} onChange={e=>setSymbolsText(e.target.value)} style={input}/></label><label style={muted}>Research question<textarea value={question} onChange={e=>setQuestion(e.target.value)} rows={4} style={{...input,resize:"vertical"}}/></label><button className="primary-button" disabled={busy||question.trim().length<3}>{busy?"Researching…":"Run AI research"}</button></form>{research&&<div style={{marginTop:14,padding:14,borderRadius:10,background:"rgba(255,255,255,.04)",whiteSpace:"pre-wrap",lineHeight:1.7}}><strong>Research result</strong><p>{research}</p></div>}</section>}
+    {tab==="Market Data"&&<><section style={panel}><h3 style={{marginTop:0}}>Market quotes</h3><p style={muted}>Enter up to 20 NSE symbols. Requests use the existing Vibe Trading batch endpoint.</p><form onSubmit={loadQuotes} style={{display:"grid",gap:10}}><label style={muted}>Symbols<input aria-label="Market symbols" value={symbolsText} onChange={e=>setSymbolsText(e.target.value)} style={input} placeholder="RELIANCE, TCS, INFY"/></label><button className="primary-button" type="submit" disabled={busy}>{busy?"Loading…":"Load market data"}</button></form>{updatedAt&&<p style={muted}>Retrieved by this page: {updatedAt}. Retrieval time is not a verified exchange timestamp.</p>}</section>{quotes.length>0&&<section style={{...panel,overflowX:"auto"}}><h3>Quote results ({quotes.length})</h3><table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}><thead><tr>{["Symbol","Status","Price","Provider timestamp","Details"].map(h=><th key={h} style={{textAlign:"left",padding:8,borderBottom:"1px solid var(--finos-color-c28962e7)"}}>{h}</th>)}</tr></thead><tbody>{quotes.map((q,i)=><tr key={`${q.symbol}-${i}`}>{[q.symbol||"—",q.status||"unknown",q.quote?.last_price??q.price??q.last_price??"—",q.provider_market_timestamp||"Not supplied",q.error||(q.cache_hit?"Cached":"API response")].map((v,j)=><td key={j} style={{padding:8,borderBottom:"1px solid var(--finos-color-c2896ec5)"}}>{String(v)}</td>)}</tr>)}</tbody></table><p style={muted}>No provider timestamp means live-price freshness is unverified.</p></section>}</>}
+    {tab==="AI Research"&&<section style={panel}><h3 style={{marginTop:0}}>Evidence-grounded AI research</h3><p style={muted}>Gemini analyses your question using successfully retrieved quotes where available. It does not place orders.</p><form onSubmit={runResearch} style={{display:"grid",gap:10}}><label style={muted}>Symbols<input value={symbolsText} onChange={e=>setSymbolsText(e.target.value)} style={input}/></label><label style={muted}>Research question<textarea value={question} onChange={e=>setQuestion(e.target.value)} rows={4} style={{...input,resize:"vertical"}}/></label><button className="primary-button" disabled={busy||question.trim().length<3}>{busy?"Researching…":"Run AI research"}</button></form>{research&&<div style={{marginTop:14,padding:14,borderRadius:10,background:"var(--finos-color-c2896f66)",whiteSpace:"pre-wrap",lineHeight:1.7}}><strong>Research result</strong><p>{research}</p></div>}</section>}
     {tab==="Strategy Builder"&&<section style={panel}><h3 style={{marginTop:0}}>Strategy builder</h3><p style={muted}>Configure a draft strategy. This currently saves only in this page's state; it does not create signals or submit orders.</p><label style={muted}>Strategy template<select value={strategyName} onChange={e=>setStrategyName(e.target.value)} style={input}><option>Moving average crossover</option><option>Momentum watchlist</option><option>Mean reversion</option><option>Breakout watchlist</option></select></label><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10}}><label style={muted}>Fast period<input type="number" min="1" max="200" value={fastPeriod} onChange={e=>setFastPeriod(Number(e.target.value))} style={input}/></label><label style={muted}>Slow period<input type="number" min="2" max="500" value={slowPeriod} onChange={e=>setSlowPeriod(Number(e.target.value))} style={input}/></label></div><button style={btn} type="button" onClick={()=>setNotice(fastPeriod>0&&slowPeriod>fastPeriod?`Draft configured: ${strategyName}, fast ${fastPeriod}, slow ${slowPeriod}. No signal has been generated.`:"Set valid periods: fast must be positive and slow must be greater than fast.")}>Validate draft</button>{notice&&<p role="status" style={muted}>{notice}</p>}</section>}
     {tab==="Backtesting"&&coming("Backtesting","Choose a strategy, instrument universe, date range, benchmark, fees, and slippage. Historical data and a tested simulation engine must be connected before performance metrics can be trusted.")}
     {tab==="Paper Trading"&&coming("Paper trading","Simulated orders, positions, fills, and P&L will be isolated from real holdings. No simulation is presented as active until its engine and persistence are implemented.")}
@@ -3790,7 +3790,7 @@ function InvestmentTransactions() {
             style={{
               margin: 0,
               color:
-                "rgba(255,255,255,0.55)",
+                "var(--finos-color-1466cb92)",
               fontSize: "13px",
               lineHeight: 1.6,
             }}
@@ -4101,9 +4101,9 @@ function InvestmentTransactions() {
               padding: "14px",
               borderRadius: "12px",
               background:
-                "rgba(239,68,68,0.10)",
+                "var(--finos-color-64743479)",
               border:
-                "1px solid rgba(239,68,68,0.20)",
+                "1px solid var(--finos-color-6474497a)",
               color: "var(--finos-status-danger-soft)",
               fontSize: "13px",
             }}
@@ -4179,9 +4179,9 @@ function InvestmentTransactions() {
                         padding: "16px",
                         borderRadius: "16px",
                         background:
-                          "var(--t-card-bg, var(--finos-surface, #ffffff))",
+                          "var(--t-card-bg, var(--finos-surface, var(--finos-color-7c4b7360)fff))",
                         border:
-                          "1px solid var(--finos-border, #e1e6ef)",
+                          "1px solid var(--finos-border, var(--finos-color-62ed5be2))",
                       }}
                     >
 
@@ -4204,7 +4204,7 @@ function InvestmentTransactions() {
                             marginTop: "5px",
                             fontSize: "11px",
                             color:
-                              "var(--finos-muted, #64748b)",
+                              "var(--finos-muted, var(--finos-color-1068d83d))",
                             whiteSpace:
                               "nowrap",
                             overflow:
@@ -4238,7 +4238,7 @@ function InvestmentTransactions() {
                           style={{
                             fontSize: "10px",
                             color:
-                              "var(--finos-muted, #64748b)",
+                              "var(--finos-muted, var(--finos-color-1068d83d))",
                             textTransform:
                               "uppercase",
                             letterSpacing:
@@ -4270,7 +4270,7 @@ function InvestmentTransactions() {
                           style={{
                             fontSize: "10px",
                             color:
-                              "var(--finos-muted, #64748b)",
+                              "var(--finos-muted, var(--finos-color-1068d83d))",
                             textTransform:
                               "uppercase",
                             letterSpacing:
@@ -4307,7 +4307,7 @@ function InvestmentTransactions() {
                           style={{
                             fontSize: "10px",
                             color:
-                              "var(--finos-muted, #64748b)",
+                              "var(--finos-muted, var(--finos-color-1068d83d))",
                             textTransform:
                               "uppercase",
                             letterSpacing:
@@ -4334,7 +4334,7 @@ function InvestmentTransactions() {
                             marginTop: "4px",
                             fontSize: "10px",
                             color:
-                              "var(--finos-muted, #64748b)",
+                              "var(--finos-muted, var(--finos-color-1068d83d))",
                           }}
                         >
                           Qty{" "}
@@ -4351,14 +4351,14 @@ function InvestmentTransactions() {
 
                       {/* STATUS AND ACTIONS */}
                       <div className="investment-transaction-actions" style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-start", minWidth: 0 }}>
-                        <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", padding: "4px 8px", borderRadius: "999px", background: transaction.status === "VOIDED" ? "rgba(248,113,113,0.14)" : "rgba(134,239,172,0.12)", color: transaction.status === "VOIDED" ? "var(--finos-status-danger-soft)" : "var(--finos-status-success-soft)" }}>
+                        <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", padding: "4px 8px", borderRadius: "999px", background: transaction.status === "VOIDED" ? "var(--finos-color-599e905b)" : "var(--finos-color-bddb0e39)", color: transaction.status === "VOIDED" ? "var(--finos-status-danger-soft)" : "var(--finos-status-success-soft)" }}>
                           {transaction.status || "ACTIVE"}
                         </span>
                         {(transaction.status || "ACTIVE") === "ACTIVE" && <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                           <button type="button" className="secondary-button" onClick={() => editInvestmentTransaction(transaction)} style={{ padding: "6px 9px", fontSize: "11px" }}>Edit</button>
                           <button type="button" className="secondary-button" onClick={() => voidInvestmentTransaction(transaction)} style={{ padding: "6px 9px", fontSize: "11px", color: "var(--finos-status-danger-soft)" }}>Void</button>
                         </div>}
-                        {transaction.status === "VOIDED" && transaction.void_reason && <small style={{ color: "var(--finos-muted, #64748b)" }}>Reason: {transaction.void_reason}</small>}
+                        {transaction.status === "VOIDED" && transaction.void_reason && <small style={{ color: "var(--finos-muted, var(--finos-color-1068d83d))" }}>Reason: {transaction.void_reason}</small>}
                       </div>
 
                     </div>
@@ -4379,20 +4379,20 @@ function InvestmentTransactions() {
       {editingTransaction && (
         <div role="presentation" onMouseDown={(event) => {
           if (event.target === event.currentTarget && !savingEdit) setEditingTransaction(null);
-        }} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,.72)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <form role="dialog" aria-modal="true" aria-labelledby="edit-investment-transaction-title" onSubmit={saveInvestmentTransactionEdit} className="glass-card" style={{ width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", padding: 22, background: "#111322", boxSizing: "border-box" }}>
+        }} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "var(--finos-color-88afc245)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <form role="dialog" aria-modal="true" aria-labelledby="edit-investment-transaction-title" onSubmit={saveInvestmentTransactionEdit} className="glass-card" style={{ width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", padding: 22, background: "var(--finos-color-24c56c04)", boxSizing: "border-box" }}>
             <p className="card-label">INVESTMENT TRANSACTIONS</p>
             <h2 id="edit-investment-transaction-title" style={{ margin: "6px 0 4px" }}>Edit {editingTransaction.transaction_type} transaction</h2>
-            <p style={{ marginTop: 0, color: "rgba(255,255,255,.6)", fontSize: 13 }}>{editingTransaction.instrument_name} · Transaction #{editingTransaction.id}</p>
+            <p style={{ marginTop: 0, color: "var(--finos-color-f66141b4)", fontSize: 13 }}>{editingTransaction.instrument_name} · Transaction #{editingTransaction.id}</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
               {[{key:"quantity",label:"Quantity",type:"number",step:"any",min:"0.000001"},{key:"price",label:"Price per unit (₹)",type:"number",step:"any",min:"0.0001"},{key:"fees",label:"Fees (₹)",type:"number",step:"any",min:"0"},{key:"transaction_date",label:"Transaction date",type:"date"}].map(field => (
-                <label key={field.key} style={{ display: "grid", gap: 6, fontSize: 12, color: "rgba(255,255,255,.75)" }}>
+                <label key={field.key} style={{ display: "grid", gap: 6, fontSize: 12, color: "var(--finos-color-c2896a40)" }}>
                   {field.label}
-                  <input required type={field.type} step={field.step} min={field.min} value={editForm[field.key]} onChange={event => setEditForm(current => ({ ...current, [field.key]: event.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 9, border: "1px solid rgba(255,255,255,.16)", background: "#191b2b", color: "white" }} />
+                  <input required type={field.type} step={field.step} min={field.min} value={editForm[field.key]} onChange={event => setEditForm(current => ({ ...current, [field.key]: event.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 9, border: "1px solid var(--finos-color-c28962a5)", background: "var(--finos-color-25555b8d)", color: "white" }} />
                 </label>
               ))}
-              <label style={{ display: "grid", gap: 6, gridColumn: "1 / -1", fontSize: 12, color: "rgba(255,255,255,.75)" }}>Notes (optional)
-                <textarea rows={3} value={editForm.notes} onChange={event => setEditForm(current => ({ ...current, notes: event.target.value }))} maxLength={2000} style={{ width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 9, border: "1px solid rgba(255,255,255,.16)", background: "#191b2b", color: "white", resize: "vertical" }} />
+              <label style={{ display: "grid", gap: 6, gridColumn: "1 / -1", fontSize: 12, color: "var(--finos-color-c2896a40)" }}>Notes (optional)
+                <textarea rows={3} value={editForm.notes} onChange={event => setEditForm(current => ({ ...current, notes: event.target.value }))} maxLength={2000} style={{ width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 9, border: "1px solid var(--finos-color-c28962a5)", background: "var(--finos-color-25555b8d)", color: "white", resize: "vertical" }} />
               </label>
             </div>
             {editError && <p role="alert" style={{ color: "var(--finos-status-danger-soft)", fontSize: 13 }}>{editError}</p>}
@@ -4504,7 +4504,7 @@ function InvestmentTransactions() {
               justify-self: stretch;
               text-align: center;
               padding: 10px 8px 0;
-              border-top: 1px solid rgba(255,255,255,0.08);
+              border-top: 1px solid var(--finos-color-1466c6ba);
             }
             .investment-transaction-row > div:nth-child(3) {
               grid-column: 1;
@@ -4808,7 +4808,7 @@ function Holdings() {
             style={{
               margin: 0,
               color:
-                "rgba(255,255,255,0.55)",
+                "var(--finos-color-1466cb92)",
               fontSize: "13px",
               lineHeight: 1.6,
             }}
@@ -4860,7 +4860,7 @@ function Holdings() {
           style={{
             padding: "14px 16px",
             border:
-              "1px solid rgba(239,68,68,0.25)",
+              "1px solid var(--finos-color-6474499f)",
             color: "var(--finos-status-danger-soft)",
             fontSize: "13px",
           }}
@@ -5119,10 +5119,10 @@ function Holdings() {
                     key={holdingKey}
                     className="portfolio-holding-card"
                     style={{
-                      border: "1px solid var(--finos-border, rgba(255,255,255,0.08))",
+                      border: "1px solid var(--finos-border, var(--finos-color-1466c6ba))",
                       borderRadius: "16px",
                       padding: "16px",
-                      background: "var(--t-card-bg, rgba(255,255,255,0.03))",
+                      background: "var(--t-card-bg, var(--finos-color-1466c711))",
                     }}
                   >
                     {/* MAIN HOLDING */}
@@ -5156,7 +5156,7 @@ function Holdings() {
                             marginTop: "5px",
                             fontSize: "11px",
                             color:
-                              "rgba(255,255,255,0.45)",
+                              "var(--finos-color-1466d7d3)",
                             whiteSpace:
                               "nowrap",
                             overflow:
@@ -5203,22 +5203,22 @@ function Holdings() {
                         style={{
                           padding: "10px 12px",
                           borderRadius: "12px",
-                          border: "1px solid rgba(52, 211, 153, 0.24)",
-                          background: "linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.035))",
+                          border: "1px solid var(--finos-color-e1c1b2e4)",
+                          background: "linear-gradient(135deg, var(--finos-color-26cd24c2), var(--finos-color-7250d7))",
                           minWidth: 0,
                         }}
                       >
                         <div
                           className="card-label"
-                          style={{ display: "flex", alignItems: "center", gap: "6px", color: "rgba(110, 231, 183, 0.9)" }}
+                          style={{ display: "flex", alignItems: "center", gap: "6px", color: "var(--finos-color-f5fb24a3)" }}
                         >
-                          <span aria-hidden="true" style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px rgba(52, 211, 153, 0.65)", flexShrink: 0 }} />
+                          <span aria-hidden="true" style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--finos-color-1fdf4e56)", boxShadow: "0 0 8px var(--finos-color-e1c1c281)", flexShrink: 0 }} />
                           CURRENT PRICE
                         </div>
-                        <strong style={{ display: "block", marginTop: "5px", fontSize: "14px", fontVariantNumeric: "tabular-nums", color: "#a7f3d0", overflowWrap: "anywhere" }}>
+                        <strong style={{ display: "block", marginTop: "5px", fontSize: "14px", fontVariantNumeric: "tabular-nums", color: "var(--finos-color-6c1d54f1)", overflowWrap: "anywhere" }}>
                           {formatCurrency(holding.current_price)}
                         </strong>
-                        <div style={{ marginTop: "3px", fontSize: "10px", color: "rgba(255,255,255,0.45)" }}>
+                        <div style={{ marginTop: "3px", fontSize: "10px", color: "var(--finos-color-1466d7d3)" }}>
                           Per unit
                         </div>
                       </div>
@@ -5357,7 +5357,7 @@ function Holdings() {
                           marginTop: "16px",
                           paddingTop: "16px",
                           borderTop:
-                            "1px solid rgba(255,255,255,0.08)",
+                            "1px solid var(--finos-color-1466c6ba)",
                           display: "grid",
                           gridTemplateColumns:
                             "repeat(2, minmax(0, 1fr))",
@@ -5372,9 +5372,9 @@ function Holdings() {
                             padding: "14px",
                             borderRadius: "14px",
                             background:
-                              "rgba(255,255,255,0.035)",
+                              "var(--finos-color-a13fa884)",
                             border:
-                              "1px solid rgba(255,255,255,0.06)",
+                              "1px solid var(--finos-color-1466c7f4)",
                           }}
                         >
                           <p className="card-label">
@@ -5476,9 +5476,9 @@ function Holdings() {
                             padding: "14px",
                             borderRadius: "14px",
                             background:
-                              "rgba(255,255,255,0.035)",
+                              "var(--finos-color-a13fa884)",
                             border:
-                              "1px solid rgba(255,255,255,0.06)",
+                              "1px solid var(--finos-color-1466c7f4)",
                           }}
                         >
                           <p className="card-label">
@@ -5492,7 +5492,7 @@ function Holdings() {
                             <p
                               style={{
                                 color:
-                                  "rgba(255,255,255,0.45)",
+                                  "var(--finos-color-1466d7d3)",
                                 fontSize:
                                   "12px",
                               }}
@@ -5555,9 +5555,9 @@ function Holdings() {
                             padding: "14px",
                             borderRadius: "14px",
                             background:
-                              "rgba(255,255,255,0.035)",
+                              "var(--finos-color-a13fa884)",
                             border:
-                              "1px solid rgba(255,255,255,0.06)",
+                              "1px solid var(--finos-color-1466c7f4)",
                             gridColumn:
                               "1 / -1",
                           }}
@@ -5571,7 +5571,7 @@ function Holdings() {
                             <p
                               style={{
                                 color:
-                                  "rgba(255,255,255,0.45)",
+                                  "var(--finos-color-1466d7d3)",
                                 fontSize:
                                   "12px",
                               }}
@@ -5619,7 +5619,7 @@ function Holdings() {
                                           marginTop:
                                             "3px",
                                           color:
-                                            "rgba(255,255,255,0.42)",
+                                            "var(--finos-color-1466d874)",
                                           fontSize:
                                             "10px",
                                         }}
@@ -5652,7 +5652,7 @@ function Holdings() {
                                           marginTop:
                                             "3px",
                                           color:
-                                            "rgba(255,255,255,0.42)",
+                                            "var(--finos-color-1466d874)",
                                           fontSize:
                                             "10px",
                                         }}
@@ -7387,7 +7387,7 @@ const summaryCards = [
                   </option>
                 ))}
               </StyledSelect>
-              {brokerAccountsError && <p role="alert" style={{ margin: "6px 0 0", color: "var(--finos-danger, #dc2626)", fontSize: "12px" }}>{brokerAccountsError}</p>}
+              {brokerAccountsError && <p role="alert" style={{ margin: "6px 0 0", color: "var(--finos-danger, var(--finos-color-5694cf81))", fontSize: "12px" }}>{brokerAccountsError}</p>}
               {!brokerAccountsLoading && brokerAccounts.length === 0 && <p style={{ margin: "6px 0 0", color: "var(--finos-muted)", fontSize: "12px" }}>Create a Money → Accounts record with type “Investment”, then use Money → Transfers to fund the Broker Account.</p>}
               <p style={{ margin: "6px 0 0", color: "var(--finos-muted)", fontSize: "11px" }}>BUY and SELL cash movements affect only this selected Investment account.</p>
             </div>
@@ -7643,13 +7643,13 @@ const summaryCards = [
                       fontSize: "10px",
                       background:
                         index === 3
-                          ? "rgba(168,85,247,0.18)"
+                          ? "var(--finos-color-2e9c892a)"
                           : "var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)))",
                       border:
                         "1px solid var(--finos-border)",
                       color:
                         index === 3
-                          ? "#d8b4fe"
+                          ? "var(--finos-color-5d1a930f)"
                           : "var(--finos-muted)",
                     }}
                   >
@@ -7771,9 +7771,9 @@ const summaryCards = [
                 height: "130px",
                 borderRadius: "50%",
                 border:
-                  "18px solid rgba(168,85,247,0.10)",
+                  "18px solid var(--finos-color-2e9c8a22)",
                 boxShadow:
-                  "0 0 0 1px rgba(255,255,255,0.05)",
+                  "0 0 0 1px var(--finos-color-1466c7d7)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -8266,7 +8266,7 @@ const holdingReturn =
         alignItems: "center",
         justifyContent: "center",
         padding: "18px",
-        background: "rgba(0,0,0,0.72)",
+        background: "var(--finos-color-9f9a0f15)",
         backdropFilter: "blur(8px)",
       }}
       onClick={closeInvestmentTransactionModal}
@@ -8437,8 +8437,8 @@ const holdingReturn =
                 marginBottom: "16px",
                 background:
                   transactionType === "BUY"
-                    ? "rgba(34,197,94,0.08)"
-                    : "rgba(239,68,68,0.08)",
+                    ? "var(--finos-color-abc6d8fd)"
+                    : "var(--finos-color-647441f0)",
               }}
             >
 
@@ -9059,7 +9059,7 @@ function AccountCompletionPage() {
 
       {activeSection === "KYC" && <p style={{ color: "var(--finos-muted, inherit)", lineHeight: 1.6, marginTop: "18px" }}>PAN and legal-name similarity can flag a mismatch, but cannot prove identity or PAN ownership. Official PAN verification and DigiLocker consent-based verification are not connected yet. Do not enter your full Aadhaar number here.</p>}
       {activeSection === "Salary Setup" && <p style={{ color: "var(--finos-muted, inherit)", lineHeight: 1.6, marginTop: "18px" }}>Enter the structure manually if you do not have Form 16 or a salary slip. Salary transactions remain separate: recording ₹25,000 received will not create another income record when you save this structure. Upload and reconciliation are planned, not active in this build.</p>}
-      {error && <p role="alert" style={{ color: "var(--finos-danger, #b42318)", marginTop: "16px" }}>{error}</p>}{notice && <p role="status" style={{ color: "var(--finos-success, #087443)", marginTop: "16px" }}>{notice}</p>}
+      {error && <p role="alert" style={{ color: "var(--finos-danger, var(--finos-color-60c282f8))", marginTop: "16px" }}>{error}</p>}{notice && <p role="status" style={{ color: "var(--finos-success, var(--finos-color-1eadfb2a))", marginTop: "16px" }}>{notice}</p>}
       <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", marginTop: "22px", flexWrap: "wrap" }}><button type="button" className="secondary-button" disabled={sections.indexOf(activeSection) === 0} onClick={() => setActiveSection(sections[Math.max(0, sections.indexOf(activeSection) - 1)])}>Previous</button><div style={{ display: "flex", gap: "10px" }}><button type="button" className="primary-button" onClick={save} disabled={saving || loading}>{saving ? "Saving…" : "Save profile"}</button><button type="button" className="secondary-button" disabled={sections.indexOf(activeSection) === totalSections - 1} onClick={() => setActiveSection(sections[Math.min(totalSections - 1, sections.indexOf(activeSection) + 1)])}>Next</button></div></div>
     </section>
   </div>;
@@ -9138,27 +9138,27 @@ function TradingControlSettings({ compact = false }) {
   };
 
   const enabled = Boolean(tradingControl?.enabled);
-  if (compact) return <div style={{ padding: "10px 12px", borderTop: "1px solid var(--finos-border, rgba(255,255,255,.12))", borderBottom: "1px solid var(--finos-border, rgba(255,255,255,.12))" }} aria-labelledby="live-trading-settings-title">
+  if (compact) return <div style={{ padding: "10px 12px", borderTop: "1px solid var(--finos-border, var(--finos-color-c2896221))", borderBottom: "1px solid var(--finos-border, var(--finos-color-c2896221))" }} aria-labelledby="live-trading-settings-title">
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
       <strong id="live-trading-settings-title" style={{ fontSize: 13 }}>Live Trading</strong>
-      <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "var(--finos-status-danger)" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
+      <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, var(--finos-color-7c4d031f))" : enabled ? "var(--finos-color-19b3f140)" : "var(--finos-status-danger)" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
     </div>
-    <button type="button" onClick={toggleTradingControl} disabled={busy} aria-pressed={enabled} style={{ width: "auto", maxWidth: "100%", marginTop: 8, padding: "6px 9px", minHeight: 30, borderRadius: 8, border: "1px solid var(--finos-border, rgba(255,255,255,.18))", background: enabled ? "rgba(239,68,68,.12)" : "rgba(34,197,94,.12)", color: "inherit", cursor: busy ? "not-allowed" : "pointer", opacity: busy ? .6 : 1, font: "inherit", fontSize: 11, lineHeight: 1.2, fontWeight: 700, whiteSpace: "normal" }}>
+    <button type="button" onClick={toggleTradingControl} disabled={busy} aria-pressed={enabled} style={{ width: "auto", maxWidth: "100%", marginTop: 8, padding: "6px 9px", minHeight: 30, borderRadius: 8, border: "1px solid var(--finos-border, var(--finos-color-c289616b))", background: enabled ? "var(--finos-color-3186eaab)" : "var(--finos-color-c721d9c6)", color: "inherit", cursor: busy ? "not-allowed" : "pointer", opacity: busy ? .6 : 1, font: "inherit", fontSize: 11, lineHeight: 1.2, fontWeight: 700, whiteSpace: "normal" }}>
       {busy ? (tradingControl ? "Saving…" : "Checking…") : tradingControl === null ? "Retry status check" : enabled ? "Turn Trading OFF" : "Turn Trading ON"}
     </button>
     {error && <p role="alert" style={{ color: "var(--finos-negative, var(--finos-status-danger))", fontSize: 11, lineHeight: 1.4 }}>{error}</p>}
-    {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", fontSize: 11, lineHeight: 1.4 }}>{notice}</p>}
-    <p style={{ color: "var(--finos-muted, rgba(255,255,255,.62))", fontSize: 10, lineHeight: 1.4, marginBottom: 0 }}>Admin-only. OFF blocks new Financial OS orders.</p>
+    {notice && <p role="status" style={{ color: "var(--finos-positive, var(--finos-color-19b3f140))", fontSize: 11, lineHeight: 1.4 }}>{notice}</p>}
+    <p style={{ color: "var(--finos-muted, var(--finos-color-c28977a6))", fontSize: 10, lineHeight: 1.4, marginBottom: 0 }}>Admin-only. OFF blocks new Financial OS orders.</p>
   </div>;
   return <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }} aria-labelledby="live-trading-settings-title">
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
       <div style={{ minWidth: 0, flex: "1 1 280px" }}>
         <p className="finos-theme-eyebrow">ACCOUNT SETTINGS</p>
         <h3 id="live-trading-settings-title" style={{ marginTop: 4 }}>Live Trading</h3>
-        <p style={{ color: "var(--finos-muted, rgba(255,255,255,0.68))", lineHeight: 1.6, marginBottom: 0 }}>Control whether new real-money orders can be submitted through Financial OS. Turning this OFF blocks new submissions; it does not cancel orders already accepted by the broker.</p>
+        <p style={{ color: "var(--finos-muted, var(--finos-color-1466cf3c))", lineHeight: 1.6, marginBottom: 0 }}>Control whether new real-money orders can be submitted through Financial OS. Turning this OFF blocks new submissions; it does not cancel orders already accepted by the broker.</p>
       </div>
-      <span role="status" aria-live="polite" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 999, border: `1px solid ${tradingControl === null ? "var(--finos-border, rgba(255,255,255,0.2))" : enabled ? "rgba(34,197,94,.65)" : "rgba(239,68,68,.65)"}`, background: tradingControl === null ? "var(--finos-surface, rgba(255,255,255,.04))" : enabled ? "rgba(34,197,94,.12)" : "rgba(239,68,68,.10)", fontWeight: 700, fontSize: 12, letterSpacing: ".03em" }}>
-        <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "var(--finos-status-danger)" }} />
+      <span role="status" aria-live="polite" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 999, border: `1px solid ${tradingControl === null ? "var(--finos-border, var(--finos-color-c28ebfe0))" : enabled ? "var(--finos-color-c721d5e6)" : "var(--finos-color-31870f8b)"}`, background: tradingControl === null ? "var(--finos-surface, var(--finos-color-c2896f66))" : enabled ? "var(--finos-color-c721d9c6)" : "var(--finos-color-3186ea69)", fontWeight: 700, fontSize: 12, letterSpacing: ".03em" }}>
+        <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: tradingControl === null ? "var(--finos-muted, var(--finos-color-7c4d031f))" : enabled ? "var(--finos-color-19b3f140)" : "var(--finos-status-danger)" }} />
         {tradingControl === null ? "STATUS UNAVAILABLE" : enabled ? "LIVE TRADING ON" : "LIVE TRADING OFF"}
       </span>
     </div>
@@ -9166,11 +9166,11 @@ function TradingControlSettings({ compact = false }) {
       <button type="button" className={enabled ? "secondary-button" : "primary-button"} onClick={toggleTradingControl} disabled={busy} aria-pressed={enabled}>
         {busy ? "Saving…" : enabled ? "Turn LIVE TRADING OFF" : "Turn LIVE TRADING ON"}
       </button>
-      <span style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", fontSize: 12 }}>{busy ? "Saving account setting…" : "Admin-only control · saved on the server"}</span>
+      <span style={{ color: "var(--finos-muted, var(--finos-color-1466d076))", fontSize: 12 }}>{busy ? "Saving account setting…" : "Admin-only control · saved on the server"}</span>
     </div>
     {error && <p role="alert" style={{ color: "var(--finos-negative, var(--finos-status-danger))", marginBottom: 0 }}>{error}</p>}
-    {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", marginBottom: 0 }}>{notice}</p>}
-    <p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", fontSize: 12, lineHeight: 1.6, marginBottom: 0, marginTop: 12 }}>If the API or database migration is unavailable, this control stays unavailable and new orders remain blocked. Enabling this switch permits new Financial OS submissions; review each order carefully.</p>
+    {notice && <p role="status" style={{ color: "var(--finos-positive, var(--finos-color-19b3f140))", marginBottom: 0 }}>{notice}</p>}
+    <p style={{ color: "var(--finos-muted, var(--finos-color-1466d076))", fontSize: 12, lineHeight: 1.6, marginBottom: 0, marginTop: 12 }}>If the API or database migration is unavailable, this control stays unavailable and new orders remain blocked. Enabling this switch permits new Financial OS submissions; review each order carefully.</p>
   </section>;
 }
 
@@ -9190,8 +9190,8 @@ function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
     </section>
     <TradingControlSettings />
     <AccountContactSettings />
-    <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }}><h3>Account Profile</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Manage your personal details, tax information, and salary setup. This is separate from your bank and investment accounts.</p><button className="primary-button" onClick={() => onNavigate("Account Profile")}>Open Account Profile</button></section>
-    <section className="glass-card" style={{ padding: "22px" }}><h3>Finance Diary</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Read-only master history of account and transaction activity. Entries cannot be edited or deleted.</p><button className="primary-button" onClick={() => onNavigate("Finance Diary")}>Open Finance Diary</button></section>
+    <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }}><h3>Account Profile</h3><p style={{ color: "var(--finos-muted, var(--finos-color-1466d076))", lineHeight: 1.6 }}>Manage your personal details, tax information, and salary setup. This is separate from your bank and investment accounts.</p><button className="primary-button" onClick={() => onNavigate("Account Profile")}>Open Account Profile</button></section>
+    <section className="glass-card" style={{ padding: "22px" }}><h3>Finance Diary</h3><p style={{ color: "var(--finos-muted, var(--finos-color-1466d076))", lineHeight: 1.6 }}>Read-only master history of account and transaction activity. Entries cannot be edited or deleted.</p><button className="primary-button" onClick={() => onNavigate("Finance Diary")}>Open Finance Diary</button></section>
   </div>;
 }
 
@@ -9217,7 +9217,7 @@ function FinanceDiaryPage() {
     return () => { active = false; };
   }, []);
   const filtered = entries.filter((entry) => `${entry.event_type} ${entry.entity_type} ${entry.entity_id} ${entry.description} ${entry.snapshot_json || ""}`.toLowerCase().includes(search.toLowerCase()));
-  return <div className="dashboard"><section className="welcome-section"><div><p className="welcome-label">PERMANENT HISTORY</p><h2>Finance Diary</h2><p className="welcome-description">Read-only activity history. Existing entries are never edited or deleted through this interface.</p></div></section><section className="glass-card" style={{ padding: "20px" }}><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." style={{ width: "100%", boxSizing: "border-box", padding: "12px", borderRadius: "10px", marginBottom: "16px" }} />{loading ? <p>Loading history…</p> : error ? <p>{error}</p> : filtered.length === 0 ? <p>No diary entries found. New account and transaction activity will appear here when recorded by the backend.</p> : <div style={{ display: "grid", gap: "10px" }}>{filtered.map((entry) => <article key={entry.id} style={{ padding: "14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.09)", background: "rgba(255,255,255,0.025)" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}><strong>{entry.event_type} · {entry.entity_type} #{entry.entity_id || "—"}</strong><span style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px" }}>{entry.created_at ? new Date(entry.created_at).toLocaleString() : "—"}</span></div><p style={{ margin: "8px 0", color: "rgba(255,255,255,0.72)" }}>{entry.description}</p>{entry.snapshot_json && <details><summary style={{ cursor: "pointer" }}>View event details</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "11px" }}>{(() => { try { return JSON.stringify(JSON.parse(entry.snapshot_json), null, 2); } catch { return entry.snapshot_json; } })()}</pre></details>}</article>)}</div>}</section></div>;
+  return <div className="dashboard"><section className="welcome-section"><div><p className="welcome-label">PERMANENT HISTORY</p><h2>Finance Diary</h2><p className="welcome-description">Read-only activity history. Existing entries are never edited or deleted through this interface.</p></div></section><section className="glass-card" style={{ padding: "20px" }}><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." style={{ width: "100%", boxSizing: "border-box", padding: "12px", borderRadius: "10px", marginBottom: "16px" }} />{loading ? <p>Loading history…</p> : error ? <p>{error}</p> : filtered.length === 0 ? <p>No diary entries found. New account and transaction activity will appear here when recorded by the backend.</p> : <div style={{ display: "grid", gap: "10px" }}>{filtered.map((entry) => <article key={entry.id} style={{ padding: "14px", borderRadius: "12px", border: "1px solid var(--finos-color-1466c65b)", background: "var(--finos-color-a13fb4c5)" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}><strong>{entry.event_type} · {entry.entity_type} #{entry.entity_id || "—"}</strong><span style={{ color: "var(--finos-color-1466d7be)", fontSize: "11px" }}>{entry.created_at ? new Date(entry.created_at).toLocaleString() : "—"}</span></div><p style={{ margin: "8px 0", color: "var(--finos-color-1466c3f7)" }}>{entry.description}</p>{entry.snapshot_json && <details><summary style={{ cursor: "pointer" }}>View event details</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "11px" }}>{(() => { try { return JSON.stringify(JSON.parse(entry.snapshot_json), null, 2); } catch { return entry.snapshot_json; } })()}</pre></details>}</article>)}</div>}</section></div>;
 }
 
 
@@ -9257,37 +9257,37 @@ function ChartOfAccountsPage() {
   const grouped = rows.reduce((acc, row) => { (acc[row.account_type] ||= []).push(row); return acc; }, {});
   // Match the Financial OS dark glass / purple accent theme used throughout the app.
   const card = {
-    background: "linear-gradient(145deg, rgba(26, 31, 57, 0.96), rgba(15, 20, 39, 0.96))",
-    border: "1px solid rgba(167, 139, 250, 0.16)",
+    background: "linear-gradient(145deg, var(--finos-color-442dc2cb), var(--finos-color-f2027c3))",
+    border: "1px solid var(--finos-color-e9955cfb)",
     borderRadius: 16,
     padding: 18,
     marginBottom: 14,
-    boxShadow: "0 10px 28px rgba(0, 0, 0, 0.12)",
-    color: "rgba(255,255,255,0.88)",
+    boxShadow: "0 10px 28px var(--finos-color-ccb9e2d3)",
+    color: "var(--finos-color-1466a6b2)",
   };
   const cell = {
     textAlign: "left",
     padding: "11px 10px",
-    borderBottom: "1px solid rgba(255,255,255,0.075)",
+    borderBottom: "1px solid var(--finos-color-a13fb880)",
     fontSize: 12,
-    color: "rgba(235,238,255,0.82)",
+    color: "var(--finos-color-68d368b5)",
     whiteSpace: "nowrap",
   };
-  const headerCell = { ...cell, color: "rgba(255,255,255,0.94)", fontWeight: 650, fontSize: 11, letterSpacing: ".02em" };
+  const headerCell = { ...cell, color: "var(--finos-color-146699bf)", fontWeight: 650, fontSize: 11, letterSpacing: ".02em" };
   return <section className="dashboard coa-page">
     <div className="coa-page-heading" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
       <div><p className="welcome-label" style={{ marginBottom: 6 }}>MONEY · ACCOUNTING</p><h2 style={{ margin: 0 }}>Chart of Accounts</h2><p className="welcome-description" style={{ margin: "6px 0 0" }}>Your accounting account catalogue. Stable account codes support consistent reporting.</p></div>
-      <label className="coa-filter" style={{ display: "inline-flex", gap: 9, alignItems: "center", fontSize: 12, color: "rgba(255,255,255,0.78)", padding: "9px 12px", borderRadius: 10, background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.08)" }}><input type="checkbox" checked={showDisabled} onChange={(e) => setShowDisabled(e.target.checked)} style={{ accentColor: "#a855f7" }} /> Show disabled accounts only</label>
+      <label className="coa-filter" style={{ display: "inline-flex", gap: 9, alignItems: "center", fontSize: 12, color: "var(--finos-color-1466c2bd)", padding: "9px 12px", borderRadius: 10, background: "var(--finos-color-a13fa884)", border: "1px solid var(--finos-color-1466c6ba)" }}><input type="checkbox" checked={showDisabled} onChange={(e) => setShowDisabled(e.target.checked)} style={{ accentColor: "var(--finos-color-6d1d8f4e)" }} /> Show disabled accounts only</label>
     </div>
-    {error && <div role="alert" style={{ ...card, color: "#fecaca", borderColor: "rgba(248,113,113,0.32)", background: "rgba(127,29,29,0.18)" }}>{error}</div>}
+    {error && <div role="alert" style={{ ...card, color: "var(--finos-color-5b373485)", borderColor: "var(--finos-color-599e889f)", background: "var(--finos-color-78b937d)" }}>{error}</div>}
     {loading ? <div className="glass-card" style={{ ...card, padding: 20 }}>Loading Chart of Accounts…</div> : Object.entries(grouped).map(([kind, accounts]) => <div key={kind} className="glass-card coa-section-card" style={card}>
-      <h3 className="coa-section-title" style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 650, color: "#fff" }}>{kind === "Asset" ? "Assets" : kind === "Liability" ? "Liabilities" : `${kind}s`} <span style={{ fontSize: 12, fontWeight: 400, color: "#b7a4ff" }}>({accounts.length})</span></h3>
+      <h3 className="coa-section-title" style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 650, color: "var(--finos-color-7c4b7360)" }}>{kind === "Asset" ? "Assets" : kind === "Liability" ? "Liabilities" : `${kind}s`} <span style={{ fontSize: 12, fontWeight: 400, color: "var(--finos-color-60ba63a6)" }}>({accounts.length})</span></h3>
       <div className="coa-table-scroll" style={{ overflowX: "auto", borderRadius: 10 }}><table className="coa-table" style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}><thead><tr>
         {["Code", "Account", "Parent", "Tax mapping", "Status", ""].map((label) => <th key={label} style={headerCell}>{label}</th>)}
-      </tr></thead><tbody>{accounts.map((row) => <tr key={row.id} style={{ background: row.is_enabled ? "transparent" : "rgba(255,255,255,0.018)" }}>
-        <td style={{ ...cell, color: "#c4b5fd", fontVariantNumeric: "tabular-nums" }}>{row.code}</td><td style={{ ...cell, color: "rgba(255,255,255,0.94)" }}>{row.name}{row.is_system ? <span style={{ marginLeft: 8, color: "#a99acb", fontSize: 10 }}>Standard</span> : null}</td>
+      </tr></thead><tbody>{accounts.map((row) => <tr key={row.id} style={{ background: row.is_enabled ? "transparent" : "var(--finos-color-a13fafab)" }}>
+        <td style={{ ...cell, color: "var(--finos-color-67ca4ca4)", fontVariantNumeric: "tabular-nums" }}>{row.code}</td><td style={{ ...cell, color: "var(--finos-color-146699bf)" }}>{row.name}{row.is_system ? <span style={{ marginLeft: 8, color: "var(--finos-color-6ce801e7)", fontSize: 10 }}>Standard</span> : null}</td>
         <td style={cell}>{rows.find((candidate) => candidate.id === row.parent_id)?.name || "—"}</td><td style={cell}>{row.tax_mapping_key || "—"}</td>
-        <td style={cell}><span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: row.is_enabled ? "var(--finos-status-success-soft)" : "var(--finos-status-danger-soft)" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: row.is_enabled ? "#34d399" : "#f87171" }} />{row.is_enabled ? "Enabled" : "Disabled"}</span></td><td style={cell}><button type="button" className={row.is_enabled ? "secondary-button" : "primary-button"} onClick={() => toggleAccount(row)} style={{ padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}>{row.is_enabled ? "Disable" : "Enable"}</button></td>
+        <td style={cell}><span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: row.is_enabled ? "var(--finos-status-success-soft)" : "var(--finos-status-danger-soft)" }}><span style={{ width: 6, height: 6, borderRadius: "50%", background: row.is_enabled ? "var(--finos-color-1fdf4e56)" : "var(--finos-color-584ad3d8)" }} />{row.is_enabled ? "Enabled" : "Disabled"}</span></td><td style={cell}><button type="button" className={row.is_enabled ? "secondary-button" : "primary-button"} onClick={() => toggleAccount(row)} style={{ padding: "6px 10px", fontSize: 11, whiteSpace: "nowrap" }}>{row.is_enabled ? "Disable" : "Enable"}</button></td>
       </tr>)}</tbody></table></div>
     </div>)}
     {!loading && !rows.length && <div className="glass-card" style={card}>No accounts found.</div>}
@@ -9343,8 +9343,8 @@ function LedgerPage() {
   const money = (value) => new Intl.NumberFormat("en-IN", {
     style: "currency", currency: "INR", maximumFractionDigits: 2,
   }).format(Number(value || 0));
-  const card = { border: "1px solid rgba(255,255,255,.1)", borderRadius: "16px", background: "rgba(255,255,255,.035)", padding: "18px" };
-  const muted = { color: "rgba(255,255,255,.62)", fontSize: "12px" };
+  const card = { border: "1px solid var(--finos-color-f6614113)", borderRadius: "16px", background: "var(--finos-color-13b739d4)", padding: "18px" };
+  const muted = { color: "var(--finos-color-c28977a6)", fontSize: "12px" };
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.005;
 
   return <div className="dashboard ledger-page" style={{ display: "grid", gap: "18px" }}>
@@ -9370,11 +9370,11 @@ function LedgerPage() {
       <div className="card-header"><div><p className="card-label">DOUBLE-ENTRY ACCOUNTING</p><h3>Ledger Entries</h3></div><span className="score">{entries.length}</span></div>
       <p style={{ ...muted, margin: "0 0 14px" }}>Each source transaction is represented by balanced debit and credit lines. Historical transactions can be posted once using the button above; unsupported legacy records are reported for review.</p>
       {loading ? <div className="empty-chart">Loading ledger…</div> : entries.length === 0 ? <div className="empty-chart">No posted ledger entries yet. Use “Post Historical Transactions” to create entries for existing transactions.</div> : <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px", fontSize: "13px" }}>
-        <thead><tr>{["Date", "Account", "Financial Account", "Description", "Transaction", "Debit", "Credit"].map((label) => <th key={label} style={{ textAlign: label === "Debit" || label === "Credit" ? "right" : "left", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.12)", color: "rgba(255,255,255,.65)" }}>{label}</th>)}</tr></thead>
+        <thead><tr>{["Date", "Account", "Financial Account", "Description", "Transaction", "Debit", "Credit"].map((label) => <th key={label} style={{ textAlign: label === "Debit" || label === "Credit" ? "right" : "left", padding: "12px 10px", borderBottom: "1px solid var(--finos-color-c2896221)", color: "var(--finos-color-c2897681)" }}>{label}</th>)}</tr></thead>
         <tbody>{entries.map((row) => <tr key={row.id}>
-          {[row.date, `${row.account_code} · ${row.account_name}`, row.financial_account_name || "—", row.description, `TX-${row.transaction_id}`].map((value, i) => <td key={i} style={{ padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{value || "—"}</td>)}
-          <td style={{ textAlign: "right", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{Number(row.debit) ? money(row.debit) : "—"}</td>
-          <td style={{ textAlign: "right", padding: "12px 10px", borderBottom: "1px solid rgba(255,255,255,.06)" }}>{Number(row.credit) ? money(row.credit) : "—"}</td>
+          {[row.date, `${row.account_code} · ${row.account_name}`, row.financial_account_name || "—", row.description, `TX-${row.transaction_id}`].map((value, i) => <td key={i} style={{ padding: "12px 10px", borderBottom: "1px solid var(--finos-color-c2896f24)" }}>{value || "—"}</td>)}
+          <td style={{ textAlign: "right", padding: "12px 10px", borderBottom: "1px solid var(--finos-color-c2896f24)" }}>{Number(row.debit) ? money(row.debit) : "—"}</td>
+          <td style={{ textAlign: "right", padding: "12px 10px", borderBottom: "1px solid var(--finos-color-c2896f24)" }}>{Number(row.credit) ? money(row.credit) : "—"}</td>
         </tr>)}</tbody>
         <tfoot><tr><th colSpan="5" style={{ textAlign: "right", padding: "12px 10px" }}>Totals</th><th style={{ textAlign: "right", padding: "12px 10px" }}>{money(totalDebit)}</th><th style={{ textAlign: "right", padding: "12px 10px" }}>{money(totalCredit)}</th></tr></tfoot>
       </table>}
@@ -10047,18 +10047,18 @@ const deleteAccount = async () => {
 
         {/* Realistic credit-card face; other account types retain their existing card layout. */}
         {["credit_card", "creditcard", "credit_card_account"].includes(String(account.account_type || account.type || "").trim().toLowerCase().replace(/[ -]+/g, "_")) && (
-          <div style={{ position: "relative", overflow: "hidden", minHeight: "158px", padding: "17px 18px", borderRadius: "16px", color: "#fff", background: "linear-gradient(135deg, #172554 0%, #4338ca 52%, #7c3aed 100%)", boxShadow: "0 10px 24px rgba(49,46,129,.24)", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "16px" }}>
-            <div style={{ position: "absolute", width: "190px", height: "190px", borderRadius: "50%", right: "-62px", top: "-92px", background: "rgba(255,255,255,.10)", pointerEvents: "none" }} />
+          <div style={{ position: "relative", overflow: "hidden", minHeight: "158px", padding: "17px 18px", borderRadius: "16px", color: "var(--finos-color-7c4b7360)", background: "linear-gradient(135deg, var(--finos-color-245a96c6) 0%, var(--finos-color-1496bd08) 52%, var(--finos-color-1c80ffa1) 100%)", boxShadow: "0 10px 24px var(--finos-color-2d83a543)", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "16px" }}>
+            <div style={{ position: "absolute", width: "190px", height: "190px", borderRadius: "50%", right: "-62px", top: "-92px", background: "var(--finos-color-c2896263)", pointerEvents: "none" }} />
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", position: "relative" }}>
-              <div><div style={{ fontSize: "10px", letterSpacing: ".15em", textTransform: "uppercase", color: "rgba(255,255,255,.72)" }}>Credit Card</div><div style={{ fontSize: "13px", fontWeight: 750, marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "220px" }}>{account.institution || "Financial Institution"}</div></div>
+              <div><div style={{ fontSize: "10px", letterSpacing: ".15em", textTransform: "uppercase", color: "var(--finos-color-c2896b27)" }}>Credit Card</div><div style={{ fontSize: "13px", fontWeight: 750, marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "220px" }}>{account.institution || "Financial Institution"}</div></div>
               <Landmark size={24} style={{ flexShrink: 0, opacity: .92 }} />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", position: "relative" }}>
-              <div style={{ width: "35px", height: "26px", borderRadius: "6px", background: "linear-gradient(135deg,#f5e7b2,#c7a96b)", border: "1px solid rgba(255,255,255,.35)", display: "grid", gridTemplateColumns: "1fr 1fr", overflow: "hidden", flexShrink: 0 }}><span style={{ borderRight: "1px solid rgba(90,70,30,.28)", borderBottom: "1px solid rgba(90,70,30,.28)" }} /><span style={{ borderBottom: "1px solid rgba(90,70,30,.28)" }} /><span style={{ borderRight: "1px solid rgba(90,70,30,.28)" }} /><span /></div>
-              <span style={{ fontSize: "13px", letterSpacing: ".13em", color: "rgba(255,255,255,.92)" }}>{account.account_number ? "•••• •••• •••• " + String(account.account_number).replace(/\D/g, "").slice(-4) : "•••• •••• •••• ••••"}</span>
+              <div style={{ width: "35px", height: "26px", borderRadius: "6px", background: "linear-gradient(135deg,var(--finos-color-58165877),var(--finos-color-67b7c41e))", border: "1px solid var(--finos-color-c2895a44)", display: "grid", gridTemplateColumns: "1fr 1fr", overflow: "hidden", flexShrink: 0 }}><span style={{ borderRight: "1px solid var(--finos-color-8d78d577)", borderBottom: "1px solid var(--finos-color-8d78d577)" }} /><span style={{ borderBottom: "1px solid var(--finos-color-8d78d577)" }} /><span style={{ borderRight: "1px solid var(--finos-color-8d78d577)" }} /><span /></div>
+              <span style={{ fontSize: "13px", letterSpacing: ".13em", color: "var(--finos-color-c2894029)" }}>{account.account_number ? "•••• •••• •••• " + String(account.account_number).replace(/\D/g, "").slice(-4) : "•••• •••• •••• ••••"}</span>
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "10px", position: "relative" }}>
-              <div style={{ minWidth: 0 }}><div style={{ fontSize: "9px", letterSpacing: ".12em", textTransform: "uppercase", color: "rgba(255,255,255,.66)" }}>Cardholder</div><div style={{ fontSize: "12px", fontWeight: 700, marginTop: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{account.name}</div></div>
+              <div style={{ minWidth: 0 }}><div style={{ fontSize: "9px", letterSpacing: ".12em", textTransform: "uppercase", color: "var(--finos-color-c2897722)" }}>Cardholder</div><div style={{ fontSize: "12px", fontWeight: 700, marginTop: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{account.name}</div></div>
               <div style={{ fontSize: "11px", fontWeight: 800, letterSpacing: ".08em", whiteSpace: "nowrap", opacity: .92 }}>CREDIT</div>
             </div>
           </div>
@@ -10086,8 +10086,8 @@ const deleteAccount = async () => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "var(--finos-account-icon-bg, linear-gradient(135deg, rgba(168,85,247,.30), rgba(236,72,153,.20)))",
-              border: "1px solid var(--finos-account-icon-border, rgba(255,255,255,.10))",
+              background: "var(--finos-account-icon-bg, linear-gradient(135deg, var(--finos-color-d2e99a90), var(--finos-color-9feb5077)))",
+              border: "1px solid var(--finos-account-icon-border, var(--finos-color-c2896263))",
             }}
           >
             <Landmark size={21} />
@@ -10122,7 +10122,7 @@ const deleteAccount = async () => {
                 gap: "5px",
                 marginTop: "6px",
                 fontSize: "10px",
-                color: account.is_active ? "var(--finos-status-success)" : "#f87171",
+                color: account.is_active ? "var(--finos-status-success)" : "var(--finos-color-584ad3d8)",
               }}
             >
               <span
@@ -10131,7 +10131,7 @@ const deleteAccount = async () => {
                   width: "6px",
                   height: "6px",
                   borderRadius: "50%",
-                  background: account.is_active ? "var(--finos-status-success)" : "#f87171",
+                  background: account.is_active ? "var(--finos-status-success)" : "var(--finos-color-584ad3d8)",
                 }}
               />
               {account.is_active ? "Active" : "Inactive"}
@@ -10148,14 +10148,14 @@ const deleteAccount = async () => {
             textAlign: "left",
             minWidth: 0,
             paddingTop: ["credit_card", "creditcard", "credit_card_account"].includes(accountTypeKey(account)) ? "12px" : "0",
-            borderTop: ["credit_card", "creditcard", "credit_card_account"].includes(accountTypeKey(account)) ? "1px solid var(--finos-border, rgba(167,139,250,.16))" : "none",
+            borderTop: ["credit_card", "creditcard", "credit_card_account"].includes(accountTypeKey(account)) ? "1px solid var(--finos-border, var(--finos-color-9dbc3a0b))" : "none",
           }}
         >
 
           <div
             style={{
               fontSize: "10px",
-              color: "var(--finos-account-muted, var(--finos-muted, rgba(255,255,255,.45)))",
+              color: "var(--finos-account-muted, var(--finos-muted, var(--finos-color-c2897f03)))",
               textTransform: "uppercase",
               letterSpacing: "0.08em",
               marginBottom: "5px",
@@ -10168,14 +10168,14 @@ const deleteAccount = async () => {
             style={{
               fontSize: "17px",
               fontWeight: 800,
-              color: "var(--finos-account-title, var(--finos-text, #ffffff))",
+              color: "var(--finos-account-title, var(--finos-text, var(--finos-color-7c4b7360)fff))",
               whiteSpace: "nowrap",
             }}
           >
             {formatCurrency(account.balance)}
           </div>
           {["credit_card", "credit_line", "credit line"].includes(String(account.account_type || "").toLowerCase()) && (
-            <div style={{ marginTop: "6px", fontSize: "11px", color: "var(--finos-account-muted, var(--finos-muted, #94a3b8))", lineHeight: 1.45 }}>
+            <div style={{ marginTop: "6px", fontSize: "11px", color: "var(--finos-account-muted, var(--finos-muted, var(--finos-color-372f06c3)))", lineHeight: 1.45 }}>
               <div>Credit limit: {formatCurrency(account.credit_limit)}</div>
               <div>Available credit: {formatCurrency(Math.max(0, Number(account.credit_limit || 0) - Number(account.balance || 0)))}</div>
               <div style={{ marginTop: "3px" }}>Outstanding is a liability; available credit is not an asset.</div>
@@ -10227,8 +10227,8 @@ const deleteAccount = async () => {
                     ? "var(--finos-status-warning)"
                     : "var(--finos-status-success)",
                   borderColor: account.is_active
-                    ? "rgba(251,191,36,0.25)"
-                    : "rgba(74,222,128,0.25)",
+                    ? "var(--finos-color-8e8c5fad)"
+                    : "var(--finos-color-825f2e0d)",
                 }}
               >
                 {account.is_active
@@ -10248,7 +10248,7 @@ const deleteAccount = async () => {
                 padding: "7px 12px",
                 fontSize: "11px",
                 color: "var(--finos-status-danger)",
-                borderColor: "rgba(251,113,133,0.25)",
+                borderColor: "var(--finos-color-5ee91fd3)",
               }}
             >
               Remove
@@ -10419,7 +10419,7 @@ const deleteAccount = async () => {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0, 0, 0, 0.65)",
+            background: "var(--finos-color-ccb9f7b3)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -10449,13 +10449,13 @@ const deleteAccount = async () => {
 
             <p
               style={{
-                color: "rgba(255,255,255,0.70)",
+                color: "var(--finos-color-1466c3b5)",
                 lineHeight: 1.6,
                 marginTop: "16px",
               }}
             >
               Remove{" "}
-              <strong style={{ color: "#ffffff" }}>
+              <strong style={{ color: "var(--finos-color-7c4b7360)fff" }}>
                 {accountToDelete.name}
               </strong>
               {" "}from the Accounts view?
@@ -10463,7 +10463,7 @@ const deleteAccount = async () => {
 
             <p
               style={{
-                color: "rgba(255,255,255,0.50)",
+                color: "var(--finos-color-1466cc37)",
                 fontSize: "13px",
                 marginTop: "8px",
               }}
@@ -10495,7 +10495,7 @@ const deleteAccount = async () => {
                 disabled={accountDeleting}
                 style={{
                   color: "var(--finos-status-danger)",
-                  borderColor: "rgba(251,113,133,0.25)",
+                  borderColor: "var(--finos-color-5ee91fd3)",
                 }}
               >
                 {accountDeleting
@@ -11236,7 +11236,7 @@ function getActualSpending(categoryId, month) {
             marginTop: "20px",
             paddingTop: "16px",
             borderTop:
-              "1px solid rgba(255,255,255,0.08)",
+              "1px solid var(--finos-color-1466c6ba)",
           }}
         >
 
@@ -11255,7 +11255,7 @@ function getActualSpending(categoryId, month) {
               fontSize: "28px",
               lineHeight: 1.2,
               fontWeight: 800,
-              color: "#ffffff",
+              color: "var(--finos-color-7c4b7360)fff",
               letterSpacing: "-0.02em",
             }}
           >
@@ -11597,7 +11597,7 @@ function getActualSpending(categoryId, month) {
             alignItems: "center",
             justifyContent: "center",
             padding: "20px",
-            background: "rgba(0,0,0,0.65)",
+            background: "var(--finos-color-9f9a0af3)",
             backdropFilter: "blur(10px)",
           }}
         >
@@ -11619,7 +11619,7 @@ function getActualSpending(categoryId, month) {
 
             <p
               style={{
-                color: "rgba(255,255,255,0.60)",
+                color: "var(--finos-color-1466d034)",
                 fontSize: "13px",
                 lineHeight: 1.6,
                 marginTop: "10px",
@@ -11653,7 +11653,7 @@ function getActualSpending(categoryId, month) {
                 style={{
                   color: "var(--finos-status-danger)",
                   borderColor:
-                    "rgba(251,113,133,0.30)",
+                    "var(--finos-color-5ee91437)",
                 }}
               >
                 {budgetDeleting
@@ -11758,7 +11758,7 @@ const isLoanDisbursement = categories.some((category) =>
 
   const USER_ID = getCurrentUserId();
 
-  const loanInputStyle = { width: "100%", boxSizing: "border-box", display: "block", marginTop: "6px", padding: "10px 11px", borderRadius: "9px", border: "1px solid rgba(255,255,255,0.14)", background: "#151525", color: "#fff", outline: "none" };
+  const loanInputStyle = { width: "100%", boxSizing: "border-box", display: "block", marginTop: "6px", padding: "10px 11px", borderRadius: "9px", border: "1px solid var(--finos-color-1466bbb7)", background: "var(--finos-color-247d2301)", color: "var(--finos-color-7c4b7360)", outline: "none" };
 
   const refreshTransactionAccounts = async () => {
     const response = await apiFetch(`${API_BASE_URL}/api/accounts/?user_id=${USER_ID}`);
@@ -12294,7 +12294,7 @@ const transactionFormModal = showForm && (
       alignItems: "center",
       justifyContent: "center",
       padding: "20px",
-      background: "rgba(0,0,0,0.65)",
+      background: "var(--finos-color-9f9a0af3)",
       backdropFilter: "blur(10px)",
     }}
     onClick={closeTransactionForm}
@@ -12355,13 +12355,13 @@ const transactionFormModal = showForm && (
             borderRadius: "14px",
             border:
               formData.transaction_type === "expense"
-                ? "1px solid rgba(239,68,68,0.7)"
-                : "1px solid rgba(255,255,255,0.10)",
+                ? "1px solid var(--finos-color-3196eb0f)"
+                : "1px solid var(--finos-color-1466bb33)",
             background:
               formData.transaction_type === "expense"
-                ? "rgba(239,68,68,0.16)"
-                : "rgba(255,255,255,0.05)",
-            color: "#fff",
+                ? "var(--finos-color-6474353f)"
+                : "var(--finos-color-1466c7d7)",
+            color: "var(--finos-color-7c4b7360)",
             cursor: "pointer",
             fontWeight: 700,
           }}
@@ -12382,25 +12382,25 @@ const transactionFormModal = showForm && (
             borderRadius: "14px",
             border:
               formData.transaction_type === "income"
-                ? "1px solid rgba(34,197,94,0.7)"
-                : "1px solid rgba(255,255,255,0.10)",
+                ? "1px solid var(--finos-color-c7250e62)"
+                : "1px solid var(--finos-color-1466bb33)",
             background:
               formData.transaction_type === "income"
-                ? "rgba(34,197,94,0.16)"
-                : "rgba(255,255,255,0.05)",
-            color: "#fff",
+                ? "var(--finos-color-abc6e632)"
+                : "var(--finos-color-1466c7d7)",
+            color: "var(--finos-color-7c4b7360)",
             cursor: "pointer",
             fontWeight: 700,
           }}
         >
           Income
         </button>
-        <button type="button" onClick={() => setFormData((previous) => ({ ...previous, transaction_type: "receivable", category_id: "" }))} style={{ padding: "12px 6px", borderRadius: "14px", border: formData.transaction_type === "receivable" ? "1px solid rgba(234,179,8,0.8)" : "1px solid rgba(255,255,255,0.10)", background: formData.transaction_type === "receivable" ? "rgba(234,179,8,0.16)" : "rgba(255,255,255,0.05)", color: "#fff", cursor: "pointer", fontWeight: 700 }}>Receivable</button>
-        <button type="button" onClick={() => setFormData((previous) => ({ ...previous, transaction_type: "payable", category_id: "" }))} style={{ padding: "12px 6px", borderRadius: "14px", border: formData.transaction_type === "payable" ? "1px solid rgba(249,115,22,0.8)" : "1px solid rgba(255,255,255,0.10)", background: formData.transaction_type === "payable" ? "rgba(249,115,22,0.16)" : "rgba(255,255,255,0.05)", color: "#fff", cursor: "pointer", fontWeight: 700 }}>Payable</button>
+        <button type="button" onClick={() => setFormData((previous) => ({ ...previous, transaction_type: "receivable", category_id: "" }))} style={{ padding: "12px 6px", borderRadius: "14px", border: formData.transaction_type === "receivable" ? "1px solid var(--finos-color-11fda84a)" : "1px solid var(--finos-color-1466bb33)", background: formData.transaction_type === "receivable" ? "var(--finos-color-51b2d8d5)" : "var(--finos-color-1466c7d7)", color: "var(--finos-color-7c4b7360)", cursor: "pointer", fontWeight: 700 }}>Receivable</button>
+        <button type="button" onClick={() => setFormData((previous) => ({ ...previous, transaction_type: "payable", category_id: "" }))} style={{ padding: "12px 6px", borderRadius: "14px", border: formData.transaction_type === "payable" ? "1px solid var(--finos-color-9ff28e72)" : "1px solid var(--finos-color-1466bb33)", background: formData.transaction_type === "payable" ? "var(--finos-color-9e442dad)" : "var(--finos-color-1466c7d7)", color: "var(--finos-color-7c4b7360)", cursor: "pointer", fontWeight: 700 }}>Payable</button>
         <button
           type="button"
           onClick={() => setFormData((previous) => ({ ...previous, transaction_type: "transfer", category_id: "" }))}
-          style={{ padding: "12px 6px", borderRadius: "14px", border: formData.transaction_type === "transfer" ? "1px solid rgba(96,165,250,0.8)" : "1px solid rgba(255,255,255,0.10)", background: formData.transaction_type === "transfer" ? "rgba(96,165,250,0.16)" : "rgba(255,255,255,0.05)", color: "#fff", cursor: "pointer", fontWeight: 700 }}
+          style={{ padding: "12px 6px", borderRadius: "14px", border: formData.transaction_type === "transfer" ? "1px solid var(--finos-color-ed675412)" : "1px solid var(--finos-color-1466bb33)", background: formData.transaction_type === "transfer" ? "var(--finos-color-9a51b78d)" : "var(--finos-color-1466c7d7)", color: "var(--finos-color-7c4b7360)", cursor: "pointer", fontWeight: 700 }}
         >Transfer</button>
       </div>
 
@@ -12412,7 +12412,7 @@ const transactionFormModal = showForm && (
             display: "block",
             marginBottom: "7px",
             fontSize: "13px",
-            color: "rgba(255,255,255,0.70)",
+            color: "var(--finos-color-1466c3b5)",
           }}
         >
           {["receivable", "payable"].includes(formData.transaction_type) ? "Related account (no cash movement yet)" : "Account"}
@@ -12438,7 +12438,7 @@ const transactionFormModal = showForm && (
 
       {formData.transaction_type === "transfer" && (
         <div style={{ marginBottom: "16px" }}>
-          <label style={{ display: "block", marginBottom: "7px", fontSize: "13px", color: "rgba(255,255,255,0.70)" }}>To Account</label>
+          <label style={{ display: "block", marginBottom: "7px", fontSize: "13px", color: "var(--finos-color-1466c3b5)" }}>To Account</label>
           <StyledSelect name="transfer_to_account_id" value={formData.transfer_to_account_id} onChange={handleFormChange} style={{ width: "100%", minWidth: 0 }}>
             <option value="">Select destination account</option>
             {accounts.filter((account) => String(account.id) !== String(formData.account_id)).map((account) => <option key={account.id} value={account.id}>{account.name} ({account.account_type})</option>)}
@@ -12454,7 +12454,7 @@ const transactionFormModal = showForm && (
             display: "block",
             marginBottom: "7px",
             fontSize: "13px",
-            color: "rgba(255,255,255,0.70)",
+            color: "var(--finos-color-1466c3b5)",
           }}
         >
           Category
@@ -12484,11 +12484,11 @@ const transactionFormModal = showForm && (
 
       {(formData.transaction_type === "receivable" || formData.transaction_type === "payable") && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "16px" }}>
-          <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>
+          <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>
             {formData.transaction_type === "receivable" ? "Who owes you? (optional)" : "Who do you owe? (optional)"}
             <input name="party_name" value={formData.party_name || ""} onChange={handleFormChange} maxLength={150} placeholder={formData.transaction_type === "receivable" ? "Customer / person" : "Supplier / person"} style={loanInputStyle} />
           </label>
-          <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>
+          <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>
             Due date (optional)
             <input type="date" name="due_date" value={formData.due_date || ""} onChange={handleFormChange} style={loanInputStyle} />
           </label>
@@ -12511,7 +12511,7 @@ const transactionFormModal = showForm && (
               display: "block",
               marginBottom: "7px",
               fontSize: "13px",
-              color: "rgba(255,255,255,0.70)",
+              color: "var(--finos-color-1466c3b5)",
             }}
           >
             Amount
@@ -12529,9 +12529,9 @@ const transactionFormModal = showForm && (
               width: "100%",
               padding: "13px 14px",
               borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#fff",
+              border: "1px solid var(--finos-color-1466baf1)",
+              background: "var(--finos-color-1466c7f4)",
+              color: "var(--finos-color-7c4b7360)",
               outline: "none",
               boxSizing: "border-box",
             }}
@@ -12544,7 +12544,7 @@ const transactionFormModal = showForm && (
               display: "block",
               marginBottom: "7px",
               fontSize: "13px",
-              color: "rgba(255,255,255,0.70)",
+              color: "var(--finos-color-1466c3b5)",
             }}
           >
             Date
@@ -12559,9 +12559,9 @@ const transactionFormModal = showForm && (
               width: "100%",
               padding: "13px 14px",
               borderRadius: "12px",
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.06)",
-              color: "#fff",
+              border: "1px solid var(--finos-color-1466baf1)",
+              background: "var(--finos-color-1466c7f4)",
+              color: "var(--finos-color-7c4b7360)",
               outline: "none",
               boxSizing: "border-box",
             }}
@@ -12572,20 +12572,20 @@ const transactionFormModal = showForm && (
 
       {/* LOAN DETAILS: shown only for Income → Loan Disbursement */}
       {formData.transaction_type === "income" && isLoanDisbursement && (
-        <div style={{ margin: "8px 0 20px", padding: "18px", borderRadius: "14px", border: "1px solid rgba(168,85,247,0.35)", background: "rgba(168,85,247,0.08)" }}>
-          <h4 style={{ margin: "0 0 14px", color: "#e9d5ff" }}>Loan Details</h4>
-          <p style={{ margin: "0 0 14px", color: "rgba(255,255,255,0.65)", fontSize: "12px" }}>Amount is the money received into your account. Principal is the total amount you owe the lender.</p>
+        <div style={{ margin: "8px 0 20px", padding: "18px", borderRadius: "14px", border: "1px solid var(--finos-color-2e9c81c5)", background: "var(--finos-color-2e9c7cab)" }}>
+          <h4 style={{ margin: "0 0 14px", color: "var(--finos-color-637eb82b)" }}>Loan Details</h4>
+          <p style={{ margin: "0 0 14px", color: "var(--finos-color-1466cf51)", fontSize: "12px" }}>Amount is the money received into your account. Principal is the total amount you owe the lender.</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Loan Name *<input required value={formData.loan_name} name="loan_name" onChange={handleFormChange} placeholder="e.g. HDFC Personal Loan" style={loanInputStyle} /></label>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Lender Name *<input required value={formData.lender_name} name="lender_name" onChange={handleFormChange} placeholder="e.g. HDFC Bank" style={loanInputStyle} /></label>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Loan Type *<StyledSelect required name="loan_type" value={formData.loan_type} onChange={handleFormChange} style={loanInputStyle}>{["Personal Loan","Home Loan","Car Loan","Education Loan","Business Loan","Gold Loan","Loan Against Property","Other"].map((x) => <option key={x} value={x}>{x}</option>)}</StyledSelect></label>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Gross Principal (₹) *<input required type="number" min="0.01" step="0.01" name="principal_amount" value={formData.principal_amount} onChange={handleFormChange} placeholder="500000" style={loanInputStyle} /></label>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Interest Rate (% p.a.)<input type="number" min="0" max="100" step="0.01" name="interest_rate" value={formData.interest_rate} onChange={handleFormChange} placeholder="12" style={loanInputStyle} /></label>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Tenure (months)<input type="number" min="1" max="600" name="tenure_months" value={formData.tenure_months} onChange={handleFormChange} placeholder="36" style={loanInputStyle} /></label>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>EMI Amount (₹)<input type="number" min="0.01" step="0.01" name="emi_amount" value={formData.emi_amount} onChange={handleFormChange} placeholder="Optional" style={loanInputStyle} /></label>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>First EMI Date<input type="date" name="first_payment_date" value={formData.first_payment_date} onChange={handleFormChange} style={loanInputStyle} /></label>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)" }}>Processing Fee (₹)<input type="number" min="0" step="0.01" name="processing_fee" value={formData.processing_fee} onChange={handleFormChange} style={loanInputStyle} /></label>
-            <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.75)", gridColumn: "1 / -1" }}>Loan Notes<textarea name="loan_notes" value={formData.loan_notes} onChange={handleFormChange} rows="2" placeholder="Optional loan terms or notes" style={{ ...loanInputStyle, resize: "vertical" }} /></label>
+            <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>Loan Name *<input required value={formData.loan_name} name="loan_name" onChange={handleFormChange} placeholder="e.g. HDFC Personal Loan" style={loanInputStyle} /></label>
+            <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>Lender Name *<input required value={formData.lender_name} name="lender_name" onChange={handleFormChange} placeholder="e.g. HDFC Bank" style={loanInputStyle} /></label>
+            <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>Loan Type *<StyledSelect required name="loan_type" value={formData.loan_type} onChange={handleFormChange} style={loanInputStyle}>{["Personal Loan","Home Loan","Car Loan","Education Loan","Business Loan","Gold Loan","Loan Against Property","Other"].map((x) => <option key={x} value={x}>{x}</option>)}</StyledSelect></label>
+            <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>Gross Principal (₹) *<input required type="number" min="0.01" step="0.01" name="principal_amount" value={formData.principal_amount} onChange={handleFormChange} placeholder="500000" style={loanInputStyle} /></label>
+            <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>Interest Rate (% p.a.)<input type="number" min="0" max="100" step="0.01" name="interest_rate" value={formData.interest_rate} onChange={handleFormChange} placeholder="12" style={loanInputStyle} /></label>
+            <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>Tenure (months)<input type="number" min="1" max="600" name="tenure_months" value={formData.tenure_months} onChange={handleFormChange} placeholder="36" style={loanInputStyle} /></label>
+            <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>EMI Amount (₹)<input type="number" min="0.01" step="0.01" name="emi_amount" value={formData.emi_amount} onChange={handleFormChange} placeholder="Optional" style={loanInputStyle} /></label>
+            <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>First EMI Date<input type="date" name="first_payment_date" value={formData.first_payment_date} onChange={handleFormChange} style={loanInputStyle} /></label>
+            <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)" }}>Processing Fee (₹)<input type="number" min="0" step="0.01" name="processing_fee" value={formData.processing_fee} onChange={handleFormChange} style={loanInputStyle} /></label>
+            <label style={{ fontSize: "12px", color: "var(--finos-color-1466c310)", gridColumn: "1 / -1" }}>Loan Notes<textarea name="loan_notes" value={formData.loan_notes} onChange={handleFormChange} rows="2" placeholder="Optional loan terms or notes" style={{ ...loanInputStyle, resize: "vertical" }} /></label>
           </div>
         </div>
       )}
@@ -12598,7 +12598,7 @@ const transactionFormModal = showForm && (
             display: "block",
             marginBottom: "7px",
             fontSize: "13px",
-            color: "rgba(255,255,255,0.70)",
+            color: "var(--finos-color-1466c3b5)",
           }}
         >
           Description
@@ -12614,9 +12614,9 @@ const transactionFormModal = showForm && (
             width: "100%",
             padding: "13px 14px",
             borderRadius: "12px",
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
+            border: "1px solid var(--finos-color-1466baf1)",
+            background: "var(--finos-color-1466c7f4)",
+            color: "var(--finos-color-7c4b7360)",
             outline: "none",
             boxSizing: "border-box",
           }}
@@ -12631,7 +12631,7 @@ const transactionFormModal = showForm && (
             display: "block",
             marginBottom: "7px",
             fontSize: "13px",
-            color: "rgba(255,255,255,0.70)",
+            color: "var(--finos-color-1466c3b5)",
           }}
         >
           Reference
@@ -12647,9 +12647,9 @@ const transactionFormModal = showForm && (
             width: "100%",
             padding: "13px 14px",
             borderRadius: "12px",
-            border: "1px solid rgba(255,255,255,0.12)",
-            background: "rgba(255,255,255,0.06)",
-            color: "#fff",
+            border: "1px solid var(--finos-color-1466baf1)",
+            background: "var(--finos-color-1466c7f4)",
+            color: "var(--finos-color-7c4b7360)",
             outline: "none",
             boxSizing: "border-box",
           }}
@@ -12662,8 +12662,8 @@ const transactionFormModal = showForm && (
       marginBottom: "16px",
       padding: "12px 14px",
       borderRadius: "12px",
-      background: "rgba(239,68,68,0.12)",
-      border: "1px solid rgba(239,68,68,0.25)",
+      background: "var(--finos-color-647434bb)",
+      border: "1px solid var(--finos-color-6474499f)",
       color: "var(--finos-status-danger-soft)",
       fontSize: "13px",
     }}
@@ -12924,9 +12924,9 @@ const transactionFormModal = showForm && (
                         padding: "18px",
                         borderRadius: "18px",
                         background:
-                          "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+                          "linear-gradient(135deg, var(--finos-color-1466c6ba), var(--finos-color-1466c711))",
                         border:
-                          "1px solid rgba(255,255,255,0.08)",
+                          "1px solid var(--finos-color-1466c6ba)",
                       }}
                     >
 
@@ -12954,7 +12954,7 @@ const transactionFormModal = showForm && (
                             justifyContent:
                               "center",
                             background:
-                              transaction.transaction_type === "transfer" ? "rgba(96,165,250,0.16)" : (income ? "rgba(34,197,94,0.16)" : "rgba(239,68,68,0.16)"),
+                              transaction.transaction_type === "transfer" ? "var(--finos-color-9a51b78d)" : (income ? "var(--finos-color-abc6e632)" : "var(--finos-color-6474353f)"),
                           }}
                         >
 
@@ -12979,7 +12979,7 @@ const transactionFormModal = showForm && (
                               fontWeight:
                                 700,
                               color:
-                                "#ffffff",
+                                "var(--finos-color-7c4b7360)fff",
                               marginBottom:
                                 "5px",
                               overflow:
@@ -13001,7 +13001,7 @@ const transactionFormModal = showForm && (
                               fontSize:
                                 "12px",
                               color:
-                                "rgba(255,255,255,0.55)",
+                                "var(--finos-color-1466cb92)",
                             }}
                           >
 
@@ -13023,7 +13023,7 @@ const transactionFormModal = showForm && (
                                 fontSize:
                                   "11px",
                                 color:
-                                  "rgba(255,255,255,0.35)",
+                                  "var(--finos-color-1466b314)",
                                 marginTop:
                                   "4px",
                               }}
@@ -13057,7 +13057,7 @@ const transactionFormModal = showForm && (
                             fontWeight:
                               800,
                             color:
-                              transaction.transaction_type === "transfer" ? "#93c5fd" : (income ? "var(--finos-status-success)" : "var(--finos-status-danger)"),
+                              transaction.transaction_type === "transfer" ? "var(--finos-color-37204018)" : (income ? "var(--finos-status-success)" : "var(--finos-status-danger)"),
                             whiteSpace:
                               "nowrap",
                           }}
@@ -13077,10 +13077,10 @@ const transactionFormModal = showForm && (
                             padding: "7px 12px",
                             borderRadius: "10px",
                             border:
-                              "1px solid rgba(255,255,255,0.12)",
+                              "1px solid var(--finos-color-1466baf1)",
                             background:
-                              "rgba(255,255,255,0.06)",
-                            color: "#ffffff",
+                              "var(--finos-color-1466c7f4)",
+                            color: "var(--finos-color-7c4b7360)fff",
                             cursor: "pointer",
                             fontSize: "12px",
                             fontWeight: 700,
@@ -13108,9 +13108,9 @@ const transactionFormModal = showForm && (
                             padding: "7px 12px",
                             borderRadius: "10px",
                             border:
-                              "1px solid rgba(251,113,133,0.25)",
+                              "1px solid var(--finos-color-5ee91fd3)",
                             background:
-                              "rgba(251,113,133,0.08)",
+                              "var(--finos-color-5ee9173c)",
                             color: "var(--finos-status-danger)",
                             cursor: deletingTransaction
                               ? "not-allowed"
@@ -13147,36 +13147,36 @@ const transactionFormModal = showForm && (
 
       {/* Salary components popup: component breakdown never changes the cash transaction amount. */}
       {showSalaryComponents && (
-        <div role="dialog" aria-modal="true" aria-label="Salary components" onClick={() => setShowSalaryComponents(false)} style={{ position: "fixed", inset: 0, zIndex: 10020, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,.72)", backdropFilter: "blur(8px)" }}>
-          <div className="glass-card" onClick={(event) => event.stopPropagation()} style={{ width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", padding: 22, border: "1px solid rgba(168,85,247,.35)" }}>
+        <div role="dialog" aria-modal="true" aria-label="Salary components" onClick={() => setShowSalaryComponents(false)} style={{ position: "fixed", inset: 0, zIndex: 10020, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "var(--finos-color-88afc245)", backdropFilter: "blur(8px)" }}>
+          <div className="glass-card" onClick={(event) => event.stopPropagation()} style={{ width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", padding: 22, border: "1px solid var(--finos-color-d2e99b35)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 8 }}>
-              <div><h3 style={{ margin: 0 }}>Salary Components</h3><p style={{ margin: "6px 0 0", color: "rgba(255,255,255,.58)", fontSize: 12 }}>Suggested breakdown; adjust to match employer payroll/Form 16.</p></div>
+              <div><h3 style={{ margin: 0 }}>Salary Components</h3><p style={{ margin: "6px 0 0", color: "var(--finos-color-c289726f)", fontSize: 12 }}>Suggested breakdown; adjust to match employer payroll/Form 16.</p></div>
               <button type="button" className="secondary-button" onClick={() => setShowSalaryComponents(false)}>Close</button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 12, marginTop: 16 }}>
-              <label style={{ display: "block", color: "rgba(255,255,255,.76)", fontSize: 12 }}>Company / Employer Name<input type="text" value={salaryComponents.employer_name} onChange={(e) => setSalaryComponents((p) => ({ ...p, employer_name: e.target.value }))} placeholder="Employer name" style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.14)", background: "#151525", color: "#fff" }} /></label>
-              <label style={{ display: "block", color: "rgba(255,255,255,.76)", fontSize: 12 }}>Gross Salary (₹)<input type="number" min="0" step="0.01" value={salaryComponents.gross_salary} onChange={(e) => { const gross = Math.max(0, Number(e.target.value) || 0); const basic = Math.round(gross * .4 * 100) / 100; const hra = Math.round(basic * .4 * 100) / 100; setSalaryComponents((p) => ({ ...p, gross_salary: e.target.value, basic: String(basic), hra: String(hra), allowances: String(Math.round((gross - basic - hra - (Number(p.da) || 0) - (Number(p.bonus) || 0) - (Number(p.commission) || 0) - (Number(p.perquisites) || 0) - (Number(p.other) || 0)) * 100) / 100) })); }} style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.14)", background: "#151525", color: "#fff" }} /></label>
-              <label style={{ display: "block", color: "rgba(255,255,255,.76)", fontSize: 12 }}>Salary Received / Net Salary Credited (₹)<input id="salary-components-received" name="salary_received" type="text" inputMode="decimal" autoComplete="off" readOnly={false} aria-readonly="false" value={salaryComponents.salary_received ?? ""} onChange={(e) => { const value = e.target.value.replace(/[^0-9.]/g, ""); setSalaryComponents((p) => ({ ...p, salary_received: value })); }} placeholder="Type actual salary received" style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.14)", background: "#151525", color: "#fff", pointerEvents: "auto", opacity: 1 }} /><span style={{ display: "block", marginTop: 4, color: "rgba(255,255,255,.58)", fontSize: 11 }}>Editable field. Enter the actual net salary credited. Applying components does not overwrite the transaction amount.</span></label>
-              <div style={{ gridColumn: "1 / -1", marginTop: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(34,197,94,.28)", background: "rgba(34,197,94,.07)" }}>
+              <label style={{ display: "block", color: "var(--finos-color-c2896aa3)", fontSize: 12 }}>Company / Employer Name<input type="text" value={salaryComponents.employer_name} onChange={(e) => setSalaryComponents((p) => ({ ...p, employer_name: e.target.value }))} placeholder="Employer name" style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid var(--finos-color-c28962e7)", background: "var(--finos-color-247d2301)", color: "var(--finos-color-7c4b7360)" }} /></label>
+              <label style={{ display: "block", color: "var(--finos-color-c2896aa3)", fontSize: 12 }}>Gross Salary (₹)<input type="number" min="0" step="0.01" value={salaryComponents.gross_salary} onChange={(e) => { const gross = Math.max(0, Number(e.target.value) || 0); const basic = Math.round(gross * .4 * 100) / 100; const hra = Math.round(basic * .4 * 100) / 100; setSalaryComponents((p) => ({ ...p, gross_salary: e.target.value, basic: String(basic), hra: String(hra), allowances: String(Math.round((gross - basic - hra - (Number(p.da) || 0) - (Number(p.bonus) || 0) - (Number(p.commission) || 0) - (Number(p.perquisites) || 0) - (Number(p.other) || 0)) * 100) / 100) })); }} style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid var(--finos-color-c28962e7)", background: "var(--finos-color-247d2301)", color: "var(--finos-color-7c4b7360)" }} /></label>
+              <label style={{ display: "block", color: "var(--finos-color-c2896aa3)", fontSize: 12 }}>Salary Received / Net Salary Credited (₹)<input id="salary-components-received" name="salary_received" type="text" inputMode="decimal" autoComplete="off" readOnly={false} aria-readonly="false" value={salaryComponents.salary_received ?? ""} onChange={(e) => { const value = e.target.value.replace(/[^0-9.]/g, ""); setSalaryComponents((p) => ({ ...p, salary_received: value })); }} placeholder="Type actual salary received" style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid var(--finos-color-c28962e7)", background: "var(--finos-color-247d2301)", color: "var(--finos-color-7c4b7360)", pointerEvents: "auto", opacity: 1 }} /><span style={{ display: "block", marginTop: 4, color: "var(--finos-color-c289726f)", fontSize: 11 }}>Editable field. Enter the actual net salary credited. Applying components does not overwrite the transaction amount.</span></label>
+              <div style={{ gridColumn: "1 / -1", marginTop: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid var(--finos-color-c721e50f)", background: "var(--finos-color-c721dda2)" }}>
                 <h4 style={{ margin: 0, color: "var(--finos-status-success-soft)", fontSize: 13 }}>INCOME COMPONENTS</h4>
-                <p style={{ margin: "5px 0 0", color: "rgba(255,255,255,.58)", fontSize: 11, lineHeight: 1.5 }}>Salary and benefit components. These may already be included in Gross Salary—enter each amount according to your payslip/Form 16 to avoid double counting.</p>
+                <p style={{ margin: "5px 0 0", color: "var(--finos-color-c289726f)", fontSize: 11, lineHeight: 1.5 }}>Salary and benefit components. These may already be included in Gross Salary—enter each amount according to your payslip/Form 16 to avoid double counting.</p>
               </div>
-              {[ ["basic", "Basic Salary"], ["da", "DA"], ["hra", "HRA"], ["allowances", "Other Allowances"], ["bonus", "Bonus"], ["commission", "Commission"], ["perquisites", "Perquisites (taxable value, if applicable)"], ["other", "Other Salary Components"] ].map(([key, label]) => <label key={key} style={{ display: "block", color: "rgba(255,255,255,.76)", fontSize: 12 }}>{label}<input type="number" min="0" step="0.01" value={salaryComponents[key]} onChange={(e) => setSalaryComponents((p) => { const next = { ...p, [key]: e.target.value }; if (["basic", "da", "hra", "bonus", "commission", "perquisites", "other"].includes(key)) { const gross = Number(p.gross_salary) || 0; const fixed = ["basic", "da", "hra", "bonus", "commission", "perquisites", "other"].reduce((sum, k) => sum + (Number(next[k]) || 0), 0); if (key !== "allowances") next.allowances = String(Math.round((gross - fixed) * 100) / 100); } return next; })} style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.14)", background: "#151525", color: "#fff" }} /></label>)}
-              <div style={{ gridColumn: "1 / -1", marginTop: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(248,113,113,.28)", background: "rgba(248,113,113,.07)" }}>
+              {[ ["basic", "Basic Salary"], ["da", "DA"], ["hra", "HRA"], ["allowances", "Other Allowances"], ["bonus", "Bonus"], ["commission", "Commission"], ["perquisites", "Perquisites (taxable value, if applicable)"], ["other", "Other Salary Components"] ].map(([key, label]) => <label key={key} style={{ display: "block", color: "var(--finos-color-c2896aa3)", fontSize: 12 }}>{label}<input type="number" min="0" step="0.01" value={salaryComponents[key]} onChange={(e) => setSalaryComponents((p) => { const next = { ...p, [key]: e.target.value }; if (["basic", "da", "hra", "bonus", "commission", "perquisites", "other"].includes(key)) { const gross = Number(p.gross_salary) || 0; const fixed = ["basic", "da", "hra", "bonus", "commission", "perquisites", "other"].reduce((sum, k) => sum + (Number(next[k]) || 0), 0); if (key !== "allowances") next.allowances = String(Math.round((gross - fixed) * 100) / 100); } return next; })} style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid var(--finos-color-c28962e7)", background: "var(--finos-color-247d2301)", color: "var(--finos-color-7c4b7360)" }} /></label>)}
+              <div style={{ gridColumn: "1 / -1", marginTop: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid var(--finos-color-faebb044)", background: "var(--finos-color-faebb729)" }}>
                 <h4 style={{ margin: 0, color: "var(--finos-status-danger-soft)", fontSize: 13 }}>DEDUCTIONS & RECONCILIATION</h4>
-                <p style={{ margin: "5px 0 0", color: "rgba(255,255,255,.58)", fontSize: 11, lineHeight: 1.5 }}>Enter actual amounts from your payslip. TDS is part of total deductions where applicable—do not count it twice. An unexplained gross-to-net difference is not automatically a deduction.</p>
+                <p style={{ margin: "5px 0 0", color: "var(--finos-color-c289726f)", fontSize: 11, lineHeight: 1.5 }}>Enter actual amounts from your payslip. TDS is part of total deductions where applicable—do not count it twice. An unexplained gross-to-net difference is not automatically a deduction.</p>
               </div>
-              {[ ["deductions", "Total Payroll Deductions (reference)"], ["tds", "TDS (included in deductions if applicable)"] ].map(([key, label]) => <label key={key} style={{ display: "block", color: "rgba(255,255,255,.76)", fontSize: 12 }}>{label}<input type="number" min="0" step="0.01" value={salaryComponents[key]} onChange={(e) => setSalaryComponents((p) => ({ ...p, [key]: e.target.value }))} style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid rgba(255,255,255,.14)", background: "#151525", color: "#fff" }} /></label>)}
+              {[ ["deductions", "Total Payroll Deductions (reference)"], ["tds", "TDS (included in deductions if applicable)"] ].map(([key, label]) => <label key={key} style={{ display: "block", color: "var(--finos-color-c2896aa3)", fontSize: 12 }}>{label}<input type="number" min="0" step="0.01" value={salaryComponents[key]} onChange={(e) => setSalaryComponents((p) => ({ ...p, [key]: e.target.value }))} style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "11px 12px", borderRadius: 10, border: "1px solid var(--finos-color-c28962e7)", background: "var(--finos-color-247d2301)", color: "var(--finos-color-7c4b7360)" }} /></label>)}
             </div>
-            <div aria-live="polite" style={{ marginTop: 16, padding: 14, borderRadius: 12, border: "1px solid rgba(168,85,247,.25)", background: "rgba(168,85,247,.06)" }}>
+            <div aria-live="polite" style={{ marginTop: 16, padding: 14, borderRadius: 12, border: "1px solid var(--finos-color-d2e99f74)", background: "var(--finos-color-d2e9a755)" }}>
               <strong style={{ display: "block", marginBottom: 10, fontSize: 13 }}>Live salary reconciliation</strong>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(135px,1fr))", gap: 10 }}>
-                <div><div style={{ color: "rgba(255,255,255,.55)", fontSize: 11 }}>Gross salary</div><strong>{formatCurrency(Number(salaryComponents.gross_salary) || 0)}</strong></div>
-                <div><div style={{ color: "rgba(255,255,255,.55)", fontSize: 11 }}>Net salary received</div><strong>{formatCurrency(Number(salaryComponents.salary_received) || 0)}</strong></div>
-                <div><div style={{ color: "rgba(255,255,255,.55)", fontSize: 11 }}>Gross − net (to reconcile)</div><strong>{formatCurrency((Number(salaryComponents.gross_salary) || 0) - (Number(salaryComponents.salary_received) || 0))}</strong></div>
-                <div><div style={{ color: "rgba(255,255,255,.55)", fontSize: 11 }}>Deductions entered</div><strong>{formatCurrency((Number(salaryComponents.deductions) || 0))}</strong></div>
+                <div><div style={{ color: "var(--finos-color-c28972c2)", fontSize: 11 }}>Gross salary</div><strong>{formatCurrency(Number(salaryComponents.gross_salary) || 0)}</strong></div>
+                <div><div style={{ color: "var(--finos-color-c28972c2)", fontSize: 11 }}>Net salary received</div><strong>{formatCurrency(Number(salaryComponents.salary_received) || 0)}</strong></div>
+                <div><div style={{ color: "var(--finos-color-c28972c2)", fontSize: 11 }}>Gross − net (to reconcile)</div><strong>{formatCurrency((Number(salaryComponents.gross_salary) || 0) - (Number(salaryComponents.salary_received) || 0))}</strong></div>
+                <div><div style={{ color: "var(--finos-color-c28972c2)", fontSize: 11 }}>Deductions entered</div><strong>{formatCurrency((Number(salaryComponents.deductions) || 0))}</strong></div>
               </div>
-              <div style={{ marginTop: 10, fontSize: 12, color: (Number(salaryComponents.salary_received) > Number(salaryComponents.gross_salary)) ? "#fda4af" : "rgba(255,255,255,.72)" }}>
+              <div style={{ marginTop: 10, fontSize: 12, color: (Number(salaryComponents.salary_received) > Number(salaryComponents.gross_salary)) ? "var(--finos-color-5b497396)" : "var(--finos-color-c2896b27)" }}>
                 {Number(salaryComponents.salary_received) > Number(salaryComponents.gross_salary)
                   ? "Validation: salary received exceeds gross salary. Check the amounts."
                   : Number(salaryComponents.gross_salary) < 0 || Number(salaryComponents.salary_received) < 0
@@ -13186,8 +13186,8 @@ const transactionFormModal = showForm && (
                       : "Not yet reconciled: the gross-to-net difference is not necessarily all deductions. Enter actual payroll deductions from the payslip; the app will not assume the difference is TDS or PF."}
               </div>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginTop: 18, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,.10)" }}>
-              <div><div style={{ color: "rgba(255,255,255,.55)", fontSize: 12 }}>Salary component total</div><strong>{formatCurrency(["basic", "da", "hra", "allowances", "bonus", "commission", "perquisites", "other"].reduce((sum, key) => sum + (Number(salaryComponents[key]) || 0), 0))}</strong><div style={{ color: "rgba(255,255,255,.55)", fontSize: 11 }}>Gross less components: {formatCurrency((Number(salaryComponents.gross_salary) || 0) - ["basic", "da", "hra", "allowances", "bonus", "commission", "perquisites", "other"].reduce((sum, key) => sum + (Number(salaryComponents[key]) || 0), 0))}</div></div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--finos-color-c2896263)" }}>
+              <div><div style={{ color: "var(--finos-color-c28972c2)", fontSize: 12 }}>Salary component total</div><strong>{formatCurrency(["basic", "da", "hra", "allowances", "bonus", "commission", "perquisites", "other"].reduce((sum, key) => sum + (Number(salaryComponents[key]) || 0), 0))}</strong><div style={{ color: "var(--finos-color-c28972c2)", fontSize: 11 }}>Gross less components: {formatCurrency((Number(salaryComponents.gross_salary) || 0) - ["basic", "da", "hra", "allowances", "bonus", "commission", "perquisites", "other"].reduce((sum, key) => sum + (Number(salaryComponents[key]) || 0), 0))}</div></div>
               <button type="button" className="primary-button" onClick={() => {
                 const componentKeys = ["basic", "da", "hra", "allowances", "bonus", "commission", "perquisites", "other"];
                 const componentTotal = componentKeys.reduce((sum, key) => sum + (Number(salaryComponents[key]) || 0), 0);
@@ -13225,7 +13225,7 @@ const transactionFormModal = showForm && (
                 setShowSalaryComponents(false);
               }}>Apply Components</button>
             </div>
-            <p style={{ margin: "12px 0 0", color: "rgba(255,255,255,.48)", fontSize: 11, lineHeight: 1.5 }}>Basic 40% and HRA 40% of Basic are configurable suggestions, not statutory salary ratios. DA defaults to 0%. PF and professional tax depend on payroll facts and applicable rules. Components are saved separately for the current user. Editing Salary Received updates the transaction amount on the next Save; changing components alone preserves it.</p>
+            <p style={{ margin: "12px 0 0", color: "var(--finos-color-c2897eee)", fontSize: 11, lineHeight: 1.5 }}>Basic 40% and HRA 40% of Basic are configurable suggestions, not statutory salary ratios. DA defaults to 0%. PF and professional tax depend on payroll facts and applicable rules. Components are saved separately for the current user. Editing Salary Received updates the transaction amount on the next Save; changing components alone preserves it.</p>
           </div>
         </div>
       )}
@@ -14029,16 +14029,16 @@ function Category() {
                       gap: "9px",
                       padding: "14px 16px",
                       borderRadius: "14px",
-                      border: selected ? "1px solid rgba(190,100,255,.55)" : "1px solid rgba(255,255,255,.10)",
-                      background: selected ? "linear-gradient(135deg, rgba(168,85,247,.28), rgba(236,72,153,.16))" : "rgba(255,255,255,.035)",
-                      color: "#fff",
+                      border: selected ? "1px solid var(--finos-color-505c7b4b)" : "1px solid var(--finos-color-c2896263)",
+                      background: selected ? "linear-gradient(135deg, var(--finos-color-d2e99d99), var(--finos-color-9feb5432))" : "var(--finos-color-13b739d4)",
+                      color: "var(--finos-color-7c4b7360)",
                       fontWeight: 700,
                       cursor: "pointer",
                     }}
                   >
                     <span style={{ fontSize: "18px" }}>{tab.icon}</span>
                     <span>{tab.label}</span>
-                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,.62)", fontWeight: 600 }}>{count}</span>
+                    <span style={{ fontSize: "11px", color: "var(--finos-color-c28977a6)", fontWeight: 600 }}>{count}</span>
                   </button>
                 );
               })}
@@ -14047,13 +14047,13 @@ function Category() {
             <section style={{ marginBottom: "24px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
                 <span style={{ fontSize: "18px" }}>⭐</span>
-                <h4 style={{ margin: 0, color: "#fff", fontSize: "15px" }}>Favorite {activeCategoryTab === "income" ? "Income" : "Expense"} Categories</h4>
-                <span style={{ fontSize: "11px", color: "rgba(255,255,255,.5)" }}>Top 4</span>
+                <h4 style={{ margin: 0, color: "var(--finos-color-7c4b7360)", fontSize: "15px" }}>Favorite {activeCategoryTab === "income" ? "Income" : "Expense"} Categories</h4>
+                <span style={{ fontSize: "11px", color: "var(--finos-color-f6614197)" }}>Top 4</span>
               </div>
               <div style={{ display: "grid", gap: "10px" }}>
                 {favoriteCategories.length > 0
                   ? favoriteCategories.map(renderCategoryCard)
-                  : <p style={{ color: "rgba(255,255,255,.55)", fontSize: "13px" }}>Favorite categories will appear here when available.</p>}
+                  : <p style={{ color: "var(--finos-color-c28972c2)", fontSize: "13px" }}>Favorite categories will appear here when available.</p>}
               </div>
             </section>
 
@@ -14064,12 +14064,12 @@ function Category() {
               <section key={group.title} style={{ marginBottom: "24px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
                   <span style={{ fontSize: "17px" }}>{group.icon}</span>
-                  <h4 style={{ margin: 0, color: "#fff", fontSize: "15px" }}>{group.title} {activeCategoryTab === "income" ? "Income" : "Expense"}</h4>
-                  <span style={{ fontSize: "11px", color: "rgba(255,255,255,.5)" }}>{group.items.length}</span>
+                  <h4 style={{ margin: 0, color: "var(--finos-color-7c4b7360)", fontSize: "15px" }}>{group.title} {activeCategoryTab === "income" ? "Income" : "Expense"}</h4>
+                  <span style={{ fontSize: "11px", color: "var(--finos-color-f6614197)" }}>{group.items.length}</span>
                 </div>
                 {group.items.length > 0
                   ? <div style={{ display: "grid", gap: "10px" }}>{group.items.map(renderCategoryCard)}</div>
-                  : <p style={{ color: "rgba(255,255,255,.45)", fontSize: "12px", margin: "0 0 4px" }}>No categories in this section yet.</p>}
+                  : <p style={{ color: "var(--finos-color-c2897f03)", fontSize: "12px", margin: "0 0 4px" }}>No categories in this section yet.</p>}
               </section>
             ))}
 
@@ -14088,7 +14088,7 @@ function Category() {
             </div>
             <span className="score">{otherCategories.length}</span>
           </div>
-          <p style={{ color: "rgba(255,255,255,.55)", fontSize: "12px", marginTop: "10px" }}>
+          <p style={{ color: "var(--finos-color-c28972c2)", fontSize: "12px", marginTop: "10px" }}>
             Transfer and settlement categories stay separate from income and expense.
           </p>
           <div style={{ display: "grid", gap: "10px", marginTop: "14px" }}>
@@ -14309,7 +14309,7 @@ function Category() {
             justifyContent: "center",
             padding: "20px",
             background:
-              "rgba(0,0,0,0.65)",
+              "var(--finos-color-9f9a0af3)",
             backdropFilter:
               "blur(10px)",
           }}
@@ -14335,7 +14335,7 @@ function Category() {
             <p
               style={{
                 color:
-                  "rgba(255,255,255,0.60)",
+                  "var(--finos-color-1466d034)",
                 fontSize: "13px",
                 lineHeight: 1.6,
                 marginTop: "10px",
@@ -14377,7 +14377,7 @@ function Category() {
                 style={{
                   color: "var(--finos-status-danger)",
                   borderColor:
-                    "rgba(251,113,133,0.30)",
+                    "var(--finos-color-5ee91437)",
                 }}
               >
                 {deleting
@@ -15092,9 +15092,9 @@ function Bills() {
         return {
           color: "var(--finos-status-success)",
           background:
-            "rgba(74,222,128,0.10)",
+            "var(--finos-color-825f29eb)",
           borderColor:
-            "rgba(74,222,128,0.25)",
+            "var(--finos-color-825f2e0d)",
         };
 
       }
@@ -15104,9 +15104,9 @@ function Bills() {
         return {
           color: "var(--finos-status-warning)",
           background:
-            "rgba(251,191,36,0.10)",
+            "var(--finos-color-8e8c6b8b)",
           borderColor:
-            "rgba(251,191,36,0.25)",
+            "var(--finos-color-8e8c5fad)",
         };
 
       }
@@ -15114,9 +15114,9 @@ function Bills() {
       return {
         color: "var(--finos-status-danger)",
         background:
-          "rgba(251,113,133,0.10)",
+          "var(--finos-color-5ee90bb5)",
         borderColor:
-          "rgba(251,113,133,0.25)",
+          "var(--finos-color-5ee91fd3)",
       };
 
     };
@@ -15198,7 +15198,7 @@ function Bills() {
           <p
             style={{
               color:
-                "rgba(255,255,255,0.55)",
+                "var(--finos-color-1466cb92)",
               margin: 0,
             }}
           >
@@ -15331,7 +15331,7 @@ function Bills() {
             padding: "14px 16px",
             color: "var(--finos-status-danger)",
             border:
-              "1px solid rgba(251,113,133,0.25)",
+              "1px solid var(--finos-color-5ee91fd3)",
           }}
         >
           {error}
@@ -15349,7 +15349,7 @@ function Bills() {
             padding: "14px 16px",
             color: "var(--finos-status-success)",
             border:
-              "1px solid rgba(74,222,128,0.25)",
+              "1px solid var(--finos-color-825f2e0d)",
           }}
         >
           {message}
@@ -15386,7 +15386,7 @@ function Bills() {
               padding: "30px",
               textAlign: "center",
               color:
-                "rgba(255,255,255,0.55)",
+                "var(--finos-color-1466cb92)",
             }}
           >
             Loading bills...
@@ -15414,7 +15414,7 @@ function Bills() {
             <p
               style={{
                 color:
-                  "rgba(255,255,255,0.50)",
+                  "var(--finos-color-1466cc37)",
                 margin:
                   "8px 0 20px",
               }}
@@ -15456,11 +15456,11 @@ function Bills() {
     padding: "20px",
     borderRadius: "18px",
     background:
-      "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+      "linear-gradient(135deg, var(--finos-color-1466c6ba), var(--finos-color-1466c711))",
     border:
-      "1px solid rgba(255,255,255,0.08)",
+      "1px solid var(--finos-color-1466c6ba)",
     boxShadow:
-      "0 12px 30px rgba(0,0,0,0.18)",
+      "0 12px 30px var(--finos-color-9f99f4d9)",
     minHeight: "90px",
   }}
 > 
@@ -15485,7 +15485,7 @@ function Bills() {
                   <div
                     style={{
                       color:
-                        "rgba(255,255,255,0.50)",
+                        "var(--finos-color-1466cc37)",
                       fontSize: "12px",
                       marginTop: "5px",
                     }}
@@ -15517,9 +15517,9 @@ function Bills() {
                         borderRadius:
                           "999px",
                         border:
-                          "1px solid rgba(255,255,255,0.10)",
+                          "1px solid var(--finos-color-1466bb33)",
                         color:
-                          "rgba(255,255,255,0.65)",
+                          "var(--finos-color-1466cf51)",
                       }}
                     >
                       {getFrequencyLabel(
@@ -15567,7 +15567,7 @@ function Bills() {
                     style={{
                       fontSize: "10px",
                       color:
-                        "rgba(255,255,255,0.40)",
+                        "var(--finos-color-1466d8b6)",
                       textTransform:
                         "uppercase",
                       letterSpacing:
@@ -15593,7 +15593,7 @@ function Bills() {
                     style={{
                       fontSize: "11px",
                       color:
-                        "rgba(255,255,255,0.45)",
+                        "var(--finos-color-1466d7d3)",
                       marginTop: "4px",
                     }}
                   >
@@ -15650,7 +15650,7 @@ function Bills() {
                       fontSize: "11px",
                       color: "var(--finos-status-danger)",
                       borderColor:
-                        "rgba(251,113,133,0.25)",
+                        "var(--finos-color-5ee91fd3)",
                     }}
                   >
                     Delete
@@ -15988,7 +15988,7 @@ function Bills() {
             position: "fixed",
             inset: 0,
             background:
-              "rgba(0,0,0,0.65)",
+              "var(--finos-color-9f9a0af3)",
             display: "flex",
             alignItems: "center",
             justifyContent:
@@ -16025,7 +16025,7 @@ function Bills() {
             <p
               style={{
                 color:
-                  "rgba(255,255,255,0.60)",
+                  "var(--finos-color-1466d034)",
                 fontSize: "13px",
                 lineHeight: 1.6,
               }}
@@ -16071,7 +16071,7 @@ function Bills() {
                 style={{
                   color: "var(--finos-status-danger)",
                   borderColor:
-                    "rgba(251,113,133,0.30)",
+                    "var(--finos-color-5ee91437)",
                 }}
               >
                 {deleting

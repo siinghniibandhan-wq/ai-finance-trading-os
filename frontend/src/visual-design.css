@@ -3694,3 +3694,127 @@ svg { flex-shrink: 0; }
   .tax-centre .tax-period-divider { width: 100%; height: 1px; min-height: 0; }
   .tax-centre .tax-period-value { font-size: 14px; }
 }
+
+
+/* Budget Plans panel: prevent clipped headings and keep empty state in flow. */
+.money-budget .budget-plans-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  overflow: visible;
+  padding: clamp(16px, 2.2vw, 24px);
+}
+.money-budget .budget-plans-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  height: auto;
+  margin: 0;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--finos-border, var(--th-border));
+  overflow: visible;
+}
+.money-budget .budget-plans-heading {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.money-budget .budget-plans-heading .card-label {
+  position: static;
+  display: block;
+  margin: 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.money-budget .budget-plans-heading h3 {
+  position: static;
+  display: block;
+  margin: 0;
+  color: var(--finos-text, var(--th-text));
+  font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.money-budget .budget-plans-count {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--finos-border, var(--th-border));
+  border-radius: 999px;
+  line-height: 1.2;
+}
+.money-budget .budget-plans-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  min-height: 190px;
+  height: auto;
+  margin: 0;
+  padding: clamp(20px, 4vw, 32px);
+  box-sizing: border-box;
+  overflow: visible;
+  text-align: center;
+  color: var(--finos-text, var(--th-text));
+}
+.money-budget .budget-plans-empty-state .chart-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  margin: 0 0 2px;
+  border-radius: 14px;
+  color: var(--finos-accent, var(--th-accent));
+  background: var(--finos-inner, var(--th-inner));
+}
+.money-budget .budget-plans-empty-state > strong {
+  display: block;
+  max-width: 100%;
+  margin: 0;
+  color: var(--finos-text, var(--th-text));
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.money-budget .budget-plans-empty-state > span {
+  display: block;
+  width: min(100%, 360px);
+  max-width: 100%;
+  margin: 0;
+  color: var(--finos-muted, var(--th-muted));
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.money-budget .budget-plans-empty-state .secondary-button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  max-width: 100%;
+  margin-top: 2px;
+  white-space: normal;
+}
+.money-budget .budget-list-grid,
+.money-budget .budget-list-card { min-width: 0; }
+@media (max-width: 600px) {
+  .money-budget .budget-plans-panel { padding: 16px; gap: 14px; }
+  .money-budget .budget-plans-header { align-items: flex-start; gap: 12px; }
+  .money-budget .budget-plans-empty-state { min-height: 180px; padding: 20px 12px; }
+}

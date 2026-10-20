@@ -59,7 +59,7 @@
 /* -------------------------------------------------------------------------
    Cross-module theme contract
    Shared presentation rules for every module: Dashboard, Money, Invest,
-   Markets, Plan, AI, Tax, Playground and settings. Theme-specific tokens above
+   Markets, Plan, AI, Tax and settings. Theme-specific tokens above
    supply colors, borders, radius, typography and depth; these rules normalize
    component behavior without changing handlers or financial logic.
    ------------------------------------------------------------------------- */

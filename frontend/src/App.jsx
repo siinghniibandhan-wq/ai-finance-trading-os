@@ -3301,7 +3301,8 @@ function PlaygroundPage() {
   const [output,setOutput]=useState("");
   const [alphas,setAlphas]=useState([]);
   const [presets,setPresets]=useState([]);
-  const [runHistory,setRunHistory]=useState([]);\n  const [activeSessionId,setActiveSessionId]=useState("");
+  const [runHistory,setRunHistory]=useState([]);
+  const [activeSessionId,setActiveSessionId]=useState("");
   const [status,setStatus]=useState(null);
   const symbols=[...new Set(symbolsText.split(/[\s,;]+/).map(x=>x.trim().toUpperCase()).filter(Boolean))].slice(0,20);
   const base=`${API_BASE_URL}/api/playground/vibe`;

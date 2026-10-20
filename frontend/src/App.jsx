@@ -240,7 +240,6 @@ const readFinosTheme = () => {
 const applyFinosTheme = (theme) => {
   const nextTheme = FINOS_THEMES.includes(theme) ? theme : "Default";
   document.documentElement.dataset.finosTheme = nextTheme.toLowerCase().replaceAll(" ", "-");
-  document.documentElement.style.colorScheme = ["Light", "Elegant Plain", "Minimal", "Skeuomorphism", "Neumorphism", "Claymorphism", "Bento Grid"].includes(nextTheme) ? "light" : "dark";
   try { window.localStorage.setItem("financial-os-theme", nextTheme); } catch { /* Theme still applies for this session. */ }
 };
 

@@ -1,16 +1,16 @@
 /* Theme-specific styles are isolated by data-finos-theme selectors. */
 :root[data-finos-theme="elegant-plain"] {
-  --finos-page: var(--finos-color-5b69a814); --finos-surface: var(--finos-color-7c4b7360); --finos-surface-raised: var(--finos-color-7c4b7360);
-  --finos-text: var(--finos-color-19868a13); --finos-muted: var(--finos-color-10452190); --finos-border: var(--finos-color-62fe27e0);
-  --finos-accent: var(--finos-color-20505825); --finos-violet: var(--finos-color-20505825); --finos-soft-accent: var(--finos-color-57e58b8d);
-  --t-page-bg: var(--finos-color-5b69a814); --t-card-bg: var(--finos-color-7c4b7360); --t-inner-bg: var(--finos-color-5af1e9ca); --t-sidebar-bg: var(--finos-color-7c4b7360);
-  --t-border: 1px solid var(--finos-color-62fe27e0); --t-radius: 8px; --t-radius-sm: 6px;
-  --t-shadow: none; --t-shadow-hover: 0 2px 10px var(--finos-color-a62b2b7c); --t-shadow-inner: none;
-  --t-btn-bg: var(--finos-color-7c4b7360); --t-btn-text: var(--finos-color-19868a13); --t-btn-border: 1px solid var(--finos-color-5c66aef9);
-  --t-pri-bg: var(--finos-color-20505825); --t-pri-text: var(--finos-color-7c4b7360); --t-pri-border: 1px solid var(--finos-color-20505825);
+  --finos-page: #fbfaf7; --finos-surface: #fff; --finos-surface-raised: #fff;
+  --finos-text: #23262b; --finos-muted: #62666d; --finos-border: #e2ded4;
+  --finos-accent: #303030; --finos-violet: #303030; --finos-soft-accent: #f0eee8;
+  --t-page-bg: #fbfaf7; --t-card-bg: #fff; --t-inner-bg: #faf8f3; --t-sidebar-bg: #fff;
+  --t-border: 1px solid #e2ded4; --t-radius: 8px; --t-radius-sm: 6px;
+  --t-shadow: none; --t-shadow-hover: 0 2px 10px rgba(35,38,43,.06); --t-shadow-inner: none;
+  --t-btn-bg: #fff; --t-btn-text: #23262b; --t-btn-border: 1px solid #d6d2c8;
+  --t-pri-bg: #303030; --t-pri-text: #fff; --t-pri-border: 1px solid #303030;
   --t-font: Inter, system-ui, sans-serif; --t-font-head: "Cormorant Garamond", Georgia, serif;
   --t-head-weight: 600; --t-head-track: .005em; --t-label-track: .12em; --t-label-case: uppercase;
-  --pop-bg: var(--finos-color-7c4b7360); --pop-border: var(--finos-color-62fe27e0); --pop-shadow: 0 10px 30px var(--finos-color-a62b2c32); --pop-radius: 8px;
+  --pop-bg: #fff; --pop-border: #e2ded4; --pop-shadow: 0 10px 30px rgba(35,38,43,.08); --pop-radius: 8px;
 }
 :root[data-finos-theme="elegant-plain"] :is(body, #root) { background: var(--t-page-bg); color: var(--finos-text); font-family: var(--t-font); }
 :root[data-finos-theme="elegant-plain"] .sidebar { background: var(--t-sidebar-bg); color: var(--finos-text); border-right: var(--t-border); box-shadow: none; }
@@ -19,24 +19,24 @@
 :root[data-finos-theme="elegant-plain"] :is(.header-popover,.finos-select-menu,[role="menu"],[role="listbox"]) { background: var(--pop-bg); color: var(--finos-text); border: 1px solid var(--pop-border); border-radius: var(--pop-radius); box-shadow: var(--pop-shadow); }
 :root[data-finos-theme="elegant-plain"] :is(input,textarea,select,.finos-select-trigger) { background: var(--t-inner-bg); color: var(--finos-text); border-color: var(--finos-border); }
 /* Signature themes use the shared variable contract; all rules stay theme-scoped. */
-:root[data-finos-theme="skeuomorphism"] { --finos-accent:var(--finos-color-160d6fdf); --finos-text:var(--finos-color-211a0f14); --finos-muted:var(--finos-color-187624d9); --finos-border:var(--finos-color-6fa26947); --t-page-bg:linear-gradient(180deg,var(--finos-color-62fd5c64),var(--finos-color-624855f2)); --t-card-bg:linear-gradient(180deg,var(--finos-color-7c4b7360),var(--finos-color-662f3856)); --t-sidebar-bg:linear-gradient(180deg,var(--finos-color-637d5b8f),var(--finos-color-6824bbf5)); --t-radius:14px; --t-shadow:inset 0 1px 0 var(--finos-color-7c4b7360),0 8px 18px var(--finos-color-27cf1c92); --t-font:Arial,system-ui,sans-serif; }
-:root[data-finos-theme="neumorphism"] { --finos-accent:var(--finos-color-1b859b56); --finos-text:var(--finos-color-20093a07); --finos-muted:var(--finos-color-1056a6ad); --finos-border:var(--finos-color-5d0d4852); --t-page-bg:var(--finos-color-63f9dd4f); --t-card-bg:var(--finos-color-63f9dd4f); --t-sidebar-bg:var(--finos-color-63f9dd4f); --t-radius:18px; --t-shadow:8px 8px 18px var(--finos-color-68a31208),-8px -8px 18px var(--finos-color-7c4b7360); --t-font:Manrope,system-ui,sans-serif; }
-:root[data-finos-theme="claymorphism"] { --finos-accent:var(--finos-color-1720f079); --finos-text:var(--finos-color-260b5ca6); --finos-muted:var(--finos-color-170d7218); --finos-border:var(--finos-color-669a29a5); --t-page-bg:var(--finos-color-57af6bf5); --t-card-bg:var(--finos-color-7c4b7360)afd; --t-sidebar-bg:var(--finos-color-58748fcf); --t-radius:24px; --t-shadow:0 10px 22px var(--finos-color-4c52f7b); --t-font:Nunito,system-ui,sans-serif; }
-:root[data-finos-theme="bento-grid"] { --finos-accent:var(--finos-color-258646f3); --finos-text:var(--finos-color-197726c2); --finos-muted:var(--finos-color-1057ee1f); --finos-border:var(--finos-color-5d0d3c18); --t-page-bg:var(--finos-color-5827f19b); --t-card-bg:var(--finos-color-7c4b7360); --t-sidebar-bg:var(--finos-color-7c4b7360); --t-radius:18px; --t-shadow:0 4px 18px var(--finos-color-d5e88ed8); --t-font:"Plus Jakarta Sans",system-ui,sans-serif; }
+:root[data-finos-theme="skeuomorphism"] { --finos-accent:#2c6bd8; --finos-text:#1f2733; --finos-muted:#5d6877; --finos-border:#aeb6c2; --t-page-bg:linear-gradient(180deg,#e2e6ec,#cfd5dd); --t-card-bg:linear-gradient(180deg,#fff,#eceff3); --t-sidebar-bg:linear-gradient(180deg,#e9edf2,#c9d0d9); --t-radius:14px; --t-shadow:inset 0 1px 0 #fff,0 8px 18px rgba(30,40,60,.12); --t-font:Arial,system-ui,sans-serif; }
+:root[data-finos-theme="neumorphism"] { --finos-accent:#52627d; --finos-text:#343c4b; --finos-muted:#657087; --finos-border:#d9e0e9; --t-page-bg:#e8edf3; --t-card-bg:#e8edf3; --t-sidebar-bg:#e8edf3; --t-radius:18px; --t-shadow:8px 8px 18px #c8ced7,-8px -8px 18px #fff; --t-font:Manrope,system-ui,sans-serif; }
+:root[data-finos-theme="claymorphism"] { --finos-accent:#7255c9; --finos-text:#3b2f63; --finos-muted:#756b91; --finos-border:#eadcff; --t-page-bg:#f3ecff; --t-card-bg:#fffafd; --t-sidebar-bg:#f8f1ff; --t-radius:24px; --t-shadow:0 10px 22px rgba(124,92,255,.14); --t-font:Nunito,system-ui,sans-serif; }
+:root[data-finos-theme="bento-grid"] { --finos-accent:#187e79; --finos-text:#203432; --finos-muted:#657b78; --finos-border:#d9e7e4; --t-page-bg:#f4f8f7; --t-card-bg:#fff; --t-sidebar-bg:#fff; --t-radius:18px; --t-shadow:0 4px 18px rgba(28,70,65,.06); --t-font:"Plus Jakarta Sans",system-ui,sans-serif; }
 :root[data-finos-theme="skeuomorphism"],:root[data-finos-theme="neumorphism"],:root[data-finos-theme="claymorphism"],:root[data-finos-theme="bento-grid"] { --t-inner-bg:var(--t-card-bg); --t-radius-sm:calc(var(--t-radius) * .55); }
 :root[data-finos-theme="skeuomorphism"],:root[data-finos-theme="neumorphism"],:root[data-finos-theme="claymorphism"],:root[data-finos-theme="bento-grid"],:root[data-finos-theme="elegant-plain"] body,:root[data-finos-theme="skeuomorphism"] #root,:root[data-finos-theme="neumorphism"] #root,:root[data-finos-theme="claymorphism"] #root,:root[data-finos-theme="bento-grid"] #root,:root[data-finos-theme="elegant-plain"] #root { background:var(--t-page-bg); color:var(--finos-text); font-family:var(--t-font); }
 :root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="elegant-plain"]) .content :is(.glass-card,.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card,.large-card,.ai-card,.module-overview-card,.wc-primary-card,.wc-shortcut-tile,.wc-welcome,.welcome-section,.dashboard-clickable-card) { background:var(--t-card-bg); color:var(--finos-text); border:1px solid var(--finos-border); border-radius:var(--t-radius); box-shadow:var(--t-shadow); }
 :root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="elegant-plain"]) :is(input,textarea,select,.finos-select-trigger) { background:var(--t-inner-bg); color:var(--finos-text); border-color:var(--finos-border); }
-:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="elegant-plain"]) :is(.header-popover,.finos-select-menu,[role="menu"],[role="listbox"]) { background:var(--pop-bg,var(--finos-color-7c4b7360)); color:var(--finos-text); border:1px solid var(--finos-border); box-shadow:var(--pop-shadow,0 10px 30px var(--finos-color-9f4b2431)); }
+:root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"],[data-finos-theme="elegant-plain"]) :is(.header-popover,.finos-select-menu,[role="menu"],[role="listbox"]) { background:var(--pop-bg,#fff); color:var(--finos-text); border:1px solid var(--finos-border); box-shadow:var(--pop-shadow,0 10px 30px rgba(0,0,0,.1)); }
 
 
 /* Elegant Plain: replace legacy fixed-grey financial summary bars and labels
    with the theme's ivory/charcoal palette while preserving chart semantics. */
 :root[data-finos-theme="elegant-plain"] {
-  --finos-summary-bg: var(--finos-color-57d15f4e);
-  --finos-summary-text: var(--finos-color-2007ff76);
-  --finos-summary-muted: var(--finos-color-172fde57);
-  --finos-track: var(--finos-color-63f8748b);
+  --finos-summary-bg: #f1efe9;
+  --finos-summary-text: #34363a;
+  --finos-summary-muted: #77766f;
+  --finos-track: #e8e5dd;
 }
 :root[data-finos-theme="elegant-plain"] .content :is(.balance-summary,.balance-sheet-summary,.net-worth-summary,.asset-liability-summary,.financial-summary-strip,.summary-strip) {
   background: var(--finos-summary-bg) !important;
@@ -65,9 +65,9 @@
    component behavior without changing handlers or financial logic.
    ------------------------------------------------------------------------- */
 :root[data-finos-theme] {
-  --finos-page: var(--t-page-bg, var(--finos-color-2392e077));
-  --finos-surface: var(--t-card-bg, var(--finos-color-cfc6b3df));
-  --finos-surface-raised: var(--t-inner-bg, var(--t-card-bg, var(--finos-color-cfc6b3df)));
+  --finos-page: var(--t-page-bg, #0b1020);
+  --finos-surface: var(--t-card-bg, rgba(20, 28, 48, .92));
+  --finos-surface-raised: var(--t-inner-bg, var(--t-card-bg, rgba(20, 28, 48, .92)));
 }
 :root[data-finos-theme] :is(.content, main, .dashboard, .page-content) {
   color: var(--finos-text);
@@ -114,10 +114,10 @@
   .dropdown-menu, .popover, .tooltip-panel, .modal-content
 ) {
   color: var(--finos-text);
-  background: var(--pop-bg, var(--t-card-bg, var(--finos-color-7c4b7360)));
+  background: var(--pop-bg, var(--t-card-bg, #fff));
   border-color: var(--pop-border, var(--finos-border));
   border-radius: var(--pop-radius, var(--t-radius, 10px));
-  box-shadow: var(--pop-shadow, var(--t-shadow, 0 8px 24px var(--finos-color-88afa943)));
+  box-shadow: var(--pop-shadow, var(--t-shadow, 0 8px 24px rgba(0,0,0,.12)));
 }
 :root[data-finos-theme] .content :is(
   .finos-select-menu, [role="menu"], [role="listbox"], .dropdown-menu,
@@ -155,9 +155,9 @@
 :root[data-finos-theme] .content :is(
   .primary-button, .finos-button-primary, button[data-variant="primary"]
 ) {
-  color: var(--t-pri-text, var(--finos-color-7c4b7360));
-  background: var(--t-pri-bg, var(--finos-accent, var(--finos-color-108be079)));
-  border: var(--t-pri-border, 1px solid var(--finos-accent, var(--finos-color-108be079)));
+  color: var(--t-pri-text, #fff);
+  background: var(--t-pri-bg, var(--finos-accent, #6657d9));
+  border: var(--t-pri-border, 1px solid var(--finos-accent, #6657d9));
   border-radius: var(--t-radius-sm, var(--t-radius, 8px));
 }
 :root[data-finos-theme] .content :is(
@@ -167,7 +167,7 @@
   filter: brightness(.97);
 }
 :root[data-finos-theme] .content :is(button, input, select, textarea, a):focus-visible {
-  outline-color: var(--finos-accent, var(--finos-color-3639ae38));
+  outline-color: var(--finos-accent, #8b7cf6);
 }
 :root[data-finos-theme] .content :is(.glass-card, .card, .panel, .stat-card,
   .metric-card, .summary-card, .chart-card, .section-card, .content-card,
@@ -243,10 +243,10 @@
   border-radius: var(--t-radius-sm, var(--t-radius, 8px)) !important;
 }
 :root[data-finos-theme="elegant-plain"] .loan-management-page > div:first-child > div > div:first-child {
-  color: var(--finos-color-cf0b6d7) !important;
+  color: #6d5aa6 !important;
 }
 :root[data-finos-theme="elegant-plain"] .loan-management-page button {
-  color: var(--finos-color-19f69fbe) !important;
+  color: #292b30 !important;
 }
 :root[data-finos-theme] .investment-workspace {
   color: var(--finos-text);
@@ -273,14 +273,14 @@
   border-radius: var(--t-radius-sm, var(--t-radius, 8px)) !important;
 }
 :root[data-finos-theme="elegant-plain"] .investment-workspace :is(.primary-button,.secondary-button) {
-  color: var(--t-btn-text, var(--finos-color-19868a13)) !important;
-  background: var(--t-btn-bg, var(--finos-color-7c4b7360)) !important;
-  border: var(--t-btn-border, 1px solid var(--finos-color-5c66aef9)) !important;
+  color: var(--t-btn-text, #23262b) !important;
+  background: var(--t-btn-bg, #fff) !important;
+  border: var(--t-btn-border, 1px solid #d6d2c8) !important;
 }
 :root[data-finos-theme="elegant-plain"] .investment-workspace .primary-button {
-  color: var(--finos-color-7c4b7360) !important;
-  background: var(--finos-color-20505825) !important;
-  border: 1px solid var(--finos-color-20505825) !important;
+  color: #fff !important;
+  background: #303030 !important;
+  border: 1px solid #303030 !important;
 }
 :root[data-finos-theme] .ledger-page > .welcome-section h2 {
   font-size: clamp(22px, 3vw, 30px) !important;
@@ -304,63 +304,63 @@
    These themes must theme the whole workspace, not only individual cards. */
 :root[data-finos-theme="light"] {
   color-scheme: light;
-  --t-page-bg: var(--finos-color-5816e440);
-  --t-card-bg: var(--finos-color-7c4b7360)fff;
-  --t-inner-bg: var(--finos-color-5875f41a);
-  --t-sidebar-bg: var(--finos-color-7c4b7360)fff;
-  --finos-text: var(--finos-color-197582a2);
-  --finos-muted: var(--finos-color-1c38570a);
-  --finos-border: var(--finos-color-56b14c52);
-  --finos-accent: var(--finos-color-10359bbd);
-  --t-btn-bg: var(--finos-color-7c4b7360)fff;
-  --t-btn-text: var(--finos-color-197582a2);
-  --t-btn-border: 1px solid var(--finos-color-56b14c52);
-  --t-pri-bg: var(--finos-color-10359bbd);
-  --t-pri-text: var(--finos-color-7c4b7360)fff;
-  --t-pri-border: 1px solid var(--finos-color-10359bbd);
+  --t-page-bg: #f5f7fb;
+  --t-card-bg: #ffffff;
+  --t-inner-bg: #f8fafc;
+  --t-sidebar-bg: #ffffff;
+  --finos-text: #202631;
+  --finos-muted: #586474;
+  --finos-border: #dce2ea;
+  --finos-accent: #6356d9;
+  --t-btn-bg: #ffffff;
+  --t-btn-text: #202631;
+  --t-btn-border: 1px solid #dce2ea;
+  --t-pri-bg: #6356d9;
+  --t-pri-text: #ffffff;
+  --t-pri-border: 1px solid #6356d9;
   --t-radius: 12px;
   --t-radius-sm: 8px;
-  --t-shadow: 0 2px 8px var(--finos-color-55e168f2);
+  --t-shadow: 0 2px 8px rgba(20,30,50,.06);
 }
 :root[data-finos-theme="minimal"] {
   color-scheme: light;
-  --t-page-bg: var(--finos-color-57f2c9ce);
-  --t-card-bg: var(--finos-color-7c4b7360)fff;
-  --t-inner-bg: var(--finos-color-5816e01b);
-  --t-sidebar-bg: var(--finos-color-7c4b7360)fff;
-  --finos-text: var(--finos-color-191d85f0);
-  --finos-muted: var(--finos-color-10468277);
-  --finos-border: var(--finos-color-57074fcf);
-  --finos-accent: var(--finos-color-1b506240);
-  --t-btn-bg: var(--finos-color-7c4b7360)fff;
-  --t-btn-text: var(--finos-color-191d85f0);
-  --t-btn-border: 1px solid var(--finos-color-57074fcf);
-  --t-pri-bg: var(--finos-color-1b506240);
-  --t-pri-text: var(--finos-color-7c4b7360)fff;
-  --t-pri-border: 1px solid var(--finos-color-1b506240);
+  --t-page-bg: #f7f8fa;
+  --t-card-bg: #ffffff;
+  --t-inner-bg: #f5f6f8;
+  --t-sidebar-bg: #ffffff;
+  --finos-text: #252a31;
+  --finos-muted: #626b76;
+  --finos-border: #dfe3e8;
+  --finos-accent: #536273;
+  --t-btn-bg: #ffffff;
+  --t-btn-text: #252a31;
+  --t-btn-border: 1px solid #dfe3e8;
+  --t-pri-bg: #536273;
+  --t-pri-text: #ffffff;
+  --t-pri-border: 1px solid #536273;
   --t-radius: 6px;
   --t-radius-sm: 5px;
   --t-shadow: none;
 }
 :root[data-finos-theme="brutalism"] {
   color-scheme: dark;
-  --t-page-bg: var(--finos-color-24f98ca2);
-  --t-card-bg: var(--finos-color-2458ff3c);
-  --t-inner-bg: var(--finos-color-19759742);
-  --t-sidebar-bg: var(--finos-color-7c4ce217)216;
-  --finos-text: var(--finos-color-57f2bbe7);
-  --finos-muted: var(--finos-color-674e4681);
-  --finos-border: var(--finos-color-155d00a2);
-  --finos-accent: var(--finos-color-5aeec445);
-  --t-btn-bg: var(--finos-color-19759742);
-  --t-btn-text: var(--finos-color-57f2bbe7);
-  --t-btn-border: 2px solid var(--finos-color-5aeec445);
-  --t-pri-bg: var(--finos-color-5aeec445);
-  --t-pri-text: var(--finos-color-7c4ce217)216;
-  --t-pri-border: 2px solid var(--finos-color-5aeec445);
+  --t-page-bg: #101114;
+  --t-card-bg: #17181d;
+  --t-inner-bg: #202127;
+  --t-sidebar-bg: #111216;
+  --finos-text: #f7f5ef;
+  --finos-muted: #c5c3bc;
+  --finos-border: #484950;
+  --finos-accent: #facc15;
+  --t-btn-bg: #202127;
+  --t-btn-text: #f7f5ef;
+  --t-btn-border: 2px solid #facc15;
+  --t-pri-bg: #facc15;
+  --t-pri-text: #111216;
+  --t-pri-border: 2px solid #facc15;
   --t-radius: 2px;
   --t-radius-sm: 2px;
-  --t-shadow: 4px 4px 0 var(--finos-color-9f4b2473);
+  --t-shadow: 4px 4px 0 rgba(0,0,0,.3);
 }
 /* Ensure global shell and Settings surfaces actually use the selected theme. */
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="brutalism"]) :is(body,#root,.app,.app-shell,.main-content,.content,.dashboard) {
@@ -413,7 +413,7 @@
   background: var(--t-pri-bg) !important;
   color: var(--t-pri-text) !important;
   border: var(--t-pri-border) !important;
-  box-shadow: 3px 3px 0 var(--finos-color-7c4cd5f6) !important;
+  box-shadow: 3px 3px 0 #000 !important;
 }
 /* Empty, loading and placeholder states are first-class themed components. */
 :root[data-finos-theme] .content :is(
@@ -430,83 +430,83 @@
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"]) .content :is(.empty-chart,.empty-state,.empty-placeholder,.no-data,.no-results,.loading-state) {
-  background: var(--finos-color-5875f41a) !important;
-  color: var(--finos-color-1c38570a) !important;
-  border: 1px dashed var(--finos-color-56b14c52) !important;
+  background: #f8fafc !important;
+  color: #586474 !important;
+  border: 1px dashed #dce2ea !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(.empty-chart,.empty-state,.empty-placeholder,.no-data,.no-results,.loading-state) {
-  background: var(--finos-color-19759742) !important;
-  color: var(--finos-color-57f2bbe7) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  background: #202127 !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"]) .content .finos-theme-settings {
-  background: var(--finos-color-7c4b7360) !important;
-  color: var(--finos-color-197582a2) !important;
+  background: #fff !important;
+  color: #202631 !important;
 }
 :root[data-finos-theme="brutalism"] .content .finos-theme-settings {
-  background: var(--finos-color-2458ff3c) !important;
-  color: var(--finos-color-57f2bbe7) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  background: #17181d !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
 }
 
 
 /* Portfolio light-family polish: the portfolio contains legacy inline white/
    translucent text and surfaces, so explicitly restore readable contrast. */
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace {
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
+  color: var(--finos-text, #292b30) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace > section:first-child {
-  background: var(--t-card-bg, var(--finos-color-7c4b7360)) !important;
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
-  border: 1px solid var(--finos-border, var(--finos-color-62fe27e0));
+  background: var(--t-card-bg, #fff) !important;
+  color: var(--finos-text, #292b30) !important;
+  border: 1px solid var(--finos-border, #e2ded4);
   border-radius: var(--t-radius, 12px);
-  box-shadow: var(--t-shadow, 0 2px 8px var(--finos-color-55e168f2));
+  box-shadow: var(--t-shadow, 0 2px 8px rgba(20,30,50,.06));
   padding: 18px;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace :is(h1,h2,h3,h4,h5,strong,b,.card-header,.card-label) {
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
+  color: var(--finos-text, #292b30) !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace :is(p,small,.muted,.description,.card-label) {
-  color: var(--finos-muted, var(--finos-color-10452190)) !important;
+  color: var(--finos-muted, #62666d) !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .glass-card {
-  background: var(--t-card-bg, var(--finos-color-7c4b7360)) !important;
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
-  border: 1px solid var(--finos-border, var(--finos-color-62fe27e0)) !important;
+  background: var(--t-card-bg, #fff) !important;
+  color: var(--finos-text, #292b30) !important;
+  border: 1px solid var(--finos-border, #e2ded4) !important;
   border-radius: var(--t-radius, 12px) !important;
-  box-shadow: var(--t-shadow, 0 2px 8px var(--finos-color-55e168f2)) !important;
+  box-shadow: var(--t-shadow, 0 2px 8px rgba(20,30,50,.06)) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace :is(span,div,label) {
   -webkit-text-fill-color: currentColor;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace :is(input,select,textarea) {
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
-  background: var(--t-inner-bg, var(--finos-color-58747196)) !important;
-  border-color: var(--finos-border, var(--finos-color-56d16357)) !important;
+  color: var(--finos-text, #292b30) !important;
+  background: var(--t-inner-bg, #f8f8f6) !important;
+  border-color: var(--finos-border, #dedbd2) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .secondary-button {
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
-  background: var(--t-btn-bg, var(--finos-color-7c4b7360)) !important;
-  border: var(--t-btn-border, 1px solid var(--finos-color-56d16357)) !important;
+  color: var(--finos-text, #292b30) !important;
+  background: var(--t-btn-bg, #fff) !important;
+  border: var(--t-btn-border, 1px solid #dedbd2) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"]) .investment-workspace .primary-button {
-  color: var(--t-pri-text, var(--finos-color-7c4b7360)) !important;
-  background: var(--t-pri-bg, var(--finos-color-10359bbd)) !important;
-  border: var(--t-pri-border, 1px solid var(--finos-color-10359bbd)) !important;
+  color: var(--t-pri-text, #fff) !important;
+  background: var(--t-pri-bg, #6356d9) !important;
+  border: var(--t-pri-border, 1px solid #6356d9) !important;
 }
 :root[data-finos-theme="elegant-plain"] .investment-workspace .primary-button {
-  color: var(--finos-color-7c4b7360) !important;
-  background: var(--finos-color-2050502f) !important;
-  border: 1px solid var(--finos-color-2050502f) !important;
+  color: #fff !important;
+  background: #303238 !important;
+  border: 1px solid #303238 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace [style*="rgba(255,255,255"] {
-  color: var(--finos-muted, var(--finos-color-10452190)) !important;
+  color: var(--finos-muted, #62666d) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace [style*="background: linear-gradient"] {
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
+  color: var(--finos-text, #292b30) !important;
 }
 @media (max-width: 760px) {
   :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace {
@@ -541,108 +541,108 @@
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
   select, textarea, .finos-select-trigger, [role="combobox"]
 ):focus-visible {
-  border-color: color-mix(in srgb, var(--finos-accent, var(--finos-color-7c4cf6fe)) 55%, transparent) !important;
-  outline: 1px solid color-mix(in srgb, var(--finos-accent, var(--finos-color-7c4cf6fe)) 30%, transparent);
+  border-color: color-mix(in srgb, var(--finos-accent, #888) 55%, transparent) !important;
+  outline: 1px solid color-mix(in srgb, var(--finos-accent, #888) 30%, transparent);
   outline-offset: 1px;
   box-shadow: none !important;
 }
 :root[data-finos-theme] .content :is(.finos-select-menu, [role="listbox"], .dropdown-menu) {
   border-width: 1px;
   border-color: color-mix(in srgb, var(--finos-border, currentColor) 45%, transparent);
-  box-shadow: var(--pop-shadow, 0 6px 20px var(--finos-color-88afa408));
+  box-shadow: var(--pop-shadow, 0 6px 20px rgba(0,0,0,.08));
 }
 
 
 /* Category list: make legacy inline dark colors readable in light themes. */
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-section {
-  background: var(--t-card-bg, var(--finos-color-7c4b7360)) !important;
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
-  border-color: var(--finos-border, var(--finos-color-62fe27e0)) !important;
+  background: var(--t-card-bg, #fff) !important;
+  color: var(--finos-text, #292b30) !important;
+  border-color: var(--finos-border, #e2ded4) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-item {
-  background: var(--t-inner-bg, var(--finos-color-58747196)) !important;
-  border: 1px solid color-mix(in srgb, var(--finos-border, var(--finos-color-56d16357)) 65%, transparent) !important;
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
+  background: var(--t-inner-bg, #f8f8f6) !important;
+  border: 1px solid color-mix(in srgb, var(--finos-border, #dedbd2) 65%, transparent) !important;
+  color: var(--finos-text, #292b30) !important;
   border-radius: var(--t-radius, 12px) !important;
   box-shadow: none !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-item > div:first-child > div:first-child {
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
+  color: var(--finos-text, #292b30) !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-item > div:first-child > div:nth-child(2) {
-  color: var(--finos-muted, var(--finos-color-10452190)) !important;
+  color: var(--finos-muted, #62666d) !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page :is(h3,h4,.card-label,.score) {
-  color: var(--finos-text, var(--finos-color-19f69fbe)) !important;
+  color: var(--finos-text, #292b30) !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page :is(p,span):not(.category-list-item span) {
   opacity: 1;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-item button {
-  background: var(--t-btn-bg, var(--finos-color-7c4b7360)) !important;
-  color: var(--t-btn-text, var(--finos-color-19f69fbe)) !important;
-  border-color: color-mix(in srgb, var(--finos-border, var(--finos-color-56d16357)) 55%, transparent) !important;
+  background: var(--t-btn-bg, #fff) !important;
+  color: var(--t-btn-text, #292b30) !important;
+  border-color: color-mix(in srgb, var(--finos-border, #dedbd2) 55%, transparent) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"]) .categories-page .category-list-item button:hover {
-  background: var(--t-inner-bg, var(--finos-color-5816e01b)) !important;
+  background: var(--t-inner-bg, #f5f6f8) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-section .empty-chart {
-  color: var(--finos-muted, var(--finos-color-10452190)) !important;
-  background: var(--t-inner-bg, var(--finos-color-58747196)) !important;
-  border-color: var(--finos-border, var(--finos-color-56d16357)) !important;
+  color: var(--finos-muted, #62666d) !important;
+  background: var(--t-inner-bg, #f8f8f6) !important;
+  border-color: var(--finos-border, #dedbd2) !important;
 }
 :root[data-finos-theme="brutalism"] .categories-page .category-list-item {
-  background: var(--finos-color-19759742) !important;
-  color: var(--finos-color-57f2bbe7) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  background: #202127 !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
 }
 :root[data-finos-theme="brutalism"] .categories-page .category-list-item > div:first-child > div:first-child,
 :root[data-finos-theme="brutalism"] .categories-page :is(h3,h4,.card-label,.score) {
-  color: var(--finos-color-57f2bbe7) !important;
+  color: #f7f5ef !important;
 }
 
 
 /* Category rows: explicit per-theme foregrounds. Keep scoped to Categories. */
 :root[data-finos-theme="brutalism"] .categories-page .category-list-section,
 :root[data-finos-theme="brutalism"] .categories-page .category-list-item {
-  background: var(--finos-color-2458ff3c) !important;
-  color: var(--finos-color-57f2bbe7) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  background: #17181d !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
-  box-shadow: 4px 4px 0 var(--finos-color-88afae27) !important;
+  box-shadow: 4px 4px 0 rgba(0,0,0,.25) !important;
 }
 :root[data-finos-theme="brutalism"] .categories-page .category-list-item :is(div,span,p,strong,small) {
-  color: var(--finos-color-57f2bbe7) !important;
+  color: #f7f5ef !important;
   opacity: 1 !important;
-  -webkit-text-fill-color: var(--finos-color-57f2bbe7) !important;
+  -webkit-text-fill-color: #f7f5ef !important;
 }
 :root[data-finos-theme="brutalism"] .categories-page .category-list-item button {
-  background: var(--finos-color-19759742) !important;
-  color: var(--finos-color-5aeec445) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  background: #202127 !important;
+  color: #facc15 !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
 }
 :root[data-finos-theme="brutalism"] .categories-page .category-list-item button:last-child {
-  color: var(--finos-color-57f2bbe7) !important;
-  border-color: var(--finos-color-57f2bbe7) !important;
+  color: #f7f5ef !important;
+  border-color: #f7f5ef !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-item :is(div,span,p,strong,small) {
-  color: var(--finos-color-19f69fbe) !important;
+  color: #292b30 !important;
   opacity: 1 !important;
-  -webkit-text-fill-color: var(--finos-color-19f69fbe) !important;
+  -webkit-text-fill-color: #292b30 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-item button {
-  background: var(--finos-color-7c4b7360) !important;
-  color: var(--finos-color-19f69fbe) !important;
-  border: 1px solid var(--finos-color-56d16357) !important;
+  background: #fff !important;
+  color: #292b30 !important;
+  border: 1px solid #dedbd2 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .categories-page .category-list-item button:last-child {
-  color: var(--finos-color-6c3654d0) !important;
-  border-color: var(--finos-color-6332c32a) !important;
+  color: #a33b4a !important;
+  border-color: #e5c9ce !important;
 }
 
 
@@ -670,20 +670,20 @@
   border-radius: var(--t-radius-sm, var(--t-radius, 8px)) !important;
 }
 :root[data-finos-theme="brutalism"] .categories-page .category-list-item {
-  background: var(--finos-color-19759742) !important;
-  color: var(--finos-color-57f2bbe7) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  background: #202127 !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
-  box-shadow: 3px 3px 0 var(--finos-color-7c4cd5f6) !important;
+  box-shadow: 3px 3px 0 #000 !important;
 }
 :root[data-finos-theme="brutalism"] .categories-page .category-list-item > div:first-child > div:first-child,
 :root[data-finos-theme="brutalism"] .categories-page .category-list-item > div:first-child > div:nth-child(2) {
-  color: var(--finos-color-57f2bbe7) !important;
+  color: #f7f5ef !important;
 }
 :root[data-finos-theme="brutalism"] .categories-page .category-list-item button {
-  color: var(--finos-color-57f2bbe7) !important;
-  background: var(--finos-color-2458ff3c) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  color: #f7f5ef !important;
+  background: #17181d !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
 }
 
@@ -691,71 +691,71 @@
 /* Portfolio: fix legacy inline dark-theme text that remains low-contrast on
    Light, Minimal and Elegant Plain. Strictly scoped to this module. */
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace {
-  --portfolio-fg: var(--finos-color-19f69fbe);
-  --portfolio-muted: var(--finos-color-10452190);
+  --portfolio-fg: #292b30;
+  --portfolio-muted: #62666d;
   color: var(--portfolio-fg) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-header {
-  background: var(--finos-color-7c4b7360) !important;
-  color: var(--finos-color-19f69fbe) !important;
-  border: 1px solid var(--finos-color-62fe27e0) !important;
+  background: #fff !important;
+  color: #292b30 !important;
+  border: 1px solid #e2ded4 !important;
   border-radius: var(--t-radius, 12px) !important;
-  box-shadow: var(--t-shadow, 0 2px 8px var(--finos-color-55e16851)) !important;
+  box-shadow: var(--t-shadow, 0 2px 8px rgba(20,30,50,.05)) !important;
   padding: 16px !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-header :is(h1,h2,h3,p,.card-label) {
-  color: var(--finos-color-19f69fbe) !important;
-  -webkit-text-fill-color: var(--finos-color-19f69fbe) !important;
+  color: #292b30 !important;
+  -webkit-text-fill-color: #292b30 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-header p:not(.card-label) {
-  color: var(--finos-color-10452190) !important;
-  -webkit-text-fill-color: var(--finos-color-10452190) !important;
+  color: #62666d !important;
+  -webkit-text-fill-color: #62666d !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-summary-card {
-  background: var(--finos-color-7c4b7360) !important;
-  color: var(--finos-color-19f69fbe) !important;
-  border: 1px solid var(--finos-color-62fe27e0) !important;
-  box-shadow: 0 2px 8px var(--finos-color-55e16851) !important;
+  background: #fff !important;
+  color: #292b30 !important;
+  border: 1px solid #e2ded4 !important;
+  box-shadow: 0 2px 8px rgba(20,30,50,.05) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-summary-card > div {
-  color: var(--finos-color-10452190) !important;
-  -webkit-text-fill-color: var(--finos-color-10452190) !important;
+  color: #62666d !important;
+  -webkit-text-fill-color: #62666d !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-summary-card .portfolio-summary-value {
-  color: var(--finos-color-19f69fbe) !important;
-  -webkit-text-fill-color: var(--finos-color-19f69fbe) !important;
+  color: #292b30 !important;
+  -webkit-text-fill-color: #292b30 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .glass-card {
-  background: var(--finos-color-7c4b7360) !important;
-  color: var(--finos-color-19f69fbe) !important;
-  border-color: var(--finos-color-62fe27e0) !important;
-  box-shadow: 0 2px 8px var(--finos-color-55e16851) !important;
+  background: #fff !important;
+  color: #292b30 !important;
+  border-color: #e2ded4 !important;
+  box-shadow: 0 2px 8px rgba(20,30,50,.05) !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .glass-card :is(h1,h2,h3,h4,strong,b) {
-  color: var(--finos-color-19f69fbe) !important;
-  -webkit-text-fill-color: var(--finos-color-19f69fbe) !important;
+  color: #292b30 !important;
+  -webkit-text-fill-color: #292b30 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"]) .investment-workspace .glass-card :is(p,small,label) {
-  color: var(--finos-color-10452190) !important;
-  -webkit-text-fill-color: var(--finos-color-10452190) !important;
+  color: #62666d !important;
+  -webkit-text-fill-color: #62666d !important;
   opacity: 1 !important;
 }
 :root[data-finos-theme="brutalism"] .investment-workspace .portfolio-header,
 :root[data-finos-theme="brutalism"] .investment-workspace .portfolio-summary-card {
-  background: var(--finos-color-2458ff3c) !important;
-  color: var(--finos-color-57f2bbe7) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  background: #17181d !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
-  box-shadow: 4px 4px 0 var(--finos-color-7c4cd5f6) !important;
+  box-shadow: 4px 4px 0 #000 !important;
 }
 :root[data-finos-theme="brutalism"] .investment-workspace .portfolio-header :is(h1,h2,h3,p,.card-label),
 :root[data-finos-theme="brutalism"] .investment-workspace .portfolio-summary-card :is(div,p,span) {
-  color: var(--finos-color-57f2bbe7) !important;
-  -webkit-text-fill-color: var(--finos-color-57f2bbe7) !important;
+  color: #f7f5ef !important;
+  -webkit-text-fill-color: #f7f5ef !important;
   opacity: 1 !important;
 }
 
@@ -798,16 +798,16 @@
   border-color: var(--finos-border) !important;
 }
 :root[data-finos-theme="neumorphism"] .investment-workspace .primary-button {
-  background: var(--finos-color-1b859b56) !important;
-  color: var(--finos-color-7c4b7360) !important;
+  background: #52627d !important;
+  color: #fff !important;
   border: 0 !important;
-  box-shadow: 4px 4px 8px var(--finos-color-68a31208), -4px -4px 8px var(--finos-color-7c4b7360) !important;
+  box-shadow: 4px 4px 8px #c8ced7, -4px -4px 8px #fff !important;
 }
 :root[data-finos-theme="neumorphism"] .investment-workspace .secondary-button {
-  background: var(--finos-color-63f9dd4f) !important;
-  color: var(--finos-color-20093a07) !important;
+  background: #e8edf3 !important;
+  color: #343c4b !important;
   border: 0 !important;
-  box-shadow: 4px 4px 8px var(--finos-color-68a31208), -4px -4px 8px var(--finos-color-7c4b7360) !important;
+  box-shadow: 4px 4px 8px #c8ced7, -4px -4px 8px #fff !important;
 }
 
 /* Brutalism placeholder/loading surfaces: avoid white/black mismatches and
@@ -817,11 +817,11 @@
   .no-results,.loading-state,.loading-placeholder,.skeleton-card,.skeleton,
   [data-empty-state="true"],[data-placeholder="true"]
 ) {
-  background: var(--finos-color-19759742) !important;
-  color: var(--finos-color-57f2bbe7) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  background: #202127 !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
-  box-shadow: 3px 3px 0 var(--finos-color-7c4cd5f6) !important;
+  box-shadow: 3px 3px 0 #000 !important;
   opacity: 1 !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(
@@ -829,8 +829,8 @@
   .no-results,.loading-state,.loading-placeholder,.skeleton-card,.skeleton,
   [data-empty-state="true"],[data-placeholder="true"]
 ) :is(h1,h2,h3,h4,p,span,strong,small,label) {
-  color: var(--finos-color-57f2bbe7) !important;
-  -webkit-text-fill-color: var(--finos-color-57f2bbe7) !important;
+  color: #f7f5ef !important;
+  -webkit-text-fill-color: #f7f5ef !important;
   opacity: 1 !important;
 }
 
@@ -890,7 +890,7 @@
 }
 :root:is([data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .investment-workspace .primary-button {
   background: var(--finos-accent) !important;
-  color: var(--finos-color-7c4b7360) !important;
+  color: #fff !important;
   border: 1px solid var(--finos-accent) !important;
 }
 
@@ -901,12 +901,12 @@
   .no-results,.loading-state,.loading-placeholder,.skeleton-card,.skeleton,
   [data-empty-state="true"],[data-placeholder="true"]
 ) {
-  background: var(--finos-color-19759742) !important;
+  background: #202127 !important;
   background-image: none !important;
-  color: var(--finos-color-57f2bbe7) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
-  box-shadow: 3px 3px 0 var(--finos-color-7c4cd5f6) !important;
+  box-shadow: 3px 3px 0 #000 !important;
   opacity: 1 !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(
@@ -914,45 +914,45 @@
   .no-results,.loading-state,.loading-placeholder,.skeleton-card,.skeleton,
   [data-empty-state="true"],[data-placeholder="true"]
 ) :is(h1,h2,h3,h4,p,span,strong,small,label,button) {
-  color: var(--finos-color-57f2bbe7) !important;
-  -webkit-text-fill-color: var(--finos-color-57f2bbe7) !important;
+  color: #f7f5ef !important;
+  -webkit-text-fill-color: #f7f5ef !important;
   opacity: 1 !important;
 }
 /* Chart of Accounts is the only non-placeholder Brutalism surface changed. */
 :root[data-finos-theme="brutalism"] .content :is(.coa-section-card,.coa-filter) {
-  background: var(--finos-color-2458ff3c) !important;
+  background: #17181d !important;
   background-image: none !important;
-  color: var(--finos-color-57f2bbe7) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  color: #f7f5ef !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
-  box-shadow: 3px 3px 0 var(--finos-color-7c4cd5f6) !important;
+  box-shadow: 3px 3px 0 #000 !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(.coa-section-card,.coa-filter) :is(h2,h3,h4,p,label,span,th,td,button) {
-  color: var(--finos-color-57f2bbe7) !important;
-  -webkit-text-fill-color: var(--finos-color-57f2bbe7) !important;
+  color: #f7f5ef !important;
+  -webkit-text-fill-color: #f7f5ef !important;
   opacity: 1 !important;
 }
 :root[data-finos-theme="brutalism"] .content .coa-section-card table thead,
 :root[data-finos-theme="brutalism"] .content .coa-section-card th {
-  background: var(--finos-color-19f6abfd) !important;
-  color: var(--finos-color-5aeec445) !important;
-  -webkit-text-fill-color: var(--finos-color-5aeec445) !important;
+  background: #292a30 !important;
+  color: #facc15 !important;
+  -webkit-text-fill-color: #facc15 !important;
 }
 :root[data-finos-theme="brutalism"] .content .coa-section-card tr,
 :root[data-finos-theme="brutalism"] .content .coa-section-card td {
-  background: var(--finos-color-2458ff3c) !important;
-  border-color: var(--finos-color-155d00a2) !important;
+  background: #17181d !important;
+  border-color: #484950 !important;
 }
 
 
 /* Brutalism polish: navigation, tabs, and chart/empty-data surfaces.
    Keep the dark canvas, use dim ivory text and yellow accent controls. */
 :root[data-finos-theme="brutalism"] .sidebar .navigation-title {
-  color: var(--finos-color-6feb5de0) !important;
+  color: #aaa89f !important;
   opacity: 1 !important;
 }
 :root[data-finos-theme="brutalism"] .sidebar .navigation-item {
-  color: var(--finos-color-635387c3) !important;
+  color: #e7e5dc !important;
   background: transparent !important;
   border: 2px solid transparent !important;
   border-radius: 2px !important;
@@ -964,28 +964,28 @@
   opacity: 1 !important;
 }
 :root[data-finos-theme="brutalism"] .sidebar .navigation-item:hover {
-  color: var(--finos-color-5aeec445) !important;
-  background: var(--finos-color-19759742) !important;
-  border-color: var(--finos-color-cd0e2f7) !important;
+  color: #facc15 !important;
+  background: #202127 !important;
+  border-color: #6b5a0a !important;
 }
 :root[data-finos-theme="brutalism"] .sidebar .navigation-item.active {
-  color: var(--finos-color-2458ff3c) !important;
-  background: var(--finos-color-5aeec445) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
-  box-shadow: 3px 3px 0 var(--finos-color-7c4cd5f6) !important;
+  color: #17181d !important;
+  background: #facc15 !important;
+  border: 2px solid #facc15 !important;
+  box-shadow: 3px 3px 0 #000 !important;
 }
 :root[data-finos-theme="brutalism"] .sidebar .navigation-item.active :is(svg,span) {
-  color: var(--finos-color-2458ff3c) !important;
+  color: #17181d !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(button,[role="tab"],.tab,.tab-button,.finos-tab) {
-  color: var(--finos-color-635387c3);
-  border-color: var(--finos-color-cd0e2f7);
+  color: #e7e5dc;
+  border-color: #6b5a0a;
 }
 :root[data-finos-theme="brutalism"] .content :is([role="tab"],.tab,.tab-button,.finos-tab)[aria-selected="true"],
 :root[data-finos-theme="brutalism"] .content :is([role="tab"],.tab,.tab-button,.finos-tab).active {
-  background: var(--finos-color-5aeec445) !important;
-  color: var(--finos-color-2458ff3c) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  background: #facc15 !important;
+  color: #17181d !important;
+  border: 2px solid #facc15 !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(
   .overview-chart,.chart-card,.chart-panel,.chart-container,.chart-legend,
@@ -993,10 +993,10 @@
   .holdings-allocation-row,.holdings-allocation-list,.trend-bars,
   .asset-allocation,.allocation-chart,.wealth-allocation,.wealth-chart
 ) {
-  background: var(--finos-color-2458ff3c) !important;
+  background: #17181d !important;
   background-image: none !important;
-  color: var(--finos-color-635387c3) !important;
-  border-color: var(--finos-color-155d00a2) !important;
+  color: #e7e5dc !important;
+  border-color: #484950 !important;
   border-radius: 2px !important;
   box-shadow: none !important;
 }
@@ -1005,119 +1005,119 @@
   .holdings-allocation-panel,.asset-allocation,.allocation-chart,
   .wealth-allocation,.wealth-chart
 ) {
-  border: 2px solid var(--finos-color-5aeec445) !important;
-  box-shadow: 4px 4px 0 var(--finos-color-7c4cd5f6) !important;
+  border: 2px solid #facc15 !important;
+  box-shadow: 4px 4px 0 #000 !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(
   .overview-chart,.chart-card,.chart-panel,.chart-container,
   .holdings-allocation-panel,.asset-allocation,.allocation-chart,
   .wealth-allocation,.wealth-chart,.empty-chart
 ) :is(h1,h2,h3,h4,p,span,strong,small,label,figcaption) {
-  color: var(--finos-color-635387c3) !important;
-  -webkit-text-fill-color: var(--finos-color-635387c3) !important;
+  color: #e7e5dc !important;
+  -webkit-text-fill-color: #e7e5dc !important;
   opacity: 1 !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(
   .legend-income,.income-bar,.holdings-allocation-track::after
 ) {
-  background: var(--finos-color-5aeec445) !important;
+  background: #facc15 !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(.expense-bar) {
-  background: var(--finos-color-5ce0e43d) !important;
+  background: #d97706 !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(svg.recharts-surface,.recharts-wrapper) {
-  background: var(--finos-color-2458ff3c) !important;
+  background: #17181d !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(.recharts-cartesian-grid line,.recharts-cartesian-axis line,.recharts-cartesian-axis-tick line) {
-  stroke: var(--finos-color-155d00a2) !important;
+  stroke: #484950 !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(.recharts-cartesian-axis-tick-value,.recharts-label,.recharts-legend-item-text) {
-  fill: var(--finos-color-635387c3) !important;
-  color: var(--finos-color-635387c3) !important;
+  fill: #e7e5dc !important;
+  color: #e7e5dc !important;
 }
 :root[data-finos-theme="brutalism"] .content :is(.empty-chart,.empty-state,.empty-placeholder,.placeholder,.no-data,.no-results) {
-  background: var(--finos-color-19759742) !important;
-  color: var(--finos-color-635387c3) !important;
-  border: 2px solid var(--finos-color-5aeec445) !important;
+  background: #202127 !important;
+  color: #e7e5dc !important;
+  border: 2px solid #facc15 !important;
   border-radius: 2px !important;
-  box-shadow: 3px 3px 0 var(--finos-color-7c4cd5f6) !important;
+  box-shadow: 3px 3px 0 #000 !important;
 }
 
 
 /* Portfolio-only readability pass: six requested themes. */
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace {
-  color: var(--finos-color-191d85f3);
+  color: #252a32;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card {
-  background: var(--finos-color-7c4b7360) !important;
+  background: #fff !important;
   background-image: none !important;
-  color: var(--finos-color-191d85f3) !important;
-  border: 1px solid var(--finos-color-5d0e1d68) !important;
-  box-shadow: 0 2px 8px var(--finos-color-b85c585b), inset 0 1px 0 var(--finos-color-f661407a) !important;
+  color: #252a32 !important;
+  border: 1px solid #d9dee7 !important;
+  box-shadow: 0 2px 8px rgba(28, 39, 56, .08), inset 0 1px 0 rgba(255,255,255,.8) !important;
   border-radius: var(--t-radius, 12px) !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card > .holdings-row {
-  color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card :is(strong,h1,h2,h3,h4) {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card :is(.card-label,small,p) {
-  color: var(--finos-color-10468279) !important;
-  -webkit-text-fill-color: var(--finos-color-10468279) !important;
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card [style*="rgba(255,255,255"] {
-  color: var(--finos-color-10468279) !important;
+  color: #626b78 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card [style*="rgba(110, 231, 183"], 
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card [style*="#a7f3d0"] {
-  color: var(--finos-color-1eaf53c8) !important;
-  -webkit-text-fill-color: var(--finos-color-1eaf53c8) !important;
+  color: #087f5b !important;
+  -webkit-text-fill-color: #087f5b !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card > .holdings-row > div:nth-child(4) {
-  background: var(--finos-color-66dae8b2) !important;
-  border: 1px solid var(--finos-color-6750bb89) !important;
+  background: #eefaf5 !important;
+  border: 1px solid #c5ead9 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-summary-card {
-  background: var(--finos-color-7c4b7360) !important;
-  border: 1px solid var(--finos-color-5d0e1d68) !important;
-  box-shadow: 0 2px 8px var(--finos-color-c84dd014) !important;
+  background: #fff !important;
+  border: 1px solid #d9dee7 !important;
+  box-shadow: 0 2px 8px rgba(28,39,56,.07) !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-summary-card :is(div,.portfolio-summary-value) {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .glass-card :is(h1,h2,h3,h4,strong,b,.card-label,.chart-footnote,.score) {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .glass-card :is(p,small,label) {
-  color: var(--finos-color-10468279) !important;
-  -webkit-text-fill-color: var(--finos-color-10468279) !important;
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
   opacity: 1 !important;
 }
 
 /* Preserve each named theme's card character while keeping holdings distinct. */
 :root[data-finos-theme="neumorphism"] .investment-workspace .portfolio-holding-card {
   border: 0 !important;
-  background: var(--finos-color-66dc4d61) !important;
-  box-shadow: 6px 6px 14px var(--finos-color-628c61af), -6px -6px 14px var(--finos-color-7c4b7360) !important;
+  background: #eef1f6 !important;
+  box-shadow: 6px 6px 14px #cbd0d8, -6px -6px 14px #fff !important;
 }
 :root[data-finos-theme="skeuomorphism"] .investment-workspace .portfolio-holding-card {
-  border: 1px solid var(--finos-color-674d8b42) !important;
-  background: linear-gradient(180deg,var(--finos-color-7c4b7360),var(--finos-color-66cb2c63)) !important;
-  box-shadow: inset 0 1px 0 var(--finos-color-7c4b7360), 0 3px 7px var(--finos-color-df0e1ab4) !important;
+  border: 1px solid #c5ccd6 !important;
+  background: linear-gradient(180deg,#fff,#edf1f5) !important;
+  box-shadow: inset 0 1px 0 #fff, 0 3px 7px rgba(35,45,60,.14) !important;
 }
 :root[data-finos-theme="claymorphism"] .investment-workspace .portfolio-holding-card {
-  border: 1px solid var(--finos-color-62ee267d) !important;
-  background: var(--finos-color-7c4b7360) !important;
+  border: 1px solid #e1d9f4 !important;
+  background: #fff !important;
   border-radius: 18px !important;
-  box-shadow: 0 8px 18px var(--finos-color-b65212c6) !important;
+  box-shadow: 0 8px 18px rgba(93,68,145,.13) !important;
 }
 
 
@@ -1126,41 +1126,41 @@
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card {
   display: block;
   margin-block: 10px !important;
-  background-color: var(--finos-color-7c4b7360)fff !important;
-  color: var(--finos-color-191d85f3) !important;
-  border: 1px solid var(--finos-color-5d1f1d26) !important;
+  background-color: #ffffff !important;
+  color: #252a32 !important;
+  border: 1px solid #d8dee8 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card + .portfolio-holding-card {
   margin-top: 12px !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row {
-  color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row > div {
   min-width: 0;
-  color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row strong {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row .card-label,
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row div[style*="rgba(255,255,255"] {
-  color: var(--finos-color-10468279) !important;
-  -webkit-text-fill-color: var(--finos-color-10468279) !important;
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row > div:nth-child(4) {
-  background: var(--finos-color-66dae8b2) !important;
-  border-color: var(--finos-color-6750bb89) !important;
+  background: #eefaf5 !important;
+  border-color: #c5ead9 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid {
-  border-color: var(--finos-color-5d1f1d26) !important;
+  border-color: #d8dee8 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid > div {
-  background: var(--finos-color-57f2cdcd) !important;
-  border-color: var(--finos-color-5d1f1d26) !important;
+  background: #f7f9fc !important;
+  border-color: #d8dee8 !important;
 }
 
 
@@ -1172,22 +1172,22 @@
   width: 100%;
   margin: 12px 0 !important;
   padding: 16px !important;
-  background: var(--finos-color-7c4b7360)fff !important;
+  background: #ffffff !important;
   background-image: none !important;
-  color: var(--finos-color-191d85f3) !important;
-  border: 1px solid var(--finos-color-628c7142) !important;
+  color: #252a32 !important;
+  border: 1px solid #cbd4e0 !important;
   border-radius: 14px !important;
-  box-shadow: 0 3px 10px var(--finos-color-b85c5552) !important;
+  box-shadow: 0 3px 10px rgba(28, 39, 56, .10) !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row {
-  color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row > div {
-  color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card :is(strong,b) {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card :is(.card-label,small,p,.holdings-row div[style*="rgba(255,255,255"]) {
@@ -1196,101 +1196,101 @@
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row > div:nth-child(4) {
-  background: var(--finos-color-66dae8b2) !important;
-  border: 1px solid var(--finos-color-6750bb89) !important;
+  background: #eefaf5 !important;
+  border: 1px solid #c5ead9 !important;
   border-radius: 12px !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-row > div:nth-child(4) :is(.card-label,span) {
-  color: var(--finos-color-1eaf53c8) !important;
-  -webkit-text-fill-color: var(--finos-color-1eaf53c8) !important;
+  color: #087f5b !important;
+  -webkit-text-fill-color: #087f5b !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid {
-  border-color: var(--finos-color-5d1f1d26) !important;
+  border-color: #d8dee8 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid > div {
-  background: var(--finos-color-57f2cdcd) !important;
-  border-color: var(--finos-color-5d1f1d26) !important;
-  color: var(--finos-color-191d85f3) !important;
+  background: #f7f9fc !important;
+  border-color: #d8dee8 !important;
+  color: #252a32 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid :is(span,p,strong) {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
   opacity: 1 !important;
 }
 
 /* Portfolio Performance: make all existing period options legible. */
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card {
-  background: var(--finos-color-7c4b7360)fff !important;
+  background: #ffffff !important;
   background-image: none !important;
-  color: var(--finos-color-191d85f3) !important;
-  border: 1px solid var(--finos-color-5d1f1d26) !important;
+  color: #252a32 !important;
+  border: 1px solid #d8dee8 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:first-child :is(div,p,span) {
-  color: var(--finos-color-10468279) !important;
-  -webkit-text-fill-color: var(--finos-color-10468279) !important;
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:first-child > div:first-child > div:first-child {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:first-child > div:last-child > span {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
   min-width: 28px;
-  background: var(--finos-color-57d2d41a) !important;
-  border: 1px solid var(--finos-color-5c571061) !important;
-  color: var(--finos-color-1a405275) !important;
-  -webkit-text-fill-color: var(--finos-color-1a405275) !important;
+  background: #f1f3f8 !important;
+  border: 1px solid #d7dce6 !important;
+  color: #4b5563 !important;
+  -webkit-text-fill-color: #4b5563 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:first-child > div:last-child > span:nth-child(4) {
-  background: var(--finos-color-66dce6db) !important;
-  border-color: var(--finos-color-5d1d67bf) !important;
-  color: var(--finos-color-180c48ad) !important;
-  -webkit-text-fill-color: var(--finos-color-180c48ad) !important;
+  background: #eee8ff !important;
+  border-color: #d8cafa !important;
+  color: #5b36a8 !important;
+  -webkit-text-fill-color: #5b36a8 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:nth-child(2) {
-  background: var(--finos-color-5875f41a) !important;
-  border-color: var(--finos-color-5d1f1d26) !important;
+  background: #f8fafc !important;
+  border-color: #d8dee8 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-performance-card > div:nth-child(2) :is(div,span,strong) {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
   opacity: 1 !important;
 }
 
 /* Asset Allocation: readable category labels, invested label and percentages. */
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card {
-  background: var(--finos-color-7c4b7360)fff !important;
+  background: #ffffff !important;
   background-image: none !important;
-  color: var(--finos-color-191d85f3) !important;
-  border: 1px solid var(--finos-color-5d1f1d26) !important;
+  color: #252a32 !important;
+  border: 1px solid #d8dee8 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:first-child {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:nth-child(2) {
-  color: var(--finos-color-10468279) !important;
-  -webkit-text-fill-color: var(--finos-color-10468279) !important;
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:nth-child(3) > div {
-  border-color: var(--finos-color-63313076) !important;
-  box-shadow: 0 0 0 1px var(--finos-color-d5f30342) !important;
+  border-color: #e5dcfa !important;
+  box-shadow: 0 0 0 1px rgba(80, 55, 130, .08) !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:nth-child(3) > div > div > div:first-child {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:nth-child(3) > div > div > div:last-child {
-  color: var(--finos-color-10468279) !important;
-  -webkit-text-fill-color: var(--finos-color-10468279) !important;
+  color: #626b78 !important;
+  -webkit-text-fill-color: #626b78 !important;
 }
 :root:is([data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="minimal"],[data-finos-theme="light"],[data-finos-theme="elegant-plain"]) .investment-workspace .portfolio-asset-allocation-card > div:last-child span {
-  color: var(--finos-color-191d85f3) !important;
-  -webkit-text-fill-color: var(--finos-color-191d85f3) !important;
+  color: #252a32 !important;
+  -webkit-text-fill-color: #252a32 !important;
   opacity: 1 !important;
 }
 
@@ -1304,20 +1304,20 @@
   width: 100%;
   margin: 12px 0 !important;
   padding: 16px !important;
-  background: var(--finos-color-57d2b79d) !important;
+  background: #f1f4f8 !important;
   background-image: none !important;
-  border: 1px solid var(--finos-color-68a02da9) !important;
+  border: 1px solid #c8d2df !important;
   border-radius: 14px !important;
-  box-shadow: 0 3px 10px var(--finos-color-bd6cbad6) !important;
-  color: var(--finos-color-1975b964) !important;
+  box-shadow: 0 3px 10px rgba(31, 41, 55, .10) !important;
+  color: #202938 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row,
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row > div {
-  color: var(--finos-color-1975b964) !important;
+  color: #202938 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card :is(strong,b) {
-  color: var(--finos-color-1975b964) !important;
-  -webkit-text-fill-color: var(--finos-color-1975b964) !important;
+  color: #202938 !important;
+  -webkit-text-fill-color: #202938 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-row :is(.card-label,small,p,div[style*="rgba(255,255,255"]) {
@@ -1326,56 +1326,56 @@
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid {
-  border-color: var(--finos-color-628c7582) !important;
+  border-color: #cbd5e1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid > div {
-  background: var(--finos-color-7c4b7360)fff !important;
-  border-color: var(--finos-color-5cc17525) !important;
-  color: var(--finos-color-1975b964) !important;
+  background: #ffffff !important;
+  border-color: #d5dde7 !important;
+  color: #202938 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .holdings-detail-grid :is(span,p,strong) {
-  color: var(--finos-color-1975b964) !important;
-  -webkit-text-fill-color: var(--finos-color-1975b964) !important;
+  color: #202938 !important;
+  -webkit-text-fill-color: #202938 !important;
   opacity: 1 !important;
 }
 
 /* Make action buttons readable on light cards while retaining their meaning:
    BUY = green, SELL = red, other actions = neutral. */
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card button.primary-button {
-  background: var(--finos-color-1eaf53c8) !important;
+  background: #087f5b !important;
   background-image: none !important;
-  border: 1px solid var(--finos-color-1eaf53c8) !important;
-  color: var(--finos-color-7c4b7360)fff !important;
-  -webkit-text-fill-color: var(--finos-color-7c4b7360)fff !important;
+  border: 1px solid #087f5b !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card button[style*="248,113,113"] {
-  background: var(--finos-color-7c4b7360)1f2 !important;
+  background: #fff1f2 !important;
   background-image: none !important;
-  border: 1px solid var(--finos-color-5b373485) !important;
-  color: var(--finos-color-60c28330) !important;
-  -webkit-text-fill-color: var(--finos-color-60c28330) !important;
+  border: 1px solid #fecaca !important;
+  color: #b42332 !important;
+  -webkit-text-fill-color: #b42332 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card button.secondary-button {
-  background: var(--finos-color-7c4b7360)fff !important;
+  background: #ffffff !important;
   background-image: none !important;
-  border: 1px solid var(--finos-color-628c7582) !important;
-  color: var(--finos-color-1ff9af43) !important;
-  -webkit-text-fill-color: var(--finos-color-1ff9af43) !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #374151 !important;
+  -webkit-text-fill-color: #374151 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card button.secondary-button[style*="248,113,113"] {
-  background: var(--finos-color-7c4b7360)1f2 !important;
-  border-color: var(--finos-color-5b373485) !important;
-  color: var(--finos-color-60c28330) !important;
-  -webkit-text-fill-color: var(--finos-color-60c28330) !important;
+  background: #fff1f2 !important;
+  border-color: #fecaca !important;
+  color: #b42332 !important;
+  -webkit-text-fill-color: #b42332 !important;
 }
 
 
 /* Portfolio Holdings: label-only contrast repair for the six light themes.
    Values, card surfaces, buttons, other themes and other modules are untouched. */
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .card-label {
-  color: var(--finos-color-1c032a87) !important;
-  -webkit-text-fill-color: var(--finos-color-1c032a87) !important;
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card :is(.holdings-row > div > div[style*="rgba(255,255,255"], .holdings-row > div > div[style*="color: rgba(255,255,255"]) {
@@ -1384,49 +1384,49 @@
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .investment-workspace .portfolio-holding-card .card-label[style*="110, 231, 183"] {
-  color: var(--finos-color-1eaf53c8) !important;
-  -webkit-text-fill-color: var(--finos-color-1eaf53c8) !important;
+  color: #087f5b !important;
+  -webkit-text-fill-color: #087f5b !important;
 }
 
 
 /* Portfolio page Holdings preview: repair text contrast only in the six light themes.
    Deliberately excludes action buttons, financial values, card layout and all other modules. */
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview {
-  color: var(--finos-color-1975b964) !important;
+  color: #202938 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview .portfolio-holding-preview-item > div:first-child > div:first-child {
-  color: var(--finos-color-1975b964) !important;
-  -webkit-text-fill-color: var(--finos-color-1975b964) !important;
+  color: #202938 !important;
+  -webkit-text-fill-color: #202938 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview .portfolio-holding-preview-item div[style*="color: rgba(255,255,255"] {
-  color: var(--finos-color-1c032a87) !important;
-  -webkit-text-fill-color: var(--finos-color-1c032a87) !important;
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview > div:first-child > div:first-child > div:last-child {
-  color: var(--finos-color-1c032a87) !important;
-  -webkit-text-fill-color: var(--finos-color-1c032a87) !important;
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview > div:first-child > span {
-  color: var(--finos-color-1c032a87) !important;
-  -webkit-text-fill-color: var(--finos-color-1c032a87) !important;
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
 }
 
 
 /* FIX: Portfolio page holding-preview labels were missed because React serializes
-   inline var(--finos-color-7e334e12) styles with spaces, so selectors matching "rgba(255,255,255"
+   inline rgba() styles with spaces, so selectors matching "rgba(255,255,255"
    did not reliably match. Target the preview's actual structure instead. */
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview .portfolio-holding-preview-item {
-  background: var(--finos-color-57d2b79d) !important;
-  border-color: var(--finos-color-5cc17525) !important;
-  color: var(--finos-color-1975b964) !important;
+  background: #f1f4f8 !important;
+  border-color: #d5dde7 !important;
+  color: #202938 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview .portfolio-holding-preview-item > div:first-child > :is(div:nth-child(2), div:nth-child(3)),
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview .portfolio-holding-preview-item > div:last-child > :is(div:nth-child(2), div:nth-child(4), div:nth-child(6)) {
-  color: var(--finos-color-1c032a87) !important;
-  -webkit-text-fill-color: var(--finos-color-1c032a87) !important;
+  color: #596579 !important;
+  -webkit-text-fill-color: #596579 !important;
   opacity: 1 !important;
 }
 :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="neumorphism"],[data-finos-theme="skeuomorphism"],[data-finos-theme="claymorphism"]) .portfolio-holdings-preview .portfolio-holding-preview-item > div:first-child > :is(div:nth-child(2), div:nth-child(3)),
@@ -1443,18 +1443,18 @@
 :root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .finos-select-menu,
 :root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content [role="listbox"],
 :root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .dropdown-menu {
-  color: var(--finos-control-text, var(--finos-text, var(--finos-color-57d2bb9d))) !important;
-  background-color: var(--finos-control-bg, var(--finos-color-24c5920a)) !important;
+  color: var(--finos-control-text, var(--finos-text, #f1f5f9)) !important;
+  background-color: var(--finos-control-bg, #111827) !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .finos-select-menu .finos-select-option,
 :root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content [role="listbox"] [role="option"],
 :root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .dropdown-menu [role="option"] {
-  color: var(--finos-control-text, var(--finos-text, var(--finos-color-57d2bb9d))) !important;
+  color: var(--finos-control-text, var(--finos-text, #f1f5f9)) !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .finos-select-menu .finos-select-option:hover,
 :root[data-finos-theme]:not([data-finos-theme="light"]):not([data-finos-theme="minimal"]):not([data-finos-theme="elegant-plain"]):not([data-finos-theme="skeuomorphism"]):not([data-finos-theme="neumorphism"]):not([data-finos-theme="claymorphism"]):not([data-finos-theme="bento-grid"]):not([data-finos-theme="brutalism"]) .content .finos-select-menu .finos-select-option.is-selected {
-  color: var(--finos-control-text, var(--finos-text, var(--finos-color-57d2bb9d))) !important;
-  background-color: color-mix(in srgb, var(--finos-accent, var(--finos-color-6bf3f92d)) 22%, var(--finos-control-bg, var(--finos-color-24c5920a))) !important;
+  color: var(--finos-control-text, var(--finos-text, #f1f5f9)) !important;
+  background-color: color-mix(in srgb, var(--finos-accent, #a78bfa) 22%, var(--finos-control-bg, #111827)) !important;
 }
 
 
@@ -1472,24 +1472,24 @@
 /* Portfolio instrument search results — theme-aware, scoped to this list only.
    Use the active theme's surface/text tokens instead of fixed dark colors. */
 :root[data-finos-theme] .content .instrument-search-results {
-  color: var(--finos-text, var(--finos-color-5875f41a));
-  background: var(--t-card-bg, var(--finos-surface-raised, var(--finos-color-2458fad5)));
-  border: 1px solid var(--finos-border, var(--finos-color-d3193f8e));
+  color: var(--finos-text, #f8fafc);
+  background: var(--t-card-bg, var(--finos-surface-raised, #17172a));
+  border: 1px solid var(--finos-border, rgba(148, 163, 184, .28));
   border-radius: var(--t-radius, 10px);
-  box-shadow: var(--t-shadow, 0 12px 30px var(--finos-color-e72502c6));
+  box-shadow: var(--t-shadow, 0 12px 30px rgba(0, 0, 0, .24));
 }
 :root[data-finos-theme] .content .instrument-search-result {
-  color: var(--finos-text, var(--finos-color-5875f41a));
+  color: var(--finos-text, #f8fafc);
   background: transparent;
   border: 0;
-  border-bottom: 1px solid var(--finos-border, var(--finos-color-d3193b0d));
+  border-bottom: 1px solid var(--finos-border, rgba(148, 163, 184, .18));
 }
 :root[data-finos-theme] .content .instrument-search-result:last-child {
   border-bottom: 0;
 }
 :root[data-finos-theme] .content .instrument-search-result:hover,
 :root[data-finos-theme] .content .instrument-search-result:focus-visible {
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-363ac67a)) 12%, var(--t-card-bg, var(--finos-color-2458fad5)));
+  background: color-mix(in srgb, var(--finos-accent, #8b5cf6) 12%, var(--t-card-bg, #17172a));
   outline: none;
 }
 :root[data-finos-theme] .content .instrument-search-result strong,
@@ -1497,45 +1497,45 @@
   color: inherit;
 }
 :root[data-finos-theme] .content .instrument-search-result-meta {
-  color: var(--finos-muted, var(--finos-color-372f06c3));
+  color: var(--finos-muted, #94a3b8);
 }
 
 
 /* Portfolio transaction-history modal: improve contrast only in light themes.
    Dark theme keeps its existing palette and inline styles unchanged. */
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history {
-  color: var(--finos-color-211a281e) !important;
+  color: #1f2937 !important;
 }
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history :is(div,span,small,p,strong,b) {
-  color: var(--finos-color-211a281e) !important;
+  color: #1f2937 !important;
 }
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history > div > div[style*="background"] {
-  background: var(--finos-color-7c4b7360)fff !important;
-  border-color: var(--finos-color-5c7bf404) !important;
+  background: #ffffff !important;
+  border-color: #d1d5db !important;
 }
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history :is(button,.small-button,.primary-button,.secondary-button) {
-  color: var(--finos-color-211a281e) !important;
-  border-color: var(--finos-color-34005129) !important;
+  color: #1f2937 !important;
+  border-color: #9ca3af !important;
 }
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history button {
-  background-color: var(--finos-color-57ae9791);
+  background-color: #f3f4f6;
 }
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history :is(button,.small-button,.primary-button,.secondary-button):hover {
-  background-color: var(--finos-color-63317fa3);
+  background-color: #e5e7eb;
 }
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history div[style*="color: rgb(134, 239, 172)"] {
-  color: var(--finos-color-2491c6c5) !important;
+  color: #166534 !important;
 }
 :root:is([data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .portfolio-transaction-history div[style*="color: rgb(252, 165, 165)"] {
-  color: var(--finos-color-618afddd) !important;
+  color: #b91c1c !important;
 }
 
 
 /* Investment Transactions filters: override the legacy dark defaults in styles.css.
    Keep the native custom-select behavior intact; only colors/surfaces change. */
 :root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-wrap > button.finos-select-trigger {
-  color: var(--finos-control-text, var(--finos-text, var(--finos-color-19757e6a))) !important;
-  background: var(--finos-control-bg, var(--finos-surface, var(--finos-color-7c4b7360)fff)) !important;
+  color: var(--finos-control-text, var(--finos-text, #202738)) !important;
+  background: var(--finos-control-bg, var(--finos-surface, #ffffff)) !important;
   border: 0 !important;
   border-radius: 10px !important;
   box-shadow: none !important;
@@ -1548,25 +1548,25 @@
   color: var(--finos-muted, currentColor) !important;
 }
 :root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-menu {
-  color: var(--finos-control-text, var(--finos-text, var(--finos-color-19757e6a))) !important;
-  background: var(--finos-control-bg, var(--finos-surface, var(--finos-color-7c4b7360)fff)) !important;
-  border: 1px solid var(--finos-control-border, var(--finos-border, var(--finos-color-5d1f1d7f))) !important;
+  color: var(--finos-control-text, var(--finos-text, #202738)) !important;
+  background: var(--finos-control-bg, var(--finos-surface, #ffffff)) !important;
+  border: 1px solid var(--finos-control-border, var(--finos-border, #d8deea)) !important;
   border-radius: 10px !important;
-  box-shadow: var(--t-shadow, 0 12px 30px var(--finos-color-8cccbef6)) !important;
+  box-shadow: var(--t-shadow, 0 12px 30px rgba(25,35,55,.16)) !important;
   backdrop-filter: none !important;
 }
 :root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-menu .finos-select-option {
-  color: var(--finos-control-text, var(--finos-text, var(--finos-color-19757e6a))) !important;
+  color: var(--finos-control-text, var(--finos-text, #202738)) !important;
   background: transparent !important;
   -webkit-text-fill-color: currentColor !important;
 }
 :root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-menu .finos-select-option:hover,
 :root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-menu .finos-select-option.is-selected {
-  color: var(--finos-control-text, var(--finos-text, var(--finos-color-19757e6a))) !important;
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 14%, var(--finos-control-bg, var(--finos-color-7c4b7360)fff)) !important;
+  color: var(--finos-control-text, var(--finos-text, #202738)) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 14%, var(--finos-control-bg, #ffffff)) !important;
 }
 :root[data-finos-theme] .content .investment-transaction-filter-grid .finos-select-check {
-  color: var(--finos-accent, var(--finos-color-1b737444)) !important;
+  color: var(--finos-accent, #5145cd) !important;
 }
 
 
@@ -1597,59 +1597,59 @@
 /* Investment Transactions history: replace dark-only inline text colors in every light theme.
    Scoped to this page so dark themes and other modules retain their existing styling. */
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row {
-  background: var(--t-card-bg, var(--finos-surface, var(--finos-color-7c4b7360)fff)) !important;
-  border: 1px solid var(--finos-border, var(--finos-color-62ed5be2)) !important;
-  color: var(--finos-text, var(--finos-color-1975b964)) !important;
+  background: var(--t-card-bg, var(--finos-surface, #ffffff)) !important;
+  border: 1px solid var(--finos-border, #e1e6ef) !important;
+  color: var(--finos-text, #202938) !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row [style*="color: rgba(255,255,255"],
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row small {
-  color: var(--finos-muted, var(--finos-color-1c032a87)) !important;
-  -webkit-text-fill-color: var(--finos-muted, var(--finos-color-1c032a87)) !important;
+  color: var(--finos-muted, #596579) !important;
+  -webkit-text-fill-color: var(--finos-muted, #596579) !important;
   opacity: 1 !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row > div > strong,
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-date-column > div:last-child {
-  color: var(--finos-text, var(--finos-color-1975b964)) !important;
+  color: var(--finos-text, #202938) !important;
   -webkit-text-fill-color: currentColor !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions button {
-  color: var(--finos-text, var(--finos-color-1975b964)) !important;
+  color: var(--finos-text, #202938) !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions button[style*="#fca5a5"] {
-  color: var(--finos-color-60c28330) !important;
-  -webkit-text-fill-color: var(--finos-color-60c28330) !important;
+  color: #b42332 !important;
+  -webkit-text-fill-color: #b42332 !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions span {
-  color: var(--finos-color-1eaf53c8) !important;
-  -webkit-text-fill-color: var(--finos-color-1eaf53c8) !important;
+  color: #087f5b !important;
+  -webkit-text-fill-color: #087f5b !important;
 }
 
 
 /* Investment Transactions: final light-theme text contrast for all row content. */
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row :is(div,span,small,p,strong,button) {
-  color: var(--finos-text, var(--finos-color-1975b964)) !important;
+  color: var(--finos-text, #202938) !important;
   -webkit-text-fill-color: currentColor !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row :is(div[style*="font-size: 10px"],div[style*="font-size: 11px"],small) {
-  color: var(--finos-muted, var(--finos-color-1c032a87)) !important;
+  color: var(--finos-muted, #596579) !important;
   -webkit-text-fill-color: currentColor !important;
   opacity: 1 !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row strong[style*="#86efac"] {
-  color: var(--finos-color-2491c6c5) !important;
-  -webkit-text-fill-color: var(--finos-color-2491c6c5) !important;
+  color: #166534 !important;
+  -webkit-text-fill-color: #166534 !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row :is(strong[style*="#fca5a5"],button[style*="#fca5a5"]) {
-  color: var(--finos-color-60c28330) !important;
-  -webkit-text-fill-color: var(--finos-color-60c28330) !important;
+  color: #b42332 !important;
+  -webkit-text-fill-color: #b42332 !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions > span {
-  color: var(--finos-color-2491c6c5) !important;
-  -webkit-text-fill-color: var(--finos-color-2491c6c5) !important;
+  color: #166534 !important;
+  -webkit-text-fill-color: #166534 !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .content .investment-transaction-row .investment-transaction-actions > span[style*="#fca5a5"] {
-  color: var(--finos-color-60c28330) !important;
-  -webkit-text-fill-color: var(--finos-color-60c28330) !important;
+  color: #b42332 !important;
+  -webkit-text-fill-color: #b42332 !important;
 }
 
 /* Add Transaction modal: authoritative theme-token dropdown styling.
@@ -1667,12 +1667,12 @@
   width: 100% !important;
   min-height: 44px !important;
   padding: 10px 12px !important;
-  border: 1px solid var(--finos-border, var(--finos-color-5d1f1d7f)) !important;
+  border: 1px solid var(--finos-border, #d8deea) !important;
   border-radius: 10px !important;
-  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, var(--finos-color-7c4b7360)fff))) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, #ffffff))) !important;
   background-image: none !important;
-  color: var(--finos-text, var(--finos-color-1975b964)) !important;
-  -webkit-text-fill-color: var(--finos-text, var(--finos-color-1975b964)) !important;
+  color: var(--finos-text, #202938) !important;
+  -webkit-text-fill-color: var(--finos-text, #202938) !important;
   box-shadow: none !important;
   text-align: left !important;
 }
@@ -1685,32 +1685,32 @@
 }
 :root[data-finos-theme] .add-transaction-modal .finos-select-wrap > button.finos-select-trigger:focus-visible,
 :root[data-finos-theme] .add-transaction-modal .finos-select-wrap > button.finos-select-trigger[aria-expanded="true"] {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 20%, transparent) !important;
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 20%, transparent) !important;
   outline-offset: 1px;
 }
 :root[data-finos-theme] .add-transaction-modal .finos-select-menu {
   z-index: 12000 !important;
-  background: var(--t-card-bg, var(--finos-surface, var(--finos-color-7c4b7360)fff)) !important;
-  color: var(--finos-text, var(--finos-color-1975b964)) !important;
-  border: 1px solid var(--finos-border, var(--finos-color-5d1f1d7f)) !important;
+  background: var(--t-card-bg, var(--finos-surface, #ffffff)) !important;
+  color: var(--finos-text, #202938) !important;
+  border: 1px solid var(--finos-border, #d8deea) !important;
   border-radius: 10px !important;
-  box-shadow: var(--t-shadow, 0 12px 30px var(--finos-color-e5366a96)) !important;
+  box-shadow: var(--t-shadow, 0 12px 30px rgba(25, 35, 55, .16)) !important;
   backdrop-filter: none !important;
 }
 :root[data-finos-theme] .add-transaction-modal .finos-select-menu .finos-select-option {
-  color: var(--finos-text, var(--finos-color-1975b964)) !important;
+  color: var(--finos-text, #202938) !important;
   -webkit-text-fill-color: currentColor !important;
   background: transparent !important;
 }
 :root[data-finos-theme] .add-transaction-modal .finos-select-menu .finos-select-option:hover,
 :root[data-finos-theme] .add-transaction-modal .finos-select-menu .finos-select-option.is-selected {
-  color: var(--finos-text, var(--finos-color-1975b964)) !important;
+  color: var(--finos-text, #202938) !important;
   -webkit-text-fill-color: currentColor !important;
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 14%, var(--t-card-bg, var(--finos-color-7c4b7360)fff)) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 14%, var(--t-card-bg, #ffffff)) !important;
 }
 :root[data-finos-theme] .add-transaction-modal .finos-select-menu .finos-select-check {
-  color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
+  color: var(--finos-accent, #7563dc) !important;
 }
 
 
@@ -1788,12 +1788,12 @@
   width: 100% !important;
   min-height: 44px !important;
   padding: 12px !important;
-  border: 1px solid var(--finos-border, var(--finos-color-5cc15062)) !important;
+  border: 1px solid var(--finos-border, #d5dce7) !important;
   border-radius: 10px !important;
-  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, var(--finos-color-7c4b7360)))) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, #fff))) !important;
   background-image: none !important;
-  color: var(--finos-text, var(--finos-color-197582a2)) !important;
-  -webkit-text-fill-color: var(--finos-text, var(--finos-color-197582a2)) !important;
+  color: var(--finos-text, #202631) !important;
+  -webkit-text-fill-color: var(--finos-text, #202631) !important;
   box-shadow: none !important;
   text-align: left !important;
   opacity: 1 !important;
@@ -1808,32 +1808,32 @@
 }
 :root[data-finos-theme] [role="dialog"][aria-labelledby="category-form-title"] .finos-select-wrap > button.finos-select-trigger:focus-visible,
 :root[data-finos-theme] [role="dialog"][aria-labelledby="category-form-title"] .finos-select-wrap > button.finos-select-trigger[aria-expanded="true"] {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 20%, transparent) !important;
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 20%, transparent) !important;
   outline-offset: 1px !important;
 }
 :root[data-finos-theme] [role="dialog"][aria-labelledby="category-form-title"] .finos-select-menu {
   z-index: 12000 !important;
-  background: var(--t-card-bg, var(--finos-surface, var(--finos-color-7c4b7360))) !important;
-  color: var(--finos-text, var(--finos-color-197582a2)) !important;
-  border: 1px solid var(--finos-border, var(--finos-color-5cc15062)) !important;
+  background: var(--t-card-bg, var(--finos-surface, #fff)) !important;
+  color: var(--finos-text, #202631) !important;
+  border: 1px solid var(--finos-border, #d5dce7) !important;
   border-radius: 10px !important;
-  box-shadow: var(--t-shadow, 0 12px 30px var(--finos-color-e5366a96)) !important;
+  box-shadow: var(--t-shadow, 0 12px 30px rgba(25, 35, 55, .16)) !important;
   backdrop-filter: none !important;
 }
 :root[data-finos-theme] [role="dialog"][aria-labelledby="category-form-title"] .finos-select-menu .finos-select-option {
-  color: var(--finos-text, var(--finos-color-197582a2)) !important;
+  color: var(--finos-text, #202631) !important;
   -webkit-text-fill-color: currentColor !important;
   background: transparent !important;
 }
 :root[data-finos-theme] [role="dialog"][aria-labelledby="category-form-title"] .finos-select-menu .finos-select-option:hover,
 :root[data-finos-theme] [role="dialog"][aria-labelledby="category-form-title"] .finos-select-menu .finos-select-option.is-selected {
-  color: var(--finos-text, var(--finos-color-197582a2)) !important;
+  color: var(--finos-text, #202631) !important;
   -webkit-text-fill-color: currentColor !important;
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 14%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 14%, var(--t-card-bg, #fff)) !important;
 }
 :root[data-finos-theme] [role="dialog"][aria-labelledby="category-form-title"] .finos-select-menu .finos-select-check {
-  color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
+  color: var(--finos-accent, #7563dc) !important;
 }
 
 
@@ -1847,7 +1847,7 @@
   justify-content: center;
   padding: 18px;
   overflow-y: auto;
-  background: color-mix(in srgb, var(--finos-page, var(--finos-color-2392e077)) 76%, transparent);
+  background: color-mix(in srgb, var(--finos-page, #0b1020) 76%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -1858,15 +1858,15 @@
   max-height: min(88vh, 760px);
   overflow-y: auto;
   padding: 24px;
-  border: 1px solid var(--finos-border, var(--finos-color-c28962e7)) !important;
+  border: 1px solid var(--finos-border, rgba(255,255,255,.14)) !important;
   border-radius: var(--t-radius, 18px) !important;
-  background: var(--t-card-bg, var(--finos-surface, var(--finos-color-24c5920a))) !important;
-  color: var(--finos-text, var(--finos-color-5875f41a)) !important;
-  box-shadow: var(--t-shadow, 0 24px 80px var(--finos-color-88afac8a)) !important;
+  background: var(--t-card-bg, var(--finos-surface, #111827)) !important;
+  color: var(--finos-text, #f8fafc) !important;
+  box-shadow: var(--t-shadow, 0 24px 80px rgba(0,0,0,.28)) !important;
   font-family: var(--t-font, inherit);
 }
 :root[data-finos-theme] .category-form-dialog :is(h3, label, .card-label) {
-  color: var(--finos-text, var(--finos-color-5875f41a));
+  color: var(--finos-text, #f8fafc);
 }
 :root[data-finos-theme] .category-form-dialog .category-form-field {
   margin-bottom: 16px;
@@ -1878,10 +1878,10 @@
   min-width: 0;
   margin-top: 8px;
   padding: 12px;
-  border: 1px solid var(--finos-border, var(--finos-color-5cc15062));
+  border: 1px solid var(--finos-border, #d5dce7);
   border-radius: var(--t-radius-sm, 10px);
-  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-color-24c5920a)));
-  color: var(--finos-text, var(--finos-color-5875f41a));
+  background: var(--t-inner-bg, var(--t-card-bg, #111827));
+  color: var(--finos-text, #f8fafc);
   font: inherit;
 }
 :root[data-finos-theme] .category-form-dialog .category-form-textarea {
@@ -1889,7 +1889,7 @@
 }
 :root[data-finos-theme] .category-form-dialog .category-form-input::placeholder,
 :root[data-finos-theme] .category-form-dialog .category-form-textarea::placeholder {
-  color: var(--finos-muted, var(--finos-color-34005129));
+  color: var(--finos-muted, #9ca3af);
   opacity: 1;
 }
 :root[data-finos-theme] .category-form-dialog .category-form-select {
@@ -1900,7 +1900,7 @@
 }
 :root[data-finos-theme] .category-form-dialog .category-form-help {
   margin-top: 6px;
-  color: var(--finos-muted, var(--finos-color-34005129));
+  color: var(--finos-muted, #9ca3af);
   font-size: 11px;
 }
 :root[data-finos-theme] .category-form-dialog .category-form-close {
@@ -1915,13 +1915,13 @@
   gap: 12px;
 }
 :root[data-finos-theme] .category-form-dialog .category-form-cancel {
-  color: var(--finos-text, var(--finos-color-5875f41a));
-  border-color: var(--finos-border, var(--finos-color-c28962e7));
+  color: var(--finos-text, #f8fafc);
+  border-color: var(--finos-border, rgba(255,255,255,.14));
 }
 :root[data-finos-theme] .category-form-dialog :is(.category-form-input, .category-form-textarea):focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 28%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 28%, transparent);
   outline-offset: 1px;
-  border-color: var(--finos-accent, var(--finos-color-170e54e6));
+  border-color: var(--finos-accent, #7563dc);
 }
 @media (max-width: 560px) {
   :root[data-finos-theme] .category-form-dialog {
@@ -1952,12 +1952,12 @@
   width: 100% !important;
   min-height: 42px !important;
   padding: 10px 12px !important;
-  border: 1px solid var(--finos-border, var(--finos-color-5cc15062)) !important;
+  border: 1px solid var(--finos-border, #d5dce7) !important;
   border-radius: var(--t-radius-sm, 10px) !important;
-  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, var(--finos-color-7c4b7360)))) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, #fff))) !important;
   background-image: none !important;
-  color: var(--finos-text, var(--finos-color-197582a2)) !important;
-  -webkit-text-fill-color: var(--finos-text, var(--finos-color-197582a2)) !important;
+  color: var(--finos-text, #202631) !important;
+  -webkit-text-fill-color: var(--finos-text, #202631) !important;
   box-shadow: none !important;
   text-align: left !important;
   opacity: 1 !important;
@@ -1972,29 +1972,29 @@
 }
 :root[data-finos-theme] .bill-form-card .finos-select-wrap > button.finos-select-trigger:focus-visible,
 :root[data-finos-theme] .bill-form-card .finos-select-wrap > button.finos-select-trigger[aria-expanded="true"] {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 20%, transparent) !important;
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 20%, transparent) !important;
   outline-offset: 1px !important;
 }
 :root[data-finos-theme] .bill-form-card .finos-select-menu {
   z-index: 12000 !important;
-  background: var(--t-card-bg, var(--finos-surface, var(--finos-color-7c4b7360))) !important;
-  color: var(--finos-text, var(--finos-color-197582a2)) !important;
-  border: 1px solid var(--finos-border, var(--finos-color-5cc15062)) !important;
+  background: var(--t-card-bg, var(--finos-surface, #fff)) !important;
+  color: var(--finos-text, #202631) !important;
+  border: 1px solid var(--finos-border, #d5dce7) !important;
   border-radius: var(--t-radius-sm, 10px) !important;
-  box-shadow: var(--t-shadow, 0 12px 30px var(--finos-color-e5366a96)) !important;
+  box-shadow: var(--t-shadow, 0 12px 30px rgba(25, 35, 55, .16)) !important;
   backdrop-filter: none !important;
 }
 :root[data-finos-theme] .bill-form-card .finos-select-menu .finos-select-option {
-  color: var(--finos-text, var(--finos-color-197582a2)) !important;
+  color: var(--finos-text, #202631) !important;
   -webkit-text-fill-color: currentColor !important;
   background: transparent !important;
 }
 :root[data-finos-theme] .bill-form-card .finos-select-menu .finos-select-option:hover,
 :root[data-finos-theme] .bill-form-card .finos-select-menu .finos-select-option.is-selected {
-  color: var(--finos-text, var(--finos-color-197582a2)) !important;
+  color: var(--finos-text, #202631) !important;
   -webkit-text-fill-color: currentColor !important;
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 14%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 14%, var(--t-card-bg, #fff)) !important;
 }
 
 
@@ -2027,7 +2027,7 @@
   justify-content: center;
   overflow-y: auto;
   padding: 20px;
-  background: color-mix(in srgb, var(--finos-page, var(--finos-color-24f97b43)) 68%, transparent);
+  background: color-mix(in srgb, var(--finos-page, #101522) 68%, transparent);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   overscroll-behavior: contain;
@@ -2044,7 +2044,7 @@
   color: var(--finos-text) !important;
   border: 1px solid var(--finos-border) !important;
   border-radius: var(--t-radius, 18px) !important;
-  box-shadow: var(--t-shadow, 0 24px 70px var(--finos-color-88afad40)) !important;
+  box-shadow: var(--t-shadow, 0 24px 70px rgba(0,0,0,.22)) !important;
 }
 :root[data-finos-theme] .bill-form-card .bill-form-header {
   position: sticky;
@@ -2325,7 +2325,7 @@
   border-radius: var(--t-radius, 16px) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text);
-  box-shadow: var(--t-shadow, 0 4px 18px var(--finos-color-55e168f2));
+  box-shadow: var(--t-shadow, 0 4px 18px rgba(20,30,50,.06));
 }
 :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row {
   display: grid !important;
@@ -2369,14 +2369,14 @@
 }
 :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:nth-child(4) {
   padding: 12px !important;
-  border: 1px solid color-mix(in srgb, var(--finos-positive, var(--finos-color-24a7d886)) 22%, var(--finos-border)) !important;
+  border: 1px solid color-mix(in srgb, var(--finos-positive, #16a34a) 22%, var(--finos-border)) !important;
   border-radius: var(--t-radius-sm, 10px) !important;
-  background: color-mix(in srgb, var(--finos-positive, var(--finos-color-24a7d886)) 7%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
+  background: color-mix(in srgb, var(--finos-positive, #16a34a) 7%, var(--t-card-bg, #fff)) !important;
 }
 :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:nth-child(4) .card-label,
 :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:nth-child(4) > strong,
 :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:nth-child(4) > div {
-  color: var(--finos-positive, var(--finos-color-24930dda)) !important;
+  color: var(--finos-positive, #16845b) !important;
 }
 :root[data-finos-theme] .holdings-list-panel .portfolio-holding-card .holdings-row > div:last-child {
   grid-column: 1 / -1;
@@ -2435,14 +2435,14 @@
 
 
 :root[data-finos-theme] .holdings-list-panel .holding-action-buy {
-  background: var(--finos-positive, var(--finos-color-24930dda)) !important;
-  border: 1px solid var(--finos-positive, var(--finos-color-24930dda)) !important;
-  color: var(--finos-color-7c4b7360) !important;
+  background: var(--finos-positive, #16845b) !important;
+  border: 1px solid var(--finos-positive, #16845b) !important;
+  color: #fff !important;
 }
 :root[data-finos-theme] .holdings-list-panel .holding-action-sell {
   background: transparent !important;
-  border: 1px solid color-mix(in srgb, var(--finos-negative, var(--finos-color-56973c36)) 40%, var(--finos-border)) !important;
-  color: var(--finos-negative, var(--finos-color-6842389e)) !important;
+  border: 1px solid color-mix(in srgb, var(--finos-negative, #dc4c55) 40%, var(--finos-border)) !important;
+  color: var(--finos-negative, #c93643) !important;
 }
 :root[data-finos-theme] .holdings-list-panel .holding-action-neutral {
   background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface))) !important;
@@ -2451,7 +2451,7 @@
 }
 :root[data-finos-theme] .holdings-list-panel .holding-action-neutral:hover,
 :root[data-finos-theme] .holdings-list-panel .holding-action-sell:hover {
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 8%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 8%, var(--t-card-bg, #fff)) !important;
 }
 
 
@@ -2489,7 +2489,7 @@
   border-radius: var(--t-radius, 16px) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text);
-  box-shadow: var(--t-shadow, 0 3px 14px var(--finos-color-55e168b0));
+  box-shadow: var(--t-shadow, 0 3px 14px rgba(20,30,50,.04));
 }
 :root[data-finos-theme] .money-transactions .transaction-history-card > div:first-child {
   display: flex;
@@ -2506,8 +2506,8 @@
   height: 44px !important;
   min-width: 44px !important;
   border-radius: var(--t-radius-sm, 12px) !important;
-  color: var(--finos-accent, var(--finos-color-170e54e6));
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 12%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
+  color: var(--finos-accent, #7563dc);
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 12%, var(--t-card-bg, #fff)) !important;
 }
 :root[data-finos-theme] .money-transactions .transaction-history-title {
   margin-bottom: 5px !important;
@@ -2551,7 +2551,7 @@
 }
 :root[data-finos-theme] .money-transactions .transaction-history-card > div:last-child button:hover {
   border-color: var(--finos-accent) !important;
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 8%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 8%, var(--t-card-bg, #fff)) !important;
 }
 :root[data-finos-theme] .money-transactions .transaction-history-panel .empty-chart {
   margin-top: 16px;
@@ -2634,10 +2634,10 @@
   white-space: nowrap;
 }
 :root[data-finos-theme] .money-accounts > .glass-card:has(.account-list-grid) > div[role="tablist"] button[aria-selected="true"] {
-  color: var(--finos-accent-contrast, var(--finos-color-7c4b7360)) !important;
-  background: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 22%, transparent);
+  color: var(--finos-accent-contrast, #fff) !important;
+  background: var(--finos-accent, #7563dc) !important;
+  border-color: var(--finos-accent, #7563dc) !important;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent);
 }
 :root[data-finos-theme] .money-accounts .account-list-grid {
   gap: 12px;
@@ -2647,7 +2647,7 @@
   border-radius: var(--t-radius, 16px);
   background: var(--t-card-bg, var(--finos-surface));
   border-color: var(--finos-border);
-  box-shadow: var(--t-shadow, 0 4px 14px var(--finos-color-55e16851));
+  box-shadow: var(--t-shadow, 0 4px 14px rgba(20,30,50,.05));
 }
 :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) {
   grid-template-columns: minmax(0, 1.4fr) minmax(100px, .65fr) minmax(180px, .8fr);
@@ -2655,8 +2655,8 @@
   padding: 16px;
 }
 :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card):hover {
-  border-color: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 38%, var(--finos-border));
-  box-shadow: var(--t-shadow, 0 8px 24px var(--finos-color-55e1683c));
+  border-color: color-mix(in srgb, var(--finos-accent, #7563dc) 38%, var(--finos-border));
+  box-shadow: var(--t-shadow, 0 8px 24px rgba(20,30,50,.08));
 }
 :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:first-child > div:first-child {
   line-height: 1.4;
@@ -2672,7 +2672,7 @@
   margin-top: 7px !important;
   padding: 3px 7px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--finos-positive, var(--finos-color-24a7d886)) 9%, var(--t-card-bg, var(--finos-color-7c4b7360)));
+  background: color-mix(in srgb, var(--finos-positive, #16a34a) 9%, var(--t-card-bg, #fff));
   font-size: 10px !important;
   font-weight: 650;
 }
@@ -2706,12 +2706,12 @@
   border-color: var(--finos-border) !important;
 }
 :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) button:nth-child(2) {
-  color: var(--finos-warning, var(--finos-color-60d66aca)) !important;
-  border-color: color-mix(in srgb, var(--finos-warning, var(--finos-color-60d66aca)) 30%, var(--finos-border)) !important;
+  color: var(--finos-warning, #b7791f) !important;
+  border-color: color-mix(in srgb, var(--finos-warning, #b7791f) 30%, var(--finos-border)) !important;
 }
 :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(3) button:last-child {
-  color: var(--finos-negative, var(--finos-color-6842389e)) !important;
-  border-color: color-mix(in srgb, var(--finos-negative, var(--finos-color-6842389e)) 26%, var(--finos-border)) !important;
+  color: var(--finos-negative, #c93643) !important;
+  border-color: color-mix(in srgb, var(--finos-negative, #c93643) 26%, var(--finos-border)) !important;
 }
 @media (max-width: 760px) {
   :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) {
@@ -2821,11 +2821,11 @@
   border-radius: var(--t-radius, 16px) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text);
-  box-shadow: var(--t-shadow, 0 3px 14px var(--finos-color-55e168b0));
+  box-shadow: var(--t-shadow, 0 3px 14px rgba(20,30,50,.04));
   transition: border-color .16s ease, box-shadow .16s ease;
 }
 :root[data-finos-theme] .investment-history-panel .investment-transaction-row:hover {
-  border-color: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 32%, var(--finos-border)) !important;
+  border-color: color-mix(in srgb, var(--finos-accent, #7563dc) 32%, var(--finos-border)) !important;
 }
 :root[data-finos-theme] .investment-history-panel .investment-transaction-row > div {
   min-width: 0;
@@ -2865,14 +2865,14 @@
   color: var(--finos-text) !important;
 }
 :root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions > span[style*="#fca5a5"] {
-  color: var(--finos-negative, var(--finos-color-6842389e)) !important;
-  border-color: color-mix(in srgb, var(--finos-negative, var(--finos-color-6842389e)) 28%, var(--finos-border));
-  background: color-mix(in srgb, var(--finos-negative, var(--finos-color-6842389e)) 8%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
+  color: var(--finos-negative, #c93643) !important;
+  border-color: color-mix(in srgb, var(--finos-negative, #c93643) 28%, var(--finos-border));
+  background: color-mix(in srgb, var(--finos-negative, #c93643) 8%, var(--t-card-bg, #fff)) !important;
 }
 :root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions > span[style*="#86efac"] {
-  color: var(--finos-positive, var(--finos-color-24930dda)) !important;
-  border-color: color-mix(in srgb, var(--finos-positive, var(--finos-color-24930dda)) 28%, var(--finos-border));
-  background: color-mix(in srgb, var(--finos-positive, var(--finos-color-24930dda)) 8%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
+  color: var(--finos-positive, #16845b) !important;
+  border-color: color-mix(in srgb, var(--finos-positive, #16845b) 28%, var(--finos-border));
+  background: color-mix(in srgb, var(--finos-positive, #16845b) 8%, var(--t-card-bg, #fff)) !important;
 }
 :root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions button {
   min-height: 32px;
@@ -2885,11 +2885,11 @@
 }
 :root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions button:hover {
   border-color: var(--finos-accent) !important;
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 8%, var(--t-card-bg, var(--finos-color-7c4b7360))) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 8%, var(--t-card-bg, #fff)) !important;
 }
 :root[data-finos-theme] .investment-history-panel .investment-transaction-row .investment-transaction-actions button[style*="#fca5a5"] {
-  color: var(--finos-negative, var(--finos-color-6842389e)) !important;
-  border-color: color-mix(in srgb, var(--finos-negative, var(--finos-color-6842389e)) 30%, var(--finos-border)) !important;
+  color: var(--finos-negative, #c93643) !important;
+  border-color: color-mix(in srgb, var(--finos-negative, #c93643) 30%, var(--finos-border)) !important;
 }
 @media (max-width: 900px) {
   :root[data-finos-theme] .investment-history-panel .investment-transaction-row {
@@ -2978,7 +2978,7 @@
 :root[data-finos-theme] .investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger:hover,
 :root[data-finos-theme] .investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger[aria-expanded="true"],
 :root[data-finos-theme] .investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger:focus-visible {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
+  border-color: var(--finos-accent, #7563dc) !important;
   outline: none;
 }
 @media (max-width: 760px) {
@@ -3065,10 +3065,10 @@
   min-width: 0;
   min-height: 44px;
   padding: 10px 12px !important;
-  border: 1px solid var(--finos-border, var(--finos-color-5c571062)) !important;
+  border: 1px solid var(--finos-border, #d7dce5) !important;
   border-radius: var(--t-radius-sm, 10px) !important;
-  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, var(--finos-color-7c4b7360)))) !important;
-  color: var(--finos-text, var(--finos-color-191d79b4)) !important;
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, #fff))) !important;
+  color: var(--finos-text, #252b36) !important;
   font-size: 12px !important;
   text-align: left;
   box-shadow: none;
@@ -3086,7 +3086,7 @@
 .investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger:hover,
 .investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger:focus-visible,
 .investment-activity-filter-panel .investment-transaction-filter-grid .finos-select-trigger[aria-expanded="true"] {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
+  border-color: var(--finos-accent, #7563dc) !important;
   outline: none;
 }
 @container (max-width: 760px) {
@@ -3131,7 +3131,7 @@
   border-radius: var(--t-radius, 16px);
   background: var(--t-card-bg, var(--finos-surface));
   color: var(--finos-text);
-  box-shadow: var(--t-shadow, 0 4px 14px var(--finos-color-55e16851));
+  box-shadow: var(--t-shadow, 0 4px 14px rgba(20,30,50,.05));
 }
 :root[data-finos-theme] .holdings-workspace .holdings-summary-grid .metric-top {
   display: flex;
@@ -3147,8 +3147,8 @@
   width: 38px;
   height: 38px;
   border-radius: var(--t-radius-sm, 12px);
-  color: var(--finos-accent, var(--finos-color-170e54e6));
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 12%, var(--t-card-bg, var(--finos-color-7c4b7360)));
+  color: var(--finos-accent, #7563dc);
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 12%, var(--t-card-bg, #fff));
 }
 :root[data-finos-theme] .holdings-workspace .holdings-summary-grid .metric-change {
   display: inline-flex;
@@ -3179,13 +3179,13 @@
   overflow-wrap: anywhere;
 }
 :root[data-finos-theme] .holdings-workspace .holdings-summary-grid .metric-change.positive {
-  color: var(--finos-positive, var(--finos-color-24930dda));
+  color: var(--finos-positive, #16845b);
 }
 :root[data-finos-theme] .holdings-workspace .holdings-summary-grid .metric-change.negative {
-  color: var(--finos-negative, var(--finos-color-6842389e));
+  color: var(--finos-negative, #c93643);
 }
 :root[data-finos-theme] .holdings-workspace .holdings-summary-grid > .metric-card:hover {
-  border-color: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 30%, var(--finos-border));
+  border-color: color-mix(in srgb, var(--finos-accent, #7563dc) 30%, var(--finos-border));
 }
 @media (max-width: 760px) {
   :root[data-finos-theme] .holdings-workspace .holdings-summary-grid {
@@ -3235,15 +3235,15 @@
   border-radius: var(--t-radius, 18px) !important;
   background:
     linear-gradient(145deg,
-      color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 4%, var(--t-card-bg, var(--finos-color-7c4b7360))),
+      color-mix(in srgb, var(--finos-accent, #7563dc) 4%, var(--t-card-bg, #fff)),
       var(--t-card-bg, var(--finos-surface)) 58%) !important;
-  box-shadow: var(--t-shadow, 0 5px 18px var(--finos-color-120e71c4)) !important;
+  box-shadow: var(--t-shadow, 0 5px 18px rgba(20,30,50,.055)) !important;
   transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
 :root[data-finos-theme] .holdings-workspace .holdings-summary-grid > .metric-card:hover {
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 38%, var(--finos-border)) !important;
-  box-shadow: var(--t-shadow, 0 9px 24px var(--finos-color-55e167dd)) !important;
+  border-color: color-mix(in srgb, var(--finos-accent, #7563dc) 38%, var(--finos-border)) !important;
+  box-shadow: var(--t-shadow, 0 9px 24px rgba(20,30,50,.09)) !important;
 }
 :root[data-finos-theme] .holdings-workspace .holdings-summary-grid .metric-top {
   justify-content: flex-start;
@@ -3255,9 +3255,9 @@
   flex: 0 0 38px;
   width: 38px;
   height: 38px;
-  border: 1px solid color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 12%, var(--finos-border));
+  border: 1px solid color-mix(in srgb, var(--finos-accent, #7563dc) 12%, var(--finos-border));
   border-radius: 12px;
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 10%, var(--t-card-bg, var(--finos-color-7c4b7360)));
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 10%, var(--t-card-bg, #fff));
 }
 :root[data-finos-theme] .holdings-workspace .holdings-summary-grid .metric-change {
   margin-left: auto;
@@ -3334,7 +3334,7 @@
   border-radius: var(--t-radius, 18px) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text);
-  box-shadow: var(--t-shadow, 0 5px 18px var(--finos-color-55e16851));
+  box-shadow: var(--t-shadow, 0 5px 18px rgba(20,30,50,.05));
 }
 :root[data-finos-theme] .instrument-search-panel {
   border-bottom: 1px solid var(--finos-border) !important;
@@ -3417,9 +3417,9 @@
 }
 :root[data-finos-theme] .instrument-research-panel [role="tablist"] button[aria-selected="true"],
 :root[data-finos-theme] .instrument-research-panel [role="tablist"] button.active {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  background: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  color: var(--finos-accent-contrast, var(--finos-color-7c4b7360)) !important;
+  border-color: var(--finos-accent, #7563dc) !important;
+  background: var(--finos-accent, #7563dc) !important;
+  color: var(--finos-accent-contrast, #fff) !important;
 }
 :root[data-finos-theme] .instrument-research-panel [role="tabpanel"] {
   padding-top: 18px !important;
@@ -3445,7 +3445,7 @@
 }
 :root[data-finos-theme] .instrument-price-metrics > button:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 40%, var(--finos-border)) !important;
+  border-color: color-mix(in srgb, var(--finos-accent, #7563dc) 40%, var(--finos-border)) !important;
 }
 :root[data-finos-theme] .instrument-price-metrics > button strong {
   color: var(--finos-text) !important;
@@ -3539,7 +3539,7 @@
   appearance: none;
 }
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 55%, transparent) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 55%, transparent) !important;
   outline-offset: 2px;
 }
 
@@ -3575,11 +3575,11 @@
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger:hover,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger[aria-expanded="true"],
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger:focus-visible {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 7%, var(--t-card-bg, var(--finos-surface))) !important;
+  border-color: var(--finos-accent, #7563dc) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 7%, var(--t-card-bg, var(--finos-surface))) !important;
 }
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > .finos-select-trigger:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 45%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 45%, transparent);
   outline-offset: 2px;
 }
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select .finos-select-chevron {
@@ -3593,7 +3593,7 @@
   border-radius: var(--t-radius-sm, 10px) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text) !important;
-  box-shadow: var(--t-shadow, 0 10px 28px var(--finos-color-55e15c73)) !important;
+  box-shadow: var(--t-shadow, 0 10px 28px rgba(20,30,50,.16)) !important;
 }
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select .finos-select-option {
   display: flex;
@@ -3612,11 +3612,11 @@
 }
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select .finos-select-option:hover,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select .finos-select-option.is-selected {
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 12%, var(--t-card-bg, var(--finos-surface))) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 12%, var(--t-card-bg, var(--finos-surface))) !important;
   color: var(--finos-text) !important;
 }
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select .finos-select-check {
-  color: var(--finos-accent, var(--finos-color-170e54e6));
+  color: var(--finos-accent, #7563dc);
 }
 
 
@@ -3633,7 +3633,7 @@
   border: 1px solid var(--finos-border) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text) !important;
-  box-shadow: var(--t-shadow, 0 5px 18px var(--finos-color-af505b52));
+  box-shadow: var(--t-shadow, 0 5px 18px rgba(20, 30, 50, .06));
 }
 :root[data-finos-theme] .instrument-search-panel *,
 :root[data-finos-theme] .instrument-chart-panel *,
@@ -3690,20 +3690,20 @@
   transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab:hover {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6));
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 9%, var(--t-card-bg, var(--finos-surface)));
+  border-color: var(--finos-accent, #7563dc);
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 9%, var(--t-card-bg, var(--finos-surface)));
   color: var(--finos-text);
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab:focus-visible {
-  outline: 2px solid var(--finos-accent, var(--finos-color-170e54e6));
+  outline: 2px solid var(--finos-accent, #7563dc);
   outline-offset: 2px;
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab[aria-selected="true"],
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab.is-active {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6));
-  background: var(--finos-accent, var(--finos-color-170e54e6));
-  color: var(--finos-accent-contrast, var(--finos-color-7c4b7360));
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 22%, transparent);
+  border-color: var(--finos-accent, #7563dc);
+  background: var(--finos-accent, #7563dc);
+  color: var(--finos-accent-contrast, #fff);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent);
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel {
   min-width: 0;
@@ -3729,8 +3729,8 @@
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:hover,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"] {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 22%, transparent);
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent);
   outline-offset: 1px;
 }
 :root[data-finos-theme] .instrument-search-panel button,
@@ -3763,11 +3763,11 @@
   border-radius: var(--t-radius, 16px);
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 7%, var(--t-card-bg, var(--finos-surface))),
+    color-mix(in srgb, var(--finos-accent, #7563dc) 7%, var(--t-card-bg, var(--finos-surface))),
     var(--t-card-bg, var(--finos-surface)) 72%
   ) !important;
   color: var(--finos-text);
-  box-shadow: var(--t-shadow, 0 4px 16px var(--finos-color-55e16851));
+  box-shadow: var(--t-shadow, 0 4px 16px rgba(20,30,50,.05));
 }
 :root[data-finos-theme] .instrument-research-panel {
   min-width: 0;
@@ -3776,7 +3776,7 @@
   border-radius: var(--t-radius, 18px);
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text);
-  box-shadow: var(--t-shadow, 0 5px 20px var(--finos-color-120e71c4));
+  box-shadow: var(--t-shadow, 0 5px 20px rgba(20,30,50,.055));
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tabs {
   display: flex;
@@ -3809,20 +3809,20 @@
   transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab:hover {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 9%, var(--t-card-bg, var(--finos-surface))) !important;
+  border-color: var(--finos-accent, #7563dc) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 9%, var(--t-card-bg, var(--finos-surface))) !important;
   color: var(--finos-text) !important;
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab:focus-visible {
-  outline: 2px solid var(--finos-accent, var(--finos-color-170e54e6));
+  outline: 2px solid var(--finos-accent, #7563dc);
   outline-offset: 2px;
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab[aria-selected="true"],
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab.is-active {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  background: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  color: var(--finos-accent-contrast, var(--finos-color-7c4b7360)) !important;
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 22%, transparent);
+  border-color: var(--finos-accent, #7563dc) !important;
+  background: var(--finos-accent, #7563dc) !important;
+  color: var(--finos-accent-contrast, #fff) !important;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent, #7563dc) 22%, transparent);
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tabpanel {
   min-width: 0;
@@ -3853,17 +3853,17 @@
   transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-metric-card:hover {
-  border-color: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 48%, var(--finos-border)) !important;
-  background: color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 4%, var(--t-card-bg, var(--finos-surface))) !important;
-  box-shadow: 0 3px 12px color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 9%, transparent);
+  border-color: color-mix(in srgb, var(--finos-accent, #7563dc) 48%, var(--finos-border)) !important;
+  background: color-mix(in srgb, var(--finos-accent, #7563dc) 4%, var(--t-card-bg, var(--finos-surface))) !important;
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--finos-accent, #7563dc) 9%, transparent);
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-metric-card:focus-visible {
-  outline: 2px solid var(--finos-accent, var(--finos-color-170e54e6));
+  outline: 2px solid var(--finos-accent, #7563dc);
   outline-offset: 2px;
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-metric-card[aria-expanded="true"] {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 18%, transparent);
+  border-color: var(--finos-accent, #7563dc) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--finos-accent, #7563dc) 18%, transparent);
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-metric-label {
   color: var(--finos-muted);
@@ -3889,7 +3889,7 @@
 :root[data-finos-theme] .instrument-research-panel .instrument-metric-help {
   margin-top: auto;
   padding-top: 9px;
-  color: var(--finos-accent, var(--finos-color-170e54e6));
+  color: var(--finos-accent, #7563dc);
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-metric-explanation {
   display: block;
@@ -3911,8 +3911,8 @@
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:hover,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible,
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"] {
-  border-color: var(--finos-accent, var(--finos-color-170e54e6)) !important;
-  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--finos-color-170e54e6)) 20%, transparent);
+  border-color: var(--finos-accent, #7563dc) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, #7563dc) 20%, transparent);
   outline-offset: 1px;
 }
 :root[data-finos-theme] .instrument-chart-panel .secondary-button,
@@ -3955,7 +3955,7 @@
   min-width: 0; max-width: 100%; padding: clamp(16px, 2.4vw, 24px) !important;
   border: 1px solid var(--finos-border) !important; border-radius: var(--t-radius, 18px) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important; color: var(--finos-text) !important;
-  box-shadow: var(--t-shadow, 0 5px 20px var(--finos-color-120e71c4)) !important;
+  box-shadow: var(--t-shadow, 0 5px 20px rgba(20,30,50,.055)) !important;
 }
 :root[data-finos-theme] .instrument-chart-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
 :root[data-finos-theme] .instrument-chart-heading { min-width:0; flex:1 1 220px; }
@@ -3969,10 +3969,10 @@
   font:inherit; font-size:11px; font-weight:650; line-height:1.2; cursor:pointer;
   transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease;
 }
-:root[data-finos-theme] .instrument-chart-range-button:hover { border-color:var(--finos-accent, var(--finos-color-170e54e6)) !important; background:color-mix(in srgb,var(--finos-accent, var(--finos-color-170e54e6)) 9%,var(--t-card-bg,var(--finos-surface))) !important; }
-:root[data-finos-theme] .instrument-chart-range-button:focus-visible { outline:2px solid var(--finos-accent, var(--finos-color-170e54e6)); outline-offset:2px; }
+:root[data-finos-theme] .instrument-chart-range-button:hover { border-color:var(--finos-accent, #7563dc) !important; background:color-mix(in srgb,var(--finos-accent, #7563dc) 9%,var(--t-card-bg,var(--finos-surface))) !important; }
+:root[data-finos-theme] .instrument-chart-range-button:focus-visible { outline:2px solid var(--finos-accent, #7563dc); outline-offset:2px; }
 :root[data-finos-theme] .instrument-chart-range-button.is-active,
-:root[data-finos-theme] .instrument-chart-range-button[aria-pressed="true"] { border-color:var(--finos-accent, var(--finos-color-170e54e6)) !important; background:var(--finos-accent, var(--finos-color-170e54e6)) !important; color:var(--finos-accent-contrast, var(--finos-color-7c4b7360)) !important; box-shadow:0 3px 10px color-mix(in srgb,var(--finos-accent, var(--finos-color-170e54e6)) 20%,transparent); }
+:root[data-finos-theme] .instrument-chart-range-button[aria-pressed="true"] { border-color:var(--finos-accent, #7563dc) !important; background:var(--finos-accent, #7563dc) !important; color:var(--finos-accent-contrast, #fff) !important; box-shadow:0 3px 10px color-mix(in srgb,var(--finos-accent, #7563dc) 20%,transparent); }
 :root[data-finos-theme] .instrument-chart-controls { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-top:14px; min-width:0; }
 :root[data-finos-theme] .instrument-chart-controls > * { min-width:0; max-width:100%; }
 :root[data-finos-theme] .instrument-chart-controls .instrument-chart-symbol-input { flex:1 1 180px; width:min(100%,240px); min-height:40px; padding:9px 12px; border:1px solid var(--finos-border) !important; border-radius:var(--t-radius-sm,10px) !important; background:var(--t-inner-bg,var(--t-card-bg,var(--finos-surface))) !important; color:var(--finos-text) !important; }
@@ -3981,13 +3981,13 @@
 :root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select > button.finos-select-trigger { width:100%; min-height:40px; padding:9px 12px !important; border:1px solid var(--finos-border) !important; border-radius:var(--t-radius-sm,10px) !important; background:var(--t-inner-bg,var(--t-card-bg,var(--finos-surface))) !important; color:var(--finos-text) !important; box-shadow:none !important; }
 :root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select > button.finos-select-trigger:hover,
 :root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select > button.finos-select-trigger:focus-visible,
-:root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"] { border-color:var(--finos-accent,var(--finos-color-170e54e6)) !important; }
+:root[data-finos-theme] .instrument-chart-controls .instrument-chart-exchange-select > button.finos-select-trigger[aria-expanded="true"] { border-color:var(--finos-accent,#7563dc) !important; }
 :root[data-finos-theme] .instrument-chart-controls .secondary-button,
 :root[data-finos-theme] .instrument-chart-controls .primary-button { min-height:40px; padding:9px 13px !important; border-radius:var(--t-radius-sm,10px) !important; white-space:normal; overflow-wrap:anywhere; }
 :root[data-finos-theme] .instrument-chart-message { margin:10px 0 0; font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
-:root[data-finos-theme] .instrument-chart-warning { color:var(--finos-warning,var(--finos-color-60d66aca)); }
-:root[data-finos-theme] .instrument-chart-period-return.is-positive { color:var(--finos-positive,var(--finos-color-24930dda)) !important; }
-:root[data-finos-theme] .instrument-chart-period-return.is-negative { color:var(--finos-negative,var(--finos-color-6842389e)) !important; }
+:root[data-finos-theme] .instrument-chart-warning { color:var(--finos-warning,#b7791f); }
+:root[data-finos-theme] .instrument-chart-period-return.is-positive { color:var(--finos-positive,#16845b) !important; }
+:root[data-finos-theme] .instrument-chart-period-return.is-negative { color:var(--finos-negative,#c93643) !important; }
 :root[data-finos-theme] .instrument-research-heading { margin-bottom:12px; min-width:0; }
 :root[data-finos-theme] .instrument-research-heading .card-label { margin:0 0 5px; color:var(--finos-muted); }
 :root[data-finos-theme] .instrument-research-heading h3 { margin:0 0 5px; color:var(--finos-text); font-size:clamp(18px,2.2vw,22px); line-height:1.3; overflow-wrap:anywhere; }
@@ -4007,10 +4007,10 @@
 
 
 :root[data-finos-theme] .instrument-technical-signal.is-positive,
-:root[data-finos-theme] .instrument-action-change.is-positive { color:var(--finos-positive,var(--finos-color-24930dda)) !important; }
+:root[data-finos-theme] .instrument-action-change.is-positive { color:var(--finos-positive,#16845b) !important; }
 :root[data-finos-theme] .instrument-technical-signal.is-negative,
-:root[data-finos-theme] .instrument-action-change.is-negative { color:var(--finos-negative,var(--finos-color-6842389e)) !important; }
-:root[data-finos-theme] .instrument-technical-signal.is-neutral { color:var(--finos-warning,var(--finos-color-60d66aca)) !important; }
+:root[data-finos-theme] .instrument-action-change.is-negative { color:var(--finos-negative,#c93643) !important; }
+:root[data-finos-theme] .instrument-technical-signal.is-neutral { color:var(--finos-warning,#b7791f) !important; }
 :root[data-finos-theme] .instrument-action-change { font-size:11px; line-height:1.4; font-variant-numeric:tabular-nums; }
 :root[data-finos-theme] .instrument-market-mover-row {
   display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
@@ -4034,7 +4034,7 @@
   border-radius: var(--t-radius, 16px) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text);
-  box-shadow: var(--t-shadow, 0 4px 16px var(--finos-color-120e71c4));
+  box-shadow: var(--t-shadow, 0 4px 16px rgba(20,30,50,.055));
 }
 :root[data-finos-theme] .instrument-search-panel,
 :root[data-finos-theme] .instrument-chart-panel,
@@ -4065,12 +4065,12 @@
   border-radius: var(--t-radius, 14px);
   background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface)));
   color: var(--finos-text);
-  box-shadow: var(--t-shadow, 0 3px 12px var(--finos-color-120e8a42));
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(20,30,50,.035));
   transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
 }
 :root[data-finos-theme] .instrument-watchlist-card:hover {
   border-color: color-mix(in srgb, var(--finos-accent) 40%, var(--finos-border));
-  box-shadow: var(--t-shadow, 0 7px 18px var(--finos-color-120e7a46));
+  box-shadow: var(--t-shadow, 0 7px 18px rgba(20,30,50,.075));
   transform: translateY(-1px);
 }
 :root[data-finos-theme] .instrument-market-news-panel {
@@ -4131,7 +4131,7 @@
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-range-button[aria-pressed="true"] {
   border-color: var(--finos-accent);
   background: var(--finos-accent);
-  color: var(--finos-accent-contrast, var(--finos-color-7c4b7360));
+  color: var(--finos-accent-contrast, #fff);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--finos-accent) 20%, transparent);
 }
 :root[data-finos-theme] .instrument-chart-panel .instrument-chart-controls {
@@ -4244,7 +4244,7 @@
 :root[data-finos-theme] .instrument-research-panel .instrument-research-tab.is-active {
   border-color: var(--finos-accent) !important;
   background: var(--finos-accent) !important;
-  color: var(--finos-accent-contrast, var(--finos-color-7c4b7360)) !important;
+  color: var(--finos-accent-contrast, #fff) !important;
   box-shadow: 0 3px 10px color-mix(in srgb, var(--finos-accent) 22%, transparent);
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-price-metrics {
@@ -4269,7 +4269,7 @@
   text-align: left;
   white-space: normal;
   overflow-wrap: anywhere;
-  box-shadow: var(--t-shadow, 0 3px 12px var(--finos-color-120e8a42));
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(20,30,50,.035));
   transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
 }
 :root[data-finos-theme] .instrument-research-panel .instrument-price-metrics > .instrument-metric-card:hover {
@@ -4390,7 +4390,7 @@
   border: 1px solid var(--finos-border) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text) !important;
-  box-shadow: var(--t-shadow, 0 8px 24px var(--finos-color-af505f95)) !important;
+  box-shadow: var(--t-shadow, 0 8px 24px rgba(20, 30, 50, .10)) !important;
   backdrop-filter: none;
 }
 :root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content .finos-select-option,
@@ -4483,7 +4483,7 @@
   border-color: var(--finos-border) !important;
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text) !important;
-  box-shadow: var(--t-shadow, 0 8px 24px var(--finos-color-af505f95)) !important;
+  box-shadow: var(--t-shadow, 0 8px 24px rgba(20, 30, 50, .10)) !important;
   backdrop-filter: none !important;
 }
 :root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .finos-select-option,
@@ -4535,7 +4535,7 @@
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text) !important;
   border: 1px solid var(--finos-border) !important;
-  box-shadow: var(--t-shadow, 0 16px 48px var(--finos-color-af505f53)) !important;
+  box-shadow: var(--t-shadow, 0 16px 48px rgba(20, 30, 50, .16)) !important;
 }
 .budget-form-modal .card-header {
   display: flex;
@@ -4592,7 +4592,7 @@
   border-radius: var(--t-radius, 18px);
   background: var(--t-card-bg, var(--finos-surface)) !important;
   color: var(--finos-text);
-  box-shadow: var(--t-shadow, 0 5px 18px var(--finos-color-af505a9c)) !important;
+  box-shadow: var(--t-shadow, 0 5px 18px rgba(20, 30, 50, .08)) !important;
 }
 .budget-list-card h3 { color: var(--finos-text) !important; overflow-wrap: anywhere; }
 .budget-list-card .budget-list-status {
@@ -4705,12 +4705,12 @@
   background: currentColor;
 }
 :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-status.is-active {
-  color: var(--finos-positive, var(--finos-color-24a7d886)) !important;
-  -webkit-text-fill-color: var(--finos-positive, var(--finos-color-24a7d886)) !important;
+  color: var(--finos-positive, #16a34a) !important;
+  -webkit-text-fill-color: var(--finos-positive, #16a34a) !important;
 }
 :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) .account-strip-status.is-inactive {
-  color: var(--finos-negative, var(--finos-color-5694cf81)) !important;
-  -webkit-text-fill-color: var(--finos-negative, var(--finos-color-5694cf81)) !important;
+  color: var(--finos-negative, #dc2626) !important;
+  -webkit-text-fill-color: var(--finos-negative, #dc2626) !important;
 }
 :root[data-finos-theme] .money-accounts .account-strip-item:not(.account-credit-card) > div:nth-child(2) {
   text-align: center !important;

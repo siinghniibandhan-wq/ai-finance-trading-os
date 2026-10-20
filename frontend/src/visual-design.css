@@ -3526,3 +3526,41 @@ svg { flex-shrink: 0; }
 }
 .theme-toggle-switch.is-disabled { opacity:.55; cursor:not-allowed; }
 .theme-toggle-switch input:disabled { cursor:not-allowed; }
+
+
+/* Theme-responsive Settings section shortcuts; preserve existing card geometry. */
+.account-settings-shortcuts {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:16px;
+}
+.account-settings-shortcut {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  min-width:0;
+  padding:16px !important;
+  text-align:left;
+  color:var(--th-text) !important;
+  background:var(--th-card) !important;
+  border:1px solid var(--th-border) !important;
+  border-radius:var(--th-radius) !important;
+  box-shadow:var(--th-card-shadow) !important;
+  font:inherit;
+  cursor:pointer;
+}
+.account-settings-shortcut:hover {
+  background:var(--th-hover-surface) !important;
+  border-color:var(--th-accent) !important;
+}
+.account-settings-shortcut-copy { display:grid; gap:6px; min-width:0; }
+.account-settings-shortcut-copy strong { color:var(--th-text) !important; overflow-wrap:anywhere; }
+.account-settings-shortcut-copy small { color:var(--th-muted) !important; line-height:1.45; overflow-wrap:anywhere; }
+.account-settings-shortcut > span:last-child { color:var(--th-icon); font-size:22px; flex:0 0 auto; }
+.account-settings-shortcut:focus-visible { outline:2px solid var(--th-focus); outline-offset:3px; }
+@media (max-width: 800px) {
+  .account-settings-shortcuts { grid-template-columns:minmax(0,1fr); }
+}

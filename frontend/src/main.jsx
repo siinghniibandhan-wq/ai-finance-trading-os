@@ -13,6 +13,13 @@ import "./theme-fixes.css";
 import "./theme-styles.css";
 import "./instrument-interaction-contrast.css";
 import "./holdings-dark-cards.css";
+import "./theme-unify.css";
+
+// Apply the saved theme before React renders so the landing and login pages use it too.
+try {
+  const savedTheme = window.localStorage.getItem("financial-os-theme");
+  if (savedTheme) document.documentElement.dataset.finosTheme = savedTheme.toLowerCase().replaceAll(" ", "-");
+} catch { /* Theme still applies after the app loads. */ }
 
 class AppRenderBoundary extends React.Component {
   constructor(props) {
@@ -23,9 +30,9 @@ class AppRenderBoundary extends React.Component {
   componentDidCatch(error) { console.error("Financial OS render error:", error); }
   render() {
     if (this.state.hasError) {
-      return <main style={{ minHeight: "100vh", padding: 28, background: "#090b16", color: "#f4f5ff", fontFamily: "system-ui, sans-serif" }}>
+      return <main style={{ minHeight: "100vh", padding: 28, background: "var(--th-page)", color: "var(--th-text)", fontFamily: "system-ui, sans-serif" }}>
         <h2>This page could not be displayed</h2>
-        <p style={{ color: "#b9bfd2", lineHeight: 1.6 }}>The page encountered a rendering error. Your saved financial records have not been changed by this screen.</p>
+        <p style={{ color: "var(--th-muted)", lineHeight: 1.6 }}>The page encountered a rendering error. Your saved financial records have not been changed by this screen.</p>
         <button type="button" onClick={() => window.location.reload()} style={{ padding: "10px 14px", borderRadius: 8, border: 0, cursor: "pointer" }}>Reload page</button>
       </main>;
     }
@@ -142,7 +149,7 @@ function ProtectedApp() {
   }, [status]);
 
   if (status !== "authenticated") {
-    return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#090b16", color: "#f4f5ff", fontFamily: "system-ui, sans-serif" }}>Checking secure session…</main>;
+    return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--th-page)", color: "var(--th-text)", fontFamily: "system-ui, sans-serif" }}>Checking secure session…</main>;
   }
   return <App />;
 }

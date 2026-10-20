@@ -110,6 +110,14 @@ def create_session(body: SessionCreate, _user=Depends(get_current_user)):
     return _request("/sessions", method="POST", payload={"title": body.title, "config": body.config})
 
 
+@router.get("/sessions/{session_id}/messages")
+def get_session_messages(session_id: str, limit: int = Query(100, ge=1, le=1000), _user=Depends(get_current_user)):
+    safe_id = session_id.strip()
+    if not safe_id or "/" in safe_id or safe_id in {".", ".."}:
+        raise HTTPException(status_code=400, detail="Invalid Vibe Trading session ID.")
+    return _request(f"/sessions/{safe_id}/messages", query={"limit": limit})
+
+
 @router.post("/sessions/{session_id}/messages")
 def send_session_message(session_id: str, body: SessionMessage, _user=Depends(get_current_user)):
     safe_id = session_id.strip()

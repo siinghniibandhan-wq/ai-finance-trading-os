@@ -142,11 +142,13 @@ def start_swarm_run(body: SwarmRunRequest, _user=Depends(get_current_user)):
 
 
 @router.get("/sessions/{session_id}/events")
-def session_events(session_id: str, _user=Depends(get_current_user)):
+def session_events(session_id: str, replay: str | None = Query(None), _user=Depends(get_current_user)):
     safe_id = session_id.strip()
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", safe_id):
         raise HTTPException(status_code=400, detail="Invalid Vibe Trading session ID.")
     url = f"{_base_url()}/sessions/{safe_id}/events"
+    if replay == "active":
+        url += "?replay=active"
     headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
     api_key = os.getenv("VIBE_TRADING_API_KEY", "").strip()
     if api_key:
@@ -161,7 +163,7 @@ def session_events(session_id: str, _user=Depends(get_current_user)):
     def chunks():
         try:
             while True:
-                chunk = upstream.read(4096)
+                chunk = upstream.read1(4096) if hasattr(upstream, "read1") else upstream.read(4096)
                 if not chunk:
                     break
                 yield chunk

@@ -5,6 +5,7 @@ No m.Stock routes, provider fallback, or live order submission are exposed here.
 """
 import json
 import os
+import re
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -64,7 +65,7 @@ def _request(path: str, method: str = "GET", payload: dict | None = None, query:
 
 
 class SessionCreate(BaseModel):
-    title: str | None = Field(default=None, max_length=200)
+    title: str = Field(default="", max_length=200)
     config: dict = Field(default_factory=dict)
 
 
@@ -113,7 +114,7 @@ def create_session(body: SessionCreate, _user=Depends(get_current_user)):
 @router.get("/sessions/{session_id}/messages")
 def get_session_messages(session_id: str, limit: int = Query(100, ge=1, le=1000), _user=Depends(get_current_user)):
     safe_id = session_id.strip()
-    if not safe_id or "/" in safe_id or safe_id in {".", ".."}:
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", safe_id):
         raise HTTPException(status_code=400, detail="Invalid Vibe Trading session ID.")
     return _request(f"/sessions/{safe_id}/messages", query={"limit": limit})
 
@@ -121,7 +122,7 @@ def get_session_messages(session_id: str, limit: int = Query(100, ge=1, le=1000)
 @router.post("/sessions/{session_id}/messages")
 def send_session_message(session_id: str, body: SessionMessage, _user=Depends(get_current_user)):
     safe_id = session_id.strip()
-    if not safe_id or "/" in safe_id or safe_id in {".", ".."}:
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", safe_id):
         raise HTTPException(status_code=400, detail="Invalid Vibe Trading session ID.")
     return _request(f"/sessions/{safe_id}/messages", method="POST", payload=body.model_dump())
 
@@ -135,7 +136,7 @@ def start_swarm_run(body: SwarmRunRequest, _user=Depends(get_current_user)):
 @router.get("/sessions/{session_id}/events")
 def session_events(session_id: str, _user=Depends(get_current_user)):
     safe_id = session_id.strip()
-    if not safe_id or "/" in safe_id or safe_id in {".", ".."}:
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", safe_id):
         raise HTTPException(status_code=400, detail="Invalid Vibe Trading session ID.")
     url = f"{_base_url()}/sessions/{safe_id}/events"
     headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
@@ -165,6 +166,6 @@ def session_events(session_id: str, _user=Depends(get_current_user)):
 @router.get("/alpha/{alpha_id}")
 def get_alpha(alpha_id: str, _user=Depends(get_current_user)):
     safe_id = alpha_id.strip()
-    if not safe_id or "/" in safe_id or safe_id in {".", ".."}:
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", safe_id):
         raise HTTPException(status_code=400, detail="Invalid alpha ID.")
     return _request(f"/alpha/{safe_id}")

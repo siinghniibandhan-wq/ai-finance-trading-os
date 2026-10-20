@@ -10,7 +10,7 @@ const themes = [
   ["Elegant Plain", "elegant-plain"], ["Bento Grid", "bento-grid"],
   ["Nordic", "nordic"], ["Editorial", "editorial"],
 ];
-const server = spawn("npm", ["run", "dev", "--", "--host", "127.0.0.1"], {
+const server = spawn(process.execPath, ["./node_modules/vite/bin/vite.js", "--host", "127.0.0.1"], {
   stdio: ["ignore", "pipe", "pipe"],
 });
 let serverOutput = "";
@@ -31,11 +31,17 @@ try {
 
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  page.setDefaultTimeout(5000);
+  page.setDefaultNavigationTimeout(15000);
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
+  // Prevent the public page from depending on a live backend or account data.
+  await page.route("https://wealthmanager.duckdns.org/**", (route) => route.abort());
 
-  const response = await page.goto("http://127.0.0.1:5173/", { waitUntil: "networkidle" });
+  const response = await page.goto("http://127.0.0.1:5173/", { waitUntil: "domcontentloaded" });
   assert.equal(response?.status(), 200, "Landing page must return HTTP 200");
+  await page.locator("body").waitFor({ state: "visible" });
+  await page.waitForTimeout(500);
   assert.ok(await page.locator("body").innerText().then((text) => text.trim().length > 0), "Landing page must render visible content");
 
   // Exercise the same shared selectors used by Accounts-style tabs, Tax navigation,
@@ -108,7 +114,6 @@ try {
         marketBackground: marketCard.backgroundColor,
         researchBackground: researchTab.backgroundColor,
         tabRadius: active.borderRadius,
-        pageBackground: getComputedStyle(document.body).backgroundColor,
       };
     }, slug);
 
@@ -127,10 +132,10 @@ try {
     results.push(label);
   }
 
-  // Test a narrow viewport for horizontal overflow on the real landing page.
   await page.evaluate(() => document.querySelector("#theme-browser-audit-fixture")?.remove());
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("http://127.0.0.1:5173/", { waitUntil: "networkidle" });
+  await page.goto("http://127.0.0.1:5173/", { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(500);
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     page: document.documentElement.scrollWidth,
@@ -145,4 +150,6 @@ try {
 } finally {
   if (browser) await browser.close();
   server.kill("SIGTERM");
+  await Promise.race([new Promise((resolve) => server.once("exit", resolve)), delay(3000)]);
+  if (server.exitCode === null) server.kill("SIGKILL");
 }

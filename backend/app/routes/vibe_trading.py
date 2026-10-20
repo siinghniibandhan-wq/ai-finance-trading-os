@@ -64,12 +64,12 @@ def _request(path: str, method: str = "GET", payload: dict | None = None, query:
 
 
 class SessionCreate(BaseModel):
+    title: str | None = Field(default=None, max_length=200)
     config: dict = Field(default_factory=dict)
 
 
 class SessionMessage(BaseModel):
-    message: str = Field(min_length=1, max_length=12000)
-    attachments: list[dict] = Field(default_factory=list)
+    content: str = Field(min_length=1, max_length=12000)
 
 
 class SwarmRunRequest(BaseModel):
@@ -108,7 +108,7 @@ def swarm_presets(_user=Depends(get_current_user)):
 
 @router.post("/sessions")
 def create_session(body: SessionCreate, _user=Depends(get_current_user)):
-    return _request("/sessions", method="POST", payload={"config": body.config})
+    return _request("/sessions", method="POST", payload={"title": body.title, "config": body.config})
 
 
 @router.post("/sessions/{session_id}/messages")

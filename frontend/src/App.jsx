@@ -11071,11 +11071,11 @@ function getActualSpending(categoryId, month) {
           BUDGET LIST
       ==================================================== */}
 
-      <section className="glass-card">
+      <section className="glass-card budget-plans-panel">
 
-        <div className="card-header">
+        <div className="card-header budget-plans-header">
 
-          <div>
+          <div className="budget-plans-heading">
 
             <p className="card-label">
               MONTHLY BUDGET
@@ -11087,7 +11087,7 @@ function getActualSpending(categoryId, month) {
 
           </div>
 
-          <span className="score">
+          <span className="score budget-plans-count" aria-label={`${budgets.length} budgets`}>
             {budgets.length}
           </span>
 
@@ -11117,7 +11117,7 @@ function getActualSpending(categoryId, month) {
 
         {!loading && budgets.length === 0 && (
 
-          <div className="empty-chart">
+          <div className="empty-chart budget-plans-empty-state">
 
             <div className="chart-icon">
               <PieChart size={28} />
@@ -11133,6 +11133,7 @@ function getActualSpending(categoryId, month) {
             </span>
 
             <button
+              type="button"
               className="secondary-button"
               onClick={openBudgetForm}
             >

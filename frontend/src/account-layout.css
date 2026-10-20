@@ -18,8 +18,8 @@
   gap: 16px;
   padding: 13px 16px;
   border-radius: 12px;
-  background: var(--finos-account-card-bg, var(--finos-panel, rgba(15,23,42,.76)));
-  border: 1px solid var(--finos-account-card-border, var(--finos-border, rgba(167,139,250,.16)));
+  background: var(--finos-account-card-bg, var(--finos-panel, color-mix(in srgb, var(--th-card) 76%, transparent)));
+  border: 1px solid var(--finos-account-card-border, var(--finos-border, color-mix(in srgb, var(--th-accent) 16%, transparent)));
   box-shadow: var(--finos-account-card-shadow, 0 8px 22px rgba(0,0,0,.10));
   width: 100%;
   min-width: 0;
@@ -65,7 +65,7 @@
 }
 .money-accounts .account-credit-card > div:nth-child(3) {
   padding-top: 10px;
-  border-top: 1px solid var(--finos-border, rgba(167,139,250,.16));
+  border-top: 1px solid var(--finos-border, color-mix(in srgb, var(--th-accent) 16%, transparent));
 }
 .money-accounts .account-credit-card > div:nth-child(4) {
   display: flex;
@@ -123,7 +123,7 @@
   padding: 16px;
   box-sizing: border-box;
   overflow-y: auto;
-  background: var(--finos-modal-backdrop, rgba(8, 12, 24, .68));
+  background: var(--finos-modal-backdrop, color-mix(in srgb, var(--th-page) 68%, transparent));
   -webkit-backdrop-filter: blur(7px);
   backdrop-filter: blur(7px);
 }
@@ -137,8 +137,8 @@
   margin: auto;
   padding: clamp(18px, 4vw, 28px);
   color: var(--finos-text, var(--t-text, inherit));
-  background: var(--t-card-bg, var(--finos-surface, #fff));
-  border: 1px solid var(--finos-border, var(--t-border, rgba(127, 127, 127, .3)));
+  background: var(--t-card-bg, var(--finos-surface, var(--th-text)));
+  border: 1px solid var(--finos-border, var(--t-border, color-mix(in srgb, var(--th-border) 30%, transparent)));
   border-radius: var(--t-radius, 18px);
   box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
 }

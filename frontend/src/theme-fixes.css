@@ -1,66 +1,268 @@
 /* Theme-only surface corrections. Scope strictly to visual theme attributes. */
-
-
-
-
-
-
+:root[data-finos-theme="light"] {
+  color-scheme: light;
+  --finos-text: var(--th-text);
+  --finos-muted: var(--th-muted);
+  --finos-border: var(--th-border);
+}
+:root[data-finos-theme="light"] body,
+:root[data-finos-theme="light"] #root {
+  background: var(--th-page);
+  color: var(--th-text);
+}
+:root[data-finos-theme="light"] :is(.header-popover, .finos-select-menu, [role="menu"], [role="listbox"]) {
+  background: var(--th-card);
+  color: var(--th-text);
+  border-color: var(--th-border);
+  box-shadow: 0 12px 32px rgba(24, 35, 55, .12);
+}
+:root[data-finos-theme="light"] :is(input, textarea, select, .finos-select-trigger) {
+  color: var(--th-text);
+  background-color: var(--th-card);
+  border-color: var(--th-border);
+}
+:root[data-finos-theme="light"] :is(input, textarea)::placeholder { color: var(--th-muted); opacity: 1; }
+:root[data-finos-theme="light"] :is(.card, .glass-card, .panel, .metric-card, .stat-card, .chart-card) {
+  color: var(--th-text);
+  border-color: var(--th-border);
+}
 
 /* Light + Minimal: keep dialogs and transaction-history controls readable.
    These overrides are presentation-only and do not alter transaction behavior. */
-
-
-
-
-
-
-
-
-
-
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) {
+  --finos-text: var(--th-text);
+  --finos-muted: var(--th-muted);
+  --finos-border: var(--th-border);
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) :is(
+  [role="dialog"], .modal, .modal-content, .modal-dialog,
+  .investment-transaction-modal, .transaction-history-modal,
+  .modal-body, .modal-header, .modal-footer
+) {
+  color: var(--th-text);
+  background-color: var(--th-card);
+  border-color: var(--th-border);
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) :is(
+  [role="dialog"], .modal, .modal-content, .modal-dialog,
+  .investment-transaction-modal, .transaction-history-modal
+) :is(h1, h2, h3, h4, h5, p, span, label, small, strong, b, td, th, div) {
+  color: inherit;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) :is(
+  [role="dialog"], .modal, .modal-content, .modal-dialog,
+  .investment-transaction-modal, .transaction-history-modal
+) :is(.muted, .text-muted, .description, .helper-text, .field-hint, small) {
+  color: var(--th-muted);
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) :is(
+  [role="dialog"], .modal, .modal-content, .modal-dialog,
+  .investment-transaction-modal, .transaction-history-modal
+) :is(button, input, select, textarea) {
+  color: var(--th-text);
+  border-color: var(--th-border);
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) :is(
+  [role="dialog"], .modal, .modal-content, .modal-dialog,
+  .investment-transaction-modal, .transaction-history-modal
+) :is(button:not(.primary-button):not(.finos-button-primary):not([data-variant="primary"])) {
+  background-color: var(--th-card);
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"]) .content :is(
+  .card, .glass-card, .panel, .metric-card, .stat-card, .chart-card,
+  .transaction-card, .table-card, .data-card, .holding-card, .portfolio-card
+) {
+  color: var(--th-text);
+  border-color: var(--th-border);
+}
+:root[data-finos-theme="minimal"] body,
+:root[data-finos-theme="minimal"] #root {
+  color: var(--th-text);
+  background: var(--th-page);
+}
+:root[data-finos-theme="minimal"] :is(input, textarea, select, .finos-select-trigger) {
+  color: var(--th-text);
+  background-color: var(--th-card);
+  border-color: var(--th-border);
+}
+:root[data-finos-theme="minimal"] :is(input, textarea)::placeholder {
+  color: var(--th-muted);
+  opacity: 1;
+}
 
 /* Holding-card transaction history: readable on the two light, restrained themes.
    Scoped to this modal so Dark and all other themes keep their current styling. */
-
-
-
-
-
-
-
-
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal {
+  color: var(--th-text);
+  background: var(--th-card);
+  border-color: var(--th-border);
+}
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history {
+  color: var(--th-text);
+}
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history > div {
+  color: var(--th-text);
+}
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history > div > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history div[style*="rgba(255,255,255,0.04)"] {
+  background: var(--th-page) !important;
+  border-color: var(--th-border) !important;
+}
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history [style*="rgba(255,255,255,0.45)"],
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history [style*="rgba(255,255,255,0.05)"] {
+  color: var(--th-muted) !important;
+}
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history button:not(.primary-button):not(.finos-button-primary) {
+  color: var(--th-text);
+  background: var(--th-card);
+  border-color: var(--th-border);
+}
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history button:disabled {
+  opacity: .6;
+}
 
 
 
 /* Broker order modal: inherit the active Financial OS theme instead of hard-coded dark styling. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme] .broker-order-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--finos-page, var(--th-card)) 72%, transparent);
+  backdrop-filter: blur(8px);
+}
+:root[data-finos-theme] .broker-order-modal {
+  box-sizing: border-box;
+  color: var(--finos-text, var(--th-text)) !important;
+  background: var(--finos-surface, var(--th-card)) !important;
+  border: 1px solid var(--finos-border, color-mix(in srgb, var(--th-border) 14%, transparent)) !important;
+  border-radius: var(--t-radius, 18px) !important;
+  box-shadow: var(--t-shadow, 0 24px 80px rgba(0,0,0,.35)) !important;
+  font-family: var(--t-font, inherit);
+}
+:root[data-finos-theme] .broker-order-modal :is(h2, strong, label, span, p, div) {
+  color: inherit;
+}
+:root[data-finos-theme] .broker-order-modal :is(label, .broker-order-field-label) {
+  color: var(--finos-muted, var(--finos-text, inherit)) !important;
+  font-size: 12px;
+  line-height: 1.45;
+  min-width: 0;
+}
+:root[data-finos-theme] .broker-order-modal :is(input, select, textarea) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 11px;
+  margin-top: 5px;
+  color: var(--finos-text, var(--th-text)) !important;
+  background: var(--finos-surface-raised, var(--t-inner-bg, var(--th-inner))) !important;
+  border: 1px solid var(--finos-border, color-mix(in srgb, var(--th-border) 18%, transparent)) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  font: inherit;
+  line-height: 1.35;
+  text-align: left;
+}
+:root[data-finos-theme] .broker-order-modal select option {
+  color: var(--finos-text, var(--th-on-accent));
+  background: var(--finos-surface, var(--th-text));
+}
+:root[data-finos-theme] .broker-order-modal :is(input, select, textarea)::placeholder {
+  color: var(--finos-muted, var(--th-muted));
+  opacity: 1;
+}
+:root[data-finos-theme] .broker-order-modal :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--finos-accent, var(--th-accent));
+  outline-offset: 2px;
+}
+:root[data-finos-theme] .broker-order-modal .broker-order-quote {
+  color: var(--finos-text, inherit) !important;
+  background: var(--finos-surface-raised, var(--t-inner-bg, transparent)) !important;
+  border: 1px solid var(--finos-border, transparent) !important;
+  border-radius: var(--t-radius, 12px) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.1)"] {
+  border-color: var(--finos-border, color-mix(in srgb, var(--th-border) 10%, transparent)) !important;
+}
+:root[data-finos-theme] .broker-order-modal [role="alert"] {
+  border: 1px solid color-mix(in srgb, var(--th-neg) 30%, var(--finos-border, transparent));
+}
+:root[data-finos-theme="light"] .broker-order-overlay,
+:root[data-finos-theme="minimal"] .broker-order-overlay,
+:root[data-finos-theme="elegant-plain"] .broker-order-overlay,
+:root[data-finos-theme="skeuomorphism"] .broker-order-overlay,
+:root[data-finos-theme="neumorphism"] .broker-order-overlay,
+:root[data-finos-theme="claymorphism"] .broker-order-overlay,
+:root[data-finos-theme="bento-grid"] .broker-order-overlay {
+  background: color-mix(in srgb, var(--finos-page, var(--th-card)) 66%, transparent);
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"], [data-finos-theme="skeuomorphism"], [data-finos-theme="neumorphism"], [data-finos-theme="claymorphism"], [data-finos-theme="bento-grid"]) .broker-order-modal {
+  color: var(--finos-text) !important;
+}
+@media (max-width: 520px) {
+  :root[data-finos-theme] .broker-order-overlay { align-items: flex-start; padding: 10px; }
+  :root[data-finos-theme] .broker-order-modal { padding: 16px !important; width: 100%; max-height: calc(100dvh - 20px); }
+  :root[data-finos-theme] .broker-order-modal > div[style*="grid-template-columns"] { grid-template-columns: minmax(0, 1fr) !important; }
+}
 
 
 /* Broker order modal contrast correction: inline legacy white-muted styles
    were winning over theme inheritance in light themes, hiding key metadata. */
-
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,0.55)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,0.62)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.55)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.62)"] {
+  color: var(--finos-muted, var(--finos-text)) !important;
+}
+:root[data-finos-theme] .broker-order-modal > div:first-child > div,
+:root[data-finos-theme] .broker-order-modal .broker-order-quote > div {
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .broker-order-modal > div[style*="border-top"] {
+  border-top-color: var(--finos-border, color-mix(in srgb, var(--th-border) 10%, transparent)) !important;
+}
+:root[data-finos-theme] .broker-order-modal .broker-order-quote strong {
+  color: var(--finos-text, inherit) !important;
+}
+:root[data-finos-theme] .broker-order-modal :is(label, input, select, button) {
+  font-family: var(--t-font, inherit);
+}
+:root[data-finos-theme] .broker-order-modal label {
+  color: var(--finos-muted, var(--finos-text)) !important;
+}
+:root[data-finos-theme] .broker-order-modal .broker-order-quote [style*="rgba(255,255,255"] {
+  color: var(--finos-muted, var(--finos-text)) !important;
+}
+:root[data-finos-theme] .broker-order-modal [role="status"] {
+  color: var(--finos-text) !important;
+  background: var(--finos-surface-raised, var(--t-inner-bg, transparent)) !important;
+  border: 1px solid var(--finos-border) !important;
+}
+:root[data-finos-theme] .broker-order-modal [role="status"] :is(strong, div) {
+  color: inherit !important;
+}
+@media (max-width: 520px) {
+  :root[data-finos-theme] .broker-order-modal > div:first-child {
+    align-items: flex-start;
+  }
+  :root[data-finos-theme] .broker-order-modal > div:first-child h2 {
+    font-size: 20px !important;
+    overflow-wrap: anywhere;
+  }
+  :root[data-finos-theme] .broker-order-modal > div[style*="border-top"] > div {
+    align-items: flex-start;
+  }
+}
 
 
 /* --------------------------------------------------------------------------
@@ -69,106 +271,684 @@
    allowing each of the 19 themes to express its own surface, typography, depth,
    controls and accent. This modal is outside .content, so it needs its own rules.
    -------------------------------------------------------------------------- */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme] .broker-order-modal {
+  --broker-form-surface: var(--finos-surface, var(--t-card-bg, var(--th-card)));
+  --broker-form-raised: var(--finos-surface-raised, var(--t-inner-bg, var(--th-inner)));
+  --broker-form-ink: var(--finos-text, var(--th-text));
+  --broker-form-muted: var(--finos-muted, var(--th-muted));
+  --broker-form-line: var(--finos-border, color-mix(in srgb, var(--th-border) 16%, transparent));
+  --broker-form-accent: var(--finos-accent, var(--th-accent));
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 480px) !important;
+  max-width: 100%;
+  max-height: min(90dvh, 900px) !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: var(--broker-form-ink) !important;
+  background: var(--broker-form-surface) !important;
+  border: 1px solid var(--broker-form-line) !important;
+  border-radius: var(--t-radius, 18px) !important;
+  box-shadow: var(--t-shadow, 0 24px 80px rgba(0,0,0,.35)) !important;
+  font-family: var(--t-font, inherit);
+  line-height: 1.5;
+}
+:root[data-finos-theme] .broker-order-modal :is(h2, strong, label, span, p, div) {
+  min-width: 0;
+}
+:root[data-finos-theme] .broker-order-modal h2 {
+  color: var(--broker-form-ink) !important;
+  font-family: var(--t-font-head, var(--t-font, inherit));
+  letter-spacing: var(--t-head-track, normal);
+}
+:root[data-finos-theme] .broker-order-modal :is(label, .broker-order-field-label) {
+  display: block;
+  color: var(--broker-form-muted) !important;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+:root[data-finos-theme] .broker-order-modal :is(input, select, textarea) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  color: var(--broker-form-ink) !important;
+  background: var(--broker-form-raised) !important;
+  border: 1px solid var(--broker-form-line) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  box-shadow: var(--t-shadow-inner, none);
+  font: inherit;
+  line-height: 1.4;
+}
+:root[data-finos-theme] .broker-order-modal select option {
+  color: var(--broker-form-ink, var(--th-on-accent));
+  background: var(--broker-form-surface, var(--th-text));
+}
+:root[data-finos-theme] .broker-order-modal :is(input, select, textarea)::placeholder {
+  color: var(--broker-form-muted) !important;
+  opacity: 1;
+}
+:root[data-finos-theme] .broker-order-modal :is(input, select, textarea, button):focus-visible {
+  outline: 2px solid var(--broker-form-accent) !important;
+  outline-offset: 2px;
+}
+:root[data-finos-theme] .broker-order-modal .broker-order-quote {
+  color: var(--broker-form-ink) !important;
+  background: var(--broker-form-raised) !important;
+  border: 1px solid var(--broker-form-line) !important;
+  border-radius: var(--t-radius, 12px) !important;
+  box-shadow: var(--t-shadow-inner, none) !important;
+}
+:root[data-finos-theme] .broker-order-modal [style*="border-top"] {
+  border-top-color: var(--broker-form-line) !important;
+}
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,0.55)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,0.62)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.55)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.62)"],
+:root[data-finos-theme] .broker-order-modal .broker-order-quote [style*="rgba(255,255,255"] {
+  color: var(--broker-form-muted) !important;
+}
+:root[data-finos-theme] .broker-order-modal [role="alert"] {
+  color: var(--th-neg) !important;
+  background: color-mix(in srgb, var(--th-neg) 10%, var(--broker-form-surface)) !important;
+  border: 1px solid color-mix(in srgb, var(--th-neg) 38%, var(--broker-form-line)) !important;
+  border-radius: var(--t-radius-sm, 9px);
+}
+:root[data-finos-theme] .broker-order-modal [role="status"] {
+  color: var(--broker-form-ink) !important;
+  background: color-mix(in srgb, var(--th-pos) 9%, var(--broker-form-surface)) !important;
+  border: 1px solid color-mix(in srgb, var(--th-pos) 38%, var(--broker-form-line)) !important;
+  border-radius: var(--t-radius-sm, 9px);
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .broker-order-modal button.secondary-button {
+  color: var(--t-btn-text, var(--broker-form-ink)) !important;
+  background: var(--t-btn-bg, var(--broker-form-raised)) !important;
+  border: var(--t-btn-border, 1px solid var(--broker-form-line)) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  font-family: var(--t-font, inherit);
+}
+:root[data-finos-theme] .broker-order-modal button.primary-button {
+  color: var(--t-pri-text, var(--th-text)) !important;
+  background: var(--t-pri-bg, var(--broker-form-accent)) !important;
+  border: var(--t-pri-border, 1px solid var(--broker-form-accent)) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  font-family: var(--t-font, inherit);
+}
+:root[data-finos-theme] .broker-order-modal > div[style*="display: flex"][style*="gap: 10px"] button {
+  min-height: 44px;
+  flex: 1 1 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .broker-order-modal > div:first-child > div,
+:root[data-finos-theme] .broker-order-modal .broker-order-quote > div {
+  overflow-wrap: anywhere;
+}
 
 /* The theme's visual signature is intentionally retained in the order dialog. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme="default"] .broker-order-modal,
+:root[data-finos-theme="dark"] .broker-order-modal,
+:root[data-finos-theme="retro-terminal"] .broker-order-modal {
+  --broker-form-raised: var(--t-inner-bg, var(--th-inner));
+}
+:root[data-finos-theme="light"] .broker-order-modal,
+:root[data-finos-theme="minimal"] .broker-order-modal,
+:root[data-finos-theme="elegant-plain"] .broker-order-modal {
+  --broker-form-surface: var(--th-card);
+  --broker-form-raised: var(--t-inner-bg, var(--th-page));
+  --broker-form-ink: var(--finos-text, var(--th-text));
+  --broker-form-muted: var(--finos-muted, var(--th-muted));
+  --broker-form-line: var(--finos-border, var(--th-border));
+}
+:root[data-finos-theme="aurora"] .broker-order-modal {
+  border-image: linear-gradient(135deg, var(--finos-accent, var(--th-accent)), var(--th-accent), var(--th-pos)) 1 !important;
+}
+:root[data-finos-theme="emerald"] .broker-order-modal {
+  --broker-form-accent: var(--finos-accent, var(--th-pos));
+  box-shadow: 0 18px 52px color-mix(in srgb, var(--th-pos) 14%, transparent) !important;
+}
+:root[data-finos-theme="ocean"] .broker-order-modal {
+  --broker-form-accent: var(--finos-accent, var(--th-accent));
+  box-shadow: 0 18px 52px color-mix(in srgb, var(--th-accent) 16%, transparent) !important;
+}
+:root[data-finos-theme="sunset"] .broker-order-modal {
+  --broker-form-accent: var(--finos-accent, var(--th-warn));
+  box-shadow: 0 18px 52px color-mix(in srgb, var(--th-warn) 14%, transparent) !important;
+}
+:root[data-finos-theme="glass"] .broker-order-modal,
+:root[data-finos-theme="glassmorphism"] .broker-order-modal,
+:root[data-finos-theme="liquid-glass"] .broker-order-modal {
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
+  background: color-mix(in srgb, var(--broker-form-surface) 88%, transparent) !important;
+}
+:root[data-finos-theme="skeuomorphism"] .broker-order-modal {
+  border-width: 2px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 10px 22px rgba(30,40,60,.16) !important;
+}
+:root[data-finos-theme="neumorphism"] .broker-order-modal {
+  border-color: transparent !important;
+  box-shadow: 8px 8px 18px #c8ced7, -8px -8px 18px #fff !important;
+}
+:root[data-finos-theme="claymorphism"] .broker-order-modal {
+  border-width: 2px !important;
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--th-accent) 18%, transparent) !important;
+}
+:root[data-finos-theme="brutalism"] .broker-order-modal {
+  border: 2px solid var(--broker-form-ink) !important;
+  border-radius: 0 !important;
+  box-shadow: 6px 6px 0 var(--broker-form-ink) !important;
+}
+:root[data-finos-theme="maximalism"] .broker-order-modal {
+  border-width: 2px !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--broker-form-accent) 22%, transparent), 0 20px 60px rgba(0,0,0,.22) !important;
+}
+:root[data-finos-theme="bento-grid"] .broker-order-modal {
+  border-radius: 22px !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--th-pos) 10%, transparent) !important;
+}
+:root[data-finos-theme="retro-terminal"] .broker-order-modal {
+  border-style: dashed !important;
+  border-radius: 2px !important;
+  font-family: var(--t-font, "Courier New", monospace);
+}
+:root[data-finos-theme="retro-terminal"] .broker-order-modal h2 {
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+:root[data-finos-theme="glass"] .broker-order-modal,
+:root[data-finos-theme="glassmorphism"] .broker-order-modal {
+  border-color: color-mix(in srgb, var(--broker-form-line) 70%, white) !important;
+}
+@media (max-width: 520px) {
+  :root[data-finos-theme] .broker-order-modal {
+    width: 100% !important;
+    max-height: calc(100dvh - 20px) !important;
+    padding: 16px !important;
+  }
+  :root[data-finos-theme] .broker-order-modal > div[style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  :root[data-finos-theme] .broker-order-modal > div[style*="display: flex"][style*="gap: 10px"] {
+    flex-wrap: wrap;
+  }
+  :root[data-finos-theme] .broker-order-modal > div[style*="display: flex"][style*="gap: 10px"] button {
+    flex-basis: 100%;
+  }
+}
 
 
 /* Light-theme broker order readability correction.
    Scoped only to the Market BUY/SELL broker order dialog. */
-
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal {
+  --broker-form-surface: var(--th-card);
+  --broker-form-raised: var(--th-page);
+  --broker-form-ink: var(--th-text);
+  --broker-form-muted: var(--th-muted);
+  --broker-form-line: var(--th-border);
+  --broker-form-accent: var(--finos-accent, var(--th-accent));
+}
 
 /* Explicitly override legacy inline light-on-dark muted styles inside this
    form; these were the reason several labels and quote details disappeared. */
-
-
-
-
-
-
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(label, p, span, small, .broker-order-field-label) {
+  color: var(--broker-form-muted) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(h2, strong, input, select, textarea) {
+  color: var(--broker-form-ink) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal .broker-order-quote {
+  background: var(--th-page) !important;
+  border-color: var(--th-border) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(input, select, textarea) {
+  background: var(--th-page) !important;
+  border-color: var(--th-border) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal [role="alert"] {
+  color: var(--th-neg) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal [role="status"] {
+  color: var(--th-pos) !important;
+}
 
 
 /* Complete the light-form fix: several missing-looking fields are DIVs, not
    labels/spans. The earlier patch only covered a subset of muted text nodes. */
-
-
-
-
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(div, label, p, span, small, .broker-order-field-label) {
+  color: var(--broker-form-muted) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(h2, strong, input, select, textarea) {
+  color: var(--broker-form-ink) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal .broker-order-quote strong,
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal > div[style*="border-top"] strong {
+  color: var(--broker-form-ink) !important;
+}
+:root:is([data-finos-theme="light"], [data-finos-theme="minimal"], [data-finos-theme="elegant-plain"]) .broker-order-modal :is(button.primary-button, button.secondary-button) {
+  color: var(--t-pri-text, var(--broker-form-ink));
+}
 
 
 /* Match the proven transaction-history text palette in the broker order form.
    Use the same readable primary (#202631) and secondary (#5b6472) text tones
    used by the light/minimal history UI, without removing each theme's shadows. */
-
-
-
-
-
-
-
-
-
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal {
+  --broker-form-surface: var(--th-text);
+  --broker-form-raised: var(--th-text);
+  --broker-form-ink: var(--th-on-accent);
+  --broker-form-muted: var(--th-muted);
+  --broker-form-line: var(--th-border);
+  color: var(--th-on-accent) !important;
+  background-color: var(--th-text) !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal :is(div, label, p, span, small, .broker-order-field-label) {
+  color: var(--th-muted) !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal :is(h2, strong, input, select, textarea) {
+  color: var(--th-on-accent) !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal .broker-order-quote {
+  color: var(--th-on-accent) !important;
+  background: var(--th-text) !important;
+  border-color: var(--th-border) !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal :is(input, select, textarea) {
+  color: var(--th-on-accent) !important;
+  background: var(--th-text) !important;
+  border-color: var(--th-border) !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal button.secondary-button {
+  color: var(--th-on-accent) !important;
+  background: var(--th-text) !important;
+  border-color: var(--th-border) !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal button.primary-button {
+  color: var(--t-pri-text, var(--th-text)) !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal [role="alert"] {
+  color: var(--th-neg) !important;
+}
+:root:is(
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"]
+) .broker-order-modal [role="status"] {
+  color: var(--th-pos) !important;
+}
 
 
 /* Market workspace — bring light-family themes in line with the readable
    Portfolio, Dashboard and Wealth Manager surfaces. Dark and other expressive
    themes are intentionally untouched. This is visual-only; data and actions stay unchanged. */
-
-
-
-
-
-
-
-
-
-
-
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace {
+  color: var(--th-text) !important;
+  --market-ink: var(--th-text);
+  --market-muted: var(--th-muted);
+  --market-surface: var(--th-card);
+  --market-raised: var(--th-page);
+  --market-line: var(--th-border);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(h1,h2,h3,h4,h5,strong,b) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(p,span,small,label,dt,dd,th,td) {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace > section[aria-label="Major Indian market indices"] > div {
+  color: var(--market-ink) !important;
+  background: var(--market-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 3px 10px rgba(31,41,55,.08) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(
+  input,select,textarea,
+  [role="combobox"],.finos-select-trigger
+) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+  background: var(--market-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+  box-shadow: none !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace input::placeholder {
+  color: var(--th-muted) !important;
+  -webkit-text-fill-color: var(--th-muted) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(
+  [aria-label="Market instrument search"],
+  [aria-label="Selected instrument"],
+  .market-card,.glass-card,.panel,.data-card,
+  .instrument-search-results,.instrument-search-result
+) {
+  color: var(--market-ink) !important;
+  border-color: var(--market-line) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace .instrument-search-results,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace .instrument-search-result,
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace .broker-order-quote {
+  background: var(--market-raised) !important;
+  background-image: none !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace button.secondary-button {
+  color: var(--th-text) !important;
+  -webkit-text-fill-color: var(--th-text) !important;
+  background: var(--th-card) !important;
+  background-image: none !important;
+  border: 1px solid var(--th-border) !important;
+  box-shadow: none !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace button.primary-button {
+  color: var(--th-on-accent) !important;
+  -webkit-text-fill-color: var(--th-on-accent) !important;
+  box-shadow: 0 3px 9px rgba(31,41,55,.10);
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace [role="status"],
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace [role="alert"] {
+  color: var(--th-text) !important;
+  -webkit-text-fill-color: var(--th-text) !important;
+  background: var(--th-page) !important;
+  border: 1px solid var(--th-border) !important;
+}
 
 
 /* Market workspace follow-up: screenshots showed the first pass only fixed
    headings and paragraph-like nodes. Many Market labels, provider messages and
    watchlist details are plain DIVs with legacy white inline colors, while the
    search/news containers still retained dark gray inline backgrounds. */
-
-
-
-
-
-
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(div, article, aside, section) {
+  color: var(--market-ink, var(--th-text));
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace [style*="color: rgba(255,255,255"],
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace [style*="color:#fff"],
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace [style*="color: #fff"] {
+  color: var(--market-ink, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--market-ink, var(--th-text)) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(
+  [aria-label="Market instrument search"],
+  [aria-label="Selected instrument"],
+  [aria-label="Market breadth"],
+  .market-news,
+  .watchlist-card,
+  .market-watchlist,
+  .instrument-search-results,
+  .instrument-search-result
+) {
+  color: var(--market-ink, var(--th-text)) !important;
+  background-color: var(--market-surface, var(--th-card)) !important;
+  background-image: none !important;
+  border-color: var(--market-line, var(--th-border)) !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.06) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(input, select, textarea)::placeholder {
+  color: var(--th-muted) !important;
+  -webkit-text-fill-color: var(--th-muted) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(.market-card, .glass-card, .panel, .data-card, .card) {
+  color: var(--market-ink, var(--th-text)) !important;
+  background: var(--market-surface, var(--th-card)) !important;
+  background-image: none !important;
+  border-color: var(--market-line, var(--th-border)) !important;
+}
+:root:is(
+  [data-finos-theme="light"],
+  [data-finos-theme="minimal"],
+  [data-finos-theme="elegant-plain"],
+  [data-finos-theme="skeuomorphism"],
+  [data-finos-theme="neumorphism"],
+  [data-finos-theme="neomorphism"],
+  [data-finos-theme="claymorphism"],
+  [data-finos-theme="bento-grid"]
+) .markets-workspace :is(button, [role="button"]) {
+  opacity: 1 !important;
+}
 
 
 /* Market page contrast repair v2 — based on the supplied live Light-theme
@@ -176,238 +956,949 @@
    content, which still inherited low-contrast legacy white/transparent styles.
    Apply to every non-dark/non-terminal theme; keep the true Dark and Default
    themes plus Retro Terminal exactly as they are. */
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace {
+  --market-ink: var(--th-on-accent);
+  --market-muted: var(--th-muted);
+  --market-surface: var(--th-text);
+  --market-raised: var(--th-text);
+  --market-line: var(--th-border);
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink);
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(h1,h2,h3,h4,h5,strong,b,legend) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(p,span,small,label,dt,dd,th,td,div,article,aside,section,li,summary) {
+  opacity: 1;
+}
 /* Inline styles in the Market JSX used white/low-alpha text on dark surfaces.
    Override those text declarations, including plain DIV labels and messages. */
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: #fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:#fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: white"] {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+  opacity: 1 !important;
+}
 /* Bring all structural panels back to opaque surfaces; this covers containers
    whose inline background was a dark translucent gray/purple. */
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(
+  [aria-label="Market instrument search"],
+  [aria-label="Selected instrument"],
+  [aria-label="Market breadth"],
+  .market-news,.market-news-card,.watchlist-card,.market-watchlist,
+  .instrument-search-results,.instrument-search-result,
+  .market-card,.glass-card,.panel,.data-card,.card
+) {
+  color: var(--market-ink) !important;
+  background-color: var(--market-surface) !important;
+  background-image: none !important;
+  border-color: var(--market-line) !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.06) !important;
+  opacity: 1 !important;
+}
 /* Index tiles and search area are direct inline-styled wrappers rather than
    consistently named cards; neutralize dark gradients without touching buttons. */
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace section[aria-label="Major Indian market indices"] > div,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [aria-label="Market instrument search"] {
+  color: var(--market-ink) !important;
+  background: var(--market-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+}
 /* Search controls should look like the Portfolio and Dashboard controls. */
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(input,select,textarea,[role="combobox"],.finos-select-trigger) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+  background: var(--th-text) !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(input,select,textarea)::placeholder {
+  color: var(--th-muted) !important;
+  -webkit-text-fill-color: var(--th-muted) !important;
+  opacity: 1 !important;
+}
 /* Preserve meaningful gain/loss colors and white text on colored action buttons. */
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace button.primary-button,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace button[aria-label*="Search"] {
+  color: var(--th-text) !important;
+  -webkit-text-fill-color: var(--th-text) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [role="alert"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [role="status"] {
+  color: var(--th-muted) !important;
+  -webkit-text-fill-color: var(--th-muted) !important;
+  background: var(--th-text) !important;
+  border: 1px solid var(--th-border) !important;
+  opacity: 1 !important;
+}
 
 
 /* Final Market-page contrast pass. The theme stylesheet is imported after
    theme-fixes.css, and several Market JSX nodes use inline low-alpha white
    colors. Use high-specificity, theme-scoped rules for every text-bearing
    element and every surface, while retaining semantic gain/loss and action colors. */
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace {
+  --market-ink: var(--th-on-accent);
+  --market-muted: var(--th-muted);
+  --market-surface: var(--th-text);
+  --market-raised: var(--th-text);
+  --market-line: var(--th-border);
+  color: var(--market-ink) !important;
+  background: transparent;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(
+  h1,h2,h3,h4,h5,strong,b,label,legend,li,dt,dd,p,span,small,div,article,aside,section,summary,th,td
+) {
+  opacity: 1 !important;
+  -webkit-text-fill-color: currentColor;
+}
 /* Correct inline legacy light-on-dark colors regardless of React's whitespace
    serialization; also cover text whose color is inherited from the old muted token. */
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(
+  p,span,small,label,dt,dd,th,td,li,summary
+) {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(
+  h1,h2,h3,h4,h5,strong,b,[aria-label="Market overview"] > div > div
+) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+}
 /* Plain DIVs include price values, watchlist quote errors and explanatory copy.
    Make them readable by default, then restore secondary copy and semantic states. */
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace div {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: #fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:#fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: white"] {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+}
 /* Preserve the red/green market semantics used for gain/loss counts and prices. */
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#86efac"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#4ade80"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#fca5a5"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#f87171"] {
+  -webkit-text-fill-color: currentColor !important;
+}
 /* Header, watchlist, breadth, news, and empty states must not inherit opaque
    gray/dark inline surfaces from the dark-theme design. */
-
-
-
-
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(
+  section[aria-label="Market overview"],
+  section[aria-label="Market instrument search"],
+  section[aria-label="Major Indian market indices"],
+  section[aria-label="Market breadth"],
+  .market-news,.market-news-card,.watchlist-card,.market-watchlist,
+  .instrument-search-results,.instrument-search-result,.market-card,.glass-card,.panel,.data-card,.card
+) {
+  color: var(--market-ink) !important;
+  background-color: var(--market-surface) !important;
+  background-image: none !important;
+  border-color: var(--market-line) !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.06) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace section[aria-label="Market overview"] > div {
+  padding: 14px 16px !important;
+  border: 1px solid var(--market-line) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--market-surface) !important;
+  background-image: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace section[aria-label="Major Indian market indices"] > div {
+  background: var(--market-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.07) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(input,select,textarea,[role="combobox"],.finos-select-trigger) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+  background: var(--th-text) !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(input,select,textarea)::placeholder {
+  color: var(--th-muted) !important;
+  -webkit-text-fill-color: var(--th-muted) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is(button.primary-button,button[aria-label*="Search"]) {
+  color: var(--th-text) !important;
+  -webkit-text-fill-color: var(--th-text) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace :is([role="alert"],[role="status"]) {
+  color: var(--th-muted) !important;
+  -webkit-text-fill-color: var(--th-muted) !important;
+  background: var(--th-text) !important;
+  border: 1px solid var(--th-border) !important;
+}
 
 
 /* Market layout polish: restore the missing card boundaries visible in the
    latest user screenshot. The original JSX spreads a style object, not a
    .card class, on several sections, so text was fixed but the section surfaces
    remained transparent. These rules style each landing-page module as a card. */
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section:not([aria-label="Major Indian market indices"]):not([aria-label="Market instrument search"]):not([aria-label="Market overview"]) {
+  box-sizing: border-box;
+  padding: 16px !important;
+  border: 1px solid var(--th-border) !important;
+  border-radius: 16px !important;
+  background: var(--th-text) !important;
+  background-image: none !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.055) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market overview"] {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market overview"] > div {
+  box-sizing: border-box;
+  padding: 15px 16px !important;
+  margin: 0 !important;
+  border: 1px solid var(--th-border) !important;
+  border-radius: 16px !important;
+  background: var(--th-text) !important;
+  background-image: none !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.055) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market breadth"] > div,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 14px !important;
+  border: 1px solid var(--th-border) !important;
+  border-radius: 14px !important;
+  background: var(--th-text) !important;
+  background-image: none !important;
+  box-shadow: 0 2px 8px rgba(31,41,55,.045) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[style*="linear-gradient(120deg"] {
+  background: var(--th-text) !important;
+  background-image: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section > div[style*="rgba(255,255,255,.025)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section > div[style*="rgba(255,255,255,0.025)"] {
+  padding: 12px !important;
+  border: 1px solid var(--th-border) !important;
+  border-radius: 12px !important;
+  background: var(--th-text) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market instrument search"] {
+  padding: 15px !important;
+  border: 1px solid var(--th-border) !important;
+  border-radius: 16px !important;
+  background: var(--th-text) !important;
+  box-shadow: 0 3px 12px rgba(31,41,55,.055) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market instrument search"] form input {
+  border-radius: 12px !important;
+  min-height: 48px !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[aria-label="Market instrument search"] form button {
+  min-height: 48px !important;
+  border-radius: 12px !important;
+}
 
 
 /* Market breadth semantic colors: theme-aware gain/loss badges for every
    light-family theme. Keep the counts saturated enough to read, while adapting
    their hue, softness, and glass effect to each theme's visual language. */
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: var(--th-pos) !important;
+  -webkit-text-fill-color: var(--th-pos) !important;
+  background: color-mix(in srgb, var(--th-pos) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--th-pos) 20%, transparent);
+  border-radius: 12px;
+  min-width: 38px;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 2px 8px;
+  box-sizing: border-box;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: var(--th-neg) !important;
+  -webkit-text-fill-color: var(--th-neg) !important;
+  background: color-mix(in srgb, var(--th-neg) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--th-neg) 20%, transparent);
+  border-radius: 12px;
+  min-width: 38px;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 2px 8px;
+  box-sizing: border-box;
+}
 /* Minimal and Elegant Plain: restrained, flat semantic treatments. */
-
-
+:root[data-finos-theme="minimal"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child,
+:root[data-finos-theme="elegant-plain"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: var(--th-pos) !important; -webkit-text-fill-color: var(--th-pos) !important;
+  background: var(--th-inner); border-color: var(--th-border); box-shadow: none;
+}
+:root[data-finos-theme="minimal"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child,
+:root[data-finos-theme="elegant-plain"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: var(--th-neg) !important; -webkit-text-fill-color: var(--th-neg) !important;
+  background: var(--th-page); border-color: var(--th-border); box-shadow: none;
+}
 /* Claymorphism: soft, rounded tinted surfaces. */
-
-
+:root[data-finos-theme="claymorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: var(--th-pos) !important; -webkit-text-fill-color: var(--th-pos) !important;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--th-inner) 95%, transparent), color-mix(in srgb, var(--th-page) 78%, transparent));
+  border-color: color-mix(in srgb, var(--th-pos) 24%, transparent); box-shadow: 2px 3px 8px color-mix(in srgb, var(--th-pos) 8%, transparent), inset 0 1px 0 rgba(255,255,255,.9);
+}
+:root[data-finos-theme="claymorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: var(--th-neg) !important; -webkit-text-fill-color: var(--th-neg) !important;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--th-inner) 96%, transparent), color-mix(in srgb, var(--th-page) 82%, transparent));
+  border-color: color-mix(in srgb, var(--th-neg) 22%, transparent); box-shadow: 2px 3px 8px color-mix(in srgb, var(--th-neg) 7%, transparent), inset 0 1px 0 rgba(255,255,255,.9);
+}
 /* Neumorphism: quiet text with recessed pastel pills. */
-
-
+:root[data-finos-theme="neumorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: var(--th-pos) !important; -webkit-text-fill-color: var(--th-pos) !important;
+  background: var(--th-inner); border-color: var(--th-border); box-shadow: inset 2px 2px 4px rgba(100,130,110,.10), inset -2px -2px 4px #fff;
+}
+:root[data-finos-theme="neumorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: var(--th-neg) !important; -webkit-text-fill-color: var(--th-neg) !important;
+  background: var(--th-inner); border-color: var(--th-border); box-shadow: inset 2px 2px 4px rgba(150,100,105,.10), inset -2px -2px 4px #fff;
+}
 /* Skeuomorphism: stronger, crisp indicator colors with a subtle raised finish. */
-
-
+:root[data-finos-theme="skeuomorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: var(--th-pos) !important; -webkit-text-fill-color: var(--th-pos) !important;
+  background: linear-gradient(180deg,var(--th-text),var(--th-text)); border-color: var(--th-border);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(30,60,40,.10);
+}
+:root[data-finos-theme="skeuomorphism"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: var(--th-neg) !important; -webkit-text-fill-color: var(--th-neg) !important;
+  background: linear-gradient(180deg,var(--th-text),var(--th-text)); border-color: var(--th-border);
+  box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(70,30,35,.10);
+}
 /* Bento Grid: cool, clean tinted blocks. */
-
-
+:root[data-finos-theme="bento-grid"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:first-child > div:last-child {
+  color: var(--th-pos) !important; -webkit-text-fill-color: var(--th-pos) !important;
+  background: var(--th-inner); border-color: var(--th-border);
+}
+:root[data-finos-theme="bento-grid"] .markets-workspace > section[style*="repeat(auto-fit, minmax(240px"] > div:last-child > div:last-child {
+  color: var(--th-neg) !important; -webkit-text-fill-color: var(--th-neg) !important;
+  background: var(--th-page); border-color: var(--th-border);
+}
 
 
 /* Plan & Goals workspace — consistent card hierarchy inspired by Markets,
    Portfolio, Holdings and Wealth Manager. Theme variables preserve each
    theme's own material, radius, contrast and accent; goal/API behavior untouched. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme] .plan-workspace {
+  --goals-ink: var(--finos-text, var(--t-text, var(--th-on-accent)));
+  --goals-muted: var(--finos-muted, var(--th-muted));
+  --goals-surface: var(--t-card-bg, var(--finos-surface, var(--th-text)));
+  --goals-inner: var(--t-inner-bg, var(--finos-surface-raised, var(--th-text)));
+  --goals-border: var(--finos-border, var(--th-border));
+  --goals-accent: var(--finos-accent, var(--th-accent));
+  color: var(--goals-ink) !important;
+  gap: 18px;
+}
+:root[data-finos-theme] .plan-workspace > section {
+  min-width: 0;
+  box-sizing: border-box;
+}
+:root[data-finos-theme] .plan-workspace > section:first-child {
+  padding: 18px 20px !important;
+  border: 1px solid var(--goals-border) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--goals-surface) !important;
+  background-image: none;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.06));
+}
+:root[data-finos-theme] .plan-workspace > section:first-child > div {
+  min-width: 0;
+}
+:root[data-finos-theme] .plan-workspace > section:first-child h2,
+:root[data-finos-theme] .plan-workspace h3,
+:root[data-finos-theme] .plan-workspace h4 {
+  color: var(--goals-ink) !important;
+  -webkit-text-fill-color: var(--goals-ink) !important;
+}
+:root[data-finos-theme] .plan-workspace :is(p,span,label,small) {
+  color: var(--goals-muted) !important;
+  -webkit-text-fill-color: var(--goals-muted) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme] .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"] > div {
+  min-width: 0;
+  padding: 16px !important;
+  border: 1px solid var(--goals-border) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--goals-surface) !important;
+  background-image: none !important;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.055)) !important;
+  color: var(--goals-ink) !important;
+}
+:root[data-finos-theme] .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"] > div > div:last-child {
+  overflow-wrap: anywhere;
+  color: var(--goals-ink) !important;
+  -webkit-text-fill-color: var(--goals-ink) !important;
+}
+:root[data-finos-theme] .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"],
+:root[data-finos-theme] .plan-workspace > section:has(> form),
+:root[data-finos-theme] .plan-workspace > section:has(> div > h3),
+:root[data-finos-theme] .plan-workspace > section:has(> .card-label) {
+  padding: 18px !important;
+  border: 1px solid var(--goals-border) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--goals-surface) !important;
+  background-image: none !important;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.055)) !important;
+}
+:root[data-finos-theme] .plan-workspace > section > form {
+  gap: 14px;
+}
+:root[data-finos-theme] .plan-workspace :is(input,select,textarea) {
+  box-sizing: border-box !important;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin-top: 7px !important;
+  padding: 11px 12px !important;
+  border: 1px solid var(--goals-border) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  background: var(--goals-inner) !important;
+  background-image: none !important;
+  color: var(--goals-ink) !important;
+  -webkit-text-fill-color: var(--goals-ink) !important;
+  box-shadow: none;
+  font: inherit;
+}
+:root[data-finos-theme] .plan-workspace :is(input,select,textarea)::placeholder {
+  color: var(--goals-muted) !important;
+  -webkit-text-fill-color: var(--goals-muted) !important;
+  opacity: .9;
+}
+:root[data-finos-theme] .plan-workspace :is(input,select,textarea):focus-visible {
+  outline: 2px solid var(--goals-accent) !important;
+  outline-offset: 2px;
+}
+:root[data-finos-theme] .plan-workspace article {
+  min-width: 0;
+  border: 1px solid var(--goals-border) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  background: var(--goals-inner) !important;
+  background-image: none !important;
+  box-shadow: var(--t-shadow, 0 2px 8px rgba(31,41,55,.05)) !important;
+  color: var(--goals-ink) !important;
+}
+:root[data-finos-theme] .plan-workspace article h4,
+:root[data-finos-theme] .plan-workspace article strong {
+  color: var(--goals-ink) !important;
+  -webkit-text-fill-color: var(--goals-ink) !important;
+}
+:root[data-finos-theme] .plan-workspace article > div[style*="height: 8px"],
+:root[data-finos-theme] .plan-workspace > section > div[style*="height: 8px"] {
+  background: var(--goals-border) !important;
+}
+:root[data-finos-theme] .plan-workspace article > div[style*="height: 8px"] > div,
+:root[data-finos-theme] .plan-workspace > section > div[style*="height: 8px"] > div {
+  background: linear-gradient(90deg, var(--goals-accent), color-mix(in srgb, var(--goals-accent) 60%, var(--th-accent))) !important;
+  border-radius: inherit;
+}
+:root[data-finos-theme] .plan-workspace [role="alert"] {
+  color: var(--th-neg) !important;
+  -webkit-text-fill-color: var(--th-neg) !important;
+  background: var(--th-text) !important;
+  border-color: var(--th-neg) !important;
+}
+:root[data-finos-theme] .plan-workspace [role="status"] {
+  color: var(--th-pos) !important;
+  -webkit-text-fill-color: var(--th-pos) !important;
+  background: var(--th-text) !important;
+  border-color: var(--th-border) !important;
+}
 /* Theme-specific material signatures. Brutalism deliberately keeps hard edges,
    thick ink borders and offset shadows instead of the soft glass-card treatment. */
-
-
-
-
-
-
+:root[data-finos-theme="brutalism"] .plan-workspace > section,
+:root[data-finos-theme="brutalism"] .plan-workspace > section:first-child,
+:root[data-finos-theme="brutalism"] .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"] > div,
+:root[data-finos-theme="brutalism"] .plan-workspace article {
+  border: 2px solid var(--finos-border, var(--th-border)) !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0 var(--finos-border, #484950) !important;
+}
+:root[data-finos-theme="brutalism"] .plan-workspace :is(input,select,textarea) {
+  border: 2px solid var(--finos-border, var(--th-border)) !important;
+  border-radius: 3px !important;
+  background: var(--t-inner-bg, var(--th-card)) !important;
+}
+:root[data-finos-theme="claymorphism"] .plan-workspace > section,
+:root[data-finos-theme="claymorphism"] .plan-workspace article {
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--th-accent) 12%, transparent), inset 0 1px 0 rgba(255,255,255,.8) !important;
+}
+:root[data-finos-theme="neumorphism"] .plan-workspace > section,
+:root[data-finos-theme="neumorphism"] .plan-workspace article {
+  box-shadow: 7px 7px 16px rgba(150,160,175,.28), -7px -7px 16px rgba(255,255,255,.9) !important;
+}
+:root[data-finos-theme="skeuomorphism"] .plan-workspace > section,
+:root[data-finos-theme="skeuomorphism"] .plan-workspace article {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 5px 12px rgba(30,40,60,.12) !important;
+}
+:root[data-finos-theme="bento-grid"] .plan-workspace > section,
+:root[data-finos-theme="bento-grid"] .plan-workspace article {
+  border-radius: 18px !important;
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--th-pos) 6%, transparent) !important;
+}
 
 /* Theme-tinted Goals category/status dropdowns in light themes. */
-
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="brutalism"]) .plan-workspace select,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="brutalism"]) .plan-workspace select option {
+  color: var(--goals-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--goals-ink, var(--th-on-accent)) !important;
+  background-color: var(--goals-inner, var(--th-text)) !important;
+}
+:root[data-finos-theme="light"] .plan-workspace select,
+:root[data-finos-theme="light"] .plan-workspace select option { background-color: var(--th-page) !important; }
+:root[data-finos-theme="minimal"] .plan-workspace select,
+:root[data-finos-theme="minimal"] .plan-workspace select option { background-color: var(--th-inner) !important; }
+:root[data-finos-theme="elegant-plain"] .plan-workspace select,
+:root[data-finos-theme="elegant-plain"] .plan-workspace select option { background-color: var(--th-inner) !important; }
+:root[data-finos-theme="skeuomorphism"] .plan-workspace select,
+:root[data-finos-theme="skeuomorphism"] .plan-workspace select option { background-color: var(--th-text) !important; }
+:root[data-finos-theme="neumorphism"] .plan-workspace select,
+:root[data-finos-theme="neumorphism"] .plan-workspace select option { background-color: var(--th-inner) !important; }
+:root[data-finos-theme="neomorphism"] .plan-workspace select,
+:root[data-finos-theme="neomorphism"] .plan-workspace select option { background-color: var(--th-text) !important; }
+:root[data-finos-theme="claymorphism"] .plan-workspace select,
+:root[data-finos-theme="claymorphism"] .plan-workspace select option { background-color: var(--th-page) !important; }
+:root[data-finos-theme="bento-grid"] .plan-workspace select,
+:root[data-finos-theme="bento-grid"] .plan-workspace select option { background-color: var(--th-inner) !important; }
+:root[data-finos-theme="brutalism"] .plan-workspace select,
+:root[data-finos-theme="brutalism"] .plan-workspace select option {
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
+  background-color: var(--t-inner-bg, var(--th-card)) !important;
+}
 
 
 /* Goals custom StyledSelect (Category and Status): match Portfolio's transparent
    select controls on light themes. The opened list is a custom popover, not a
    native <select>, so style trigger, menu, options and selected state directly. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-trigger {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 12px !important;
+  color: var(--goals-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--goals-ink, var(--th-on-accent)) !important;
+  background: var(--goals-inner, color-mix(in srgb, var(--th-text) 62%, transparent)) !important;
+  border: 1px solid var(--goals-border, color-mix(in srgb, var(--th-border) 32%, transparent)) !important;
+  border-radius: var(--t-radius-sm, 8px) !important;
+  box-shadow: none !important;
+  text-align: left;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-trigger > span {
+  color: var(--goals-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--goals-ink, var(--th-on-accent)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-menu {
+  position: absolute;
+  z-index: 1000;
+  inset-inline: 0;
+  top: calc(100% + 5px);
+  max-height: min(260px, 40vh);
+  overflow-y: auto;
+  padding: 5px;
+  color: var(--goals-ink, var(--th-on-accent)) !important;
+  background: var(--goals-inner, var(--th-text)) !important;
+  border: 1px solid var(--goals-border, var(--th-border)) !important;
+  border-radius: var(--t-radius, 12px) !important;
+  box-shadow: 0 12px 28px rgba(30,41,59,.14) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-option {
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  color: var(--goals-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--goals-ink, var(--th-on-accent)) !important;
+  background: transparent !important;
+  border: 0;
+  border-radius: calc(var(--t-radius-sm, 8px) - 2px);
+  text-align: left;
+  cursor: pointer;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-option:hover,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-option:focus-visible {
+  background: color-mix(in srgb, var(--goals-accent, var(--th-accent)) 10%, transparent) !important;
+  outline: 2px solid color-mix(in srgb, var(--goals-accent, var(--th-accent)) 28%, transparent);
+  outline-offset: -2px;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-option.is-selected {
+  background: color-mix(in srgb, var(--goals-accent, var(--th-accent)) 13%, transparent) !important;
+  font-weight: 650;
+}
+:root[data-finos-theme="light"] .plan-workspace .finos-select-trigger,
+:root[data-finos-theme="light"] .plan-workspace .finos-select-menu { background-color: color-mix(in srgb, var(--th-inner) 76%, transparent) !important; }
+:root[data-finos-theme="minimal"] .plan-workspace .finos-select-trigger,
+:root[data-finos-theme="minimal"] .plan-workspace .finos-select-menu { background-color: color-mix(in srgb, var(--th-inner) 88%, transparent) !important; }
+:root[data-finos-theme="elegant-plain"] .plan-workspace .finos-select-trigger,
+:root[data-finos-theme="elegant-plain"] .plan-workspace .finos-select-menu { background-color: color-mix(in srgb, var(--th-inner) 90%, transparent) !important; }
+:root[data-finos-theme="skeuomorphism"] .plan-workspace .finos-select-trigger,
+:root[data-finos-theme="skeuomorphism"] .plan-workspace .finos-select-menu { background-color: color-mix(in srgb, var(--th-text) 92%, transparent) !important; }
+:root[data-finos-theme="neumorphism"] .plan-workspace .finos-select-trigger,
+:root[data-finos-theme="neumorphism"] .plan-workspace .finos-select-menu { background-color: color-mix(in srgb, var(--th-inner) 94%, transparent) !important; }
+:root[data-finos-theme="neomorphism"] .plan-workspace .finos-select-trigger,
+:root[data-finos-theme="neomorphism"] .plan-workspace .finos-select-menu { background-color: color-mix(in srgb, var(--th-text) 90%, transparent) !important; }
+:root[data-finos-theme="claymorphism"] .plan-workspace .finos-select-trigger,
+:root[data-finos-theme="claymorphism"] .plan-workspace .finos-select-menu { background-color: color-mix(in srgb, var(--th-inner) 90%, transparent) !important; }
+:root[data-finos-theme="bento-grid"] .plan-workspace .finos-select-trigger,
+:root[data-finos-theme="bento-grid"] .plan-workspace .finos-select-menu { background-color: color-mix(in srgb, var(--th-inner) 92%, transparent) !important; }
+:root[data-finos-theme="brutalism"] .plan-workspace .finos-select-trigger,
+:root[data-finos-theme="brutalism"] .plan-workspace .finos-select-menu {
+  border: 2px solid var(--finos-border, var(--th-border)) !important;
+  border-radius: 3px !important;
+  box-shadow: 4px 4px 0 var(--finos-border, #484950) !important;
+}
 
 
 /* Goals final polish: summary cards borrow the saved-goal card's hierarchy
    (uppercase eyebrow, strong prominent value, quiet surface) without changing
    any goal calculations or actions. Scope only to light-family themes. */
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"] > div {
+  position: relative;
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  padding: 16px !important;
+  border: 1px solid var(--goals-border, var(--th-border)) !important;
+  border-radius: var(--t-radius, 14px) !important;
+  background: var(--goals-surface, var(--th-text)) !important;
+  background-image: none !important;
+  box-shadow: var(--t-shadow, 0 3px 10px rgba(31,41,55,.05)) !important;
+  color: var(--goals-ink, var(--th-on-accent)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"] > div > div:first-child {
+  color: var(--goals-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--goals-muted, var(--th-muted)) !important;
+  font-size: 10px !important;
+  font-weight: 650 !important;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  line-height: 1.35;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"] > div > div:last-child {
+  color: var(--goals-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--goals-ink, var(--th-on-accent)) !important;
+  font-size: clamp(23px, 3vw, 30px) !important;
+  line-height: 1.12;
+  font-weight: 800 !important;
+  letter-spacing: -.025em;
+  overflow-wrap: anywhere;
+}
 /* Subtle theme-aware edge for the form's custom Category and Status selectors.
    Remove the heavy charcoal frame while keeping a clear, accessible boundary. */
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-wrap .finos-select-trigger {
+  border: 1px solid color-mix(in srgb, var(--goals-border, var(--th-border)) 78%, var(--goals-accent, var(--th-accent)) 22%) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  background: color-mix(in srgb, var(--goals-inner, var(--th-text)) 84%, var(--goals-accent, var(--th-accent)) 4%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.48) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-wrap .finos-select-trigger:focus-visible,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-wrap .finos-select-trigger[aria-expanded="true"] {
+  outline: 2px solid color-mix(in srgb, var(--goals-accent, var(--th-accent)) 35%, transparent) !important;
+  outline-offset: 1px;
+  border-color: color-mix(in srgb, var(--goals-border, var(--th-border)) 55%, var(--goals-accent, var(--th-accent)) 45%) !important;
+}
+:root[data-finos-theme="brutalism"] .plan-workspace > section[style*="repeat(auto-fit,minmax(160px"] > div {
+  border: 2px solid var(--finos-border, var(--th-border)) !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0 var(--finos-border, #484950) !important;
+}
 
 
 /* Correct the Goals summary selector using the actual DOM: the summary is the
    second direct section, and its inline grid style contains spaces. Match the
    saved-goal article's solid inner-card surface and typography exactly. */
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace > section:nth-of-type(2) > div {
+  min-height: 92px;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  padding: 16px !important;
+  border: 1px solid color-mix(in srgb, var(--goals-inner, var(--th-border)) 76%, var(--goals-border, var(--th-border)) 24%) !important;
+  border-radius: var(--t-radius, 14px) !important;
+  background-color: var(--goals-inner, var(--th-text)) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: var(--goals-ink, var(--th-on-accent)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace > section:nth-of-type(2) > div > div:first-child {
+  color: var(--goals-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--goals-muted, var(--th-muted)) !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  line-height: 1.35;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace > section:nth-of-type(2) > div > div:last-child {
+  color: var(--goals-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--goals-ink, var(--th-on-accent)) !important;
+  font-size: clamp(22px, 3vw, 28px) !important;
+  line-height: 1.15;
+  font-weight: 800 !important;
+  letter-spacing: -.02em;
+  overflow-wrap: anywhere;
+}
 /* The custom select wrapper receives the old field inline styles. Neutralize
    that outer dark frame as well as the inner trigger; use a hairline sampled
    from the goal-card surface so it reads as a subtle edge, not a black box. */
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-wrap {
+  padding: 0 !important;
+  border: 1px solid color-mix(in srgb, var(--goals-inner, var(--th-border)) 78%, var(--goals-ink, var(--th-border)) 7%) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  background: var(--goals-inner, var(--th-text)) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace .finos-select-wrap .finos-select-trigger {
+  min-height: 42px;
+  border: 0.5px solid color-mix(in srgb, var(--goals-inner, var(--th-border)) 78%, var(--goals-ink, var(--th-border)) 7%) !important;
+  background: var(--goals-inner, var(--th-text)) !important;
+  box-shadow: none !important;
+}
 /* Brutalism keeps its intentionally heavy material language. */
-
+:root[data-finos-theme="brutalism"] .plan-workspace .finos-select-wrap {
+  border: 2px solid var(--finos-border, var(--th-border)) !important;
+  border-radius: 3px !important;
+}
 
 
 /* Goals summary cards: thin black outline only, across every light-family theme.
    Keep the existing solid surface, typography, spacing and all other styling. */
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]) .plan-workspace > section:nth-of-type(2) > div {
+  border: 1px solid color-mix(in srgb, var(--th-border) 62%, transparent) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
 /* Brutalism's existing strong border language is intentionally preserved. */
-
+:root[data-finos-theme="brutalism"] .plan-workspace > section:nth-of-type(2) > div {
+  border: 2px solid var(--finos-border, var(--th-border)) !important;
+}
 
 
 /* Tax Centre light-theme parity pass. The Tax JSX uses dark-mode inline
    rgba/gradient colours, so override those locally without touching tax logic
    or the Dark theme. */
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre {
+  --tax-ink: var(--finos-text, var(--th-on-accent));
+  --tax-muted: var(--finos-muted, var(--th-muted));
+  --tax-surface: var(--t-card-bg, var(--th-text));
+  --tax-inner: var(--t-inner-bg, var(--th-text));
+  --tax-line: var(--finos-border, var(--th-border));
+  color: var(--tax-ink) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre > section,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="linear-gradient(135deg, rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.025)"] {
+  color: var(--tax-ink) !important;
+  background: var(--tax-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--tax-line) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.055)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(h1,h2,h3,h4,h5,strong,b,th,td,label) {
+  color: var(--tax-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--tax-ink, var(--th-on-accent)) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(p,span,small,dt,dd,caption) {
+  color: var(--tax-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--tax-muted, var(--th-muted)) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.48)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.55)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.58)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.62)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.65)"] {
+  color: var(--tax-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--tax-muted, var(--th-muted)) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(input,select,textarea) {
+  color: var(--tax-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--tax-ink, var(--th-on-accent)) !important;
+  background: var(--tax-inner, var(--th-text)) !important;
+  border: 1px solid var(--tax-line, var(--th-border)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [role="alert"] {
+  color: var(--th-neg) !important;
+  -webkit-text-fill-color: var(--th-neg) !important;
+  background: var(--th-text) !important;
+  border: 1px solid var(--th-border) !important;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre table {
+  color: var(--tax-ink, var(--th-on-accent)) !important;
+  border-color: var(--tax-line, var(--th-border)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre th,
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre td {
+  border-color: var(--tax-line, var(--th-border)) !important;
+}
 
 
 /* Tax Centre: make the entire module follow Goals' light-theme card/form system.
    This is deliberately a presentation-only layer; no tax data or calculations
    are touched. Inline dark-mode styles in nested tax panels need explicit wins. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre {
+  color: var(--finos-text, var(--th-on-accent)) !important;
+  color-scheme: light;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(section, article, .glass-card, .card, [class*="panel"], [class*="card"], [style*="linear-gradient"], [style*="rgba(12,16,30"], [style*="rgba(15,23,42"], [style*="rgba(255,255,255,0.02"], [style*="rgba(255,255,255,0.03"], [style*="rgba(255,255,255,0.04"], [style*="rgba(255,255,255,0.05"], [style*="rgba(255,255,255,0.06"], [style*="rgba(255,255,255,0.07"], [style*="rgba(255,255,255,0.08"]) {
+  color: var(--tax-ink, var(--th-on-accent)) !important;
+  background-color: var(--tax-surface, var(--th-text)) !important;
+  background-image: none !important;
+  border-color: var(--tax-line, var(--th-border)) !important;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.055)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(.glass-card, .card, [class*="panel"], [class*="card"]) {
+  border: 1px solid var(--tax-line, var(--th-border)) !important;
+  border-radius: var(--t-radius, 14px) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(h1,h2,h3,h4,h5,h6,strong,b,label,th,td,button) {
+  color: var(--tax-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--tax-ink, var(--th-on-accent)) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(p,span,small,dt,dd,caption,legend) {
+  color: var(--tax-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--tax-muted, var(--th-muted)) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(input,select,textarea) {
+  box-sizing: border-box !important;
+  min-height: 42px;
+  color: var(--tax-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--tax-ink, var(--th-on-accent)) !important;
+  background: var(--tax-inner, var(--th-text)) !important;
+  border: 1px solid var(--tax-line, var(--th-border)) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(input,select,textarea)::placeholder {
+  color: var(--tax-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--tax-muted, var(--th-muted)) !important;
+  opacity: .85 !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(input,select,textarea):focus-visible {
+  outline: 2px solid var(--finos-accent, var(--th-accent)) !important;
+  outline-offset: 2px;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre nav[aria-label="Tax sections"] {
+  padding: 8px !important;
+  background: var(--tax-inner, var(--th-text)) !important;
+  border: 1px solid var(--tax-line, var(--th-border)) !important;
+  border-radius: var(--t-radius, 14px) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre nav[aria-label="Tax sections"] button {
+  border-radius: var(--t-radius-sm, 9px) !important;
+  border: 1px solid var(--tax-line, var(--th-border)) !important;
+  background: var(--tax-surface, var(--th-text)) !important;
+  color: var(--tax-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--tax-ink, var(--th-on-accent)) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme="light"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="minimal"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="elegant-plain"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="skeuomorphism"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="neumorphism"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="neomorphism"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="claymorphism"] .tax-centre nav[aria-label="Tax sections"] button.primary-button,
+:root[data-finos-theme="bento-grid"] .tax-centre nav[aria-label="Tax sections"] button.primary-button {
+  background: var(--finos-accent, var(--th-accent)) !important;
+  color: var(--th-on-accent) !important;
+  -webkit-text-fill-color: var(--th-on-accent) !important;
+  border-color: var(--finos-accent, var(--th-accent)) !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre button:not(.primary-button) {
+  background: var(--tax-inner, var(--th-text)) !important;
+  border: 1px solid var(--tax-line, var(--th-border)) !important;
+  color: var(--tax-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--tax-ink, var(--th-on-accent)) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [role="alert"] {
+  color: var(--th-neg) !important;
+  -webkit-text-fill-color: var(--th-neg) !important;
+  background: var(--th-text) !important;
+  border: 1px solid var(--th-border) !important;
+  border-radius: 12px !important;
+}
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: rgba(255,255,255"] {
+  color: var(--tax-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--tax-muted, var(--th-muted)) !important;
+  opacity: 1 !important;
+}
 
 
 /* Final Tax text-contrast correction: several tax metric/card labels are plain
    divs with inline white rgba colours, not paragraphs/spans. Catch those too
    so text remains readable inside every light-theme card and nested panel. */
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: white"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color:#fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: #fff"] {
+  color: var(--tax-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--tax-muted, var(--th-muted)) !important;
+  opacity: 1 !important;
+}
 /* Values and primary labels should use the darker foreground, even when the
    original inline colour was translucent white. */
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="font-weight: 700"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="font-weight: 800"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="fontSize: 22"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="fontSize: 24"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="fontSize: 28"] {
+  color: var(--tax-ink, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--tax-ink, var(--th-on-accent)) !important;
+  opacity: 1 !important;
+}
 
 
 /* Tax light-theme text correction: inline rgba colours are serialized with spaces,
    so cover all nested card content and restore muted text hierarchy afterwards. */
-
-
-
-
-
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre * { color: var(--tax-ink, var(--th-on-accent)) !important; -webkit-text-fill-color: var(--tax-ink, var(--th-on-accent)) !important; text-shadow: none !important; }
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(p,span,small,dt,dd,caption,summary,legend) { color: var(--tax-muted, var(--th-muted)) !important; -webkit-text-fill-color: var(--tax-muted, var(--th-muted)) !important; }
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [role="status"] { color: var(--th-pos) !important; -webkit-text-fill-color: var(--th-pos) !important; }
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [role="alert"] { color: var(--th-neg) !important; -webkit-text-fill-color: var(--th-neg) !important; }
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre button.primary-button { color: var(--th-text) !important; -webkit-text-fill-color: var(--th-text) !important; }
 
 
 /* Tax Income tab: make the three concepts read as separate sections instead
@@ -421,19 +1912,19 @@
 .tax-centre .tax-house-property-panel {
   display: block;
   box-sizing: border-box;
-  border: 1px solid var(--tax-section-border, rgba(125, 135, 155, 0.28)) !important;
+  border: 1px solid var(--tax-section-border, color-mix(in srgb, var(--th-border) 28%, transparent)) !important;
   border-radius: 16px !important;
   padding: clamp(14px, 2.4vw, 22px) !important;
   box-shadow: 0 5px 18px rgba(24, 32, 48, 0.055);
 }
 .tax-centre .tax-income-aggregation {
-  border-top: 3px solid #7563dc !important;
+  border-top: 3px solid var(--th-accent) !important;
 }
 .tax-centre .tax-business-income-review {
-  border-top: 3px solid #d39a37 !important;
+  border-top: 3px solid var(--th-warn) !important;
 }
 .tax-centre .tax-house-property-panel {
-  border-top: 3px solid #299b78 !important;
+  border-top: 3px solid var(--th-pos) !important;
 }
 .tax-centre .tax-income-aggregation > h3,
 .tax-centre .tax-business-income-review > h3,
@@ -453,17 +1944,17 @@
 .tax-centre .tax-income-aggregation > div[style*="margin-top: 16px"] {
   padding: 10px 12px;
   border-radius: 9px;
-  background: rgba(125, 135, 155, 0.075);
-  border-left: 3px solid #8c98aa;
+  background: color-mix(in srgb, var(--th-border) 8%, transparent);
+  border-left: 3px solid var(--th-border);
 }
 .tax-centre .tax-business-income-review {
-  background: color-mix(in srgb, var(--surface, #ffffff) 94%, #d39a37 6%) !important;
+  background: color-mix(in srgb, var(--surface, var(--th-text)) 94%, var(--th-warn) 6%) !important;
 }
 .tax-centre .tax-house-property-panel {
-  background: color-mix(in srgb, var(--surface, #ffffff) 96%, #299b78 4%) !important;
+  background: color-mix(in srgb, var(--surface, var(--th-text)) 96%, var(--th-pos) 4%) !important;
 }
 .tax-centre .tax-income-aggregation {
-  background: var(--surface, #ffffff);
+  background: var(--surface, var(--th-text));
 }
 
 
@@ -472,12 +1963,12 @@
   display: grid;
   gap: 16px;
   padding: clamp(14px, 2.2vw, 22px) !important;
-  border: 1px solid var(--tax-section-border, rgba(125,135,155,.28)) !important;
+  border: 1px solid var(--tax-section-border, color-mix(in srgb, var(--th-border) 28%, transparent)) !important;
   border-radius: 16px !important;
 }
 .tax-centre .tax-hra-heading {
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--tax-section-border, rgba(125,135,155,.28));
+  border-bottom: 1px solid var(--tax-section-border, color-mix(in srgb, var(--th-border) 28%, transparent));
 }
 .tax-centre .tax-hra-heading h3 {
   font-size: clamp(19px, 2vw, 24px);
@@ -488,7 +1979,7 @@
 .tax-centre .tax-hra-salary-section {
   margin-bottom: 0 !important;
   padding: clamp(12px, 1.8vw, 18px) !important;
-  border: 1px solid var(--tax-section-border, rgba(125,135,155,.28)) !important;
+  border: 1px solid var(--tax-section-border, color-mix(in srgb, var(--th-border) 28%, transparent)) !important;
   border-radius: 12px !important;
 }
 .tax-centre .tax-hra-salary-section h3 { font-size: 16px; margin-bottom: 6px !important; }
@@ -496,9 +1987,9 @@
 .tax-centre .tax-hra-form { gap: 16px !important; }
 .tax-centre .tax-hra-rent-section {
   padding: clamp(12px, 1.8vw, 18px);
-  border: 1px solid var(--tax-section-border, rgba(125,135,155,.28));
+  border: 1px solid var(--tax-section-border, color-mix(in srgb, var(--th-border) 28%, transparent));
   border-radius: 12px;
-  background: var(--tax-subtle-surface, rgba(125,135,155,.035));
+  background: var(--tax-subtle-surface, color-mix(in srgb, var(--th-border) 4%, transparent));
 }
 .tax-centre .tax-hra-rent-section h4 {
   margin: 0 0 5px;
@@ -522,35 +2013,35 @@
   min-width: 0;
   min-height: 42px;
   border-radius: 8px !important;
-  border: 1px solid var(--tax-input-border, #cbd5e1) !important;
-  background: var(--tax-input-surface, #fff) !important;
-  color: var(--tax-ink, #202938) !important;
+  border: 1px solid var(--tax-input-border, var(--th-border)) !important;
+  background: var(--tax-input-surface, var(--th-text)) !important;
+  color: var(--tax-ink, var(--th-on-accent)) !important;
   padding: 10px 11px !important;
   box-shadow: none !important;
 }
 .tax-centre .tax-hra-fields input:focus,
 .tax-centre .tax-hra-fields select:focus {
-  outline: 2px solid color-mix(in srgb, #7563dc 32%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--th-accent) 32%, transparent);
   outline-offset: 1px;
 }
-.tax-centre .tax-hra-fields input::placeholder { color: var(--tax-muted, #5b6472) !important; opacity: .78; }
+.tax-centre .tax-hra-fields input::placeholder { color: var(--tax-muted, var(--th-muted)) !important; opacity: .78; }
 .tax-centre .tax-hra-fields label:has(input[type="checkbox"]) {
   display: flex !important;
   flex-direction: row !important;
   align-items: flex-start !important;
   gap: 9px !important;
   padding: 10px 11px;
-  border: 1px solid var(--tax-section-border, rgba(125,135,155,.28));
+  border: 1px solid var(--tax-section-border, color-mix(in srgb, var(--th-border) 28%, transparent));
   border-radius: 8px;
   font-weight: 500;
 }
 .tax-centre .tax-hra-fields input[type="checkbox"] { margin-top: 3px; flex: 0 0 auto; accent-color: #7563dc; }
 .tax-centre .tax-hra-classification > div[aria-live] {
   min-height: 42px !important;
-  border: 1px solid var(--tax-input-border, #cbd5e1) !important;
+  border: 1px solid var(--tax-input-border, var(--th-border)) !important;
   border-radius: 8px !important;
-  background: var(--tax-input-surface, #fff) !important;
-  color: var(--tax-ink, #202938) !important;
+  background: var(--tax-input-surface, var(--th-text)) !important;
+  color: var(--tax-ink, var(--th-on-accent)) !important;
 }
 .tax-centre .tax-hra-actions { padding-top: 2px; }
 .tax-centre .tax-hra-actions button { min-height: 40px; padding: 10px 15px; }
@@ -558,17 +2049,59 @@
   .tax-centre .tax-hra-fields { grid-template-columns: minmax(0, 1fr) !important; }
   .tax-centre .tax-hra-fields label:has(input[type="checkbox"]) { grid-column: 1; }
 }
-
-
+:root[data-finos-theme="dark"] .tax-centre .tax-hra-fields input:not([type="checkbox"]),
+:root[data-finos-theme="dark"] .tax-centre .tax-hra-fields select,
+:root[data-finos-theme="dark"] .tax-centre .tax-hra-fields textarea,
+:root[data-finos-theme="dark"] .tax-centre .tax-hra-classification > div[aria-live] {
+  --tax-input-surface: var(--th-card);
+  --tax-input-border: var(--th-border);
+  --tax-ink: var(--th-text);
+  --tax-muted: var(--th-muted);
+}
+:root[data-finos-theme="dark"] .tax-centre .tax-hra-rent-section {
+  --tax-section-border: color-mix(in srgb, var(--th-border) 18%, transparent);
+  --tax-subtle-surface: color-mix(in srgb, var(--th-muted) 4%, transparent);
+}
 
 
 /* Tax workspace polish: unify form controls with the active theme and remove
    the oversized legacy select outlines. Presentation only; tax logic is untouched. */
-
-
-
-
-
+:root[data-finos-theme] .tax-centre :is(select, input:not([type="checkbox"]):not([type="radio"]), textarea) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--tax-input-border, var(--finos-border, color-mix(in srgb, var(--th-border) 28%, transparent))) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  background: var(--tax-input-surface, var(--finos-surface-raised, var(--t-inner-bg, var(--th-card)))) !important;
+  color: var(--tax-ink, var(--finos-text, inherit)) !important;
+  box-shadow: none !important;
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+:root[data-finos-theme] .tax-centre :is(select, input:not([type="checkbox"]):not([type="radio"]), textarea):focus-visible {
+  border-color: var(--finos-accent, var(--th-accent)) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--th-accent)) 22%, transparent) !important;
+  outline-offset: 1px;
+}
+:root[data-finos-theme] .tax-centre select option {
+  color: var(--tax-ink, var(--finos-text, var(--th-on-accent)));
+  background: var(--tax-input-surface, var(--finos-surface, var(--th-text)));
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre {
+  --tax-ink: var(--th-text);
+  --tax-muted: var(--th-muted);
+  --tax-input-surface: color-mix(in srgb, var(--finos-surface, var(--th-card)) 84%, var(--finos-page, var(--th-page)) 16%);
+  --tax-input-border: color-mix(in srgb, var(--finos-border, var(--th-border)) 82%, var(--finos-text, var(--th-border)) 18%);
+  --tax-section-border: color-mix(in srgb, var(--finos-border, var(--th-border)) 86%, var(--finos-text, var(--th-border)) 14%);
+  --tax-subtle-surface: color-mix(in srgb, var(--finos-surface, var(--th-on-accent)) 90%, var(--finos-page, var(--th-on-accent)) 10%);
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre :is(select, input:not([type="checkbox"]):not([type="radio"]), textarea) {
+  background: var(--tax-input-surface) !important;
+  border-color: var(--tax-input-border) !important;
+  color: var(--tax-ink) !important;
+  border-width: 1px !important;
+  box-shadow: none !important;
+}
 .tax-centre :is(.tax-income-aggregation,.tax-business-income-review,.tax-house-property-panel,.tax-hra-panel,.tax-hra-salary-section,.tax-hra-rent-section) {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -592,237 +2125,1493 @@
 
 /* Focused light-theme refinement: dropdowns only, plus clearer section separation.
    Keep existing input styling, cards, and all dark-theme styling untouched. */
-
-
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content select {
+  border: 1px solid color-mix(in srgb, var(--finos-border, var(--th-border)) 72%, transparent) !important;
+  border-radius: var(--t-radius-sm, 9px) !important;
+  box-shadow: none !important;
+  background-image: none;
+  background-color: var(--t-inner-bg, var(--t-card-bg, var(--th-card))) !important;
+  color: var(--finos-text, var(--th-text)) !important;
+  outline-offset: 2px;
+  transition: border-color .16s ease, background-color .16s ease;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content select:focus-visible {
+  border-color: var(--finos-accent, var(--th-accent)) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--th-accent)) 20%, transparent);
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content select option {
+  color: var(--finos-text, var(--th-text));
+  background: var(--t-card-bg, var(--th-card));
+}
 /* Use spacing and heading hierarchy—not heavy borders—to distinguish sections. */
-
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content :is(form, section, .form-section, .settings-section) + :is(form, section, .form-section, .settings-section) {
+  margin-top: 20px;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content :is(.form-section, .settings-section) > :is(h2,h3,h4) {
+  margin-top: 0;
+  line-height: 1.35;
+}
 
 
 /* Tax Calculation page: remove the heavy boxed dropdown treatment in light themes.
    Keep these rules scoped to tax controls; other modules retain their existing styling. */
-
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre select {
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--finos-border, var(--th-border)) 75%, transparent) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  background: var(--tax-input-surface, var(--finos-surface, var(--th-card))) !important;
+  color: var(--tax-ink, var(--finos-text, var(--th-text))) !important;
+  min-height: 42px;
+  padding: 10px 30px 10px 12px !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--th-accent)) 22%, transparent) !important;
+  outline-offset: 1px;
+  border-bottom-color: var(--finos-accent, var(--th-accent)) !important;
+}
 /* Distinguish tax workflow sections with whitespace and subtle surface changes,
    not nested heavy outlines. */
-
-
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre :is(.tax-calculation-settings,.tax-calculation-results,.tax-paid-section,.tax-credit-section,.tax-income-aggregation,.tax-business-income-review,.tax-house-property-panel,.tax-hra-panel) {
+  margin-block: 20px !important;
+  padding: 16px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--finos-surface, var(--th-card)) 72%, var(--finos-page, var(--th-page)) 28%) !important;
+  min-width: 0;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre :is(.tax-calculation-settings,.tax-calculation-results,.tax-paid-section,.tax-credit-section,.tax-income-aggregation,.tax-business-income-review,.tax-house-property-panel,.tax-hra-panel) > :is(h2,h3,h4) {
+  margin-top: 0 !important;
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+@media (max-width: 620px) {
+  :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre :is(.tax-calculation-settings,.tax-calculation-results,.tax-paid-section,.tax-credit-section) {
+    padding: 12px !important;
+  }
+}
 
 
 /* Definitive fix for the custom Financial OS dropdown used on Tax Calculation.
    The visible boxed control is .finos-select-trigger (not the native select element). */
-
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre .finos-select-trigger {
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--finos-border, var(--th-border)) 72%, transparent) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  background: var(--tax-input-surface, var(--finos-surface, var(--th-card))) !important;
+  color: var(--tax-ink, var(--finos-text, var(--th-text))) !important;
+  min-height: 42px;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre .finos-select-trigger:focus-visible,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre .finos-select-trigger[aria-expanded="true"] {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--th-accent)) 20%, transparent) !important;
+  outline-offset: 1px;
+  border-bottom-color: var(--finos-accent, var(--th-accent)) !important;
+}
 /* Make the three main Tax Calculation areas visibly distinct using whitespace
    and subtle surfaces while avoiding heavy card borders. */
-
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre .finos-select-wrap {
+  min-width: 0;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .tax-centre :is(.tax-calculation-settings,.tax-calculation-results,.tax-paid-section,.tax-credit-section) {
+  margin-block: 20px !important;
+  padding: 16px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--finos-surface, var(--th-card)) 72%, var(--finos-page, var(--th-page)) 28%) !important;
+}
 
 
 /* Final cascade correction for Tax Calculation custom dropdowns.
    The shared .content dropdown rule is more specific than the earlier tax rule. */
-
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre .finos-select-wrap > button.finos-select-trigger {
+  border: 0 !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--finos-border, var(--th-border)) 72%, transparent) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--tax-ink, var(--finos-text, var(--th-text))) !important;
+  -webkit-text-fill-color: var(--tax-ink, var(--finos-text, var(--th-text))) !important;
+  min-height: 42px;
+  padding: 10px 4px !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre .finos-select-wrap > button.finos-select-trigger:focus-visible,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre .finos-select-wrap > button.finos-select-trigger[aria-expanded="true"] {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--th-accent)) 20%, transparent) !important;
+  outline-offset: 1px;
+  border-bottom-color: var(--finos-accent, var(--th-accent)) !important;
+}
 /* Real wrappers in renderTaxCalculation: distinguish major areas without heavy outlines. */
-
-
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre :is(.tax-calculation-liability,.tax-calculation-settings,.tax-calculation-breakdown,.tax-calculation-scope) {
+  margin-block: 8px 16px !important;
+  padding: 18px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, var(--finos-surface, var(--th-card)) 90%, var(--finos-page, var(--th-page)) 10%) !important;
+  min-width: 0;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre :is(.tax-calculation-liability,.tax-calculation-settings,.tax-calculation-scope) > h3 {
+  margin-top: 0 !important;
+  color: var(--tax-ink, var(--finos-text, var(--th-text))) !important;
+}
+@media (max-width: 620px) {
+  :root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .content .tax-centre :is(.tax-calculation-liability,.tax-calculation-settings,.tax-calculation-breakdown,.tax-calculation-scope) {
+    padding: 13px !important;
+  }
+}
 
 /* Add Transaction modal: make the Account and Category custom dropdowns
    follow the active light theme. Dark-theme rules remain untouched. */
-
-
-
-
-
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .finos-select-wrap > button.finos-select-trigger {
+  background: var(--t-inner-bg, var(--t-card-bg, var(--finos-surface, var(--th-card)))) !important;
+  background-image: none !important;
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+  box-shadow: none !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .finos-select-wrap > button.finos-select-trigger:focus-visible,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .finos-select-wrap > button.finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, var(--th-accent)) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--th-accent)) 18%, transparent);
+  outline-offset: 1px;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .finos-select-menu {
+  background: var(--t-card-bg, var(--finos-surface, var(--th-card))) !important;
+  border-color: var(--finos-border, var(--th-border)) !important;
+  box-shadow: 0 12px 30px rgba(31, 41, 55, .14) !important;
+  backdrop-filter: blur(12px);
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .finos-select-option {
+  color: var(--finos-text, var(--th-text)) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .finos-select-option:hover,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .finos-select-option.is-selected {
+  background: color-mix(in srgb, var(--finos-accent, var(--th-accent)) 12%, var(--t-card-bg, var(--th-card))) !important;
+  color: var(--finos-text, var(--th-text)) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .finos-select-chevron,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .finos-select-check {
+  color: var(--finos-accent, var(--th-accent)) !important;
+}
 
 
 /* Add/Edit Account dialog: respect the active light theme instead of
    retaining the hard-coded dark modal and dark input borders from inline styles. */
-
-
-
-
-
-
-
-
-
-
-
-
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="presentation"][style*="rgba(3, 7, 18, 0.78)"] {
+  background: color-mix(in srgb, var(--th-text) 38%, transparent) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] {
+  background: var(--t-card-bg, var(--th-card)) !important;
+  background-image: none !important;
+  color: var(--finos-text, var(--th-text)) !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  box-shadow: 0 22px 65px rgba(31, 41, 55, .18) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] h3 {
+  color: var(--finos-text, var(--th-text)) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] p {
+  color: var(--finos-muted, var(--th-muted)) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] label {
+  color: var(--finos-text, var(--th-text)) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] input:not([type="checkbox"]):not([type="radio"]) {
+  background: var(--t-inner-bg, var(--th-page)) !important;
+  background-image: none !important;
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+  box-shadow: none !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] input::placeholder {
+  color: var(--finos-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--finos-muted, var(--th-muted)) !important;
+  opacity: 1;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] input:focus {
+  border-color: var(--finos-accent, var(--th-accent)) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--finos-accent, var(--th-accent)) 14%, transparent) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-wrap > .finos-select-trigger {
+  background: var(--t-inner-bg, var(--th-page)) !important;
+  background-image: none !important;
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+  box-shadow: none !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-menu {
+  background: var(--t-card-bg, var(--th-card)) !important;
+  color: var(--finos-text, var(--th-text)) !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+  box-shadow: 0 12px 30px rgba(31, 41, 55, .14) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-option {
+  color: var(--finos-text, var(--th-text)) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] header > button[aria-label="Close account form"] {
+  background: var(--t-inner-bg, var(--th-page)) !important;
+  color: var(--finos-text, var(--th-text)) !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+}
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] footer {
+  border-top: 1px solid var(--finos-border, var(--th-border)) !important;
+}
 
 
 /* Account type dropdown: remove the heavy dark focus ring visible in the
    Add Account dialog on mobile; retain a subtle theme-accent focus indicator. */
-
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-wrap > .finos-select-trigger:focus,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-wrap > .finos-select-trigger:focus-visible,
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .finos-select-wrap > .finos-select-trigger[aria-expanded="true"] {
+  outline: none !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--finos-accent, var(--th-accent)) 12%, transparent) !important;
+}
 
 
 /* Account form: all presentation comes from the active theme tokens. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme] .money-accounts .account-form-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--t-space-4, 16px);
+  background: color-mix(in srgb, var(--finos-page, var(--t-page-bg, var(--th-card))) 72%, transparent);
+  backdrop-filter: blur(var(--t-overlay-blur, 8px));
+  -webkit-backdrop-filter: blur(var(--t-overlay-blur, 8px));
+}
+:root[data-finos-theme] .money-accounts .account-form-dialog {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 620px;
+  max-height: min(88dvh, 760px);
+  overflow-y: auto;
+  padding: clamp(18px, 4vw, 28px);
+  color: var(--finos-text, var(--t-text, inherit));
+  background: var(--t-card-bg, var(--finos-surface, var(--t-surface, var(--th-card))));
+  background-image: none;
+  border: var(--t-card-border, 1px solid var(--finos-border, var(--t-border, transparent)));
+  border-radius: var(--t-radius, 20px);
+  box-shadow: var(--t-shadow, 0 24px 90px rgba(0,0,0,.35));
+}
+:root[data-finos-theme] .money-accounts .account-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--t-space-4, 16px);
+  margin-bottom: var(--t-space-5, 22px);
+}
+:root[data-finos-theme] .money-accounts .account-form-eyebrow {
+  margin: 0 0 7px;
+  letter-spacing: var(--t-label-track, .14em);
+}
+:root[data-finos-theme] .money-accounts .account-form-title {
+  margin: 0;
+  color: var(--finos-text, var(--t-text, inherit));
+  font-size: clamp(21px, 4vw, 27px);
+}
+:root[data-finos-theme] .money-accounts .account-form-description {
+  margin: 8px 0 0;
+  color: var(--finos-muted, var(--t-muted, var(--finos-text, inherit)));
+  font-size: var(--t-font-sm, 13px);
+  line-height: 1.5;
+}
+:root[data-finos-theme] .money-accounts .account-form-close {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--finos-border, var(--t-border, transparent));
+  border-radius: var(--t-radius-sm, 10px);
+  color: var(--finos-text, var(--t-text, inherit));
+  background: var(--t-inner-bg, var(--finos-surface-raised, transparent));
+  font: inherit;
+  font-size: 21px;
+  cursor: pointer;
+}
+:root[data-finos-theme] .money-accounts .account-form-close:disabled {
+  cursor: not-allowed;
+  opacity: var(--t-disabled-opacity, .6);
+}
+:root[data-finos-theme] .money-accounts .account-form-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: var(--t-space-4, 17px);
+}
+:root[data-finos-theme] .money-accounts .account-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--t-space-2, 8px);
+  min-width: 0;
+  color: var(--finos-text, var(--t-text, inherit));
+  font-size: var(--t-font-sm, 13px);
+  font-weight: var(--t-label-weight, 600);
+}
+:root[data-finos-theme] .money-accounts :is(.account-form-input, .account-form-select, .account-form-field > .finos-select) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 11px 12px;
+  color: var(--finos-text, var(--t-text, inherit));
+  -webkit-text-fill-color: var(--finos-text, var(--t-text, inherit));
+  background: var(--t-inner-bg, var(--finos-surface-raised, transparent));
+  border: 1px solid var(--finos-border, var(--t-border, transparent));
+  border-radius: var(--t-radius-sm, 10px);
+  box-shadow: var(--t-shadow-inner, none);
+  font: inherit;
+  font-size: var(--t-control-font-size, 14px);
+  outline: none;
+}
+:root[data-finos-theme] .money-accounts .account-form-input::placeholder {
+  color: var(--finos-muted, var(--t-muted, currentColor));
+  -webkit-text-fill-color: var(--finos-muted, var(--t-muted, currentColor));
+  opacity: 1;
+}
+:root[data-finos-theme] .money-accounts :is(.account-form-input, .account-form-select, .account-form-field > .finos-select):focus,
+:root[data-finos-theme] .money-accounts :is(.account-form-input, .account-form-select, .account-form-field > .finos-select):focus-visible,
+:root[data-finos-theme] .money-accounts .account-form-select[aria-expanded="true"] {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--t-accent, currentColor)) 24%, transparent);
+  outline-offset: 1px;
+  border-color: var(--finos-accent, var(--t-accent, var(--finos-border, currentColor)));
+  box-shadow: none;
+}
+:root[data-finos-theme] .money-accounts .account-form-loan-fields {
+  margin-top: var(--t-space-4, 17px);
+}
+:root[data-finos-theme] .money-accounts .account-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--t-space-2, 10px);
+  margin-top: var(--t-space-5, 26px);
+  padding-top: var(--t-space-4, 18px);
+  border-top: 1px solid var(--finos-border, var(--t-border, transparent));
+}
+:root[data-finos-theme] .money-accounts .account-form-footer button {
+  min-height: 42px;
+  padding: 11px 18px;
+  border-radius: var(--t-radius-sm, 10px);
+}
+:root[data-finos-theme] .money-accounts .account-form-cancel { min-width: 100px; }
+:root[data-finos-theme] .money-accounts .account-form-submit { min-width: 145px; }
+:root[data-finos-theme] .money-accounts .account-form-submit:disabled {
+  opacity: var(--t-disabled-opacity, .65);
+}
+@media (max-width: 520px) {
+  :root[data-finos-theme] .money-accounts .account-form-overlay {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: var(--t-space-3, 10px);
+  }
+  :root[data-finos-theme] .money-accounts .account-form-dialog {
+    max-height: calc(100dvh - 2 * var(--t-space-3, 10px));
+  }
+  :root[data-finos-theme] .money-accounts .account-form-footer > button {
+    flex: 1 1 auto;
+  }
+}
 
 
 /* Root cause fix: account-form-select is the StyledSelect wrapper.
    The visible control is its child button, .finos-select-trigger. */
-
-
-
-
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:hover,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:active,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:focus,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger[aria-expanded="true"] {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 11px 12px !important;
+  color: var(--finos-text, var(--t-text, inherit)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--t-text, inherit)) !important;
+  background: var(--t-inner-bg, var(--finos-surface-raised, transparent)) !important;
+  background-image: none !important;
+  border: 1px solid var(--finos-border, var(--t-border, transparent)) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font: inherit !important;
+  font-size: var(--t-control-font-size, 14px) !important;
+  text-align: left !important;
+}
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, var(--t-accent, var(--finos-border, currentColor))) !important;
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--t-accent, currentColor)) 20%, transparent) !important;
+  outline-offset: 1px !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .money-accounts .account-form-select > .finos-select-trigger:disabled {
+  opacity: var(--t-disabled-opacity, .6) !important;
+  cursor: not-allowed !important;
+}
+:root[data-finos-theme] .money-accounts .account-form-select .finos-select-menu {
+  color: var(--finos-text, var(--t-text, inherit)) !important;
+  background: var(--t-card-bg, var(--finos-surface, var(--t-surface, var(--th-text)))) !important;
+  border: 1px solid var(--finos-border, var(--t-border, transparent)) !important;
+}
 
 
 /* Final override for the Add Account type selector: prevent browser/global
    button focus styles from painting the thick black frame seen on mobile. */
-
-
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:hover,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:active,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:focus,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger[aria-expanded="true"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  outline: 0 !important;
+  outline-offset: 0 !important;
+  border: 1px solid var(--finos-border, var(--t-border, var(--th-border))) !important;
+  background: var(--t-inner-bg, var(--finos-surface-raised, var(--th-text))) !important;
+  color: var(--finos-text, var(--t-text, var(--th-on-accent))) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--t-text, var(--th-on-accent))) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger:focus-visible,
+:root[data-finos-theme] .money-accounts [role="dialog"][aria-labelledby="account-form-title"] .account-form-select > button.finos-select-trigger[aria-expanded="true"] {
+  border-color: var(--finos-accent, var(--t-accent, var(--th-accent))) !important;
+}
 
 
 /* Dark theme only: restore dark surfaces across the Markets workspace.
    Light/white themes are deliberately excluded from these selectors. */
-
-
-
-
-
-
-
+:root[data-finos-theme="dark"] .markets-workspace {
+  --market-ink: var(--finos-text, var(--th-text));
+  --market-muted: var(--finos-muted, var(--th-muted));
+  --market-surface: var(--t-card-bg, var(--th-card));
+  --market-raised: var(--t-inner-bg, var(--th-card));
+  --market-line: var(--finos-border, var(--th-border));
+  color: var(--market-ink) !important;
+}
+:root[data-finos-theme="dark"] .markets-workspace > section[aria-label="Market overview"],
+:root[data-finos-theme="dark"] .markets-workspace > section[aria-label="Market instrument search"],
+:root[data-finos-theme="dark"] .markets-workspace > section[aria-label="Major Indian market indices"],
+:root[data-finos-theme="dark"] .markets-workspace > section[aria-label="Market breadth"],
+:root[data-finos-theme="dark"] .markets-workspace > section[aria-label="Market news"],
+:root[data-finos-theme="dark"] .markets-workspace > section[aria-label="My watchlist"],
+:root[data-finos-theme="dark"] .markets-workspace > section[aria-label="Market movers"] {
+  color: var(--market-ink) !important;
+  background: var(--market-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .22) !important;
+}
+:root[data-finos-theme="dark"] .markets-workspace > section[aria-label="Major Indian market indices"] > div,
+:root[data-finos-theme="dark"] .markets-workspace > section[aria-label="Market breadth"] > div,
+:root[data-finos-theme="dark"] .markets-workspace > section[aria-label="Market movers"] > div,
+:root[data-finos-theme="dark"] .markets-workspace .market-news,
+:root[data-finos-theme="dark"] .markets-workspace .market-watchlist-item {
+  color: var(--market-ink) !important;
+  background: var(--market-raised) !important;
+  background-image: none !important;
+  border-color: var(--market-line) !important;
+}
+:root[data-finos-theme="dark"] .markets-workspace :is(h1,h2,h3,h4,h5,strong,b) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme="dark"] .markets-workspace :is(p,span,small,label,dt,dd,th,td) {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme="dark"] .markets-workspace :is(input,select,textarea) {
+  color: var(--market-ink) !important;
+  background: var(--market-raised) !important;
+  border-color: var(--market-line) !important;
+}
+:root[data-finos-theme="dark"] .markets-workspace input::placeholder {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+}
 
 
 /* Dark theme only — unify card surfaces and prevent light/white cards leaking
    into the dark interface. Every selector is explicitly scoped to dark theme. */
-
+:root[data-finos-theme="dark"] {
+  --finos-page: var(--th-page);
+  --finos-surface: var(--th-card);
+  --finos-surface-raised: var(--th-inner);
+  --finos-card: var(--th-card);
+  --finos-text: var(--th-text);
+  --finos-muted: var(--th-muted);
+  --finos-border: var(--th-border);
+  --finos-accent: var(--th-accent);
+  --t-page-bg: var(--th-page);
+  --t-card-bg: var(--th-card);
+  --t-inner-bg: var(--th-inner);
+  --t-text: var(--th-text);
+  --t-muted: var(--th-muted);
+  --t-border: 1px solid var(--th-border);
+}
 
 /* Main cards, nested cards, statistic tiles and module panels. */
-
+:root[data-finos-theme="dark"] :is(
+  .card, .panel, .stat-card, .metric-card, .summary-card, .chart-card,
+  .section-card, .glass-card, .account-card, .goal-card, .budget-card,
+  .holding-card, .portfolio-card, .transaction-card, .tax-card,
+  .loan-card, .bill-card, .investment-card, .dashboard-card,
+  [class*="-stat-card"], [class*="-metric-card"], [class*="-summary-card"],
+  [class*="-chart-card"], [class*="-info-card"], [class*="-panel"],
+  [class*="summary-tile"], [class*="overview-card"]
+) {
+  color: var(--finos-text, var(--th-text));
+  background-color: var(--t-card-bg, var(--th-card));
+  background-image: linear-gradient(145deg, color-mix(in srgb, var(--th-accent) 4%, transparent), transparent 65%);
+  border-color: var(--finos-border, var(--th-border));
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+}
 
 /* Inner surfaces should be visibly distinct but remain dark. */
-
+:root[data-finos-theme="dark"] :is(
+  .card, .panel, .stat-card, .metric-card, .summary-card, .chart-card,
+  .section-card, .glass-card, .account-card, .goal-card, .budget-card,
+  .holding-card, .portfolio-card, .transaction-card, .tax-card,
+  .loan-card, .bill-card, .investment-card, .dashboard-card
+) :is(.card, .panel, [class*="-card"], [class*="-panel"], .inner, .nested-card) {
+  color: var(--finos-text, var(--th-text));
+  background-color: var(--t-inner-bg, var(--th-inner));
+  background-image: none;
+  border-color: var(--finos-border, var(--th-border));
+}
 
 /* Make text readable when a component has hard-coded light-theme text colours. */
-
-
+:root[data-finos-theme="dark"] :is(
+  .card, .panel, .stat-card, .metric-card, .summary-card, .chart-card,
+  .section-card, .glass-card, .account-card, .goal-card, .budget-card,
+  .holding-card, .portfolio-card, .transaction-card, .tax-card,
+  .loan-card, .bill-card, .investment-card, .dashboard-card
+) :is(h1,h2,h3,h4,h5,h6,strong,b,label,dt,dd,th,td) {
+  color: var(--finos-text, var(--th-text));
+  -webkit-text-fill-color: var(--finos-text, var(--th-text));
+}
+:root[data-finos-theme="dark"] :is(
+  .card, .panel, .stat-card, .metric-card, .summary-card, .chart-card,
+  .section-card, .glass-card, .account-card, .goal-card, .budget-card,
+  .holding-card, .portfolio-card, .transaction-card, .tax-card,
+  .loan-card, .bill-card, .investment-card, .dashboard-card
+) :is(p,small,caption,.muted,.subtitle,.description,.helper-text) {
+  color: var(--finos-muted, var(--th-muted));
+  -webkit-text-fill-color: var(--finos-muted, var(--th-muted));
+}
 
 /* Keep fields and dropdowns dark inside dark-theme cards. */
-
-
+:root[data-finos-theme="dark"] :is(
+  .card, .panel, .stat-card, .metric-card, .summary-card, .chart-card,
+  .section-card, .glass-card, .account-card, .goal-card, .budget-card,
+  .holding-card, .portfolio-card, .transaction-card, .tax-card,
+  .loan-card, .bill-card, .investment-card, .dashboard-card
+) :is(input,select,textarea,[role="listbox"],[role="option"]) {
+  color: var(--finos-text, var(--th-text));
+  background-color: var(--t-inner-bg, var(--th-inner));
+  border-color: var(--finos-border, var(--th-border));
+}
+:root[data-finos-theme="dark"] :is(input,textarea)::placeholder {
+  color: var(--finos-muted, var(--th-muted));
+  opacity: 1;
+}
 
 
 /* Final dark-theme enforcement: several legacy cards use inline light
    backgrounds, so theme tokens alone cannot override them. Keep this override
    strictly dark-scoped and preserve semantic positive/negative indicators. */
-
-
-
-
+:root[data-finos-theme="dark"] .content :is(
+  .glass-card, .large-card, .ai-card, .module-overview-card,
+  .wc-primary-card, .wc-shortcut-tile, .wc-welcome, .welcome-section,
+  .dashboard-clickable-card, .balance-summary, .balance-sheet-summary,
+  .net-worth-summary, .asset-liability-summary, .financial-summary-strip,
+  .summary-strip, .overview-card, .overview-panel, .account-summary,
+  .account-type-card, .form-card, .settings-card, .data-card, .table-card,
+  .empty-state-card, .activity-card, .diary-card, .history-card
+) {
+  color: var(--finos-text, var(--th-text)) !important;
+  background: var(--t-card-bg, var(--th-card)) !important;
+  background-image: linear-gradient(145deg, color-mix(in srgb, var(--th-accent) 4%, transparent), transparent 65%) !important;
+  border-color: var(--finos-border, var(--th-border)) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22) !important;
+}
+:root[data-finos-theme="dark"] .content :is(
+  .glass-card, .large-card, .ai-card, .module-overview-card,
+  .wc-primary-card, .wc-shortcut-tile, .wc-welcome, .welcome-section,
+  .dashboard-clickable-card, .balance-summary, .balance-sheet-summary,
+  .net-worth-summary, .asset-liability-summary, .financial-summary-strip,
+  .summary-strip, .overview-card, .overview-panel, .account-summary,
+  .account-type-card, .form-card, .settings-card, .data-card, .table-card,
+  .empty-state-card, .activity-card, .diary-card, .history-card
+) :is(.card,.panel,[class*="-card"],[class*="-panel"],.inner,.nested-card) {
+  color: var(--finos-text, var(--th-text)) !important;
+  background: var(--t-inner-bg, var(--th-inner)) !important;
+  background-image: none !important;
+  border-color: var(--finos-border, var(--th-border)) !important;
+}
+:root[data-finos-theme="dark"] .content :is(
+  .glass-card, .large-card, .ai-card, .module-overview-card,
+  .wc-primary-card, .wc-shortcut-tile, .wc-welcome, .welcome-section,
+  .dashboard-clickable-card, .balance-summary, .balance-sheet-summary,
+  .net-worth-summary, .asset-liability-summary, .financial-summary-strip,
+  .summary-strip, .overview-card, .overview-panel, .account-summary,
+  .account-type-card, .form-card, .settings-card, .data-card, .table-card,
+  .empty-state-card, .activity-card, .diary-card, .history-card
+) :is(h1,h2,h3,h4,h5,h6,strong,b,label,dt,dd,th,td) {
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
+}
+:root[data-finos-theme="dark"] .content :is(
+  .glass-card, .large-card, .ai-card, .module-overview-card,
+  .wc-primary-card, .wc-shortcut-tile, .wc-welcome, .welcome-section,
+  .dashboard-clickable-card, .balance-summary, .balance-sheet-summary,
+  .net-worth-summary, .asset-liability-summary, .financial-summary-strip,
+  .summary-strip, .overview-card, .overview-panel, .account-summary,
+  .account-type-card, .form-card, .settings-card, .data-card, .table-card,
+  .empty-state-card, .activity-card, .diary-card, .history-card
+) :is(p,small,caption,.muted,.subtitle,.description,.helper-text) {
+  color: var(--finos-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--finos-muted, var(--th-muted)) !important;
+}
 
 
 /* Account Profile > Login Contact Details: match the shared dark form/card
    design used by Basic Profile and the other profile sections. Light themes
    are intentionally unaffected. */
-
-
-
-
-
-
-
-
-
-
+:root[data-finos-theme="dark"] .content .account-contact-settings {
+  box-sizing: border-box;
+  color: var(--finos-text, var(--th-text)) !important;
+  background: var(--t-card-bg, var(--th-card)) !important;
+  background-image: none !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+  border-radius: var(--t-radius, 16px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .22) !important;
+}
+:root[data-finos-theme="dark"] .content .account-contact-settings .account-contact-form {
+  min-width: 0;
+  padding: 16px;
+  color: var(--finos-text, var(--th-text)) !important;
+  background: var(--t-inner-bg, var(--th-inner)) !important;
+  background-image: none !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme="dark"] .content .account-contact-settings :is(
+  h3, h4, label, .account-contact-eyebrow
+) {
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
+}
+:root[data-finos-theme="dark"] .content .account-contact-settings :is(
+  p, .account-contact-security, .account-contact-loading
+) {
+  color: var(--finos-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--finos-muted, var(--th-muted)) !important;
+}
+:root[data-finos-theme="dark"] .content .account-contact-settings .account-contact-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 42px;
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
+  background: var(--t-page-bg, var(--th-page)) !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme="dark"] .content .account-contact-settings .account-contact-form input::placeholder {
+  color: var(--finos-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--finos-muted, var(--th-muted)) !important;
+  opacity: 1;
+}
+:root[data-finos-theme="dark"] .content .account-contact-settings .account-contact-form input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--finos-accent, var(--th-accent)) 45%, transparent);
+  outline-offset: 1px;
+  border-color: var(--finos-accent, var(--th-accent)) !important;
+}
+:root[data-finos-theme="dark"] .content .account-contact-settings .account-contact-form .primary-button {
+  min-height: 40px;
+  color: var(--t-pri-text, var(--th-on-accent)) !important;
+  background: var(--t-pri-bg, var(--th-accent)) !important;
+  border: var(--t-pri-border, 1px solid var(--th-accent)) !important;
+  border-radius: var(--t-radius-sm, 10px) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme="dark"] .content .account-contact-settings .account-contact-message {
+  border: 1px solid var(--finos-border, var(--th-border));
+  border-radius: var(--t-radius-sm, 10px);
+}
+@media (max-width: 640px) {
+  :root[data-finos-theme="dark"] .content .account-contact-settings .account-contact-form {
+    padding: 13px;
+  }
+}
 
 
 /* Markets: preserve each non-default dark theme instead of forcing white cards.
    Scoped only to visually dark themes; Light-family themes and Default/Dark keep
    their existing Markets appearance. Use each theme's existing palette tokens. */
-
-
-
-
-
-
-
-
-
-
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace {
+  --market-ink: var(--finos-text, var(--th-text));
+  --market-muted: var(--finos-muted, var(--th-muted));
+  --market-surface: var(--t-card-bg, color-mix(in srgb, var(--th-card) 88%, transparent));
+  --market-raised: var(--t-inner-bg, rgba(255, 255, 255, .06));
+  --market-line: var(--finos-border, color-mix(in srgb, var(--th-border) 16%, transparent));
+  --market-accent: var(--finos-accent, var(--th-accent));
+  color: var(--market-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market overview"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market instrument search"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Major Indian market indices"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market breadth"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market news"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="My watchlist"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market movers"] {
+  color: var(--market-ink) !important;
+  background: var(--market-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--market-line) !important;
+  box-shadow: var(--t-shadow, 0 8px 24px rgba(0, 0, 0, .24)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Market overview"] {
+  background: var(--market-surface) !important;
+  background-image: none !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(
+  .card, .panel, .market-card, .market-news, .market-watchlist-item,
+  [role="status"], [role="alert"],
+  section[aria-label="Major Indian market indices"] > div,
+  section[aria-label="Market breadth"] > div,
+  section[aria-label="Market movers"] > div
+) {
+  color: var(--market-ink) !important;
+  background: var(--market-raised) !important;
+  background-image: none !important;
+  border-color: var(--market-line) !important;
+  box-shadow: none;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(h1,h2,h3,h4,h5,strong,b,th) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(p,span,small,label,dt,dd,td,.muted,.text-muted) {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input,select,textarea) {
+  color: var(--market-ink) !important;
+  -webkit-text-fill-color: var(--market-ink) !important;
+  background: var(--market-raised) !important;
+  border-color: var(--market-line) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input,textarea)::placeholder {
+  color: var(--market-muted) !important;
+  -webkit-text-fill-color: var(--market-muted) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(button:not(.primary-button):not([data-variant="primary"])) {
+  color: var(--market-ink) !important;
+  background: var(--market-raised) !important;
+  border-color: var(--market-line) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(button.primary-button,button[data-variant="primary"],button[aria-label*="Search"]) {
+  color: var(--th-text) !important;
+  -webkit-text-fill-color: var(--th-text) !important;
+  background: var(--market-accent) !important;
+  border-color: var(--market-accent) !important;
+}
 
 
 /* Tax Centre: restore contrast for visually dark accent themes only.
    Default/Dark and every light theme are deliberately excluded. */
-
-
-
-
-
-
-
-
-
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre {
+  --tax-ink: var(--finos-text, var(--th-text));
+  --tax-muted: var(--finos-muted, var(--th-text));
+  --tax-surface: var(--t-card-bg, color-mix(in srgb, var(--th-card) 92%, transparent));
+  --tax-raised: var(--t-inner-bg, rgba(255, 255, 255, .055));
+  --tax-border: var(--finos-border, color-mix(in srgb, var(--th-border) 17%, transparent));
+  --tax-accent: var(--finos-accent, var(--th-accent));
+  color: var(--tax-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre > section,
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre .glass-card,
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre [class*="tax-card"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre [class*="metric"],
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre [class*="summary"] {
+  color: var(--tax-ink) !important;
+  background: var(--tax-surface) !important;
+  background-image: none !important;
+  border-color: var(--tax-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre nav[aria-label="Tax sections"] {
+  background: var(--tax-surface) !important;
+  border-color: var(--tax-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre :is(h1,h2,h3,h4,h5,h6,strong,b,label,th,td,.card-label,[class*="title"],[class*="label"]) {
+  color: var(--tax-ink) !important;
+  -webkit-text-fill-color: var(--tax-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre :is(p,small,caption,.muted,.subtitle,.description,.helper-text,[class*="description"],[class*="subtitle"]) {
+  color: var(--tax-muted) !important;
+  -webkit-text-fill-color: var(--tax-muted) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre :is(input:not([type="checkbox"]),select,textarea) {
+  color: var(--tax-ink) !important;
+  -webkit-text-fill-color: var(--tax-ink) !important;
+  background: var(--tax-raised) !important;
+  border-color: var(--tax-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre :is(input,textarea)::placeholder {
+  color: var(--tax-muted) !important;
+  -webkit-text-fill-color: var(--tax-muted) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre nav[aria-label="Tax sections"] button:not([aria-pressed="true"]) {
+  color: var(--tax-ink) !important;
+  background: var(--tax-raised) !important;
+  border-color: var(--tax-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .tax-centre nav[aria-label="Tax sections"] button[aria-pressed="true"] {
+  color: var(--finos-text) !important;
+  -webkit-text-fill-color: var(--finos-text) !important;
+  background: var(--finos-accent) !important;
+  border-color: var(--tax-accent) !important;
+}
 
 
 /* Targeted follow-up: actual inline-styled Market cards and Tax Centre cards.
    Only the nine dark accent themes are included. Light themes, Default and Dark
    are intentionally not selected. Explicit dark surface values avoid inheriting
    a light --t-card-bg token, and !important overrides the inline visual styles. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+:root:is(
+  [data-finos-theme="aurora"],
+  [data-finos-theme="emerald"],
+  [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],
+  [data-finos-theme="retro-terminal"],
+  [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],
+  [data-finos-theme="maximalism"],
+  [data-finos-theme="liquid-glass"]
+) .markets-workspace {
+  --market-fix-surface: var(--finos-page);
+  --market-fix-raised: var(--finos-surface);
+  --market-fix-ink: var(--finos-text);
+  --market-fix-muted: var(--finos-muted);
+  color: var(--market-fix-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Major Indian market indices"] > div,
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(.market-result-card,.market-search-result,.market-watchlist-row,.market-mover-card) {
+  color: var(--market-fix-ink) !important;
+  background: var(--market-fix-surface) !important;
+  background-image: none !important;
+  border-color: var(--finos-border) !important;
+  box-shadow: var(--t-shadow, none) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Major Indian market indices"] > div > div,
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(h1,h2,h3,h4,h5,strong,b) {
+  color: var(--market-fix-ink) !important;
+  -webkit-text-fill-color: var(--market-fix-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(p,span,small,label,dt,dd,td,.muted,.text-muted) {
+  color: var(--market-fix-muted) !important;
+  -webkit-text-fill-color: var(--market-fix-muted) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input,select,textarea) {
+  color: var(--market-fix-ink) !important;
+  -webkit-text-fill-color: var(--market-fix-ink) !important;
+  background: var(--market-fix-raised) !important;
+  border-color: var(--finos-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input,textarea)::placeholder {
+  color: var(--market-fix-muted) !important;
+  -webkit-text-fill-color: var(--market-fix-muted) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace .instrument-search-panel {
+  border-bottom-color: color-mix(in srgb, var(--th-border) 28%, transparent) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre {
+  --tax-fix-surface: var(--finos-page);
+  --tax-fix-raised: var(--finos-surface);
+  --tax-fix-ink: var(--finos-text);
+  --tax-fix-muted: var(--finos-muted);
+  color: var(--tax-fix-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre :is(.glass-card,.tax-centre-grid > div,.tax-centre-grid > article,[class*="tax-card"],[class*="summary-card"],[class*="metric-card"]) {
+  color: var(--tax-fix-ink) !important;
+  background: var(--tax-fix-surface) !important;
+  background-image: none !important;
+  border-color: var(--finos-border) !important;
+  box-shadow: var(--t-shadow, none) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre :is(h1,h2,h3,h4,h5,h6,strong,b,label,th,td,.card-label,[class*="title"],[class*="label"]) {
+  color: var(--tax-fix-ink) !important;
+  -webkit-text-fill-color: var(--tax-fix-ink) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre :is(p,small,caption,.muted,.subtitle,.description,.helper-text,[class*="description"],[class*="subtitle"]) {
+  color: var(--tax-fix-muted) !important;
+  -webkit-text-fill-color: var(--tax-fix-muted) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre :is(input:not([type="checkbox"]),select,textarea) {
+  color: var(--tax-fix-ink) !important;
+  -webkit-text-fill-color: var(--tax-fix-ink) !important;
+  background: var(--tax-fix-raised) !important;
+  border-color: var(--finos-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre nav[aria-label="Tax sections"] button {
+  color: var(--tax-fix-ink) !important;
+  background: var(--tax-fix-raised) !important;
+  border-color: var(--finos-border) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre nav[aria-label="Tax sections"] button.primary-button {
+  color: var(--t-pri-text, var(--finos-text)) !important;
+  -webkit-text-fill-color: var(--t-pri-text, var(--finos-text)) !important;
+  background: var(--finos-accent) !important;
+  border-color: var(--finos-accent) !important;
+}
 
 
 /* Playground-referenced surface treatment for Markets and Tax.
    Deliberately scoped to the nine dark accent themes only.
    Values mirror PlaygroundPage's existing panel/muted styles.
    Light themes, Default, and Dark are excluded from these selectors. */
-
-
-
-
-
-
-
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) :is(.markets-workspace, .tax-centre) {
+  color: var(--th-text);
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Major Indian market indices"] > div,
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(.market-result-card, .market-search-result, .market-watchlist-row, .market-mover-card),
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre :is(.glass-card, .tax-centre-grid > div, .tax-centre-grid > article, [class*="tax-card"], [class*="summary-card"], [class*="metric-card"]) {
+  color: var(--th-text) !important;
+  background: rgba(255, 255, 255, .035) !important;
+  background-image: none !important;
+  border: 1px solid color-mix(in srgb, var(--th-border) 10%, transparent) !important;
+  border-radius: 14px;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(h1,h2,h3,h4,h5,h6,strong,b,th),
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre :is(h1,h2,h3,h4,h5,h6,strong,b,th,td,label,.card-label,[class*="title"],[class*="label"]) {
+  color: var(--th-text) !important;
+  -webkit-text-fill-color: var(--th-text) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(p,span,small,label,dt,dd,td,.muted,.text-muted),
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre :is(p,small,caption,.muted,.subtitle,.description,.helper-text,[class*="description"],[class*="subtitle"]) {
+  color: color-mix(in srgb, var(--th-text) 65%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--th-text) 65%, transparent) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input,select,textarea),
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre :is(input:not([type="checkbox"]),select,textarea) {
+  color: var(--th-text) !important;
+  -webkit-text-fill-color: var(--th-text) !important;
+  background: rgba(255, 255, 255, .06) !important;
+  border-color: color-mix(in srgb, var(--th-border) 16%, transparent) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input,textarea)::placeholder,
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre :is(input,textarea)::placeholder {
+  color: color-mix(in srgb, var(--th-text) 65%, transparent) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--th-text) 65%, transparent) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre nav[aria-label="Tax sections"] button:not(.primary-button),
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(button:not(.primary-button):not([data-variant="primary"])) {
+  color: var(--th-text) !important;
+  background: rgba(255, 255, 255, .05) !important;
+  border-color: color-mix(in srgb, var(--th-border) 15%, transparent) !important;
+}
 
 
 /* Markets + Tax contrast correction for accent dark themes.
    Excludes Default/Dark and all light themes. Presentation-only. */
-
-
-
-
-
-
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Major Indian market indices"] > div {
+  background: var(--t-card-bg, rgba(255,255,255,.045)) !important;
+  background-image: none !important;
+  color: var(--finos-text, var(--th-text)) !important;
+  border: 1px solid var(--finos-border, color-mix(in srgb, var(--th-border) 16%, transparent)) !important;
+  box-shadow: var(--t-shadow, 0 8px 22px rgba(0,0,0,.18)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(.instrument-search-panel, .instrument-market-news-panel, .instrument-watchlist-card, .instrument-ltp-panel, .instrument-chart-panel) {
+  color: var(--finos-text, var(--th-text)) !important;
+  background: var(--t-card-bg, rgba(255,255,255,.045)) !important;
+  border-color: var(--finos-border, color-mix(in srgb, var(--th-border) 16%, transparent)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input, textarea, select, .finos-select-trigger) {
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
+  background: var(--t-input-bg, rgba(255,255,255,.06)) !important;
+  border-color: var(--finos-border, color-mix(in srgb, var(--th-border) 18%, transparent)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input, textarea)::placeholder {
+  color: var(--finos-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: var(--finos-muted, var(--th-muted)) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(button:not(.primary-button):not([data-variant="primary"]), .secondary-button) {
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
+  background: var(--t-card-bg, rgba(255,255,255,.06)) !important;
+  border-color: var(--finos-border, color-mix(in srgb, var(--th-border) 18%, transparent)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(.card-label, .instrument-provider-error, [role="status"]) {
+  color: var(--finos-muted, var(--th-muted)) !important;
+}
 
 /* Tax: normalize nested text and card surfaces in the same accent themes. */
-
-
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre :is(.tax-centre-grid > div, .tax-centre-grid > article, [class*="tax-card"], [class*="summary-card"], [class*="metric-card"]) {
+  color: var(--finos-text, var(--th-text)) !important;
+  background: var(--t-card-bg, rgba(255,255,255,.045)) !important;
+  background-image: none !important;
+  border-color: var(--finos-border, color-mix(in srgb, var(--th-border) 16%, transparent)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre :is(.tax-centre-grid > div, .tax-centre-grid > article, [class*="tax-card"], [class*="summary-card"], [class*="metric-card"]) :is(h1,h2,h3,h4,h5,strong,b,label,span,div,td,th) {
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
+}

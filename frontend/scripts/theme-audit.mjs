@@ -57,6 +57,16 @@ for (const selector of ['.tax-centre nav[aria-label="Tax sections"] button', '.i
 }
 console.log("PASS: shared semantic component tokens and cross-module tab/form/icon rules exist.");
 
+for (const token of [
+  "--finos-text:var(--th-text)", "--finos-border:var(--th-border)",
+  "--finos-accent:var(--th-accent)", "--t-card-bg:var(--th-card)",
+  "--t-page-bg:var(--th-page)", "--finos-chart-series-1:var(--th-chart-1)",
+]) {
+  assert.ok(componentSystem.includes(token), `Legacy token bridge missing: ${token}`);
+}
+console.log("PASS: legacy --finos-* and --t-* tokens map to the central theme contract.");
+
+
 function parseHexColor(hex) {
   const raw = hex.replace("#", "");
   const expanded = raw.length === 3 ? [...raw].map((part) => part + part).join("") : raw;

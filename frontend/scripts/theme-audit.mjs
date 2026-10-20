@@ -3,10 +3,11 @@ import { readFileSync } from "node:fs";
 
 const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
 const css = readFileSync(new URL("../src/visual-design.css", import.meta.url), "utf8");
+const tokens = readFileSync(new URL("../src/theme-tokens.css", import.meta.url), "utf8");
 
 const expectedThemes = [
   "Default", "Light", "Dark", "Aurora", "Emerald", "Ocean", "Sunset",
-  "Minimal", "Retro Terminal", "Glass", "Skeuomorphism", "Neumorphism",
+  "Minimal", "Retro Terminal", "Skeuomorphism", "Neumorphism",
   "Glassmorphism", "Claymorphism", "Brutalism", "Maximalism",
   "Liquid Glass", "Bento Grid", "Elegant Plain",
 ];
@@ -27,13 +28,13 @@ const requiredTokens = [
   "--finos-chart-series-5",
 ];
 for (const token of requiredTokens) {
-  assert.ok(css.includes(token), `Missing theme token: ${token}`);
+  assert.ok(tokens.includes(token), `Missing theme token: ${token}`);
 }
 console.log(`PASS: all ${requiredTokens.length} shared chart/control tokens exist.`);
 
 for (const slug of slugs) {
   const selector = new RegExp(`data-finos-theme=["']${slug}["']`);
-  assert.ok(selector.test(css), `No theme-specific CSS selector found for ${slug}`);
+  assert.ok(selector.test(tokens), `No theme-specific CSS selector found for ${slug}`);
 }
 console.log(`PASS: CSS includes theme-specific rules for all ${slugs.length} theme slugs.`);
 

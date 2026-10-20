@@ -2374,14 +2374,21 @@ function TaxPage() {
     <div className="tax-centre" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
       {/* Tax Centre header */}
       <section style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
-        <div><p className="card-label">FINANCIAL OS / TAX</p><h2 style={{ margin: "4px 0 6px", fontSize: "28px", fontWeight: 800 }}>Tax Centre</h2><p style={{ margin: 0, color: "rgba(255,255,255,0.55)", fontSize: "13px" }}>Income, capital gains, deductions and tax-report readiness in one place.</p></div>
+        <div className="tax-centre-heading"><h2 style={{ margin: "0 0 6px", fontSize: "28px", fontWeight: 800 }}>Tax Centre</h2><p style={{ margin: 0, fontSize: "13px", lineHeight: 1.55 }}>Income, capital gains, deductions and tax-report readiness in one place.</p></div>
         <button className="secondary-button" type="button" onClick={loadTaxData} disabled={loading}>{loading ? "Loading..." : "Refresh tax data"}</button>
       </section>
 
       {/* Financial year and regime quick selectors */}
-      <section style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>FINANCIAL YEAR</span>
-        <strong>{financialYear}</strong><span style={{ color: "rgba(255,255,255,0.3)" }}>•</span><span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>{taxRegime === "new" ? "New regime framework" : "Old regime framework"}</span>
+      <section className="tax-period-card" aria-label="Tax period and regime">
+        <div className="tax-period-item">
+          <span className="tax-period-label">Financial year</span>
+          <strong className="tax-period-value">{financialYear}</strong>
+        </div>
+        <span className="tax-period-divider" aria-hidden="true"/>
+        <div className="tax-period-item tax-regime-item">
+          <span className="tax-period-label">Tax regime</span>
+          <strong className="tax-period-value">{taxRegime === "new" ? "New regime framework" : "Old regime framework"}</strong>
+        </div>
       </section>
 
       {/* Six section tabs */}

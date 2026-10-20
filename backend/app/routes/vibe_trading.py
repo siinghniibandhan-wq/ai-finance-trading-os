@@ -96,6 +96,14 @@ def list_runs(limit: int = Query(20, ge=1, le=100), _user=Depends(get_current_us
     return _request("/runs", query={"limit": limit})
 
 
+@router.get("/runs/{run_id}")
+def get_run(run_id: str, _user=Depends(get_current_user)):
+    safe_id = run_id.strip()
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", safe_id):
+        raise HTTPException(status_code=400, detail="Invalid Vibe Trading run ID.")
+    return _request(f"/runs/{safe_id}")
+
+
 @router.get("/alpha")
 def list_alphas(limit: int = Query(50, ge=1, le=200), zoo: str | None = None, theme: str | None = None, universe: str | None = None, _user=Depends(get_current_user)):
     return _request("/alpha/list", query={"limit": limit, "zoo": zoo, "theme": theme, "universe": universe})

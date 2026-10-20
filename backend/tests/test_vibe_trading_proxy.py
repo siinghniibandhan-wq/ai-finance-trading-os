@@ -69,6 +69,7 @@ def test_live_order_endpoints_are_not_registered_by_this_router():
     assert "/api/playground/vibe/sessions" in paths
     assert "/api/playground/vibe/sessions/{session_id}/messages" in paths
     assert "/api/playground/vibe/swarm/runs" in paths
+    assert "/api/playground/vibe/runs/{run_id}" in paths
     assert not any("order" in path.lower() or "broker" in path.lower() for path in paths)
 
 
@@ -96,3 +97,18 @@ def test_session_message_route_rejects_url_injection(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         vibe_trading.get_session_messages("session_123?x=evil", limit=10, _user=None)
     assert exc.value.status_code == 400
+
+
+
+def test_get_run_uses_vibe_api(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        vibe_trading,
+        "_request",
+        lambda path, method="GET", payload=None, query=None: captured.update(
+            path=path, method=method
+        ) or {"id": "run_123", "status": "completed"},
+    )
+    result = vibe_trading.get_run("run_123", _user=None)
+    assert result == {"id": "run_123", "status": "completed"}
+    assert captured == {"path": "/runs/run_123", "method": "GET"}

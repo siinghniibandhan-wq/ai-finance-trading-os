@@ -9170,9 +9170,20 @@ function TradingControlSettings({ compact = false }) {
 
 function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
   return <div className="dashboard finos-settings-page">
-    <section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Personalize your workspace. Your theme is saved on this device and applies throughout Financial OS.</p></div></section>
+    <section className="welcome-section"><div><p className="welcome-label">ACCOUNT & PREFERENCES</p><h2>Settings</h2><p className="welcome-description">Manage your profile, compliance information, theme, and financial diary.</p></div></section>
+    <section className="account-settings-shortcuts" aria-label="Account settings sections">
+      <button type="button" className="glass-card account-settings-shortcut" onClick={() => onNavigate("Account Profile")}>
+        <span className="account-settings-shortcut-copy"><strong>Personal Details</strong><small>Name, email, contact information and address</small></span><span aria-hidden="true">›</span>
+      </button>
+      <button type="button" className="glass-card account-settings-shortcut" onClick={() => onNavigate("Account Profile")}>
+        <span className="account-settings-shortcut-copy"><strong>KYC / Tax Information</strong><small>Identity verification and tax-related details</small></span><span aria-hidden="true">›</span>
+      </button>
+      <button type="button" className="glass-card account-settings-shortcut" onClick={() => onNavigate("Finance Diary")}>
+        <span className="account-settings-shortcut-copy"><strong>Financial Diary</strong><small>View your existing financial activity history</small></span><span aria-hidden="true">›</span>
+      </button>
+    </section>
     <section className="finos-theme-settings glass-card">
-      <div className="finos-theme-settings-heading"><div><p className="finos-theme-eyebrow">APPEARANCE</p><h3>Choose your theme</h3><p>19 visual styles. Select a preview to apply it immediately.</p></div><span className="finos-theme-current">Current: {selectedTheme}</span></div>
+      <div className="finos-theme-settings-heading"><div><p className="finos-theme-eyebrow">APPEARANCE</p><h3>Theme</h3><p>Choose a theme for your workspace. Your selection applies throughout Financial OS.</p></div><span className="finos-theme-current">Current: {selectedTheme}</span></div>
       <div className="finos-theme-settings-grid">
         {FINOS_THEMES.map((theme) => <button type="button" key={theme} aria-pressed={selectedTheme === theme} onClick={() => onThemeChange(theme)} className={`finos-theme-option finos-theme-option-${theme.toLowerCase().replaceAll(" ", "-")} ${selectedTheme === theme ? "is-active" : ""}`}>
           <span className="finos-theme-sample" aria-hidden="true"><i/><i/><i/><b/></span>
@@ -9180,12 +9191,8 @@ function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
           <span className="finos-theme-radio" aria-hidden="true">{selectedTheme === theme ? "✓" : ""}</span>
         </button>)}
       </div>
-      <p className="finos-theme-footnote">Default remains the standard Financial OS look. Elegant Plain is a clean white theme with thin borders and minimal visual decoration. Theme selection changes appearance only, not your records or calculations.</p>
+      <p className="finos-theme-footnote">Theme selection changes appearance only, not your records or calculations.</p>
     </section>
-    <TradingControlSettings />
-    <AccountContactSettings />
-    <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }}><h3>Account Profile</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Manage your personal details, tax information, and salary setup. This is separate from your bank and investment accounts.</p><button className="primary-button" onClick={() => onNavigate("Account Profile")}>Open Account Profile</button></section>
-    <section className="glass-card" style={{ padding: "22px" }}><h3>Finance Diary</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Read-only master history of account and transaction activity. Entries cannot be edited or deleted.</p><button className="primary-button" onClick={() => onNavigate("Finance Diary")}>Open Finance Diary</button></section>
   </div>;
 }
 

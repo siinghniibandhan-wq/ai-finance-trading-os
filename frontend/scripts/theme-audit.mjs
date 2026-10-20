@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
 const css = readFileSync(new URL("../src/visual-design.css", import.meta.url), "utf8");
 const tokens = readFileSync(new URL("../src/theme-tokens.css", import.meta.url), "utf8");
+const main = readFileSync(new URL("../src/main.jsx", import.meta.url), "utf8");
 
 const expectedThemes = [
   "Default", "Light", "Dark", "Aurora", "Emerald", "Ocean", "Sunset",
@@ -81,5 +82,18 @@ assert.ok(
   "SELL on an instrument without a holding must show clear feedback",
 );
 console.log("PASS: BUY/SELL intent matching, validation, initial BUY, and no-holding guards exist.");
+
+
+assert.ok(!themesDeclaration[1].includes('"Glass"'), "Deprecated Glass theme must not be registered");
+assert.ok(!app.includes('"Glass":'), "Deprecated Glass theme description must not remain");
+assert.ok(app.includes("18 visual styles."), "Theme gallery must display the correct count of 18");
+console.log("PASS: deprecated Glass theme is removed and gallery count is 18.");
+
+assert.ok(main.includes('import "./theme-tokens.css";'), "main.jsx must load the theme token contract");
+assert.ok(main.includes('import "./theme-components.css";'), "main.jsx must load shared token-based component styles");
+assert.ok(!main.includes('import "./instrument-interaction-contrast.css";'), "Deprecated instrument contrast stylesheet import remains");
+assert.ok(!main.includes('import "./holdings-dark-cards.css";'), "Deprecated holdings stylesheet import remains");
+assert.ok(/replace\(\/\\s\+\/g, "-"/.test(main), "Saved theme slug must normalize whitespace");
+console.log("PASS: startup theme tokens, deprecated stylesheet imports, and saved theme slug are checked.");
 
 console.log("NOTE: These are static regression checks; they do not replace real-browser visual/accessibility testing.");

@@ -127,6 +127,37 @@ def start_swarm_run(body: SwarmRunRequest, _user=Depends(get_current_user)):
     return _request("/swarm/runs", method="POST", payload=payload)
 
 
+
+@router.get("/sessions/{session_id}/events")
+def session_events(session_id: str, _user=Depends(get_current_user)):
+    safe_id = session_id.strip()
+    if not safe_id or "/" in safe_id or safe_id in {".", ".."}:
+        raise HTTPException(status_code=400, detail="Invalid Vibe Trading session ID.")
+    url = f"{_base_url()}/sessions/{safe_id}/events"
+    headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
+    api_key = os.getenv("VIBE_TRADING_API_KEY", "").strip()
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    try:
+        upstream = urlopen(Request(url, headers=headers, method="GET"), timeout=30)
+    except HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Vibe Trading event stream returned HTTP {exc.code}.") from exc
+    except URLError as exc:
+        raise HTTPException(status_code=503, detail="Unable to connect to the Vibe Trading event stream.") from exc
+
+    def chunks():
+        try:
+            while True:
+                chunk = upstream.read(4096)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            upstream.close()
+
+    return StreamingResponse(chunks(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
 @router.get("/alpha/{alpha_id}")
 def get_alpha(alpha_id: str, _user=Depends(get_current_user)):
     safe_id = alpha_id.strip()

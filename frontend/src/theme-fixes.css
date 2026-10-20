@@ -3432,3 +3432,106 @@
   background: var(--finos-accent) !important;
   border-color: var(--finos-accent) !important;
 }
+
+
+/* Playground-referenced surface treatment for Markets and Tax.
+   Deliberately scoped to the nine dark accent themes only.
+   Values mirror PlaygroundPage's existing panel/muted styles.
+   Light themes, Default, and Dark are excluded from these selectors. */
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) :is(.markets-workspace, .tax-centre) {
+  color: #ffffff;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Major Indian market indices"] > div,
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(.market-result-card, .market-search-result, .market-watchlist-row, .market-mover-card),
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre :is(.glass-card, .tax-centre-grid > div, .tax-centre-grid > article, [class*="tax-card"], [class*="summary-card"], [class*="metric-card"]) {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, .035) !important;
+  background-image: none !important;
+  border: 1px solid rgba(255, 255, 255, .10) !important;
+  border-radius: 14px;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(h1,h2,h3,h4,h5,h6,strong,b,th),
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre :is(h1,h2,h3,h4,h5,h6,strong,b,th,td,label,.card-label,[class*="title"],[class*="label"]) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(p,span,small,label,dt,dd,td,.muted,.text-muted),
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre :is(p,small,caption,.muted,.subtitle,.description,.helper-text,[class*="description"],[class*="subtitle"]) {
+  color: rgba(255, 255, 255, .65) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, .65) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input,select,textarea),
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre :is(input:not([type="checkbox"]),select,textarea) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: rgba(255, 255, 255, .06) !important;
+  border-color: rgba(255, 255, 255, .16) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input,textarea)::placeholder,
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre :is(input,textarea)::placeholder {
+  color: rgba(255, 255, 255, .65) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, .65) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .tax-centre nav[aria-label="Tax sections"] button:not(.primary-button),
+:root:is(
+  [data-finos-theme="aurora"], [data-finos-theme="emerald"], [data-finos-theme="ocean"],
+  [data-finos-theme="sunset"], [data-finos-theme="retro-terminal"], [data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"], [data-finos-theme="maximalism"], [data-finos-theme="liquid-glass"]
+) .markets-workspace :is(button:not(.primary-button):not([data-variant="primary"])) {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, .05) !important;
+  border-color: rgba(255, 255, 255, .15) !important;
+}

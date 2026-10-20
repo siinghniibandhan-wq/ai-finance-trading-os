@@ -1,0 +1,5 @@
+/* Shared theme-aware component styling; colour values come from theme tokens. */
+:root[data-finos-theme] body, :root[data-finos-theme] #root { background: var(--finos-page); color: var(--finos-text); }
+:root[data-finos-theme] :is(input,textarea,select,.finos-select-trigger) { background: var(--finos-control-bg); color: var(--finos-control-text); border-color: var(--finos-control-border); }
+:root[data-finos-theme] :is(.finos-select-menu,[role="listbox"],[role="menu"]) { background: var(--finos-control-bg); color: var(--finos-control-text); border-color: var(--finos-control-border); }
+:root[data-finos-theme] :is(.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card) { border-color: var(--finos-border); }

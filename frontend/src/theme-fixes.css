@@ -107,12 +107,12 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
-:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history div[style*="var(--finos-color-1466c836)"] {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history div[style*="rgba(255,255,255,0.04)"] {
   background: var(--finos-color-5875f41a) !important;
   border-color: var(--finos-color-62fd961a) !important;
 }
-:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history [style*="var(--finos-color-1466d7d3)"],
-:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history [style*="var(--finos-color-1466c7d7)"] {
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history [style*="rgba(255,255,255,0.45)"],
+:root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history [style*="rgba(255,255,255,0.05)"] {
   color: var(--finos-color-180ff2d6) !important;
 }
 :root:is([data-finos-theme="minimal"], [data-finos-theme="light"]) .investment-transaction-modal .portfolio-transaction-history button:not(.primary-button):not(.finos-button-primary) {
@@ -191,7 +191,7 @@
   border-radius: var(--t-radius, 12px) !important;
   box-shadow: none !important;
 }
-:root[data-finos-theme] .broker-order-modal [style*="var(--finos-color-f6614113)"] {
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.1)"] {
   border-color: var(--finos-border, var(--finos-color-f6614113)) !important;
 }
 :root[data-finos-theme] .broker-order-modal [role="alert"] {
@@ -218,10 +218,10 @@
 
 /* Broker order modal contrast correction: inline legacy white-muted styles
    were winning over theme inheritance in light themes, hiding key metadata. */
-:root[data-finos-theme] .broker-order-modal [style*="var(--finos-color-1466cb92)"],
-:root[data-finos-theme] .broker-order-modal [style*="var(--finos-color-1466d076)"],
-:root[data-finos-theme] .broker-order-modal [style*="var(--finos-color-c28972c2)"],
-:root[data-finos-theme] .broker-order-modal [style*="var(--finos-color-c28977a6)"] {
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,0.55)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,0.62)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.55)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.62)"] {
   color: var(--finos-muted, var(--finos-text)) !important;
 }
 :root[data-finos-theme] .broker-order-modal > div:first-child > div,
@@ -346,10 +346,10 @@
 :root[data-finos-theme] .broker-order-modal [style*="border-top"] {
   border-top-color: var(--broker-form-line) !important;
 }
-:root[data-finos-theme] .broker-order-modal [style*="var(--finos-color-1466cb92)"],
-:root[data-finos-theme] .broker-order-modal [style*="var(--finos-color-1466d076)"],
-:root[data-finos-theme] .broker-order-modal [style*="var(--finos-color-c28972c2)"],
-:root[data-finos-theme] .broker-order-modal [style*="var(--finos-color-c28977a6)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,0.55)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,0.62)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.55)"],
+:root[data-finos-theme] .broker-order-modal [style*="rgba(255,255,255,.62)"],
 :root[data-finos-theme] .broker-order-modal .broker-order-quote [style*="rgba(255,255,255"] {
   color: var(--broker-form-muted) !important;
 }
@@ -868,7 +868,7 @@
   [data-finos-theme="neomorphism"],
   [data-finos-theme="claymorphism"],
   [data-finos-theme="bento-grid"]
-) .markets-workspace [style*="color:var(--finos-color-7c4b7360)"],
+) .markets-workspace [style*="color:#fff"],
 :root:is(
   [data-finos-theme="light"],
   [data-finos-theme="minimal"],
@@ -878,7 +878,7 @@
   [data-finos-theme="neomorphism"],
   [data-finos-theme="claymorphism"],
   [data-finos-theme="bento-grid"]
-) .markets-workspace [style*="color: var(--finos-color-7c4b7360)"] {
+) .markets-workspace [style*="color: #fff"] {
   color: var(--market-ink, var(--finos-color-1975b964)) !important;
   -webkit-text-fill-color: var(--market-ink, var(--finos-color-1975b964)) !important;
   opacity: 1 !important;
@@ -977,8 +977,8 @@
    Override those text declarations, including plain DIV labels and messages. */
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: rgba(255,255,255"],
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:rgba(255,255,255"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: var(--finos-color-7c4b7360)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:var(--finos-color-7c4b7360)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: #fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:#fff"],
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: white"] {
   color: var(--market-muted) !important;
   -webkit-text-fill-color: var(--market-muted) !important;
@@ -1082,17 +1082,17 @@
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: rgba(255,255,255"],
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:rgba(255,255,255"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: var(--finos-color-7c4b7360)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:var(--finos-color-7c4b7360)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: #fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color:#fff"],
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="color: white"] {
   color: var(--market-muted) !important;
   -webkit-text-fill-color: var(--market-muted) !important;
 }
 /* Preserve the red/green market semantics used for gain/loss counts and prices. */
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="var(--finos-color-307ae789)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="var(--finos-color-1a7e99da)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="var(--finos-color-5b598103)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="var(--finos-color-584ad3d8)"] {
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#86efac"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#4ade80"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#fca5a5"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace [style*="#f87171"] {
   -webkit-text-fill-color: currentColor !important;
 }
 /* Header, watchlist, breadth, news, and empty states must not inherit opaque
@@ -1194,8 +1194,8 @@
   background: var(--finos-color-7c4b7360)fff !important;
   background-image: none !important;
 }
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section > div[style*="var(--finos-color-13b74615)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section > div[style*="var(--finos-color-a13fb4c5)"] {
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section > div[style*="rgba(255,255,255,.025)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .markets-workspace > section > div[style*="rgba(255,255,255,0.025)"] {
   padding: 12px !important;
   border: 1px solid var(--finos-color-6367b0a2) !important;
   border-radius: 12px !important;
@@ -1722,7 +1722,7 @@
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre > section,
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="linear-gradient(135deg, rgba(255,255,255"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="var(--finos-color-a13fb4c5)"] {
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.025)"] {
   color: var(--tax-ink) !important;
   background: var(--tax-surface) !important;
   background-image: none !important;
@@ -1740,11 +1740,11 @@
   -webkit-text-fill-color: var(--tax-muted, var(--finos-color-180ff2d6)) !important;
   opacity: 1 !important;
 }
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="var(--finos-color-1466d7be)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="var(--finos-color-1466cb92)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="var(--finos-color-1466cb3f)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="var(--finos-color-1466d076)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="var(--finos-color-1466cf51)"] {
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.48)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.55)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.58)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.62)"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255,0.65)"] {
   color: var(--tax-muted, var(--finos-color-180ff2d6)) !important;
   -webkit-text-fill-color: var(--tax-muted, var(--finos-color-180ff2d6)) !important;
   opacity: 1 !important;
@@ -1780,12 +1780,12 @@
   color: var(--finos-text, var(--finos-color-1975b964)) !important;
   color-scheme: light;
 }
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(section, article, .glass-card, .card, [class*="panel"], [class*="card"], [style*="linear-gradient"], [style*="var(--finos-color-c334c4c0) {
-  color: var(--tax-ink, var(--finos-color-1975b964)) !important;
-  background-color: var(--tax-surface, var(--finos-color-7c4b7360)) !important;
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(section, article, .glass-card, .card, [class*="panel"], [class*="card"], [style*="linear-gradient"], [style*="rgba(12,16,30"], [style*="rgba(15,23,42"], [style*="rgba(255,255,255,0.02"], [style*="rgba(255,255,255,0.03"], [style*="rgba(255,255,255,0.04"], [style*="rgba(255,255,255,0.05"], [style*="rgba(255,255,255,0.06"], [style*="rgba(255,255,255,0.07"], [style*="rgba(255,255,255,0.08"]) {
+  color: var(--tax-ink, #202938) !important;
+  background-color: var(--tax-surface, #fff) !important;
   background-image: none !important;
-  border-color: var(--tax-line, var(--finos-color-570763d3)) !important;
-  box-shadow: var(--t-shadow, 0 3px 12px var(--finos-color-86b8f847)) !important;
+  border-color: var(--tax-line, #dfe4ec) !important;
+  box-shadow: var(--t-shadow, 0 3px 12px rgba(31,41,55,.055)) !important;
 }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(.glass-card, .card, [class*="panel"], [class*="card"]) {
   border: 1px solid var(--tax-line, var(--finos-color-570763d3)) !important;
@@ -1873,8 +1873,8 @@
    so text remains readable inside every light-theme card and nested panel. */
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="rgba(255,255,255"],
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: white"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color:var(--finos-color-7c4b7360)"],
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: var(--finos-color-7c4b7360)"] {
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color:#fff"],
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [style*="color: #fff"] {
   color: var(--tax-muted, var(--finos-color-180ff2d6)) !important;
   -webkit-text-fill-color: var(--tax-muted, var(--finos-color-180ff2d6)) !important;
   opacity: 1 !important;
@@ -2300,7 +2300,7 @@
 
 /* Add/Edit Account dialog: respect the active light theme instead of
    retaining the hard-coded dark modal and dark input borders from inline styles. */
-:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="presentation"][style*="var(--finos-color-e8eb6762)"] {
+:root:is([data-finos-theme="light"],[data-finos-theme="minimal"],[data-finos-theme="elegant-plain"],[data-finos-theme="skeuomorphism"],[data-finos-theme="neumorphism"],[data-finos-theme="neomorphism"],[data-finos-theme="claymorphism"],[data-finos-theme="bento-grid"]) .money-accounts [role="presentation"][style*="rgba(3, 7, 18, 0.78)"] {
   background: var(--finos-color-375877) !important;
   backdrop-filter: blur(6px) !important;
   -webkit-backdrop-filter: blur(6px) !important;

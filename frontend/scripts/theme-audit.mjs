@@ -5,6 +5,7 @@ const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
 const css = readFileSync(new URL("../src/visual-design.css", import.meta.url), "utf8");
 const themeTokens = readFileSync(new URL("../src/theme-unify.css", import.meta.url), "utf8");
 const componentSystem = readFileSync(new URL("../src/theme-component-system.css", import.meta.url), "utf8");
+const main = readFileSync(new URL("../src/main.jsx", import.meta.url), "utf8");
 
 const expectedThemes = [
   "Default", "Light", "Dark", "Skeuomorphism", "Neumorphism",
@@ -65,6 +66,14 @@ for (const token of [
   assert.ok(componentSystem.includes(token), `Legacy token bridge missing: ${token}`);
 }
 console.log("PASS: legacy --finos-* and --t-* tokens map to the central theme contract.");
+
+const cssImports = [...main.matchAll(/import ["']\.\/[^"']+\.css["'];/g)].map((match) => match[0]);
+assert.equal(cssImports.at(-1), 'import "./theme-component-system.css";', "Shared theme component contract must load after legacy styles.");
+for (const removedTheme of ["Aurora", "Emerald", "Ocean", "Sunset", "Minimal", "Glass", "Claymorphism", "Maximalism", "Liquid Glass"]) {
+  assert.ok(!themesDeclaration[1].includes(`"${removedTheme}"`), `Removed theme must not remain selectable: ${removedTheme}`);
+}
+console.log("PASS: the central component contract loads last and retired themes are absent from the selector.");
+
 
 
 function parseHexColor(hex) {

@@ -3385,3 +3385,18 @@ svg { flex-shrink: 0; }
 /* New theme identities: layout remains shared; palette and component tokens live centrally. */
 :root[data-finos-theme="nordic"] body { background: var(--th-page); color: var(--th-text); font-family: var(--th-font); }
 :root[data-finos-theme="editorial"] body { background: var(--th-page); color: var(--th-text); font-family: var(--th-font); }
+
+/* HEADER TYPOGRAPHY — consistent, theme-aware contrast across every theme.
+   Keep each theme's own palette; do not alter header dimensions or surfaces. */
+.topbar .page-title h1 {
+  color: var(--th-text) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--th-text) !important;
+  text-shadow: none !important;
+}
+.topbar .eyebrow {
+  color: var(--th-muted) !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--th-muted) !important;
+  text-shadow: none !important;
+}

@@ -69,6 +69,7 @@ def test_live_order_endpoints_are_not_registered_by_this_router():
     assert "/api/playground/vibe/sessions" in paths
     assert "/api/playground/vibe/sessions/{session_id}/messages" in paths
     assert "/api/playground/vibe/swarm/runs" in paths
+    assert "/api/playground/vibe/swarm/runs/{run_id}" in paths
     assert "/api/playground/vibe/runs/{run_id}" in paths
     assert not any("order" in path.lower() or "broker" in path.lower() for path in paths)
 
@@ -124,3 +125,18 @@ def test_session_events_can_request_active_attempt_replay(monkeypatch):
     response = vibe_trading.session_events("session_123", replay="active", _user=None)
     assert captured["url"] == "https://vibe.example.test/sessions/session_123/events?replay=active"
     assert response.media_type == "text/event-stream"
+
+
+
+def test_list_swarm_runs_uses_swarm_endpoint(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(vibe_trading, "_request", lambda path, method="GET", payload=None, query=None: captured.update(path=path, query=query) or [])
+    assert vibe_trading.list_swarm_runs(limit=12, _user=None) == []
+    assert captured == {"path": "/swarm/runs", "query": {"limit": 12}}
+
+
+def test_get_swarm_run_uses_swarm_endpoint(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(vibe_trading, "_request", lambda path, method="GET", payload=None, query=None: captured.update(path=path) or {"id": "swarm_123"})
+    assert vibe_trading.get_swarm_run("swarm_123", _user=None) == {"id": "swarm_123"}
+    assert captured == {"path": "/swarm/runs/swarm_123"}

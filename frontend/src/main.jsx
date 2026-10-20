@@ -13,6 +13,7 @@ import "./theme-fixes.css";
 import "./theme-tokens.css";
 import "./theme-components.css";
 import "./theme-styles.css";
+import "./holdings-dark-cards.css";
 
 class AppRenderBoundary extends React.Component {
   constructor(props) {

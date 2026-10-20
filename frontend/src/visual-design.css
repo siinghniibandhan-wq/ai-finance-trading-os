@@ -4057,3 +4057,85 @@ svg { flex-shrink: 0; }
   font-size: 12px; line-height: 1.55;
 }
 .categories-page .category-group-items { display: grid; gap: 10px; min-width: 0; }
+
+
+/* Loan Management page header follows the active workspace theme. */
+.loan-management-page { min-width: 0; color: var(--th-text); }
+.loan-management-page .loan-management-header {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  width: 100%;
+  min-width: 0;
+  padding: clamp(18px, 2.4vw, 28px);
+  border: 1px solid var(--th-border);
+  border-radius: var(--th-radius, 16px);
+  background: var(--th-card);
+  color: var(--th-text);
+}
+.loan-management-page .loan-management-heading {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.loan-management-page .loan-management-eyebrow {
+  margin: 0;
+  color: var(--th-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  line-height: 1.4;
+}
+.loan-management-page .loan-management-heading h2 {
+  margin: 0;
+  color: var(--th-text);
+  font-size: clamp(22px, 2.6vw, 28px);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.loan-management-page .loan-management-description {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--th-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.loan-management-page .loan-management-refresh {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 10px 14px;
+  border: 1px solid var(--th-border);
+  border-radius: 10px;
+  background: var(--th-accent);
+  color: var(--th-on-accent, #fff);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.loan-management-page .loan-management-refresh:hover:not(:disabled) { transform: translateY(-1px); }
+.loan-management-page .loan-management-refresh:disabled { cursor: wait; opacity: .7; }
+.loan-management-page .loan-refresh-spinning { animation: loan-refresh-spin .9s linear infinite; }
+@keyframes loan-refresh-spin { to { transform: rotate(360deg); } }
+@media (max-width: 640px) {
+  .loan-management-page .loan-management-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+  }
+  .loan-management-page .loan-management-refresh { align-self: flex-start; }
+}
+@media (max-width: 360px) {
+  .loan-management-page .loan-management-header { padding: 14px; }
+}

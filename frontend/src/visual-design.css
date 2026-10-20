@@ -3639,42 +3639,42 @@ svg { flex-shrink: 0; }
 }
 
 
-/* Responsive theme picker: readable cards across every Financial OS theme. */
+/* Responsive theme picker: compact horizontal choices on mobile as well. */
 .finos-theme-settings,
 .finos-theme-settings * { box-sizing: border-box; }
 .finos-theme-settings { width: 100%; min-width: 0; }
-.finos-theme-settings-grid { align-items: stretch; }
+.finos-theme-settings-grid {
+  align-items: start !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px;
+}
 .finos-theme-option {
-  min-height: 132px;
-  height: 100%;
-  align-content: center;
+  min-width: 0;
+  min-height: 124px !important;
+  height: auto !important;
+  align-self: start;
+  align-content: start !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 8px !important;
+  padding: 10px !important;
   overflow-wrap: anywhere;
   transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 .finos-theme-option-copy { min-width: 0; }
 .finos-theme-option-copy strong,
 .finos-theme-option-copy small { overflow-wrap: anywhere; word-break: normal; }
-.finos-theme-option-copy small { font-size: 12px; line-height: 1.5; }
-.finos-theme-sample { flex-shrink: 0; }
-@media (max-width: 760px) {
-  .finos-theme-settings-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 10px; }
-  .finos-theme-option {
-    grid-template-columns: 76px minmax(0, 1fr) 22px !important;
-    min-height: 112px;
-    gap: 12px !important;
-    padding: 14px !important;
-  }
-  .finos-theme-sample { width: 76px !important; min-width: 76px !important; height: 58px !important; }
-  .finos-theme-option-copy strong { font-size: 14px; }
-  .finos-theme-option-copy small { font-size: 12px; line-height: 1.5; }
+.finos-theme-option-copy small { font-size: 11px; line-height: 1.4; }
+.finos-theme-sample {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  flex-shrink: 1;
 }
+.finos-theme-radio { justify-self: start !important; }
 @media (max-width: 360px) {
-  .finos-theme-option {
-    grid-template-columns: 58px minmax(0, 1fr) 20px !important;
-    gap: 9px !important;
-    padding: 10px !important;
-  }
-  .finos-theme-sample { width: 58px !important; min-width: 58px !important; height: 48px !important; }
+  .finos-theme-settings-grid { gap: 6px; }
+  .finos-theme-option { padding: 7px !important; min-height: 138px !important; }
+  .finos-theme-option-copy small { font-size: 9px; line-height: 1.3; }
   .finos-theme-settings-heading { gap: 10px; }
   .finos-theme-current { white-space: normal; }
 }

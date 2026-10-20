@@ -140,6 +140,14 @@ def get_session_messages(session_id: str, limit: int = Query(100, ge=1, le=1000)
     return _request(f"/sessions/{safe_id}/messages", query={"limit": limit})
 
 
+@router.post("/sessions/{session_id}/cancel")
+def cancel_session(session_id: str, _user=Depends(get_current_user)):
+    safe_id = session_id.strip()
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", safe_id):
+        raise HTTPException(status_code=400, detail="Invalid Vibe Trading session ID.")
+    return _request(f"/sessions/{safe_id}/cancel", method="POST")
+
+
 @router.post("/sessions/{session_id}/messages")
 def send_session_message(session_id: str, body: SessionMessage, _user=Depends(get_current_user)):
     safe_id = session_id.strip()

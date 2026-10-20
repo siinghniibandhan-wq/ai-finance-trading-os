@@ -3386,6 +3386,38 @@ svg { flex-shrink: 0; }
 :root[data-finos-theme="nordic"] body { background: var(--th-page); color: var(--th-text); font-family: var(--th-font); }
 :root[data-finos-theme="editorial"] body { background: var(--th-page); color: var(--th-text); font-family: var(--th-font); }
 
+/* Editorial navigation: use the paper surface and a solid rust active state.
+   This fixes the previous white-on-pale active item and faint navigation labels. */
+:root[data-finos-theme="editorial"] .sidebar {
+  background: var(--th-card) !important;
+  color: var(--th-text) !important;
+  border-right: 1px solid var(--th-border) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme="editorial"] .navigation-title {
+  color: var(--th-muted) !important;
+  opacity: 1 !important;
+}
+:root[data-finos-theme="editorial"] .navigation-item {
+  color: var(--th-muted) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme="editorial"] .navigation-item:hover {
+  color: var(--th-text) !important;
+  background: var(--th-inner) !important;
+}
+:root[data-finos-theme="editorial"] .navigation-item.active {
+  color: var(--th-on-accent) !important;
+  background: var(--th-accent) !important;
+  border-color: var(--th-accent) !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme="editorial"] .navigation-item :is(svg, span) {
+  color: inherit !important;
+}
+
 /* HEADER TYPOGRAPHY — consistent, theme-aware contrast across every theme.
    Keep each theme's own palette; do not alter header dimensions or surfaces. */
 .topbar .page-title h1 {

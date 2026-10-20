@@ -24,7 +24,7 @@ def _base_url() -> str:
     return os.getenv("VIBE_TRADING_BASE_URL", DEFAULT_BASE_URL).strip().rstrip("/")
 
 
-def _request(path: str, method: str = "GET", payload: dict | None = None, query: dict | None = None):
+def _request(path: str, method: str = "GET", payload: dict | None = None, query: dict | None = None, timeout: int = 20):
     base = _base_url()
     if not base.startswith(("https://", "http://")):
         raise HTTPException(status_code=503, detail="Vibe Trading base URL must use HTTP or HTTPS.")
@@ -41,7 +41,7 @@ def _request(path: str, method: str = "GET", payload: dict | None = None, query:
         headers["Content-Type"] = "application/json"
     req = Request(url, data=data, headers=headers, method=method)
     try:
-        with urlopen(req, timeout=20) as response:
+        with urlopen(req, timeout=timeout) as response:
             raw = response.read()
             content_type = response.headers.get("Content-Type", "application/json")
             if "text/event-stream" in content_type:
@@ -81,13 +81,22 @@ class SwarmRunRequest(BaseModel):
 @router.get("/status")
 def status(_user=Depends(get_current_user)):
     configured = bool(os.getenv("VIBE_TRADING_BASE_URL", "").strip())
+    try:
+        _request("/runs", query={"limit": 1}, timeout=3)
+        connected = True
+        connection_error = None
+    except HTTPException as exc:
+        connected = False
+        connection_error = exc.detail
     return {
         "provider": "Vibe Trading",
         "configured": configured,
         "base_url_configured": configured,
         "api_key_configured": bool(os.getenv("VIBE_TRADING_API_KEY", "").strip()),
+        "connected": connected,
+        "connection_error": connection_error,
         "live_execution_exposed": False,
-        "note": "Status reports configuration only; it does not submit trading requests.",
+        "note": "Connectivity checks the read-only run-list endpoint; it does not submit trading requests.",
     }
 
 

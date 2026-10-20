@@ -3615,3 +3615,26 @@
   color: var(--finos-text, var(--th-text)) !important;
   -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
 }
+
+
+/* Tax button text parity: use the same semantic foreground tokens as other modules.
+   Keep primary actions and selected Tax tabs readable on the theme accent surface.
+   This is presentation-only and applies across all themes. */
+:root[data-finos-theme] .tax-centre button.primary-button,
+:root[data-finos-theme] .tax-centre button[type="submit"],
+:root[data-finos-theme] .tax-centre .finos-button-primary {
+  color: var(--th-button-primary-text, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--th-button-primary-text, var(--th-on-accent)) !important;
+}
+:root[data-finos-theme] .tax-centre nav[aria-label="Tax sections"] button:is(.active,.is-active,[aria-selected="true"],[aria-pressed="true"],.primary-button) {
+  color: var(--th-tab-active-text, var(--th-on-accent)) !important;
+  -webkit-text-fill-color: var(--th-tab-active-text, var(--th-on-accent)) !important;
+}
+:root[data-finos-theme] .tax-centre nav[aria-label="Tax sections"] button:not(.active):not(.is-active):not([aria-selected="true"]):not([aria-pressed="true"]):not(.primary-button) {
+  color: var(--th-tab-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--th-tab-text, var(--th-text)) !important;
+}
+:root[data-finos-theme] .tax-centre :is(button.secondary-button,.secondary-button,button.icon-button,.icon-button,button.small-button,.small-button) {
+  color: var(--th-button-secondary-text, var(--th-text)) !important;
+  -webkit-text-fill-color: var(--th-button-secondary-text, var(--th-text)) !important;
+}

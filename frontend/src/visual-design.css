@@ -3432,3 +3432,180 @@ svg { flex-shrink: 0; }
   -webkit-text-fill-color: var(--th-muted) !important;
   text-shadow: none !important;
 }
+
+
+/* Account dropdown refinement: content-sized width and theme-aware Live Trading switch. */
+.header-profile-popover {
+  width: max-content !important;
+  min-width: 0 !important;
+  max-width: min(360px, calc(100vw - 24px)) !important;
+  box-sizing: border-box !important;
+}
+.header-profile-summary { min-width: 0; }
+.header-profile-summary > div:last-child { min-width: 0; max-width: 100%; }
+.header-profile-summary strong,
+.header-profile-summary span {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.header-live-trading {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-block: 1px solid var(--th-border);
+  color: var(--th-text);
+}
+.header-live-trading-copy { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.header-live-trading-copy strong { color:var(--th-text); font-size:13px; }
+.header-live-trading-copy > span { color:var(--th-muted); font-size:10px; font-weight:800; letter-spacing:.06em; }
+.header-live-trading-note,
+.header-live-trading-message { grid-column:1 / -1; margin:0; color:var(--th-muted); font-size:10px; line-height:1.45; overflow-wrap:anywhere; }
+.header-live-trading-message[role="alert"] { color:var(--th-neg); }
+.header-live-trading-message[role="status"] { color:var(--th-pos); }
+.header-live-trading-retry {
+  grid-column:1 / -1;
+  justify-self:start;
+  padding:5px 8px;
+  border:1px solid var(--th-border);
+  border-radius:var(--th-control-radius);
+  background:var(--th-button-secondary-bg);
+  color:var(--th-button-secondary-text);
+  font:inherit;
+  font-size:11px;
+}
+.theme-toggle-switch {
+  position:relative;
+  display:inline-flex;
+  width:42px;
+  height:24px;
+  flex:0 0 42px;
+  align-items:center;
+  cursor:pointer;
+}
+.theme-toggle-switch input {
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+}
+.theme-toggle-track {
+  display:flex;
+  width:42px;
+  height:24px;
+  align-items:center;
+  padding:3px;
+  border:1px solid var(--th-border);
+  border-radius:999px;
+  background:var(--th-inner);
+  box-shadow:var(--th-card-shadow);
+  transition:background .16s ease,border-color .16s ease;
+}
+.theme-toggle-thumb {
+  display:block;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:var(--th-muted);
+  box-shadow:0 1px 3px color-mix(in srgb,var(--th-text) 22%,transparent);
+  transform:translateX(0);
+  transition:transform .16s ease,background .16s ease;
+}
+.theme-toggle-switch.is-on .theme-toggle-track {
+  background:var(--th-accent);
+  border-color:var(--th-accent);
+}
+.theme-toggle-switch.is-on .theme-toggle-thumb {
+  background:var(--th-on-accent);
+  transform:translateX(18px);
+}
+.theme-toggle-switch input:focus-visible + .theme-toggle-track {
+  outline:2px solid var(--th-focus);
+  outline-offset:3px;
+}
+.theme-toggle-switch.is-disabled { opacity:.55; cursor:not-allowed; }
+.theme-toggle-switch input:disabled { cursor:not-allowed; }
+
+
+/* Theme-responsive Settings section shortcuts; preserve existing card geometry. */
+.account-settings-shortcuts {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:16px;
+}
+.account-settings-shortcut {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  min-width:0;
+  padding:16px !important;
+  text-align:left;
+  color:var(--th-text) !important;
+  background:var(--th-card) !important;
+  border:1px solid var(--th-border) !important;
+  border-radius:var(--th-radius) !important;
+  box-shadow:var(--th-card-shadow) !important;
+  font:inherit;
+  cursor:pointer;
+}
+.account-settings-shortcut:hover {
+  background:var(--th-hover-surface) !important;
+  border-color:var(--th-accent) !important;
+}
+.account-settings-shortcut-copy { display:grid; gap:6px; min-width:0; }
+.account-settings-shortcut-copy strong { color:var(--th-text) !important; overflow-wrap:anywhere; }
+.account-settings-shortcut-copy small { color:var(--th-muted) !important; line-height:1.45; overflow-wrap:anywhere; }
+.account-settings-shortcut > span:last-child { color:var(--th-icon); font-size:22px; flex:0 0 auto; }
+.account-settings-shortcut:focus-visible { outline:2px solid var(--th-focus); outline-offset:3px; }
+@media (max-width: 800px) {
+  .account-settings-shortcuts { grid-template-columns:minmax(0,1fr); }
+}
+
+
+/* Account menu and Settings refinements: use the active theme's semantic tokens. */
+.header-profile-popover {
+  width: max-content;
+  min-width: 0;
+  max-width: min(360px, calc(100vw - 24px));
+}
+.header-profile-popover .header-profile-summary {
+  width: max-content;
+  max-width: 100%;
+}
+.header-profile-popover .header-profile-summary > div:last-child {
+  min-width: 0;
+  max-width: 100%;
+}
+.header-profile-popover .header-profile-summary strong,
+.header-profile-popover .header-profile-summary span {
+  overflow-wrap: anywhere;
+}
+.account-live-trading-switch {
+  flex: 0 0 auto;
+  transition: background-color .16s ease, border-color .16s ease, opacity .16s ease;
+}
+.account-live-trading-switch:focus-visible,
+.account-live-trading-retry:focus-visible {
+  outline: 2px solid var(--finos-accent, var(--th-accent));
+  outline-offset: 3px;
+}
+.finos-settings-categories .finos-settings-category {
+  border-color: var(--finos-border, var(--th-border));
+  background: var(--finos-surface, var(--th-card));
+  color: var(--finos-text, var(--th-text));
+}
+.finos-settings-categories .finos-settings-category p {
+  color: var(--finos-muted, var(--th-muted));
+}
+@media (max-width: 600px) {
+  .header-profile-popover {
+    max-width: calc(100vw - 24px);
+  }
+  .finos-settings-categories .finos-settings-category {
+    padding: 16px !important;
+  }
+}

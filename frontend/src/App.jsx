@@ -287,6 +287,7 @@ export default function App() {
     return page && validPages.has(page) ? page : "Wealth Manager";
   };
   const [activePage, setActivePage] = useState(getPageFromLocation);
+  const [profileInitialSection, setProfileInitialSection] = useState("Basic Profile");
   const [selectedTheme, setSelectedTheme] = useState(readFinosTheme);
 
   useEffect(() => {
@@ -545,12 +546,10 @@ export default function App() {
                 <div className="profile-info"><strong>{getCurrentUser()?.name || "User"}</strong><span>{getCurrentUser()?.email || "Personal workspace"}</span></div>
               </button>
               {headerPanel === "profile" && (
-                <div className="header-popover header-profile-popover" role="menu" aria-label="User menu" style={{ width: "min(280px, calc(100vw - 24px))", maxWidth: "280px", boxSizing: "border-box" }}>
+                <div className="header-popover header-profile-popover" role="menu" aria-label="User menu" style={{ width: "max-content", minWidth: 0, maxWidth: "min(360px, calc(100vw - 24px))", boxSizing: "border-box" }}>
                   <div className="header-profile-summary"><div className="profile-avatar">{(getCurrentUser()?.name || "U").trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}</div><div><strong>{getCurrentUser()?.name || "User"}</strong><span>{getCurrentUser()?.email || "Personal workspace"}</span></div></div>
-                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Account Profile"); }}>Account profile</button>
                   <div role="none"><TradingControlSettings compact /></div>
-                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}><Settings size={16}/> Settings &amp; preferences <span>›</span></button>
-                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}>Theme &amp; appearance <span>›</span></button>
+                  <button type="button" role="menuitem" onClick={() => { setHeaderPanel(""); handleNavigation("Settings"); }}><Settings size={16}/> Settings <span>›</span></button>
                   <div className="header-profile-divider"/>
                   <button type="button" role="menuitem" className="header-signout" onClick={() => {
                     const token = sessionStorage.getItem("financial_os_access_token") || "";
@@ -581,7 +580,7 @@ export default function App() {
 ) : activePage === "Accounts" ? (
   <Accounts />
 ) : activePage === "Account Profile" ? (
-  <AccountCompletionPage />
+  <AccountCompletionPage initialSection={profileInitialSection} />
 ) : activePage === "Transactions" ? (
   <Transactions />
 ) : activePage === "Ledger" ? (
@@ -617,7 +616,7 @@ export default function App() {
 ) : activePage === "Admin Panel" ? (
    isAdmin ? <AdminPanel /> : <div className="admin-access-denied" role="alert">Administrator access is required. Your backend admin configuration must be set before this panel is available.</div>
 ) : activePage === "Settings" ? (
-   <SettingsPage onNavigate={handleNavigation} selectedTheme={selectedTheme} onThemeChange={changeTheme} />
+   <SettingsPage onNavigate={handleNavigation} onOpenProfileSection={(section) => { setProfileInitialSection(section); handleNavigation("Account Profile"); }} selectedTheme={selectedTheme} onThemeChange={changeTheme} />
 ) : (
    <PlaceholderPage
     title={activePage}
@@ -8923,7 +8922,7 @@ const holdingReturn =
 // salary structure, and connection readiness in one guided page.
 // Profile data is persisted by the authenticated backend identity.
 // ============================================================
-function AccountCompletionPage() {
+function AccountCompletionPage({ initialSection = "Basic Profile" }) {
   const emptyProfile = {
     legal_name: "", display_name: "", date_of_birth: "", pan: "", aadhaar_last4: "",
     kyc_method: "manual", kyc_status: "not_verified", tax_residency: "India",
@@ -8939,7 +8938,8 @@ function AccountCompletionPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [activeSection, setActiveSection] = useState("Basic Profile");
+  const [activeSection, setActiveSection] = useState(initialSection);
+  useEffect(() => { if (initialSection) setActiveSection(initialSection); }, [initialSection]);
   const [accountEmail, setAccountEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [emailPassword, setEmailPassword] = useState("");
@@ -9132,18 +9132,20 @@ function TradingControlSettings({ compact = false }) {
   };
 
   const enabled = Boolean(tradingControl?.enabled);
-  if (compact) return <div style={{ padding: "10px 12px", borderTop: "1px solid var(--finos-border, rgba(255,255,255,.12))", borderBottom: "1px solid var(--finos-border, rgba(255,255,255,.12))" }} aria-labelledby="live-trading-settings-title">
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-      <strong id="live-trading-settings-title" style={{ fontSize: 13 }}>Live Trading</strong>
-      <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "#22c55e" : "#ef4444" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
-    </div>
-    <button type="button" onClick={toggleTradingControl} disabled={busy} aria-pressed={enabled} style={{ width: "auto", maxWidth: "100%", marginTop: 8, padding: "6px 9px", minHeight: 30, borderRadius: 8, border: "1px solid var(--finos-border, rgba(255,255,255,.18))", background: enabled ? "rgba(239,68,68,.12)" : "rgba(34,197,94,.12)", color: "inherit", cursor: busy ? "not-allowed" : "pointer", opacity: busy ? .6 : 1, font: "inherit", fontSize: 11, lineHeight: 1.2, fontWeight: 700, whiteSpace: "normal" }}>
-      {busy ? (tradingControl ? "Saving…" : "Checking…") : tradingControl === null ? "Retry status check" : enabled ? "Turn Trading OFF" : "Turn Trading ON"}
-    </button>
-    {error && <p role="alert" style={{ color: "var(--finos-negative, #ef4444)", fontSize: 11, lineHeight: 1.4 }}>{error}</p>}
-    {notice && <p role="status" style={{ color: "var(--finos-positive, #22c55e)", fontSize: 11, lineHeight: 1.4 }}>{notice}</p>}
-    <p style={{ color: "var(--finos-muted, rgba(255,255,255,.62))", fontSize: 10, lineHeight: 1.4, marginBottom: 0 }}>Admin-only. OFF blocks new Financial OS orders.</p>
-  </div>;
+  if (compact) return <div className="account-live-trading-toggle" style={{ padding: "10px 12px", borderTop: "1px solid var(--finos-border, rgba(255,255,255,.12))", borderBottom: "1px solid var(--finos-border, rgba(255,255,255,.12))" }} aria-labelledby="live-trading-settings-title">
+     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+       <strong id="live-trading-settings-title" style={{ fontSize: 13 }}>Live Trading</strong>
+       <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "var(--finos-positive, #16a34a)" : "var(--finos-negative, #dc2626)" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
+     </div>
+     <button type="button" role="switch" aria-checked={tradingControl === null ? undefined : enabled} aria-label="Live Trading" onClick={toggleTradingControl} disabled={busy || tradingControl === null} className={`account-live-trading-switch ${enabled ? "is-on" : "is-off"}`} style={{ marginTop: 8, width: 44, height: 24, padding: 3, display: "inline-flex", alignItems: "center", justifyContent: enabled ? "flex-end" : "flex-start", borderRadius: 999, border: "1px solid var(--finos-border, currentColor)", background: enabled ? "var(--finos-positive, #16a34a)" : "var(--finos-surface, var(--th-inner))", color: "var(--finos-text, var(--th-text))", cursor: busy || tradingControl === null ? "not-allowed" : "pointer", opacity: busy ? .65 : 1 }} title={tradingControl === null ? "Live Trading status unavailable" : enabled ? "Turn Live Trading off" : "Turn Live Trading on"}>
+       <span aria-hidden="true" style={{ width: 16, height: 16, borderRadius: "50%", background: "var(--finos-on-accent, #fff)", boxShadow: "0 1px 3px rgba(0,0,0,.25)" }} />
+     </button>
+     {busy && <span style={{ marginLeft: 8, fontSize: 10, color: "var(--finos-muted, var(--th-muted))" }}>Saving…</span>}
+     {tradingControl === null && <button type="button" onClick={toggleTradingControl} disabled={busy} className="account-live-trading-retry" style={{ display: "block", marginTop: 6, padding: "3px 0", border: 0, background: "transparent", color: "var(--finos-muted, var(--th-muted))", fontSize: 11 }}>Retry status check</button>}
+     {error && <p role="alert" style={{ color: "var(--finos-negative, #ef4444)", fontSize: 11, lineHeight: 1.4 }}>{error}</p>}
+     {notice && <p role="status" style={{ color: "var(--finos-positive, #16a34a)", fontSize: 11, lineHeight: 1.4 }}>{notice}</p>}
+     <p style={{ color: "var(--finos-muted, var(--th-muted))", fontSize: 10, lineHeight: 1.4, marginBottom: 0 }}>Admin-only. OFF blocks new Financial OS orders.</p>
+   </div>;
   return <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }} aria-labelledby="live-trading-settings-title">
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexWrap: "wrap" }}>
       <div style={{ minWidth: 0, flex: "1 1 280px" }}>
@@ -9168,11 +9170,24 @@ function TradingControlSettings({ compact = false }) {
   </section>;
 }
 
-function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
+function SettingsPage({ onNavigate, onOpenProfileSection, selectedTheme, onThemeChange }) {
+  const settingsCardStyle = { padding: "20px", minWidth: 0, border: "1px solid var(--finos-border, var(--th-border))", background: "var(--finos-surface, var(--th-card))", color: "var(--finos-text, var(--th-text))", borderRadius: "var(--finos-radius, 14px)" };
+  const settingsCategories = [
+    { title: "Personal Details", description: "Name, email, contact information and address.", action: () => onOpenProfileSection("Basic Profile"), button: "Manage personal details" },
+    { title: "KYC / Tax Information", description: "KYC details, tax regime, financial year and salary setup.", action: () => onOpenProfileSection("KYC"), button: "Manage KYC & tax" },
+    { title: "Financial Diary", description: "View the read-only history of account and transaction activity.", action: () => onNavigate("Finance Diary"), button: "Open Financial Diary" },
+  ];
   return <div className="dashboard finos-settings-page">
-    <section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Personalize your workspace. Your theme is saved on this device and applies throughout Financial OS.</p></div></section>
+    <section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Manage personal information, KYC and tax details, appearance, and financial history.</p></div></section>
+    <section className="finos-settings-categories" aria-label="Settings categories" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 14, marginBottom: 18 }}>
+      {settingsCategories.map((category) => <article key={category.title} className="glass-card finos-settings-category" style={settingsCardStyle}>
+        <h3 style={{ marginTop: 0, color: "var(--finos-text, var(--th-text))" }}>{category.title}</h3>
+        <p style={{ color: "var(--finos-muted, var(--th-muted))", lineHeight: 1.6, minHeight: 42 }}>{category.description}</p>
+        <button type="button" className="primary-button" onClick={category.action}>{category.button}</button>
+      </article>)}
+    </section>
     <section className="finos-theme-settings glass-card">
-      <div className="finos-theme-settings-heading"><div><p className="finos-theme-eyebrow">APPEARANCE</p><h3>Choose your theme</h3><p>19 visual styles. Select a preview to apply it immediately.</p></div><span className="finos-theme-current">Current: {selectedTheme}</span></div>
+      <div className="finos-theme-settings-heading"><div><p className="finos-theme-eyebrow">APPEARANCE</p><h3>Theme</h3><p>Choose a theme. The selected style applies throughout Financial OS.</p></div><span className="finos-theme-current">Current: {selectedTheme}</span></div>
       <div className="finos-theme-settings-grid">
         {FINOS_THEMES.map((theme) => <button type="button" key={theme} aria-pressed={selectedTheme === theme} onClick={() => onThemeChange(theme)} className={`finos-theme-option finos-theme-option-${theme.toLowerCase().replaceAll(" ", "-")} ${selectedTheme === theme ? "is-active" : ""}`}>
           <span className="finos-theme-sample" aria-hidden="true"><i/><i/><i/><b/></span>
@@ -9180,12 +9195,10 @@ function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
           <span className="finos-theme-radio" aria-hidden="true">{selectedTheme === theme ? "✓" : ""}</span>
         </button>)}
       </div>
-      <p className="finos-theme-footnote">Default remains the standard Financial OS look. Elegant Plain is a clean white theme with thin borders and minimal visual decoration. Theme selection changes appearance only, not your records or calculations.</p>
+      <p className="finos-theme-footnote">Theme selection changes appearance only, not your records or calculations.</p>
     </section>
     <TradingControlSettings />
     <AccountContactSettings />
-    <section className="glass-card" style={{ padding: "22px", marginBottom: "16px" }}><h3>Account Profile</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Manage your personal details, tax information, and salary setup. This is separate from your bank and investment accounts.</p><button className="primary-button" onClick={() => onNavigate("Account Profile")}>Open Account Profile</button></section>
-    <section className="glass-card" style={{ padding: "22px" }}><h3>Finance Diary</h3><p style={{ color: "var(--finos-muted, rgba(255,255,255,0.62))", lineHeight: 1.6 }}>Read-only master history of account and transaction activity. Entries cannot be edited or deleted.</p><button className="primary-button" onClick={() => onNavigate("Finance Diary")}>Open Finance Diary</button></section>
   </div>;
 }
 

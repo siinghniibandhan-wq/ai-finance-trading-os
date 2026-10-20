@@ -122,6 +122,36 @@ def get_swarm_run(run_id: str, _user=Depends(get_current_user)):
     return _request(f"/swarm/runs/{safe_id}")
 
 
+@router.get("/swarm/runs/{run_id}/events")
+def swarm_run_events(run_id: str, _user=Depends(get_current_user)):
+    safe_id = run_id.strip()
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", safe_id):
+        raise HTTPException(status_code=400, detail="Invalid Vibe Trading swarm run ID.")
+    url = f"{_base_url()}/swarm/runs/{safe_id}/events"
+    headers = {"Accept": "text/event-stream", "Cache-Control": "no-cache"}
+    api_key = os.getenv("VIBE_TRADING_API_KEY", "").strip()
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    try:
+        upstream = urlopen(Request(url, headers=headers, method="GET"), timeout=30)
+    except HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Vibe Trading swarm stream returned HTTP {exc.code}.") from exc
+    except URLError as exc:
+        raise HTTPException(status_code=503, detail="Unable to connect to the Vibe Trading swarm stream.") from exc
+
+    def chunks():
+        try:
+            while True:
+                chunk = upstream.read1(4096) if hasattr(upstream, "read1") else upstream.read(4096)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            upstream.close()
+
+    return StreamingResponse(chunks(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
 @router.get("/swarm/presets")
 def swarm_presets(_user=Depends(get_current_user)):
     return _request("/swarm/presets")

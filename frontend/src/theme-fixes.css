@@ -3535,3 +3535,83 @@
   background: rgba(255, 255, 255, .05) !important;
   border-color: rgba(255, 255, 255, .15) !important;
 }
+
+
+/* Markets + Tax contrast correction for accent dark themes.
+   Excludes Default/Dark and all light themes. Presentation-only. */
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace > section[aria-label="Major Indian market indices"] > div {
+  background: var(--t-card-bg, rgba(255,255,255,.045)) !important;
+  background-image: none !important;
+  color: var(--finos-text, #f8fafc) !important;
+  border: 1px solid var(--finos-border, rgba(255,255,255,.16)) !important;
+  box-shadow: var(--t-shadow, 0 8px 22px rgba(0,0,0,.18)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(.instrument-search-panel, .instrument-market-news-panel, .instrument-watchlist-card, .instrument-ltp-panel, .instrument-chart-panel) {
+  color: var(--finos-text, #f8fafc) !important;
+  background: var(--t-card-bg, rgba(255,255,255,.045)) !important;
+  border-color: var(--finos-border, rgba(255,255,255,.16)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input, textarea, select, .finos-select-trigger) {
+  color: var(--finos-text, #f8fafc) !important;
+  -webkit-text-fill-color: var(--finos-text, #f8fafc) !important;
+  background: var(--t-input-bg, rgba(255,255,255,.06)) !important;
+  border-color: var(--finos-border, rgba(255,255,255,.18)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(input, textarea)::placeholder {
+  color: var(--finos-muted, #aab4c5) !important;
+  -webkit-text-fill-color: var(--finos-muted, #aab4c5) !important;
+  opacity: 1 !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(button:not(.primary-button):not([data-variant="primary"]), .secondary-button) {
+  color: var(--finos-text, #f8fafc) !important;
+  -webkit-text-fill-color: var(--finos-text, #f8fafc) !important;
+  background: var(--t-card-bg, rgba(255,255,255,.06)) !important;
+  border-color: var(--finos-border, rgba(255,255,255,.18)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .markets-workspace :is(.card-label, .instrument-provider-error, [role="status"]) {
+  color: var(--finos-muted, #aab4c5) !important;
+}
+
+/* Tax: normalize nested text and card surfaces in the same accent themes. */
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre :is(.tax-centre-grid > div, .tax-centre-grid > article, [class*="tax-card"], [class*="summary-card"], [class*="metric-card"]) {
+  color: var(--finos-text, #f8fafc) !important;
+  background: var(--t-card-bg, rgba(255,255,255,.045)) !important;
+  background-image: none !important;
+  border-color: var(--finos-border, rgba(255,255,255,.16)) !important;
+}
+:root:is(
+  [data-finos-theme="aurora"],[data-finos-theme="emerald"],[data-finos-theme="ocean"],
+  [data-finos-theme="sunset"],[data-finos-theme="retro-terminal"],[data-finos-theme="glass"],
+  [data-finos-theme="glassmorphism"],[data-finos-theme="maximalism"],[data-finos-theme="liquid-glass"]
+) .tax-centre :is(.tax-centre-grid > div, .tax-centre-grid > article, [class*="tax-card"], [class*="summary-card"], [class*="metric-card"]) :is(h1,h2,h3,h4,h5,strong,b,label,span,div,td,th) {
+  color: var(--finos-text, #f8fafc) !important;
+  -webkit-text-fill-color: var(--finos-text, #f8fafc) !important;
+}

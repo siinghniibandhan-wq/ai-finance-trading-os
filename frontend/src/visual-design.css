@@ -3984,3 +3984,48 @@ svg { flex-shrink: 0; }
   .categories-page .categories-list-panel { padding: 12px; }
   .categories-page .category-type-tabs { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* Additional Categories mirrors the primary Category Management panel. */
+.categories-page .categories-additional-panel {
+  box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch;
+  gap: 16px; width: 100%; min-width: 0; min-height: 0; height: auto;
+  margin-top: 18px; padding: clamp(16px, 2vw, 24px); overflow: visible;
+}
+.categories-page .categories-additional-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+  width: 100%; min-width: 0; min-height: 0; height: auto; margin: 0;
+  padding: 0 0 14px; border-bottom: 1px solid var(--th-border); overflow: visible;
+}
+.categories-page .categories-additional-header > div {
+  display: grid; gap: 6px; min-width: 0;
+}
+.categories-page .categories-additional-header .card-label {
+  margin: 0; color: var(--th-muted); line-height: 1.4; overflow-wrap: anywhere;
+}
+.categories-page .categories-additional-header h3 {
+  margin: 0; color: var(--th-text); font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.35; overflow-wrap: anywhere;
+}
+.categories-page .categories-additional-description {
+  margin: 0; color: var(--th-muted); font-size: 12px; line-height: 1.6;
+  max-width: 64ch; overflow-wrap: anywhere;
+}
+.categories-page .categories-additional-header .score {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  min-width: 34px; min-height: 34px; padding: 5px 9px;
+  border: 1px solid var(--th-border); border-radius: 999px;
+  color: var(--th-text); line-height: 1.2;
+}
+.categories-page .categories-additional-list {
+  display: grid; gap: 10px; width: 100%; min-width: 0;
+}
+.categories-page .categories-additional-list > * { min-width: 0; }
+.categories-page .categories-additional-list button { max-width: 100%; }
+@media (max-width: 640px) {
+  .categories-page .categories-additional-panel { padding: 16px; gap: 12px; }
+  .categories-page .categories-additional-header { gap: 10px; }
+}
+@media (max-width: 360px) {
+  .categories-page .categories-additional-panel { padding: 12px; }
+}

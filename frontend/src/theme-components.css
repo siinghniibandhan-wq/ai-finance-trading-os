@@ -1,5 +1,38 @@
-/* Shared theme-aware component styling; colour values come from theme tokens. */
-:root[data-finos-theme] body, :root[data-finos-theme] #root { background: var(--finos-page); color: var(--finos-text); }
-:root[data-finos-theme] :is(input,textarea,select,.finos-select-trigger) { background: var(--finos-control-bg); color: var(--finos-control-text); border-color: var(--finos-control-border); }
-:root[data-finos-theme] :is(.finos-select-menu,[role="listbox"],[role="menu"]) { background: var(--finos-control-bg); color: var(--finos-control-text); border-color: var(--finos-control-border); }
-:root[data-finos-theme] :is(.card,.panel,.stat-card,.metric-card,.summary-card,.chart-card,.section-card) { border-color: var(--finos-border); }
+/* Cloud theme source of truth: components consume semantic tokens. */
+:root[data-finos-theme]{
+  --finos-page:var(--th-page);--finos-text:var(--th-text);--finos-muted:var(--th-muted);--finos-border:var(--th-border);--finos-accent:var(--th-accent);
+  --finos-surface:var(--th-card);--finos-surface-raised:var(--th-inner);--finos-control-bg:var(--th-input-bg);--finos-control-text:var(--th-text);--finos-control-muted:var(--th-muted);--finos-control-border:var(--th-border);
+  --t-page-bg:var(--th-page);--t-card-bg:var(--th-card);--t-inner-bg:var(--th-inner);--t-sidebar-bg:var(--th-card);--t-border:var(--th-border);
+  --t-btn-bg:var(--th-inner);--t-btn-text:var(--th-text);--t-btn-border:var(--th-border);--t-pri-bg:var(--th-accent);--t-pri-text:var(--th-on-accent);--t-pri-border:var(--th-accent);
+  --t-radius:var(--th-radius);--t-radius-sm:calc(var(--th-radius)*.6);--t-shadow:var(--th-shadow);--t-font:var(--th-font);--portfolio-fg:var(--th-text);--portfolio-muted:var(--th-muted)
+}
+:root[data-finos-theme] body,:root[data-finos-theme] .app-shell,:root[data-finos-theme] .main-area,:root[data-finos-theme] .dashboard,:root[data-finos-theme] .money-workspace,:root[data-finos-theme] .markets-workspace,:root[data-finos-theme] .tax-centre{background:var(--th-page);color:var(--th-text);font-family:var(--th-font)}
+:root[data-finos-theme] .sidebar,:root[data-finos-theme] .topbar{background:var(--th-card);color:var(--th-text);border-color:var(--th-border);-webkit-backdrop-filter:var(--th-blur);backdrop-filter:var(--th-blur)}
+:root[data-finos-theme] .navigation-item{color:var(--th-muted)}
+:root[data-finos-theme] .navigation-item:hover{background:var(--th-inner);color:var(--th-text)}
+:root[data-finos-theme] .navigation-item.active{background:var(--th-accent);color:var(--th-on-accent)}
+:root[data-finos-theme] .navigation-title,:root[data-finos-theme] .card-label,:root[data-finos-theme] .eyebrow,:root[data-finos-theme] .welcome-label,:root[data-finos-theme] .finos-theme-eyebrow,:root[data-finos-theme] .chart-footnote,:root[data-finos-theme] .header-popover-empty,:root[data-finos-theme] .empty-chart,:root[data-finos-theme] [role="status"]{color:var(--th-muted)}
+:root[data-finos-theme] h1,:root[data-finos-theme] h2,:root[data-finos-theme] h3,:root[data-finos-theme] h4,:root[data-finos-theme] h5,:root[data-finos-theme] h6,:root[data-finos-theme] strong,:root[data-finos-theme] b,:root[data-finos-theme] th,:root[data-finos-theme] label,:root[data-finos-theme] .page-title,:root[data-finos-theme] .brand-text,:root[data-finos-theme] .welcome-section h1{color:var(--th-text)}
+:root[data-finos-theme] p,:root[data-finos-theme] small,:root[data-finos-theme] dt,:root[data-finos-theme] dd,:root[data-finos-theme] .welcome-description{color:var(--th-muted)}
+:root[data-finos-theme] a{color:var(--th-accent)}
+:root[data-finos-theme] .glass-card,:root[data-finos-theme] .metric-card,:root[data-finos-theme] .ai-card,:root[data-finos-theme] .health-card,:root[data-finos-theme] .placeholder-card,:root[data-finos-theme] .wc-primary-card,:root[data-finos-theme] .dashboard-clickable-card,:root[data-finos-theme] .instrument-search-panel,:root[data-finos-theme] .instrument-market-news-panel,:root[data-finos-theme] .instrument-watchlist-card,:root[data-finos-theme] .instrument-ltp-panel,:root[data-finos-theme] .instrument-chart-panel,:root[data-finos-theme] .header-popover,:root[data-finos-theme] .header-search-popover,:root[data-finos-theme] .header-notifications-popover,:root[data-finos-theme] .finos-select-menu,:root[data-finos-theme] .finos-theme-option{background:var(--th-card);background-image:none;color:var(--th-text);border:1px solid var(--th-border);border-radius:var(--th-radius);box-shadow:var(--th-shadow);-webkit-backdrop-filter:var(--th-blur);backdrop-filter:var(--th-blur)}
+:root[data-finos-theme] .glass-card .glass-card,:root[data-finos-theme] .metric-card .metric-card,:root[data-finos-theme] .card-header,:root[data-finos-theme] .header-search-results,:root[data-finos-theme] .finos-select-option:hover{background:var(--th-inner)}
+:root[data-finos-theme] .glass-card :is(h1,h2,h3,h4,h5,h6,strong,td,.card-value,.wc-card-value){color:var(--th-text)}
+:root[data-finos-theme] .glass-card :is(small,.card-label,.wc-card-label,.wc-card-subtitle,.chart-footnote){color:var(--th-muted)}
+:root[data-finos-theme] .wc-card-action,:root[data-finos-theme] .finos-select-check{color:var(--th-accent)}
+:root[data-finos-theme] input,:root[data-finos-theme] textarea,:root[data-finos-theme] select,:root[data-finos-theme] .finos-select-trigger,:root[data-finos-theme] .bill-form-select,:root[data-finos-theme] .category-form-select{background:var(--th-input-bg);color:var(--th-text);-webkit-text-fill-color:var(--th-text);border:1px solid var(--th-border);border-radius:calc(var(--th-radius)*.6)}
+:root[data-finos-theme] input::placeholder,:root[data-finos-theme] textarea::placeholder{color:var(--th-muted);-webkit-text-fill-color:var(--th-muted);opacity:1}
+:root[data-finos-theme] input:focus,:root[data-finos-theme] textarea:focus,:root[data-finos-theme] select:focus,:root[data-finos-theme] .finos-select-trigger:focus{outline:2px solid var(--th-accent);outline-offset:1px}
+:root[data-finos-theme] .bill-form-label,:root[data-finos-theme] .account-form-field label,:root[data-finos-theme] .category-form-field label{color:var(--th-muted)}
+:root[data-finos-theme] option{background:var(--th-card);color:var(--th-text)}
+:root[data-finos-theme] button,:root[data-finos-theme] .secondary-button,:root[data-finos-theme] .small-button,:root[data-finos-theme] .icon-button,:root[data-finos-theme] .menu-button,:root[data-finos-theme] .wc-close-button{background:var(--th-inner);color:var(--th-text);-webkit-text-fill-color:var(--th-text);border:1px solid var(--th-border);border-radius:calc(var(--th-radius)*.6)}
+:root[data-finos-theme] button:hover,:root[data-finos-theme] .secondary-button:hover,:root[data-finos-theme] .icon-button:hover{border-color:var(--th-accent)}
+:root[data-finos-theme] .primary-button,:root[data-finos-theme] button[data-variant="primary"],:root[data-finos-theme] .header-popover-primary{background:var(--th-accent);color:var(--th-on-accent);-webkit-text-fill-color:var(--th-on-accent);border-color:var(--th-accent)}
+:root[data-finos-theme] table,:root[data-finos-theme] td,:root[data-finos-theme] th{border-color:var(--th-border)}
+:root[data-finos-theme] tbody tr:hover{background:var(--th-inner)}
+:root[data-finos-theme] .positive,:root[data-finos-theme] .gain,:root[data-finos-theme] .text-positive{color:var(--th-pos)}
+:root[data-finos-theme] .negative,:root[data-finos-theme] .loss,:root[data-finos-theme] .text-negative{color:var(--th-neg)}
+:root[data-finos-theme] hr{border-color:var(--th-border)}
+:root[data-finos-theme] :is(dialog,[role="dialog"],[role="menu"],[role="listbox"],details){background:var(--th-card);color:var(--th-text);border:1px solid var(--th-border);border-radius:var(--th-radius)}
+:root[data-finos-theme] :is(code,kbd,pre){background:var(--th-inner);color:var(--th-text);border:1px solid var(--th-border)}
+:root[data-finos-theme] :is(button,a) svg{color:inherit}

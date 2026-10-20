@@ -220,7 +220,6 @@ const FINOS_THEME_DESCRIPTIONS = {
   "Sunset": "Warm amber and coral accents.",
   "Minimal": "Quiet, reduced visual decoration.",
   "Retro Terminal": "Terminal-inspired green and monospace details.",
-  "Glass": "Translucent panels and soft depth.",
   "Skeuomorphism": "Tactile surfaces with subtle inset and raised depth.",
   "Neumorphism": "Soft, low-contrast raised and inset surfaces.",
   "Glassmorphism": "Frosted translucent cards and blur.",
@@ -9179,7 +9178,7 @@ function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
   return <div className="dashboard finos-settings-page">
     <section className="welcome-section"><div><p className="welcome-label">PREFERENCES & HISTORY</p><h2>Settings</h2><p className="welcome-description">Personalize your workspace. Your theme is saved on this device and applies throughout Financial OS.</p></div></section>
     <section className="finos-theme-settings glass-card">
-      <div className="finos-theme-settings-heading"><div><p className="finos-theme-eyebrow">APPEARANCE</p><h3>Choose your theme</h3><p>19 visual styles. Select a preview to apply it immediately.</p></div><span className="finos-theme-current">Current: {selectedTheme}</span></div>
+      <div className="finos-theme-settings-heading"><div><p className="finos-theme-eyebrow">APPEARANCE</p><h3>Choose your theme</h3><p>18 visual styles. Select a preview to apply it immediately.</p></div><span className="finos-theme-current">Current: {selectedTheme}</span></div>
       <div className="finos-theme-settings-grid">
         {FINOS_THEMES.map((theme) => <button type="button" key={theme} aria-pressed={selectedTheme === theme} onClick={() => onThemeChange(theme)} className={`finos-theme-option finos-theme-option-${theme.toLowerCase().replaceAll(" ", "-")} ${selectedTheme === theme ? "is-active" : ""}`}>
           <span className="finos-theme-sample" aria-hidden="true"><i/><i/><i/><b/></span>

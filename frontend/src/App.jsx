@@ -287,6 +287,7 @@ export default function App() {
     return page && validPages.has(page) ? page : "Wealth Manager";
   };
   const [activePage, setActivePage] = useState(getPageFromLocation);
+  const [profileInitialSection, setProfileInitialSection] = useState("Basic Profile");
   const [selectedTheme, setSelectedTheme] = useState(readFinosTheme);
 
   useEffect(() => {
@@ -579,7 +580,7 @@ export default function App() {
 ) : activePage === "Accounts" ? (
   <Accounts />
 ) : activePage === "Account Profile" ? (
-  <AccountCompletionPage />
+  <AccountCompletionPage initialSection={profileInitialSection} />
 ) : activePage === "Transactions" ? (
   <Transactions />
 ) : activePage === "Ledger" ? (
@@ -615,7 +616,7 @@ export default function App() {
 ) : activePage === "Admin Panel" ? (
    isAdmin ? <AdminPanel /> : <div className="admin-access-denied" role="alert">Administrator access is required. Your backend admin configuration must be set before this panel is available.</div>
 ) : activePage === "Settings" ? (
-   <SettingsPage onNavigate={handleNavigation} selectedTheme={selectedTheme} onThemeChange={changeTheme} />
+   <SettingsPage onNavigate={handleNavigation} onOpenProfileSection={(section) => { setProfileInitialSection(section); handleNavigation("Account Profile"); }} selectedTheme={selectedTheme} onThemeChange={changeTheme} />
 ) : (
    <PlaceholderPage
     title={activePage}
@@ -8921,7 +8922,7 @@ const holdingReturn =
 // salary structure, and connection readiness in one guided page.
 // Profile data is persisted by the authenticated backend identity.
 // ============================================================
-function AccountCompletionPage() {
+function AccountCompletionPage({ initialSection = "Basic Profile" }) {
   const emptyProfile = {
     legal_name: "", display_name: "", date_of_birth: "", pan: "", aadhaar_last4: "",
     kyc_method: "manual", kyc_status: "not_verified", tax_residency: "India",
@@ -8937,7 +8938,8 @@ function AccountCompletionPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [activeSection, setActiveSection] = useState("Basic Profile");
+  const [activeSection, setActiveSection] = useState(initialSection);
+  useEffect(() => { if (initialSection) setActiveSection(initialSection); }, [initialSection]);
   const [accountEmail, setAccountEmail] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [emailPassword, setEmailPassword] = useState("");
@@ -9135,7 +9137,7 @@ function TradingControlSettings({ compact = false }) {
        <strong id="live-trading-settings-title" style={{ fontSize: 13 }}>Live Trading</strong>
        <span role="status" aria-live="polite" style={{ fontSize: 10, fontWeight: 800, color: tradingControl === null ? "var(--finos-muted, #999)" : enabled ? "var(--finos-positive, #16a34a)" : "var(--finos-negative, #dc2626)" }}>{tradingControl === null ? "UNKNOWN" : enabled ? "ON" : "OFF"}</span>
      </div>
-     <button type="button" role="switch" aria-checked={enabled} aria-label="Live Trading" onClick={toggleTradingControl} disabled={busy || tradingControl === null} className={`account-live-trading-switch ${enabled ? "is-on" : "is-off"}`} style={{ marginTop: 8, width: 44, height: 24, padding: 3, display: "inline-flex", alignItems: "center", justifyContent: enabled ? "flex-end" : "flex-start", borderRadius: 999, border: "1px solid var(--finos-border, currentColor)", background: enabled ? "var(--finos-positive, #16a34a)" : "var(--finos-surface, var(--th-inner))", color: "var(--finos-text, var(--th-text))", cursor: busy || tradingControl === null ? "not-allowed" : "pointer", opacity: busy ? .65 : 1 }} title={tradingControl === null ? "Live Trading status unavailable" : enabled ? "Turn Live Trading off" : "Turn Live Trading on"}>
+     <button type="button" role="switch" aria-checked={tradingControl === null ? undefined : enabled} aria-label="Live Trading" onClick={toggleTradingControl} disabled={busy || tradingControl === null} className={`account-live-trading-switch ${enabled ? "is-on" : "is-off"}`} style={{ marginTop: 8, width: 44, height: 24, padding: 3, display: "inline-flex", alignItems: "center", justifyContent: enabled ? "flex-end" : "flex-start", borderRadius: 999, border: "1px solid var(--finos-border, currentColor)", background: enabled ? "var(--finos-positive, #16a34a)" : "var(--finos-surface, var(--th-inner))", color: "var(--finos-text, var(--th-text))", cursor: busy || tradingControl === null ? "not-allowed" : "pointer", opacity: busy ? .65 : 1 }} title={tradingControl === null ? "Live Trading status unavailable" : enabled ? "Turn Live Trading off" : "Turn Live Trading on"}>
        <span aria-hidden="true" style={{ width: 16, height: 16, borderRadius: "50%", background: "var(--finos-on-accent, #fff)", boxShadow: "0 1px 3px rgba(0,0,0,.25)" }} />
      </button>
      {busy && <span style={{ marginLeft: 8, fontSize: 10, color: "var(--finos-muted, var(--th-muted))" }}>Saving…</span>}
@@ -9168,11 +9170,11 @@ function TradingControlSettings({ compact = false }) {
   </section>;
 }
 
-function SettingsPage({ onNavigate, selectedTheme, onThemeChange }) {
+function SettingsPage({ onNavigate, onOpenProfileSection, selectedTheme, onThemeChange }) {
   const settingsCardStyle = { padding: "20px", minWidth: 0, border: "1px solid var(--finos-border, var(--th-border))", background: "var(--finos-surface, var(--th-card))", color: "var(--finos-text, var(--th-text))", borderRadius: "var(--finos-radius, 14px)" };
   const settingsCategories = [
-    { title: "Personal Details", description: "Name, email, contact information and address.", action: () => onNavigate("Account Profile"), button: "Manage personal details" },
-    { title: "KYC / Tax Information", description: "KYC details, tax regime, financial year and salary setup.", action: () => onNavigate("Account Profile"), button: "Manage KYC & tax" },
+    { title: "Personal Details", description: "Name, email, contact information and address.", action: () => onOpenProfileSection("Basic Profile"), button: "Manage personal details" },
+    { title: "KYC / Tax Information", description: "KYC details, tax regime, financial year and salary setup.", action: () => onOpenProfileSection("KYC"), button: "Manage KYC & tax" },
     { title: "Financial Diary", description: "View the read-only history of account and transaction activity.", action: () => onNavigate("Finance Diary"), button: "Open Financial Diary" },
   ];
   return <div className="dashboard finos-settings-page">

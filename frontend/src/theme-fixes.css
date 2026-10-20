@@ -1894,10 +1894,11 @@
 
 /* Tax light-theme text correction: inline rgba colours are serialized with spaces,
    so cover all nested card content and restore muted text hierarchy afterwards. */
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre *:not(button):not(button *) { color: var(--tax-ink, var(--th-on-accent)) !important; -webkit-text-fill-color: var(--tax-ink, var(--th-on-accent)) !important; text-shadow: none !important; }
-:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(p,span,small,dt,dd,caption,summary,legend):not(button):not(button *) { color: var(--tax-muted, var(--th-muted)) !important; -webkit-text-fill-color: var(--tax-muted, var(--th-muted)) !important; }
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre * { color: var(--tax-ink, var(--th-on-accent)) !important; -webkit-text-fill-color: var(--tax-ink, var(--th-on-accent)) !important; text-shadow: none !important; }
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre :is(p,span,small,dt,dd,caption,summary,legend) { color: var(--tax-muted, var(--th-muted)) !important; -webkit-text-fill-color: var(--tax-muted, var(--th-muted)) !important; }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [role="status"] { color: var(--th-pos) !important; -webkit-text-fill-color: var(--th-pos) !important; }
 :root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre [role="alert"] { color: var(--th-neg) !important; -webkit-text-fill-color: var(--th-neg) !important; }
+:root[data-finos-theme]:not([data-finos-theme="dark"]):not([data-finos-theme="default"]):not([data-finos-theme="retro-terminal"]) .tax-centre button.primary-button { color: var(--th-text) !important; -webkit-text-fill-color: var(--th-text) !important; }
 
 
 /* Tax Income tab: make the three concepts read as separate sections instead

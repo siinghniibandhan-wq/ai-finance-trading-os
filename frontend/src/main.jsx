@@ -14,6 +14,7 @@ import "./theme-styles.css";
 import "./instrument-interaction-contrast.css";
 import "./holdings-dark-cards.css";
 import "./theme-unify.css";
+import "./theme-component-system.css";
 
 // Apply the saved theme before React renders so the landing and login pages use it too.
 try {

@@ -83,11 +83,18 @@ export default function LoanManagement() {
   };
 
   const card = { background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.09)", borderRadius: 16, padding: 18, minWidth: 0 };
-  return <div className="loan-management-page" style={{ display: "grid", gap: 18, color: "#f8fafc" }}>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-      <div><div style={{ fontSize: 12, letterSpacing: 1.5, color: "#c4b5fd", fontWeight: 700 }}>MONEY • LOANS</div><h2 style={{ margin: "6px 0" }}>Loan Management</h2><p style={{ margin: 0, color: "#a1a1b5" }}>Review borrowing, lending, repayments and recoveries. Corrections update linked balances together.</p></div>
-      <button style={buttonStyle} onClick={load} disabled={loading}><RefreshCw size={16} /> Refresh</button>
-    </div>
+  return <div className="loan-management-page" style={{ display: "grid", gap: 18 }}>
+    <section className="loan-management-header">
+      <div className="loan-management-heading">
+        <p className="loan-management-eyebrow">MONEY · LOANS</p>
+        <h2>Loan Management</h2>
+        <p className="loan-management-description">Review borrowing, lending, repayments and recoveries. Corrections update linked balances together.</p>
+      </div>
+      <button className="loan-management-refresh" onClick={load} disabled={loading} type="button">
+        <RefreshCw size={16} className={loading ? "loan-refresh-spinning" : ""} />
+        <span>{loading ? "Refreshing…" : "Refresh"}</span>
+      </button>
+    </section>
     {error && <div role="alert" style={{ ...card, borderColor: "rgba(248,113,113,.45)", color: "#fecaca" }}><AlertTriangle size={17} style={{ verticalAlign: "middle", marginRight: 8 }} />{error}</div>}
     {message && <div role="status" style={{ ...card, borderColor: "rgba(74,222,128,.4)", color: "#bbf7d0" }}>{message}</div>}
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 14 }}>

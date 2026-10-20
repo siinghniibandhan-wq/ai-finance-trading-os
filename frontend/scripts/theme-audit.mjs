@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 
 const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
 const css = readFileSync(new URL("../src/visual-design.css", import.meta.url), "utf8");
+const themeTokens = readFileSync(new URL("../src/theme-unify.css", import.meta.url), "utf8");
+const componentSystem = readFileSync(new URL("../src/theme-component-system.css", import.meta.url), "utf8");
 
 const expectedThemes = [
   "Default", "Light", "Dark", "Skeuomorphism", "Neumorphism",
@@ -35,6 +37,26 @@ for (const slug of slugs) {
   assert.ok(selector.test(css), `No theme-specific CSS selector found for ${slug}`);
 }
 console.log(`PASS: CSS includes theme-specific rules for all ${slugs.length} theme slugs.`);
+for (const slug of slugs) {
+  assert.ok(themeTokens.includes(`data-finos-theme="${slug}"`), `Missing central palette for theme: ${slug}`);
+}
+console.log(`PASS: all ${slugs.length} themes have central palette definitions.`);
+
+for (const token of [
+  "--th-surface-raised", "--th-surface-inset", "--th-tab-bg", "--th-tab-text",
+  "--th-tab-active-bg", "--th-tab-active-text", "--th-tab-border", "--th-tab-radius",
+  "--th-button-primary-bg", "--th-button-primary-text", "--th-button-secondary-bg",
+  "--th-button-secondary-text", "--th-input-surface", "--th-input-text",
+  "--th-input-border", "--th-icon", "--th-icon-muted", "--th-focus",
+  "--th-hover-surface", "--th-selected-surface", "--th-card-shadow",
+]) {
+  assert.ok(themeTokens.includes(token), `Missing semantic theme token: ${token}`);
+}
+for (const selector of ['.tax-centre nav[aria-label="Tax sections"] button', '.instrument-research-tab', '.instrument-chart-range-button', 'input', 'textarea', '.metric-icon']) {
+  assert.ok(componentSystem.includes(selector), `Shared component styling missing: ${selector}`);
+}
+console.log("PASS: shared semantic component tokens and cross-module tab/form/icon rules exist.");
+
 
 for (const selector of [
   ".finos-select-menu", ".finos-select-option",

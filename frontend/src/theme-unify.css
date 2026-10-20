@@ -17,7 +17,7 @@
  --th-surface-raised:var(--th-card);--th-surface-inset:var(--th-inner);
  --th-tab-bg:var(--th-inner);--th-tab-text:var(--th-muted);
  --th-tab-active-bg:var(--th-accent);--th-tab-active-text:var(--th-on-accent);
- --th-tab-border:var(--th-border);--th-tab-radius:var(--th-radius);
+ --th-tab-border:var(--th-border);--th-tab-radius:var(--th-radius);--th-tab-shadow:none;--th-tab-active-shadow:none;
  --th-button-primary-bg:var(--th-accent);--th-button-primary-text:var(--th-on-accent);
  --th-button-secondary-bg:var(--th-inner);--th-button-secondary-text:var(--th-text);
  --th-input-surface:var(--th-input-bg);--th-input-text:var(--th-text);--th-input-border:var(--th-border);
@@ -28,18 +28,18 @@
 }
 :root[data-finos-theme="neumorphism"]{
  --th-tab-bg:var(--th-page);--th-tab-text:var(--th-text);--th-tab-active-bg:var(--th-inner);--th-tab-active-text:var(--th-text);
- --th-tab-radius:var(--th-radius);--th-card-shadow:8px 8px 16px #c9d0da,-8px -8px 16px #ffffff;
+ --th-tab-radius:var(--th-radius);--th-tab-shadow:5px 5px 10px #c9d0da,-5px -5px 10px #ffffff;--th-tab-active-shadow:inset 4px 4px 8px #c9d0da,inset -4px -4px 8px #ffffff;--th-card-shadow:8px 8px 16px #c9d0da,-8px -8px 16px #ffffff;
  --th-button-secondary-bg:var(--th-page);--th-input-surface:var(--th-page);
 }
 :root[data-finos-theme="skeuomorphism"]{
  --th-tab-bg:linear-gradient(#f8fbfd,var(--th-inner));--th-tab-active-bg:linear-gradient(#ffffff,var(--th-card));
- --th-tab-text:var(--th-text);--th-tab-active-text:var(--th-text);--th-tab-radius:8px;
+ --th-tab-text:var(--th-text);--th-tab-active-text:var(--th-text);--th-tab-radius:8px;--th-tab-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 0 #a7b5c1,0 4px 7px rgba(28,48,64,.14);--th-tab-active-shadow:inset 0 2px 3px rgba(28,48,64,.18),0 1px 0 #fff;
  --th-card-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 3px 0 #a7b5c1,0 6px 12px rgba(28,48,64,.18);
 }
-:root[data-finos-theme="brutalism"]{--th-tab-radius:0px;--th-tab-bg:var(--th-card);--th-tab-active-bg:var(--th-accent);--th-card-shadow:4px 4px 0 var(--th-accent);--th-control-radius:0px}
+:root[data-finos-theme="brutalism"]{--th-tab-radius:0px;--th-tab-bg:var(--th-card);--th-tab-active-bg:var(--th-accent);--th-tab-shadow:3px 3px 0 var(--th-text);--th-tab-active-shadow:inset 2px 2px 0 rgba(0,0,0,.28);--th-card-shadow:4px 4px 0 var(--th-accent);--th-control-radius:0px}
 :root[data-finos-theme="retro-terminal"]{--th-tab-radius:2px;--th-tab-bg:var(--th-card);--th-tab-active-bg:var(--th-accent);--th-card-shadow:none;--th-control-radius:2px}
 :root[data-finos-theme="elegant-plain"]{--th-tab-bg:transparent;--th-tab-active-bg:transparent;--th-tab-text:var(--th-muted);--th-tab-active-text:var(--th-text);--th-tab-radius:0px;--th-card-shadow:none;--th-control-radius:4px}
-:root[data-finos-theme="bento-grid"]{--th-tab-radius:10px;--th-card-shadow:0 5px 18px rgba(32,52,50,.08);--th-control-radius:10px}
-:root[data-finos-theme="nordic"]{--th-tab-radius:12px;--th-card-shadow:0 5px 16px rgba(37,73,87,.08);--th-control-radius:12px}
-:root[data-finos-theme="editorial"]{--th-tab-radius:4px;--th-tab-bg:transparent;--th-tab-active-bg:var(--th-card);--th-tab-active-text:var(--th-accent);--th-card-shadow:0 4px 14px rgba(66,49,34,.08);--th-control-radius:4px}
+:root[data-finos-theme="bento-grid"]{--th-tab-radius:10px;--th-tab-shadow:0 2px 6px rgba(32,52,50,.07);--th-tab-active-shadow:0 3px 8px rgba(24,126,121,.18);--th-card-shadow:0 5px 18px rgba(32,52,50,.08);--th-control-radius:10px}
+:root[data-finos-theme="nordic"]{--th-tab-radius:12px;--th-tab-shadow:0 2px 5px rgba(37,73,87,.06);--th-tab-active-shadow:0 3px 8px rgba(38,123,131,.16);--th-card-shadow:0 5px 16px rgba(37,73,87,.08);--th-control-radius:12px}
+:root[data-finos-theme="editorial"]{--th-tab-radius:4px;--th-tab-bg:transparent;--th-tab-active-bg:var(--th-card);--th-tab-active-text:var(--th-accent);--th-tab-shadow:none;--th-tab-active-shadow:inset 0 -2px 0 var(--th-accent);--th-card-shadow:0 4px 14px rgba(66,49,34,.08);--th-control-radius:4px}
 :root{--th-chart-1:var(--th-accent);--th-chart-2:var(--th-pos);--th-chart-3:var(--th-neg);--th-chart-4:var(--th-warn);--th-chart-5:color-mix(in srgb,var(--th-accent) 55%,var(--th-text))}

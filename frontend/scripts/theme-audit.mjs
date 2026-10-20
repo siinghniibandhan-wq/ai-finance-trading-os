@@ -57,6 +57,44 @@ for (const selector of ['.tax-centre nav[aria-label="Tax sections"] button', '.i
 }
 console.log("PASS: shared semantic component tokens and cross-module tab/form/icon rules exist.");
 
+function parseHexColor(hex) {
+  const raw = hex.replace("#", "");
+  const expanded = raw.length === 3 ? [...raw].map((part) => part + part).join("") : raw;
+  if (!/^[0-9a-fA-F]{6}$/.test(expanded)) return null;
+  return [0, 2, 4].map((offset) => parseInt(expanded.slice(offset, offset + 2), 16) / 255);
+}
+function relativeLuminance(hex) {
+  const channels = parseHexColor(hex);
+  if (!channels) return null;
+  const linear = channels.map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+function contrastRatio(first, second) {
+  const a = relativeLuminance(first);
+  const b = relativeLuminance(second);
+  if (a === null || b === null) return null;
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+for (const slug of slugs) {
+  const declaration = themeTokens.match(new RegExp(`\\[data-finos-theme=["']${slug}["']\\]\\{([^}]*)\\}`));
+  assert.ok(declaration, `Theme palette not found for contrast check: ${slug}`);
+  const colour = (name) => declaration[1].match(new RegExp(`--th-${name}:(#[0-9a-fA-F]{3,6})(?![0-9a-fA-F])`))?.[1];
+  const page = colour("page");
+  const card = colour("card");
+  const text = colour("text");
+  const muted = colour("muted");
+  const accent = colour("accent");
+  const onAccent = colour("on-accent");
+  assert.ok([page, card, text, muted, accent, onAccent].every(Boolean), `Missing contrast-critical palette value for ${slug}`);
+  assert.ok(contrastRatio(text, page) >= 4.5, `${slug}: primary text/page contrast must be at least 4.5:1`);
+  assert.ok(contrastRatio(text, card) >= 4.5, `${slug}: primary text/card contrast must be at least 4.5:1`);
+  assert.ok(contrastRatio(muted, card) >= 4.5, `${slug}: muted text/card contrast must be at least 4.5:1`);
+  assert.ok(contrastRatio(onAccent, accent) >= 4.5, `${slug}: accent button text contrast must be at least 4.5:1`);
+  assert.ok(contrastRatio(accent, card) >= 3, `${slug}: accent/icon contrast must be at least 3:1`);
+}
+console.log(`PASS: all ${slugs.length} theme palettes meet the defined text and accent contrast checks.`);
+
+
 
 for (const selector of [
   ".finos-select-menu", ".finos-select-option",

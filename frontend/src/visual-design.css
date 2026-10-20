@@ -2479,16 +2479,32 @@ svg { flex-shrink: 0; }
 :root[data-finos-theme="light"] .accounts-hero {
   color: var(--th-text) !important;
 }
-:root[data-finos-theme="light"] .welcome-section p,
-:root[data-finos-theme="light"] .welcome-section small,
-:root[data-finos-theme="light"] .welcome-section .eyebrow,
-:root[data-finos-theme="light"] .welcome-section .subtitle,
-:root[data-finos-theme="light"] .welcome-section .description,
-:root[data-finos-theme="light"] .welcome-section span:not(.gradient-text),
-:root[data-finos-theme="light"] .page-hero p,
-:root[data-finos-theme="light"] .module-hero p {
-  color: var(--th-on-accent) !important;
+/* Light theme: headings and supporting copy use foreground tokens, not
+   the on-accent token (which is intended only for text on accent buttons). */
+:root[data-finos-theme="light"] :is(.welcome-section, .page-hero, .module-hero, .accounts-hero) {
+  color: var(--th-text) !important;
+}
+:root[data-finos-theme="light"] :is(.welcome-section, .page-hero, .module-hero, .accounts-hero) :is(h1,h2,h3,h4) {
+  color: var(--th-text) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme="light"] .welcome-section h2 :is(span, .gradient-text),
+:root[data-finos-theme="light"] :is(.page-hero, .module-hero, .accounts-hero) :is(h1,h2,h3) :is(span, .gradient-text) {
+  background: none !important;
+  color: var(--th-accent) !important;
+  -webkit-text-fill-color: var(--th-accent) !important;
+}
+:root[data-finos-theme="light"] :is(.welcome-section, .page-hero, .module-hero, .accounts-hero) :is(p,small,.eyebrow,.subtitle,.description,span:not(.gradient-text)) {
+  color: var(--th-muted) !important;
   opacity: 1 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+/* Accent controls retain readable on-accent text, including nested labels/icons. */
+:root[data-finos-theme="light"] :is(.primary-button, .button-primary, button[aria-pressed="true"]) {
+  color: var(--th-on-accent) !important;
+}
+:root[data-finos-theme="light"] :is(.primary-button, .button-primary, button[aria-pressed="true"]) :is(span,strong,small) {
+  color: inherit !important;
   -webkit-text-fill-color: currentColor !important;
 }
 :root[data-finos-theme="light"] .glass-card,

@@ -6,7 +6,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "./account-layout.css";
-import "./playground.css";
 import AdminPanel from "./AdminPanel";
 import AccountContactSettings from "./AccountContactSettings";
 import WealthManager from "./WealthManager";
@@ -194,18 +193,6 @@ const navigation = [
     ]
   },
 
-  // ============================================================
-  // PLAYGROUND SECTION
-  // ============================================================
-  {
-    section: "Playground",
-    items: [
-      {
-        name: "Playground",
-        icon: Sparkles
-      }
-    ]
-  }
 ];
 
 

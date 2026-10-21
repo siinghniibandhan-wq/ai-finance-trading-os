@@ -48,6 +48,7 @@ from app.database.database import get_db
 from app.routes.auth import get_current_user
 from app.routes.ownership import require_matching_user_id
 from app.models import User, TaxCreditEntry
+from app.finance_diary import record_finance_event
 from app.routes.final_taxable_income import get_final_taxable_income
 
 
@@ -625,6 +626,12 @@ def create_tax_credit_entry(payload: TaxCreditEntryInput, current_user: User = D
         source_reference=reference, notes=payload.notes, status="pending_review",
     )
     db.add(entry)
+    db.flush()
+    record_finance_event(
+        db, user_id=current_user.id, event_type="created", entity_type="tax_credit", entity_id=entry.id,
+        description=f"Tax credit recorded: {entry.credit_type} for FY {entry.financial_year}",
+        snapshot={"financial_year": entry.financial_year, "credit_type": entry.credit_type, "amount": entry.amount, "status": entry.status, "source_reference_present": bool(entry.source_reference)},
+    )
     db.commit()
     db.refresh(entry)
     return {
@@ -1117,6 +1124,11 @@ def verify_tax_credit_entry(
         raise HTTPException(status_code=status_code, detail=problem)
     entry.source_reference = reference
     entry.status = "verified"
+    record_finance_event(
+        db, user_id=current_user.id, event_type="verified", entity_type="tax_credit", entity_id=entry.id,
+        description=f"Tax credit verified: {entry.credit_type} for FY {entry.financial_year}",
+        snapshot={"financial_year": entry.financial_year, "credit_type": entry.credit_type, "amount": entry.amount, "status": entry.status, "source_reference_present": True},
+    )
     db.commit()
     db.refresh(entry)
     result = _credit_summary(entry)
@@ -1137,6 +1149,11 @@ def unverify_tax_credit_entry(
     """Return a credit to pending review so it stops being counted."""
     entry = _get_owned_credit(db, credit_id, current_user.id)
     entry.status = "pending_review"
+    record_finance_event(
+        db, user_id=current_user.id, event_type="unverified", entity_type="tax_credit", entity_id=entry.id,
+        description=f"Tax credit returned to review: {entry.credit_type} for FY {entry.financial_year}",
+        snapshot={"financial_year": entry.financial_year, "credit_type": entry.credit_type, "amount": entry.amount, "status": entry.status},
+    )
     db.commit()
     db.refresh(entry)
     result = _credit_summary(entry)
@@ -1152,6 +1169,11 @@ def delete_tax_credit_entry(
 ):
     """Delete one of the owner's tax credit entries."""
     entry = _get_owned_credit(db, credit_id, user_id)
+    record_finance_event(
+        db, user_id=user_id, event_type="deleted", entity_type="tax_credit", entity_id=entry.id,
+        description=f"Tax credit deleted: {entry.credit_type} for FY {entry.financial_year}",
+        snapshot={"financial_year": entry.financial_year, "credit_type": entry.credit_type, "amount": entry.amount, "status": entry.status, "source_reference_present": bool(entry.source_reference)},
+    )
     db.delete(entry)
     db.commit()
     return {"id": credit_id, "deleted": True}

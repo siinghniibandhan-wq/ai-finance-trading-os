@@ -25,6 +25,7 @@ from sqlalchemy.exc import IntegrityError
 from app.database.database import get_db
 from datetime import datetime
 from app.models import User, UserCredential, AuthSession, AdminAuditLog
+from app.finance_diary import record_finance_event
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -117,7 +118,6 @@ def _issue_token(user_id: int, db: Session) -> str:
     expires = now + 60 * 60 * 12
     payload = {"sub": user_id, "iat": now, "exp": expires, "jti": jti}
     db.add(AuthSession(jti=jti, user_id=user_id, expires_at=datetime.utcfromtimestamp(expires)))
-    db.commit()
     encoded = _b64(json.dumps(payload, separators=(",", ":")).encode())
     signature = _b64(hmac.new(_secret(), encoded.encode(), hashlib.sha256).digest())
     return f"{encoded}.{signature}"
@@ -175,6 +175,11 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
     db.flush()
     credential = UserCredential(user_id=user.id, password_hash=_hash_password(request.password))
     db.add(credential)
+    record_finance_event(
+        db, user_id=user.id, event_type="created", entity_type="user_account", entity_id=user.id,
+        description="Financial OS user account registered",
+        snapshot={"user_id": user.id, "currency": user.currency},
+    )
     try:
         db.commit()
     except Exception as exc:
@@ -204,10 +209,16 @@ def login(request: LoginRequest, http_request: Request, db: Session = Depends(ge
     if not user or not credential or not _verify_password(request.password, credential.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email/phone number or password.")
     _clear_login_rate_limit(rate_limit_key)
+    access_token = _issue_token(user.id, db)
+    record_finance_event(
+        db, user_id=user.id, event_type="login", entity_type="authentication",
+        description="Successful login", snapshot={"method": "email" if "@" in identifier else "phone"},
+    )
+    db.commit()
     return {
         "status": "success",
         "token_type": "Bearer",
-        "access_token": _issue_token(user.id, db),
+        "access_token": access_token,
         "expires_in": 43200,
         "user": {"id": user.id, "name": user.name, "email": user.email, "phone_number": user.phone_number, "currency": user.currency},
         "subscription": {"status": "not_configured", "message": "Payment and plan activation are not implemented yet."},
@@ -289,7 +300,12 @@ def logout(
     ).first()
     if session:
         session.revoked_at = datetime.utcnow()
-        db.commit()
+    record_finance_event(
+        db, user_id=user.id, event_type="logout", entity_type="authentication",
+        entity_id=payload.get("jti"), description="User logged out",
+        snapshot={"session_revoked": bool(session)},
+    )
+    db.commit()
     return {"status": "success", "message": "Session revoked."}
 
 
@@ -395,6 +411,12 @@ def admin_update_user_status(
     if target.id == admin.id and not request.is_active:
         raise HTTPException(status_code=400, detail="The administrator cannot deactivate their own account.")
     target.is_active = request.is_active
+    record_finance_event(
+        db, user_id=target.id, event_type="activated" if request.is_active else "deactivated",
+        entity_type="user_account", entity_id=target.id,
+        description="User account activated by administrator" if request.is_active else "User account deactivated by administrator",
+        snapshot={"user_id": target.id, "is_active": target.is_active},
+    )
     db.add(AdminAuditLog(
         admin_user_id=admin.id,
         action="user_activated" if request.is_active else "user_deactivated",
@@ -428,6 +450,13 @@ def admin_delete_user(
     if target_is_admin:
         raise HTTPException(status_code=400, detail="Administrator accounts cannot be deleted here.")
     try:
+        # Finance Diary entries have no user foreign key, so this final audit event
+        # survives the user/account deletion along with earlier history.
+        record_finance_event(
+            db, user_id=target.id, event_type="deleted", entity_type="user_account", entity_id=target.id,
+            description="User account permanently deleted by administrator",
+            snapshot={"user_id": target.id, "name": target.name, "email_present": bool(target.email)},
+        )
         # ORM relationships cascade owned accounts, transactions, and categories.
         # The transaction ensures no partial deletion is committed.
         db.delete(target)

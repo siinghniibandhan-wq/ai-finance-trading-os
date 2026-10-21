@@ -50,6 +50,7 @@ from app.models import Transaction, Category, LoanMovement, TaxDeductionClaim, T
 from app.house_property_calc import compute_house_property
 from app.routes.auth import get_current_user
 from app.tax_income_safety import non_income_reason, find_duplicates
+from app.finance_diary import record_finance_event
 from app.routes.deductions_exempt_income import (
     DEDUCTION_CATALOG, EXEMPT_INCOME_CATALOG, HRAInputs, calculate_hra_exemption, regime_available,
 )
@@ -1240,12 +1241,19 @@ def upsert_tax_salary_income(payload: TaxSalaryIncomeInput, current_user: User =
     if payload.annual_rent_paid > 0 and not payload.rent_actually_paid:
         raise HTTPException(status_code=400, detail="Confirm that rent was actually paid before recording HRA rent details.")
     record = db.query(TaxSalaryIncomeRecord).filter_by(user_id=current_user.id, financial_year=payload.financial_year).first()
+    event_type = "created" if record is None else "updated"
     if record is None:
         record = TaxSalaryIncomeRecord(user_id=current_user.id, financial_year=payload.financial_year)
         db.add(record)
     for field, value in payload.model_dump().items():
         setattr(record, field, value)
     record.status = "pending_review"
+    db.flush()
+    record_finance_event(
+        db, user_id=current_user.id, event_type=event_type, entity_type="tax_salary_income", entity_id=record.id,
+        description=f"Salary income tax record {event_type}: {record.financial_year}",
+        snapshot={"financial_year": record.financial_year, "gross_salary": record.gross_salary, "annual_hra_received": record.annual_hra_received, "status": record.status},
+    )
     db.commit()
     db.refresh(record)
     result = _salary_record_summary(record)
@@ -1272,6 +1280,11 @@ def verify_tax_salary_income(financial_year: str = Query(..., pattern=r"^\d{4}-\
         raise HTTPException(status_code=400, detail="An evidence reference is required.")
     record.evidence_reference = evidence
     record.status = "verified"
+    record_finance_event(
+        db, user_id=current_user.id, event_type="verified", entity_type="tax_salary_income", entity_id=record.id,
+        description=f"Salary income tax record verified: {record.financial_year}",
+        snapshot={"financial_year": record.financial_year, "gross_salary": record.gross_salary, "status": record.status, "evidence_reference_present": True},
+    )
     db.commit()
     db.refresh(record)
     return _salary_record_summary(record)
@@ -1287,6 +1300,11 @@ def unverify_tax_salary_income(financial_year: str = Query(..., pattern=r"^\d{4}
     if record is None:
         raise HTTPException(status_code=404, detail="Salary income record not found for this financial year.")
     record.status = "pending_review"
+    record_finance_event(
+        db, user_id=current_user.id, event_type="unverified", entity_type="tax_salary_income", entity_id=record.id,
+        description=f"Salary income tax record returned to review: {record.financial_year}",
+        snapshot={"financial_year": record.financial_year, "gross_salary": record.gross_salary, "status": record.status},
+    )
     db.commit()
     db.refresh(record)
     result = _salary_record_summary(record)

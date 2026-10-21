@@ -3,7 +3,7 @@
 # API SCHEMAS
 # ============================================================
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -204,3 +204,20 @@ class TransactionResponse(BaseModel):
     settled_amount: Decimal = Decimal("0.00")
     status: str = "open"
     settles_transaction_id: int | None = None
+
+
+# ============================================================
+# FINANCE DIARY — immutable audit history response
+# ============================================================
+
+class FinanceDiaryEntryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    event_type: str
+    entity_type: str
+    entity_id: str | None = None
+    description: str
+    snapshot_json: str | None = None
+    created_at: datetime

@@ -9269,31 +9269,135 @@ function SettingsPage({ onNavigate, onOpenProfileSection, selectedTheme, onTheme
 }
 
 function FinanceDiaryPage() {
-  const API_BASE_URL = "https://wealthmanager.duckdns.org";
   const [entries, setEntries] = useState([]);
+  const [summaries, setSummaries] = useState({});
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [summaryError, setSummaryError] = useState("");
+
+  const dateKey = (value) => {
+    if (!value) return "";
+    const raw = String(value);
+    const parsed = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw}Z`);
+    if (Number.isNaN(parsed.getTime())) return raw.slice(0, 10);
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(parsed).reduce((result, part) => {
+      if (part.type !== "literal") result[part.type] = part.value;
+      return result;
+    }, {});
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  };
+  const formatTime = (value) => {
+    if (!value) return "Time unavailable";
+    const raw = String(value);
+    const parsed = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw}Z`);
+    return Number.isNaN(parsed.getTime()) ? raw : parsed.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" });
+  };
+  const money = (value) => new Intl.NumberFormat("en-IN", {
+    style: "currency", currency: "INR", maximumFractionDigits: 2,
+  }).format(Number(value || 0));
+  const todayKey = () => dateKey(new Date().toISOString());
+
   useEffect(() => {
     let active = true;
     (async () => {
       try {
         setLoading(true);
+        setError("");
         const response = await apiFetch(`${API_BASE_URL}/api/finance-diary/?limit=500`);
         const data = await response.json().catch(() => []);
         if (!response.ok) throw new Error(data?.detail || "Unable to load Finance Diary.");
-        if (active) setEntries(Array.isArray(data) ? data : []);
-      } catch (err) { if (active) setError(err.message || "Unable to load Finance Diary."); }
-      finally { if (active) setLoading(false); }
+        const rows = Array.isArray(data) ? data : [];
+        if (active) setEntries(rows);
+
+        const dates = new Set(rows.map((entry) => dateKey(entry.created_at)).filter(Boolean));
+        dates.add(todayKey());
+        const sortedDates = [...dates].sort();
+        let startDate = sortedDates[0] || todayKey();
+        const endDate = sortedDates[sortedDates.length - 1] || todayKey();
+        const rangeStart = new Date(`${startDate}T00:00:00Z`);
+        const rangeEnd = new Date(`${endDate}T00:00:00Z`);
+        if ((rangeEnd - rangeStart) / 86400000 > 366) {
+          startDate = new Date(rangeEnd.getTime() - 366 * 86400000).toISOString().slice(0, 10);
+        }
+        try {
+          const summaryResponse = await apiFetch(
+            `${API_BASE_URL}/api/finance-diary/daily-summary?start_date=${startDate}&end_date=${endDate}`
+          );
+          const summaryData = await summaryResponse.json().catch(() => []);
+          if (!summaryResponse.ok) throw new Error(summaryData?.detail || "Unable to load daily financial summaries.");
+          if (active) setSummaries(Object.fromEntries((Array.isArray(summaryData) ? summaryData : []).map((item) => [item.date, item])));
+        } catch (summaryErr) {
+          if (active) setSummaryError(summaryErr.message || "Daily summaries are temporarily unavailable.");
+        }
+      } catch (err) {
+        if (active) setError(err.message || "Unable to load Finance Diary.");
+      } finally {
+        if (active) setLoading(false);
+      }
     })();
     return () => { active = false; };
   }, []);
-  const filtered = entries.filter((entry) => `${entry.event_type} ${entry.entity_type} ${entry.entity_id} ${entry.description} ${entry.snapshot_json || ""}`.toLowerCase().includes(search.toLowerCase()));
-  return <div className="dashboard"><section className="welcome-section"><div><p className="welcome-label">PERMANENT HISTORY</p><h2>Finance Diary</h2><p className="welcome-description">Read-only activity history. Existing entries are never edited or deleted through this interface.</p></div></section><section className="glass-card" style={{ padding: "20px" }}><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." style={{ width: "100%", boxSizing: "border-box", padding: "12px", borderRadius: "10px", marginBottom: "16px" }} />{loading ? <p>Loading history…</p> : error ? <p>{error}</p> : filtered.length === 0 ? <p>No diary entries found yet. Account, transaction and investment activity recorded by the system will appear here.</p> : <div style={{ display: "grid", gap: "10px" }}>{filtered.map((entry) => <article key={entry.id} style={{ padding: "14px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.09)", background: "rgba(255,255,255,0.025)" }}><div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}><strong>{entry.event_type} · {entry.entity_type} #{entry.entity_id || "—"}</strong><span style={{ color: "rgba(255,255,255,0.48)", fontSize: "11px" }}>{entry.created_at ? new Date(entry.created_at).toLocaleString() : "—"}</span></div><p style={{ margin: "8px 0", color: "rgba(255,255,255,0.72)" }}>{entry.description}</p>{entry.snapshot_json && <details><summary style={{ cursor: "pointer" }}>View event details</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "11px" }}>{(() => { try { return JSON.stringify(JSON.parse(entry.snapshot_json), null, 2); } catch { return entry.snapshot_json; } })()}</pre></details>}</article>)}</div>}</section></div>;
+
+  const filtered = entries.filter((entry) =>
+    `${entry.event_type} ${entry.entity_type} ${entry.entity_id} ${entry.description} ${entry.snapshot_json || ""}`
+      .toLowerCase().includes(search.toLowerCase())
+  );
+  const grouped = filtered.reduce((groups, entry) => {
+    const key = dateKey(entry.created_at) || "undated";
+    (groups[key] ||= []).push(entry);
+    return groups;
+  }, {});
+  const sortedDays = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+  const cardStyle = { padding: "16px", borderRadius: "12px", border: "1px solid var(--border-subtle, rgba(255,255,255,0.09))", background: "var(--surface-secondary, rgba(255,255,255,0.025))" };
+  const totalStyle = { padding: "14px", borderRadius: "12px", border: "1px solid var(--border-subtle, rgba(255,255,255,0.09))", minWidth: "135px", flex: "1 1 135px" };
+
+  return <div className="dashboard">
+    <section className="welcome-section">
+      <div><p className="welcome-label">PERMANENT HISTORY</p><h2>Finance Diary</h2><p className="welcome-description">A time-ordered record of important activity across your Financial OS, with a daily financial summary.</p></div>
+    </section>
+    <section className="glass-card" style={{ padding: "20px" }}>
+      {summaryError && <p role="status" style={{ fontSize: "12px", opacity: .75 }}>Activity history is available, but daily totals could not be loaded: {summaryError}</p>}
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." aria-label="Search Finance Diary" style={{ width: "100%", boxSizing: "border-box", padding: "12px", borderRadius: "10px", marginBottom: "16px" }} />
+      {loading ? <p>Loading Finance Diary…</p> : error ? <p role="alert">{error}</p> : filtered.length === 0 ? <p>No diary events match this search. Account, authentication, transaction and investment activity will appear here when recorded.</p> : <div style={{ display: "grid", gap: "20px" }}>
+        {sortedDays.map((day) => {
+          const dayEntries = [...grouped[day]].sort((a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")) || Number(a.id || 0) - Number(b.id || 0));
+          const summary = summaries[day];
+          return <section key={day} aria-label={`Diary activity for ${day}`} style={{ display: "grid", gap: "10px" }}>
+            <h3 style={{ margin: "4px 0", fontSize: "15px" }}>{day === todayKey() ? "Today" : day === "undated" ? "Date unavailable" : new Date(`${day}T12:00:00`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</h3>
+            {dayEntries.map((entry) => <article key={entry.id} style={cardStyle}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+                <strong style={{ textTransform: "capitalize" }}>{String(entry.event_type || "activity").replaceAll("_", " ")} · {String(entry.entity_type || "event").replaceAll("_", " ")}{entry.entity_id ? ` #${entry.entity_id}` : ""}</strong>
+                <span style={{ color: "var(--text-muted, rgba(255,255,255,0.58))", fontSize: "12px" }}>{formatTime(entry.created_at)}</span>
+              </div>
+              <p style={{ margin: "8px 0 0", color: "var(--text-secondary, rgba(255,255,255,0.78))" }}>{entry.description}</p>
+              {entry.snapshot_json && <details style={{ marginTop: "10px" }}><summary style={{ cursor: "pointer" }}>View recorded details</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "12px", marginTop: "8px" }}>{(() => { try { return JSON.stringify(JSON.parse(entry.snapshot_json), null, 2); } catch { return entry.snapshot_json; } })()}</pre></details>}
+            </article>)}
+            {summary && <section aria-label={`Financial summary for ${day}`} style={{ ...cardStyle, marginTop: "4px" }}>
+              <h4 style={{ margin: "0 0 12px", fontSize: "14px" }}>📊 Daily financial summary</h4>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <div style={{ ...totalStyle, color: "var(--success, #34d399)" }}><div style={{ fontSize: "12px", marginBottom: "6px" }}>Total income</div><strong>{money(summary.total_income)}</strong></div>
+                <div style={{ ...totalStyle, color: "var(--danger, #fb7185)" }}><div style={{ fontSize: "12px", marginBottom: "6px" }}>Total expenses</div><strong>{money(summary.total_expense)}</strong></div>
+                <div style={{ ...totalStyle, color: "var(--accent, #a78bfa)" }}><div style={{ fontSize: "12px", marginBottom: "6px" }}>Total investments</div><strong>{money(summary.total_investment)}</strong></div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px", marginTop: "14px" }}>
+                <div><strong style={{ fontSize: "12px" }}>Income by source</strong>
+                  {Object.entries(summary.income_by_source || {}).length ? Object.entries(summary.income_by_source).map(([name, amount]) => <div key={name} style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: "5px 0", fontSize: "12px" }}><span>{name}</span><span>{money(amount)}</span></div>) : <p style={{ fontSize: "12px", opacity: .7, margin: "6px 0" }}>No income recorded</p>}
+                </div>
+                <div><strong style={{ fontSize: "12px" }}>Expenses by category</strong>
+                  {Object.entries(summary.expense_by_category || {}).length ? Object.entries(summary.expense_by_category).map(([name, amount]) => <div key={name} style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: "5px 0", fontSize: "12px" }}><span>{name}</span><span>{money(amount)}</span></div>) : <p style={{ fontSize: "12px", opacity: .7, margin: "6px 0" }}>No expenses recorded</p>}
+                </div>
+              </div>
+              <p style={{ fontSize: "11px", opacity: .68, margin: "12px 0 0" }}>Transfers and refunds are excluded from income and expense totals. Investment activity is shown separately.</p>
+            </section>}
+          </section>;
+        })}
+      </div>}
+    </section>
+  </div>;
 }
-
-
-
 function ChartOfAccountsPage() {
   const API_BASE_URL = "https://wealthmanager.duckdns.org";
   const [rows, setRows] = useState([]);

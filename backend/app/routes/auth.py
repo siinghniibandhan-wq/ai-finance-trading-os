@@ -25,6 +25,7 @@ from sqlalchemy.exc import IntegrityError
 from app.database.database import get_db
 from datetime import datetime
 from app.models import User, UserCredential, AuthSession, AdminAuditLog
+from app.finance_diary import record_finance_event
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -175,6 +176,11 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
     db.flush()
     credential = UserCredential(user_id=user.id, password_hash=_hash_password(request.password))
     db.add(credential)
+    record_finance_event(
+        db, user_id=user.id, event_type="created", entity_type="user_account", entity_id=user.id,
+        description="Financial OS user account registered",
+        snapshot={"user_id": user.id, "currency": user.currency},
+    )
     try:
         db.commit()
     except Exception as exc:
@@ -204,6 +210,11 @@ def login(request: LoginRequest, http_request: Request, db: Session = Depends(ge
     if not user or not credential or not _verify_password(request.password, credential.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email/phone number or password.")
     _clear_login_rate_limit(rate_limit_key)
+    record_finance_event(
+        db, user_id=user.id, event_type="login", entity_type="authentication",
+        description="Successful login", snapshot={"method": "email" if "@" in identifier else "phone"},
+    )
+    db.commit()
     return {
         "status": "success",
         "token_type": "Bearer",
@@ -289,7 +300,12 @@ def logout(
     ).first()
     if session:
         session.revoked_at = datetime.utcnow()
-        db.commit()
+    record_finance_event(
+        db, user_id=user.id, event_type="logout", entity_type="authentication",
+        entity_id=payload.get("jti"), description="User logged out",
+        snapshot={"session_revoked": bool(session)},
+    )
+    db.commit()
     return {"status": "success", "message": "Session revoked."}
 
 

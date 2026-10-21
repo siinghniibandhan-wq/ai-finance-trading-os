@@ -9274,23 +9274,31 @@ function FinanceDiaryPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [summaryError, setSummaryError] = useState("");
 
   const dateKey = (value) => {
     if (!value) return "";
-    // Backend timestamps are stored as naive UTC; use the same date key as the
-    // daily-summary endpoint, and localise the displayed time separately.
-    return String(value).slice(0, 10);
+    const raw = String(value);
+    const parsed = new Date(/[zZ]|[+-]\\d{2}:?\\d{2}$/.test(raw) ? raw : `${raw}Z`);
+    if (Number.isNaN(parsed.getTime())) return raw.slice(0, 10);
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(parsed).reduce((result, part) => {
+      if (part.type !== "literal") result[part.type] = part.value;
+      return result;
+    }, {});
+    return `${parts.year}-${parts.month}-${parts.day}`;
   };
   const formatTime = (value) => {
     if (!value) return "Time unavailable";
     const raw = String(value);
     const parsed = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw}Z`);
-    return Number.isNaN(parsed.getTime()) ? raw : parsed.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+    return Number.isNaN(parsed.getTime()) ? raw : parsed.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" });
   };
   const money = (value) => new Intl.NumberFormat("en-IN", {
     style: "currency", currency: "INR", maximumFractionDigits: 2,
   }).format(Number(value || 0));
-  const todayKey = () => new Date().toISOString().slice(0, 10);
+  const todayKey = () => dateKey(new Date().toISOString());
 
   useEffect(() => {
     let active = true;
@@ -9314,12 +9322,16 @@ function FinanceDiaryPage() {
         if ((rangeEnd - rangeStart) / 86400000 > 366) {
           startDate = new Date(rangeEnd.getTime() - 366 * 86400000).toISOString().slice(0, 10);
         }
-        const summaryResponse = await apiFetch(
-          `${API_BASE_URL}/api/finance-diary/daily-summary?start_date=${startDate}&end_date=${endDate}`
-        );
-        const summaryData = await summaryResponse.json().catch(() => []);
-        if (!summaryResponse.ok) throw new Error(summaryData?.detail || "Unable to load daily financial summaries.");
-        if (active) setSummaries(Object.fromEntries((Array.isArray(summaryData) ? summaryData : []).map((item) => [item.date, item])));
+        try {
+          const summaryResponse = await apiFetch(
+            `${API_BASE_URL}/api/finance-diary/daily-summary?start_date=${startDate}&end_date=${endDate}`
+          );
+          const summaryData = await summaryResponse.json().catch(() => []);
+          if (!summaryResponse.ok) throw new Error(summaryData?.detail || "Unable to load daily financial summaries.");
+          if (active) setSummaries(Object.fromEntries((Array.isArray(summaryData) ? summaryData : []).map((item) => [item.date, item])));
+        } catch (summaryErr) {
+          if (active) setSummaryError(summaryErr.message || "Daily summaries are temporarily unavailable.");
+        }
       } catch (err) {
         if (active) setError(err.message || "Unable to load Finance Diary.");
       } finally {
@@ -9347,6 +9359,7 @@ function FinanceDiaryPage() {
       <div><p className="welcome-label">PERMANENT HISTORY</p><h2>Finance Diary</h2><p className="welcome-description">A time-ordered record of important activity across your Financial OS, with a daily financial summary.</p></div>
     </section>
     <section className="glass-card" style={{ padding: "20px" }}>
+      {summaryError && <p role="status" style={{ fontSize: "12px", opacity: .75 }}>Activity history is available, but daily totals could not be loaded: {summaryError}</p>}
       <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." aria-label="Search Finance Diary" style={{ width: "100%", boxSizing: "border-box", padding: "12px", borderRadius: "10px", marginBottom: "16px" }} />
       {loading ? <p>Loading Finance Diary…</p> : error ? <p role="alert">{error}</p> : filtered.length === 0 ? <p>No diary events match this search. Account, authentication, transaction and investment activity will appear here when recorded.</p> : <div style={{ display: "grid", gap: "20px" }}>
         {sortedDays.map((day) => {

@@ -119,3 +119,12 @@
 .fos-swatch-bento-grid{background:#fff}.fos-swatch-bento-grid i{background:#187e79}
 .fos-swatch-nordic{background:#fbfdfe}.fos-swatch-nordic i{background:#267b83}
 .fos-swatch-editorial{background:#fffaf2}.fos-swatch-editorial i{background:#9a4f32}
+
+/* Wealth Manager logo in landing header and footer */
+.fos-brand.wealth-site-brand { display: inline-flex; align-items: center; gap: 10px; }
+.fos-brand.wealth-site-brand > img { width: 44px; height: 44px; object-fit: contain; flex: 0 0 44px; border-radius: 12px; }
+.fos-brand .wealth-site-wordmark { display: flex; flex-direction: column; gap: 3px; line-height: 1.05; }
+.fos-brand .wealth-site-wordmark strong { color: var(--th-text, currentColor); font-size: 15px; font-weight: 800; letter-spacing: .16em; }
+.fos-brand .wealth-site-wordmark small { color: var(--th-muted, currentColor); font-size: 9px; font-weight: 700; letter-spacing: .27em; }
+.fos-footer .fos-brand.wealth-site-brand > img { width: 38px; height: 38px; flex-basis: 38px; }
+@media (max-width: 480px) { .fos-brand.wealth-site-brand > img { width: 38px; height: 38px; flex-basis: 38px; } }

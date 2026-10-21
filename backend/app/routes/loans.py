@@ -204,6 +204,19 @@ def create_loan(payload: LoanPayload, current_user: User = Depends(get_current_u
             outstanding_amount=payload.principal_amount, loan_id=loan.id,
         )
         db.add(liability)
+        record_finance_event(
+            db, user_id=current_user.id, event_type="loan_created",
+            entity_type="loan", entity_id=loan.id,
+            description=f"Created loan: {loan.name}",
+            snapshot={
+                "loan_id": loan.id, "liability_id": liability.id,
+                "principal_amount": payload.principal_amount,
+                "amount_disbursed": payload.amount_disbursed,
+                "deposit_account_id": payload.deposit_account_id,
+                "linked_account_id": payload.linked_account_id,
+                "start_date": payload.start_date, "status": loan.status,
+            },
+        )
         db.commit()
         db.refresh(loan)
         return {"status": "success", "loan": _loan_dict(loan)}
@@ -501,6 +514,15 @@ def create_liability(payload: LiabilityPayload, current_user: User = Depends(get
         raise HTTPException(status_code=400, detail="Outstanding amount cannot exceed original amount")
     item = Liability(**payload.model_dump(exclude={'user_id'}), user_id=current_user.id)
     db.add(item)
+    db.flush()
+    record_finance_event(
+        db, user_id=current_user.id, event_type="created",
+        entity_type="liability", entity_id=item.id,
+        description=f"Liability created: {item.name}",
+        snapshot={"id": item.id, "name": item.name, "liability_type": item.liability_type,
+                  "original_amount": item.original_amount, "outstanding_amount": item.outstanding_amount,
+                  "due_date": item.due_date, "status": item.status},
+    )
     db.commit()
     db.refresh(item)
     return {"status": "success", "liability": _liability_dict(item)}

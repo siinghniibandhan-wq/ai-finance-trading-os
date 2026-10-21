@@ -9279,7 +9279,7 @@ function FinanceDiaryPage() {
   const dateKey = (value) => {
     if (!value) return "";
     const raw = String(value);
-    const parsed = new Date(/[zZ]|[+-]\\d{2}:?\\d{2}$/.test(raw) ? raw : `${raw}Z`);
+    const parsed = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw}Z`);
     if (Number.isNaN(parsed.getTime())) return raw.slice(0, 10);
     const parts = new Intl.DateTimeFormat("en-CA", {
       timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",

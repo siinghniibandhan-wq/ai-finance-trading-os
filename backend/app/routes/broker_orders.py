@@ -36,8 +36,9 @@ class DefiniteGatewayRejection(HTTPException):
 
     definite_rejection = True
 
-    def __init__(self, detail: str):
+    def __init__(self, detail: str, gateway_status: int):
         super().__init__(status_code=502, detail=detail)
+        self.gateway_status = gateway_status
 GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").rstrip("/")
 GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
 GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/order")
@@ -138,7 +139,7 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
         # 400/422 response proves this order request was rejected. A 409 may
         # indicate a duplicate of an order already sent, so it stays ambiguous.
         if exc.code in (400, 422):
-            raise DefiniteGatewayRejection(detail=message) from exc
+            raise DefiniteGatewayRejection(detail=message, gateway_status=exc.code) from exc
         raise HTTPException(status_code=502, detail=message) from exc
     except URLError as exc:
         logger.warning("m.Stock order gateway connection failed: %s", type(exc).__name__)
@@ -306,7 +307,11 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         if getattr(exc, "definite_rejection", False) or 400 <= exc.status_code < 500:
             reservation.status = "REJECTED"
             reservation.response_json = json.dumps(
-                {"http_status": exc.status_code, "detail": exc.detail},
+                {
+                    "http_status": exc.status_code,
+                    "gateway_http_status": getattr(exc, "gateway_status", None),
+                    "detail": exc.detail,
+                },
                 default=str,
             )
             db.commit()

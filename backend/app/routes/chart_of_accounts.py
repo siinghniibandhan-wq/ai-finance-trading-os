@@ -82,7 +82,18 @@ def create_chart_of_account(payload: ChartOfAccountCreate, db: Session = Depends
     row=ChartOfAccount(user_id=current_user.id,code=payload.code,name=payload.name.strip(),
         account_type=payload.account_type,parent_id=payload.parent_id,is_system=False,
         is_enabled=payload.is_enabled,tax_mapping_key=payload.tax_mapping_key)
-    db.add(row); db.commit(); db.refresh(row)
+    db.add(row)
+    db.flush()
+    record_finance_event(
+        db, user_id=current_user.id, event_type="created",
+        entity_type="chart_of_account", entity_id=row.id,
+        description=f"Chart of Accounts entry created: {row.code} {row.name}",
+        snapshot={"id": row.id, "code": row.code, "name": row.name,
+                  "account_type": row.account_type, "parent_id": row.parent_id,
+                  "is_enabled": row.is_enabled, "tax_mapping_key": row.tax_mapping_key},
+    )
+    db.commit()
+    db.refresh(row)
     return _serialize(row)
 
 @router.patch("/{account_id}")

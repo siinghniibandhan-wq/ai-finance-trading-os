@@ -802,28 +802,6 @@ class AuthSession(Base):
 
 
 # ============================================================
-# PUBLIC WEBSITE CHECKOUT PAYMENTS
-# Razorpay orders and verified payment receipts. Subscription
-# activation is handled separately from payment verification.
-# ============================================================
-
-class PaymentOrder(Base):
-    __tablename__ = "payment_orders"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    razorpay_order_id: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
-    razorpay_payment_id: Mapped[str | None] = mapped_column(String(80), unique=True, nullable=True, index=True)
-    plan: Mapped[str] = mapped_column(String(40), nullable=False)
-    amount_paise: Mapped[int] = mapped_column(Integer, nullable=False)
-    currency: Mapped[str] = mapped_column(String(3), nullable=False, default="INR")
-    customer_name: Mapped[str] = mapped_column(String(150), nullable=False)
-    customer_email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    customer_phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="created", index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-
-
-# ============================================================
 # DURABLE BROKER ORDER IDEMPOTENCY
 # ============================================================
 class BrokerOrderSubmission(Base):

@@ -69,3 +69,7 @@ def test_whitespace_only_model_falls_back_to_default(monkeypatch):
         result = ai_providers.generate("openai", "hello", model="   ")
     assert result["model"] == ai_providers.DEFAULT_MODELS["openai"]
     assert post.call_args.args[2]["model"] == ai_providers.DEFAULT_MODELS["openai"]
+
+
+def test_claude_default_model_is_current_supported_generation():
+    assert ai_providers.DEFAULT_MODELS["claude"] == "claude-haiku-4-5-20251001"

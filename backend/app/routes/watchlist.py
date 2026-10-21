@@ -151,19 +151,16 @@ def list_watchlist(
         },
     )
 
+    watchlist = [dict(row._mapping) for row in result]
     return {
         "status": "success",
         "engine": "Watchlist Engine",
         "version": "1.0",
         "read_only": True,
         "user_id": user_id,
-        "count": result.rowcount
-            if result.rowcount >= 0
-            else 0,
-        "watchlist": [
-            dict(row._mapping)
-            for row in result
-        ],
+        # SELECT rowcount is driver-dependent (often -1); count the fetched rows.
+        "count": len(watchlist),
+        "watchlist": watchlist,
         "database_write": False,
     }
 

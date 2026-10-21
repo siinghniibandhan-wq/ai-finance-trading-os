@@ -9351,46 +9351,46 @@ function FinanceDiaryPage() {
     return groups;
   }, {});
   const sortedDays = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
-  const cardStyle = { padding: "16px", borderRadius: "12px", border: "1px solid var(--border-subtle, rgba(255,255,255,0.09))", background: "var(--surface-secondary, rgba(255,255,255,0.025))" };
-  const totalStyle = { padding: "14px", borderRadius: "12px", border: "1px solid var(--border-subtle, rgba(255,255,255,0.09))", minWidth: "135px", flex: "1 1 135px" };
+  const cardStyle = { padding: "12px", borderRadius: "var(--th-radius, 10px)", border: "1px solid var(--th-border)", background: "var(--th-card)" };
+  const totalStyle = { padding: "10px 12px", borderRadius: "var(--th-radius, 10px)", border: "1px solid var(--th-border)", background: "var(--th-inner)", minWidth: "115px", flex: "1 1 115px" };
 
   return <div className="dashboard">
     <section className="welcome-section">
       <div><p className="welcome-label">PERMANENT HISTORY</p><h2>Finance Diary</h2><p className="welcome-description">A time-ordered record of important activity across your Financial OS, with a daily financial summary.</p></div>
     </section>
-    <section className="glass-card" style={{ padding: "20px" }}>
-      {summaryError && <p role="status" style={{ fontSize: "12px", opacity: .75 }}>Activity history is available, but daily totals could not be loaded: {summaryError}</p>}
-      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." aria-label="Search Finance Diary" style={{ width: "100%", boxSizing: "border-box", padding: "12px", borderRadius: "10px", marginBottom: "16px" }} />
-      {loading ? <p>Loading Finance Diary…</p> : error ? <p role="alert">{error}</p> : filtered.length === 0 ? <p>No diary events match this search. Account, authentication, transaction and investment activity will appear here when recorded.</p> : <div style={{ display: "grid", gap: "20px" }}>
+    <section className="glass-card" style={{ padding: "12px", background: "var(--th-card)", border: "1px solid var(--th-border)", color: "var(--th-text)" }}>
+      {summaryError && <p role="status" style={{ fontSize: "12px", color: "var(--th-muted)" }}>Activity history is available, but daily totals could not be loaded: {summaryError}</p>}
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search history..." aria-label="Search Finance Diary" style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: "var(--th-control-radius, 10px)", marginBottom: "12px", background: "var(--th-input-surface)", color: "var(--th-input-text)", border: "1px solid var(--th-input-border)", outlineColor: "var(--th-accent)" }} />
+      {loading ? <p>Loading Finance Diary…</p> : error ? <p role="alert">{error}</p> : filtered.length === 0 ? <p>No diary events match this search. Account, authentication, transaction and investment activity will appear here when recorded.</p> : <div style={{ display: "grid", gap: "14px" }}>
         {sortedDays.map((day) => {
           const dayEntries = [...grouped[day]].sort((a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")) || Number(a.id || 0) - Number(b.id || 0));
           const summary = summaries[day];
-          return <section key={day} aria-label={`Diary activity for ${day}`} style={{ display: "grid", gap: "10px" }}>
+          return <section key={day} aria-label={`Diary activity for ${day}`} style={{ display: "grid", gap: "8px" }}>
             <h3 style={{ margin: "4px 0", fontSize: "15px" }}>{day === todayKey() ? "Today" : day === "undated" ? "Date unavailable" : new Date(`${day}T12:00:00`).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</h3>
             {dayEntries.map((entry) => <article key={entry.id} style={cardStyle}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
                 <strong style={{ textTransform: "capitalize" }}>{String(entry.event_type || "activity").replaceAll("_", " ")} · {String(entry.entity_type || "event").replaceAll("_", " ")}{entry.entity_id ? ` #${entry.entity_id}` : ""}</strong>
-                <span style={{ color: "var(--text-muted, rgba(255,255,255,0.58))", fontSize: "12px" }}>{formatTime(entry.created_at)}</span>
+                <span style={{ color: "var(--th-muted)", fontSize: "12px" }}>{formatTime(entry.created_at)}</span>
               </div>
-              <p style={{ margin: "8px 0 0", color: "var(--text-secondary, rgba(255,255,255,0.78))" }}>{entry.description}</p>
+              <p style={{ margin: "8px 0 0", color: "var(--th-text)" }}>{entry.description}</p>
               {entry.snapshot_json && <details style={{ marginTop: "10px" }}><summary style={{ cursor: "pointer" }}>View recorded details</summary><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: "12px", marginTop: "8px" }}>{(() => { try { return JSON.stringify(JSON.parse(entry.snapshot_json), null, 2); } catch { return entry.snapshot_json; } })()}</pre></details>}
             </article>)}
             {summary && <section aria-label={`Financial summary for ${day}`} style={{ ...cardStyle, marginTop: "4px" }}>
               <h4 style={{ margin: "0 0 12px", fontSize: "14px" }}>📊 Daily financial summary</h4>
               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                <div style={{ ...totalStyle, color: "var(--success, #34d399)" }}><div style={{ fontSize: "12px", marginBottom: "6px" }}>Total income</div><strong>{money(summary.total_income)}</strong></div>
-                <div style={{ ...totalStyle, color: "var(--danger, #fb7185)" }}><div style={{ fontSize: "12px", marginBottom: "6px" }}>Total expenses</div><strong>{money(summary.total_expense)}</strong></div>
-                <div style={{ ...totalStyle, color: "var(--accent, #a78bfa)" }}><div style={{ fontSize: "12px", marginBottom: "6px" }}>Total investments</div><strong>{money(summary.total_investment)}</strong></div>
+                <div style={{ ...totalStyle, color: "var(--th-pos)" }}><div style={{ fontSize: "12px", marginBottom: "6px" }}>Total income</div><strong>{money(summary.total_income)}</strong></div>
+                <div style={{ ...totalStyle, color: "var(--th-neg)" }}><div style={{ fontSize: "12px", marginBottom: "6px" }}>Total expenses</div><strong>{money(summary.total_expense)}</strong></div>
+                <div style={{ ...totalStyle, color: "var(--th-accent)" }}><div style={{ fontSize: "12px", marginBottom: "6px" }}>Total investments</div><strong>{money(summary.total_investment)}</strong></div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px", marginTop: "14px" }}>
                 <div><strong style={{ fontSize: "12px" }}>Income by source</strong>
-                  {Object.entries(summary.income_by_source || {}).length ? Object.entries(summary.income_by_source).map(([name, amount]) => <div key={name} style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: "5px 0", fontSize: "12px" }}><span>{name}</span><span>{money(amount)}</span></div>) : <p style={{ fontSize: "12px", opacity: .7, margin: "6px 0" }}>No income recorded</p>}
+                  {Object.entries(summary.income_by_source || {}).length ? Object.entries(summary.income_by_source).map(([name, amount]) => <div key={name} style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: "5px 0", fontSize: "12px" }}><span>{name}</span><span>{money(amount)}</span></div>) : <p style={{ fontSize: "12px", color: "var(--th-muted)", margin: "6px 0" }}>No income recorded</p>}
                 </div>
                 <div><strong style={{ fontSize: "12px" }}>Expenses by category</strong>
                   {Object.entries(summary.expense_by_category || {}).length ? Object.entries(summary.expense_by_category).map(([name, amount]) => <div key={name} style={{ display: "flex", justifyContent: "space-between", gap: "10px", padding: "5px 0", fontSize: "12px" }}><span>{name}</span><span>{money(amount)}</span></div>) : <p style={{ fontSize: "12px", opacity: .7, margin: "6px 0" }}>No expenses recorded</p>}
                 </div>
               </div>
-              <p style={{ fontSize: "11px", opacity: .68, margin: "12px 0 0" }}>Transfers and refunds are excluded from income and expense totals. Investment activity is shown separately.</p>
+              <p style={{ fontSize: "11px", color: "var(--th-muted)", margin: "10px 0 0" }}>Transfers and refunds are excluded from income and expense totals. Investment activity is shown separately.</p>
             </section>}
           </section>;
         })}

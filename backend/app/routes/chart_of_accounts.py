@@ -101,7 +101,20 @@ def update_chart_of_account(account_id: int,payload: ChartOfAccountUpdate,db: Se
                             current_user: User=Depends(get_current_user)):
     row=db.query(ChartOfAccount).filter_by(id=account_id,user_id=current_user.id).first()
     if not row: raise HTTPException(status_code=404,detail="Chart of Accounts entry not found.")
+    before = {"code": row.code, "name": row.name, "account_type": row.account_type,
+              "parent_id": row.parent_id, "is_enabled": row.is_enabled,
+              "tax_mapping_key": row.tax_mapping_key}
     for key,value in payload.model_dump(exclude_unset=True).items():
         setattr(row,key,value.strip() if key=="name" and value is not None else value)
+    after = {"code": row.code, "name": row.name, "account_type": row.account_type,
+             "parent_id": row.parent_id, "is_enabled": row.is_enabled,
+             "tax_mapping_key": row.tax_mapping_key}
+    if before != after:
+        record_finance_event(
+            db, user_id=current_user.id, event_type="updated",
+            entity_type="chart_of_account", entity_id=row.id,
+            description=f"Chart of Accounts entry updated: {row.code} {row.name}",
+            snapshot={"before": before, "after": after},
+        )
     db.commit(); db.refresh(row)
     return _serialize(row)

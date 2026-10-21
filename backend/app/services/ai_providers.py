@@ -104,7 +104,7 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
             "openai": "https://api.openai.com/v1",
             "openrouter": "https://openrouter.ai/api/v1",
             "huggingface": os.getenv("HUGGINGFACE_BASE_URL", "https://router.huggingface.co/v1"),
-            "ollama": os.getenv("OLLAMA_BASE_URL", os.getenv("OLLAMA_HOST", "http://localhost:11434")) .rstrip("/") + "/v1",
+            "ollama": (lambda value: value if value.endswith("/v1") else value + "/v1")(os.getenv("OLLAMA_BASE_URL", os.getenv("OLLAMA_HOST", "http://localhost:11434")).rstrip("/")),
             "vllm": os.getenv("VLLM_BASE_URL", "http://localhost:8000/v1"),
             "lmstudio": os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1"),
             "custom": os.getenv("CUSTOM_BASE_URL", ""),

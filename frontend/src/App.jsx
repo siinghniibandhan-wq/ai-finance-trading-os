@@ -10380,6 +10380,11 @@ const deleteAccount = async () => {
                 >×</button>
               </header>
 
+              {error && (
+                <div role="alert" className="account-form-error" style={{ marginBottom: 14, padding: "10px 12px", borderRadius: 10, border: "1px solid var(--finos-danger, #ef4444)", color: "var(--finos-text, inherit)", background: "var(--t-inner-bg, transparent)", overflowWrap: "anywhere" }}>
+                  {error}
+                </div>
+              )}
               <div className="account-form-fields">
                 {[
                   { key: "name", label: "Account name *", placeholder: "e.g. Salary Account", type: "text", required: true },
@@ -10477,7 +10482,7 @@ const deleteAccount = async () => {
                   type="button"
                   className="primary-button account-form-submit"
                   onClick={handleAccountSubmit}
-                  disabled={accountSaving || !accountForm.name.trim() || accountForm.balance === ""}
+                  disabled={accountSaving}
                 >{accountSaving ? "Saving…" : editingAccount ? "Save changes" : "Save account"}</button>
               </footer>
             </section>

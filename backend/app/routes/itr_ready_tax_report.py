@@ -323,21 +323,30 @@ def calculate_capital_gains(
         for row in investments
     }
 
-    # FIFO buy lots per investment.
+    # Process the complete transaction history chronologically.
+    # This both consumes prior-year sales and prevents future buys from
+    # being incorrectly used to match earlier sales.
     lots = defaultdict(list)
+    sales = []
 
     for row in investment_transactions:
-        investment_id = int(row["investment_id"])
-
-        quantity = decimal(row["quantity"])
-        price = decimal(row["price"])
-        fees = decimal(row["fees"])
-
         transaction_type = str(
             row["transaction_type"] or ""
         ).upper()
-
         transaction_date = row["transaction_date"]
+
+        if transaction_date is None:
+            continue
+        if isinstance(transaction_date, datetime):
+            transaction_date = transaction_date.date()
+
+        if transaction_date > end_date:
+            continue
+
+        investment_id = int(row["investment_id"])
+        quantity = decimal(row["quantity"])
+        price = decimal(row["price"])
+        fees = decimal(row["fees"])
 
         if transaction_type == "BUY":
             lots[investment_id].append(
@@ -350,127 +359,57 @@ def calculate_capital_gains(
                     "transaction_date": transaction_date,
                 }
             )
-
-    sales = []
-
-    for row in investment_transactions:
-        transaction_type = str(
-            row["transaction_type"] or ""
-        ).upper()
+            continue
 
         if transaction_type != "SELL":
             continue
 
-        sale_date = row["transaction_date"]
+        # Prior-year sells must consume FIFO lots, but only selected-year
+        # sells are included in the current report.
+        include_in_report = start_date <= transaction_date <= end_date
 
-        if sale_date is None:
-            continue
-
-        if isinstance(sale_date, datetime):
-            sale_date = sale_date.date()
-
-        if sale_date < start_date or sale_date > end_date:
-            continue
-
-        investment_id = int(row["investment_id"])
-
-        sale_quantity = decimal(row["quantity"])
-        sale_price = decimal(row["price"])
-        sale_fees = decimal(row["fees"])
-
-        investment = investment_map.get(investment_id)
-
-        if not investment:
-            continue
-
-        asset_class = classify_asset(
-            investment["investment_type"]
-        )
-
-        threshold = long_term_threshold(asset_class)
-
-        remaining_sale_quantity = sale_quantity
+        remaining_sale_quantity = quantity
         matched_lots = []
-
         total_cost_basis = Decimal("0")
         total_gain = Decimal("0")
 
+        investment = investment_map.get(investment_id)
+        if not investment:
+            continue
+
+        asset_class = classify_asset(investment["investment_type"])
+        threshold = long_term_threshold(asset_class)
+
         while remaining_sale_quantity > 0 and lots[investment_id]:
-
             lot = lots[investment_id][0]
-
-            available_quantity = decimal(
-                lot["remaining_quantity"]
-            )
-
-            matched_quantity = min(
-                remaining_sale_quantity,
-                available_quantity,
-            )
+            available_quantity = decimal(lot["remaining_quantity"])
+            matched_quantity = min(remaining_sale_quantity, available_quantity)
+            if matched_quantity <= 0:
+                break
 
             buy_price = decimal(lot["price"])
             buy_fees = decimal(lot["fees"])
+            original_quantity = decimal(lot["quantity"])
 
-            original_quantity = decimal(
-                lot["quantity"]
-            )
-
-            # Allocate BUY fees proportionally.
             allocated_buy_fees = Decimal("0")
-
             if original_quantity > 0:
                 allocated_buy_fees = (
-                    buy_fees
-                    * matched_quantity
-                    / original_quantity
+                    buy_fees * matched_quantity / original_quantity
                 )
 
-            cost_basis = (
-                matched_quantity * buy_price
-            ) + allocated_buy_fees
-
-            proceeds_before_fees = (
-                matched_quantity * sale_price
-            )
-
-            # Allocate SELL fees proportionally.
+            cost_basis = matched_quantity * buy_price + allocated_buy_fees
             allocated_sale_fees = Decimal("0")
+            if quantity > 0:
+                allocated_sale_fees = fees * matched_quantity / quantity
 
-            if sale_quantity > 0:
-                allocated_sale_fees = (
-                    sale_fees
-                    * matched_quantity
-                    / sale_quantity
-                )
-
-            proceeds_after_fees = (
-                proceeds_before_fees
-                - allocated_sale_fees
-            )
-
-            gain = (
-                proceeds_after_fees
-                - cost_basis
-            )
-
+            gain = matched_quantity * price - allocated_sale_fees - cost_basis
             buy_date = lot["transaction_date"]
-
-            if isinstance(buy_date, datetime):
-                buy_date = buy_date.date()
-
-            holding_days = None
-
-            if buy_date and sale_date:
-                holding_days = (
-                    sale_date - buy_date
-                ).days
+            holding_days = (transaction_date - buy_date).days if buy_date else None
 
             if threshold is None:
                 classification = "UNCLASSIFIED"
-
-            elif holding_days >= threshold:
+            elif holding_days is not None and holding_days >= threshold:
                 classification = "LTCG"
-
             else:
                 classification = "STCG"
 
@@ -488,33 +427,27 @@ def calculate_capital_gains(
 
             total_cost_basis += cost_basis
             total_gain += gain
-
             lot["remaining_quantity"] -= matched_quantity
             remaining_sale_quantity -= matched_quantity
 
             if lot["remaining_quantity"] <= 0:
                 lots[investment_id].pop(0)
 
-        if remaining_sale_quantity > 0:
-            unmatched_quantity = remaining_sale_quantity
-        else:
-            unmatched_quantity = Decimal("0")
+        if not include_in_report:
+            continue
+
+        unmatched_quantity = max(remaining_sale_quantity, Decimal("0"))
 
         if matched_lots:
             sale_classifications = {
-                item["classification"]
-                for item in matched_lots
+                item["classification"] for item in matched_lots
             }
-
             if sale_classifications == {"LTCG"}:
                 sale_classification = "LTCG"
-
             elif sale_classifications == {"STCG"}:
                 sale_classification = "STCG"
-
             else:
                 sale_classification = "MIXED"
-
         else:
             sale_classification = "UNCLASSIFIED"
 
@@ -526,16 +459,14 @@ def calculate_capital_gains(
                 "symbol": investment["symbol"],
                 "investment_type": investment["investment_type"],
                 "asset_class": asset_class,
-                "sale_date": str(sale_date),
-                "quantity": money(sale_quantity),
-                "sale_price": money(sale_price),
+                "sale_date": str(transaction_date),
+                "quantity": money(quantity),
+                "sale_price": money(price),
                 "cost_basis": money(total_cost_basis),
                 "gain": money(total_gain),
                 "classification": sale_classification,
                 "matched_lots": matched_lots,
-                "unmatched_quantity": money(
-                    unmatched_quantity
-                ),
+                "unmatched_quantity": money(unmatched_quantity),
             }
         )
 
@@ -545,13 +476,10 @@ def calculate_capital_gains(
 
     for sale in sales:
         gain = decimal(sale["gain"])
-
         if sale["classification"] == "STCG":
             stcg += gain
-
         elif sale["classification"] == "LTCG":
             ltcg += gain
-
         else:
             unclassified_gain += gain
 

@@ -525,16 +525,13 @@ def calculate_capital_gains(
 
         elif transaction_type == "SELL":
 
-            # ------------------------------------------------
-            # Ignore sales outside current Tax Year.
-            # ------------------------------------------------
-
-            if (
-                transaction_date is None
-                or transaction_date < start_date
-                or transaction_date > end_date
-            ):
+            # Consume every historical sale in chronological order so
+            # previously sold units cannot be reused in this Tax Year.
+            # Future sales are ignored because they must not consume today's lots.
+            if transaction_date is None or transaction_date > end_date:
                 continue
+
+            report_sale = start_date <= transaction_date <= end_date
 
             remaining_quantity = quantity
 
@@ -769,6 +766,9 @@ def calculate_capital_gains(
                     asset_class,
                 )
             )
+
+            if not report_sale:
+                continue
 
             sales.append(
                 {

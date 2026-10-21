@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models import Account, Category, User
 from app.routes.auth import get_current_user
+from app.finance_diary import record_finance_event
 
 router = APIRouter(prefix="/api/bills", tags=["Bills & Subscriptions"])
 
@@ -195,6 +196,7 @@ def create_bill(
         "status": data.status,
         "notes": data.notes,
     }).first()
+    record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="bill", entity_id=row._mapping["id"], description=f"Bill created: {data.name.strip()}", snapshot={"id": row._mapping["id"], "name": row._mapping["name"], "amount": row._mapping["amount"], "frequency": row._mapping["frequency"], "next_due_date": row._mapping["next_due_date"], "status": row._mapping["status"]})
     db.commit()
     return dict(row._mapping)
 
@@ -245,6 +247,7 @@ def update_bill(
     if row is None:
         db.rollback()
         raise HTTPException(status_code=404, detail="Bill not found")
+    record_finance_event(db, user_id=current_user.id, event_type="updated", entity_type="bill", entity_id=bill_id, description=f"Bill updated: {row._mapping['name']}", snapshot={"id": bill_id, "name": row._mapping["name"], "amount": row._mapping["amount"], "frequency": row._mapping["frequency"], "next_due_date": row._mapping["next_due_date"], "status": row._mapping["status"]})
     db.commit()
     return dict(row._mapping)
 
@@ -263,5 +266,6 @@ def delete_bill(
     if row is None:
         db.rollback()
         raise HTTPException(status_code=404, detail="Bill not found")
+    record_finance_event(db, user_id=current_user.id, event_type="deleted", entity_type="bill", entity_id=bill_id, description=f"Bill deleted: {bill_id}", snapshot={"id": bill_id})
     db.commit()
     return {"message": "Bill deleted successfully", "bill_id": bill_id}

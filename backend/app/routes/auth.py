@@ -118,7 +118,6 @@ def _issue_token(user_id: int, db: Session) -> str:
     expires = now + 60 * 60 * 12
     payload = {"sub": user_id, "iat": now, "exp": expires, "jti": jti}
     db.add(AuthSession(jti=jti, user_id=user_id, expires_at=datetime.utcfromtimestamp(expires)))
-    db.commit()
     encoded = _b64(json.dumps(payload, separators=(",", ":")).encode())
     signature = _b64(hmac.new(_secret(), encoded.encode(), hashlib.sha256).digest())
     return f"{encoded}.{signature}"

@@ -209,6 +209,7 @@ def login(request: LoginRequest, http_request: Request, db: Session = Depends(ge
     if not user or not credential or not _verify_password(request.password, credential.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email/phone number or password.")
     _clear_login_rate_limit(rate_limit_key)
+    access_token = _issue_token(user.id, db)
     record_finance_event(
         db, user_id=user.id, event_type="login", entity_type="authentication",
         description="Successful login", snapshot={"method": "email" if "@" in identifier else "phone"},
@@ -217,7 +218,7 @@ def login(request: LoginRequest, http_request: Request, db: Session = Depends(ge
     return {
         "status": "success",
         "token_type": "Bearer",
-        "access_token": _issue_token(user.id, db),
+        "access_token": access_token,
         "expires_in": 43200,
         "user": {"id": user.id, "name": user.name, "email": user.email, "phone_number": user.phone_number, "currency": user.currency},
         "subscription": {"status": "not_configured", "message": "Payment and plan activation are not implemented yet."},

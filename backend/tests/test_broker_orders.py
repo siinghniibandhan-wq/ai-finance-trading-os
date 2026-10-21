@@ -532,28 +532,26 @@ def test_false_or_empty_gateway_error_fields_do_not_override_positive_ack(
     assert reservation.status == "ACKNOWLEDGED"
 
 
-def test_missing_reservation_table_is_recreated_before_submission(monkeypatch, db_session):
-    """Older deployments may lack the idempotency table; create it before broker I/O."""
+def test_missing_reservation_table_fails_closed_without_runtime_ddl(monkeypatch, db_session):
+    """Missing schema must block submission; request handlers must not run DDL."""
     engine = db_session.get_bind()
     db_session.close()
     models.BrokerOrderSubmission.__table__.drop(bind=engine, checkfirst=True)
     calls = []
     monkeypatch.setattr(
         broker_orders, "_gateway_request",
-        lambda *args, **kwargs: calls.append(args) or {"success": True, "order_id": "ORD-TABLE-REPAIRED"},
+        lambda *args, **kwargs: calls.append(args) or {"success": True, "order_id": "MUST-NOT-SEND"},
     )
     from sqlalchemy.orm import Session
     session = Session(bind=engine, expire_on_commit=False)
     try:
-        result = broker_orders.place_broker_order(
-            request_payload("missing-table-repair-1"),
-            db=session,
-            current_user=SimpleNamespace(id=7),
-        )
-        assert result["order_id"] == "ORD-TABLE-REPAIRED"
-        assert len(calls) == 1
-        assert session.query(models.BrokerOrderSubmission).filter_by(
-            user_id=7, client_id="missing-table-repair-1"
-        ).one().status == "ACKNOWLEDGED"
+        with pytest.raises(HTTPException) as error:
+            broker_orders.place_broker_order(
+                request_payload("missing-table-fail-closed-1"),
+                db=session,
+                current_user=SimpleNamespace(id=7),
+            )
+        assert error.value.status_code == 503
+        assert calls == []
     finally:
         session.close()

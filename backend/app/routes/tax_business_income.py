@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models import TaxBusinessIncomeRecord, Transaction, Category, User
 from app.routes.auth import get_current_user
+from app.finance_diary import record_finance_event
 from app.tax_income_safety import non_income_reason, find_duplicates
 
 router = APIRouter(prefix="/api/tax-business-income", tags=["Tax Business Income"])
@@ -124,6 +125,8 @@ def create_record(
         status="pending_review",
     )
     db.add(record)
+    db.flush()
+    record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="tax_business_record", entity_id=record.id, description=f"Tax business record created: {record.record_type} / {record.category}", snapshot={"id": record.id, "financial_year": record.financial_year, "record_type": record.record_type, "income_type": record.income_type, "category": record.category, "amount": record.amount, "transaction_date": record.transaction_date, "source_transaction_id": record.source_transaction_id, "status": record.status})
     db.commit()
     db.refresh(record)
     return _serialize(record)

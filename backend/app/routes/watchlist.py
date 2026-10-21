@@ -16,6 +16,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -237,49 +238,60 @@ def add_to_watchlist(
     # Insert
     # --------------------------------------------------------
 
-    result = db.execute(
-        text(
-            """
-            INSERT INTO watchlist (
-                user_id,
-                symbol,
-                exchange,
-                name,
-                instrument_token
-            )
-            VALUES (
-                :user_id,
-                :symbol,
-                :exchange,
-                :name,
-                :instrument_token
-            )
-            RETURNING
-                id,
-                user_id,
-                symbol,
-                exchange,
-                name,
-                instrument_token,
-                created_at
-            """
-        ),
-        {
-            "user_id": current_user.id,
-            "symbol": symbol,
-            "exchange": exchange,
-            "name": (
-                data.name.strip()
-                if data.name
-                else None
+    try:
+        result = db.execute(
+            text(
+                """
+                INSERT INTO watchlist (
+                    user_id,
+                    symbol,
+                    exchange,
+                    name,
+                    instrument_token
+                )
+                VALUES (
+                    :user_id,
+                    :symbol,
+                    :exchange,
+                    :name,
+                    :instrument_token
+                )
+                RETURNING
+                    id,
+                    user_id,
+                    symbol,
+                    exchange,
+                    name,
+                    instrument_token,
+                    created_at
+                """
             ),
-            "instrument_token": data.instrument_token,
-        },
-    )
-
-    db.commit()
-
-    watchlist_item = result.first()
+            {
+                "user_id": current_user.id,
+                "symbol": symbol,
+                "exchange": exchange,
+                "name": data.name.strip() if data.name else None,
+                "instrument_token": data.instrument_token,
+            },
+        )
+        # A concurrent request may pass the pre-insert SELECT too. The unique
+        # index is authoritative; translate its conflict into a stable 409.
+        watchlist_item = result.first()
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        existing = db.execute(
+            text(
+                """
+                SELECT id FROM watchlist
+                WHERE user_id = :user_id AND exchange = :exchange AND symbol = :symbol
+                """
+            ),
+            {"user_id": current_user.id, "exchange": exchange, "symbol": symbol},
+        ).first()
+        if existing:
+            raise HTTPException(status_code=409, detail="Symbol is already in the watchlist.") from exc
+        raise HTTPException(status_code=503, detail="Unable to save watchlist item safely.") from exc
 
     if not watchlist_item:
         raise HTTPException(

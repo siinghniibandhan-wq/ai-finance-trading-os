@@ -78,13 +78,13 @@ def finance_diary_daily_summary(
             FinanceDiaryEntry.user_id == current_user.id,
             FinanceDiaryEntry.entity_type == "investment",
             FinanceDiaryEntry.event_type == "created",
-            FinanceDiaryEntry.created_at >= datetime.combine(start_date, datetime.min.time()),
-            FinanceDiaryEntry.created_at < datetime.combine(end_date + timedelta(days=1), datetime.min.time()),
+            FinanceDiaryEntry.created_at >= datetime.combine(start_date, datetime.min.time()) - timedelta(hours=5, minutes=30),
+            FinanceDiaryEntry.created_at < datetime.combine(end_date + timedelta(days=1), datetime.min.time()) - timedelta(hours=5, minutes=30),
         )
         .all()
     )
     for event in investment_events:
-        day_key = event.created_at.date().isoformat() if event.created_at else None
+        day_key = (event.created_at + timedelta(hours=5, minutes=30)).date().isoformat() if event.created_at else None
         day = days.get(day_key)
         if day is None:
             continue

@@ -597,7 +597,9 @@ def test_gateway_http_400_json_list_persists_definite_rejection(monkeypatch, db_
         user_id=user.id, client_id=client_id
     ).one()
     assert reservation.status == "REJECTED"
-    assert "Invalid symbol" in json.loads(reservation.response_json)["detail"]
+    stored_response = json.loads(reservation.response_json)
+    assert "Invalid symbol" in stored_response["detail"]
+    assert stored_response["gateway_http_status"] == 400
     assert len(calls) == 1
 
 

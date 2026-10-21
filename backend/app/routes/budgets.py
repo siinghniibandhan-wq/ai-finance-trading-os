@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.models import Budget, Category, User
+from app.finance_diary import record_finance_event
 from app.routes.auth import get_current_user
 from app.schemas import (
     BudgetCreate,
@@ -56,6 +57,9 @@ def create_budget(
     )
 
     db.add(budget)
+    db.flush()
+    record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="budget", entity_id=budget.id, description=f"Budget created for category {category.name}", snapshot={"id": budget.id, "month": budget.month, "category_id": budget.category_id, "amount": budget.amount})
+    record_finance_event(db, user_id=current_user.id, event_type="updated", entity_type="budget", entity_id=budget.id, description=f"Budget updated: {budget.id}", snapshot={"month": budget.month, "category_id": budget.category_id, "amount": budget.amount})
     db.commit()
     db.refresh(budget)
 
@@ -182,6 +186,7 @@ def delete_budget(
             detail="Budget not found.",
         )
 
+    record_finance_event(db, user_id=current_user.id, event_type="deleted", entity_type="budget", entity_id=budget.id, description=f"Budget deleted: {budget.id}", snapshot={"month": budget.month, "category_id": budget.category_id, "amount": budget.amount})
     db.delete(budget)
     db.commit()
 

@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.finance_diary import record_finance_event
 from app.routes.auth import get_current_user
 from app.models import (
     Account, Liability, Loan, LoanMovement, LoanReceivable,
@@ -255,6 +256,15 @@ def repay_loan(loan_id: int, payload: LoanMovementCreate, current_user: User = D
             liability.outstanding_amount = loan.outstanding_principal
             liability.status = "closed" if liability.outstanding_amount == 0 else "active"
         account.balance = (account.balance or Decimal("0")) - total
+        record_finance_event(
+            db, user_id=current_user.id, event_type="loan_repayment_recorded",
+            entity_type="loan_movement", entity_id=movement.id,
+            description=f"Recorded repayment for loan: {loan.name}",
+            snapshot={"loan_id": loan.id, "transaction_id": tx.id, "account_id": account.id,
+                      "principal_amount": payload.principal_amount, "interest_amount": payload.interest_amount,
+                      "fee_amount": payload.fee_amount, "total_amount": total,
+                      "transaction_date": payload.transaction_date},
+        )
         db.commit()
         db.refresh(movement)
         return {"status": "success", "transaction_id": tx.id, "movement": _movement_dict(movement), "loan": _loan_dict(loan), "account_balance": float(account.balance)}
@@ -311,6 +321,13 @@ def create_loan_receivable(payload: LoanReceivableCreate, current_user: User = D
         )
         db.add(movement)
         account.balance = (account.balance or Decimal("0")) - payload.principal_amount
+        record_finance_event(
+            db, user_id=current_user.id, event_type="loan_disbursement_recorded",
+            entity_type="loan_receivable", entity_id=receivable.id,
+            description=f"Disbursed loan to {receivable.borrower_name}: {receivable.name}",
+            snapshot={"transaction_id": tx.id, "account_id": account.id,
+                      "principal_amount": payload.principal_amount, "start_date": payload.start_date},
+        )
         db.commit()
         db.refresh(receivable)
         return {"status": "success", "loan_receivable": _receivable_dict(receivable), "transaction_id": tx.id, "account_balance": float(account.balance)}
@@ -357,6 +374,15 @@ def recover_loan(receivable_id: int, payload: LoanMovementCreate, current_user: 
         receivable.outstanding_principal -= payload.principal_amount
         receivable.status = "closed" if receivable.outstanding_principal == 0 else "active"
         account.balance = (account.balance or Decimal("0")) + total
+        record_finance_event(
+            db, user_id=current_user.id, event_type="loan_recovery_recorded",
+            entity_type="loan_movement", entity_id=movement.id,
+            description=f"Recorded recovery for loan receivable: {receivable.name}",
+            snapshot={"receivable_id": receivable.id, "transaction_id": tx.id, "account_id": account.id,
+                      "principal_amount": payload.principal_amount, "interest_amount": payload.interest_amount,
+                      "fee_amount": payload.fee_amount, "total_amount": total,
+                      "transaction_date": payload.transaction_date},
+        )
         db.commit()
         db.refresh(movement)
         return {"status": "success", "transaction_id": tx.id, "movement": _movement_dict(movement), "loan_receivable": _receivable_dict(receivable), "account_balance": float(account.balance)}
@@ -560,6 +586,15 @@ def correct_loan_movement(movement_id: int, payload: LoanMovementCorrection, cur
         tx.reference = payload.reference
         if payload.notes is not None:
             tx.description = payload.notes
+        record_finance_event(
+            db, user_id=current_user.id, event_type="loan_movement_corrected",
+            entity_type="loan_movement", entity_id=movement.id,
+            description=f"Corrected {movement.movement_type} for loan movement {movement.id}",
+            snapshot={"transaction_id": tx.id, "account_id": account.id,
+                      "principal_amount": movement.principal_amount, "interest_amount": movement.interest_amount,
+                      "fee_amount": movement.fee_amount, "transaction_amount": tx.amount,
+                      "transaction_date": tx.transaction_date},
+        )
         db.commit()
         db.refresh(movement)
         return {"status": "success", "movement": _movement_dict(movement), "transaction_id": tx.id, "account_balance": float(account.balance)}
@@ -614,6 +649,16 @@ def cancel_loan_movement(
         db.delete(movement)
         db.flush()
         db.delete(tx)
+        record_finance_event(
+            db, user_id=current_user.id, event_type="loan_movement_cancelled",
+            entity_type="loan_movement", entity_id=movement_id,
+            description=f"Cancelled {movement.movement_type} for loan movement {movement_id}",
+            snapshot={"transaction_id": tx.id, "movement_type": movement.movement_type,
+                      "loan_id": movement.loan_id, "receivable_id": movement.receivable_id,
+                      "principal_amount": movement.principal_amount, "interest_amount": movement.interest_amount,
+                      "fee_amount": movement.fee_amount, "reversed_amount": tx.amount,
+                      "account_id": account.id},
+        )
         db.commit()
         return {"status": "success", "message": "Loan movement cancelled and linked balances reversed", "movement_id": movement_id, "account_balance": float(account.balance)}
     except HTTPException:
@@ -691,6 +736,13 @@ def cancel_borrowed_loan_disbursement(
         db.delete(loan)
         db.flush()
         db.delete(tx)
+        record_finance_event(
+            db, user_id=current_user.id, event_type="loan_disbursement_cancelled",
+            entity_type="loan", entity_id=loan_id,
+            description=f"Cancelled borrowed-loan disbursement for loan {loan_id}",
+            snapshot={"transaction_id": tx.id, "account_id": account.id, "reversed_amount": tx.amount,
+                      "loan_name": loan.name, "principal_amount": loan.principal_amount},
+        )
         db.commit()
         return {
             "status": "success",
@@ -772,6 +824,13 @@ def cancel_loan_given_disbursement(
         db.delete(receivable)
         db.flush()
         db.delete(tx)
+        record_finance_event(
+            db, user_id=current_user.id, event_type="loan_given_disbursement_cancelled",
+            entity_type="loan_receivable", entity_id=receivable_id,
+            description=f"Cancelled loan-given disbursement for receivable {receivable_id}",
+            snapshot={"transaction_id": tx.id, "account_id": account.id, "reversed_amount": tx.amount,
+                      "borrower_name": receivable.borrower_name, "principal_amount": receivable.original_principal},
+        )
         db.commit()
         return {
             "status": "success",

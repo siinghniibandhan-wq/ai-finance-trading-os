@@ -36,6 +36,8 @@ export default function LandingPage() {
   const [showAllThemes, setShowAllThemes] = useState(false);
   const [demoMode, setDemoMode] = useState("overview");
   const [isLight, setIsLight] = useState(false);
+  const prices = { monthly: [69, 199, 399], halfYearly: [null, null, null], annually: [null, null, null] };
+  const billingLabel = billing === "monthly" ? "/ month" : billing === "halfYearly" ? "/ 6 months" : "/ year";
   const displayedThemes = showAllThemes ? themes : themes.slice(0, 5);
   const goApp = () => { window.location.href = "/login"; };
   const goPlans = () => document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" });

@@ -105,9 +105,9 @@ def test_daily_finance_diary_summary_excludes_transfers_and_refunds():
         Transaction(user_id=user.id, account_id=account.id, transaction_type="transfer", amount=Decimal("1000"), transaction_date=date(2026, 10, 22), description="Own-account transfer"),
     ])
     db.add(FinanceDiaryEntry(
-        user_id=user.id, event_type="created", entity_type="investment", entity_id="42",
-        description="Investment position created",
-        snapshot_json='{"quantity": "2", "buy_price": "500", "fees": "10"}',
+        user_id=user.id, event_type="created", entity_type="investment_transaction", entity_id="42",
+        description="BUY investment transaction recorded",
+        snapshot_json='{"transaction_type": "BUY", "quantity": "2", "price": "500", "fees": "10"}',
         created_at=datetime(2026, 10, 22, 10, 0, 0),
     ))
     db.commit()

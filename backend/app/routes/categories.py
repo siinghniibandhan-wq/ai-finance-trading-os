@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models import Category, User
 from app.routes.auth import get_current_user
+from app.finance_diary import record_finance_event
 from app.schemas import (
     CategoryCreate,
     CategoryResponse,
@@ -83,6 +84,9 @@ def create_category(
     )
 
     db.add(category)
+    db.flush()
+    record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="category", entity_id=category.id, description=f"Category created: {category.name}", snapshot={"id": category.id, "name": category.name, "category_type": category.category_type})
+    record_finance_event(db, user_id=current_user.id, event_type="updated", entity_type="category", entity_id=category.id, description=f"Category updated: {category.name}", snapshot={"id": category.id, "name": category.name, "category_type": category.category_type})
     db.commit()
     db.refresh(category)
 
@@ -197,6 +201,7 @@ def delete_category(
             detail="Category not found.",
         )
 
+    record_finance_event(db, user_id=current_user.id, event_type="deleted", entity_type="category", entity_id=category.id, description=f"Category deleted: {category.name}", snapshot={"id": category.id, "name": category.name, "category_type": category.category_type})
     db.delete(category)
     db.commit()
 

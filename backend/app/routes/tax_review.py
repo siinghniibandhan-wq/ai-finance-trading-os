@@ -8,6 +8,7 @@ from app.database.database import get_db
 from app.models import TaxCreditEntry, TaxDeductionClaim, TaxReviewConfirmation, User
 from app.routes.auth import get_current_user
 from app.routes.ownership import require_matching_user_id
+from app.finance_diary import record_finance_event
 from app.tax_review_rules import REVIEW_SECTIONS, section_status
 
 router = APIRouter(prefix="/api/tax-review", tags=["Tax Review"])
@@ -85,6 +86,8 @@ def confirm_section(
         db.add(row)
     else:
         row.note = payload.note
+    db.flush()
+    record_finance_event(db, user_id=current_user.id, event_type="confirmed", entity_type="tax_review", entity_id=row.id, description=f"Tax review section confirmed: {payload.section} ({payload.financial_year})", snapshot={"id": row.id, "financial_year": payload.financial_year, "section": payload.section, "note": payload.note})
     db.commit()
     return {"sections": review_state(db, current_user.id, payload.financial_year)}
 
@@ -96,10 +99,13 @@ def remove_confirmation(
     section: str = Query(..., pattern=r"^(tds_advance_tax|deductions_exemptions)$"),
     db: Session = Depends(get_db),
 ):
-    db.query(TaxReviewConfirmation).filter(
+    rows = db.query(TaxReviewConfirmation).filter(
         TaxReviewConfirmation.user_id == user_id,
         TaxReviewConfirmation.financial_year == financial_year,
         TaxReviewConfirmation.section == section,
-    ).delete()
+    ).all()
+    for row in rows:
+        record_finance_event(db, user_id=user_id, event_type="confirmation_removed", entity_type="tax_review", entity_id=row.id, description=f"Tax review confirmation removed: {section} ({financial_year})", snapshot={"id": row.id, "financial_year": financial_year, "section": section})
+        db.delete(row)
     db.commit()
     return {"sections": review_state(db, user_id, financial_year)}

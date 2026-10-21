@@ -728,3 +728,63 @@ def test_acknowledgement_commit_failure_keeps_durable_reservation_and_blocks_ret
 
     assert gateway_calls == [client_id]
 
+
+
+def test_acknowledgement_commit_succeeds_but_confirmation_is_lost_blocks_retry(
+    monkeypatch, db_session
+):
+    """If commit lands but its confirmation is lost, retry must not resubmit."""
+    from sqlalchemy.exc import SQLAlchemyError
+    from sqlalchemy.orm import Session
+
+    gateway_calls = []
+
+    def fake_gateway(path, method, payload):
+        gateway_calls.append(payload["client_id"])
+        return {"success": True, "order_id": "MOCK-COMMIT-UNCERTAINTY"}
+
+    monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
+    user = SimpleNamespace(id=98)
+    client_id = "ack-commit-outcome-uncertain"
+
+    original_commit = db_session.commit
+    commit_calls = 0
+
+    def commit_then_lose_confirmation():
+        nonlocal commit_calls
+        commit_calls += 1
+        if commit_calls == 2:
+            # Simulate the database committing ACKNOWLEDGED, while the caller
+            # receives an exception before learning that the commit succeeded.
+            original_commit()
+            raise SQLAlchemyError("simulated lost commit confirmation")
+        return original_commit()
+
+    monkeypatch.setattr(db_session, "commit", commit_then_lose_confirmation)
+
+    with pytest.raises(SQLAlchemyError, match="simulated lost commit confirmation"):
+        broker_orders.place_broker_order(
+            request_payload(client_id), db=db_session, current_user=user
+        )
+
+    # Do not assume rollback means the remote commit was undone: inspect the
+    # durable result through a separate session.
+    db_session.rollback()
+    engine = db_session.get_bind()
+    with Session(bind=engine, expire_on_commit=False) as verification_session:
+        reservation = verification_session.query(models.BrokerOrderSubmission).filter_by(
+            user_id=user.id, client_id=client_id
+        ).one()
+        assert reservation.status == "ACKNOWLEDGED"
+        assert reservation.gateway_order_id == "MOCK-COMMIT-UNCERTAINTY"
+
+    # A repeated request must be rejected using the durable idempotency key,
+    # regardless of the first caller's uncertainty about the commit result.
+    with Session(bind=engine, expire_on_commit=False) as retry_session:
+        with pytest.raises(HTTPException) as duplicate:
+            broker_orders.place_broker_order(
+                request_payload(client_id), db=retry_session, current_user=user
+            )
+        assert duplicate.value.status_code == 409
+
+    assert gateway_calls == [client_id]

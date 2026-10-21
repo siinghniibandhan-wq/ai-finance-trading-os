@@ -50,3 +50,22 @@ def test_provider_status_does_not_return_credentials(monkeypatch):
     assert any(item["id"] == "openai" and item["configured"] for item in statuses)
     assert all("key" not in item and "secret" not in item for item in statuses)
     assert "do-not-leak" not in json.dumps(statuses)
+
+
+def test_gemini_model_is_encoded_as_a_single_url_segment(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    with patch.object(ai_providers, "_post_json", return_value={
+        "candidates": [{"content": {"parts": [{"text": "ok"}]}}]
+    }) as post:
+        ai_providers.generate("gemini", "hello", model="model/name?x=1")
+    assert "/models/model%2Fname%3Fx%3D1:generateContent" in post.call_args.args[0]
+
+
+def test_whitespace_only_model_falls_back_to_default(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    with patch.object(ai_providers, "_post_json", return_value={
+        "choices": [{"message": {"content": "ok"}}]
+    }) as post:
+        result = ai_providers.generate("openai", "hello", model="   ")
+    assert result["model"] == ai_providers.DEFAULT_MODELS["openai"]
+    assert post.call_args.args[2]["model"] == ai_providers.DEFAULT_MODELS["openai"]

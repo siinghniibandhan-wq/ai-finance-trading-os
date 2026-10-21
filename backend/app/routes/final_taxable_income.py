@@ -1248,6 +1248,7 @@ def upsert_tax_salary_income(payload: TaxSalaryIncomeInput, current_user: User =
     for field, value in payload.model_dump().items():
         setattr(record, field, value)
     record.status = "pending_review"
+    db.flush()
     record_finance_event(
         db, user_id=current_user.id, event_type=event_type, entity_type="tax_salary_income", entity_id=record.id,
         description=f"Salary income tax record {event_type}: {record.financial_year}",

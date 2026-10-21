@@ -3244,33 +3244,130 @@ function PlanPage() {
 }
 
 // ============================================================
-// GEMINI AI ASSISTANT
+// MULTI-PROVIDER AI ASSISTANT — provider settings stay in this module
 // ============================================================
 function AIAssistantPage() {
-  const API_BASE_URL = "https://wealthmanager.duckdns.org";
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  async function sendMessage(event) {
-    event.preventDefault(); const text = message.trim(); if (!text || busy) return;
-    setMessages(old => [...old, { role: "you", text }]); setMessage(""); setError(""); setBusy(true);
-    try {
-      const response = await apiFetch(`${API_BASE_URL}/api/ai/chat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
-      setMessages(old => [...old, { role: "gemini", text: data.answer || "Gemini returned an empty response." }]);
-    } catch (err) { setError(err.message || "Unable to reach Gemini."); } finally { setBusy(false); }
+  const [providers, setProviders] = useState([]);
+  const [provider, setProvider] = useState("gemini");
+  const [model, setModel] = useState("");
+  const [loadingProviders, setLoadingProviders] = useState(true);
+  const [testing, setTesting] = useState(false);
+  const [connectionMessage, setConnectionMessage] = useState("");
+
+  const selectedProvider = providers.find(item => item.id === provider);
+
+  useEffect(() => {
+    let active = true;
+    apiFetch(`${API_BASE_URL}/api/ai/providers`)
+      .then(async response => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || "Could not load AI providers.");
+        if (active) {
+          const list = Array.isArray(data.providers) ? data.providers : [];
+          setProviders(list);
+          if (list.length && !list.some(item => item.id === provider)) setProvider(list[0].id);
+        }
+      })
+      .catch(err => { if (active) setError(err.message || "Could not load AI providers."); })
+      .finally(() => { if (active) setLoadingProviders(false); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    setModel(selectedProvider?.default_model || "");
+    setConnectionMessage("");
+  }, [provider, selectedProvider?.default_model]);
+
+  async function callAssistant(text, isConnectionTest = false) {
+    const response = await apiFetch(`${API_BASE_URL}/api/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, provider, model: model.trim() || undefined }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
+    if (isConnectionTest) {
+      setConnectionMessage(`Connected successfully to ${data.provider_name || provider} using ${data.model || model}.`);
+    } else {
+      setMessages(old => [...old, { role: "assistant", provider: data.provider_name || provider, text: data.answer || "The provider returned an empty response." }]);
+    }
   }
+
+  async function sendMessage(event) {
+    event.preventDefault();
+    const text = message.trim();
+    if (!text || busy) return;
+    setMessages(old => [...old, { role: "you", text }]);
+    setMessage("");
+    setError("");
+    setBusy(true);
+    try { await callAssistant(text); }
+    catch (err) { setError(err.message || "Unable to reach the selected AI provider."); }
+    finally { setBusy(false); }
+  }
+
+  async function testConnection() {
+    if (testing || busy) return;
+    setTesting(true);
+    setError("");
+    setConnectionMessage("");
+    try { await callAssistant("Reply with exactly: Connection successful.", true); }
+    catch (err) { setError(err.message || "AI provider connection test failed."); }
+    finally { setTesting(false); }
+  }
+
+  const panelStyle = { padding: 18, marginBottom: 16 };
+  const labelStyle = { display: "block", fontSize: 12, marginBottom: 7, opacity: .75, fontWeight: 600 };
+  const inputStyle = { width: "100%", minWidth: 0, boxSizing: "border-box", padding: "11px 12px", borderRadius: 10, color: "inherit", background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.14)" };
+
   return <div style={{ maxWidth: 980, margin: "0 auto", padding: "8px 0 24px" }}>
-    <div className="glass-card" style={{ padding: 22, marginBottom: 16 }}><p className="card-label">GOOGLE GEMINI</p><h2 style={{ margin: "6px 0" }}>AI Financial Assistant</h2><p style={{ color: "rgba(255,255,255,.65)", lineHeight: 1.6, marginBottom: 0 }}>Ask about budgeting, investing concepts, financial goals, or planning. This initial connection does not automatically access your private Financial OS records or live market data.</p></div>
-    <div className="glass-card" style={{ padding: 18 }}><div style={{ minHeight: 180, maxHeight: 430, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
-      {messages.length === 0 && <p style={{ color: "rgba(255,255,255,.55)" }}>Example: “Help me create a monthly budget”</p>}
-      {messages.map((item, index) => <div key={index} style={{ alignSelf: item.role === "you" ? "flex-end" : "stretch", maxWidth: "95%", padding: 12, borderRadius: 12, background: item.role === "you" ? "rgba(168,85,247,.20)" : "rgba(255,255,255,.06)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}><strong style={{ display: "block", fontSize: 12, opacity: .7, marginBottom: 5 }}>{item.role === "you" ? "YOU" : "GEMINI"}</strong>{item.text}</div>)}
-      {busy && <p style={{ color: "rgba(255,255,255,.65)" }}>Gemini is thinking…</p>}</div>
+    <div className="glass-card" style={{ padding: 22, marginBottom: 16 }}>
+      <p className="card-label">FINANCIAL OS · AI MODULE</p>
+      <h2 style={{ margin: "6px 0" }}>AI Financial Assistant</h2>
+      <p style={{ color: "rgba(255,255,255,.65)", lineHeight: 1.6, marginBottom: 0 }}>Choose an AI provider for budgeting, investing concepts and financial planning. This assistant does not automatically access your private Financial OS records or live market data.</p>
+    </div>
+
+    <section className="glass-card" style={panelStyle} aria-label="AI provider settings">
+      <h3 style={{ marginTop: 0 }}>Provider settings</h3>
+      {loadingProviders ? <p>Loading available providers…</p> : <>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14 }}>
+          <label><span style={labelStyle}>AI provider</span>
+            <select value={provider} onChange={e => setProvider(e.target.value)} style={inputStyle} disabled={busy || testing}>
+              {providers.map(item => <option key={item.id} value={item.id}>{item.name}{item.configured ? " · configured" : " · needs setup"}</option>)}
+            </select>
+          </label>
+          <label><span style={labelStyle}>Model</span>
+            <input value={model} onChange={e => setModel(e.target.value)} maxLength={160} placeholder="Provider default model" style={inputStyle} disabled={busy || testing} />
+          </label>
+        </div>
+        <p style={{ fontSize: 13, opacity: .7, lineHeight: 1.5 }}>Credentials are configured on the backend and are never entered or stored in this browser. Local providers such as Ollama, vLLM and LM Studio must be reachable from the backend server.</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <button type="button" className="primary-button" onClick={testConnection} disabled={testing || busy || !selectedProvider}>{testing ? "Testing connection…" : "Test connection"}</button>
+          {selectedProvider && <span style={{ fontSize: 13, opacity: .75 }}>{selectedProvider.configured ? "Backend configuration detected" : "Backend configuration required"}</span>}
+        </div>
+        {connectionMessage && <p role="status" style={{ color: "#34d399", marginBottom: 0 }}>{connectionMessage}</p>}
+      </>}
+    </section>
+
+    <section className="glass-card" style={{ padding: 18 }} aria-label="AI conversation">
+      <div style={{ minHeight: 180, maxHeight: 430, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+        {messages.length === 0 && <p style={{ color: "rgba(255,255,255,.55)" }}>Example: “Help me create a monthly budget”</p>}
+        {messages.map((item, index) => <div key={index} style={{ alignSelf: item.role === "you" ? "flex-end" : "stretch", maxWidth: "95%", padding: 12, borderRadius: 12, background: item.role === "you" ? "rgba(168,85,247,.20)" : "rgba(255,255,255,.06)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+          <strong style={{ display: "block", fontSize: 12, opacity: .7, marginBottom: 5 }}>{item.role === "you" ? "YOU" : item.provider || "AI ASSISTANT"}</strong>{item.text}
+        </div>)}
+        {busy && <p style={{ color: "rgba(255,255,255,.65)" }}>AI assistant is thinking…</p>}
+      </div>
       {error && <p role="alert" style={{ color: "#fb7185" }}>{error}</p>}
-      <form onSubmit={sendMessage} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}><input aria-label="Message Gemini" value={message} onChange={e => setMessage(e.target.value)} placeholder="Ask your financial assistant…" maxLength={8000} style={{ flex: "1 1 260px", minWidth: 0, padding: "13px 14px", borderRadius: 10, color: "inherit", background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.14)" }} /><button type="submit" className="primary-button" disabled={busy || !message.trim()}>{busy ? "Sending…" : "Ask Gemini"}</button></form>
-    </div></div>;
+      <form onSubmit={sendMessage} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <input aria-label="Message AI assistant" value={message} onChange={e => setMessage(e.target.value)} placeholder="Ask your financial assistant…" maxLength={8000} style={{ ...inputStyle, flex: "1 1 260px" }} />
+        <button type="submit" className="primary-button" disabled={busy || testing || !message.trim()}>{busy ? "Sending…" : "Ask AI"}</button>
+      </form>
+    </section>
+  </div>;
 }
 
 function PlaceholderPage({ title }) {

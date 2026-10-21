@@ -82,6 +82,7 @@ from app.routes import (
     tax_business_income,
     tax_house_property,
     tax_review,
+    finance_diary,
 )
 
 
@@ -390,6 +391,7 @@ app.include_router(market_indices.router)
 app.include_router(investment_transactions.router)
 app.include_router(holdings.router)
 app.include_router(investment_pnl.router)
+app.include_router(finance_diary.router)
 
 
 # ------------------------------------------------------------

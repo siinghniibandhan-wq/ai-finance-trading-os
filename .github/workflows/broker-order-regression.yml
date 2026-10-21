@@ -1,0 +1,45 @@
+name: Broker Order Regression Tests
+
+on:
+  push:
+    branches:
+      - main
+      - "test/broker-order-regression-ci"
+  pull_request:
+    paths:
+      - "backend/app/routes/broker_orders.py"
+      - "backend/app/models.py"
+      - "backend/app/database/**"
+      - "backend/tests/test_broker_orders.py"
+      - "backend/requirements.txt"
+      - ".github/workflows/broker-order-regression.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  broker-order-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: sqlite:///./ci-test.db
+      PYTHONPATH: .
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install backend dependencies and test runner
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest
+      - name: Run broker-order regression tests
+        run: python -m pytest -q tests/test_broker_orders.py

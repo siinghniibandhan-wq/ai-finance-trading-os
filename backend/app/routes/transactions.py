@@ -684,10 +684,31 @@ def delete_transaction(
                     # The destination may have been deactivated, but keep the
                     # source correction and immutable destination snapshot.
                     account.balance = (account.balance or 0) + transaction.amount
-                record_finance_event(db, user_id=transaction.user_id, event_type="deleted", entity_type="transfer", entity_id=transaction.id, description="Transfer deleted; source and destination balances reversed; original details retained in diary", snapshot={"id": transaction.id, "from_account_id": transaction.account_id, "to_account_id": transaction.transfer_to_account_id, "amount": transaction.amount, "transfer_group_id": transaction.transfer_group_id, "reference": transaction.reference})
             else:
                 _reverse_balance_effect(account, str(transaction.transaction_type).lower(), transaction.amount)
-                record_finance_event(db, user_id=transaction.user_id, event_type="deleted", entity_type="transaction", entity_id=transaction.id, description="Transaction deleted; original details retained in Finance Diary", snapshot={"id": transaction.id, "account_id": transaction.account_id, "category_id": transaction.category_id, "transaction_type": transaction.transaction_type, "amount": transaction.amount, "description": transaction.description, "transaction_date": transaction.transaction_date, "reference": transaction.reference})
+
+        # Audit the deletion independently of balance reversal. A missing or
+        # deactivated account must not silently erase the transaction history.
+        if (transaction.transaction_type or "").lower() == "transfer":
+            record_finance_event(
+                db, user_id=transaction.user_id, event_type="deleted",
+                entity_type="transfer", entity_id=transaction.id,
+                description="Transfer deleted; original details retained in Finance Diary",
+                snapshot={"id": transaction.id, "from_account_id": transaction.account_id,
+                          "to_account_id": transaction.transfer_to_account_id,
+                          "amount": transaction.amount, "transfer_group_id": transaction.transfer_group_id,
+                          "reference": transaction.reference},
+            )
+        else:
+            record_finance_event(
+                db, user_id=transaction.user_id, event_type="deleted",
+                entity_type="transaction", entity_id=transaction.id,
+                description="Transaction deleted; original details retained in Finance Diary",
+                snapshot={"id": transaction.id, "account_id": transaction.account_id,
+                          "category_id": transaction.category_id, "transaction_type": transaction.transaction_type,
+                          "amount": transaction.amount, "description": transaction.description,
+                          "transaction_date": transaction.transaction_date, "reference": transaction.reference},
+            )
         journal_ids = [
             row[0] for row in db.query(JournalEntry.id).filter_by(
                 user_id=transaction.user_id, transaction_id=transaction.id

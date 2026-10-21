@@ -666,3 +666,65 @@ def test_gateway_http_5xx_keeps_reservation_submitting(
         user_id=user.id, client_id=client_id
     ).one()
     assert reservation.status == "SUBMITTING"
+
+
+def test_acknowledgement_commit_failure_keeps_durable_reservation_and_blocks_retry(
+    monkeypatch, db_session
+):
+    """A broker ack followed by a DB commit error must never trigger blind resubmission."""
+    from sqlalchemy.exc import SQLAlchemyError
+    from sqlalchemy.orm import Session
+
+    gateway_calls = []
+
+    def fake_gateway(path, method, payload):
+        gateway_calls.append(payload["client_id"])
+        return {"success": True, "order_id": "MOCK-ACK-PERSISTENCE"}
+
+    monkeypatch.setattr(broker_orders, "_gateway_request", fake_gateway)
+    user = SimpleNamespace(id=97)
+    client_id = "ack-persistence-commit-failure"
+
+    # Allow the initial SUBMITTING reservation commit, but fail the final
+    # commit that would persist ACKNOWLEDGED. This simulates a failure before
+    # the database confirms that final state was committed.
+    original_commit = db_session.commit
+    commit_calls = 0
+
+    def fail_acknowledgement_commit():
+        nonlocal commit_calls
+        commit_calls += 1
+        if commit_calls == 2:
+            raise SQLAlchemyError("simulated acknowledgement commit failure")
+        return original_commit()
+
+    monkeypatch.setattr(db_session, "commit", fail_acknowledgement_commit)
+
+    with pytest.raises(SQLAlchemyError, match="simulated acknowledgement commit failure"):
+        broker_orders.place_broker_order(
+            request_payload(client_id), db=db_session, current_user=user
+        )
+
+    # Roll back the failed ORM transaction and inspect persisted state from a
+    # new session, not the possibly stale in-memory reservation object.
+    db_session.rollback()
+    engine = db_session.get_bind()
+    with Session(bind=engine, expire_on_commit=False) as verification_session:
+        reservation = verification_session.query(models.BrokerOrderSubmission).filter_by(
+            user_id=user.id, client_id=client_id
+        ).one()
+        assert reservation.status == "SUBMITTING"
+        assert reservation.gateway_order_id is None
+
+    # A retry with the same durable idempotency key is blocked before gateway I/O.
+    with Session(bind=engine, expire_on_commit=False) as retry_session:
+        with pytest.raises(HTTPException) as duplicate:
+            broker_orders.place_broker_order(
+                request_payload(client_id),
+                db=retry_session,
+                current_user=user,
+            )
+        assert duplicate.value.status_code == 409
+
+    assert gateway_calls == [client_id]
+

@@ -26,7 +26,7 @@ PROVIDERS = {
 
 DEFAULT_MODELS = {
     "gemini": "gemini-2.5-flash",
-    "claude": "claude-3-5-haiku-latest",
+    "claude": "claude-haiku-4-5-20251001",
     "openai": "gpt-4o-mini",
     "openrouter": "openai/gpt-4o-mini",
     "ollama": "llama3.2",

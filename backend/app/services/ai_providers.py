@@ -7,6 +7,30 @@ from __future__ import annotations
 
 import json
 import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def _get_api_key(provider: str) -> str | None:
+    """Resolve env credentials; fall back to AWS SSM for Gemini only."""
+    config = PROVIDERS[provider]
+    env_key = config["env_key"]
+    value = os.getenv(env_key) if env_key else None
+    if value or provider != "gemini":
+        return value
+
+    parameter_name = os.getenv("GEMINI_API_KEY_PARAMETER", "/financial-os/gemini-api-key")
+    try:
+        import boto3
+        region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
+        response = boto3.client("ssm", region_name=region).get_parameter(
+            Name=parameter_name, WithDecryption=True
+        )
+        return response["Parameter"]["Value"]
+    except Exception as exc:
+        logger.warning("Gemini key unavailable from AWS SSM (%s)", type(exc).__name__)
+        return None
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from urllib.parse import quote
@@ -83,7 +107,7 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
         "your output as verified tax calculations or personalised regulated financial advice."
     )
     config = PROVIDERS[key]
-    api_key = os.getenv(config["env_key"]) if config["env_key"] else None
+    api_key = _get_api_key(key)
     if config["env_key"] and not api_key:
         raise ProviderError(f"{config['label']} is not configured. Set its API key in the backend environment.")
 

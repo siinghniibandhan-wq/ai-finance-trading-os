@@ -131,6 +131,57 @@ def list_finance_diary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # Repair legacy/missing diary events for already-saved transactions.
+    # A transaction may exist even if an older backend version did not write its
+    # Finance Diary event. Reconciliation is user-scoped and idempotent.
+    saved_transactions = (
+        db.query(Transaction)
+        .filter(
+            Transaction.user_id == current_user.id,
+            Transaction.transaction_type != "transfer",
+        )
+        .all()
+    )
+    transaction_ids = {str(row.id) for row in saved_transactions}
+    existing_created_ids = {
+        value
+        for (value,) in db.query(FinanceDiaryEntry.entity_id)
+        .filter(
+            FinanceDiaryEntry.user_id == current_user.id,
+            FinanceDiaryEntry.entity_type == "transaction",
+            FinanceDiaryEntry.event_type == "created",
+            FinanceDiaryEntry.entity_id.isnot(None),
+        )
+        .all()
+        if value is not None
+    }
+    missing_entries = []
+    for transaction in saved_transactions:
+        if str(transaction.id) in existing_created_ids:
+            continue
+        snapshot = {
+            "id": transaction.id,
+            "account_id": transaction.account_id,
+            "category_id": transaction.category_id,
+            "transaction_type": transaction.transaction_type,
+            "amount": transaction.amount,
+            "description": transaction.description,
+            "transaction_date": transaction.transaction_date,
+            "reference": transaction.reference,
+            "reconciled_from_saved_transaction": True,
+        }
+        missing_entries.append(FinanceDiaryEntry(
+            user_id=current_user.id,
+            event_type="created",
+            entity_type="transaction",
+            entity_id=str(transaction.id),
+            description=f"Transaction recovered in Finance Diary: {transaction.transaction_type} {transaction.amount}",
+            snapshot_json=json.dumps(snapshot, default=str, sort_keys=True),
+        ))
+    if missing_entries:
+        db.add_all(missing_entries)
+        db.commit()
+
     # Finance Diary remains user-scoped; client cannot choose another user.
     query = db.query(FinanceDiaryEntry).filter(FinanceDiaryEntry.user_id == current_user.id)
     if search:

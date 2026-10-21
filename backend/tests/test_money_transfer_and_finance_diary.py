@@ -9,7 +9,7 @@ from app.database.database import Base
 from app.models import Account, Category, FinanceDiaryEntry, Transaction, User
 from app.schemas import TransactionCreate
 from app.routes.transactions import create_transaction, delete_transaction
-from app.routes.finance_diary import finance_diary_daily_summary
+from app.routes.finance_diary import finance_diary_daily_summary, list_finance_diary
 
 
 def _session():
@@ -123,4 +123,44 @@ def test_daily_finance_diary_summary_excludes_transfers_and_refunds():
     assert day["total_investment"] == "1010.00"
     assert day["income_by_source"] == {"Salary": "25000.00"}
     assert day["expense_by_category"] == {"Food": "2000.00"}
+    db.close()
+
+
+
+def test_finance_diary_repairs_saved_expense_missing_its_created_event():
+    db = _session()
+    user = User(name="Diary Repair Test", currency="INR")
+    db.add(user)
+    db.flush()
+    account = Account(
+        user_id=user.id, name="Bank", account_type="bank",
+        currency="INR", balance=Decimal("750"),
+    )
+    category = Category(user_id=user.id, name="Food", category_type="expense")
+    db.add_all([account, category])
+    db.flush()
+    transaction = Transaction(
+        user_id=user.id, account_id=account.id, category_id=category.id,
+        transaction_type="expense", amount=Decimal("250"),
+        transaction_date=date(2026, 10, 22), description="Missing diary event test",
+    )
+    db.add(transaction)
+    db.commit()
+
+    entries = list_finance_diary(db=db, current_user=user)
+    recovered = [
+        entry for entry in entries
+        if entry.entity_type == "transaction" and entry.entity_id == str(transaction.id)
+    ]
+    assert len(recovered) == 1
+    assert recovered[0].event_type == "created"
+    assert "recovered in Finance Diary" in recovered[0].description
+    assert '"reconciled_from_saved_transaction": true' in recovered[0].snapshot_json
+
+    # Repeated page loads must not create duplicate events.
+    list_finance_diary(db=db, current_user=user)
+    assert db.query(FinanceDiaryEntry).filter_by(
+        user_id=user.id, entity_type="transaction", entity_id=str(transaction.id),
+        event_type="created",
+    ).count() == 1
     db.close()

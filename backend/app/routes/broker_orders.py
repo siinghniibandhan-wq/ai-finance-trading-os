@@ -29,6 +29,16 @@ from app.database.database import get_db
 
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
 logger = logging.getLogger(__name__)
+
+
+class DefiniteGatewayRejection(HTTPException):
+    """Gateway response proves the order request was rejected before acceptance."""
+
+    definite_rejection = True
+
+    def __init__(self, detail: str, gateway_status: int):
+        super().__init__(status_code=502, detail=detail)
+        self.gateway_status = gateway_status
 GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").rstrip("/")
 GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
 GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/order")
@@ -115,12 +125,22 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
     except HTTPError as exc:
         try:
             detail = json.loads(exc.read().decode("utf-8"))
+            if isinstance(detail, list):
+                detail = detail[0] if detail else {}
+            if not isinstance(detail, dict):
+                detail = {}
             message = detail.get("detail") or detail.get("message") or detail.get("error")
         except Exception:
             message = None
         if exc.code == 404:
             raise HTTPException(status_code=503, detail="The AWS m.Stock gateway does not yet implement this order endpoint.") from exc
-        raise HTTPException(status_code=502, detail=message or f"m.Stock gateway returned HTTP {exc.code}.") from exc
+        message = message or f"m.Stock gateway returned HTTP {exc.code}."
+        # Keep the public response at 502, but preserve whether the gateway's
+        # 400/422 response proves this order request was rejected. A 409 may
+        # indicate a duplicate of an order already sent, so it stays ambiguous.
+        if exc.code in (400, 422):
+            raise DefiniteGatewayRejection(detail=message, gateway_status=exc.code) from exc
+        raise HTTPException(status_code=502, detail=message) from exc
     except URLError as exc:
         logger.warning("m.Stock order gateway connection failed: %s", type(exc).__name__)
         raise HTTPException(status_code=502, detail="Unable to connect to the AWS m.Stock gateway.") from exc
@@ -284,10 +304,14 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
     except HTTPException as exc:
         # Explicit HTTP 4xx responses are definite gateway rejections. Keep
         # timeouts and 5xx responses SUBMITTING because acceptance is ambiguous.
-        if 400 <= exc.status_code < 500:
+        if getattr(exc, "definite_rejection", False) or 400 <= exc.status_code < 500:
             reservation.status = "REJECTED"
             reservation.response_json = json.dumps(
-                {"http_status": exc.status_code, "detail": exc.detail},
+                {
+                    "http_status": exc.status_code,
+                    "gateway_http_status": getattr(exc, "gateway_status", None),
+                    "detail": exc.detail,
+                },
                 default=str,
             )
             db.commit()

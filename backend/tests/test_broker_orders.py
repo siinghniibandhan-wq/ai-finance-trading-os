@@ -555,3 +555,114 @@ def test_missing_reservation_table_fails_closed_without_runtime_ddl(monkeypatch,
         assert calls == []
     finally:
         session.close()
+
+
+def _configure_real_gateway_http_error_test(monkeypatch):
+    import io
+    from urllib.error import HTTPError
+
+    monkeypatch.setattr(broker_orders, "GATEWAY_URL", "http://127.0.0.1:8000")
+    monkeypatch.setattr(broker_orders, "GATEWAY_SECRET", "test-secret")
+    calls = []
+
+    def fake_urlopen(request, timeout):
+        calls.append((request, timeout))
+        raise HTTPError(
+            request.full_url, 400, "Bad Request", {},
+            io.BytesIO(
+                b'[{"status":"error","message":"Invalid symbol. Scrip Name not found in exchange file.",'
+                b'"error_type":"InputException","data":null}]'
+            ),
+        )
+
+    monkeypatch.setattr(broker_orders, "urlopen", fake_urlopen)
+    return calls
+
+
+def test_gateway_http_400_json_list_persists_definite_rejection(monkeypatch, db_session):
+    import json
+
+    calls = _configure_real_gateway_http_error_test(monkeypatch)
+    user = SimpleNamespace(id=91)
+    client_id = "gateway-400-list-rejection"
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload(client_id), db=db_session, current_user=user
+        )
+
+    assert error.value.status_code == 502
+    assert "Invalid symbol" in error.value.detail
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=user.id, client_id=client_id
+    ).one()
+    assert reservation.status == "REJECTED"
+    stored_response = json.loads(reservation.response_json)
+    assert "Invalid symbol" in stored_response["detail"]
+    assert stored_response["gateway_http_status"] == 400
+    assert len(calls) == 1
+
+
+def test_gateway_http_409_keeps_reservation_submitting(monkeypatch, db_session):
+    import io
+    from urllib.error import HTTPError
+
+    monkeypatch.setattr(broker_orders, "GATEWAY_URL", "http://127.0.0.1:8000")
+    monkeypatch.setattr(broker_orders, "GATEWAY_SECRET", "test-secret")
+    calls = []
+
+    def fake_urlopen(request, timeout):
+        calls.append(request)
+        raise HTTPError(
+            request.full_url, 409, "Conflict", {},
+            io.BytesIO(b'{"message":"Duplicate client_id; order may already exist"}'),
+        )
+
+    monkeypatch.setattr(broker_orders, "urlopen", fake_urlopen)
+    user = SimpleNamespace(id=92)
+    client_id = "gateway-409-ambiguous"
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload(client_id), db=db_session, current_user=user
+        )
+
+    assert error.value.status_code == 502
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=user.id, client_id=client_id
+    ).one()
+    assert reservation.status == "SUBMITTING"
+    assert reservation.response_json in (None, "")
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("gateway_status", [500, 503])
+def test_gateway_http_5xx_keeps_reservation_submitting(
+    monkeypatch, db_session, gateway_status
+):
+    import io
+    from urllib.error import HTTPError
+
+    monkeypatch.setattr(broker_orders, "GATEWAY_URL", "http://127.0.0.1:8000")
+    monkeypatch.setattr(broker_orders, "GATEWAY_SECRET", "test-secret")
+
+    def fake_urlopen(request, timeout):
+        raise HTTPError(
+            request.full_url, gateway_status, "Gateway Error", {},
+            io.BytesIO(b'{"message":"upstream error"}'),
+        )
+
+    monkeypatch.setattr(broker_orders, "urlopen", fake_urlopen)
+    user = SimpleNamespace(id=93)
+    client_id = f"gateway-{gateway_status}-ambiguous"
+
+    with pytest.raises(HTTPException) as error:
+        broker_orders.place_broker_order(
+            request_payload(client_id), db=db_session, current_user=user
+        )
+
+    assert error.value.status_code == 502
+    reservation = db_session.query(models.BrokerOrderSubmission).filter_by(
+        user_id=user.id, client_id=client_id
+    ).one()
+    assert reservation.status == "SUBMITTING"

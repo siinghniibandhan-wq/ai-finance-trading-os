@@ -9284,7 +9284,7 @@ function FinanceDiaryPage() {
   const formatTime = (value) => {
     if (!value) return "Time unavailable";
     const raw = String(value);
-    const parsed = new Date(/[zZ]|[+-]\\d{2}:?\\d{2}$/.test(raw) ? raw : `${raw}Z`);
+    const parsed = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw}Z`);
     return Number.isNaN(parsed.getTime()) ? raw : parsed.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
   };
   const money = (value) => new Intl.NumberFormat("en-IN", {

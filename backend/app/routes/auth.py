@@ -411,6 +411,12 @@ def admin_update_user_status(
     if target.id == admin.id and not request.is_active:
         raise HTTPException(status_code=400, detail="The administrator cannot deactivate their own account.")
     target.is_active = request.is_active
+    record_finance_event(
+        db, user_id=target.id, event_type="activated" if request.is_active else "deactivated",
+        entity_type="user_account", entity_id=target.id,
+        description="User account activated by administrator" if request.is_active else "User account deactivated by administrator",
+        snapshot={"user_id": target.id, "is_active": target.is_active},
+    )
     db.add(AdminAuditLog(
         admin_user_id=admin.id,
         action="user_activated" if request.is_active else "user_deactivated",
@@ -444,6 +450,13 @@ def admin_delete_user(
     if target_is_admin:
         raise HTTPException(status_code=400, detail="Administrator accounts cannot be deleted here.")
     try:
+        # Finance Diary entries have no user foreign key, so this final audit event
+        # survives the user/account deletion along with earlier history.
+        record_finance_event(
+            db, user_id=target.id, event_type="deleted", entity_type="user_account", entity_id=target.id,
+            description="User account permanently deleted by administrator",
+            snapshot={"user_id": target.id, "name": target.name, "email_present": bool(target.email)},
+        )
         # ORM relationships cascade owned accounts, transactions, and categories.
         # The transaction ensures no partial deletion is committed.
         db.delete(target)

@@ -372,13 +372,10 @@ export default function App() {
 
         <div className="brand">
 
-          <div className="brand-icon">
-            <CircleDollarSign size={24} />
-          </div>
-
-          <div className="brand-text">
-            <strong>Financial OS</strong>
-            <span>Your Financial Command Center</span>
+          <img className="brand-logo-image" src="/wealth-manager-mark.svg" alt="Wealth Manager logo" />
+          <div className="brand-text wealth-brand-text">
+            <strong>WEALTH</strong>
+            <span>MANAGER</span>
           </div>
 
           <button
@@ -16284,3 +16281,10 @@ function Bills() {
 
 
 
+
+/* Wealth Manager identity — responsive and theme-aware */
+.sidebar .brand { gap: 10px; }
+.sidebar .brand-logo-image { width: 42px; height: 42px; flex: 0 0 42px; object-fit: contain; border-radius: 12px; }
+.sidebar .wealth-brand-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.sidebar .wealth-brand-text strong { color: var(--th-text); font-size: 14px; font-weight: 800; letter-spacing: .15em; line-height: 1.15; }
+.sidebar .wealth-brand-text span { color: var(--th-muted); font-size: 9px; font-weight: 700; letter-spacing: .28em; line-height: 1.2; }

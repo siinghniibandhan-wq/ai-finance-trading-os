@@ -13,6 +13,7 @@ from app.database.database import get_db
 from app.house_property_calc import PROPERTY_TYPES, compute_house_property
 from app.models import TaxHousePropertyRecord, User
 from app.routes.auth import get_current_user
+from app.finance_diary import record_finance_event
 
 router = APIRouter(prefix="/api/tax-house-property", tags=["Tax House Property"])
 
@@ -65,6 +66,8 @@ def create_house_property_record(payload: HousePropertyIn, current_user: User = 
         status="pending_review",
     )
     db.add(record)
+    db.flush()
+    record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="tax_house_property", entity_id=record.id, description=f"House property tax record created: {record.property_type}", snapshot={"id": record.id, "financial_year": record.financial_year, "property_type": record.property_type, "property_label": record.property_label, "annual_rent_received": record.annual_rent_received, "municipal_taxes_paid": record.municipal_taxes_paid, "interest_on_housing_loan": record.interest_on_housing_loan, "status": record.status})
     db.commit()
     db.refresh(record)
     return _summary(record)
@@ -103,6 +106,7 @@ def verify_house_property_record(record_id: int, payload: HousePropertyAction, c
         raise HTTPException(status_code=409, detail="You have confirmed 'no house property'. Set that record back to pending before verifying a property.")
     record.evidence_reference = reference
     record.status = "verified"
+    record_finance_event(db, user_id=current_user.id, event_type="verified", entity_type="tax_house_property", entity_id=record.id, description=f"House property tax record verified: {record.property_type}", snapshot={"financial_year": record.financial_year, "evidence_reference": reference, "status": record.status})
     db.commit()
     db.refresh(record)
     result = _summary(record)
@@ -114,6 +118,7 @@ def verify_house_property_record(record_id: int, payload: HousePropertyAction, c
 def unverify_house_property_record(record_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     record = _owned(db, record_id, current_user.id)
     record.status = "pending_review"
+    record_finance_event(db, user_id=current_user.id, event_type="unverified", entity_type="tax_house_property", entity_id=record.id, description=f"House property tax record returned to review: {record.property_type}", snapshot={"financial_year": record.financial_year, "status": record.status})
     db.commit()
     db.refresh(record)
     result = _summary(record)
@@ -124,6 +129,7 @@ def unverify_house_property_record(record_id: int, current_user: User = Depends(
 @router.delete("/{record_id}")
 def delete_house_property_record(record_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     record = _owned(db, record_id, current_user.id)
+    record_finance_event(db, user_id=current_user.id, event_type="deleted", entity_type="tax_house_property", entity_id=record.id, description=f"House property tax record deleted: {record.property_type}", snapshot={"financial_year": record.financial_year, "property_label": record.property_label, "status": record.status})
     db.delete(record)
     db.commit()
     return {"id": record_id, "deleted": True}

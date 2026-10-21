@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models import ChartOfAccount, User
 from app.routes.auth import get_current_user
+from app.finance_diary import record_finance_event
 
 router = APIRouter(prefix="/api/chart-of-accounts", tags=["Chart of Accounts"])
 

@@ -9,6 +9,7 @@ import json
 import os
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from urllib.parse import quote
 
 
 PROVIDERS = {
@@ -74,7 +75,7 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
     key = provider.strip().lower()
     if key not in PROVIDERS:
         raise ProviderError("Unsupported AI provider.")
-    model = (model or os.getenv(f"{key.upper()}_MODEL") or DEFAULT_MODELS[key]).strip()
+    model = (model or "").strip() or os.getenv(f"{key.upper()}_MODEL", "").strip() or DEFAULT_MODELS[key]
     system_prompt = (
         "You are the assistant inside a personal Financial OS. Give clear, cautious "
         "financial education. Do not claim to see account data or live market data unless "
@@ -87,7 +88,7 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
         raise ProviderError(f"{config['label']} is not configured. Set its API key in the backend environment.")
 
     if config["kind"] == "gemini":
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{quote(model, safe='')}:generateContent"
         result = _post_json(url, {"x-goog-api-key": api_key}, {
             "systemInstruction": {"parts": [{"text": system_prompt}]},
             "contents": [{"role": "user", "parts": [{"text": message}]}],

@@ -247,6 +247,11 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         status="SUBMITTING",
     )
     try:
+        # Repair the specific missing-table case before attempting the durable
+        # reservation. create_all() normally creates this model at app startup,
+        # but older deployments may have started before this model existed.
+        # checkfirst is idempotent and preserves all existing order records.
+        BrokerOrderSubmission.__table__.create(bind=db.get_bind(), checkfirst=True)
         db.add(reservation)
         db.commit()
         db.refresh(reservation)
@@ -266,7 +271,7 @@ def place_broker_order(request: BrokerOrderRequest, db: Session = Depends(get_db
         raise HTTPException(status_code=503, detail="Unable to verify order idempotency state; order was not submitted.") from exc
     except SQLAlchemyError as exc:
         db.rollback()
-        logger.error("Unable to persist broker order idempotency reservation")
+        logger.exception("Unable to persist broker order idempotency reservation")
         raise HTTPException(status_code=503, detail="Order submission is disabled because durable duplicate protection is unavailable.") from exc
 
     try:

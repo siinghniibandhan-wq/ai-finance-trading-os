@@ -14,6 +14,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
+from app.finance_diary import record_finance_event
 from app.models import User
 from app.routes.auth import get_current_admin
 from app.routes.broker_orders import _gateway_request
@@ -334,6 +335,25 @@ def reconcile_broker_fills(
                     SET investment_transaction_id = :transaction_id
                     WHERE id = :marker_id
                 """), {"transaction_id": tx.id, "marker_id": marker.id})
+                record_finance_event(
+                    db,
+                    user_id=user_id,
+                    event_type="broker_fill_reconciled",
+                    entity_type="investment_transaction",
+                    entity_id=tx.id,
+                    description=f"Confirmed broker fill imported: {trade['side']} {trade['quantity']} {investment.name}",
+                    snapshot={
+                        "investment_id": investment.id,
+                        "investment_name": investment.name,
+                        "trade_id": trade["trade_id"],
+                        "exchange_order_id": trade["exchange_order_id"],
+                        "client_reference": trade["client_reference"],
+                        "side": trade["side"],
+                        "quantity": trade["quantity"],
+                        "price": trade["price"],
+                        "trade_date": trade["trade_date"],
+                    },
+                )
                 imported.append({
                     "trade_id": trade["trade_id"], "exchange_order_id": trade["exchange_order_id"],
                     "investment_transaction_id": tx.id, "side": trade["side"],

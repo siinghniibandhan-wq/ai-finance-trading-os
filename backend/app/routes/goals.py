@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models import FinancialGoal, User
 from app.routes.auth import get_current_user
+from app.finance_diary import record_finance_event
 
 router = APIRouter(prefix="/api/goals", tags=["Financial Goals"])
 
@@ -55,7 +56,9 @@ def create_goal(payload: GoalPayload, db: Session = Depends(get_db), current_use
         pass
     values = payload.model_dump(exclude={"user_id"})
     goal = FinancialGoal(user_id=current_user.id, **values)
-    db.add(goal); db.commit(); db.refresh(goal)
+    db.add(goal); db.flush()
+    record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="financial_goal", entity_id=goal.id, description=f"Financial goal created: {goal.name}", snapshot={"id": goal.id, "target_amount": goal.target_amount, "current_amount": goal.current_amount, "target_date": goal.target_date, "status": goal.status})
+    db.commit(); db.refresh(goal)
     return {"status": "success", "goal": serialize(goal)}
 
 @router.put("/{goal_id}")
@@ -73,5 +76,6 @@ def delete_goal(goal_id: int, db: Session = Depends(get_db), current_user: User 
     goal = db.query(FinancialGoal).filter(FinancialGoal.id == goal_id, FinancialGoal.user_id == current_user.id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
+    record_finance_event(db, user_id=current_user.id, event_type="deleted", entity_type="financial_goal", entity_id=goal.id, description=f"Financial goal deleted: {goal.name}", snapshot={"target_amount": goal.target_amount, "current_amount": goal.current_amount, "status": goal.status})
     db.delete(goal); db.commit()
     return {"status": "success", "deleted_id": goal_id}

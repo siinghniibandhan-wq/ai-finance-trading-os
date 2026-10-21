@@ -86,7 +86,6 @@ def create_category(
     db.add(category)
     db.flush()
     record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="category", entity_id=category.id, description=f"Category created: {category.name}", snapshot={"id": category.id, "name": category.name, "category_type": category.category_type})
-    record_finance_event(db, user_id=current_user.id, event_type="updated", entity_type="category", entity_id=category.id, description=f"Category updated: {category.name}", snapshot={"id": category.id, "name": category.name, "category_type": category.category_type})
     db.commit()
     db.refresh(category)
 

@@ -372,13 +372,10 @@ export default function App() {
 
         <div className="brand">
 
-          <div className="brand-icon">
-            <CircleDollarSign size={24} />
-          </div>
-
-          <div className="brand-text">
-            <strong>Financial OS</strong>
-            <span>Your Financial Command Center</span>
+          <img className="brand-logo-image" src="/wealth-manager-mark.svg" alt="Wealth Manager logo" />
+          <div className="brand-text wealth-brand-text">
+            <strong>WEALTH</strong>
+            <span>MANAGER</span>
           </div>
 
           <button

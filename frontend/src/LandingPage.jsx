@@ -44,7 +44,7 @@ export default function LandingPage() {
 
   return <div className={`fos-site ${isLight ? "fos-site-light" : ""}`}>
     <header className="fos-nav">
-      <a className="fos-brand" href="#top" aria-label="Financial OS home"><span className="fos-brand-mark"><Layers3 size={21}/></span><span>Financial<span className="fos-brand-accent">OS</span><small>YOUR MONEY. ONE WORKSPACE.</small></span></a>
+      <a className="fos-brand wealth-site-brand" href="#top" aria-label="Wealth Manager home"><img src="/wealth-manager-mark.svg" alt="" /><span className="wealth-site-wordmark"><strong>WEALTH</strong><small>MANAGER</small></span></a>
       <nav className={`fos-nav-links ${mobileOpen ? "fos-nav-open" : ""}`}>
         <a href="#features" onClick={() => setMobileOpen(false)}>Features</a><a href="#how-it-works" onClick={() => setMobileOpen(false)}>How it works</a><a href="#themes" onClick={() => setMobileOpen(false)}>Themes</a><a href="#plans" onClick={() => setMobileOpen(false)}>Pricing</a><a href="#faq" onClick={() => setMobileOpen(false)}>FAQ</a>
         <button className="fos-mobile-login" onClick={goApp}>Log in <ArrowRight size={16}/></button>
@@ -153,6 +153,6 @@ export default function LandingPage() {
         <p className="fos-company-note">Financial OS is part of KPMC Enterprises.</p>
       </section>
     </main>
-    <footer className="fos-footer"><div className="fos-container fos-footer-main"><a className="fos-brand" href="#top"><span className="fos-brand-mark"><Layers3 size={20}/></span><span>Financial<span className="fos-brand-accent">OS</span><small>YOUR MONEY. ONE WORKSPACE.</small></span></a><p>One workspace for money management, investing and planning.</p><div className="fos-footer-links"><a href="#features">Features</a><a href="#plans">Pricing</a><a href="#faq">FAQ</a><a href="#privacy-policy">Privacy Policy</a><a href="#terms">Terms &amp; Conditions</a><a href="#payment-policy">Payment Policy</a><a href="#refund-policy">Refund Policy</a><a href="#contact">Contact</a></div></div><div className="fos-container fos-footer-bottom"><span>© {new Date().getFullYear()} Financial OS. All rights reserved.</span><span>Part of KPMC Enterprises · Illustrative previews only. Not investment advice.</span></div></footer>
+    <footer className="fos-footer"><div className="fos-container fos-footer-main"><a className="fos-brand wealth-site-brand" href="#top" aria-label="Wealth Manager home"><img src="/wealth-manager-mark.svg" alt="" /><span className="wealth-site-wordmark"><strong>WEALTH</strong><small>MANAGER</small></span></a><p>One workspace for money management, investing and planning.</p><div className="fos-footer-links"><a href="#features">Features</a><a href="#plans">Pricing</a><a href="#faq">FAQ</a><a href="#privacy-policy">Privacy Policy</a><a href="#terms">Terms &amp; Conditions</a><a href="#payment-policy">Payment Policy</a><a href="#refund-policy">Refund Policy</a><a href="#contact">Contact</a></div></div><div className="fos-container fos-footer-bottom"><span>© {new Date().getFullYear()} Financial OS. All rights reserved.</span><span>Part of KPMC Enterprises · Illustrative previews only. Not investment advice.</span></div></footer>
   </div>;
 }

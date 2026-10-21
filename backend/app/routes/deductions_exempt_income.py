@@ -34,6 +34,7 @@ from app.database.database import get_db
 from app.routes.auth import get_current_user
 from app.routes.ownership import require_matching_user_id
 from app.models import TaxDeductionClaim, User
+from app.finance_diary import record_finance_event
 
 
 # ============================================================
@@ -617,6 +618,8 @@ def create_deduction_claim(payload: TaxDeductionClaimInput, current_user: User =
             notes=notes, status="pending_review",
         )
         db.add(claim)
+    db.flush()
+    record_finance_event(db, user_id=current_user.id, event_type="created_or_updated", entity_type="tax_deduction_claim", entity_id=claim.id, description=f"Tax deduction claim saved: {claim.deduction_key} ({claim.financial_year})", snapshot={"id": claim.id, "financial_year": claim.financial_year, "tax_regime": claim.tax_regime, "deduction_key": claim.deduction_key, "claimed_amount": claim.claimed_amount, "status": claim.status})
     db.commit()
     db.refresh(claim)
     return {"id": claim.id, "user_id": claim.user_id, "financial_year": claim.financial_year,
@@ -722,6 +725,7 @@ def verify_deduction_claim(
         raise HTTPException(status_code=400, detail=problem)
     claim.evidence_reference = evidence
     claim.status = "verified"
+    record_finance_event(db, user_id=current_user.id, event_type="verified", entity_type="tax_deduction_claim", entity_id=claim.id, description=f"Tax deduction claim verified: {claim.deduction_key}", snapshot={"financial_year": claim.financial_year, "deduction_key": claim.deduction_key, "claimed_amount": claim.claimed_amount, "evidence_reference": evidence, "status": claim.status})
     db.commit()
     db.refresh(claim)
     result = _claim_summary(claim)
@@ -742,6 +746,7 @@ def unverify_deduction_claim(
     """Return a claim to pending review so it stops reducing taxable income."""
     claim = _get_owned_claim(db, claim_id, current_user.id)
     claim.status = "pending_review"
+    record_finance_event(db, user_id=current_user.id, event_type="unverified", entity_type="tax_deduction_claim", entity_id=claim.id, description=f"Tax deduction claim returned to review: {claim.deduction_key}", snapshot={"financial_year": claim.financial_year, "deduction_key": claim.deduction_key, "status": claim.status})
     db.commit()
     db.refresh(claim)
     result = _claim_summary(claim)
@@ -757,6 +762,7 @@ def delete_deduction_claim(
 ):
     """Delete one of the owner's claims."""
     claim = _get_owned_claim(db, claim_id, user_id)
+    record_finance_event(db, user_id=user_id, event_type="deleted", entity_type="tax_deduction_claim", entity_id=claim.id, description=f"Tax deduction claim deleted: {claim.deduction_key}", snapshot={"financial_year": claim.financial_year, "deduction_key": claim.deduction_key, "claimed_amount": claim.claimed_amount, "status": claim.status})
     db.delete(claim)
     db.commit()
     return {"id": claim_id, "deleted": True}

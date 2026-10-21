@@ -59,9 +59,9 @@ export default function AuthPage({ initialMode = "login" }) {
   return (
     <main className="auth-page">
       <section className="auth-card" aria-labelledby="auth-heading">
-        <a href="/" className="auth-brand">
-          <span className="auth-brand-icon"><CircleDollarSign size={24} /></span>
-          <span><strong>Financial OS</strong><small>Your Financial Command Center</small></span>
+        <a href="/" className="auth-brand wealth-auth-brand">
+          <img src="/wealth-manager-mark.svg" alt="" className="auth-brand-logo" />
+          <span className="wealth-auth-wordmark"><strong>WEALTH</strong><small>MANAGER</small></span>
         </a>
         <div className="auth-eyebrow"><ShieldCheck size={16} /> Secure customer workspace</div>
         <h1 id="auth-heading">{mode === "register" ? "Create your account" : "Welcome back"}</h1>

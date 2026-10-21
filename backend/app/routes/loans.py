@@ -514,6 +514,15 @@ def create_liability(payload: LiabilityPayload, current_user: User = Depends(get
         raise HTTPException(status_code=400, detail="Outstanding amount cannot exceed original amount")
     item = Liability(**payload.model_dump(exclude={'user_id'}), user_id=current_user.id)
     db.add(item)
+    db.flush()
+    record_finance_event(
+        db, user_id=current_user.id, event_type="created",
+        entity_type="liability", entity_id=item.id,
+        description=f"Liability created: {item.name}",
+        snapshot={"id": item.id, "name": item.name, "liability_type": item.liability_type,
+                  "original_amount": item.original_amount, "outstanding_amount": item.outstanding_amount,
+                  "due_date": item.due_date, "status": item.status},
+    )
     db.commit()
     db.refresh(item)
     return {"status": "success", "liability": _liability_dict(item)}

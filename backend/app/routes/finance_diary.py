@@ -46,7 +46,7 @@ def finance_diary_daily_summary(
 
     transaction_rows = (
         db.query(Transaction, Category.name)
-        .outerjoin(Category, Category.id == Transaction.category_id)
+        .outerjoin(Category, (Category.id == Transaction.category_id) & (Category.user_id == current_user.id))
         .filter(
             Transaction.user_id == current_user.id,
             Transaction.transaction_date >= start_date,

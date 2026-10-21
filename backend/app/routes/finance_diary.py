@@ -76,7 +76,7 @@ def finance_diary_daily_summary(
         db.query(FinanceDiaryEntry)
         .filter(
             FinanceDiaryEntry.user_id == current_user.id,
-            FinanceDiaryEntry.entity_type == "investment",
+            FinanceDiaryEntry.entity_type.in_(["investment_transaction", "investment"]),
             FinanceDiaryEntry.event_type == "created",
             FinanceDiaryEntry.created_at >= datetime.combine(start_date, datetime.min.time()) - timedelta(hours=5, minutes=30),
             FinanceDiaryEntry.created_at < datetime.combine(end_date + timedelta(days=1), datetime.min.time()) - timedelta(hours=5, minutes=30),
@@ -90,10 +90,23 @@ def finance_diary_daily_summary(
             continue
         try:
             snapshot = json.loads(event.snapshot_json or "{}")
-            quantity = Decimal(str(snapshot.get("quantity") or 0))
-            buy_price = Decimal(str(snapshot.get("buy_price") or 0))
-            fees = Decimal(str(snapshot.get("fees") or 0))
-            invested = quantity * buy_price + fees
+            if event.entity_type == "investment_transaction":
+                transaction_type = str(snapshot.get("transaction_type") or "").strip().lower()
+                # Count purchase outflows as investments; sale proceeds are not new investment.
+                if transaction_type not in {"buy", "purchase"}:
+                    continue
+                quantity = Decimal(str(snapshot.get("quantity") or 0))
+                price = Decimal(str(snapshot.get("price") or 0))
+                fees = Decimal(str(snapshot.get("fees") or 0))
+            else:
+                # New position creation also writes an initial BUY ledger row.
+                # Avoid counting that same purchase twice.
+                if snapshot.get("cash_deduction_handled_by_initial_buy_ledger"):
+                    continue
+                quantity = Decimal(str(snapshot.get("quantity") or 0))
+                price = Decimal(str(snapshot.get("buy_price") or 0))
+                fees = Decimal(str(snapshot.get("fees") or 0))
+            invested = quantity * price + fees
         except (ValueError, TypeError, ArithmeticError):
             continue
         day["total_investment"] += invested

@@ -1,16 +1,18 @@
 """Multi-provider AI gateway for the Finance OS AI module.
 
-All provider credentials remain server-side. Uses the Python standard library
-so provider adapters do not add mandatory SDK dependencies.
+Provider credentials remain server-side. Gemini credentials can be loaded from
+AWS Systems Manager Parameter Store when GEMINI_API_KEY is not in the environment.
 """
 from __future__ import annotations
 
 import json
+import logging
 import os
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
 from urllib.parse import quote
+from urllib.request import Request, urlopen
 
+logger = logging.getLogger(__name__)
 
 PROVIDERS = {
     "gemini": {"label": "Google Gemini", "env_key": "GEMINI_API_KEY", "kind": "gemini"},
@@ -25,7 +27,7 @@ PROVIDERS = {
 }
 
 DEFAULT_MODELS = {
-    "gemini": "gemini-2.5-flash",
+    "gemini": "gemini-3.8-flash",
     "claude": "claude-haiku-4-5-20251001",
     "openai": "gpt-4o-mini",
     "openrouter": "openai/gpt-4o-mini",
@@ -41,10 +43,37 @@ class ProviderError(RuntimeError):
     pass
 
 
+def _get_api_key(provider: str) -> str | None:
+    """Read environment credentials; fall back to AWS SSM for Gemini only."""
+    config = PROVIDERS[provider]
+    env_key = config["env_key"]
+    value = os.getenv(env_key) if env_key else None
+    if value or provider != "gemini":
+        return value
+
+    parameter_name = os.getenv("GEMINI_API_KEY_PARAMETER", "/financial-os/gemini-api-key")
+    try:
+        import boto3
+
+        region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
+        client = boto3.client("ssm", region_name=region) if region else boto3.client("ssm")
+        response = client.get_parameter(Name=parameter_name, WithDecryption=True)
+        value = response.get("Parameter", {}).get("Value")
+        return value if isinstance(value, str) and value else None
+    except Exception as exc:
+        # Do not log secret values or AWS/provider response bodies.
+        logger.warning("Gemini key unavailable from AWS SSM (%s)", type(exc).__name__)
+        return None
+
+
 def provider_status():
     result = []
     for key, config in PROVIDERS.items():
-        configured = bool(os.getenv(config["env_key"])) if config["env_key"] else True
+        if key == "gemini":
+            # Reflect SSM configuration too, not only the process environment.
+            configured = bool(_get_api_key(key))
+        else:
+            configured = bool(os.getenv(config["env_key"])) if config["env_key"] else True
         if key in {"ollama", "vllm", "lmstudio", "custom"}:
             configured = bool(os.getenv(f"{key.upper()}_BASE_URL")) or (
                 key == "ollama" and bool(os.getenv("OLLAMA_HOST"))
@@ -60,22 +89,51 @@ def provider_status():
 
 def _post_json(url: str, headers: dict, payload: dict) -> dict:
     data = json.dumps(payload).encode("utf-8")
-    request = Request(url, data=data, headers={**headers, "Content-Type": "application/json"}, method="POST")
+    request = Request(
+        url,
+        data=data,
+        headers={**headers, "Content-Type": "application/json"},
+        method="POST",
+    )
     try:
         with urlopen(request, timeout=60) as response:
             return json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
-        # Do not expose response bodies that could contain provider or account data.
-        raise ProviderError(f"Provider returned HTTP {exc.code}. Check provider settings and backend logs.") from exc
+        raise ProviderError(
+            f"Provider returned HTTP {exc.code}. Check provider settings and backend logs."
+        ) from exc
     except (URLError, TimeoutError, json.JSONDecodeError) as exc:
         raise ProviderError("Provider could not be reached or returned an invalid response.") from exc
+
+
+def _extract_gemini_text(result: dict) -> str:
+    """Extract text only; safely ignore thought signatures and other non-text parts."""
+    chunks = []
+    for candidate in result.get("candidates", []):
+        content = candidate.get("content")
+        if not isinstance(content, dict):
+            continue
+        parts = content.get("parts", [])
+        if not isinstance(parts, list):
+            continue
+        for part in parts:
+            if not isinstance(part, dict):
+                continue
+            text = part.get("text")
+            if isinstance(text, str):
+                chunks.append(text)
+    return "".join(chunks)
 
 
 def generate(provider: str, message: str, model: str | None = None) -> dict:
     key = provider.strip().lower()
     if key not in PROVIDERS:
         raise ProviderError("Unsupported AI provider.")
-    model = (model or "").strip() or os.getenv(f"{key.upper()}_MODEL", "").strip() or DEFAULT_MODELS[key]
+    model = (
+        (model or "").strip()
+        or os.getenv(f"{key.upper()}_MODEL", "").strip()
+        or DEFAULT_MODELS[key]
+    )
     system_prompt = (
         "You are the assistant inside a personal Financial OS. Give clear, cautious "
         "financial education. Do not claim to see account data or live market data unless "
@@ -83,29 +141,48 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
         "your output as verified tax calculations or personalised regulated financial advice."
     )
     config = PROVIDERS[key]
-    api_key = os.getenv(config["env_key"]) if config["env_key"] else None
+    api_key = _get_api_key(key)
     if config["env_key"] and not api_key:
-        raise ProviderError(f"{config['label']} is not configured. Set its API key in the backend environment.")
+        raise ProviderError(
+            f"{config['label']} is not configured. Set its API key in the backend environment "
+            "or configure AWS SSM Parameter Store."
+        )
 
     if config["kind"] == "gemini":
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{quote(model, safe='')}:generateContent"
+        url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{quote(model, safe='')}:generateContent"
+        )
         result = _post_json(url, {"x-goog-api-key": api_key}, {
             "systemInstruction": {"parts": [{"text": system_prompt}]},
             "contents": [{"role": "user", "parts": [{"text": message}]}],
         })
-        answer = "".join(p.get("text", "") for c in result.get("candidates", []) for p in c.get("content", {}).get("parts", []))
+        answer = _extract_gemini_text(result)
     elif config["kind"] == "claude":
         result = _post_json("https://api.anthropic.com/v1/messages", {
             "x-api-key": api_key or "",
             "anthropic-version": "2023-06-01",
-        }, {"model": model, "max_tokens": 1200, "system": system_prompt, "messages": [{"role": "user", "content": message}]})
-        answer = "".join(block.get("text", "") for block in result.get("content", []) if block.get("type") == "text")
+        }, {
+            "model": model,
+            "max_tokens": 1200,
+            "system": system_prompt,
+            "messages": [{"role": "user", "content": message}],
+        })
+        answer = "".join(
+            block.get("text", "")
+            for block in result.get("content", [])
+            if isinstance(block, dict)
+            and block.get("type") == "text"
+            and isinstance(block.get("text"), str)
+        )
     else:
         base_url = {
             "openai": "https://api.openai.com/v1",
             "openrouter": "https://openrouter.ai/api/v1",
             "huggingface": os.getenv("HUGGINGFACE_BASE_URL", "https://router.huggingface.co/v1"),
-            "ollama": (lambda value: value if value.endswith("/v1") else value + "/v1")(os.getenv("OLLAMA_BASE_URL", os.getenv("OLLAMA_HOST", "http://localhost:11434")).rstrip("/")),
+            "ollama": (
+                lambda value: value if value.endswith("/v1") else value + "/v1"
+            )(os.getenv("OLLAMA_BASE_URL", os.getenv("OLLAMA_HOST", "http://localhost:11434")).rstrip("/")),
             "vllm": os.getenv("VLLM_BASE_URL", "http://localhost:8000/v1"),
             "lmstudio": os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1"),
             "custom": os.getenv("CUSTOM_BASE_URL", ""),
@@ -117,7 +194,10 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
             headers["Authorization"] = f"Bearer {api_key}"
         result = _post_json(f"{base_url}/chat/completions", headers, {
             "model": model,
-            "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": message}],
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": message},
+            ],
             "temperature": 0.3,
         })
         choices = result.get("choices", [])
@@ -125,4 +205,10 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
 
     if not isinstance(answer, str) or not answer.strip():
         raise ProviderError("Provider returned no text.")
-    return {"status": "success", "provider": key, "provider_name": config["label"], "model": model, "answer": answer.strip()}
+    return {
+        "status": "success",
+        "provider": key,
+        "provider_name": config["label"],
+        "model": model,
+        "answer": answer.strip(),
+    }

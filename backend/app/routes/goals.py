@@ -58,7 +58,6 @@ def create_goal(payload: GoalPayload, db: Session = Depends(get_db), current_use
     goal = FinancialGoal(user_id=current_user.id, **values)
     db.add(goal); db.flush()
     record_finance_event(db, user_id=current_user.id, event_type="created", entity_type="financial_goal", entity_id=goal.id, description=f"Financial goal created: {goal.name}", snapshot={"id": goal.id, "target_amount": goal.target_amount, "current_amount": goal.current_amount, "target_date": goal.target_date, "status": goal.status})
-    record_finance_event(db, user_id=current_user.id, event_type="updated", entity_type="financial_goal", entity_id=goal.id, description=f"Financial goal updated: {goal.name}", snapshot={"target_amount": goal.target_amount, "current_amount": goal.current_amount, "target_date": goal.target_date, "status": goal.status})
     db.commit(); db.refresh(goal)
     return {"status": "success", "goal": serialize(goal)}
 

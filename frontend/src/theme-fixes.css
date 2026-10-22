@@ -2648,7 +2648,7 @@
 }
 :root[data-finos-theme] .content .wealth-centre :is(
   .wc-welcome, .wc-primary-card, .wc-chart-surface, .wc-breakdown,
-  .wc-breakdown-category, .wc-analytics, .wc-section
+  .wc-breakdown-category
 ) {
   box-sizing: border-box;
   min-width: 0;
@@ -2659,8 +2659,7 @@
   padding: var(--wc-card-padding);
 }
 :root[data-finos-theme] .content .wealth-centre :is(
-  .wc-wealth-visuals, .wc-analytics-grid, .wc-breakdown-actions,
-  .wc-breakdown-category, .wc-workspace-grid
+  .wc-wealth-visuals, .wc-breakdown-actions, .wc-breakdown-category
 ) {
   gap: var(--wc-card-gap);
 }

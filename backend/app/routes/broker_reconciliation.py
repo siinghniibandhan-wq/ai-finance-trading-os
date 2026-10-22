@@ -29,18 +29,36 @@ class _SkipFill(Exception):
 
 def _submission_matches_trade(submission, trade):
     """Require exact local submission identity and instrument metadata before importing a fill."""
+    if submission is None:
+        return False
+
+    # SQLAlchemy Row objects expose column data through their mapping. Read
+    # that mapping explicitly so reconciliation behaves consistently across
+    # SQLAlchemy Row, RowMapping, and dict results.
+    values = getattr(submission, "_mapping", submission)
+    if not hasattr(values, "get"):
+        try:
+            values = dict(values)
+        except (TypeError, ValueError):
+            return False
+
+    def value(name, default=None):
+        return values.get(name, default)
+
+    # A local placement reservation is not proof that the broker accepted
+    # the order. Only reconcile fills against a durably acknowledged order.
+    gateway_order_id = value("gateway_order_id")
+    investment_id = value("investment_id")
+    quantity = value("quantity")
     return bool(
-        submission
-        # A local placement reservation is not proof that the broker accepted
-        # the order. Only reconcile fills against a durably acknowledged order.
-        and str(getattr(submission, "status", "") or "").strip().upper() == "ACKNOWLEDGED"
-        and submission.gateway_order_id
-        and str(submission.gateway_order_id).strip() == trade["broker_order_id"]
-        and submission.investment_id
-        and (submission.symbol or "").strip().upper() == trade["symbol"]
-        and (submission.exchange or "").strip().upper() == trade["exchange"]
-        and (submission.side or "").strip().upper() == trade["side"]
-        and submission.quantity
+        str(value("status", "") or "").strip().upper() == "ACKNOWLEDGED"
+        and gateway_order_id
+        and str(gateway_order_id).strip() == trade["broker_order_id"]
+        and investment_id
+        and str(value("symbol", "") or "").strip().upper() == trade["symbol"]
+        and str(value("exchange", "") or "").strip().upper() == trade["exchange"]
+        and str(value("side", "") or "").strip().upper() == trade["side"]
+        and quantity
     )
 
 

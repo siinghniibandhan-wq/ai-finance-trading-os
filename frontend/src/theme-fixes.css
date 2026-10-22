@@ -2638,3 +2638,94 @@
   stroke: currentColor;
   opacity: 1;
 }
+
+
+/* Wealth Manager: consistent card spacing, padding and heading rhythm across every theme. */
+:root[data-finos-theme] .content .wealth-centre {
+  --wc-card-padding: clamp(14px, 1.8vw, 22px);
+  --wc-card-gap: clamp(12px, 1.5vw, 18px);
+  --wc-heading-gap: 6px;
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-welcome, .wc-primary-card, .wc-chart-surface, .wc-breakdown,
+  .wc-breakdown-category
+) {
+  box-sizing: border-box;
+  min-width: 0;
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-welcome, .wc-primary-card, .wc-chart-surface, .wc-breakdown
+) {
+  padding: var(--wc-card-padding);
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-wealth-visuals, .wc-breakdown-actions, .wc-breakdown-category
+) {
+  gap: var(--wc-card-gap);
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-panel-heading, .wc-breakdown-heading, .wc-card-top
+) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-panel-heading, .wc-breakdown-heading, .wc-card-top
+) > :first-child {
+  min-width: 0;
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-panel-heading, .wc-breakdown-heading, .wc-card-top
+) :is(h2, h3, h4, .card-title, .wc-card-label) {
+  margin-block: 0 var(--wc-heading-gap);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-panel-heading, .wc-breakdown-heading, .wc-card-top
+) :is(p, small, .subtitle, .wc-card-subtitle) {
+  margin-block: 4px 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-card-label, .wc-card-value, .wc-card-subtitle, .wc-note,
+  .wc-detail-row, .wc-breakdown-category-main, .wc-liability-record
+) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-detail-row, .wc-breakdown-category-main, .wc-liability-record
+) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-detail-row, .wc-breakdown-category-main, .wc-liability-record
+) > :last-child {
+  flex: 0 1 auto;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  :root[data-finos-theme] .content .wealth-centre {
+    --wc-card-padding: 14px;
+    --wc-card-gap: 12px;
+  }
+  :root[data-finos-theme] .content .wealth-centre :is(
+    .wc-panel-heading, .wc-breakdown-heading, .wc-card-top
+  ) {
+    gap: 8px;
+  }
+  :root[data-finos-theme] .content .wealth-centre :is(
+    .wc-detail-row, .wc-breakdown-category-main, .wc-liability-record
+  ) {
+    gap: 8px;
+  }
+}

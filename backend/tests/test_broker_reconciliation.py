@@ -501,3 +501,25 @@ def test_allows_non_error_tradebook_error_flags(value):
     rows = [{"TRADE_NUMBER": "T-FLAG", "status": "Complete"}]
     response = {"success": True, "error": value, "data": rows}
     assert _trade_rows(response) == rows
+
+
+
+def test_submission_match_supports_sqlalchemy_row_mapping():
+    """SQLAlchemy query rows expose selected columns through their mapping."""
+    trade = {
+        "broker_order_id": "BROKER-ROW-1",
+        "symbol": "RELIANCE",
+        "exchange": "NSE",
+        "side": "BUY",
+    }
+    row_mapping = {
+        "status": "ACKNOWLEDGED",
+        "gateway_order_id": "BROKER-ROW-1",
+        "investment_id": 9,
+        "symbol": "RELIANCE",
+        "exchange": "NSE",
+        "side": "BUY",
+        "quantity": 2,
+    }
+    row = type("MockSQLAlchemyRow", (), {"_mapping": row_mapping})()
+    assert _submission_matches_trade(row, trade) is True

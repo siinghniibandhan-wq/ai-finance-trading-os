@@ -225,8 +225,8 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
             result = broker_reconciliation.reconcile_broker_fills(
                 db=session, current_user=SimpleNamespace(id=user_id)
             )
-            assert result["imported_count"] == 2
-            assert result["duplicate_count"] == 1
+            assert result["imported_count"] == 2, f"Reconciliation did not import both matched partial fills: {result}"
+            assert result["duplicate_count"] == 1, f"Unexpected duplicate count: {result}"
 
         with SessionFactory() as verify:
             quantity = verify.execute(text(

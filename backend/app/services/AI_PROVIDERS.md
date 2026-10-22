@@ -16,6 +16,18 @@ The AI Assistant has a provider selector and a **Test connection** action. The t
 
 Hugging Face may require HUGGINGFACE_BASE_URL if the selected endpoint is not the default OpenAI-compatible router.
 
+## Additional chat gateway tabs
+
+The AI module also exposes three separate chat tabs, each backed by an OpenAI-compatible endpoint:
+
+| Tab | Backend variables | Notes |
+|---|---|---|
+| FreeLLMAPI | FREELLMAPI_BASE_URL, FREELLMAPI_API_KEY, optional FREELLMAPI_MODEL | Self-host or configure a trusted FreeLLMAPI endpoint. It is a gateway, not a guarantee of anonymous hosted access. |
+| OmniRoute | OMNIROUTE_BASE_URL, OMNIROUTE_API_KEY, optional OMNIROUTE_MODEL | Run/configure OmniRoute and connect its OpenAI-compatible API. Provider accounts, quotas and terms still apply. |
+| G0DM0D3 | GODMODE_BASE_URL, GODMODE_API_KEY, optional GODMODE_MODEL | Requires a configured G0DM0D3 API server. Its API may require upstream OpenRouter credentials depending on deployment. |
+
+These tabs are chat-only. Project-specific UI features that are not exposed through the configured API are not automatically available inside Financial OS. The G0DM0D3 source is AGPL-3.0; this integration uses an API adapter rather than copying its source UI or server. Review its license and any service terms before self-hosting or distributing modifications.
+
 ## Local / OpenAI-compatible endpoints
 
 | Provider ID | Backend variables | Default endpoint |

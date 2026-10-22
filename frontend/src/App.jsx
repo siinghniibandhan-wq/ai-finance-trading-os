@@ -3253,7 +3253,7 @@ function AIAssistantPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [providers, setProviders] = useState([]);
-  const [provider, setProvider] = useState("gemini");
+  const [provider, setProvider] = useState("freellmapi");
   const [gatewayTab, setGatewayTab] = useState("freellmapi");
   const [model, setModel] = useState("");
   const [loadingProviders, setLoadingProviders] = useState(true);

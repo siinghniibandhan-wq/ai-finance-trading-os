@@ -2512,3 +2512,71 @@
   color: var(--th-accent);
 }
 
+
+
+/* Wealth Manager: keep the same card language across themes while using each
+   theme's own tokens for text, icons, chart labels and secondary actions. */
+:root[data-finos-theme] .content .wealth-centre .wc-primary-card :is(
+  .wc-card-label, .wc-card-value, .wc-card-subtitle, .wc-card-action
+) {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+:root[data-finos-theme] .content .wealth-centre .wc-primary-card .wc-card-label {
+  color: var(--finos-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content .wealth-centre .wc-primary-card .wc-card-value {
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content .wealth-centre .wc-primary-card .wc-card-subtitle {
+  color: var(--finos-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content .wealth-centre .wc-primary-card .wc-card-action {
+  color: var(--finos-accent, var(--th-accent)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+/* Ensure card header dropdown chevrons and chart section icons remain visible. */
+:root[data-finos-theme] .content .wealth-centre .wc-primary-card :is(
+  svg, .lucide, [data-lucide]
+) {
+  color: var(--finos-muted, var(--th-muted));
+  stroke: currentColor;
+  opacity: 1;
+}
+/* Chart axes, month labels, legends, captions and supporting copy must not
+   inherit low-contrast legacy gray/white values in the dark theme. */
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-allocation, .wc-chart, .wc-cash-flow, .wc-balance-sheet,
+  .wc-section, .wc-analytics, .wc-wealth-chart
+) {
+  color: var(--finos-text, var(--th-text));
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-allocation, .wc-chart, .wc-cash-flow, .wc-balance-sheet,
+  .wc-section, .wc-analytics, .wc-wealth-chart
+) :is(p, small, label, .muted, .subtitle, .description, .chart-label, .axis-label, .tick-label) {
+  color: var(--finos-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-breakdown-action, .wc-action-button, .wc-shortcut-tile, .wc-primary-card button
+) {
+  color: var(--finos-text, var(--th-text));
+}
+:root[data-finos-theme] .content .wealth-centre :is(
+  .wc-breakdown-action, .wc-action-button
+) :is(span, svg) {
+  color: inherit;
+  stroke: currentColor;
+}
+:root[data-finos-theme="dark"] .content .wealth-centre :is(
+  .wc-breakdown-action, .wc-action-button
+) {
+  background: var(--t-inner-bg, var(--th-inner));
+  border-color: var(--th-border);
+}

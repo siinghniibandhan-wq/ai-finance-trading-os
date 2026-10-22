@@ -48,6 +48,7 @@ from app.routes import (
     investment_transactions,
     holdings,
     investment_pnl,
+    finance_diary,
 
     # Financial Data & Analytics
     financial_summary,
@@ -390,6 +391,7 @@ app.include_router(market_indices.router)
 app.include_router(investment_transactions.router)
 app.include_router(holdings.router)
 app.include_router(investment_pnl.router)
+app.include_router(finance_diary.router)
 
 
 # ------------------------------------------------------------

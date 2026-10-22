@@ -80,10 +80,13 @@ def provider_status():
             configured = bool(_get_api_key(key))
         else:
             configured = bool(os.getenv(config["env_key"])) if config["env_key"] else True
-        if key in {"ollama", "vllm", "lmstudio", "custom", "freellmapi", "omniroute", "godmode"}:
+        if key in {"ollama", "vllm", "lmstudio", "custom"}:
             configured = bool(os.getenv(f"{key.upper()}_BASE_URL")) or (
                 key == "ollama" and bool(os.getenv("OLLAMA_HOST"))
             )
+        elif key in {"freellmapi", "omniroute", "godmode"}:
+            # These gateways require both a reachable base URL and a backend-side key.
+            configured = bool(os.getenv(f"{key.upper()}_BASE_URL")) and bool(_get_api_key(key))
         result.append({
             "id": key,
             "name": config["label"],
@@ -197,7 +200,9 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
             "godmode": os.getenv("GODMODE_BASE_URL", ""),
         }[key].rstrip("/")
         if not base_url:
-            raise ProviderError("Set CUSTOM_BASE_URL in the backend environment.")
+            raise ProviderError(
+                f"Set {key.upper()}_BASE_URL in the backend environment."
+            )
         headers = {}
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"

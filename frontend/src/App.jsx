@@ -958,12 +958,16 @@ function Dashboard() {
         </div>
       </section>
 
-      {/* AI summary is explicitly a module link until real AI insights are connected. */}
-      <section className="glass-card ai-card">
-        <div className="card-header"><div className="ai-title"><div className="ai-icon"><Sparkles size={19}/></div><div><p className="card-label">AI • INSIGHTS</p><h3>Financial Assistant</h3></div></div></div>
-        <p className="welcome-description">AI-generated recommendations are not shown here until a working AI analysis endpoint is connected. Open the assistant to explore available features.</p>
-        <button className="primary-button" onClick={() => goTo("AI Assistant")}><Sparkles size={17}/> Open AI Assistant</button>
-      </section>
+      {isAdmin && (
+        <>
+          {/* AI summary is explicitly a module link until real AI insights are connected. */}
+          <section className="glass-card ai-card">
+            <div className="card-header"><div className="ai-title"><div className="ai-icon"><Sparkles size={19}/></div><div><p className="card-label">AI • INSIGHTS</p><h3>Financial Assistant</h3></div></div></div>
+            <p className="welcome-description">AI-generated recommendations are not shown here until a working AI analysis endpoint is connected. Open the assistant to explore available features.</p>
+            <button className="primary-button" onClick={() => goTo("AI Assistant")}><Sparkles size={17}/> Open AI Assistant</button>
+          </section>
+        </>
+      )}
 
       <section className="glass-card health-card">
         <div className="card-header"><div><p className="card-label">RECENT ACTIVITY</p><h3>Recent Transactions</h3></div><span className="score">{summary.transaction_count || 0}</span></div>

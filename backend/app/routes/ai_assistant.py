@@ -1,37 +1,15 @@
 """Admin-only AI assistant endpoints for the Finance OS AI module."""
 import logging
-import os
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app.models import User
-from app.routes.auth import _check_login_rate_limit, get_current_user
+from app.routes.auth import _check_login_rate_limit, get_current_admin
 from app.services.ai_providers import ProviderError, generate, provider_status
 
 router = APIRouter(prefix="/api/ai", tags=["AI Assistant"])
 logger = logging.getLogger(__name__)
-
-
-def require_ai_admin(current_user: User = Depends(get_current_user)) -> User:
-    """Require the server-configured administrator; never trust a frontend flag."""
-    admin_user_id = os.getenv("ADMIN_USER_ID", "").strip()
-    admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
-
-    if not admin_user_id and not admin_email:
-        raise HTTPException(
-            status_code=503,
-            detail="AI access is unavailable until ADMIN_USER_ID or ADMIN_EMAIL is configured.",
-        )
-
-    is_admin = (
-        str(current_user.id) == admin_user_id
-        if admin_user_id
-        else (current_user.email or "").strip().lower() == admin_email
-    )
-    if not is_admin:
-        raise HTTPException(status_code=403, detail="The AI module is available to administrators only.")
-    return current_user
 
 
 class ChatRequest(BaseModel):
@@ -41,7 +19,7 @@ class ChatRequest(BaseModel):
 
 
 @router.get("/status")
-def ai_status(current_user: User = Depends(require_ai_admin)):
+def ai_status(current_user: User = Depends(get_current_admin)):
     providers = provider_status()
     return {
         "module": "AI Assistant",
@@ -51,13 +29,13 @@ def ai_status(current_user: User = Depends(require_ai_admin)):
 
 
 @router.get("/providers")
-def list_ai_providers(current_user: User = Depends(require_ai_admin)):
+def list_ai_providers(current_user: User = Depends(get_current_admin)):
     """Provider availability and model defaults for the AI module settings UI."""
     return {"providers": provider_status()}
 
 
 @router.post("/chat")
-def ai_chat(request: ChatRequest, current_user: User = Depends(require_ai_admin)):
+def ai_chat(request: ChatRequest, current_user: User = Depends(get_current_admin)):
     # Each call costs money on the AI provider key: 30 messages per 10 minutes per user.
     _check_login_rate_limit(f"ai-chat:{current_user.id}", max_attempts=30, window=600)
     try:

@@ -6,7 +6,7 @@ from decimal import Decimal
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, extract
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db

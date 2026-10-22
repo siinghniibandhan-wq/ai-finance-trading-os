@@ -11,7 +11,6 @@ Purpose:
 - No changes to investments or transactions.
 """
 
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field

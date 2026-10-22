@@ -4,7 +4,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.routes.auth import get_current_user
+from app.models import User
+from app.routes.auth import _check_login_rate_limit, get_current_user
 from app.services.ai_providers import ProviderError, generate, provider_status
 
 router = APIRouter(prefix="/api/ai", tags=["AI Assistant"])
@@ -17,7 +18,7 @@ class ChatRequest(BaseModel):
     model: str | None = Field(default=None, max_length=160)
 
 
-@router.get("/status")
+@router.get("/status", dependencies=[Depends(get_current_user)])
 def ai_status():
     providers = provider_status()
     return {
@@ -33,8 +34,10 @@ def list_ai_providers():
     return {"providers": provider_status()}
 
 
-@router.post("/chat", dependencies=[Depends(get_current_user)])
-def ai_chat(request: ChatRequest):
+@router.post("/chat")
+def ai_chat(request: ChatRequest, current_user: User = Depends(get_current_user)):
+    # Each call costs money on the AI provider key: 30 messages per 10 minutes per user.
+    _check_login_rate_limit(f"ai-chat:{current_user.id}", max_attempts=30, window=600)
     try:
         return generate(
             provider=request.provider,

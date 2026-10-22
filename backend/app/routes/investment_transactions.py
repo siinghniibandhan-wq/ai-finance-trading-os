@@ -14,7 +14,7 @@
 # - Does NOT affect Market API
 # ============================================================
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException

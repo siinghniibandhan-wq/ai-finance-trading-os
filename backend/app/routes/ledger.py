@@ -1,6 +1,6 @@
 """Read-only views and authenticated backfill for persisted accounting journals."""
 from decimal import Decimal
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db

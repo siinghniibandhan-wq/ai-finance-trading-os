@@ -40,18 +40,45 @@ _LOGIN_MAX_ATTEMPTS = 5
 _login_attempts: dict[str, deque[float]] = defaultdict(deque)
 _login_attempts_lock = threading.Lock()
 
-def _login_rate_limit_key(request: Request, email: str) -> str:
-    client_ip = request.client.host if request.client else "unknown"
-    return f"{client_ip}:{email.strip().lower()}"
+def _client_ip(request: Request) -> str:
+    """Best-effort client address.
 
-def _check_login_rate_limit(key: str) -> None:
+    Behind a reverse proxy (nginx, load balancer) request.client.host is the
+    proxy, so every user would share one rate-limit bucket. Set
+    TRUSTED_PROXY_COUNT to the number of proxies in front of the app (usually 1)
+    to read the real address from X-Forwarded-For. Left unset, the header is
+    ignored because clients can forge it.
+    """
+    try:
+        proxies = int(os.getenv("TRUSTED_PROXY_COUNT", "0") or 0)
+    except ValueError:
+        proxies = 0
+    if proxies > 0:
+        parts = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
+        if len(parts) >= proxies:
+            return parts[-proxies]
+    return request.client.host if request.client else "unknown"
+
+
+def _login_rate_limit_key(request: Request, email: str) -> str:
+    return f"{_client_ip(request)}:{email.strip().lower()}"
+
+
+_LOGIN_STORE_MAX_KEYS = 50_000
+
+
+def _check_login_rate_limit(key: str, max_attempts: int = _LOGIN_MAX_ATTEMPTS, window: int = _LOGIN_WINDOW_SECONDS) -> None:
     now = time.monotonic()
     with _login_attempts_lock:
+        if len(_login_attempts) > _LOGIN_STORE_MAX_KEYS:
+            # Bound memory: attackers rotating emails must not grow this forever.
+            for stale_key in [k for k, v in _login_attempts.items() if not v or now - v[-1] >= window]:
+                _login_attempts.pop(stale_key, None)
         attempts = _login_attempts[key]
-        while attempts and now - attempts[0] >= _LOGIN_WINDOW_SECONDS:
+        while attempts and now - attempts[0] >= window:
             attempts.popleft()
-        if len(attempts) >= _LOGIN_MAX_ATTEMPTS:
-            raise HTTPException(status_code=429, detail="Too many login attempts. Try again in 15 minutes.")
+        if len(attempts) >= max_attempts:
+            raise HTTPException(status_code=429, detail="Too many attempts. Please try again later.")
         attempts.append(now)
 
 def _clear_login_rate_limit(key: str) -> None:
@@ -89,10 +116,28 @@ def _secret() -> bytes:
     return value.encode("utf-8")
 
 
+# OWASP (2023) recommends at least 600,000 PBKDF2-HMAC-SHA256 iterations.
+# Older hashes (310,000) still verify and are upgraded on the next login.
+_PBKDF2_ROUNDS = 600_000
+_PBKDF2_MAX_ROUNDS = 2_000_000  # refuse absurd stored values (CPU exhaustion guard)
+
+
 def _hash_password(password: str, salt: bytes | None = None) -> str:
     salt = salt or secrets.token_bytes(16)
-    derived = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 310_000)
-    return f"pbkdf2_sha256$310000${base64.urlsafe_b64encode(salt).decode()}${base64.urlsafe_b64encode(derived).decode()}"
+    derived = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, _PBKDF2_ROUNDS)
+    return f"pbkdf2_sha256${_PBKDF2_ROUNDS}${base64.urlsafe_b64encode(salt).decode()}${base64.urlsafe_b64encode(derived).decode()}"
+
+
+def _password_needs_rehash(stored: str) -> bool:
+    try:
+        return int(stored.split("$", 3)[1]) < _PBKDF2_ROUNDS
+    except (ValueError, IndexError):
+        return False
+
+
+# Used to spend the same CPU time when the account does not exist, so response
+# timing does not reveal which emails/phone numbers are registered.
+_DUMMY_PASSWORD_HASH = _hash_password("dummy-password-for-timing-equalisation")
 
 
 def _verify_password(password: str, stored: str) -> bool:
@@ -100,9 +145,12 @@ def _verify_password(password: str, stored: str) -> bool:
         algorithm, rounds, salt_text, digest_text = stored.split("$", 3)
         if algorithm != "pbkdf2_sha256":
             return False
+        iterations = int(rounds)
+        if not 1 <= iterations <= _PBKDF2_MAX_ROUNDS:
+            return False
         salt = base64.urlsafe_b64decode(salt_text.encode())
         expected = base64.urlsafe_b64decode(digest_text.encode())
-        actual = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, int(rounds))
+        actual = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
         return hmac.compare_digest(actual, expected)
     except (ValueError, TypeError):
         return False
@@ -162,10 +210,16 @@ def get_current_user(
 
 
 @router.post("/register", status_code=201)
-def register(request: RegisterRequest, db: Session = Depends(get_db)):
+def register(request: RegisterRequest, http_request: Request, db: Session = Depends(get_db)):
+    # Throttle account creation per client address (20 per hour).
+    _check_login_rate_limit(f"register:{_client_ip(http_request)}", max_attempts=20, window=3600)
     email = str(request.email).strip().lower()
-    if "@" not in email or "." not in email.rsplit("@", 1)[-1]:
+    if len(email) > 255 or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
         raise HTTPException(status_code=422, detail="Enter a valid email address.")
+    if request.password.strip().lower() == email:
+        raise HTTPException(status_code=422, detail="Password must not be the same as your email address.")
+    if len(request.password.strip()) < 12:
+        raise HTTPException(status_code=422, detail="Password must be at least 12 characters (not counting spaces at the ends).")
     existing = db.query(User).filter(User.email == email).first()
     if existing:
         raise HTTPException(status_code=409, detail="An account with this email already exists.")
@@ -197,7 +251,6 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 def login(request: LoginRequest, http_request: Request, db: Session = Depends(get_db)):
     identifier = str(request.email).strip().lower()
     if "@" not in identifier:
-        import re
         identifier = re.sub(r"[\\s().-]", "", identifier)
     rate_limit_key = _login_rate_limit_key(http_request, identifier)
     _check_login_rate_limit(rate_limit_key)
@@ -206,9 +259,12 @@ def login(request: LoginRequest, http_request: Request, db: Session = Depends(ge
         User.is_active.is_(True),
     ).first()
     credential = db.query(UserCredential).filter(UserCredential.user_id == user.id).first() if user else None
-    if not user or not credential or not _verify_password(request.password, credential.password_hash):
+    password_ok = _verify_password(request.password, credential.password_hash if credential else _DUMMY_PASSWORD_HASH)
+    if not user or not credential or not password_ok:
         raise HTTPException(status_code=401, detail="Invalid email/phone number or password.")
     _clear_login_rate_limit(rate_limit_key)
+    if _password_needs_rehash(credential.password_hash):
+        credential.password_hash = _hash_password(request.password)
     access_token = _issue_token(user.id, db)
     record_finance_event(
         db, user_id=user.id, event_type="login", entity_type="authentication",
@@ -309,25 +365,6 @@ def logout(
     return {"status": "success", "message": "Session revoked."}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ============================================================
 # ADMIN FOUNDATION
 # Configure ADMIN_EMAIL to the email address of the administrator.
@@ -426,7 +463,6 @@ def admin_update_user_status(
     db.commit()
     db.refresh(target)
     return {"status": "success", "user_id": target.id, "is_active": target.is_active}
-    
 
 
 @router.delete("/admin/users/{user_id}")

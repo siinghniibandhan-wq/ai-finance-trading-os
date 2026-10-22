@@ -23,7 +23,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, model_validator
 
-from app.routes.auth import get_current_user, get_current_admin
+from app.routes.auth import get_current_admin
 from app.models import User, BrokerOrderSubmission, BrokerTradingControl
 from app.database.database import get_db
 

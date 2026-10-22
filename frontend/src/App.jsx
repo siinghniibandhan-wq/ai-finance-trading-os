@@ -301,9 +301,13 @@ export default function App() {
 
   // Show the Admin Panel navigation only when the backend confirms administrator access.
   // The backend remains the security boundary for every administrative API request.
+  const navigationForRole = isAdmin
+    ? navigation
+    : navigation.map(group => ({ ...group, items: group.items.filter(item => item.name !== "AI Assistant") }))
+        .filter(group => group.items.length > 0);
   const visibleNavigation = isAdmin
-    ? [...navigation, { section: "Administration", items: [{ name: "Admin Panel", icon: ShieldCheck }] }]
-    : navigation;
+    ? [...navigationForRole, { section: "Administration", items: [{ name: "Admin Panel", icon: ShieldCheck }] }]
+    : navigationForRole;
 
   useEffect(() => { applyFinosTheme(selectedTheme); }, [selectedTheme]);
   const changeTheme = (theme) => { setSelectedTheme(theme); applyFinosTheme(theme); };
@@ -3250,11 +3254,21 @@ function AIAssistantPage() {
   const [error, setError] = useState("");
   const [providers, setProviders] = useState([]);
   const [provider, setProvider] = useState("gemini");
+  const [gatewayTab, setGatewayTab] = useState("freellmapi");
   const [model, setModel] = useState("");
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [testing, setTesting] = useState(false);
   const [connectionMessage, setConnectionMessage] = useState("");
 
+  const gatewayTabs = [
+    { id: "freellmapi", label: "FreeLLMAPI" },
+    { id: "omniroute", label: "OmniRoute" },
+    { id: "godmode", label: "G0DM0D3" },
+    { id: "other", label: "Other providers" },
+  ];
+  const visibleProviders = gatewayTab === "other"
+    ? providers.filter(item => !["freellmapi", "omniroute", "godmode"].includes(item.id))
+    : providers.filter(item => item.id === gatewayTab);
   const selectedProvider = providers.find(item => item.id === provider);
 
   useEffect(() => {
@@ -3266,7 +3280,8 @@ function AIAssistantPage() {
         if (active) {
           const list = Array.isArray(data.providers) ? data.providers : [];
           setProviders(list);
-          if (list.length && !list.some(item => item.id === provider)) setProvider(list[0].id);
+          const preferred = list.some(item => item.id === "freellmapi") ? "freellmapi" : list[0]?.id;
+          if (preferred && !list.some(item => item.id === provider)) setProvider(preferred);
         }
       })
       .catch(err => { if (active) setError(err.message || "Could not load AI providers."); })
@@ -3329,12 +3344,20 @@ function AIAssistantPage() {
     </div>
 
     <section className="glass-card" style={panelStyle} aria-label="AI provider settings">
-      <h3 style={{ marginTop: 0 }}>Provider settings</h3>
+      <h3 style={{ marginTop: 0 }}>Chat providers</h3>
+      <div role="tablist" aria-label="AI chat gateways" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+        {gatewayTabs.map(tab => <button key={tab.id} type="button" role="tab" aria-selected={gatewayTab === tab.id} className={gatewayTab === tab.id ? "primary-button" : "secondary-button"} onClick={() => {
+          setGatewayTab(tab.id);
+          const next = tab.id === "other" ? providers.find(item => !["freellmapi", "omniroute", "godmode"].includes(item.id)) : providers.find(item => item.id === tab.id);
+          if (next) setProvider(next.id);
+          setError("");
+        }}>{tab.label}</button>)}
+      </div>
       {loadingProviders ? <p>Loading available providers…</p> : <>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14 }}>
           <label><span style={labelStyle}>AI provider</span>
             <select value={provider} onChange={e => setProvider(e.target.value)} style={inputStyle} disabled={busy || testing}>
-              {providers.map(item => <option key={item.id} value={item.id}>{item.name}{item.configured ? " · configured" : " · needs setup"}</option>)}
+              {visibleProviders.map(item => <option key={item.id} value={item.id}>{item.name}{item.configured ? " · configured" : " · needs setup"}</option>)}
             </select>
           </label>
           <label><span style={labelStyle}>Model</span>

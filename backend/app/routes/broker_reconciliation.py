@@ -27,39 +27,40 @@ class _SkipFill(Exception):
     """Rollback this fill's savepoint without aborting other valid fills."""
 
 
-def _submission_matches_trade(submission, trade):
-    """Require exact local submission identity and instrument metadata before importing a fill."""
+def _submission_match_failure_reason(submission, trade):
+    """Return a safe, specific reason when a trade cannot match its local order."""
     if submission is None:
-        return False
-
-    # SQLAlchemy Row objects expose column data through their mapping. Read
-    # that mapping explicitly so reconciliation behaves consistently across
-    # SQLAlchemy Row, RowMapping, and dict results.
+        return "local_submission_not_found"
     values = getattr(submission, "_mapping", submission)
     if not hasattr(values, "get"):
         try:
             values = dict(values)
         except (TypeError, ValueError):
-            return False
+            return "local_submission_unreadable"
 
     def value(name, default=None):
         return values.get(name, default)
 
-    # A local placement reservation is not proof that the broker accepted
-    # the order. Only reconcile fills against a durably acknowledged order.
-    gateway_order_id = value("gateway_order_id")
-    investment_id = value("investment_id")
-    quantity = value("quantity")
-    return bool(
-        str(value("status", "") or "").strip().upper() == "ACKNOWLEDGED"
-        and gateway_order_id
-        and str(gateway_order_id).strip() == trade["broker_order_id"]
-        and investment_id
-        and str(value("symbol", "") or "").strip().upper() == trade["symbol"]
-        and str(value("exchange", "") or "").strip().upper() == trade["exchange"]
-        and str(value("side", "") or "").strip().upper() == trade["side"]
-        and quantity
-    )
+    if str(value("status", "") or "").strip().upper() != "ACKNOWLEDGED":
+        return "submission_not_acknowledged"
+    if not value("gateway_order_id") or str(value("gateway_order_id")).strip() != trade["broker_order_id"]:
+        return "broker_order_id_mismatch"
+    if not value("investment_id"):
+        return "submission_missing_investment_id"
+    if str(value("symbol", "") or "").strip().upper() != trade["symbol"]:
+        return "submission_symbol_mismatch"
+    if str(value("exchange", "") or "").strip().upper() != trade["exchange"]:
+        return "submission_exchange_mismatch"
+    if str(value("side", "") or "").strip().upper() != trade["side"]:
+        return "submission_side_mismatch"
+    if not value("quantity"):
+        return "submission_missing_quantity"
+    return None
+
+
+def _submission_matches_trade(submission, trade):
+    """Require exact local submission identity and instrument metadata before importing a fill."""
+    return _submission_match_failure_reason(submission, trade) is None
 
 
 def _trade_rows(response):
@@ -276,8 +277,10 @@ def reconcile_broker_fills(
                 """), {"user_id": user_id, "client_reference": trade["client_reference"]}).first()
                 # Never infer ownership or investment from symbol/price/time.
                 # The documented broker order-ID mapping must be verified separately.
-                if not _submission_matches_trade(submission, trade):
-                    raise _SkipFill()
+                match_failure = _submission_match_failure_reason(submission, trade)
+                if match_failure:
+                    skipped.append({"trade_id": trade["trade_id"], "reason": match_failure})
+                    raise _SkipFill(match_failure)
 
                 investment = db.execute(text("""
                     SELECT id, quantity, name
@@ -359,8 +362,8 @@ def reconcile_broker_fills(
                 })
         except _SkipFill as exc:
             # begin_nested rolls back only this fill; duplicates are counted separately.
-            if str(exc) != "duplicate" and not any(item.get("trade_id") == trade["trade_id"] for item in skipped):
-                skipped.append({"trade_id": trade["trade_id"], "reason": "unmatched_order_or_unsafe_position"})
+            if str(exc) not in {"duplicate"} and not any(item.get("trade_id") == trade["trade_id"] for item in skipped):
+                skipped.append({"trade_id": trade["trade_id"], "reason": str(exc) or "unmatched_order_or_unsafe_position"})
             continue
         except HTTPException:
             db.rollback()

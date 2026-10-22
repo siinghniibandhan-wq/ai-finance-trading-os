@@ -24,6 +24,9 @@ PROVIDERS = {
     "vllm": {"label": "vLLM", "env_key": None, "kind": "openai"},
     "lmstudio": {"label": "LM Studio", "env_key": None, "kind": "openai"},
     "custom": {"label": "Custom OpenAI-compatible API", "env_key": "AI_CUSTOM_API_KEY", "kind": "openai"},
+    "freellmapi": {"label": "FreeLLMAPI Gateway", "env_key": "FREELLMAPI_API_KEY", "kind": "openai"},
+    "omniroute": {"label": "OmniRoute Gateway", "env_key": "OMNIROUTE_API_KEY", "kind": "openai"},
+    "godmode": {"label": "G0DM0D3 Chat", "env_key": "GODMODE_API_KEY", "kind": "openai"},
 }
 
 DEFAULT_MODELS = {
@@ -36,6 +39,9 @@ DEFAULT_MODELS = {
     "vllm": "Qwen/Qwen2.5-7B-Instruct",
     "lmstudio": "local-model",
     "custom": "default",
+    "freellmapi": "auto",
+    "omniroute": "auto",
+    "godmode": "ultraplinian/fast",
 }
 
 
@@ -74,7 +80,7 @@ def provider_status():
             configured = bool(_get_api_key(key))
         else:
             configured = bool(os.getenv(config["env_key"])) if config["env_key"] else True
-        if key in {"ollama", "vllm", "lmstudio", "custom"}:
+        if key in {"ollama", "vllm", "lmstudio", "custom", "freellmapi", "omniroute", "godmode"}:
             configured = bool(os.getenv(f"{key.upper()}_BASE_URL")) or (
                 key == "ollama" and bool(os.getenv("OLLAMA_HOST"))
             )
@@ -186,6 +192,9 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
             "vllm": os.getenv("VLLM_BASE_URL", "http://localhost:8000/v1"),
             "lmstudio": os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1"),
             "custom": os.getenv("CUSTOM_BASE_URL", ""),
+            "freellmapi": os.getenv("FREELLMAPI_BASE_URL", ""),
+            "omniroute": os.getenv("OMNIROUTE_BASE_URL", ""),
+            "godmode": os.getenv("GODMODE_BASE_URL", ""),
         }[key].rstrip("/")
         if not base_url:
             raise ProviderError("Set CUSTOM_BASE_URL in the backend environment.")

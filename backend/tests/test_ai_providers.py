@@ -88,3 +88,66 @@ def test_whitespace_only_model_falls_back_to_default(monkeypatch):
 
 def test_claude_default_model_is_current_supported_generation():
     assert ai_providers.DEFAULT_MODELS["claude"] == "claude-haiku-4-5-20251001"
+
+
+@pytest.mark.parametrize(
+    ("provider", "prefix", "base_url", "model"),
+    [
+        ("freellmapi", "FREELLMAPI", "https://free.example/v1", "auto"),
+        ("omniroute", "OMNIROUTE", "https://omni.example/v1", "auto"),
+        ("godmode", "GODMODE", "https://godmode.example/v1", "ultraplinian/fast"),
+    ],
+)
+def test_gateway_status_requires_base_url_and_api_key(
+    monkeypatch, provider, prefix, base_url, model
+):
+    monkeypatch.setenv(f"{prefix}_BASE_URL", base_url)
+    monkeypatch.setenv(f"{prefix}_API_KEY", "test-gateway-key")
+    status = next(item for item in ai_providers.provider_status() if item["id"] == provider)
+    assert status["configured"] is True
+    assert status["default_model"] == model
+
+    monkeypatch.delenv(f"{prefix}_API_KEY")
+    status = next(item for item in ai_providers.provider_status() if item["id"] == provider)
+    assert status["configured"] is False
+
+
+@pytest.mark.parametrize(
+    ("provider", "prefix", "base_url"),
+    [
+        ("freellmapi", "FREELLMAPI", "https://free.example/v1"),
+        ("omniroute", "OMNIROUTE", "https://omni.example/v1"),
+        ("godmode", "GODMODE", "https://godmode.example/v1"),
+    ],
+)
+def test_gateway_chat_uses_configured_openai_compatible_endpoint(
+    monkeypatch, provider, prefix, base_url
+):
+    monkeypatch.setenv(f"{prefix}_BASE_URL", base_url)
+    monkeypatch.setenv(f"{prefix}_API_KEY", "test-gateway-key")
+    response = {"choices": [{"message": {"content": "Gateway response"}}]}
+    with patch.object(ai_providers, "_post_json", return_value=response) as post:
+        result = ai_providers.generate(provider, "hello")
+
+    assert result["answer"] == "Gateway response"
+    assert result["provider"] == provider
+    assert post.call_args.args[0] == f"{base_url}/chat/completions"
+    assert post.call_args.args[1]["Authorization"] == "Bearer test-gateway-key"
+    assert post.call_args.args[2]["model"] == ai_providers.DEFAULT_MODELS[provider]
+
+
+@pytest.mark.parametrize(
+    ("provider", "prefix"),
+    [
+        ("freellmapi", "FREELLMAPI"),
+        ("omniroute", "OMNIROUTE"),
+        ("godmode", "GODMODE"),
+    ],
+)
+def test_gateway_chat_requires_base_url(
+    monkeypatch, provider, prefix
+):
+    monkeypatch.setenv(f"{prefix}_API_KEY", "test-gateway-key")
+    monkeypatch.delenv(f"{prefix}_BASE_URL", raising=False)
+    with pytest.raises(ai_providers.ProviderError, match="BASE_URL"):
+        ai_providers.generate(provider, "hello")

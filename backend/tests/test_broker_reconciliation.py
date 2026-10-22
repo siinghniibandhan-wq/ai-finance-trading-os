@@ -504,22 +504,31 @@ def test_allows_non_error_tradebook_error_flags(value):
 
 
 
-def test_submission_match_supports_sqlalchemy_row_mapping():
-    """SQLAlchemy query rows expose selected columns through their mapping."""
+def test_submission_match_supports_real_sqlalchemy_row():
+    """Exercise the matcher with an actual SQLAlchemy Row, not a mock object."""
+    from sqlalchemy import create_engine, text
+
     trade = {
         "broker_order_id": "BROKER-ROW-1",
         "symbol": "RELIANCE",
         "exchange": "NSE",
         "side": "BUY",
     }
-    row_mapping = {
-        "status": "ACKNOWLEDGED",
-        "gateway_order_id": "BROKER-ROW-1",
-        "investment_id": 9,
-        "symbol": "RELIANCE",
-        "exchange": "NSE",
-        "side": "BUY",
-        "quantity": 2,
-    }
-    row = type("MockSQLAlchemyRow", (), {"_mapping": row_mapping})()
-    assert _submission_matches_trade(row, trade) is True
+    engine = create_engine("sqlite://")
+    try:
+        with engine.connect() as connection:
+            row = connection.execute(text("""
+                SELECT
+                    'ACKNOWLEDGED' AS status,
+                    'BROKER-ROW-1' AS gateway_order_id,
+                    9 AS investment_id,
+                    'RELIANCE' AS symbol,
+                    'NSE' AS exchange,
+                    'BUY' AS side,
+                    2 AS quantity
+            """)).first()
+            assert row is not None
+            assert _submission_matches_trade(row, trade) is True
+            assert _submission_matches_trade(row._mapping, trade) is True
+    finally:
+        engine.dispose()

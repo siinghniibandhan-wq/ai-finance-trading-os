@@ -507,7 +507,7 @@ export default function App() {
                   <input id="global-page-search" autoFocus value={headerSearch} onChange={(event) => setHeaderSearch(event.target.value)} placeholder="Search pages…" />
                   <div className="header-search-results">
                     {["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"]
-                      .filter((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase()))
+                      .filter((page) => (isAdmin || page !== "AI Assistant") && page.toLowerCase().includes(headerSearch.trim().toLowerCase()))
                       .slice(0, 8)
                       .map((page) => <button type="button" key={page} onClick={() => { setHeaderPanel(""); setHeaderSearch(""); handleNavigation(page); }}>{page}</button>)}
                     {headerSearch.trim() && !["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"].some((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase())) && <p className="header-popover-empty">No matching pages found.</p>}
@@ -918,7 +918,7 @@ function Dashboard() {
             {name:"Markets", detail:"Open market data and instruments", icon:BarChart3, page:"Markets"},
             {name:"AI Assistant", detail:"Open financial assistant", icon:Sparkles, page:"AI Assistant"},
             {name:"Tax", detail:"Review tax records and reports", icon:Receipt, page:"Tax"},
-          ].map(module => {
+          ].filter(module => isAdmin || module.name !== "AI Assistant").map(module => {
             const Icon = module.icon;
             return <button className="module-overview-tile" key={module.name} onClick={() => goTo(module.page)}>
               <span className="module-tile-icon"><Icon size={19}/></span>

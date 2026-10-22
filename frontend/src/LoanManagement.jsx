@@ -4,7 +4,7 @@
 // ============================================================
 import React, { useCallback, useEffect, useState } from "react";
 import { RefreshCw, Pencil, Ban, Landmark, HandCoins, AlertTriangle } from "lucide-react";
-import { apiFetch, getCurrentUserId } from "./api";
+import { apiFetch, getCurrentUserId, friendlyErrorMessage } from "./api";
 
 const API_BASE_URL = "https://wealthmanager.duckdns.org";
 const USER_ID = getCurrentUserId();
@@ -27,7 +27,7 @@ export default function LoanManagement() {
       headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.detail || `Request failed (${response.status})`);
+    if (!response.ok) throw new Error(friendlyErrorMessage(response.status, payload));
     return payload;
   };
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ArrowRight, CircleDollarSign, Eye, EyeOff, ShieldCheck } from "lucide-react";
-import { API_BASE_URL, saveSession } from "./api";
+import { API_BASE_URL, saveSession, friendlyErrorMessage, describeError } from "./api";
 
 // Login and registration use the shared Financial OS theme tokens.
 export default function AuthPage({ initialMode = "login" }) {
@@ -32,7 +32,7 @@ export default function AuthPage({ initialMode = "login" }) {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const detail = typeof data.detail === "string" ? data.detail : `Request failed (${response.status}).`;
+        const detail = friendlyErrorMessage(response.status, data);
         throw new Error(detail);
       }
       if (isRegister) {
@@ -44,7 +44,7 @@ export default function AuthPage({ initialMode = "login" }) {
       saveSession(data);
       window.location.replace("/app");
     } catch (err) {
-      setError(err?.message || "Unable to connect. Please try again.");
+      setError(describeError(err, "Unable to connect. Please try again."));
     } finally {
       setLoading(false);
     }

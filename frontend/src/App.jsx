@@ -10,7 +10,7 @@ import AdminPanel from "./AdminPanel";
 import AccountContactSettings from "./AccountContactSettings";
 import WealthManager from "./WealthManager";
 import LoanManagement from "./LoanManagement";
-import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession } from "./api";
+import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession, friendlyErrorMessage, describeError } from "./api";
 
 import {
   LayoutDashboard,
@@ -1466,7 +1466,7 @@ function TaxPage() {
     try {
       const r = await apiFetch(url, options);
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(typeof d?.detail === "string" ? d.detail : `Request failed (${r.status}).`);
+      if (!r.ok) throw new Error(friendlyErrorMessage(r.status, d));
       setHpMessage(doneMessage);
       await loadHouseProperty();
       await loadTaxData();
@@ -1576,7 +1576,7 @@ function TaxPage() {
         : { method: "DELETE" };
       const r = await apiFetch(url, options);
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(typeof d?.detail === "string" ? d.detail : `Request failed (${r.status}).`);
+      if (!r.ok) throw new Error(friendlyErrorMessage(r.status, d));
       if (d?.sections) setTaxReviewState(d.sections);
       else await loadTaxReview();
       setTaxReviewMessage(confirm ? "Your confirmation was saved. Pending entries still block completion." : "Your confirmation was removed.");
@@ -1618,7 +1618,7 @@ function TaxPage() {
     try {
       const r = await apiFetch(url, options);
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(typeof d?.detail === "string" ? d.detail : `Request failed (${r.status}).`);
+      if (!r.ok) throw new Error(friendlyErrorMessage(r.status, d));
       setCreditMessage(doneMessage);
       await loadTaxCredits();
       await loadTaxData();
@@ -1852,7 +1852,7 @@ function TaxPage() {
     try {
       const r = await apiFetch(url, options);
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(typeof d?.detail === "string" ? d.detail : `Request failed (${r.status}).`);
+      if (!r.ok) throw new Error(friendlyErrorMessage(r.status, d));
       setDedMessage(doneMessage);
       await loadDedClaims();
       await loadTaxData();
@@ -2888,9 +2888,9 @@ function MarketsPage() {
               client_id: orderClientId || createOrderClientId()
             }) });
             const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Order request failed (${response.status}).`);
+            if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
             setOrderSuccess(data);
-          } catch (error) { setOrderError(error?.message || "Unable to place order."); }
+          } catch (error) { setOrderError(describeError(error, "Unable to place the order. Please try again.")); }
           finally { setOrderSubmitting(false); }
         }} className="broker-order-modal" style={{ width: "min(100%, 460px)", maxHeight: "90vh", overflowY: "auto", padding: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", marginBottom: "14px" }}>
@@ -3174,7 +3174,7 @@ function PlanPage() {
     try {
       const response = await apiFetch(`${API_BASE_URL}/api/goals/${editingId ? `${editingId}` : ""}`, { method: editingId ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || `Save failed (${response.status})`);
+      if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
       await loadGoals(); resetForm(); setSuccess(editingId ? "Goal updated successfully." : "Goal saved successfully. It will remain available after refresh.");
     } catch (e) { setError(e.message || "Could not save goal."); }
     finally { setSaving(false); }
@@ -3183,7 +3183,7 @@ function PlanPage() {
   const removeGoal = async (goal) => {
     if (!window.confirm(`Delete goal “${goal.name}”? This will not change any account balance or transaction.`)) return;
     setError(""); setSuccess("");
-    try { const response = await apiFetch(`${API_BASE_URL}/api/goals/${goal.id}?user_id=${USER_ID}`, { method: "DELETE" }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.detail || `Delete failed (${response.status})`); setGoals(prev => prev.filter(g => g.id !== goal.id)); if (editingId === goal.id) resetForm(); setSuccess("Goal deleted."); }
+    try { const response = await apiFetch(`${API_BASE_URL}/api/goals/${goal.id}?user_id=${USER_ID}`, { method: "DELETE" }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data)); setGoals(prev => prev.filter(g => g.id !== goal.id)); if (editingId === goal.id) resetForm(); setSuccess("Goal deleted."); }
     catch (e) { setError(e.message || "Could not delete goal."); }
   };
 
@@ -3286,7 +3286,7 @@ function AIAssistantPage() {
       body: JSON.stringify({ message: text, provider, model: model.trim() || undefined }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
+    if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
     if (isConnectionTest) {
       setConnectionMessage(`Connected successfully to ${data.provider_name || provider} using ${data.model || model}.`);
     } else {
@@ -5866,7 +5866,7 @@ function Portfolio() {
       const response = await apiFetch(endpoint);
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const detail = typeof data?.detail === "string" ? data.detail : `Instrument search failed (${response.status})`;
+        const detail = friendlyErrorMessage(response.status, data);
         throw new Error(detail);
       }
       if (requestId !== instrumentSearchRequestRef.current) return;
@@ -8988,7 +8988,7 @@ function AccountCompletionPage({ initialSection = "Basic Profile", onNavigate })
     apiFetch(`${API_BASE_URL}/api/profile/me`, { cache: "no-store" })
       .then(async response => {
         const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.detail || `Profile load failed (${response.status})`);
+        if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
         if (active) { setProfile({ ...emptyProfile, ...(data.profile || {}) }); setAccountEmail(data.user?.email || ""); }
       })
       .catch(err => { if (active) setError(err.message || "Unable to load profile."); })
@@ -9049,7 +9049,7 @@ function AccountCompletionPage({ initialSection = "Basic Profile", onNavigate })
     try {
       const response = await apiFetch(`${API_BASE_URL}/api/profile/me`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profile }) });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || `Save failed (${response.status})`);
+      if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
       setNotice("Profile saved. Tax calculations will use these details only where the tax engine supports them.");
     } catch (err) { setError(err.message || "Unable to save profile."); }
     finally { setSaving(false); }
@@ -9068,7 +9068,7 @@ function AccountCompletionPage({ initialSection = "Basic Profile", onNavigate })
         body: JSON.stringify({ new_email: newEmail.trim(), current_password: emailPassword }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : `Email change failed (${response.status})`);
+      if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
       setAccountEmail(data.user?.email || newEmail.trim().toLowerCase());
       setNewEmail("");
       setEmailPassword("");
@@ -9122,7 +9122,7 @@ function TradingControlSettings({ compact = false }) {
     apiFetch(`${API}/api/broker-orders/trading-control`, { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.detail || `Trading control unavailable (${response.status})`);
+        if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
         return data;
       })
       .then((data) => { if (!cancelled) setTradingControl(data); })
@@ -9143,7 +9143,7 @@ function TradingControlSettings({ compact = false }) {
       try {
         const response = await apiFetch(`${API}/api/broker-orders/trading-control`, { cache: "no-store" });
         const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.detail || `Trading control unavailable (${response.status})`);
+        if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
         setTradingControl(data);
         setNotice("Trading status refreshed. Review the displayed state before changing it.");
       } catch (err) {
@@ -9166,7 +9166,7 @@ function TradingControlSettings({ compact = false }) {
         body: JSON.stringify({ enabled }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || `Unable to update trading switch (${response.status})`);
+      if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
       setTradingControl(data);
       setNotice(enabled ? "New Financial OS real-money orders are enabled." : "New Financial OS real-money orders are blocked.");
     } catch (err) {
@@ -9423,7 +9423,7 @@ function ChartOfAccountsPage() {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_enabled: !row.is_enabled }),
       });
-      if (!response.ok) throw new Error(`Update failed (${response.status})`);
+      if (!response.ok) throw new Error(friendlyErrorMessage(response.status, await response.json().catch(() => ({}))));
       await loadAccounts();
     } catch (e) { setError(e.message || "Unable to update account."); }
   };
@@ -9503,7 +9503,7 @@ function LedgerPage() {
     try {
       const response = await apiFetch(`${API_BASE_URL}/api/ledger/backfill`, { method: "POST" });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.detail || `Ledger backfill returned ${response.status}`);
+      if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
       setMessage(`${data.posted || 0} historical transactions posted; ${data.skipped_count || 0} skipped for review.`);
       await loadLedger();
     } catch (e) {

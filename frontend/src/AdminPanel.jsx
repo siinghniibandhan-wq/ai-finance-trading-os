@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Activity, AlertCircle, CheckCircle2, RefreshCw, ShieldCheck, Users, UserCheck, UserX } from "lucide-react";
-import { API_BASE_URL, apiFetch } from "./api";
+import { API_BASE_URL, apiFetch, friendlyErrorMessage } from "./api";
 import "./AdminPanel.css";
 
 async function readResponse(response) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(typeof body.detail === "string" ? body.detail : `Request failed (${response.status}).`);
+    throw new Error(friendlyErrorMessage(response.status, body));
   }
   return body;
 }

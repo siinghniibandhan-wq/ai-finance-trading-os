@@ -5,7 +5,7 @@
 // ============================================================
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { API_BASE_URL, apiFetch, getCurrentUserId } from "./api";
+import { API_BASE_URL, apiFetch, getCurrentUserId, friendlyErrorMessage } from "./api";
 import {
   Wallet,
   TrendingUp,
@@ -44,8 +44,8 @@ const numberValue = (value) => {
 async function getJson(path) {
   const response = await apiFetch(`${API_BASE_URL}${path}`, { cache: "no-store" });
   if (!response.ok) {
-    const message = await response.text().catch(() => "");
-    throw new Error(message || `Request failed (${response.status})`);
+    const body = await response.json().catch(() => ({}));
+    throw new Error(friendlyErrorMessage(response.status, body));
   }
   return response.json();
 }

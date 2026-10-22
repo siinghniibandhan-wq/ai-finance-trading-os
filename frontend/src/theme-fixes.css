@@ -2460,8 +2460,55 @@
   -webkit-text-fill-color: var(--finos-text, var(--th-text)) !important;
 }
 
+/* Wealth Manager dark theme: keep the banner and summary cards as single
+   surfaces. The generic nested-card selector above also matches text classes
+   such as .wc-card-label and .wc-card-value because their names contain
+   "-card", which creates the visible horizontal strips. */
+:root[data-finos-theme="dark"] .content .wealth-centre .wc-welcome {
+  color: var(--finos-text, var(--th-text));
+  background:
+    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--th-accent) 13%, transparent), transparent 54%),
+    linear-gradient(130deg, color-mix(in srgb, var(--th-card) 92%, transparent), color-mix(in srgb, var(--th-card) 78%, transparent));
+  background-image:
+    radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--th-accent) 13%, transparent), transparent 54%),
+    linear-gradient(130deg, color-mix(in srgb, var(--th-card) 92%, transparent), color-mix(in srgb, var(--th-card) 78%, transparent));
+  border: 1px solid color-mix(in srgb, var(--th-border) 35%, transparent);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
+}
 
+:root[data-finos-theme="dark"] .content .wealth-centre .wc-primary-card {
+  color: var(--finos-text, var(--th-text));
+  background:
+    radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--th-accent) 8%, transparent), transparent 58%),
+    linear-gradient(145deg, var(--t-inner-bg, var(--th-inner)), var(--t-card-bg, var(--th-card)));
+  border: 1px solid color-mix(in srgb, var(--th-border) 35%, transparent);
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
+}
 
+/* Never paint card-like backgrounds on the four cards' text rows. */
+:root[data-finos-theme="dark"] .content .wealth-centre .wc-primary-card > .wc-card-label,
+:root[data-finos-theme="dark"] .content .wealth-centre .wc-primary-card > .wc-card-value,
+:root[data-finos-theme="dark"] .content .wealth-centre .wc-primary-card > .wc-card-subtitle,
+:root[data-finos-theme="dark"] .content .wealth-centre .wc-primary-card > .wc-card-action {
+  color: inherit;
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-text-fill-color: currentColor;
+}
 
+:root[data-finos-theme="dark"] .content .wealth-centre .wc-primary-card > .wc-card-label {
+  color: var(--th-muted);
+}
 
+:root[data-finos-theme="dark"] .content .wealth-centre .wc-primary-card > .wc-card-subtitle {
+  color: var(--th-muted);
+}
+
+:root[data-finos-theme="dark"] .content .wealth-centre .wc-primary-card > .wc-card-action {
+  color: var(--th-accent);
+}
 

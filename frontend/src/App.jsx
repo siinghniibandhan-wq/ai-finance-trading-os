@@ -597,7 +597,7 @@ export default function App() {
 ) : activePage === "Goals" ? (
    <PlanPage />
 ) : activePage === "AI Assistant" ? (
-   <AIAssistantPage />
+   isAdmin ? <AIAssistantPage /> : <div className="admin-access-denied" role="alert">Administrator access is required to use the AI module.</div>
 ) : activePage === "Finance Diary" ? (
    <FinanceDiaryPage />
 ) : activePage === "Admin Panel" ? (

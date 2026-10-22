@@ -3,7 +3,9 @@
 # FASTAPI APPLICATION
 # ============================================================
 
-from fastapi import FastAPI
+import os
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect, text
 
@@ -160,10 +162,7 @@ def _apply_user_phone_number_migration():
     with engine.begin() as connection:
         if "phone_number" not in existing_columns:
             connection.execute(text("ALTER TABLE users ADD COLUMN phone_number VARCHAR(25)"))
-        if engine.dialect.name == "postgresql":
-            connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_phone_number ON users (phone_number)"))
-        else:
-            connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_phone_number ON users (phone_number)"))
+        connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_phone_number ON users (phone_number)"))
 
 
 _apply_user_phone_number_migration()
@@ -259,11 +258,64 @@ _apply_tax_business_source_link_migration()
 # CREATE APPLICATION
 # ============================================================
 
+# Interactive API docs list every endpoint to anyone who can reach the server.
+# They are off unless ENABLE_API_DOCS=1 is set (for example on a dev machine).
+_docs_enabled = os.getenv("ENABLE_API_DOCS", "").strip() == "1"
+
 app = FastAPI(
     title="Financial OS API",
     version="1.0.0",
     description="Backend API for Financial OS",
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
 )
+
+
+# ============================================================
+# PLAIN-LANGUAGE SERVER ERRORS
+# Unexpected failures return a readable reason plus a reference code.
+# The full technical error (never shown to users) is written to the
+# server log under the same reference so it can be found quickly.
+# ============================================================
+
+import logging
+import socket
+import uuid
+
+from sqlalchemy.exc import DBAPIError, SQLAlchemyError
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+_error_logger = logging.getLogger("financial_os.errors")
+
+
+def _plain_reason(exc: Exception) -> str:
+    if isinstance(exc, (DBAPIError, SQLAlchemyError)):
+        return "The database had a problem saving or reading your data."
+    if isinstance(exc, (TimeoutError, socket.timeout)):
+        return "A connected service took too long to respond."
+    if isinstance(exc, (ConnectionError, OSError)):
+        return "The server could not reach a connected service."
+    return "An unexpected problem occurred on the server."
+
+
+# Registered before CORSMiddleware so the CORS layer wraps this response too;
+# otherwise the browser hides the message behind a generic "Failed to fetch".
+@app.middleware("http")
+async def plain_language_errors(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        reference = uuid.uuid4().hex[:8].upper()
+        _error_logger.error(
+            "Unhandled error ref=%s %s %s", reference, request.method, request.url.path, exc_info=exc
+        )
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"{_plain_reason(exc)} Please try again. If it keeps happening, quote reference {reference}."},
+        )
+
 
 
 # ============================================================
@@ -274,7 +326,6 @@ app = FastAPI(
 # Do not use "*" with credentialed requests in production.
 # ============================================================
 
-import os
 
 _raw_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").strip()
 
@@ -300,13 +351,25 @@ CORS_ALLOWED_ORIGINS = list(dict.fromkeys(CORS_ALLOWED_ORIGINS))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ALLOWED_ORIGINS,
-    # Accept Amplify branch/app domains even if the exact generated frontend
-    # hostname changes. Keep this restricted to HTTPS Amplify domains.
-    allow_origin_regex=r"https://([a-zA-Z0-9-]+\\.)+amplifyapp\\.com",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept", "Origin"],
 )
+
+
+# ============================================================
+# SECURITY HEADERS
+# ============================================================
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    response.headers.setdefault("Cache-Control", "no-store")
+    return response
 
 
 # ============================================================
@@ -328,28 +391,12 @@ def root():
 
 @app.get("/health")
 def health():
-    return {
-        "status": "healthy",
-        "database": "connected",
-    }
-
-
-# ============================================================
-# DATABASE STATUS
-# ============================================================
-
-@app.get("/api/database-status")
-def database_status():
-    return {
-        "status": "connected",
-        "database": "Financial OS PostgreSQL",
-        "tables": [
-            "users",
-            "accounts",
-            "categories",
-            "transactions",
-        ],
-    }
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except Exception:
+        raise HTTPException(status_code=503, detail="Database unavailable.")
+    return {"status": "healthy", "database": "connected"}
 
 
 # ============================================================

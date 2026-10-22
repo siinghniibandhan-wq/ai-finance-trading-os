@@ -2580,3 +2580,61 @@
   background: var(--t-inner-bg, var(--th-inner));
   border-color: var(--th-border);
 }
+
+
+/* Use the actual Wealth Manager chart classes (not generic guessed selectors). */
+:root[data-finos-theme] .content .wealth-centre .wc-chart-surface {
+  color: var(--finos-text, var(--th-text));
+  background-color: var(--finos-surface, var(--th-card));
+  border-color: var(--finos-border, var(--th-border));
+}
+:root[data-finos-theme] .content .wealth-centre .wc-chart-surface :is(h2,h3,h4,strong,b) {
+  color: var(--finos-text, var(--th-text)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content .wealth-centre .wc-chart-surface :is(
+  p, small, label, .wc-chart-subtitle, .wc-allocation-name,
+  .wc-balance-label, .wc-balance-equation, .wc-chart-empty
+) {
+  color: var(--finos-muted, var(--th-muted)) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content .wealth-centre .wc-chart-surface .wc-breakdown-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 11px;
+  color: var(--finos-text, var(--th-text)) !important;
+  background: var(--finos-inner, var(--th-inner)) !important;
+  border: 1px solid var(--finos-border, var(--th-border)) !important;
+  border-radius: var(--t-radius-sm, 9px);
+  opacity: 1;
+  -webkit-text-fill-color: currentColor !important;
+}
+:root[data-finos-theme] .content .wealth-centre .wc-chart-surface .wc-breakdown-action:hover {
+  border-color: var(--finos-accent, var(--th-accent)) !important;
+  background: color-mix(in srgb, var(--finos-accent, var(--th-accent)) 12%, var(--finos-inner, var(--th-inner))) !important;
+}
+:root[data-finos-theme] .content .wealth-centre .wc-chart-surface .wc-breakdown-action span {
+  color: inherit !important;
+}
+:root[data-finos-theme] .content .wealth-centre .wc-history-chart {
+  color: var(--finos-text, var(--th-text));
+}
+:root[data-finos-theme] .content .wealth-centre .wc-history-chart svg text,
+:root[data-finos-theme] .content .wealth-centre .wc-history-chart :is(.wc-history-month, .wc-history-label, .wc-axis-label) {
+  fill: var(--finos-muted, var(--th-muted));
+  color: var(--finos-muted, var(--th-muted));
+}
+:root[data-finos-theme] .content .wealth-centre .wc-inline-link {
+  color: var(--finos-accent, var(--th-accent)) !important;
+  background: transparent !important;
+  text-decoration: underline;
+}
+:root[data-finos-theme] .content .wealth-centre .wc-primary-card .wc-card-top > svg {
+  flex: 0 0 auto;
+  color: var(--finos-muted, var(--th-muted)) !important;
+  stroke: currentColor;
+  opacity: 1;
+}

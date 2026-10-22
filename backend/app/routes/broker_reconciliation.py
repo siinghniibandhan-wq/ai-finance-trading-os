@@ -36,7 +36,10 @@ def _submission_match_failure_reason(submission, trade):
         try:
             values = dict(values)
         except (TypeError, ValueError):
-            return "local_submission_unreadable"
+            try:
+                values = vars(values)
+            except TypeError:
+                return "local_submission_unreadable"
 
     def value(name, default=None):
         return values.get(name, default)

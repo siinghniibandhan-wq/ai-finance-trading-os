@@ -154,6 +154,9 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
             "EXCHANGE": "NSE",
         },
     ]
+    # Repeat one fill in the same response to exercise the database uniqueness guard,
+    # not just replay protection across separate reconciliation requests.
+    trade_rows.append(dict(trade_rows[0]))
 
     try:
         with SessionFactory() as setup:
@@ -223,7 +226,7 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
                 db=session, current_user=SimpleNamespace(id=user_id)
             )
             assert result["imported_count"] == 2
-            assert result["duplicate_count"] == 0
+            assert result["duplicate_count"] == 1
 
         with SessionFactory() as verify:
             quantity = verify.execute(text(
@@ -244,7 +247,7 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
                 db=session, current_user=SimpleNamespace(id=user_id)
             )
             assert replay["imported_count"] == 0
-            assert replay["duplicate_count"] == 2
+            assert replay["duplicate_count"] == 3
 
         with SessionFactory() as verify:
             quantity = verify.execute(text(
@@ -256,6 +259,52 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
             """), {"uid": user_id, "iid": investment_id}).scalar_one()
             assert Decimal(str(quantity)) == Decimal("5.000000")
             assert ledger_count == 2
+
+        # A valid partial SELL updates the ledger and holding exactly once.
+        partial_sell_client_id = f"pg-reconcile-partial-sell-{uuid4().hex}"
+        with SessionFactory() as setup:
+            setup.add(models.BrokerOrderSubmission(
+                user_id=user_id, investment_id=investment_id, symbol="RELIANCE-EQ",
+                exchange="NSE", side="SELL", quantity=2, client_id=partial_sell_client_id,
+                payload_hash="d" * 64, status="ACKNOWLEDGED",
+                gateway_order_id="MOCK-BROKER-PARTIAL-SELL-1",
+            ))
+            setup.commit()
+        partial_sell_row = {
+            "TRADE_NUMBER": "MOCK-PARTIAL-SELL-TRADE-1",
+            "EXCH_ORDER_NUMBER": "MOCK-PARTIAL-SELL-EXCHANGE-ORDER-1",
+            "broker_order_id": "MOCK-BROKER-PARTIAL-SELL-1",
+            "client_reference": partial_sell_client_id,
+            "SYMBOL": "RELIANCE-EQ",
+            "BUY_SELL": "SELL",
+            "QUANTITY": "1.5",
+            "PRICE": "102.00",
+            "ORDER_DATE_TIME": "2026-10-18 10:01:00",
+            "EXCHANGE": "NSE",
+        }
+        monkeypatch.setattr(
+            broker_reconciliation, "_gateway_request",
+            lambda path, method: {"success": True, "data": [partial_sell_row]},
+        )
+        with SessionFactory() as session:
+            partial_sell = broker_reconciliation.reconcile_broker_fills(
+                db=session, current_user=SimpleNamespace(id=user_id)
+            )
+            assert partial_sell["imported_count"] == 1
+            assert partial_sell["duplicate_count"] == 0
+        with SessionFactory() as verify:
+            quantity = verify.execute(text(
+                "SELECT quantity FROM investments WHERE id=:id AND user_id=:uid"
+            ), {"id": investment_id, "uid": user_id}).scalar_one()
+            ledger_rows = verify.execute(text("""
+                SELECT transaction_type, quantity FROM investment_transactions
+                WHERE user_id=:uid AND investment_id=:iid ORDER BY id
+            """), {"uid": user_id, "iid": investment_id}).fetchall()
+            assert Decimal(str(quantity)) == Decimal("3.500000")
+            assert [(r.transaction_type, Decimal(str(r.quantity))) for r in ledger_rows] == [
+                ("BUY", Decimal("2.000000")), ("BUY", Decimal("3.000000")),
+                ("SELL", Decimal("1.500000")),
+            ]
 
         # A mocked SELL exceeding the available ledger must be skipped safely.
         sell_client_id = f"pg-reconcile-sell-{uuid4().hex}"
@@ -301,8 +350,8 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
                 SELECT COUNT(*) FROM broker_reconciled_fills
                 WHERE user_id=:uid AND broker_trade_id='MOCK-SELL-TRADE-1'
             """), {"uid": user_id}).scalar_one()
-            assert Decimal(str(quantity)) == Decimal("5.000000")
-            assert ledger_count == 2
+            assert Decimal(str(quantity)) == Decimal("3.500000")
+            assert ledger_count == 3
             assert marker_count == 0
 
         # Force a ledger insert failure in PostgreSQL and prove the savepoint
@@ -370,8 +419,8 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
                 SELECT COUNT(*) FROM broker_reconciled_fills
                 WHERE user_id=:uid AND broker_trade_id='MOCK-ROLLBACK-TRADE'
             """), {"uid": user_id}).scalar_one()
-            assert Decimal(str(quantity)) == Decimal("5.000000")
-            assert ledger_count == 2
+            assert Decimal(str(quantity)) == Decimal("3.500000")
+            assert ledger_count == 3
             assert marker_count == 0
             verify.execute(text("""
                 DROP TRIGGER IF EXISTS fail_mock_reconciliation_insert_trigger

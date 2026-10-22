@@ -306,6 +306,24 @@ def test_postgres_reconciles_mocked_partial_fills_once(monkeypatch):
                 ("SELL", Decimal("1.500000")),
             ]
 
+        # Replaying a SELL must not decrement holdings or append another ledger row.
+        with SessionFactory() as session:
+            partial_sell_replay = broker_reconciliation.reconcile_broker_fills(
+                db=session, current_user=SimpleNamespace(id=user_id)
+            )
+            assert partial_sell_replay["imported_count"] == 0
+            assert partial_sell_replay["duplicate_count"] == 1
+        with SessionFactory() as verify:
+            quantity = verify.execute(text(
+                "SELECT quantity FROM investments WHERE id=:id AND user_id=:uid"
+            ), {"id": investment_id, "uid": user_id}).scalar_one()
+            ledger_count = verify.execute(text("""
+                SELECT COUNT(*) FROM investment_transactions
+                WHERE user_id=:uid AND investment_id=:iid
+            """), {"uid": user_id, "iid": investment_id}).scalar_one()
+            assert Decimal(str(quantity)) == Decimal("3.500000")
+            assert ledger_count == 3
+
         # A mocked SELL exceeding the available ledger must be skipped safely.
         sell_client_id = f"pg-reconcile-sell-{uuid4().hex}"
         with SessionFactory() as setup:

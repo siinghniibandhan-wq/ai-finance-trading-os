@@ -301,9 +301,13 @@ export default function App() {
 
   // Show the Admin Panel navigation only when the backend confirms administrator access.
   // The backend remains the security boundary for every administrative API request.
+  const navigationForRole = isAdmin
+    ? navigation
+    : navigation.map(group => ({ ...group, items: group.items.filter(item => item.name !== "AI Assistant") }))
+        .filter(group => group.items.length > 0);
   const visibleNavigation = isAdmin
-    ? [...navigation, { section: "Administration", items: [{ name: "Admin Panel", icon: ShieldCheck }] }]
-    : navigation;
+    ? [...navigationForRole, { section: "Administration", items: [{ name: "Admin Panel", icon: ShieldCheck }] }]
+    : navigationForRole;
 
   useEffect(() => { applyFinosTheme(selectedTheme); }, [selectedTheme]);
   const changeTheme = (theme) => { setSelectedTheme(theme); applyFinosTheme(theme); };
@@ -503,7 +507,7 @@ export default function App() {
                   <input id="global-page-search" autoFocus value={headerSearch} onChange={(event) => setHeaderSearch(event.target.value)} placeholder="Search pages…" />
                   <div className="header-search-results">
                     {["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"]
-                      .filter((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase()))
+                      .filter((page) => (isAdmin || page !== "AI Assistant") && page.toLowerCase().includes(headerSearch.trim().toLowerCase()))
                       .slice(0, 8)
                       .map((page) => <button type="button" key={page} onClick={() => { setHeaderPanel(""); setHeaderSearch(""); handleNavigation(page); }}>{page}</button>)}
                     {headerSearch.trim() && !["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"].some((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase())) && <p className="header-popover-empty">No matching pages found.</p>}
@@ -593,7 +597,7 @@ export default function App() {
 ) : activePage === "Goals" ? (
    <PlanPage />
 ) : activePage === "AI Assistant" ? (
-   <AIAssistantPage />
+   isAdmin ? <AIAssistantPage /> : <div className="admin-access-denied" role="alert">Administrator access is required to use the AI module.</div>
 ) : activePage === "Finance Diary" ? (
    <FinanceDiaryPage />
 ) : activePage === "Admin Panel" ? (
@@ -914,7 +918,7 @@ function Dashboard() {
             {name:"Markets", detail:"Open market data and instruments", icon:BarChart3, page:"Markets"},
             {name:"AI Assistant", detail:"Open financial assistant", icon:Sparkles, page:"AI Assistant"},
             {name:"Tax", detail:"Review tax records and reports", icon:Receipt, page:"Tax"},
-          ].map(module => {
+          ].filter(module => isAdmin || module.name !== "AI Assistant").map(module => {
             const Icon = module.icon;
             return <button className="module-overview-tile" key={module.name} onClick={() => goTo(module.page)}>
               <span className="module-tile-icon"><Icon size={19}/></span>
@@ -954,12 +958,16 @@ function Dashboard() {
         </div>
       </section>
 
-      {/* AI summary is explicitly a module link until real AI insights are connected. */}
-      <section className="glass-card ai-card">
-        <div className="card-header"><div className="ai-title"><div className="ai-icon"><Sparkles size={19}/></div><div><p className="card-label">AI • INSIGHTS</p><h3>Financial Assistant</h3></div></div></div>
-        <p className="welcome-description">AI-generated recommendations are not shown here until a working AI analysis endpoint is connected. Open the assistant to explore available features.</p>
-        <button className="primary-button" onClick={() => goTo("AI Assistant")}><Sparkles size={17}/> Open AI Assistant</button>
-      </section>
+      {isAdmin && (
+        <>
+          {/* AI summary is explicitly a module link until real AI insights are connected. */}
+          <section className="glass-card ai-card">
+            <div className="card-header"><div className="ai-title"><div className="ai-icon"><Sparkles size={19}/></div><div><p className="card-label">AI • INSIGHTS</p><h3>Financial Assistant</h3></div></div></div>
+            <p className="welcome-description">AI-generated recommendations are not shown here until a working AI analysis endpoint is connected. Open the assistant to explore available features.</p>
+            <button className="primary-button" onClick={() => goTo("AI Assistant")}><Sparkles size={17}/> Open AI Assistant</button>
+          </section>
+        </>
+      )}
 
       <section className="glass-card health-card">
         <div className="card-header"><div><p className="card-label">RECENT ACTIVITY</p><h3>Recent Transactions</h3></div><span className="score">{summary.transaction_count || 0}</span></div>
@@ -3249,12 +3257,22 @@ function AIAssistantPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [providers, setProviders] = useState([]);
-  const [provider, setProvider] = useState("gemini");
+  const [provider, setProvider] = useState("freellmapi");
+  const [gatewayTab, setGatewayTab] = useState("freellmapi");
   const [model, setModel] = useState("");
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [testing, setTesting] = useState(false);
   const [connectionMessage, setConnectionMessage] = useState("");
 
+  const gatewayTabs = [
+    { id: "freellmapi", label: "FreeLLMAPI" },
+    { id: "omniroute", label: "OmniRoute" },
+    { id: "godmode", label: "G0DM0D3" },
+    { id: "other", label: "Other providers" },
+  ];
+  const visibleProviders = gatewayTab === "other"
+    ? providers.filter(item => !["freellmapi", "omniroute", "godmode"].includes(item.id))
+    : providers.filter(item => item.id === gatewayTab);
   const selectedProvider = providers.find(item => item.id === provider);
 
   useEffect(() => {
@@ -3266,7 +3284,8 @@ function AIAssistantPage() {
         if (active) {
           const list = Array.isArray(data.providers) ? data.providers : [];
           setProviders(list);
-          if (list.length && !list.some(item => item.id === provider)) setProvider(list[0].id);
+          const preferred = list.some(item => item.id === "freellmapi") ? "freellmapi" : list[0]?.id;
+          if (preferred && !list.some(item => item.id === provider)) setProvider(preferred);
         }
       })
       .catch(err => { if (active) setError(err.message || "Could not load AI providers."); })
@@ -3329,12 +3348,20 @@ function AIAssistantPage() {
     </div>
 
     <section className="glass-card" style={panelStyle} aria-label="AI provider settings">
-      <h3 style={{ marginTop: 0 }}>Provider settings</h3>
+      <h3 style={{ marginTop: 0 }}>Chat providers</h3>
+      <div role="tablist" aria-label="AI chat gateways" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+        {gatewayTabs.map(tab => <button key={tab.id} type="button" role="tab" aria-selected={gatewayTab === tab.id} className={gatewayTab === tab.id ? "primary-button" : "secondary-button"} onClick={() => {
+          setGatewayTab(tab.id);
+          const next = tab.id === "other" ? providers.find(item => !["freellmapi", "omniroute", "godmode"].includes(item.id)) : providers.find(item => item.id === tab.id);
+          if (next) setProvider(next.id);
+          setError("");
+        }}>{tab.label}</button>)}
+      </div>
       {loadingProviders ? <p>Loading available providers…</p> : <>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14 }}>
           <label><span style={labelStyle}>AI provider</span>
             <select value={provider} onChange={e => setProvider(e.target.value)} style={inputStyle} disabled={busy || testing}>
-              {providers.map(item => <option key={item.id} value={item.id}>{item.name}{item.configured ? " · configured" : " · needs setup"}</option>)}
+              {visibleProviders.map(item => <option key={item.id} value={item.id}>{item.name}{item.configured ? " · configured" : " · needs setup"}</option>)}
             </select>
           </label>
           <label><span style={labelStyle}>Model</span>

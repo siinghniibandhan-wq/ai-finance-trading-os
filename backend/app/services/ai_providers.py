@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,8 @@ PROVIDERS = {
     "vllm": {"label": "vLLM", "env_key": None, "kind": "openai"},
     "lmstudio": {"label": "LM Studio", "env_key": None, "kind": "openai"},
     "custom": {"label": "Custom OpenAI-compatible API", "env_key": "AI_CUSTOM_API_KEY", "kind": "openai"},
+    "omniroute": {"label": "OmniRoute", "env_key": "OMNIROUTE_API_KEY", "kind": "openai"},
+    "freellmapi": {"label": "FreeLLMAPI", "env_key": "FREELLMAPI_API_KEY", "kind": "openai"},
 }
 
 DEFAULT_MODELS = {
@@ -36,11 +38,49 @@ DEFAULT_MODELS = {
     "vllm": "Qwen/Qwen2.5-7B-Instruct",
     "lmstudio": "local-model",
     "custom": "default",
+    "omniroute": "auto",
+    "freellmapi": "auto",
 }
+
+ 
+GATEWAYS = {"omniroute", "freellmapi"}
+
+_HTTP_HINTS = {
+    401: "the provider rejected the API key",
+    402: "the provider account has no remaining credit",
+    403: "access was denied for this key",
+    404: "the model or endpoint was not found (check the model name)",
+    429: "the rate limit or free quota was reached, try again later",
+}
+
+
+def _http_error_message(code: int) -> str:
+    hint = _HTTP_HINTS.get(code)
+    if hint:
+        return f"Provider returned HTTP {code}: {hint}."
+    return f"Provider returned HTTP {code}. Check provider settings and backend logs."
 
 
 class ProviderError(RuntimeError):
     pass
+
+
+def _gateway_base_url(key: str) -> str:
+    label = PROVIDERS[key]["label"]
+    url = os.getenv(f"{key.upper()}_BASE_URL", "").strip().rstrip("/")
+    if not url:
+        raise ProviderError(
+            f"{label} is not configured: set {key.upper()}_BASE_URL in the backend environment."
+        )
+    parsed = urlparse(url)
+    is_local = parsed.hostname in {"127.0.0.1", "localhost"}
+    if parsed.username or parsed.password or not parsed.hostname or not (
+        parsed.scheme == "https" or (parsed.scheme == "http" and is_local)
+    ):
+        raise ProviderError(
+            f"{label} base URL must use https (http is allowed only for localhost)."
+        )
+    return url
 
 
 def _get_api_key(provider: str) -> str | None:
@@ -69,6 +109,7 @@ def _get_api_key(provider: str) -> str | None:
 def provider_status():
     result = []
     for key, config in PROVIDERS.items():
+        missing = []
         if key == "gemini":
             # Reflect SSM configuration too, not only the process environment.
             configured = bool(_get_api_key(key))
@@ -78,11 +119,18 @@ def provider_status():
             configured = bool(os.getenv(f"{key.upper()}_BASE_URL")) or (
                 key == "ollama" and bool(os.getenv("OLLAMA_HOST"))
             )
+        if key in GATEWAYS:
+            if not os.getenv(config["env_key"]):
+                missing.append(config["env_key"])
+            if not os.getenv(f"{key.upper()}_BASE_URL"):
+                missing.append(f"{key.upper()}_BASE_URL")
+            configured = not missing
         result.append({
             "id": key,
             "name": config["label"],
             "configured": configured,
             "default_model": DEFAULT_MODELS[key],
+            "missing": missing,
         })
     return result
 
@@ -99,11 +147,41 @@ def _post_json(url: str, headers: dict, payload: dict) -> dict:
         with urlopen(request, timeout=60) as response:
             return json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
-        raise ProviderError(
-            f"Provider returned HTTP {exc.code}. Check provider settings and backend logs."
-        ) from exc
+        raise ProviderError(_http_error_message(exc.code)) from exc
     except (URLError, TimeoutError, json.JSONDecodeError) as exc:
         raise ProviderError("Provider could not be reached or returned an invalid response.") from exc
+
+
+
+def _get_json(url: str, headers: dict) -> dict:
+    request = Request(url, headers=headers, method="GET")
+    try:
+        with urlopen(request, timeout=15) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        raise ProviderError(_http_error_message(exc.code)) from exc
+    except (URLError, TimeoutError, json.JSONDecodeError) as exc:
+        raise ProviderError("Provider could not be reached or returned an invalid response.") from exc
+
+
+def list_models(provider: str) -> dict:
+    key = provider.strip().lower()
+    if key not in GATEWAYS:
+        raise ProviderError("Model discovery is enabled for OmniRoute and FreeLLMAPI only.")
+    config = PROVIDERS[key]
+    api_key = _get_api_key(key)
+    if not api_key:
+        raise ProviderError(
+            f"{config['label']} is not configured: set {config['env_key']} in the backend environment."
+        )
+    base_url = _gateway_base_url(key)
+    result = _get_json(f"{base_url}/models", {"Authorization": f"Bearer {api_key}"})
+    items = result.get("data", []) if isinstance(result, dict) else []
+    models = sorted({
+        item["id"] for item in items
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    })
+    return {"provider": key, "models": models[:300]}
 
 
 def _extract_gemini_text(result: dict) -> str:
@@ -142,12 +220,17 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
     )
     config = PROVIDERS[key]
     api_key = _get_api_key(key)
+    if key in GATEWAYS and not api_key:
+        raise ProviderError(
+            f"{config['label']} is not configured: set {config['env_key']} in the backend environment."
+        )
     if config["env_key"] and not api_key:
         raise ProviderError(
             f"{config['label']} is not configured. Set its API key in the backend environment "
             "or configure AWS SSM Parameter Store."
         )
 
+    served = None
     if config["kind"] == "gemini":
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -186,9 +269,13 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
             "vllm": os.getenv("VLLM_BASE_URL", "http://localhost:8000/v1"),
             "lmstudio": os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1"),
             "custom": os.getenv("CUSTOM_BASE_URL", ""),
+            "omniroute": os.getenv("OMNIROUTE_BASE_URL", ""),
+            "freellmapi": os.getenv("FREELLMAPI_BASE_URL", ""),
         }[key].rstrip("/")
+        if key in GATEWAYS:
+            base_url = _gateway_base_url(key)
         if not base_url:
-            raise ProviderError("Set CUSTOM_BASE_URL in the backend environment.")
+            raise ProviderError(f"Set {key.upper()}_BASE_URL in the backend environment.")
         headers = {}
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
@@ -200,6 +287,8 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
             ],
             "temperature": 0.3,
         })
+        if isinstance(result.get("model"), str):
+            served = result["model"]
         choices = result.get("choices", [])
         answer = choices[0].get("message", {}).get("content", "") if choices else ""
 
@@ -210,5 +299,6 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
         "provider": key,
         "provider_name": config["label"],
         "model": model,
+        "served_model": served,
         "answer": answer.strip(),
     }

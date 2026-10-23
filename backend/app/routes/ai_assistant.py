@@ -58,10 +58,11 @@ def ai_chat(request: ChatRequest, current_user: User = Depends(get_current_admin
 @router.get("/models")
 def ai_models(
     provider: str = Query(..., max_length=40),
+    free_only: bool = Query(True),
     current_user: User = Depends(get_current_admin),
 ):
     _check_login_rate_limit(f"ai-models:{current_user.id}", max_attempts=30, window=600)
     try:
-        return list_models(provider)
+        return list_models(provider, free_only)
     except ProviderError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc

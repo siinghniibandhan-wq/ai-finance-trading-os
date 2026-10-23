@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
@@ -38,12 +39,57 @@ DEFAULT_MODELS = {
     "vllm": "Qwen/Qwen2.5-7B-Instruct",
     "lmstudio": "local-model",
     "custom": "default",
-    "omniroute": "auto",
+    "omniroute": "glyph-cluster",
     "freellmapi": "auto",
 }
 
  
 GATEWAYS = {"omniroute", "freellmapi"}
+
+_MODEL_CACHE: dict = {}
+_MODEL_CACHE_SECONDS = 300
+
+
+def _price(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _gateway_models(key: str) -> list:
+    """Fetch and normalize a gateway's model list. Cached for a few minutes."""
+    cached = _MODEL_CACHE.get(key)
+    if cached and time.time() - cached[0] < _MODEL_CACHE_SECONDS:
+        return cached[1]
+    config = PROVIDERS[key]
+    api_key = _get_api_key(key)
+    if not api_key:
+        raise ProviderError(
+            f"{config['label']} is not configured: set {config['env_key']} in the backend environment."
+        )
+    base_url = _gateway_base_url(key)
+    result = _get_json(f"{base_url}/models", {"Authorization": f"Bearer {api_key}"})
+    items = result.get("data", []) if isinstance(result, dict) else []
+    models = []
+    for item in items:
+        if not isinstance(item, dict) or not isinstance(item.get("id"), str):
+            continue
+        pricing = item.get("pricing") if isinstance(item.get("pricing"), dict) else {}
+        caps = item.get("capabilities") if isinstance(item.get("capabilities"), dict) else {}
+        models.append({
+            "id": item["id"],
+            "type": item.get("type"),
+            "is_free": item.get("is_free") if isinstance(item.get("is_free"), bool) else None,
+            "input_per_million": _price(pricing.get("input_per_million")),
+            "output_per_million": _price(pricing.get("output_per_million")),
+            "context_length": item.get("context_length") if isinstance(item.get("context_length"), int) else None,
+            "capabilities": {name: bool(value) for name, value in caps.items()},
+            "available_until": item.get("available_until"),
+        })
+    models.sort(key=lambda entry: entry["id"])
+    _MODEL_CACHE[key] = (time.time(), models)
+    return models
 
 _HTTP_HINTS = {
     401: "the provider rejected the API key",
@@ -164,24 +210,16 @@ def _get_json(url: str, headers: dict) -> dict:
         raise ProviderError("Provider could not be reached or returned an invalid response.") from exc
 
 
-def list_models(provider: str) -> dict:
+def list_models(provider: str, free_only: bool = True) -> dict:
     key = provider.strip().lower()
     if key not in GATEWAYS:
         raise ProviderError("Model discovery is enabled for OmniRoute and FreeLLMAPI only.")
-    config = PROVIDERS[key]
-    api_key = _get_api_key(key)
-    if not api_key:
-        raise ProviderError(
-            f"{config['label']} is not configured: set {config['env_key']} in the backend environment."
-        )
-    base_url = _gateway_base_url(key)
-    result = _get_json(f"{base_url}/models", {"Authorization": f"Bearer {api_key}"})
-    items = result.get("data", []) if isinstance(result, dict) else []
-    models = sorted({
-        item["id"] for item in items
-        if isinstance(item, dict) and isinstance(item.get("id"), str)
-    })
-    return {"provider": key, "models": models[:300]}
+    # Chat-capable models only. Hide embeddings, images, video, speech, transcription.
+    models = [m for m in _gateway_models(key) if m["type"] in (None, "text")]
+    apply_free_filter = free_only and key == "omniroute"
+    if apply_free_filter:
+        models = [m for m in models if m["is_free"] is True]
+    return {"provider": key, "free_only": apply_free_filter, "models": models[:300]}
 
 
 def _extract_gemini_text(result: dict) -> str:
@@ -224,6 +262,17 @@ def generate(provider: str, message: str, model: str | None = None) -> dict:
         raise ProviderError(
             f"{config['label']} is not configured: set {config['env_key']} in the backend environment."
         )
+    if key == "omniroute" and os.getenv("AI_ALLOW_PAID_MODELS", "").strip().lower() != "true":
+        entry = next((m for m in _gateway_models(key) if m["id"] == model), None)
+        if entry is None:
+            raise ProviderError(
+                f"Model '{model}' is not in OmniRoute's model list. Choose a model from the list."
+            )
+        if entry["is_free"] is not True:
+            raise ProviderError(
+                f"Model '{model}' is not marked free by OmniRoute, so it is blocked. "
+                "Choose a free model."
+            )
     if config["env_key"] and not api_key:
         raise ProviderError(
             f"{config['label']} is not configured. Set its API key in the backend environment "

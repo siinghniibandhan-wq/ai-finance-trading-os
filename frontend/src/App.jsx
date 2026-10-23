@@ -3428,7 +3428,7 @@ function AIAssistantPage() {
             const item = providers.find(entry => entry.id === id);
             if (!item) return null;
             const active = provider === id;
-            return <button key={id} type="button" role="tab" aria-selected={active} className={active ? "primary-button" : "secondary-button"} onClick={() => setProvider(id)} style={{ minHeight: 38 }}>{item.name || id}</button>;
+            return <button key={id} type="button" role="tab" aria-selected={active} className={active ? "primary-button" : "secondary-button"} onClick={() => setProvider(id)} style={{ minHeight: 38 }}>{item.name || id} · {item.configured ? "Configured" : "Not configured"}</button>;
           })}
         </div>
         {selectedProvider ? <div style={{ display: "grid", gap: 14 }}>

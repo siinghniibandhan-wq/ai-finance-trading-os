@@ -178,18 +178,27 @@ def test_omniroute_default_model_is_glyph_cluster():
     assert ai_providers.DEFAULT_MODELS["omniroute"] == "glyph-cluster"
 
 
-@pytest.mark.parametrize("model_entry", [
-    {"id": "paid-model", "type": "text", "is_free": False},
-    {"id": "unknown-free-model", "type": "text", "is_free": None},
-])
-def test_omniroute_blocks_paid_or_unlisted_models_by_default(monkeypatch, model_entry):
+def test_omniroute_blocks_paid_model_by_default(monkeypatch):
     monkeypatch.setenv("OMNIROUTE_API_KEY", "test-key")
     monkeypatch.setenv("OMNIROUTE_BASE_URL", "https://omni.example/v1")
     monkeypatch.delenv("AI_ALLOW_PAID_MODELS", raising=False)
-    with patch.object(ai_providers, "_gateway_models", return_value=[model_entry]), \
-         patch.object(ai_providers, "_post_json") as post:
-        with pytest.raises(ai_providers.ProviderError, match="not marked free|not in OmniRoute"):
-            ai_providers.generate("omniroute", "hello", model=model_entry["id"])
+    with patch.object(ai_providers, "_gateway_models", return_value=[
+        {"id": "paid-model", "type": "text", "is_free": False}
+    ]), patch.object(ai_providers, "_post_json") as post:
+        with pytest.raises(ai_providers.ProviderError, match="not marked free"):
+            ai_providers.generate("omniroute", "hello", model="paid-model")
+    post.assert_not_called()
+
+
+def test_omniroute_blocks_model_not_in_list_by_default(monkeypatch):
+    monkeypatch.setenv("OMNIROUTE_API_KEY", "test-key")
+    monkeypatch.setenv("OMNIROUTE_BASE_URL", "https://omni.example/v1")
+    monkeypatch.delenv("AI_ALLOW_PAID_MODELS", raising=False)
+    with patch.object(ai_providers, "_gateway_models", return_value=[
+        {"id": "free-model", "type": "text", "is_free": True}
+    ]), patch.object(ai_providers, "_post_json") as post:
+        with pytest.raises(ai_providers.ProviderError, match="not in OmniRoute"):
+            ai_providers.generate("omniroute", "hello", model="not-listed")
     post.assert_not_called()
 
 

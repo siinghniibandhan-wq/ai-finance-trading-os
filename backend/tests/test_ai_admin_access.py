@@ -10,6 +10,7 @@ def test_all_ai_endpoints_require_server_verified_admin():
         "/api/ai/status",
         "/api/ai/providers",
         "/api/ai/chat",
+        "/api/ai/models",
     }
     for route in ai_routes:
         dependency_calls = {dependency.call for dependency in route.dependant.dependencies}

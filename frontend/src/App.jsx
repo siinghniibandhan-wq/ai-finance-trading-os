@@ -3267,6 +3267,23 @@ function AIAssistantPage() {
   const selectedModelData = (modelsByProvider[provider]?.models || []).find(item => String(typeof item === "string" ? item : item.id) === model);
   const isGateway = provider === "freellmapi" || provider === "omniroute";
   const asModelId = item => String(typeof item === "string" ? item : item?.id || "");
+  const missingVariableNames = item => {
+    if (Array.isArray(item?.missing) && item.missing.length) return item.missing;
+    const names = {
+      gemini: ["GEMINI_API_KEY"],
+      claude: ["ANTHROPIC_API_KEY"],
+      openai: ["OPENAI_API_KEY"],
+      openrouter: ["OPENROUTER_API_KEY"],
+      ollama: ["OLLAMA_BASE_URL or OLLAMA_HOST"],
+      huggingface: ["HF_TOKEN"],
+      vllm: ["VLLM_BASE_URL"],
+      lmstudio: ["LMSTUDIO_BASE_URL"],
+      custom: ["CUSTOM_BASE_URL"],
+      omniroute: ["OMNIROUTE_API_KEY", "OMNIROUTE_BASE_URL"],
+      freellmapi: ["FREELLMAPI_API_KEY", "FREELLMAPI_BASE_URL"],
+    };
+    return names[item?.id] || [];
+  };
   const statusUrl = `${API_BASE_URL}/api/ai/status`;
   const modelsUrl = `${API_BASE_URL}/api/ai/models?provider=${encodeURIComponent(provider)}&free_only=true`;
 
@@ -3343,7 +3360,7 @@ function AIAssistantPage() {
     try {
       if (isGateway) {
         if (!selectedProvider?.configured) {
-          const missing = Array.isArray(selectedProvider?.missing) ? selectedProvider.missing : [];
+          const missing = missingVariableNames(selectedProvider);
           throw new Error(missing.length ? `Not configured. Missing: ${missing.join(", ")}` : "Provider is not configured.");
         }
         const response = await apiFetch(modelsUrl);
@@ -3358,7 +3375,7 @@ function AIAssistantPage() {
         const data = await readResponse(response, "Provider status check failed");
         const fresh = Array.isArray(data.providers) ? data.providers.find(item => item.id === provider) : null;
         if (!fresh?.configured) {
-          const missing = Array.isArray(fresh?.missing) ? fresh.missing : [];
+          const missing = missingVariableNames(fresh);
           throw new Error(missing.length ? `Not configured. Missing: ${missing.join(", ")}` : "Provider is not configured.");
         }
         setProviders(Array.isArray(data.providers) ? data.providers : providers);
@@ -3436,7 +3453,7 @@ function AIAssistantPage() {
             <strong>{selectedProvider.name || provider}</strong>
             <span style={{ ...badgeStyle, color: selectedProvider.configured ? "#34d399" : "#fb7185" }}>{selectedProvider.configured ? "Configured" : "Not configured"}</span>
           </div>
-          {!selectedProvider.configured && <p style={{ margin: 0, fontSize: 13 }} role="status">Missing: {(selectedProvider.missing || []).length ? selectedProvider.missing.join(", ") : "Required backend configuration (variable names unavailable)."}</p>}
+          {!selectedProvider.configured && <p style={{ margin: 0, fontSize: 13 }} role="status">Missing: {missingVariableNames(selectedProvider).length ? missingVariableNames(selectedProvider).join(", ") : "Required backend configuration."}</p>}
           {isGateway ? <>
             <label><span style={labelStyle}>Model</span>
               <select value={model} onChange={event => setModel(event.target.value)} style={inputStyle} disabled={busy || !!testingProvider || modelsLoading || !(modelsByProvider[provider]?.models || []).length}>

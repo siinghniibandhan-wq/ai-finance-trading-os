@@ -3249,48 +3249,126 @@ function AIAssistantPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [providers, setProviders] = useState([]);
-  const [provider, setProvider] = useState("gemini");
+  const [provider, setProvider] = useState("freellmapi");
   const [model, setModel] = useState("");
-  const [loadingProviders, setLoadingProviders] = useState(true);
-  const [testing, setTesting] = useState(false);
-  const [connectionMessage, setConnectionMessage] = useState("");
+  const [modelsByProvider, setModelsByProvider] = useState({});
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [testingProvider, setTestingProvider] = useState("");
+  const [connectionMessages, setConnectionMessages] = useState({});
+  const [statusError, setStatusError] = useState("");
 
+  const providerGroups = [
+    { label: "FreeLLMAPI", ids: ["freellmapi"] },
+    { label: "OmniRoute", ids: ["omniroute"] },
+    { label: "Other Providers", ids: ["gemini", "claude", "openai", "openrouter", "ollama", "huggingface", "vllm", "lmstudio", "custom"] },
+  ];
   const selectedProvider = providers.find(item => item.id === provider);
+  const selectedModelData = (modelsByProvider[provider]?.models || []).find(item => String(typeof item === "string" ? item : item.id) === model);
+  const isGateway = provider === "freellmapi" || provider === "omniroute";
+  const asModelId = item => String(typeof item === "string" ? item : item?.id || "");
+  const statusUrl = `${API_BASE_URL}/api/ai/status`;
+  const modelsUrl = `${API_BASE_URL}/api/ai/models?provider=${encodeURIComponent(provider)}&free_only=true`;
 
   useEffect(() => {
     let active = true;
-    apiFetch(`${API_BASE_URL}/api/ai/providers`)
+    setStatusLoading(true);
+    apiFetch(statusUrl)
       .then(async response => {
         const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.detail || "Could not load AI providers.");
+        if (!response.ok) throw new Error(data.detail || `Could not load AI status (HTTP ${response.status}).`);
         if (active) {
           const list = Array.isArray(data.providers) ? data.providers : [];
           setProviders(list);
-          if (list.length && !list.some(item => item.id === provider)) setProvider(list[0].id);
+          setStatusError("");
+          const preferred = ["freellmapi", "omniroute", "gemini"];
+          const initial = preferred.find(id => list.some(item => item.id === id)) || list[0]?.id;
+          setProvider(current => list.some(item => item.id === current) ? current : (initial || "freellmapi"));
         }
       })
-      .catch(err => { if (active) setError(err.message || "Could not load AI providers."); })
-      .finally(() => { if (active) setLoadingProviders(false); });
+      .catch(err => { if (active) setStatusError(err.message || "Could not load AI status."); })
+      .finally(() => { if (active) setStatusLoading(false); });
     return () => { active = false; };
   }, []);
 
   useEffect(() => {
-    setModel(selectedProvider?.default_model || "");
-    setConnectionMessage("");
-  }, [provider, selectedProvider?.default_model]);
+    let active = true;
+    setConnectionMessages(previous => ({ ...previous, [provider]: "" }));
+    if (!isGateway || !selectedProvider?.configured) {
+      setModelsLoading(false);
+      setModel("");
+      return () => { active = false; };
+    }
+    setModelsLoading(true);
+    apiFetch(modelsUrl)
+      .then(async response => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || `Could not load models (HTTP ${response.status}).`);
+        const models = Array.isArray(data.models) ? data.models : [];
+        if (active) {
+          setModelsByProvider(previous => ({ ...previous, [provider]: { models, error: "" } }));
+          const ids = models.map(asModelId).filter(Boolean);
+          const preferred = provider === "freellmapi" && ids.includes("auto") ? "auto" : (provider === "omniroute" && ids.includes("glyph-cluster") ? "glyph-cluster" : ids[0] || "");
+          setModel(current => ids.includes(current) ? current : preferred);
+          setError("");
+        }
+      })
+      .catch(err => {
+        if (active) {
+          setModelsByProvider(previous => ({ ...previous, [provider]: { models: [], error: err.message || "Could not load models." } }));
+          setModel("");
+        }
+      })
+      .finally(() => { if (active) setModelsLoading(false); });
+    return () => { active = false; };
+  }, [provider, selectedProvider?.configured]);
 
-  async function callAssistant(text, isConnectionTest = false) {
-    const response = await apiFetch(`${API_BASE_URL}/api/ai/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, provider, model: model.trim() || undefined }),
-    });
+  async function readResponse(response, fallback) {
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(friendlyErrorMessage(response.status, data));
-    if (isConnectionTest) {
-      setConnectionMessage(`Connected successfully to ${data.provider_name || provider} using ${data.model || model}.`);
-    } else {
-      setMessages(old => [...old, { role: "assistant", provider: data.provider_name || provider, text: data.answer || "The provider returned an empty response." }]);
+    if (!response.ok) {
+      const detail = typeof data.detail === "string" ? data.detail : "";
+      if (detail) throw new Error(detail);
+      if (response.status === 429) throw new Error("Rate limit or free quota reached. Please try again later.");
+      if (response.status === 503) throw new Error("The selected provider is not configured or is temporarily unavailable.");
+      throw new Error(`${fallback} (HTTP ${response.status}).`);
+    }
+    return data;
+  }
+
+  async function testConnection() {
+    if (testingProvider || busy) return;
+    setTestingProvider(provider);
+    setError("");
+    setConnectionMessages(previous => ({ ...previous, [provider]: "" }));
+    try {
+      if (isGateway) {
+        if (!selectedProvider?.configured) {
+          const missing = Array.isArray(selectedProvider?.missing) ? selectedProvider.missing : [];
+          throw new Error(missing.length ? `Not configured. Missing: ${missing.join(", ")}` : "Provider is not configured.");
+        }
+        const response = await apiFetch(modelsUrl);
+        const data = await readResponse(response, "Model discovery failed");
+        const count = Array.isArray(data.models) ? data.models.length : 0;
+        setModelsByProvider(previous => ({ ...previous, [provider]: { models: Array.isArray(data.models) ? data.models : [], error: "" } }));
+        setConnectionMessages(previous => ({ ...previous, [provider]: `OK, ${count} model${count === 1 ? "" : "s"}` }));
+        const ids = (Array.isArray(data.models) ? data.models : []).map(asModelId).filter(Boolean);
+        setModel(current => ids.includes(current) ? current : (provider === "freellmapi" && ids.includes("auto") ? "auto" : (provider === "omniroute" && ids.includes("glyph-cluster") ? "glyph-cluster" : ids[0] || "")));
+      } else {
+        const response = await apiFetch(statusUrl);
+        const data = await readResponse(response, "Provider status check failed");
+        const fresh = Array.isArray(data.providers) ? data.providers.find(item => item.id === provider) : null;
+        if (!fresh?.configured) {
+          const missing = Array.isArray(fresh?.missing) ? fresh.missing : [];
+          throw new Error(missing.length ? `Not configured. Missing: ${missing.join(", ")}` : "Provider is not configured.");
+        }
+        setProviders(Array.isArray(data.providers) ? data.providers : providers);
+        setConnectionMessages(previous => ({ ...previous, [provider]: "OK — backend configuration detected. Status check does not send a test prompt." }));
+      }
+    } catch (err) {
+      const messageText = err instanceof TypeError ? "Network error: could not reach the Financial OS backend." : (err.message || "Connection test failed.");
+      setConnectionMessages(previous => ({ ...previous, [provider]: messageText }));
+    } finally {
+      setTestingProvider("");
     }
   }
 
@@ -3298,70 +3376,108 @@ function AIAssistantPage() {
     event.preventDefault();
     const text = message.trim();
     if (!text || busy) return;
+    if (isGateway && !model) {
+      setError(modelsByProvider[provider]?.error || "No models are available for this provider. Check its configuration and try again.");
+      return;
+    }
     setMessages(old => [...old, { role: "you", text }]);
     setMessage("");
     setError("");
     setBusy(true);
-    try { await callAssistant(text); }
-    catch (err) { setError(err.message || "Unable to reach the selected AI provider."); }
-    finally { setBusy(false); }
-  }
-
-  async function testConnection() {
-    if (testing || busy) return;
-    setTesting(true);
-    setError("");
-    setConnectionMessage("");
-    try { await callAssistant("Reply with exactly: Connection successful.", true); }
-    catch (err) { setError(err.message || "AI provider connection test failed."); }
-    finally { setTesting(false); }
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/ai/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, provider, ...(model ? { model } : {}) }),
+      });
+      const data = await readResponse(response, "AI request failed");
+      setMessages(old => [...old, {
+        role: "assistant",
+        provider: data.provider_name || selectedProvider?.name || provider,
+        model: data.served_model || data.model || model || "unknown model",
+        text: data.answer || "The provider returned an empty response.",
+      }]);
+    } catch (err) {
+      setError(err instanceof TypeError ? "Network error: could not reach the Financial OS backend." : (err.message || "Unable to reach the selected AI provider."));
+    } finally {
+      setBusy(false);
+    }
   }
 
   const panelStyle = { padding: 18, marginBottom: 16 };
   const labelStyle = { display: "block", fontSize: 12, marginBottom: 7, opacity: .75, fontWeight: 600 };
-  const inputStyle = { width: "100%", minWidth: 0, boxSizing: "border-box", padding: "11px 12px", borderRadius: 10, color: "inherit", background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.14)" };
+  const inputStyle = { width: "100%", minWidth: 0, boxSizing: "border-box", padding: "11px 12px", borderRadius: 10, color: "inherit", background: "var(--finos-input-bg, rgba(255,255,255,.06))", border: "1px solid var(--finos-border, rgba(255,255,255,.14))" };
+  const badgeStyle = { display: "inline-flex", alignItems: "center", border: "1px solid var(--finos-border, rgba(255,255,255,.18))", borderRadius: 999, padding: "4px 8px", fontSize: 11, lineHeight: 1.3 };
 
   return <div style={{ maxWidth: 980, margin: "0 auto", padding: "8px 0 24px" }}>
     <div className="glass-card" style={{ padding: 22, marginBottom: 16 }}>
       <p className="card-label">FINANCIAL OS · AI MODULE</p>
       <h2 style={{ margin: "6px 0" }}>AI Financial Assistant</h2>
-      <p style={{ color: "rgba(255,255,255,.65)", lineHeight: 1.6, marginBottom: 0 }}>Choose an AI provider for budgeting, investing concepts and financial planning. This assistant does not automatically access your private Financial OS records or live market data.</p>
+      <p style={{ color: "var(--finos-muted, rgba(255,255,255,.65))", lineHeight: 1.6, marginBottom: 12 }}>Choose an AI provider for budgeting, investing concepts and financial planning. The assistant receives only the message you type and does not automatically access your Financial OS records or live market data.</p>
+      <p role="note" style={{ margin: 0, padding: 12, borderRadius: 10, border: "1px solid var(--finos-border, rgba(255,255,255,.16))", fontSize: 13, lineHeight: 1.5 }}>Free providers may keep or train on prompts. Do not enter private portfolio or account details.</p>
     </div>
 
     <section className="glass-card" style={panelStyle} aria-label="AI provider settings">
-      <h3 style={{ marginTop: 0 }}>Provider settings</h3>
-      {loadingProviders ? <p>Loading available providers…</p> : <>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 14 }}>
-          <label><span style={labelStyle}>AI provider</span>
-            <select value={provider} onChange={e => setProvider(e.target.value)} style={inputStyle} disabled={busy || testing}>
-              {providers.map(item => <option key={item.id} value={item.id}>{item.name}{item.configured ? " · configured" : " · needs setup"}</option>)}
-            </select>
-          </label>
-          <label><span style={labelStyle}>Model</span>
-            <input value={model} onChange={e => setModel(e.target.value)} maxLength={160} placeholder="Provider default model" style={inputStyle} disabled={busy || testing} />
-          </label>
+      <h3 style={{ marginTop: 0 }}>Choose provider</h3>
+      {statusLoading ? <p>Loading provider status…</p> : statusError ? <p role="alert">{statusError}</p> : <>
+        <div role="tablist" aria-label="AI provider groups" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+          {providerGroups.map(group => <button key={group.label} type="button" role="tab" aria-selected={group.ids.includes(provider)} className={group.ids.includes(provider) ? "primary-button" : "secondary-button"} onClick={() => { const next = group.ids.find(id => providers.some(item => item.id === id)); if (next) setProvider(next); }} style={{ minHeight: 40 }}>{group.label}</button>)}
         </div>
-        <p style={{ fontSize: 13, opacity: .7, lineHeight: 1.5 }}>Credentials are configured on the backend and are never entered or stored in this browser. Local providers such as Ollama, vLLM and LM Studio must be reachable from the backend server.</p>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <button type="button" className="primary-button" onClick={testConnection} disabled={testing || busy || !selectedProvider}>{testing ? "Testing connection…" : "Test connection"}</button>
-          {selectedProvider && <span style={{ fontSize: 13, opacity: .75 }}>{selectedProvider.configured ? "Backend configuration detected" : "Backend configuration required"}</span>}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          {providerGroups.find(group => group.ids.includes(provider))?.ids.map(id => {
+            const item = providers.find(entry => entry.id === id);
+            if (!item) return null;
+            const active = provider === id;
+            return <button key={id} type="button" role="tab" aria-selected={active} className={active ? "primary-button" : "secondary-button"} onClick={() => setProvider(id)} style={{ minHeight: 38 }}>{item.name || id}</button>;
+          })}
         </div>
-        {connectionMessage && <p role="status" style={{ color: "#34d399", marginBottom: 0 }}>{connectionMessage}</p>}
+        {selectedProvider ? <div style={{ display: "grid", gap: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <strong>{selectedProvider.name || provider}</strong>
+            <span style={{ ...badgeStyle, color: selectedProvider.configured ? "#34d399" : "#fb7185" }}>{selectedProvider.configured ? "Configured" : "Not configured"}</span>
+          </div>
+          {!selectedProvider.configured && <p style={{ margin: 0, fontSize: 13 }} role="status">Missing: {(selectedProvider.missing || []).length ? selectedProvider.missing.join(", ") : "Required backend configuration (variable names unavailable)."}</p>}
+          {isGateway ? <>
+            <label><span style={labelStyle}>Model</span>
+              <select value={model} onChange={event => setModel(event.target.value)} style={inputStyle} disabled={busy || !!testingProvider || modelsLoading || !(modelsByProvider[provider]?.models || []).length}>
+                {(modelsByProvider[provider]?.models || []).map(item => {
+                  const id = asModelId(item);
+                  return id ? <option key={id} value={id}>{id}</option> : null;
+                })}
+              </select>
+            </label>
+            {modelsLoading && <p style={{ margin: 0, fontSize: 13 }}>Loading models from the backend…</p>}
+            {!modelsLoading && !(modelsByProvider[provider]?.models || []).length && <p role="status" style={{ margin: 0, fontSize: 13 }}>{modelsByProvider[provider]?.error || (selectedProvider.configured ? "No chat models were returned by the backend." : "Configure this provider on the backend to discover its models.")}</p>}
+            {provider === "freellmapi" && <p style={{ margin: 0, fontSize: 13, opacity: .75 }}>Only providers with a working free key will answer.</p>}
+            {selectedModelData && typeof selectedModelData === "object" && <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+              {selectedModelData.is_free === true && <span style={badgeStyle}>Free</span>}
+              {Number.isFinite(selectedModelData.context_length) && <span style={badgeStyle}>Context: {selectedModelData.context_length.toLocaleString()} tokens</span>}
+              {selectedModelData.capabilities?.reasoning === true && <span style={badgeStyle}>Reasoning</span>}
+              {selectedModelData.capabilities?.streaming === true && <span style={badgeStyle}>Streaming</span>}
+              {selectedModelData.capabilities?.vision === true && <span style={badgeStyle}>Vision</span>}
+            </div>}
+          </> : <p style={{ margin: 0, fontSize: 13, opacity: .75 }}>Model: {selectedProvider.default_model || "Provider default"}. Model discovery is available for the two gateway providers only.</p>}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <button type="button" className="primary-button" onClick={testConnection} disabled={!!testingProvider || busy || statusLoading}>{testingProvider === provider ? "Testing connection…" : "Test connection"}</button>
+            {connectionMessages[provider] && <span role="status" style={{ fontSize: 13, color: connectionMessages[provider].startsWith("OK") ? "#34d399" : "inherit", overflowWrap: "anywhere" }}>{connectionMessages[provider]}</span>}
+          </div>
+        </div> : <p>No status entry was returned for this provider.</p>}
       </>}
     </section>
 
     <section className="glass-card" style={{ padding: 18 }} aria-label="AI conversation">
       <div style={{ minHeight: 180, maxHeight: 430, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
-        {messages.length === 0 && <p style={{ color: "rgba(255,255,255,.55)" }}>Example: “Help me create a monthly budget”</p>}
-        {messages.map((item, index) => <div key={index} style={{ alignSelf: item.role === "you" ? "flex-end" : "stretch", maxWidth: "95%", padding: 12, borderRadius: 12, background: item.role === "you" ? "rgba(168,85,247,.20)" : "rgba(255,255,255,.06)", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+        {messages.length === 0 && <p style={{ color: "var(--finos-muted, rgba(255,255,255,.55))" }}>Example: “Help me create a monthly budget”</p>}
+        {messages.map((item, index) => <div key={index} style={{ alignSelf: item.role === "you" ? "flex-end" : "stretch", maxWidth: "95%", padding: 12, borderRadius: 12, background: item.role === "you" ? "rgba(168,85,247,.20)" : "var(--finos-card-muted, rgba(255,255,255,.06))", whiteSpace: "pre-wrap", lineHeight: 1.6, overflowWrap: "anywhere" }}>
           <strong style={{ display: "block", fontSize: 12, opacity: .7, marginBottom: 5 }}>{item.role === "you" ? "YOU" : item.provider || "AI ASSISTANT"}</strong>{item.text}
+          {item.role === "assistant" && <div style={{ fontSize: 12, opacity: .7, marginTop: 8 }}>Answered by: {item.provider} / {item.model}</div>}
         </div>)}
-        {busy && <p style={{ color: "rgba(255,255,255,.65)" }}>AI assistant is thinking…</p>}
+        {busy && <p role="status" style={{ color: "var(--finos-muted, rgba(255,255,255,.65))" }}>AI assistant is thinking…</p>}
       </div>
-      {error && <p role="alert" style={{ color: "#fb7185" }}>{error}</p>}
+      {error && <p role="alert" style={{ color: "#fb7185", overflowWrap: "anywhere" }}>{error}</p>}
       <form onSubmit={sendMessage} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <input aria-label="Message AI assistant" value={message} onChange={e => setMessage(e.target.value)} placeholder="Ask your financial assistant…" maxLength={8000} style={{ ...inputStyle, flex: "1 1 260px" }} />
-        <button type="submit" className="primary-button" disabled={busy || testing || !message.trim()}>{busy ? "Sending…" : "Ask AI"}</button>
+        <input aria-label="Message AI assistant" value={message} onChange={e => setMessage(e.target.value)} placeholder="Ask your financial assistant…" maxLength={8000} style={{ ...inputStyle, flex: "1 1 260px" }} disabled={busy || !!testingProvider} />
+        <button type="submit" className="primary-button" disabled={busy || !!testingProvider || !message.trim() || (isGateway && !model)}>{busy ? "Sending…" : "Ask AI"}</button>
       </form>
     </section>
   </div>;

@@ -1,4 +1,4 @@
-"""Admin-only AI assistant endpoints for the Finance OS AI module."""
+"""Authenticated AI assistant endpoints for the Finance OS AI module."""
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException

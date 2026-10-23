@@ -128,10 +128,80 @@ def test_http_error_message_429_mentions_rate_limit_or_quota():
 def test_gateway_model_discovery_uses_real_models_without_network(monkeypatch):
     monkeypatch.setenv("OMNIROUTE_API_KEY", "test-key")
     monkeypatch.setenv("OMNIROUTE_BASE_URL", "https://omni.example/v1")
+    ai_providers._MODEL_CACHE.clear()
     with patch.object(ai_providers, "_get_json", return_value={
-        "data": [{"id": "z-model"}, {"id": "a-model"}, {"name": "missing-id"}]
+        "data": [
+            {"id": "z-model", "type": "text", "is_free": True},
+            {"id": "a-model", "type": "text", "is_free": False},
+            {"id": "image-model", "type": "image", "is_free": True},
+            {"name": "missing-id"},
+        ]
     }) as get_json:
-        result = ai_providers.list_models("omniroute")
-    assert result == {"provider": "omniroute", "models": ["a-model", "z-model"]}
+        result = ai_providers._gateway_models("omniroute")
+    assert [m["id"] for m in result] == ["a-model", "image-model", "z-model"]
     assert get_json.call_args.args[0] == "https://omni.example/v1/models"
     assert get_json.call_args.args[1]["Authorization"] == "Bearer test-key"
+
+
+def test_omniroute_lists_only_free_text_models_by_default(monkeypatch):
+    models = [
+        {"id": "free-text", "type": "text", "is_free": True},
+        {"id": "paid-text", "type": "text", "is_free": False},
+        {"id": "image", "type": "image", "is_free": True},
+        {"id": "embedding", "type": "embedding", "is_free": True},
+        {"id": "unknown-free-flag", "type": "text", "is_free": None},
+    ]
+    with patch.object(ai_providers, "_gateway_models", return_value=models):
+        default_result = ai_providers.list_models("omniroute")
+        expanded_result = ai_providers.list_models("omniroute", free_only=False)
+    assert default_result["free_only"] is True
+    assert [m["id"] for m in default_result["models"]] == ["free-text"]
+    assert expanded_result["free_only"] is False
+    assert [m["id"] for m in expanded_result["models"]] == [
+        "free-text", "paid-text", "unknown-free-flag"
+    ]
+
+
+def test_freellmapi_free_only_does_not_remove_text_models():
+    models = [
+        {"id": "free-text", "type": "text", "is_free": True},
+        {"id": "paid-text", "type": "text", "is_free": False},
+        {"id": "image", "type": "image", "is_free": True},
+    ]
+    with patch.object(ai_providers, "_gateway_models", return_value=models):
+        result = ai_providers.list_models("freellmapi")
+    assert result["free_only"] is False
+    assert [m["id"] for m in result["models"]] == ["free-text", "paid-text"]
+
+
+def test_omniroute_default_model_is_glyph_cluster():
+    assert ai_providers.DEFAULT_MODELS["omniroute"] == "glyph-cluster"
+
+
+@pytest.mark.parametrize("model_entry", [
+    {"id": "paid-model", "type": "text", "is_free": False},
+    {"id": "unknown-free-model", "type": "text", "is_free": None},
+])
+def test_omniroute_blocks_paid_or_unlisted_models_by_default(monkeypatch, model_entry):
+    monkeypatch.setenv("OMNIROUTE_API_KEY", "test-key")
+    monkeypatch.setenv("OMNIROUTE_BASE_URL", "https://omni.example/v1")
+    monkeypatch.delenv("AI_ALLOW_PAID_MODELS", raising=False)
+    with patch.object(ai_providers, "_gateway_models", return_value=[model_entry]), \
+         patch.object(ai_providers, "_post_json") as post:
+        with pytest.raises(ai_providers.ProviderError, match="not marked free|not in OmniRoute"):
+            ai_providers.generate("omniroute", "hello", model=model_entry["id"])
+    post.assert_not_called()
+
+
+def test_omniroute_allows_paid_model_when_explicitly_enabled(monkeypatch):
+    monkeypatch.setenv("OMNIROUTE_API_KEY", "test-key")
+    monkeypatch.setenv("OMNIROUTE_BASE_URL", "https://omni.example/v1")
+    monkeypatch.setenv("AI_ALLOW_PAID_MODELS", "true")
+    with patch.object(ai_providers, "_gateway_models") as discover, \
+         patch.object(ai_providers, "_post_json", return_value={
+             "model": "paid-model", "choices": [{"message": {"content": "ok"}}]
+         }) as post:
+        result = ai_providers.generate("omniroute", "hello", model="paid-model")
+    discover.assert_not_called()
+    assert result["answer"] == "ok"
+    assert post.call_args.args[2]["model"] == "paid-model"

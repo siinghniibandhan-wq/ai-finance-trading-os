@@ -1,12 +1,12 @@
 """Authenticated AI assistant endpoints for the Finance OS AI module."""
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.models import User
 from app.routes.auth import _check_login_rate_limit, get_current_admin
-from app.services.ai_providers import ProviderError, generate, provider_status
+from app.services.ai_providers import ProviderError, generate, list_models, provider_status
 
 router = APIRouter(prefix="/api/ai", tags=["AI Assistant"])
 logger = logging.getLogger(__name__)
@@ -52,3 +52,16 @@ def ai_chat(request: ChatRequest, current_user: User = Depends(get_current_admin
             status_code=502,
             detail="AI request failed. Check backend logs and provider settings.",
         ) from exc
+
+
+
+@router.get("/models")
+def ai_models(
+    provider: str = Query(..., max_length=40),
+    current_user: User = Depends(get_current_admin),
+):
+    _check_login_rate_limit(f"ai-models:{current_user.id}", max_attempts=30, window=600)
+    try:
+        return list_models(provider)
+    except ProviderError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc

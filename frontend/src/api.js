@@ -6,8 +6,7 @@
 // Keep API traffic on the current deployment origin. This lets Vercel Services
 // route /api/* to FastAPI without a second project, CORS dependency, or a
 // production URL baked into the frontend bundle.
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || window.location.origin;
+export const API_BASE_URL = window.location.origin;
 
 // ============================================================
 // SESSION MANAGEMENT

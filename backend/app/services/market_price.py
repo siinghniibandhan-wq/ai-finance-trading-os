@@ -3,12 +3,12 @@ Financial OS — Market Price Service
 -----------------------------------
 
 Provider:
-- AWS m.Stock Gateway
+- m.Stock Gateway
 - m.Stock handles NSE/BSE market data
 
 This service:
 - Receives an investment symbol
-- Calls the AWS m.Stock gateway
+- Calls the m.Stock gateway
 - Extracts the latest market price
 - Returns Decimal price to the investment API
 
@@ -16,7 +16,7 @@ IMPORTANT:
 - m.Stock API key is NOT stored here.
 - TOTP is NOT stored here.
 - Access token is NOT stored here.
-- All m.Stock authentication remains inside the AWS gateway.
+- All m.Stock authentication remains inside the m.Stock gateway.
 """
 
 import json
@@ -79,7 +79,7 @@ def normalize_symbol(symbol: str) -> str:
         RELIANCE
         NSE:RELIANCE-EQ
 
-    Both are accepted by the AWS gateway.
+    Both are accepted by the m.Stock gateway.
     """
 
     cleaned = symbol.strip().upper()
@@ -129,7 +129,7 @@ def _quote_symbols_match(requested: str, returned: str) -> bool:
 
 def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
     """
-    Fetch latest market price from the AWS m.Stock gateway.
+    Fetch latest market price from the m.Stock gateway.
     """
 
     normalized_symbol = normalize_symbol(symbol)

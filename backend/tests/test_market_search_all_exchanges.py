@@ -7,7 +7,8 @@ from app.routes import market_search
 
 
 @pytest.fixture(autouse=True)
-def reset_instrument_master_cache():
+def reset_instrument_master_cache(monkeypatch):
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-gateway-secret")
     market_search._instrument_master_cache.update({"text": None, "loaded_at": 0.0, "parsed_text": None, "fieldnames": None, "rows": None, "stale": False})
     yield
     market_search._instrument_master_cache.update({"text": None, "loaded_at": 0.0, "parsed_text": None, "fieldnames": None, "rows": None, "stale": False})

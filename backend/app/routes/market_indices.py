@@ -27,10 +27,7 @@ router = APIRouter(
 # Existing AWS gateway configuration
 # --------------------------------------------------
 
-GATEWAY_URL = os.getenv(
-    "MSTOCK_GATEWAY_URL",
-    "http://54.153.201.74:8000",
-).rstrip("/")
+GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
 
 # Request the four benchmarks required by the Market Workspace.
 # The gateway is queried independently per index; unsupported symbols are
@@ -109,6 +106,8 @@ def fetch_index(index):
 
 @router.get("/")
 def get_market_indices():
+    if not GATEWAY_URL:
+        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
     indices = []
     errors = []
 

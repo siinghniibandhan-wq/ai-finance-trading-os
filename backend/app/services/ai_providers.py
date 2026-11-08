@@ -1,7 +1,7 @@
 """Multi-provider AI gateway for the Finance OS AI module.
 
-Provider credentials remain server-side. Gemini credentials can be loaded from
-AWS Systems Manager Parameter Store when GEMINI_API_KEY is not in the environment.
+Provider credentials remain server-side and are supplied through the deployment
+platform's encrypted environment variables.
 """
 from __future__ import annotations
 

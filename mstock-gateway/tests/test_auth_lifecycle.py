@@ -37,7 +37,7 @@ def test_totp_waits_until_next_period_when_near_expiry(monkeypatch):
 
 def test_totp_waits_when_fewer_than_five_seconds_remain(monkeypatch):
     calls = []
-    monkeypatch.setattr(main.time, "time", lambda: 128.0)  # 2 seconds remain
+    monkeypatch.setattr(main.time, "time", lambda: 148.0)  # 2 seconds remain
     monkeypatch.setattr(main.time, "sleep", lambda seconds: calls.append(seconds))
     monkeypatch.setattr(main.pyotp, "TOTP", lambda secret: type(
         "FakeTotp", (), {"now": lambda self: "654321"}

@@ -14,7 +14,7 @@ import os
 from uuid import uuid4
 from decimal import Decimal
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -95,12 +95,26 @@ class BrokerOrderRequest(BaseModel):
 def _gateway_request(path: str, method: str, payload: dict | None = None, query: dict | None = None):
     if not GATEWAY_URL:
         raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_URL is not configured.")
-    # Broker credentials are shared by the configured m.Stock account. Keep
-    # the secret on loopback only; never send it to a public IP over HTTP.
-    if GATEWAY_URL not in {"http://127.0.0.1:8000", "http://localhost:8000"}:
+    # Local development may use loopback HTTP. Remote gateways (including
+    # the Vercel-hosted gateway) must use HTTPS before the shared secret is sent.
+    parsed_gateway_url = urlsplit(GATEWAY_URL)
+    is_loopback_http = (
+        parsed_gateway_url.scheme == "http"
+        and parsed_gateway_url.hostname in {"127.0.0.1", "localhost"}
+        and parsed_gateway_url.port == 8000
+        and not parsed_gateway_url.username
+        and not parsed_gateway_url.password
+    )
+    is_secure_remote = (
+        parsed_gateway_url.scheme == "https"
+        and bool(parsed_gateway_url.hostname)
+        and not parsed_gateway_url.username
+        and not parsed_gateway_url.password
+    )
+    if not (is_loopback_http or is_secure_remote):
         raise HTTPException(
             status_code=503,
-            detail="Broker gateway must be configured on loopback HTTP (127.0.0.1:8000).",
+            detail="Remote broker gateway must use HTTPS; loopback HTTP (127.0.0.1:8000) is allowed only for local development.",
         )
     if not GATEWAY_SECRET:
         raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_SECRET is not configured; broker gateway requests are disabled.")
@@ -133,7 +147,7 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
         except Exception:
             message = None
         if exc.code == 404:
-            raise HTTPException(status_code=503, detail="The AWS m.Stock gateway does not yet implement this order endpoint.") from exc
+            raise HTTPException(status_code=503, detail="The m.Stock gateway does not yet implement this order endpoint.") from exc
         message = message or f"m.Stock gateway returned HTTP {exc.code}."
         # Keep the public response at 502, but preserve whether the gateway's
         # 400/422 response proves this order request was rejected. A 409 may
@@ -143,7 +157,7 @@ def _gateway_request(path: str, method: str, payload: dict | None = None, query:
         raise HTTPException(status_code=502, detail=message) from exc
     except URLError as exc:
         logger.warning("m.Stock order gateway connection failed: %s", type(exc).__name__)
-        raise HTTPException(status_code=502, detail="Unable to connect to the AWS m.Stock gateway.") from exc
+        raise HTTPException(status_code=502, detail="Unable to connect to the m.Stock gateway.") from exc
     except (TimeoutError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         logger.warning("m.Stock order gateway response failed: %s", type(exc).__name__)
         raise HTTPException(status_code=502, detail="Gateway timed out or returned invalid JSON; check broker order status before retrying.") from exc

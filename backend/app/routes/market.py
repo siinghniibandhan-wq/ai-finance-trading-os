@@ -13,7 +13,7 @@
 #       ↓
 # market_price.py
 #       ↓
-# AWS m.Stock Gateway
+# m.Stock Gateway
 #       ↓
 # m.Stock
 #       ↓
@@ -63,7 +63,7 @@ def market_status():
         "status": "online",
         "service": "Financial OS Market Data API",
         "provider": "m.Stock",
-        "gateway": "AWS m.Stock Gateway",
+        "gateway": "m.Stock Gateway",
     }
 
 
@@ -81,7 +81,7 @@ def market_quote(symbol: str):
         /api/market/quote?symbol=RELIANCE
 
     The market-price service handles communication with
-    the AWS m.Stock Gateway.
+    the m.Stock Gateway.
     """
 
     # --------------------------------------------------------
@@ -125,7 +125,7 @@ def market_quote(symbol: str):
         "symbol": symbol,
         "price": price,
         "provider": "m.Stock",
-        "source": "AWS m.Stock Gateway",
+        "source": "m.Stock Gateway",
         "retrieved_at": quote_data["retrieved_at"],
         "cache_hit": quote_data["cache_hit"],
         "cache_age_seconds": quote_data["cache_age_seconds"],

@@ -4,7 +4,7 @@ Financial OS — Market Search Engine v1.0
 Purpose:
 - Search the m.Stock instrument master.
 - Keep market-search logic separate from market.py.
-- Use the existing AWS m.Stock Gateway.
+- Use the existing m.Stock Gateway.
 - Read-only.
 - No database writes.
 - Uses Python standard library only.
@@ -15,7 +15,7 @@ Client
    ↓
 Financial OS Market Search Engine
    ↓
-AWS m.Stock Gateway /instruments
+m.Stock Gateway /instruments
    ↓
 m.Stock Script Master
 """
@@ -463,7 +463,7 @@ def search_market(
         "results": results,
         "source": {
             "provider": "m.Stock",
-            "gateway": "AWS Gateway",
+            "gateway": "m.Stock Gateway",
             "endpoint": "/instruments",
             "cache_age_seconds": max(0, int(time.monotonic() - _instrument_master_cache["loaded_at"])),
             "stale": bool(_instrument_master_cache.get("stale")),

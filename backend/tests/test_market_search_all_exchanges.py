@@ -219,3 +219,15 @@ def test_product_type_rejects_unknown_values(monkeypatch):
         market_search.search_market(query="E", exchange="ALL", limit=12, product_type="Mutual Funds")
 
     assert error.value.status_code == 422
+
+
+
+def test_instrument_master_requires_configured_gateway_secret(monkeypatch):
+    monkeypatch.setattr(market_search, "MSTOCK_GATEWAY_URL", "https://gateway.example")
+    monkeypatch.delenv("MSTOCK_GATEWAY_SECRET", raising=False)
+
+    with pytest.raises(HTTPException) as error:
+        market_search._get_instrument_master_csv()
+
+    assert error.value.status_code == 503
+    assert error.value.detail == "Market gateway authentication is not configured."

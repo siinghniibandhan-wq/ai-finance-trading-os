@@ -5,7 +5,19 @@
     },
     "backend": {
       "root": "backend/",
-      "entrypoint": "app.main:app"
+      "entrypoint": "app.main:app",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "mstock_gateway",
+          "format": "url",
+          "env": "MSTOCK_GATEWAY_URL"
+        }
+      ]
+    },
+    "mstock_gateway": {
+      "root": "mstock-gateway/",
+      "entrypoint": "main:app"
     }
   },
   "rewrites": [

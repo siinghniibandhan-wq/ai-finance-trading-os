@@ -55,7 +55,10 @@ def fetch_index(index):
 
     request = Request(
         url,
-        headers={"Accept": "application/json"},
+        headers={
+            "Accept": "application/json",
+            "X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip(),
+        },
         method="GET",
     )
 

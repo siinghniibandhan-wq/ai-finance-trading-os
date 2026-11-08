@@ -12,5 +12,4 @@ psycopg[binary]==3.2.3
 # Google Gemini AI integration
 google-genai>=1.0.0
 
-# AWS Systems Manager Parameter Store secret retrieval
-boto3>=1.35.0
+# Secrets are supplied by the deployment platform environment.

@@ -76,7 +76,7 @@ def get_market_history(
         alias="to",
         description="End date in YYYY-MM-DD format",
     ),
-): 
+):
     if not MSTOCK_GATEWAY_URL:
         raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
     cleaned_symbol = symbol.strip().upper()

@@ -162,6 +162,7 @@ def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
         headers={
             "Accept": "application/json",
             "User-Agent": "Financial-OS/1.0",
+            "X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip(),
         },
         method="GET",
     )

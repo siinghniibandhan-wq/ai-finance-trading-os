@@ -77,8 +77,6 @@ def get_market_history(
         description="End date in YYYY-MM-DD format",
     ),
 ):
-    if not MSTOCK_GATEWAY_URL:
-        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
     cleaned_symbol = symbol.strip().upper()
     cleaned_exchange = exchange.strip().upper()
     cleaned_interval = interval.strip().lower()
@@ -151,6 +149,9 @@ def get_market_history(
             status_code=400,
             detail="The start date must be on or before the end date.",
         )
+
+    if not MSTOCK_GATEWAY_URL:
+        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
 
     # --------------------------------------------------------
     # Resolve symbol through Market Search

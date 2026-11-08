@@ -147,7 +147,7 @@ def test_finance_diary_repairs_saved_expense_missing_its_created_event():
     db.add(transaction)
     db.commit()
 
-    entries = list_finance_diary(db=db, current_user=user)
+    entries = list_finance_diary(db=db, current_user=user, limit=200, offset=0)
     recovered = [
         entry for entry in entries
         if entry.entity_type == "transaction" and entry.entity_id == str(transaction.id)
@@ -158,7 +158,7 @@ def test_finance_diary_repairs_saved_expense_missing_its_created_event():
     assert '"reconciled_from_saved_transaction": true' in recovered[0].snapshot_json
 
     # Repeated page loads must not create duplicate events.
-    list_finance_diary(db=db, current_user=user)
+    list_finance_diary(db=db, current_user=user, limit=200, offset=0)
     assert db.query(FinanceDiaryEntry).filter_by(
         user_id=user.id, entity_type="transaction", entity_id=str(transaction.id),
         event_type="created",

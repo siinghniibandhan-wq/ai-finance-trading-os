@@ -1,6 +1,6 @@
 """
 Market Indices Engine v1.0
-Fetches NIFTY 50 and SENSEX through the existing AWS m.Stock gateway.
+Fetches NIFTY 50 and SENSEX through the existing m.Stock gateway.
 Read-only: does not write to the database.
 """
 
@@ -24,7 +24,7 @@ router = APIRouter(
 )
 
 # --------------------------------------------------
-# Existing AWS gateway configuration
+# Existing m.Stock gateway configuration
 # --------------------------------------------------
 
 GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
@@ -42,7 +42,7 @@ SUPPORTED_INDICES = [
 
 
 # --------------------------------------------------
-# Fetch one index from the existing AWS gateway
+# Fetch one index from the existing m.Stock gateway
 # --------------------------------------------------
 
 def fetch_index(index):

@@ -51,10 +51,9 @@ _instrument_master_cache_lock = threading.Lock()
 
 
 def _get_instrument_master_csv():
+    """Return the cached instrument-master CSV, refreshing it after the TTL."""
     if not MSTOCK_GATEWAY_URL:
         raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
-
-    """Return the cached instrument-master CSV, refreshing it after the TTL."""
     now = time.monotonic()
     cached_text = _instrument_master_cache["text"]
     if cached_text is not None and now - _instrument_master_cache["loaded_at"] < MARKET_INSTRUMENT_CACHE_TTL_SECONDS:

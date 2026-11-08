@@ -6,9 +6,13 @@ again by the Financial OS admin gate, persistent kill switch, and durable idempo
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import hashlib
 import json
+import logging
 import os
+import re
 import secrets
 import threading
 import time
@@ -21,6 +25,7 @@ from zoneinfo import ZoneInfo
 import pyotp
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
 
 API_BASE_URL = os.getenv("MSTOCK_API_BASE_URL", "https://api.mstock.trade").rstrip("/")
 API_KEY = os.getenv("MSTOCK_API_KEY", "").strip()
@@ -28,6 +33,8 @@ GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
 TOTP_SECRET = os.getenv("MSTOCK_TOTP_SECRET", "").strip()
 STATIC_ACCESS_TOKEN = os.getenv("MSTOCK_ACCESS_TOKEN", "").strip()
 REQUEST_TIMEOUT_SECONDS = 15
+SESSION_REQUIRED_PREFIX = "MSTOCK_SESSION_REQUIRED"
+logger = logging.getLogger("mstock_gateway")
 
 _token_lock = threading.Lock()
 _cached_access_token: str | None = None
@@ -63,6 +70,104 @@ def _local_token_expiry() -> datetime:
         tzinfo=ZoneInfo("Asia/Kolkata"),
     )
     return min(now + timedelta(hours=12), midnight) - timedelta(seconds=60)
+
+
+# ---------------------------------------------------------------------------
+# Shared session storage
+# A serverless instance can restart or run in parallel, so the access token is
+# also kept (encrypted) in the existing Postgres database. The 6-digit TOTP is
+# used once to obtain the token; it is never stored.
+# ---------------------------------------------------------------------------
+
+def _database_url() -> str:
+    url = os.getenv("DATABASE_URL", "").strip()
+    for prefix in ("postgresql+psycopg://", "postgres://"):
+        if url.startswith(prefix):
+            url = "postgresql://" + url[len(prefix):]
+    return url
+
+
+def _fernet():
+    from cryptography.fernet import Fernet
+
+    secret = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
+    key = base64.urlsafe_b64encode(hashlib.sha256(f"mstock-session:{secret}".encode("utf-8")).digest())
+    return Fernet(key)
+
+
+def _db_connect():
+    import psycopg
+
+    url = _database_url()
+    if not url:
+        raise RuntimeError("DATABASE_URL is not configured.")
+    conn = psycopg.connect(url, connect_timeout=5, autocommit=True)
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS mstock_gateway_session ("
+        "id SMALLINT PRIMARY KEY, token_encrypted TEXT NOT NULL, "
+        "expires_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+    )
+    return conn
+
+
+def _store_session(token: str, expires_at: datetime) -> bool:
+    """Persist the token for all instances. Returns False when the database is unavailable."""
+    try:
+        encrypted = _fernet().encrypt(token.encode("utf-8")).decode("utf-8")
+        with _db_connect() as conn:
+            conn.execute(
+                "INSERT INTO mstock_gateway_session (id, token_encrypted, expires_at, updated_at) "
+                "VALUES (1, %s, %s, now()) ON CONFLICT (id) DO UPDATE SET "
+                "token_encrypted = EXCLUDED.token_encrypted, expires_at = EXCLUDED.expires_at, updated_at = now()",
+                (encrypted, expires_at),
+            )
+        return True
+    except Exception as exc:  # noqa: BLE001 - never leak details or break market data
+        logger.warning("Could not persist m.Stock session: %s", type(exc).__name__)
+        return False
+
+
+def _load_session() -> tuple[str, datetime] | None:
+    try:
+        with _db_connect() as conn:
+            row = conn.execute(
+                "SELECT token_encrypted, expires_at FROM mstock_gateway_session WHERE id = 1"
+            ).fetchone()
+        if not row:
+            return None
+        token = _fernet().decrypt(row[0].encode("utf-8")).decode("utf-8")
+        expires_at = row[1]
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=ZoneInfo("Asia/Kolkata"))
+        return token, expires_at
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not load m.Stock session: %s", type(exc).__name__)
+        return None
+
+
+def _clear_session() -> None:
+    global _cached_access_token, _cached_token_expires_at
+    _cached_access_token = None
+    _cached_token_expires_at = None
+    try:
+        with _db_connect() as conn:
+            conn.execute("DELETE FROM mstock_gateway_session WHERE id = 1")
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not clear m.Stock session: %s", type(exc).__name__)
+
+
+def _normalised_totp_secret() -> str | None:
+    """Return the TOTP seed only if it is a valid Base32 key; never raises."""
+    candidate = re.sub(r"[\s-]", "", TOTP_SECRET or "").upper()
+    if not candidate:
+        return None
+    try:
+        base64.b32decode(candidate + "=" * (-len(candidate) % 8), casefold=True)
+    except (binascii.Error, ValueError):
+        return None
+    return candidate
+
+
 
 
 def _generate_fresh_totp(secret: str, *, next_period: bool = False) -> str:
@@ -127,20 +232,21 @@ def _is_totp_rejection(payload: dict, http_status: int | None = None) -> bool:
     )
 
 
-def _login_with_totp() -> str:
+def _login_with_totp(seed: str | None = None) -> str:
     if not API_KEY:
         raise HTTPException(status_code=503, detail="MSTOCK_API_KEY is not configured.")
-    if not TOTP_SECRET:
+    seed = seed or TOTP_SECRET
+    if not seed:
         raise HTTPException(
             status_code=503,
             detail="MSTOCK_TOTP_SECRET is not configured; enable m.Stock Trading API TOTP.",
         )
 
-    payload = _post_totp_session(_generate_fresh_totp(TOTP_SECRET))
+    payload = _post_totp_session(_generate_fresh_totp(seed))
     if _is_totp_rejection(payload):
         # A rejected code may have crossed a 30-second boundary in transit.
         # Wait for the next period and make exactly one fresh attempt.
-        payload = _post_totp_session(_generate_fresh_totp(TOTP_SECRET, next_period=True))
+        payload = _post_totp_session(_generate_fresh_totp(seed, next_period=True))
 
     if payload.get("status") not in {"success", True}:
         if str(payload.get("error_type") or "").lower() in {"apikeyexception"}:
@@ -163,6 +269,17 @@ def _login_with_totp() -> str:
     return token.strip()
 
 
+def _token_valid(token: str | None, expires_at: datetime | None) -> bool:
+    return bool(token and expires_at and _now_ist() < expires_at)
+
+
+def _session_required() -> HTTPException:
+    return HTTPException(
+        status_code=503,
+        detail=f"{SESSION_REQUIRED_PREFIX}: Enter your current m.Stock TOTP code to connect.",
+    )
+
+
 def _get_access_token(force_refresh: bool = False) -> str:
     global _cached_access_token, _cached_token_expires_at
 
@@ -171,27 +288,36 @@ def _get_access_token(force_refresh: bool = False) -> str:
             raise HTTPException(status_code=503, detail="MSTOCK_API_KEY is not configured.")
         return STATIC_ACCESS_TOKEN
 
-    now = datetime.now(ZoneInfo("Asia/Kolkata"))
-    if (
-        not force_refresh
-        and _cached_access_token
-        and _cached_token_expires_at
-        and now < _cached_token_expires_at
-    ):
+    if not force_refresh and _token_valid(_cached_access_token, _cached_token_expires_at):
         return _cached_access_token
 
     with _token_lock:
-        now = datetime.now(ZoneInfo("Asia/Kolkata"))
-        if (
-            not force_refresh
-            and _cached_access_token
-            and _cached_token_expires_at
-            and now < _cached_token_expires_at
-        ):
+        rejected = _cached_access_token if force_refresh else None
+        if not force_refresh and _token_valid(_cached_access_token, _cached_token_expires_at):
             return _cached_access_token
-        _cached_access_token = _login_with_totp()
-        _cached_token_expires_at = _local_token_expiry()
-        return _cached_access_token
+
+        # Another instance may already hold a newer valid session.
+        stored = _load_session()
+        if stored and _token_valid(*stored) and stored[0] != rejected:
+            _cached_access_token, _cached_token_expires_at = stored
+            return _cached_access_token
+
+        if force_refresh:
+            _clear_session()
+
+        # Optional automatic login, only when a valid Base32 seed is configured.
+        seed = _normalised_totp_secret()
+        if seed and API_KEY:
+            try:
+                token = _login_with_totp(seed)
+                _cached_access_token = token
+                _cached_token_expires_at = _local_token_expiry()
+                _store_session(token, _cached_token_expires_at)
+                return token
+            except HTTPException as exc:
+                logger.warning("Automatic TOTP login failed (HTTP %s).", exc.status_code)
+
+        raise _session_required()
 
 
 def _mstock_request(
@@ -265,8 +391,61 @@ def health():
     return {
         "status": "healthy",
         "service": "Financial OS m.Stock Gateway",
-        "authentication": "totp" if TOTP_SECRET else ("static-token" if STATIC_ACCESS_TOKEN else "not-configured"),
+        "authentication": "static-token" if STATIC_ACCESS_TOKEN else ("totp-seed" if _normalised_totp_secret() else "typed-totp-session"),
     }
+
+
+class SessionRequest(BaseModel):
+    totp: str
+
+
+@app.get("/session", dependencies=[Depends(require_gateway_secret)])
+def session_status():
+    """Report whether a usable m.Stock session exists. Never returns the token."""
+    if STATIC_ACCESS_TOKEN:
+        return {"connected": True, "mode": "static-token", "expires_at": None}
+    if _token_valid(_cached_access_token, _cached_token_expires_at):
+        return {"connected": True, "mode": "session", "expires_at": _cached_token_expires_at.isoformat()}
+    stored = _load_session()
+    if stored and _token_valid(*stored):
+        return {"connected": True, "mode": "session", "expires_at": stored[1].isoformat()}
+    return {"connected": False, "mode": "totp-required", "expires_at": None}
+
+
+@app.post("/session", dependencies=[Depends(require_gateway_secret)])
+def create_session(body: SessionRequest):
+    """Exchange one typed 6-digit TOTP for an m.Stock access token and keep it until it expires."""
+    global _cached_access_token, _cached_token_expires_at
+
+    code = body.totp.strip()
+    if not re.fullmatch(r"\d{6}", code):
+        raise HTTPException(status_code=400, detail="Enter the 6-digit code from your authenticator app.")
+    if not API_KEY:
+        raise HTTPException(status_code=503, detail="MSTOCK_API_KEY is not configured.")
+
+    payload = _post_totp_session(code)
+    if payload.get("status") not in {"success", True}:
+        if str(payload.get("error_type") or "").lower() == "apikeyexception":
+            raise HTTPException(
+                status_code=503,
+                detail="m.Stock API key is invalid, expired, or suspended. Check the broker API subscription.",
+            )
+        raise HTTPException(
+            status_code=400,
+            detail="m.Stock did not accept that code. Wait for the next code and try again.",
+        )
+    data = payload.get("data")
+    token = data.get("access_token") if isinstance(data, dict) else None
+    if not isinstance(token, str) or not token.strip():
+        raise HTTPException(status_code=502, detail="m.Stock did not return an access token.")
+
+    token = token.strip()
+    expires_at = _local_token_expiry()
+    with _token_lock:
+        _cached_access_token = token
+        _cached_token_expires_at = expires_at
+    persisted = _store_session(token, expires_at)
+    return {"connected": True, "expires_at": expires_at.isoformat(), "shared_across_instances": persisted}
 
 
 @app.get("/quote", dependencies=[Depends(require_gateway_secret)])

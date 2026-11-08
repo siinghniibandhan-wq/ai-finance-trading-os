@@ -39,6 +39,7 @@ from app.routes import (
     market,
     market_overview,
     market_quote,
+    mstock_session,
     market_search,
     mutual_fund_search,
     market_history,
@@ -432,6 +433,7 @@ app.include_router(investments.router)
 app.include_router(market.router)
 app.include_router(market_overview.router)
 app.include_router(market_quote.router)
+app.include_router(mstock_session.router)
 app.include_router(market_search.router)
 app.include_router(mutual_fund_search.router)
 app.include_router(market_history.router)

@@ -2498,6 +2498,54 @@ function calculateTechnicalIndicators(rows) {
 
 // MARKETS WORKSPACE — existing read-only m.Stock APIs
 // ============================================================
+function MstockSessionCard({ onConnected }) {
+  const [status, setStatus] = useState(null);
+  const [hidden, setHidden] = useState(false);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const load = async () => {
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/mstock/session`);
+      if (response.status === 401 || response.status === 403) { setHidden(true); return; }
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) setStatus(data);
+    } catch { /* leave the card in its unknown state */ }
+  };
+  useEffect(() => { load(); }, []);
+
+  const connect = async (event) => {
+    event.preventDefault();
+    if (!/^\d{6}$/.test(code)) { setMessage("Enter the 6-digit code from your authenticator app."); return; }
+    setBusy(true); setMessage("");
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/mstock/session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ totp: code }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : "Could not connect to m.Stock.");
+      setStatus(data); setCode("");
+      if (onConnected) onConnected();
+    } catch (error) { setMessage(error?.message || "Could not connect to m.Stock."); }
+    finally { setBusy(false); }
+  };
+
+  if (hidden || !status) return null;
+  if (status.connected) {
+    const until = status.expires_at ? new Date(status.expires_at).toLocaleString() : null;
+    return <div role="status" className="instrument-provider-error" style={{ marginBottom: "12px" }}>m.Stock connected{until ? ` until ${until}` : ""}. You will be asked for a new code only after this session expires.</div>;
+  }
+  return <form onSubmit={connect} style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center", marginBottom: "12px" }}>
+    <strong>Connect m.Stock</strong>
+    <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="6-digit code" aria-label="m.Stock 6-digit authenticator code" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
+    <button type="submit" className="primary-button" disabled={busy || code.length !== 6}>{busy ? "Connecting…" : "Connect"}</button>
+    {message && <span role="alert" style={{ color: "var(--finos-negative)", fontSize: "13px" }}>{message}</span>}
+  </form>;
+}
+
 function MarketsPage() {
   const API = API_BASE_URL;
   const [overview, setOverview] = useState(null);
@@ -2915,7 +2963,8 @@ function MarketsPage() {
       </div>}
       {results.map((row, i) => <div key={`${row.exchange || "NSE"}-${row.symbol || row.instrument_token || i}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "13px 12px", marginTop: "8px", borderRadius: "12px", border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.025)", flexWrap: "wrap" }}><button type="button" onClick={() => selectInstrument(row)} aria-label={`Select ${row.name || row.symbol}`} style={{ flex: "1 1 180px", textAlign: "left", padding: "4px 0", border: 0, background: "transparent", color: "inherit", cursor: "pointer" }}><strong>{row.symbol || "Unknown symbol"}</strong><div style={muted}>{row.name || "Company name unavailable"} · {row.exchange || "Exchange unavailable"}{(row.series || row.instrument_type) ? ` · ${row.series || row.instrument_type}` : ""}</div><div style={{ ...muted, marginTop: "3px" }}>Tap to open this instrument</div></button><div style={{ display: "flex", gap: "10px", alignItems: "center" }}><strong style={{ fontSize: "12px" }}>{money(row.last_price)}</strong><button type="button" className="secondary-button" onClick={() => selectInstrument(row)}>Select</button></div></div>)}
     </section>
-    {overviewError && <div role="status" className="instrument-provider-error">{overviewError}</div>}
+    <MstockSessionCard onConnected={refresh} />
+    {overviewError && <div role="status" className="instrument-provider-error">{overviewError}</div>
     {!selectedInstrument && <>
 
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" }}>

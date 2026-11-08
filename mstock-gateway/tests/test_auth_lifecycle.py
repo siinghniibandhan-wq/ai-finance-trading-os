@@ -12,7 +12,7 @@ def test_token_expiry_is_earlier_of_twelve_hours_and_midnight(monkeypatch):
     monkeypatch.setattr(main, "_now_ist", lambda: now)
 
     assert main._local_token_expiry() == datetime(
-        2026, 11, 8, 23, 59, tzinfo=ZoneInfo("Asia/Kolkata")
+        2026, 11, 8, 21, 59, tzinfo=ZoneInfo("Asia/Kolkata")
     )
 
 

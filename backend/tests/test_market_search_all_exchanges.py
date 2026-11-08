@@ -7,7 +7,8 @@ from app.routes import market_search
 
 
 @pytest.fixture(autouse=True)
-def reset_instrument_master_cache():
+def reset_instrument_master_cache(monkeypatch):
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-gateway-secret")
     market_search._instrument_master_cache.update({"text": None, "loaded_at": 0.0, "parsed_text": None, "fieldnames": None, "rows": None, "stale": False})
     yield
     market_search._instrument_master_cache.update({"text": None, "loaded_at": 0.0, "parsed_text": None, "fieldnames": None, "rows": None, "stale": False})
@@ -219,3 +220,15 @@ def test_product_type_rejects_unknown_values(monkeypatch):
         market_search.search_market(query="E", exchange="ALL", limit=12, product_type="Mutual Funds")
 
     assert error.value.status_code == 422
+
+
+
+def test_instrument_master_requires_configured_gateway_secret(monkeypatch):
+    monkeypatch.setattr(market_search, "MSTOCK_GATEWAY_URL", "https://gateway.example")
+    monkeypatch.delenv("MSTOCK_GATEWAY_SECRET", raising=False)
+
+    with pytest.raises(HTTPException) as error:
+        market_search._get_instrument_master_csv()
+
+    assert error.value.status_code == 503
+    assert error.value.detail == "Market gateway authentication is not configured."

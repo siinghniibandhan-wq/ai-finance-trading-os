@@ -40,11 +40,16 @@
       }
     },
     {
-      "source": "/(.*)",
-      "destination": {
-        "service": "frontend",
-        "path": "/"
-      }
+      "source": "/login",
+      "destination": "/"
+    },
+    {
+      "source": "/register",
+      "destination": "/"
+    },
+    {
+      "source": "/app/(.*)",
+      "destination": "/"
     }
   ]
 }

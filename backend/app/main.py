@@ -90,170 +90,179 @@ from app.routes import (
 # ============================================================
 # CREATE DATABASE TABLES
 # ============================================================
-
-Base.metadata.create_all(
-    bind=engine
-)
-
-def _apply_account_credit_limit_migration():
-    """Add account credit fields and loan-account linking to existing databases."""
-    inspector = inspect(engine)
-    with engine.begin() as connection:
-        if inspector.has_table("accounts"):
-            account_columns = {column["name"] for column in inspector.get_columns("accounts")}
-            if "credit_limit" not in account_columns:
-                connection.execute(text("ALTER TABLE accounts ADD COLUMN credit_limit NUMERIC(18, 2)"))
-        if inspector.has_table("loans"):
-            loan_columns = {column["name"] for column in inspector.get_columns("loans")}
-            if "linked_account_id" not in loan_columns:
-                connection.execute(text("ALTER TABLE loans ADD COLUMN linked_account_id INTEGER"))
-            if engine.dialect.name == "postgresql":
-                connection.execute(text("CREATE INDEX IF NOT EXISTS ix_loans_linked_account_id ON loans (linked_account_id)"))
-
-_apply_account_credit_limit_migration()
-
-
-def _apply_account_logical_delete_migration():
-    """Add an account tombstone flag without deleting linked ledger rows."""
-    inspector = inspect(engine)
-    if not inspector.has_table("accounts"):
-        return
-    columns = {column["name"] for column in inspector.get_columns("accounts")}
-    if "is_deleted" not in columns:
+# Vercel may create multiple function instances concurrently. Never run
+# create_all() or ad-hoc ALTER TABLE statements during serverless imports.
+# Apply schema changes as a controlled, one-off database migration before
+# deploying the new release. Local/non-Vercel deployments retain the legacy
+# bootstrap behavior for backwards compatibility.
+if os.getenv("VERCEL") != "1":
+    
+    Base.metadata.create_all(
+        bind=engine
+    )
+    
+    def _apply_account_credit_limit_migration():
+        """Add account credit fields and loan-account linking to existing databases."""
+        inspector = inspect(engine)
         with engine.begin() as connection:
-            connection.execute(
-                text("ALTER TABLE accounts ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE")
-            )
-
-
-_apply_account_logical_delete_migration()
-
-
-def _apply_account_details_migration():
-    """Add optional bank and broker identity fields to existing account rows."""
-    inspector = inspect(engine)
-    if not inspector.has_table("accounts"):
-        return
-    columns = {column["name"] for column in inspector.get_columns("accounts")}
-    definitions = {
-        "ifsc_code": "VARCHAR(20)",
-        "nominee_name": "VARCHAR(150)",
-        "bo_id": "VARCHAR(100)",
-        "linked_mobile_number": "VARCHAR(25)",
-        "linked_email": "VARCHAR(255)",
-        "is_deleted": "BOOLEAN NOT NULL DEFAULT FALSE",
-    }
-    with engine.begin() as connection:
-        for column_name, sql_type in definitions.items():
-            if column_name not in columns:
-                connection.execute(text(f"ALTER TABLE accounts ADD COLUMN {column_name} {sql_type}"))
-
-
-_apply_account_details_migration()
-
-
-def _apply_user_phone_number_migration():
-    """Add the optional unique phone number column to existing user tables."""
-    table_name = "users"
-    inspector = inspect(engine)
-    if not inspector.has_table(table_name):
-        return
-    existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
-    with engine.begin() as connection:
-        if "phone_number" not in existing_columns:
-            connection.execute(text("ALTER TABLE users ADD COLUMN phone_number VARCHAR(25)"))
-        connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_phone_number ON users (phone_number)"))
-
-
-_apply_user_phone_number_migration()
-
-
-
-
-def _apply_hra_eligibility_schema_migration():
-    """Add HRA eligibility columns to existing databases safely.
-
-    SQLAlchemy create_all() creates missing tables but does not add columns to
-    existing tables. This idempotent startup migration repairs databases that
-    predate the HRA eligibility fields without modifying existing records.
-    """
-    table_name = "tax_salary_income_records"
-    inspector = inspect(engine)
-    if not inspector.has_table(table_name):
-        # The model/table may be unavailable in a minimal test configuration.
-        return
-
-    existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
-    missing_columns = {
-        "accommodation_owned_by_taxpayer": "BOOLEAN NOT NULL DEFAULT FALSE",
-        "rent_actually_paid": "BOOLEAN NOT NULL DEFAULT FALSE",
-    }
-
-    with engine.begin() as connection:
-        for column_name, column_definition in missing_columns.items():
-            if column_name not in existing_columns:
-                # Names and definitions are fixed constants, not user input.
+            if inspector.has_table("accounts"):
+                account_columns = {column["name"] for column in inspector.get_columns("accounts")}
+                if "credit_limit" not in account_columns:
+                    connection.execute(text("ALTER TABLE accounts ADD COLUMN credit_limit NUMERIC(18, 2)"))
+            if inspector.has_table("loans"):
+                loan_columns = {column["name"] for column in inspector.get_columns("loans")}
+                if "linked_account_id" not in loan_columns:
+                    connection.execute(text("ALTER TABLE loans ADD COLUMN linked_account_id INTEGER"))
+                if engine.dialect.name == "postgresql":
+                    connection.execute(text("CREATE INDEX IF NOT EXISTS ix_loans_linked_account_id ON loans (linked_account_id)"))
+    
+    _apply_account_credit_limit_migration()
+    
+    
+    def _apply_account_logical_delete_migration():
+        """Add an account tombstone flag without deleting linked ledger rows."""
+        inspector = inspect(engine)
+        if not inspector.has_table("accounts"):
+            return
+        columns = {column["name"] for column in inspector.get_columns("accounts")}
+        if "is_deleted" not in columns:
+            with engine.begin() as connection:
                 connection.execute(
-                    text(
-                        f"ALTER TABLE {table_name} "
-                        f"ADD COLUMN {column_name} {column_definition}"
-                    )
+                    text("ALTER TABLE accounts ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE")
                 )
-
-
-_apply_hra_eligibility_schema_migration()
-
-
-def _apply_receivable_payable_schema_migration():
-    """Add receivable/payable tracking fields to existing transactions safely."""
-    table_name = "transactions"
-    inspector = inspect(engine)
-    if not inspector.has_table(table_name):
-        return
-    existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
-    additions = {
-        "party_name": "VARCHAR(150)",
-        "due_date": "DATE",
-        "settled_amount": "NUMERIC(18, 2) NOT NULL DEFAULT 0",
-        "status": "VARCHAR(20) NOT NULL DEFAULT 'open'",
-        "settles_transaction_id": "INTEGER",
-    }
-    with engine.begin() as connection:
-        for column_name, column_definition in additions.items():
-            if column_name not in existing_columns:
-                connection.execute(text(
-                    f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}"
-                ))
-        connection.execute(text(
-            "CREATE INDEX IF NOT EXISTS ix_transactions_settles_transaction_id "
-            "ON transactions (settles_transaction_id)"
-        ))
-
-
-_apply_receivable_payable_schema_migration()
-
-
-def _apply_tax_business_source_link_migration():
-    """Add an optional explicit Money-transaction link to tax business records."""
-    table_name = "tax_business_income_records"
-    inspector = inspect(engine)
-    if not inspector.has_table(table_name):
-        return
-    existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
-    with engine.begin() as connection:
-        if "source_transaction_id" not in existing_columns:
+    
+    
+    _apply_account_logical_delete_migration()
+    
+    
+    def _apply_account_details_migration():
+        """Add optional bank and broker identity fields to existing account rows."""
+        inspector = inspect(engine)
+        if not inspector.has_table("accounts"):
+            return
+        columns = {column["name"] for column in inspector.get_columns("accounts")}
+        definitions = {
+            "ifsc_code": "VARCHAR(20)",
+            "nominee_name": "VARCHAR(150)",
+            "bo_id": "VARCHAR(100)",
+            "linked_mobile_number": "VARCHAR(25)",
+            "linked_email": "VARCHAR(255)",
+            "is_deleted": "BOOLEAN NOT NULL DEFAULT FALSE",
+        }
+        with engine.begin() as connection:
+            for column_name, sql_type in definitions.items():
+                if column_name not in columns:
+                    connection.execute(text(f"ALTER TABLE accounts ADD COLUMN {column_name} {sql_type}"))
+    
+    
+    _apply_account_details_migration()
+    
+    
+    def _apply_user_phone_number_migration():
+        """Add the optional unique phone number column to existing user tables."""
+        table_name = "users"
+        inspector = inspect(engine)
+        if not inspector.has_table(table_name):
+            return
+        existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+        with engine.begin() as connection:
+            if "phone_number" not in existing_columns:
+                connection.execute(text("ALTER TABLE users ADD COLUMN phone_number VARCHAR(25)"))
+            connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_phone_number ON users (phone_number)"))
+    
+    
+    _apply_user_phone_number_migration()
+    
+    
+    
+    
+    def _apply_hra_eligibility_schema_migration():
+        """Add HRA eligibility columns to existing databases safely.
+    
+        SQLAlchemy create_all() creates missing tables but does not add columns to
+        existing tables. This idempotent startup migration repairs databases that
+        predate the HRA eligibility fields without modifying existing records.
+        """
+        table_name = "tax_salary_income_records"
+        inspector = inspect(engine)
+        if not inspector.has_table(table_name):
+            # The model/table may be unavailable in a minimal test configuration.
+            return
+    
+        existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+        missing_columns = {
+            "accommodation_owned_by_taxpayer": "BOOLEAN NOT NULL DEFAULT FALSE",
+            "rent_actually_paid": "BOOLEAN NOT NULL DEFAULT FALSE",
+        }
+    
+        with engine.begin() as connection:
+            for column_name, column_definition in missing_columns.items():
+                if column_name not in existing_columns:
+                    # Names and definitions are fixed constants, not user input.
+                    connection.execute(
+                        text(
+                            f"ALTER TABLE {table_name} "
+                            f"ADD COLUMN {column_name} {column_definition}"
+                        )
+                    )
+    
+    
+    _apply_hra_eligibility_schema_migration()
+    
+    
+    def _apply_receivable_payable_schema_migration():
+        """Add receivable/payable tracking fields to existing transactions safely."""
+        table_name = "transactions"
+        inspector = inspect(engine)
+        if not inspector.has_table(table_name):
+            return
+        existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+        additions = {
+            "party_name": "VARCHAR(150)",
+            "due_date": "DATE",
+            "settled_amount": "NUMERIC(18, 2) NOT NULL DEFAULT 0",
+            "status": "VARCHAR(20) NOT NULL DEFAULT 'open'",
+            "settles_transaction_id": "INTEGER",
+        }
+        with engine.begin() as connection:
+            for column_name, column_definition in additions.items():
+                if column_name not in existing_columns:
+                    connection.execute(text(
+                        f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_definition}"
+                    ))
             connection.execute(text(
-                f"ALTER TABLE {table_name} ADD COLUMN source_transaction_id INTEGER"
+                "CREATE INDEX IF NOT EXISTS ix_transactions_settles_transaction_id "
+                "ON transactions (settles_transaction_id)"
             ))
-        connection.execute(text(
-            "CREATE INDEX IF NOT EXISTS ix_tax_business_income_records_source_transaction_id "
-            "ON tax_business_income_records (source_transaction_id)"
-        ))
+    
+    
+    _apply_receivable_payable_schema_migration()
+    
+    
+    def _apply_tax_business_source_link_migration():
+        """Add an optional explicit Money-transaction link to tax business records."""
+        table_name = "tax_business_income_records"
+        inspector = inspect(engine)
+        if not inspector.has_table(table_name):
+            return
+        existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+        with engine.begin() as connection:
+            if "source_transaction_id" not in existing_columns:
+                connection.execute(text(
+                    f"ALTER TABLE {table_name} ADD COLUMN source_transaction_id INTEGER"
+                ))
+            connection.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_tax_business_income_records_source_transaction_id "
+                "ON tax_business_income_records (source_transaction_id)"
+            ))
+    
+    
+    _apply_tax_business_source_link_migration()
+    
 
-
-_apply_tax_business_source_link_migration()
-
-
+# ============================================================
+# CREATE APPLICATION
+# ============================================================
 # ============================================================
 # CREATE APPLICATION
 # ============================================================

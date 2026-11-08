@@ -4,7 +4,7 @@ Financial OS — Market Quote Engine v1.0
 Purpose:
 - Provide a clean API for fetching a live market quote.
 - Reuse the existing market.py provider service.
-- Keep AWS / m.Stock authentication outside this route.
+- Keep m.Stock authentication outside this route.
 - Read-only.
 - No database writes.
 

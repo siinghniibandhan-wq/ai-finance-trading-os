@@ -24,7 +24,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database.database import Base, get_db
-from app.models import AuthSession, User, UserCredential
+from app.models import AuthSession, FinanceDiaryEntry, User, UserCredential
 from app.routes.auth import router as auth_router
 
 TEST_ENGINE = create_engine(
@@ -36,7 +36,7 @@ TestSessionLocal = sessionmaker(bind=TEST_ENGINE, autoflush=False, autocommit=Fa
 # Create only the tables needed by the authentication router.
 Base.metadata.create_all(
     bind=TEST_ENGINE,
-    tables=[User.__table__, UserCredential.__table__, AuthSession.__table__],
+    tables=[User.__table__, UserCredential.__table__, AuthSession.__table__, FinanceDiaryEntry.__table__],
 )
 
 app = FastAPI()

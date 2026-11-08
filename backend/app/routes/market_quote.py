@@ -16,7 +16,7 @@ Market Quote Engine
    ↓
 market.py
    ↓
-AWS m.Stock Gateway
+m.Stock Gateway
    ↓
 Live Quote
 """
@@ -140,7 +140,7 @@ def get_market_quote(
 
         "source": {
             "provider": "m.Stock",
-            "gateway": "AWS Gateway",
+            "gateway": "m.Stock Gateway",
             "service": "market.py",
         },
 

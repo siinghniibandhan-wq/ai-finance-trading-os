@@ -214,6 +214,39 @@ def test_gateway_rejects_public_http_endpoint_and_does_not_send_secret(monkeypat
     assert "loopback HTTP" in error.value.detail
 
 
+def test_gateway_accepts_remote_https_endpoint_and_sends_secret(monkeypatch):
+    captured = {}
+
+    class FakeResponse:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self):
+            return b'{"success": true}'
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["secret"] = request.get_header("X-financial-os-gateway-secret")
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr(broker_orders, "GATEWAY_URL", "https://gateway.example.vercel.app")
+    monkeypatch.setattr(broker_orders, "GATEWAY_SECRET", "test-secret")
+    monkeypatch.setattr(broker_orders, "urlopen", fake_urlopen)
+
+    result = broker_orders._gateway_request("/order", "POST", {"client_id": "vercel-1"})
+
+    assert result == {"success": True}
+    assert captured["url"] == "https://gateway.example.vercel.app/order"
+    assert captured["secret"] == "test-secret"
+    assert captured["timeout"] == broker_orders.GATEWAY_TIMEOUT_SECONDS
+
+
 def test_real_order_and_order_book_routes_require_admin():
     from app.routes.auth import get_current_admin
 

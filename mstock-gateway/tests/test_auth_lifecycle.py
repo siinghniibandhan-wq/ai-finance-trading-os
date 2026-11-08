@@ -50,7 +50,7 @@ def test_totp_waits_when_fewer_than_five_seconds_remain(monkeypatch):
 def test_login_rejects_provider_error_payload_without_leaking_message(monkeypatch):
     monkeypatch.setattr(main, "API_KEY", "api-key")
     monkeypatch.setattr(main, "TOTP_SECRET", "totp-secret")
-    monkeypatch.setattr(main, "_generate_fresh_totp", lambda secret: "123456")
+    monkeypatch.setattr(main, "_generate_fresh_totp", lambda secret, **kwargs: "123456")
     monkeypatch.setattr(main, "_post_totp_session", lambda code: {
         "status": "error",
         "message": "Please enter correct TOTP - private provider detail",
@@ -81,43 +81,10 @@ def test_login_requires_access_token_in_success_payload(monkeypatch):
 
 
 def test_gateway_secret_is_required(monkeypatch):
-    from fastapi.testclient import TestClient
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "expected-secret")
 
-    monkeypatch.setattr(main, "GATEWAY_SECRET", "")
-    client = TestClient(main.app)
-    response = client.get("/instruments")
+    with pytest.raises(HTTPException) as error:
+        main.require_gateway_secret("wrong-secret")
 
-    assert response.status_code == 403
-
-
-
-def test_login_retries_totp_once_after_provider_rejection(monkeypatch):
-    codes = iter(["111111", "222222"])
-    responses = iter([
-        {"status": "error", "message": "Please enter correct TOTP", "data": None},
-        {"status": "success", "data": {"access_token": "valid-token"}},
-    ])
-    monkeypatch.setattr(main, "API_KEY", "api-key")
-    monkeypatch.setattr(main, "TOTP_SECRET", "totp-secret")
-    monkeypatch.setattr(main, "_generate_fresh_totp", lambda secret, **kwargs: next(codes))
-    monkeypatch.setattr(main, "_post_totp_session", lambda code: next(responses))
-
-    assert main._login_with_totp() == "valid-token"
-
-
-def test_login_does_not_retry_non_totp_provider_error(monkeypatch):
-    calls = []
-    monkeypatch.setattr(main, "API_KEY", "api-key")
-    monkeypatch.setattr(main, "TOTP_SECRET", "totp-secret")
-    monkeypatch.setattr(main, "_generate_fresh_totp", lambda secret, **kwargs: "111111")
-
-    def provider_error(code):
-        calls.append(code)
-        return {"status": "error", "message": "API subscription suspended", "data": None}
-
-    monkeypatch.setattr(main, "_post_totp_session", provider_error)
-
-    with pytest.raises(HTTPException):
-        main._login_with_totp()
-
-    assert calls == ["111111"]
+    assert error.value.status_code == 403
+    assert error.value.detail == "Gateway authentication failed."

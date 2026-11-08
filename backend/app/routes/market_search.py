@@ -66,10 +66,17 @@ def _get_instrument_master_csv():
         if cached_text is not None and now - _instrument_master_cache["loaded_at"] < MARKET_INSTRUMENT_CACHE_TTL_SECONDS:
             return cached_text
 
+        gateway_secret = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
+        if not gateway_secret:
+            raise HTTPException(
+                status_code=503,
+                detail="Market gateway authentication is not configured.",
+            )
+
         try:
             request = Request(
                 f"{MSTOCK_GATEWAY_URL}/instruments",
-                headers={"X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()},
+                headers={"X-Financial-OS-Gateway-Secret": gateway_secret},
                 method="GET",
             )
             with urlopen(request, timeout=8) as response:

@@ -2964,7 +2964,7 @@ function MarketsPage() {
       {results.map((row, i) => <div key={`${row.exchange || "NSE"}-${row.symbol || row.instrument_token || i}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "13px 12px", marginTop: "8px", borderRadius: "12px", border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.025)", flexWrap: "wrap" }}><button type="button" onClick={() => selectInstrument(row)} aria-label={`Select ${row.name || row.symbol}`} style={{ flex: "1 1 180px", textAlign: "left", padding: "4px 0", border: 0, background: "transparent", color: "inherit", cursor: "pointer" }}><strong>{row.symbol || "Unknown symbol"}</strong><div style={muted}>{row.name || "Company name unavailable"} · {row.exchange || "Exchange unavailable"}{(row.series || row.instrument_type) ? ` · ${row.series || row.instrument_type}` : ""}</div><div style={{ ...muted, marginTop: "3px" }}>Tap to open this instrument</div></button><div style={{ display: "flex", gap: "10px", alignItems: "center" }}><strong style={{ fontSize: "12px" }}>{money(row.last_price)}</strong><button type="button" className="secondary-button" onClick={() => selectInstrument(row)}>Select</button></div></div>)}
     </section>
     <MstockSessionCard onConnected={refresh} />
-    {overviewError && <div role="status" className="instrument-provider-error">{overviewError}</div>
+    {overviewError && <div role="status" className="instrument-provider-error">{overviewError}</div>}
     {!selectedInstrument && <>
 
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" }}>

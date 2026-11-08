@@ -93,7 +93,7 @@ def normalize_symbol(symbol: str) -> str:
 
 
 # ============================================================
-# AWS m.STOCK GATEWAY REQUEST
+# m.STOCK GATEWAY REQUEST
 # ============================================================
 
 def _canonical_quote_symbol(symbol: str) -> tuple[str | None, str]:

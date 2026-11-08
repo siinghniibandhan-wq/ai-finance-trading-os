@@ -233,13 +233,12 @@ def _mstock_request(
                 retry_auth=False, force_refresh=True,
                 allow_provider_error=allow_provider_error,
             )
-        message = f"m.Stock API request failed (HTTP {exc.code})."
-        try:
-            provider_error = json.loads(exc.read().decode("utf-8"))
-            if isinstance(provider_error, dict):
-                message = str(provider_error.get("message") or message)
-        except Exception:
-            pass
+        if exc.code == 401:
+            message = "m.Stock rejected the access token after one re-authentication attempt."
+        elif exc.code == 403:
+            message = "m.Stock API key is invalid, expired, or suspended. Check the broker API subscription."
+        else:
+            message = f"m.Stock API request failed (HTTP {exc.code})."
         raise HTTPException(status_code=502, detail=message) from exc
     except (URLError, TimeoutError) as exc:
         raise HTTPException(status_code=502, detail="Unable to reach m.Stock API.") from exc

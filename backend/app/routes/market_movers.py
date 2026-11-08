@@ -3,9 +3,9 @@ Financial OS — Market Movers Engine v1.0
 
 Purpose:
 - Fetch official market gainers and losers.
-- Reuse the existing AWS m.Stock Gateway.
+- Reuse the existing m.Stock Gateway.
 - Use m.Stock's dedicated Gainer/Loser API.
-- Keep authentication inside the AWS gateway.
+- Keep authentication inside the m.Stock gateway.
 - Return a clean Financial OS response.
 - Read-only.
 - No database writes.
@@ -16,7 +16,7 @@ Client
    ↓
 Market Movers Engine
    ↓
-AWS m.Stock Gateway
+m.Stock Gateway
    ↓
 m.Stock Gainer/Loser API
 """
@@ -217,7 +217,7 @@ def get_market_movers(
         "movers": movers,
         "source": {
             "provider": "m.Stock",
-            "gateway": "AWS Gateway",
+            "gateway": "m.Stock Gateway",
             "endpoint": "/gainers-losers",
         },
         "database_write": False,

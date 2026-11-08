@@ -34,10 +34,7 @@ from urllib.request import Request, urlopen
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = os.getenv(
-    "MSTOCK_GATEWAY_URL",
-    "http://54.153.201.74:8000",
-).rstrip("/")
+MSTOCK_GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
 
 
 def _read_cache_ttl() -> float:

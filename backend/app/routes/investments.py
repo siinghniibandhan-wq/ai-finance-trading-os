@@ -630,13 +630,13 @@ def refresh_market_prices(
                     THEN tx.weighted_buy_price
                     ELSE investments.buy_price
                 END AS buy_price,
-                current_price,
-                buy_date,
-                broker,
-                fees,
-                notes,
-                created_at,
-                updated_at
+                investments.current_price,
+                investments.buy_date,
+                investments.broker,
+                investments.fees,
+                investments.notes,
+                investments.created_at,
+                investments.updated_at
 
             FROM investments
             LEFT JOIN instrument_master ON instrument_master.id = investments.instrument_master_id

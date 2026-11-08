@@ -3,7 +3,7 @@ Financial OS — Market Overview Engine v1.2
 
 Purpose:
 - Combine existing market indices and market movers.
-- Reuse existing provider functions and AWS gateway.
+- Reuse existing provider functions and m.Stock gateway.
 - Return partial results when one data source fails.
 - Read-only: no database writes.
 """
@@ -72,7 +72,7 @@ def fetch_overview_movers(mover_type: str):
     )
 
     # --------------------------------------------------------
-    # Request data from the existing AWS gateway integration
+    # Request data from the existing m.Stock gateway integration
     # --------------------------------------------------------
 
     provider_response = fetch_movers(
@@ -261,7 +261,7 @@ def get_market_overview():
         # ----------------------------------------------------
 
         "data_sources": {
-            "primary": "m.Stock via AWS Gateway",
+            "primary": "m.Stock via m.Stock Gateway",
             "indices": "Market Indices Engine",
             "market_movers": "Market Movers Engine",
         },

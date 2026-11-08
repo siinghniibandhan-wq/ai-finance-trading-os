@@ -3,7 +3,7 @@ Financial OS — Historical Market Data Engine v1.0
 
 Purpose:
 - Provide historical OHLCV market data to Financial OS.
-- Use the existing AWS m.Stock Gateway.
+- Use the existing m.Stock Gateway.
 - Keep historical-data logic separate from market.py.
 - Read-only.
 - No database writes.
@@ -15,7 +15,7 @@ Client
    ↓
 Financial OS Historical Market Data Engine
    ↓
-AWS m.Stock Gateway /historical
+m.Stock Gateway /historical
    ↓
 m.Stock Historical Market Data
 """
@@ -155,7 +155,7 @@ def get_market_history(
     # --------------------------------------------------------
     # Resolve symbol through Market Search
     #
-    # The AWS historical endpoint requires an instrument token.
+    # The m.Stock historical endpoint requires an instrument token.
     # We first use the existing instrument master.
     # --------------------------------------------------------
 
@@ -260,7 +260,7 @@ def get_market_history(
         )
 
     # --------------------------------------------------------
-    # Request historical data from AWS gateway
+    # Request historical data from m.Stock gateway
     # --------------------------------------------------------
 
     historical_url = (
@@ -379,7 +379,7 @@ def get_market_history(
         "candles": candles,
         "source": {
             "provider": "m.Stock",
-            "gateway": "AWS Gateway",
+            "gateway": "m.Stock Gateway",
             "endpoint": "/historical",
         },
         "database_write": False,

@@ -67,9 +67,8 @@ def fetch_movers(
         data=payload,
         method="POST",
         headers={
-            "Content-Type": (
-                "application/x-www-form-urlencoded"
-            ),
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip(),
         },
     )
 

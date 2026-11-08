@@ -122,7 +122,7 @@ def get_market_chart(
         "data": chart_data,
         "source": {
             "provider": "m.Stock",
-            "gateway": "AWS Gateway",
+            "gateway": "m.Stock Gateway",
             "engine": "Historical Market Data Engine",
         },
         "database_write": False,

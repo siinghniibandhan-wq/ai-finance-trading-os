@@ -52,7 +52,7 @@ def fetch_movers(
     security_id_code: int,
     segment: int,
     type_flag: str,
-): 
+):
     if not MSTOCK_GATEWAY_URL:
         raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
     payload = urlencode({

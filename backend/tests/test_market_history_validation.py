@@ -34,6 +34,7 @@ def test_market_history_accepts_valid_ordered_dates_and_proceeds_to_gateway(monk
     def unavailable(*args, **kwargs):
         raise URLError("offline test")
 
+    monkeypatch.setattr(market_history, "MSTOCK_GATEWAY_SECRET", "test-gateway-secret")
     monkeypatch.setattr(market_history, "urlopen", unavailable)
     with pytest.raises(HTTPException) as exc:
         call_history("2026-10-01", "2026-10-14")
@@ -41,7 +42,6 @@ def test_market_history_accepts_valid_ordered_dates_and_proceeds_to_gateway(monk
 
 
 def test_market_history_authenticates_both_gateway_requests(monkeypatch):
-    import io
     import json
     from app.routes import market_history
 

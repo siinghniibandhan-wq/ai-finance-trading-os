@@ -263,9 +263,6 @@ if os.getenv("VERCEL") != "1":
 # ============================================================
 # CREATE APPLICATION
 # ============================================================
-# ============================================================
-# CREATE APPLICATION
-# ============================================================
 
 # Interactive API docs list every endpoint to anyone who can reach the server.
 # They are off unless ENABLE_API_DOCS=1 is set (for example on a dev machine).

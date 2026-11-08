@@ -66,7 +66,7 @@ def test_market_history_authenticates_both_gateway_requests(monkeypatch):
     def fake_urlopen(request, timeout):
         requests.append(request)
         if request.full_url.endswith("/instruments"):
-            return Response(b"exchange,tradingsymbol,instrument_token,name\\nNSE,RELIANCE,2885,Reliance Industries\\n")
+            return Response(b"exchange,tradingsymbol,instrument_token,name\nNSE,RELIANCE,2885,Reliance Industries\n")
         return Response(json.dumps({"status": "success", "data": {"candles": []}}).encode())
 
     monkeypatch.setattr(market_history, "urlopen", fake_urlopen)

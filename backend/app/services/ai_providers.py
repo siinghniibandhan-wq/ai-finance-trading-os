@@ -130,26 +130,11 @@ def _gateway_base_url(key: str) -> str:
 
 
 def _get_api_key(provider: str) -> str | None:
-    """Read environment credentials; fall back to AWS SSM for Gemini only."""
+    """Read provider credentials exclusively from deployment environment variables."""
     config = PROVIDERS[provider]
     env_key = config["env_key"]
     value = os.getenv(env_key) if env_key else None
-    if value or provider != "gemini":
-        return value
-
-    parameter_name = os.getenv("GEMINI_API_KEY_PARAMETER", "/financial-os/gemini-api-key")
-    try:
-        import boto3
-
-        region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
-        client = boto3.client("ssm", region_name=region) if region else boto3.client("ssm")
-        response = client.get_parameter(Name=parameter_name, WithDecryption=True)
-        value = response.get("Parameter", {}).get("Value")
-        return value if isinstance(value, str) and value else None
-    except Exception as exc:
-        # Do not log secret values or AWS/provider response bodies.
-        logger.warning("Gemini key unavailable from AWS SSM (%s)", type(exc).__name__)
-        return None
+    return value.strip() if isinstance(value, str) and value.strip() else None
 
 
 def provider_status():

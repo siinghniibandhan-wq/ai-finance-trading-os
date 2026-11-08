@@ -11,6 +11,7 @@ import json
 import os
 import secrets
 import threading
+import time
 from datetime import datetime, timedelta
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -49,22 +50,34 @@ def require_gateway_secret(
         raise HTTPException(status_code=403, detail="Gateway authentication failed.")
 
 
+def _now_ist() -> datetime:
+    return datetime.now(ZoneInfo("Asia/Kolkata"))
+
+
 def _local_token_expiry() -> datetime:
-    now = datetime.now(ZoneInfo("Asia/Kolkata"))
-    tomorrow = (now + timedelta(days=1)).date()
-    return datetime.combine(tomorrow, datetime.min.time(), tzinfo=ZoneInfo("Asia/Kolkata")) - timedelta(seconds=60)
+    """Refresh before the earlier of the 12-hour token limit and midnight IST."""
+    now = _now_ist()
+    midnight = datetime.combine(
+        now.date() + timedelta(days=1),
+        datetime.min.time(),
+        tzinfo=ZoneInfo("Asia/Kolkata"),
+    )
+    return min(now + timedelta(hours=12), midnight) - timedelta(seconds=60)
 
 
-def _login_with_totp() -> str:
-    if not API_KEY:
-        raise HTTPException(status_code=503, detail="MSTOCK_API_KEY is not configured.")
-    if not TOTP_SECRET:
-        raise HTTPException(
-            status_code=503,
-            detail="Configure MSTOCK_TOTP_SECRET (m.Stock Trading API TOTP must be enabled) or a current MSTOCK_ACCESS_TOKEN.",
-        )
-    totp = pyotp.TOTP(TOTP_SECRET).now()
-    body = urlencode({"api_key": API_KEY, "totp": totp}).encode("utf-8")
+def _generate_fresh_totp(secret: str, *, next_period: bool = False) -> str:
+    """Generate TOTP away from a 30-second boundary to avoid sending an expiring code."""
+    totp = pyotp.TOTP(secret)
+    remaining = 30 - (int(time.time()) % 30)
+    if next_period:
+        time.sleep(remaining + 1)
+    elif remaining < 5:
+        time.sleep(remaining + 1)
+    return totp.now()
+
+
+def _post_totp_session(code: str) -> dict:
+    body = urlencode({"api_key": API_KEY, "totp": code}).encode("utf-8")
     request = Request(
         f"{API_BASE_URL}/openapi/typea/session/verifytotp",
         data=body,
@@ -79,17 +92,75 @@ def _login_with_totp() -> str:
         with urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
-        raise HTTPException(status_code=503, detail=f"m.Stock session refresh failed (HTTP {exc.code}).") from exc
+        try:
+            payload = json.loads(exc.read().decode("utf-8"))
+        except (ValueError, UnicodeDecodeError):
+            payload = {}
+        if _is_totp_rejection(payload, exc.code):
+            return payload
+        if exc.code == 403:
+            raise HTTPException(
+                status_code=503,
+                detail="m.Stock API key is invalid, expired, or suspended. Check the broker API subscription.",
+            ) from exc
+        raise HTTPException(
+            status_code=503,
+            detail=f"m.Stock authentication service rejected the request (HTTP {exc.code}).",
+        ) from exc
     except (URLError, TimeoutError) as exc:
         raise HTTPException(status_code=503, detail="Unable to reach m.Stock authentication service.") from exc
     except (ValueError, UnicodeDecodeError) as exc:
         raise HTTPException(status_code=502, detail="m.Stock authentication returned an invalid response.") from exc
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=502, detail="m.Stock authentication returned an invalid response.")
+    return payload
 
-    data = payload.get("data") if isinstance(payload, dict) else None
+
+def _is_totp_rejection(payload: dict, http_status: int | None = None) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    message = str(payload.get("message") or "").lower()
+    error_type = str(payload.get("error_type") or "").lower()
+    return (
+        (http_status in {400, 401} or payload.get("status") == "error")
+        and any(term in message or term in error_type for term in ("totp", "otp", "macm60", "ma400"))
+    )
+
+
+def _login_with_totp() -> str:
+    if not API_KEY:
+        raise HTTPException(status_code=503, detail="MSTOCK_API_KEY is not configured.")
+    if not TOTP_SECRET:
+        raise HTTPException(
+            status_code=503,
+            detail="MSTOCK_TOTP_SECRET is not configured; enable m.Stock Trading API TOTP.",
+        )
+
+    payload = _post_totp_session(_generate_fresh_totp(TOTP_SECRET))
+    if _is_totp_rejection(payload):
+        # A rejected code may have crossed a 30-second boundary in transit.
+        # Wait for the next period and make exactly one fresh attempt.
+        payload = _post_totp_session(_generate_fresh_totp(TOTP_SECRET, next_period=True))
+
+    if payload.get("status") not in {"success", True}:
+        if str(payload.get("error_type") or "").lower() in {"apikeyexception"}:
+            raise HTTPException(
+                status_code=503,
+                detail="m.Stock API key is invalid, expired, or suspended. Check the broker API subscription.",
+            )
+        raise HTTPException(
+            status_code=503,
+            detail="m.Stock TOTP authentication failed. Verify the TOTP secret, account setting, and server clock.",
+        )
+
+    data = payload.get("data")
     token = data.get("access_token") if isinstance(data, dict) else None
-    if not isinstance(token, str) or not token:
-        raise HTTPException(status_code=503, detail="m.Stock did not issue an access token; check TOTP and API credentials.")
-    return token
+    if not isinstance(token, str) or not token.strip():
+        raise HTTPException(
+            status_code=502,
+            detail="m.Stock authentication response did not contain an access token.",
+        )
+    return token.strip()
 
 
 def _get_access_token(force_refresh: bool = False) -> str:

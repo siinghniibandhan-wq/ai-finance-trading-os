@@ -35,10 +35,7 @@ from fastapi import APIRouter, HTTPException, Query
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = os.getenv(
-    "MSTOCK_GATEWAY_URL",
-    "http://54.153.201.74:8000",
-).rstrip("/")
+MSTOCK_GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
 
 # Cache the gateway's instrument master in this backend process. This is read-only
 # and deliberately does not change the search response or ranking behaviour.
@@ -54,6 +51,9 @@ _instrument_master_cache_lock = threading.Lock()
 
 
 def _get_instrument_master_csv():
+    if not MSTOCK_GATEWAY_URL:
+        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
+
     """Return the cached instrument-master CSV, refreshing it after the TTL."""
     now = time.monotonic()
     cached_text = _instrument_master_cache["text"]

@@ -632,7 +632,6 @@ function Dashboard() {
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  const API_BASE_URL = "https://wealthmanager.duckdns.org";
   const USER_ID = getCurrentUserId();
 
 
@@ -1082,8 +1081,6 @@ class TaxSectionErrorBoundary extends React.Component {
 // ============================================================
 
 function TaxPage() {
-  const API_BASE_URL =
-    "https://wealthmanager.duckdns.org";
   const USER_ID = getCurrentUserId();
 
   const [section, setSection] = useState("Overview");
@@ -2499,10 +2496,10 @@ function calculateTechnicalIndicators(rows) {
     bollingerUpper, bollingerMiddle, bollingerLower, vwap, atr14, stochasticK, obv };
 }
 
-// MARKETS WORKSPACE — existing read-only m.Stock/AWS APIs
+// MARKETS WORKSPACE — existing read-only m.Stock APIs
 // ============================================================
 function MarketsPage() {
-  const API = "https://wealthmanager.duckdns.org";
+  const API = API_BASE_URL;
   const [overview, setOverview] = useState(null);
   const [busy, setBusy] = useState(true);
   const [overviewError, setOverviewError] = useState("");
@@ -3125,7 +3122,6 @@ function MarketsPage() {
 
 function PlanPage() {
   // Persistent financial goals API. Keep USER_ID consistent with existing app.
-  const API_BASE_URL = "https://wealthmanager.duckdns.org";
   const USER_ID = getCurrentUserId();
   const categories = ["Emergency Fund", "Savings", "House", "Car", "Education", "Financial Independence", "Retirement", "Major Purchase", "Other"];
   const [goals, setGoals] = useState([]);
@@ -9529,7 +9525,6 @@ function FinanceDiaryPage() {
   </div>;
 }
 function ChartOfAccountsPage() {
-  const API_BASE_URL = "https://wealthmanager.duckdns.org";
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -9601,7 +9596,6 @@ function ChartOfAccountsPage() {
 }
 
 function LedgerPage() {
-  const API_BASE_URL = "https://wealthmanager.duckdns.org";
   const [entries, setEntries] = useState([]);
   const [totalDebit, setTotalDebit] = useState(0);
   const [totalCredit, setTotalCredit] = useState(0);
@@ -9739,8 +9733,6 @@ function Accounts() {
   // API CONFIGURATION
   // ----------------------------------------------------------
 
-  const API_BASE_URL =
-    "https://wealthmanager.duckdns.org";
 
   const USER_ID = getCurrentUserId();
 
@@ -10860,8 +10852,6 @@ function Budget() {
   // API CONFIGURATION
   // ----------------------------------------------------------
 
-  const API_BASE_URL =
-    "https://wealthmanager.duckdns.org";
 
   const USER_ID = getCurrentUserId();
 
@@ -12065,8 +12055,6 @@ const isLoanDisbursement = categories.some((category) =>
   // API CONFIGURATION
   // ----------------------------------------------------------
 
-  const API_BASE_URL =
-    "https://wealthmanager.duckdns.org";
 
   const USER_ID = getCurrentUserId();
 
@@ -13684,8 +13672,6 @@ function Category() {
   // API CONFIGURATION
   // ----------------------------------------------------------
 
-  const API_BASE_URL =
-    "https://wealthmanager.duckdns.org";
 
   const USER_ID = getCurrentUserId();
 
@@ -14722,11 +14708,8 @@ function Bills() {
   // API
   // ----------------------------------------------------------
 
-  const BILLS_API =
-    "https://wealthmanager.duckdns.org/api/bills";
+  const BILLS_API = `${API_BASE_URL}/api/bills`;
 
-  const API_BASE_URL =
-    "https://wealthmanager.duckdns.org";
 
 
   // ----------------------------------------------------------

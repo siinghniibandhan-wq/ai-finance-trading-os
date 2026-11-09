@@ -13,7 +13,6 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException
-from app.services.gateway_security import require_gateway_secret, require_secure_gateway_url
 
 # --------------------------------------------------
 # Router configuration
@@ -52,15 +51,13 @@ def fetch_index(index):
         "symbol": index["symbol"],
     })
 
-    gateway_url = require_secure_gateway_url(GATEWAY_URL)
-    gateway_secret = require_gateway_secret(os.getenv("MSTOCK_GATEWAY_SECRET", ""))
-    url = f"{gateway_url}/index-quote?{query}"
+    url = f"{GATEWAY_URL}/index-quote?{query}"
 
     request = Request(
         url,
         headers={
             "Accept": "application/json",
-            "X-Financial-OS-Gateway-Secret": gateway_secret,
+            "X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip(),
         },
         method="GET",
     )
@@ -112,11 +109,8 @@ def fetch_index(index):
 
 @router.get("/")
 def get_market_indices():
-    try:
-        require_secure_gateway_url(GATEWAY_URL)
-        require_gateway_secret(os.getenv("MSTOCK_GATEWAY_SECRET", ""))
-    except ValueError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if not GATEWAY_URL:
+        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
     indices = []
     errors = []
 

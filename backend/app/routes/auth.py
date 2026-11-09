@@ -86,6 +86,63 @@ def _clear_login_rate_limit(key: str) -> None:
         _login_attempts.pop(key, None)
 
 
+# Failed-password protection is tracked independently from general API limits.
+# Account buckets apply across IPs; IP buckets prevent spraying many identifiers.
+# The in-memory store is bounded and is a single-process protection layer.
+_FAILED_LOGIN_WINDOW_SECONDS = 15 * 60
+_FAILED_LOGIN_ACCOUNT_MAX = 5
+_FAILED_LOGIN_IP_MAX = 20
+_FAILED_LOGIN_STORE_MAX_KEYS = 50_000
+_failed_login_attempts: dict[str, deque[float]] = defaultdict(deque)
+_failed_login_lock = threading.Lock()
+
+
+def _check_failed_login_limits(identifier: str, client_ip: str) -> None:
+    now = time.monotonic()
+    keys_and_limits = (
+        (f"account:{identifier}", _FAILED_LOGIN_ACCOUNT_MAX),
+        (f"ip:{client_ip}", _FAILED_LOGIN_IP_MAX),
+    )
+    with _failed_login_lock:
+        if len(_failed_login_attempts) >= _FAILED_LOGIN_STORE_MAX_KEYS:
+            for stale_key, events in list(_failed_login_attempts.items()):
+                if not events or now - events[-1] >= _FAILED_LOGIN_WINDOW_SECONDS:
+                    _failed_login_attempts.pop(stale_key, None)
+        retry_after = 0
+        for key, limit in keys_and_limits:
+            events = _failed_login_attempts[key]
+            while events and now - events[0] >= _FAILED_LOGIN_WINDOW_SECONDS:
+                events.popleft()
+            if len(events) >= limit:
+                retry_after = max(
+                    retry_after,
+                    int(_FAILED_LOGIN_WINDOW_SECONDS - (now - events[0])) + 1,
+                )
+        if retry_after:
+            raise HTTPException(
+                status_code=429,
+                detail="Too many failed login attempts. Please try again in 15 minutes.",
+                headers={"Retry-After": str(max(1, retry_after)), "Cache-Control": "no-store"},
+            )
+
+
+def _record_failed_login(identifier: str, client_ip: str) -> None:
+    now = time.monotonic()
+    with _failed_login_lock:
+        for key in (f"account:{identifier}", f"ip:{client_ip}"):
+            events = _failed_login_attempts[key]
+            while events and now - events[0] >= _FAILED_LOGIN_WINDOW_SECONDS:
+                events.popleft()
+            events.append(now)
+
+
+def _clear_failed_login(identifier: str) -> None:
+    # A valid password resets the account's consecutive-failure counter.
+    # Do not clear the IP bucket: that would erase failures against other accounts.
+    with _failed_login_lock:
+        _failed_login_attempts.pop(f"account:{identifier}", None)
+
+
 class RegisterRequest(BaseModel):
     name: str = Field(min_length=1, max_length=150)
     email: str = Field(min_length=5, max_length=255)
@@ -252,8 +309,8 @@ def login(request: LoginRequest, http_request: Request, db: Session = Depends(ge
     identifier = str(request.email).strip().lower()
     if "@" not in identifier:
         identifier = re.sub(r"[\\s().-]", "", identifier)
-    rate_limit_key = _login_rate_limit_key(http_request, identifier)
-    _check_login_rate_limit(rate_limit_key)
+    client_ip = _client_ip(http_request)
+    _check_failed_login_limits(identifier, client_ip)
     user = db.query(User).filter(
         (User.email == identifier) | (User.phone_number == identifier),
         User.is_active.is_(True),
@@ -261,8 +318,9 @@ def login(request: LoginRequest, http_request: Request, db: Session = Depends(ge
     credential = db.query(UserCredential).filter(UserCredential.user_id == user.id).first() if user else None
     password_ok = _verify_password(request.password, credential.password_hash if credential else _DUMMY_PASSWORD_HASH)
     if not user or not credential or not password_ok:
+        _record_failed_login(identifier, client_ip)
         raise HTTPException(status_code=401, detail="Invalid email/phone number or password.")
-    _clear_login_rate_limit(rate_limit_key)
+    _clear_failed_login(identifier)
     if _password_needs_rehash(credential.password_hash):
         credential.password_hash = _hash_password(request.password)
     access_token = _issue_token(user.id, db)

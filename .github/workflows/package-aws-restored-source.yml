@@ -19,7 +19,7 @@ jobs:
           ref: ${{ github.sha }}
       - name: Create source archive
         run: |
-          zip -r financial-os-aws-restored.zip . \
+          zip -r /tmp/financial-os-aws-restored.zip . \
             -x ".git/*" \
                "*/node_modules/*" \
                "*/.venv/*" \
@@ -29,6 +29,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: financial-os-aws-restored-source
-          path: financial-os-aws-restored.zip
+          path: /tmp/financial-os-aws-restored.zip
           if-no-files-found: error
           retention-days: 30

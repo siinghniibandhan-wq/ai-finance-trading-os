@@ -4,8 +4,11 @@
 # ============================================================
 
 import os
+import threading
+import time
+from collections import defaultdict, deque
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect, text
 
@@ -266,7 +269,8 @@ if os.getenv("VERCEL") != "1":
 
 # Interactive API docs list every endpoint to anyone who can reach the server.
 # They are off unless ENABLE_API_DOCS=1 is set (for example on a dev machine).
-_docs_enabled = os.getenv("ENABLE_API_DOCS", "").strip() == "1"
+APP_ENV = os.getenv("APP_ENV", "production").strip().lower()
+_docs_enabled = APP_ENV in {"development", "local", "test"} and os.getenv("ENABLE_API_DOCS", "").strip() == "1"
 
 app = FastAPI(
     title="Financial OS API",
@@ -334,33 +338,61 @@ async def plain_language_errors(request: Request, call_next):
 
 
 _raw_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").strip()
-
-# Keep the existing DuckDNS API/domain setup. Explicitly trust the deployed
-# Amplify frontend origin so browser login/API calls are not rejected by CORS.
-# Any additional production frontend origins can still be configured through
-# CORS_ALLOWED_ORIGINS.
-CORS_ALLOWED_ORIGINS = [
-    origin.strip().rstrip("/")
-    for origin in _raw_cors_origins.split(",")
-    if origin.strip()
-]
-CORS_ALLOWED_ORIGINS.extend([
-    "https://main.d1qcu413dz9f9e.amplifyapp.com",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-])
-# Remove duplicates while preserving order.
+CORS_ALLOWED_ORIGINS = [origin.strip().rstrip("/") for origin in _raw_cors_origins.split(",") if origin.strip()]
+CORS_ALLOWED_ORIGINS.append("https://main.d1qcu413dz9f9e.amplifyapp.com")
+if APP_ENV in {"development", "local", "test"}:
+    CORS_ALLOWED_ORIGINS.extend(["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"])
 CORS_ALLOWED_ORIGINS = list(dict.fromkeys(CORS_ALLOWED_ORIGINS))
+if "*" in CORS_ALLOWED_ORIGINS:
+    raise RuntimeError("CORS_ALLOWED_ORIGINS must contain exact origins; wildcard origins are forbidden.")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept", "Origin"],
-)
+
+# API RATE LIMITING — process-local first layer; add AWS WAF/shared proxy limits for multi-worker deployments.
+_RATE_LIMIT_DEFAULT_MAX = 120
+_RATE_LIMIT_DEFAULT_WINDOW = 60
+_RATE_LIMIT_MAX_KEYS = 50000
+_rate_limit_buckets: dict[str, deque[float]] = defaultdict(deque)
+_rate_limit_lock = threading.Lock()
+_RATE_LIMIT_POLICIES = {"/api/auth/login": (10, 60), "/api/auth/register": (5, 3600)}
+_RATE_LIMIT_PREFIX_POLICIES = (("/api/ai/", (20, 600)), ("/api/broker-orders", (10, 60)))
+
+
+def _rate_limit_client_ip(request: Request) -> str:
+    try:
+        trusted_proxy_count = max(0, int(os.getenv("TRUSTED_PROXY_COUNT", "0") or 0))
+    except ValueError:
+        trusted_proxy_count = 0
+    forwarded = [part.strip() for part in request.headers.get("x-forwarded-for", "").split(",") if part.strip()]
+    if trusted_proxy_count and len(forwarded) >= trusted_proxy_count:
+        return forwarded[-trusted_proxy_count]
+    return request.client.host if request.client else "unknown"
+
+
+@app.middleware("http")
+async def enforce_api_rate_limits(request: Request, call_next):
+    path = request.url.path
+    if not path.startswith("/api/") or request.method == "OPTIONS":
+        return await call_next(request)
+    limit, window = _RATE_LIMIT_POLICIES.get(path, (_RATE_LIMIT_DEFAULT_MAX, _RATE_LIMIT_DEFAULT_WINDOW))
+    for prefix, policy in _RATE_LIMIT_PREFIX_POLICIES:
+        if path.startswith(prefix):
+            limit, window = policy
+            break
+    now = time.monotonic()
+    bucket_key = f"{_rate_limit_client_ip(request)}:{path}"
+    with _rate_limit_lock:
+        if len(_rate_limit_buckets) >= _RATE_LIMIT_MAX_KEYS:
+            for key, events in list(_rate_limit_buckets.items()):
+                if not events or now - events[-1] >= 3600:
+                    _rate_limit_buckets.pop(key, None)
+        events = _rate_limit_buckets[bucket_key]
+        while events and now - events[0] >= window:
+            events.popleft()
+        if len(events) >= limit:
+            retry_after = max(1, int(window - (now - events[0])))
+            return JSONResponse(status_code=429, content={"detail": "Too many requests. Please wait before trying again."}, headers={"Retry-After": str(retry_after), "Cache-Control": "no-store"})
+        events.append(now)
+    return await call_next(request)
 
 
 # ============================================================
@@ -375,7 +407,20 @@ async def add_security_headers(request, call_next):
     response.headers.setdefault("Referrer-Policy", "no-referrer")
     response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     response.headers.setdefault("Cache-Control", "no-store")
+    response.headers.setdefault("Content-Security-Policy", "default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+    response.headers.setdefault("X-Permitted-Cross-Domain-Policies", "none")
     return response
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin"],
+)
 
 
 # ============================================================
@@ -402,7 +447,7 @@ def health():
             connection.execute(text("SELECT 1"))
     except Exception:
         raise HTTPException(status_code=503, detail="Database unavailable.")
-    return {"status": "healthy", "database": "connected"}
+    return {"status": "healthy"}
 
 
 # ============================================================
@@ -412,68 +457,72 @@ def health():
 # ------------------------------------------------------------
 # CORE FINANCIAL OS
 # ------------------------------------------------------------
-app.include_router(auth.router)
-app.include_router(profile.router)
-app.include_router(ai_assistant.router)
-app.include_router(broker_orders.router)
-app.include_router(broker_reconciliation.router)
+# Business/data routers are private by default; auth registration/login remain public.
+def _include_private_router(router):
+    app.include_router(router, dependencies=[Depends(auth.get_current_user)])
 
-app.include_router(users.router)
-app.include_router(loans.router)
-app.include_router(accounts.router)
-app.include_router(chart_of_accounts.router)
-app.include_router(ledger.router)
-app.include_router(categories.router)
-app.include_router(transactions.router)
-app.include_router(dashboard.router)
-app.include_router(budgets.router)
-app.include_router(bills.router)
-app.include_router(investments.router)
-app.include_router(market.router)
-app.include_router(market_overview.router)
-app.include_router(market_quote.router)
-app.include_router(market_search.router)
-app.include_router(mutual_fund_search.router)
-app.include_router(market_history.router)
-app.include_router(market_charts.router)
-app.include_router(watchlist.router)
-app.include_router(market_movers.router)
-app.include_router(market_indices.router)
-app.include_router(investment_transactions.router)
-app.include_router(holdings.router)
-app.include_router(investment_pnl.router)
-app.include_router(finance_diary.router)
+app.include_router(auth.router)
+_include_private_router(profile.router)
+_include_private_router(ai_assistant.router)
+_include_private_router(broker_orders.router)
+_include_private_router(broker_reconciliation.router)
+
+_include_private_router(users.router)
+_include_private_router(loans.router)
+_include_private_router(accounts.router)
+_include_private_router(chart_of_accounts.router)
+_include_private_router(ledger.router)
+_include_private_router(categories.router)
+_include_private_router(transactions.router)
+_include_private_router(dashboard.router)
+_include_private_router(budgets.router)
+_include_private_router(bills.router)
+_include_private_router(investments.router)
+_include_private_router(market.router)
+_include_private_router(market_overview.router)
+_include_private_router(market_quote.router)
+_include_private_router(market_search.router)
+_include_private_router(mutual_fund_search.router)
+_include_private_router(market_history.router)
+_include_private_router(market_charts.router)
+_include_private_router(watchlist.router)
+_include_private_router(market_movers.router)
+_include_private_router(market_indices.router)
+_include_private_router(investment_transactions.router)
+_include_private_router(holdings.router)
+_include_private_router(investment_pnl.router)
+_include_private_router(finance_diary.router)
 
 
 # ------------------------------------------------------------
 # FINANCIAL DATA & ANALYTICS
 # ------------------------------------------------------------
 
-app.include_router(financial_summary.router)
-app.include_router(financial_analytics.router)
-app.include_router(financial_plan.router)
-app.include_router(goals.router)
+_include_private_router(financial_summary.router)
+_include_private_router(financial_analytics.router)
+_include_private_router(financial_plan.router)
+_include_private_router(goals.router)
 
 
 # ------------------------------------------------------------
 # TAX DATA & CAPITAL GAINS
 # ------------------------------------------------------------
 
-app.include_router(tax_data.router)
-app.include_router(capital_gains.router)
-app.include_router(capital_gains_classification.router)
-app.include_router(asset_classification.router)
-app.include_router(tax_calculation.router)
-app.include_router(tax_context.router)
+_include_private_router(tax_data.router)
+_include_private_router(capital_gains.router)
+_include_private_router(capital_gains_classification.router)
+_include_private_router(asset_classification.router)
+_include_private_router(tax_calculation.router)
+_include_private_router(tax_context.router)
 
 
 # ------------------------------------------------------------
 # TAX LIABILITY & INCOME ENGINES
 # ------------------------------------------------------------
 
-app.include_router(tax_liability.router)
-app.include_router(income_tax_loss_setoff.router)
-app.include_router(income_tax_aggregation.router)
+_include_private_router(tax_liability.router)
+_include_private_router(income_tax_loss_setoff.router)
+_include_private_router(income_tax_aggregation.router)
 
 
 # ------------------------------------------------------------
@@ -481,7 +530,7 @@ app.include_router(income_tax_aggregation.router)
 # DEDUCTIONS & EXEMPT INCOME
 # ------------------------------------------------------------
 
-app.include_router(
+_include_private_router(
     deductions_exempt_income.router
 )
 
@@ -489,7 +538,7 @@ app.include_router(
 # MODULE 11
 # FINAL TAXABLE INCOME
 # ------------------------------------------------------------
-app.include_router(
+_include_private_router(
     final_taxable_income.router
 )
 
@@ -497,14 +546,14 @@ app.include_router(
 # MODULE 12
 # FINAL TAXABLE LIABILITY
 # ------------------------------------------------------------
-app.include_router(final_tax_liability.router)
+_include_private_router(final_tax_liability.router)
 
 
 # ------------------------------------------------------------
 # MODULE 13
 # ITR READY TAX REPORT
 # ------------------------------------------------------------
-app.include_router(itr_ready_tax_report.router)
-app.include_router(tax_business_income.router)
-app.include_router(tax_house_property.router)
-app.include_router(tax_review.router)
+_include_private_router(itr_ready_tax_report.router)
+_include_private_router(tax_business_income.router)
+_include_private_router(tax_house_property.router)
+_include_private_router(tax_review.router)

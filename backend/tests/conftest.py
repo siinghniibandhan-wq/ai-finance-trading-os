@@ -9,5 +9,3 @@ os.environ.setdefault("DATABASE_URL", "sqlite:////tmp/financial-os-unit-test-imp
 # Market-data unit tests mock the gateway transport. Provide a non-production
 # base URL so request construction is valid without contacting a live service.
 os.environ.setdefault("MSTOCK_GATEWAY_URL", "http://127.0.0.1:8000")
-
-os.environ.setdefault("MSTOCK_GATEWAY_SECRET", "unit-test-gateway-secret-00000000000000000000000000000000")

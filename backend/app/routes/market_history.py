@@ -158,6 +158,12 @@ def get_market_history(
     # We first use the existing instrument master.
     # --------------------------------------------------------
 
+    from app.services.gateway_security import require_secure_gateway_url
+    try:
+        gateway_url = require_secure_gateway_url(MSTOCK_GATEWAY_URL)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
     search_url = (
         f"{gateway_url}/instruments"
     )

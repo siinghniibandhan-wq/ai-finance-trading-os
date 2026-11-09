@@ -31,3 +31,11 @@ def require_secure_gateway_url(base_url: str) -> str:
             "MSTOCK_GATEWAY_URL must use HTTPS; HTTP is allowed only for a loopback service."
         )
     return value
+
+
+def require_gateway_secret(secret: str) -> str:
+    """Require a strong server-side shared secret for gateway-to-backend calls."""
+    value = (secret or "").strip()
+    if len(value) < 32:
+        raise ValueError("MSTOCK_GATEWAY_SECRET must be configured with at least 32 characters.")
+    return value

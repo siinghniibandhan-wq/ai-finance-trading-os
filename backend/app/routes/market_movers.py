@@ -28,6 +28,7 @@ from urllib.error import HTTPError, URLError
 import json
 
 from fastapi import APIRouter, HTTPException, Query
+from app.services.gateway_security import require_secure_gateway_url
 
 
 router = APIRouter(
@@ -53,8 +54,7 @@ def fetch_movers(
     segment: int,
     type_flag: str,
 ):
-    if not MSTOCK_GATEWAY_URL:
-        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
+    gateway_url = require_secure_gateway_url(MSTOCK_GATEWAY_URL)
     payload = urlencode({
         "Exchange": exchange,
         "SecurityIdCode": security_id_code,
@@ -63,7 +63,7 @@ def fetch_movers(
     }).encode("utf-8")
 
     request = Request(
-        f"{MSTOCK_GATEWAY_URL}/gainers-losers",
+        f"{gateway_url}/gainers-losers",
         data=payload,
         method="POST",
         headers={

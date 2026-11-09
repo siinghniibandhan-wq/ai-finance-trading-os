@@ -34,10 +34,8 @@ from fastapi import APIRouter, HTTPException, Query
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = os.getenv(
-    "MSTOCK_GATEWAY_URL",
-    "http://54.153.201.74:8000",
-).rstrip("/")
+MSTOCK_GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
+MSTOCK_GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
 
 
 # ============================================================
@@ -161,14 +159,14 @@ def get_market_history(
     # --------------------------------------------------------
 
     search_url = (
-        f"{MSTOCK_GATEWAY_URL}/instruments"
+        f"{gateway_url}/instruments"
     )
 
     try:
-        search_request = Request(
-            search_url,
-            method="GET",
-        )
+        search_headers = {"Accept": "text/csv"}
+        if MSTOCK_GATEWAY_SECRET:
+            search_headers["X-Financial-OS-Gateway-Secret"] = MSTOCK_GATEWAY_SECRET
+        search_request = Request(search_url, headers=search_headers, method="GET")
 
         with urlopen(
             search_request,
@@ -265,7 +263,7 @@ def get_market_history(
     # --------------------------------------------------------
 
     historical_url = (
-        f"{MSTOCK_GATEWAY_URL}/historical/"
+        f"{gateway_url}/historical/"
         f"{cleaned_exchange}/"
         f"{instrument_token}/"
         f"{cleaned_interval}"
@@ -277,8 +275,12 @@ def get_market_history(
     })
 
     try:
+        historical_headers = {"Accept": "application/json"}
+        if MSTOCK_GATEWAY_SECRET:
+            historical_headers["X-Financial-OS-Gateway-Secret"] = MSTOCK_GATEWAY_SECRET
         historical_request = Request(
             f"{historical_url}?{query_string}",
+            headers=historical_headers,
             method="GET",
         )
 

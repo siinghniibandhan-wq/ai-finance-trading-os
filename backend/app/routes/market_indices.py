@@ -13,6 +13,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException
+from app.services.gateway_security import require_secure_gateway_url
 
 # --------------------------------------------------
 # Router configuration
@@ -51,7 +52,8 @@ def fetch_index(index):
         "symbol": index["symbol"],
     })
 
-    url = f"{GATEWAY_URL}/index-quote?{query}"
+    gateway_url = require_secure_gateway_url(GATEWAY_URL)
+    url = f"{gateway_url}/index-quote?{query}"
 
     request = Request(
         url,

@@ -34,6 +34,8 @@ def test_ip_limit_applies_across_different_login_identifiers():
 def test_successful_login_clears_account_failures_but_not_ip_failures():
     for _ in range(5):
         auth._record_failed_login("user@example.test", "198.51.100.10")
+    for index in range(15):
+        auth._record_failed_login(f"other{index}@example.test", "198.51.100.10")
 
     auth._clear_failed_login("user@example.test")
 

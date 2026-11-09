@@ -23,8 +23,8 @@
 
 ## Frontend exposure boundary
 
-The API hostname and request paths are necessarily visible in browser network traffic. A Vite `VITE_*` value is public after build and must never contain a credential. The API URL remains public configuration; database, broker, AWS and AI-provider secrets must stay server-side. A same-origin reverse proxy can remove the hardcoded API hostname from the bundle, but browser requests remain inspectable.
+The API hostname and request paths are necessarily visible in browser network traffic. A Vite `VITE_*` value is public after build and must never contain a credential. The API URL remains public configuration; database, broker, AWS and AI-provider secrets must stay server-side. A same-origin reverse proxy can remove the hardcoded API hostname from the bundle, but browser requests remain inspectable. The current bearer token is stored in `sessionStorage`: it is not a bundled API key, but JavaScript can read it if an XSS vulnerability is introduced. Moving to HttpOnly cookies requires a coordinated same-site/CSRF design and is not a safe one-file change.
 
 ## Verification boundary
 
-CI checks source-level controls, dependency advisories and committed-secret patterns. It cannot verify live EC2 security groups, nginx/ALB TLS, WAF rules, SSM values, database network exposure or deployed CORS headers. Those require an AWS-side deployment audit.
+CI checks source-level controls, dependency advisories and committed-secret patterns. The repository currently has no committed npm or Python dependency lockfile, so dependency resolution is audited on each CI run but is not fully reproducible between installs. CI cannot verify live EC2 security groups, nginx/ALB TLS, WAF rules, SSM values, database network exposure or deployed CORS headers. Those require an AWS-side deployment audit.

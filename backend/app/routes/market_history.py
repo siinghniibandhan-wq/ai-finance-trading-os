@@ -158,9 +158,10 @@ def get_market_history(
     # We first use the existing instrument master.
     # --------------------------------------------------------
 
-    from app.services.gateway_security import require_secure_gateway_url
+    from app.services.gateway_security import require_gateway_secret, require_secure_gateway_url
     try:
         gateway_url = require_secure_gateway_url(MSTOCK_GATEWAY_URL)
+        gateway_secret = require_gateway_secret(MSTOCK_GATEWAY_SECRET)
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
@@ -169,9 +170,7 @@ def get_market_history(
     )
 
     try:
-        search_headers = {"Accept": "text/csv"}
-        if MSTOCK_GATEWAY_SECRET:
-            search_headers["X-Financial-OS-Gateway-Secret"] = MSTOCK_GATEWAY_SECRET
+        search_headers = {"Accept": "text/csv", "X-Financial-OS-Gateway-Secret": gateway_secret}
         search_request = Request(search_url, headers=search_headers, method="GET")
 
         with urlopen(
@@ -281,9 +280,7 @@ def get_market_history(
     })
 
     try:
-        historical_headers = {"Accept": "application/json"}
-        if MSTOCK_GATEWAY_SECRET:
-            historical_headers["X-Financial-OS-Gateway-Secret"] = MSTOCK_GATEWAY_SECRET
+        historical_headers = {"Accept": "application/json", "X-Financial-OS-Gateway-Secret": gateway_secret}
         historical_request = Request(
             f"{historical_url}?{query_string}",
             headers=historical_headers,

@@ -28,6 +28,7 @@ from io import StringIO
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from urllib.parse import urlsplit
+from app.services.gateway_security import require_gateway_secret
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -78,9 +79,11 @@ def _get_instrument_master_csv():
             return cached_text
 
         try:
-            gateway_headers = {"Accept": "text/csv"}
-            if MSTOCK_GATEWAY_SECRET:
-                gateway_headers["X-Financial-OS-Gateway-Secret"] = MSTOCK_GATEWAY_SECRET
+            try:
+                gateway_secret = require_gateway_secret(MSTOCK_GATEWAY_SECRET)
+            except ValueError as exc:
+                raise HTTPException(status_code=503, detail=str(exc)) from exc
+            gateway_headers = {"Accept": "text/csv", "X-Financial-OS-Gateway-Secret": gateway_secret}
             request = Request(f"{_instrument_gateway_url()}/instruments", headers=gateway_headers, method="GET")
             with urlopen(request, timeout=8) as response:
                 status_code = response.status

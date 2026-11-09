@@ -25,7 +25,7 @@ def test_auth_login_remains_public_for_sign_in():
 def test_api_rate_limit_returns_429_and_retry_after(monkeypatch):
     monkeypatch.setattr(main, "_RATE_LIMIT_DEFAULT_MAX", 1)
     first = client.get("/api/auth/me")
-    second = client.get("/api/auth/me")
+    second = client.get("/api/accounts/")
     assert first.status_code == 401
     assert second.status_code == 429
     assert int(second.headers["Retry-After"]) >= 1

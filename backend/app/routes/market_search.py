@@ -27,8 +27,6 @@ import time
 from io import StringIO
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-from urllib.parse import urlsplit
-from app.services.gateway_security import require_gateway_secret
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -37,19 +35,10 @@ from fastapi import APIRouter, HTTPException, Query
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
-MSTOCK_GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
-
-
-def _instrument_gateway_url() -> str:
-    if not MSTOCK_GATEWAY_URL:
-        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
-    parsed = urlsplit(MSTOCK_GATEWAY_URL)
-    loopback_http = parsed.scheme == "http" and parsed.hostname in {"127.0.0.1", "localhost"} and not parsed.username and not parsed.password
-    secure_remote = parsed.scheme == "https" and bool(parsed.hostname) and not parsed.username and not parsed.password
-    if not (loopback_http or secure_remote):
-        raise HTTPException(status_code=503, detail="Market data gateway must use HTTPS; HTTP is allowed only for a loopback service.")
-    return MSTOCK_GATEWAY_URL
+MSTOCK_GATEWAY_URL = os.getenv(
+    "MSTOCK_GATEWAY_URL",
+    "http://54.153.201.74:8000",
+).rstrip("/")
 
 # Cache the gateway's instrument master in this backend process. This is read-only
 # and deliberately does not change the search response or ranking behaviour.
@@ -79,12 +68,7 @@ def _get_instrument_master_csv():
             return cached_text
 
         try:
-            try:
-                gateway_secret = require_gateway_secret(MSTOCK_GATEWAY_SECRET)
-            except ValueError as exc:
-                raise HTTPException(status_code=503, detail=str(exc)) from exc
-            gateway_headers = {"Accept": "text/csv", "X-Financial-OS-Gateway-Secret": gateway_secret}
-            request = Request(f"{_instrument_gateway_url()}/instruments", headers=gateway_headers, method="GET")
+            request = Request(f"{MSTOCK_GATEWAY_URL}/instruments", method="GET")
             with urlopen(request, timeout=8) as response:
                 status_code = response.status
                 response_text = response.read().decode("utf-8", errors="replace")

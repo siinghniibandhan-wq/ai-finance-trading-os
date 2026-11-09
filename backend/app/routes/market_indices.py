@@ -13,7 +13,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException
-from app.services.gateway_security import require_secure_gateway_url
+from app.services.gateway_security import require_gateway_secret, require_secure_gateway_url
 
 # --------------------------------------------------
 # Router configuration
@@ -53,13 +53,14 @@ def fetch_index(index):
     })
 
     gateway_url = require_secure_gateway_url(GATEWAY_URL)
+    gateway_secret = require_gateway_secret(os.getenv("MSTOCK_GATEWAY_SECRET", ""))
     url = f"{gateway_url}/index-quote?{query}"
 
     request = Request(
         url,
         headers={
             "Accept": "application/json",
-            "X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip(),
+            "X-Financial-OS-Gateway-Secret": gateway_secret,
         },
         method="GET",
     )

@@ -34,8 +34,10 @@ from fastapi import APIRouter, HTTPException, Query
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
-MSTOCK_GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
+MSTOCK_GATEWAY_URL = os.getenv(
+    "MSTOCK_GATEWAY_URL",
+    "http://54.153.201.74:8000",
+).rstrip("/")
 
 
 # ============================================================
@@ -158,20 +160,15 @@ def get_market_history(
     # We first use the existing instrument master.
     # --------------------------------------------------------
 
-    from app.services.gateway_security import require_gateway_secret, require_secure_gateway_url
-    try:
-        gateway_url = require_secure_gateway_url(MSTOCK_GATEWAY_URL)
-        gateway_secret = require_gateway_secret(MSTOCK_GATEWAY_SECRET)
-    except ValueError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-
     search_url = (
-        f"{gateway_url}/instruments"
+        f"{MSTOCK_GATEWAY_URL}/instruments"
     )
 
     try:
-        search_headers = {"Accept": "text/csv", "X-Financial-OS-Gateway-Secret": gateway_secret}
-        search_request = Request(search_url, headers=search_headers, method="GET")
+        search_request = Request(
+            search_url,
+            method="GET",
+        )
 
         with urlopen(
             search_request,
@@ -268,7 +265,7 @@ def get_market_history(
     # --------------------------------------------------------
 
     historical_url = (
-        f"{gateway_url}/historical/"
+        f"{MSTOCK_GATEWAY_URL}/historical/"
         f"{cleaned_exchange}/"
         f"{instrument_token}/"
         f"{cleaned_interval}"
@@ -280,10 +277,8 @@ def get_market_history(
     })
 
     try:
-        historical_headers = {"Accept": "application/json", "X-Financial-OS-Gateway-Secret": gateway_secret}
         historical_request = Request(
             f"{historical_url}?{query_string}",
-            headers=historical_headers,
             method="GET",
         )
 

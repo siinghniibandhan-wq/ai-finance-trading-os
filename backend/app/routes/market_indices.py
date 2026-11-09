@@ -112,8 +112,11 @@ def fetch_index(index):
 
 @router.get("/")
 def get_market_indices():
-    if not GATEWAY_URL:
-        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
+    try:
+        require_secure_gateway_url(GATEWAY_URL)
+        require_gateway_secret(os.getenv("MSTOCK_GATEWAY_SECRET", ""))
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     indices = []
     errors = []
 

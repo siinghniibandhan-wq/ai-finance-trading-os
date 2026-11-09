@@ -373,13 +373,19 @@ async def enforce_api_rate_limits(request: Request, call_next):
     path = request.url.path
     if not path.startswith("/api/") or request.method == "OPTIONS":
         return await call_next(request)
-    limit, window = _RATE_LIMIT_POLICIES.get(path, (_RATE_LIMIT_DEFAULT_MAX, _RATE_LIMIT_DEFAULT_WINDOW))
-    for prefix, policy in _RATE_LIMIT_PREFIX_POLICIES:
-        if path.startswith(prefix):
-            limit, window = policy
-            break
+    scope = "api"
+    limit, window = _RATE_LIMIT_DEFAULT_MAX, _RATE_LIMIT_DEFAULT_WINDOW
+    if path in _RATE_LIMIT_POLICIES:
+        scope = path
+        limit, window = _RATE_LIMIT_POLICIES[path]
+    else:
+        for prefix, policy in _RATE_LIMIT_PREFIX_POLICIES:
+            if path.startswith(prefix):
+                scope = prefix
+                limit, window = policy
+                break
     now = time.monotonic()
-    bucket_key = f"{_rate_limit_client_ip(request)}:{path}"
+    bucket_key = f"{_rate_limit_client_ip(request)}:{scope}"
     with _rate_limit_lock:
         if len(_rate_limit_buckets) >= _RATE_LIMIT_MAX_KEYS:
             for key, events in list(_rate_limit_buckets.items()):

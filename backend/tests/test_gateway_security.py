@@ -25,3 +25,13 @@ def test_loopback_http_gateway_is_allowed(url):
 def test_insecure_or_ambiguous_gateway_urls_are_rejected(url):
     with pytest.raises(ValueError):
         require_secure_gateway_url(url)
+
+
+def test_gateway_secret_must_be_present_and_strong():
+    from app.services.gateway_security import require_gateway_secret
+
+    with pytest.raises(ValueError):
+        require_gateway_secret("")
+    with pytest.raises(ValueError):
+        require_gateway_secret("short")
+    assert len(require_gateway_secret("x" * 48)) == 48

@@ -4,7 +4,7 @@ Financial OS — Market Search Engine v1.0
 Purpose:
 - Search the m.Stock instrument master.
 - Keep market-search logic separate from market.py.
-- Use the existing m.Stock Gateway.
+- Use the existing AWS m.Stock Gateway.
 - Read-only.
 - No database writes.
 - Uses Python standard library only.
@@ -15,7 +15,7 @@ Client
    ↓
 Financial OS Market Search Engine
    ↓
-m.Stock Gateway /instruments
+AWS m.Stock Gateway /instruments
    ↓
 m.Stock Script Master
 """
@@ -35,7 +35,10 @@ from fastapi import APIRouter, HTTPException, Query
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
+MSTOCK_GATEWAY_URL = os.getenv(
+    "MSTOCK_GATEWAY_URL",
+    "http://54.153.201.74:8000",
+).rstrip("/")
 
 # Cache the gateway's instrument master in this backend process. This is read-only
 # and deliberately does not change the search response or ranking behaviour.
@@ -52,8 +55,6 @@ _instrument_master_cache_lock = threading.Lock()
 
 def _get_instrument_master_csv():
     """Return the cached instrument-master CSV, refreshing it after the TTL."""
-    if not MSTOCK_GATEWAY_URL:
-        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
     now = time.monotonic()
     cached_text = _instrument_master_cache["text"]
     if cached_text is not None and now - _instrument_master_cache["loaded_at"] < MARKET_INSTRUMENT_CACHE_TTL_SECONDS:
@@ -66,19 +67,8 @@ def _get_instrument_master_csv():
         if cached_text is not None and now - _instrument_master_cache["loaded_at"] < MARKET_INSTRUMENT_CACHE_TTL_SECONDS:
             return cached_text
 
-        gateway_secret = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
-        if not gateway_secret:
-            raise HTTPException(
-                status_code=503,
-                detail="Market gateway authentication is not configured.",
-            )
-
         try:
-            request = Request(
-                f"{MSTOCK_GATEWAY_URL}/instruments",
-                headers={"X-Financial-OS-Gateway-Secret": gateway_secret},
-                method="GET",
-            )
+            request = Request(f"{MSTOCK_GATEWAY_URL}/instruments", method="GET")
             with urlopen(request, timeout=8) as response:
                 status_code = response.status
                 response_text = response.read().decode("utf-8", errors="replace")
@@ -473,7 +463,7 @@ def search_market(
         "results": results,
         "source": {
             "provider": "m.Stock",
-            "gateway": "m.Stock Gateway",
+            "gateway": "AWS Gateway",
             "endpoint": "/instruments",
             "cache_age_seconds": max(0, int(time.monotonic() - _instrument_master_cache["loaded_at"])),
             "stale": bool(_instrument_master_cache.get("stale")),

@@ -1,12 +1,11 @@
 // ============================================================
 // FINANCIAL OS — AUTHENTICATED API CLIENT
-// Same-origin API by default; VITE_API_BASE_URL can override it.
+// AWS backend + session management
 // ============================================================
 
-export const API_BASE_URL = (
+export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  (typeof window !== "undefined" ? window.location.origin : "http://localhost")
-).replace(/\/+$/, "");
+  "https://wealthmanager.duckdns.org";
 
 // ============================================================
 // SESSION MANAGEMENT

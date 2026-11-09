@@ -1,4 +1,0 @@
-fastapi==0.157.0
-pyotp>=2.9.0
-psycopg[binary]==3.2.3
-cryptography>=42

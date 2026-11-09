@@ -3,7 +3,7 @@ Financial OS — Historical Market Data Engine v1.0
 
 Purpose:
 - Provide historical OHLCV market data to Financial OS.
-- Use the existing m.Stock Gateway.
+- Use the existing AWS m.Stock Gateway.
 - Keep historical-data logic separate from market.py.
 - Read-only.
 - No database writes.
@@ -15,7 +15,7 @@ Client
    ↓
 Financial OS Historical Market Data Engine
    ↓
-m.Stock Gateway /historical
+AWS m.Stock Gateway /historical
    ↓
 m.Stock Historical Market Data
 """
@@ -34,15 +34,10 @@ from fastapi import APIRouter, HTTPException, Query
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
-MSTOCK_GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
-
-
-def _gateway_headers():
-    """Authenticate backend-to-gateway requests without exposing broker credentials."""
-    if not MSTOCK_GATEWAY_SECRET:
-        raise HTTPException(status_code=503, detail="Market gateway authentication is not configured.")
-    return {"X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET}
+MSTOCK_GATEWAY_URL = os.getenv(
+    "MSTOCK_GATEWAY_URL",
+    "http://54.153.201.74:8000",
+).rstrip("/")
 
 
 # ============================================================
@@ -158,13 +153,10 @@ def get_market_history(
             detail="The start date must be on or before the end date.",
         )
 
-    if not MSTOCK_GATEWAY_URL:
-        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
-
     # --------------------------------------------------------
     # Resolve symbol through Market Search
     #
-    # The m.Stock historical endpoint requires an instrument token.
+    # The AWS historical endpoint requires an instrument token.
     # We first use the existing instrument master.
     # --------------------------------------------------------
 
@@ -175,7 +167,6 @@ def get_market_history(
     try:
         search_request = Request(
             search_url,
-            headers=_gateway_headers(),
             method="GET",
         )
 
@@ -270,7 +261,7 @@ def get_market_history(
         )
 
     # --------------------------------------------------------
-    # Request historical data from m.Stock gateway
+    # Request historical data from AWS gateway
     # --------------------------------------------------------
 
     historical_url = (
@@ -288,7 +279,6 @@ def get_market_history(
     try:
         historical_request = Request(
             f"{historical_url}?{query_string}",
-            headers=_gateway_headers(),
             method="GET",
         )
 
@@ -390,7 +380,7 @@ def get_market_history(
         "candles": candles,
         "source": {
             "provider": "m.Stock",
-            "gateway": "m.Stock Gateway",
+            "gateway": "AWS Gateway",
             "endpoint": "/historical",
         },
         "database_write": False,

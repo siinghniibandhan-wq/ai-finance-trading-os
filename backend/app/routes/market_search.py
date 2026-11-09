@@ -27,6 +27,7 @@ import time
 from io import StringIO
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -35,10 +36,19 @@ from fastapi import APIRouter, HTTPException, Query
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = os.getenv(
-    "MSTOCK_GATEWAY_URL",
-    "http://54.153.201.74:8000",
-).rstrip("/")
+MSTOCK_GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
+MSTOCK_GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
+
+
+def _instrument_gateway_url() -> str:
+    if not MSTOCK_GATEWAY_URL:
+        raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
+    parsed = urlsplit(MSTOCK_GATEWAY_URL)
+    loopback_http = parsed.scheme == "http" and parsed.hostname in {"127.0.0.1", "localhost"} and not parsed.username and not parsed.password
+    secure_remote = parsed.scheme == "https" and bool(parsed.hostname) and not parsed.username and not parsed.password
+    if not (loopback_http or secure_remote):
+        raise HTTPException(status_code=503, detail="Market data gateway must use HTTPS; HTTP is allowed only for a loopback service.")
+    return MSTOCK_GATEWAY_URL
 
 # Cache the gateway's instrument master in this backend process. This is read-only
 # and deliberately does not change the search response or ranking behaviour.
@@ -68,7 +78,10 @@ def _get_instrument_master_csv():
             return cached_text
 
         try:
-            request = Request(f"{MSTOCK_GATEWAY_URL}/instruments", method="GET")
+            gateway_headers = {"Accept": "text/csv"}
+            if MSTOCK_GATEWAY_SECRET:
+                gateway_headers["X-Financial-OS-Gateway-Secret"] = MSTOCK_GATEWAY_SECRET
+            request = Request(f"{_instrument_gateway_url()}/instruments", headers=gateway_headers, method="GET")
             with urlopen(request, timeout=8) as response:
                 status_code = response.status
                 response_text = response.read().decode("utf-8", errors="replace")

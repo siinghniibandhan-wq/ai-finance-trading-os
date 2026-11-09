@@ -54,8 +54,11 @@ def fetch_movers(
     segment: int,
     type_flag: str,
 ):
-    gateway_url = require_secure_gateway_url(MSTOCK_GATEWAY_URL)
-    gateway_secret = require_gateway_secret(os.getenv("MSTOCK_GATEWAY_SECRET", ""))
+    try:
+        gateway_url = require_secure_gateway_url(MSTOCK_GATEWAY_URL)
+        gateway_secret = require_gateway_secret(os.getenv("MSTOCK_GATEWAY_SECRET", ""))
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     payload = urlencode({
         "Exchange": exchange,
         "SecurityIdCode": security_id_code,

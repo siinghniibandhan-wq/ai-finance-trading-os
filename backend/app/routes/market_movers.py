@@ -28,7 +28,7 @@ from urllib.error import HTTPError, URLError
 import json
 
 from fastapi import APIRouter, HTTPException, Query
-from app.services.gateway_security import require_secure_gateway_url
+from app.services.gateway_security import require_gateway_secret, require_secure_gateway_url
 
 
 router = APIRouter(
@@ -55,6 +55,7 @@ def fetch_movers(
     type_flag: str,
 ):
     gateway_url = require_secure_gateway_url(MSTOCK_GATEWAY_URL)
+    gateway_secret = require_gateway_secret(os.getenv("MSTOCK_GATEWAY_SECRET", ""))
     payload = urlencode({
         "Exchange": exchange,
         "SecurityIdCode": security_id_code,
@@ -68,7 +69,7 @@ def fetch_movers(
         method="POST",
         headers={
             "Content-Type": "application/x-www-form-urlencoded",
-            "X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip(),
+            "X-Financial-OS-Gateway-Secret": gateway_secret,
         },
     )
 

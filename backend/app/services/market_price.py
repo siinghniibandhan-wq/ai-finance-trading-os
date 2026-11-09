@@ -28,7 +28,6 @@ from time import monotonic, perf_counter
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
-from app.services.gateway_security import require_gateway_secret, require_secure_gateway_url
 
 
 # ============================================================
@@ -134,11 +133,6 @@ def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
     """
 
     normalized_symbol = normalize_symbol(symbol)
-    try:
-        gateway_url = require_secure_gateway_url(MSTOCK_GATEWAY_URL)
-        gateway_secret = require_gateway_secret(os.getenv("MSTOCK_GATEWAY_SECRET", ""))
-    except ValueError as exc:
-        raise MarketPriceError(str(exc)) from exc
 
     # The m.Stock gateway expects exchange-qualified cash-equity symbols in
     # the form NSE:RELIANCE-EQ (rather than NSE:RELIANCE). Preserve an existing
@@ -159,7 +153,7 @@ def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
     })
 
     url = (
-        f"{gateway_url}/quote"
+        f"{MSTOCK_GATEWAY_URL}/quote"
         f"?{params}"
     )
 
@@ -168,7 +162,7 @@ def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
         headers={
             "Accept": "application/json",
             "User-Agent": "Financial-OS/1.0",
-            "X-Financial-OS-Gateway-Secret": gateway_secret,
+            "X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip(),
         },
         method="GET",
     )

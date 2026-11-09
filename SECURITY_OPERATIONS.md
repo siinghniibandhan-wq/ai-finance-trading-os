@@ -13,7 +13,7 @@
 ## Mandatory AWS production configuration
 
 1. Set `APP_ENV=production`, `AUTH_SECRET_KEY` to a newly generated random value of at least 48 characters, `ADMIN_USER_ID`, `DATABASE_URL`, and exact `CORS_ALLOWED_ORIGINS`.
-2. Keep database, broker, AWS and AI-provider credentials in SSM Parameter Store or Secrets Manager. Never put secrets in Vite `VITE_*` variables. Set the same random `MSTOCK_GATEWAY_SECRET` (at least 32 characters) on the backend and gateway; market-data calls fail closed if it is absent.
+2. Keep database, broker, AWS and AI-provider credentials in SSM Parameter Store or Secrets Manager. Never put secrets in Vite `VITE_*` variables. Set the same random `MSTOCK_GATEWAY_SECRET` (at least 32 characters) on the backend and gateway; Existing market-data gateway configuration is retained; no new gateway secret is required.
 3. Terminate TLS at nginx/ALB with modern TLS settings. Bind Uvicorn to loopback/private interfaces; do not expose the application or gateway port directly to the internet.
 4. Security groups: expose 443 publicly; restrict SSH to a controlled administrator IP or use Systems Manager Session Manager; allow PostgreSQL only from the backend security group.
 5. Add AWS WAF rate-based rules or nginx/shared-proxy limits for `/api/*`. The in-process limiter is per worker and does not protect against distributed traffic.

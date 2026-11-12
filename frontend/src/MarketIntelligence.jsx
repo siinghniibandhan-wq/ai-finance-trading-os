@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { API_BASE_URL, apiFetch } from './api';
 import './market-intelligence.css';
-import { getCompletionSummary, getMetricDisplay } from './marketIntelligenceModel';
+import { getCompletionSummary, getMarketSnapshot, getMetricDisplay } from './marketIntelligenceModel';
 
 const capabilities = [
   { id: 'futures', title: 'Futures positioning', description: 'Long build-up, short build-up, short covering and long unwinding classifications.', implementation: 'built', integration: 'pending', note: 'Calculation engine is implemented. A live futures/OI data source is not connected.' },
@@ -31,7 +32,45 @@ function MetricCard({ metric }) {
 }
 
 export default function MarketIntelligence() {
+  const [snapshot, setSnapshot] = useState({ indices: [], gainers: [], losers: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retrievedAt, setRetrievedAt] = useState(null);
+  const [providerStatus, setProviderStatus] = useState('Checking market overview');
   const summary = getCompletionSummary(capabilities);
+  const refreshSnapshot = useCallback(async () => {
+    setError('');
+    try {
+      const response = await apiFetch(`${API_BASE_URL}/api/market-overview/`, { cache: 'no-store' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(typeof payload?.detail === 'string' ? payload.detail : payload?.detail?.message || `Market overview returned ${response.status}`);
+      const next = getMarketSnapshot(payload);
+      setSnapshot(next);
+      setRetrievedAt(payload.retrieved_at || payload.last_updated || new Date().toISOString());
+      setProviderStatus(payload.status === 'error' ? 'Provider error' : payload.status || 'Snapshot received');
+      if (payload.status === 'error') setError('The market provider returned no usable data.');
+      else if (Array.isArray(payload.errors) && payload.errors.length) setError('Some market sources are unavailable. Available results are shown.');
+    } catch (requestError) {
+      setError(requestError?.message || 'Unable to load the market overview.');
+      setProviderStatus('Unavailable');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    refreshSnapshot();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refreshSnapshot();
+    }, 30000);
+    const onVisibility = () => { if (document.visibilityState === 'visible') refreshSnapshot(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [refreshSnapshot]);
+  const formatNumber = (value, digits = 2) => value === null || value === undefined ? 'Unavailable' : Number(value).toLocaleString('en-IN', { maximumFractionDigits: digits });
+  const formatMover = (row) => row.change === null ? 'Change unavailable' : `${row.change > 0 ? '+' : ''}${row.change.toFixed(2)}%`;
   return <main className="market-intelligence-page">
     <header className="mi-page-header">
       <div>
@@ -39,7 +78,7 @@ export default function MarketIntelligence() {
         <h1>Market Intelligence</h1>
         <p className="mi-subtitle">Market structure, positioning and stream readiness in one workspace.</p>
       </div>
-      <div className="mi-header-status"><span className="mi-status-dot" /> Live feed not connected</div>
+      <div className="mi-header-actions"><span className="mi-header-status"><span className="mi-status-dot" /> {providerStatus}</span><button className="mi-refresh-button" type="button" onClick={refreshSnapshot} disabled={loading}>{loading ? 'Refreshing…' : '↻ Refresh'}</button></div>
     </header>
 
     <section className="mi-summary-grid" aria-label="Implementation overview">
@@ -61,8 +100,20 @@ export default function MarketIntelligence() {
     </section>
 
     <section className="mi-section" aria-labelledby="mi-market-overview-title">
-      <div className="mi-section-heading"><div><p className="mi-eyebrow">MARKET SNAPSHOT</p><h2 id="mi-market-overview-title">Executive overview</h2></div><span className="mi-section-note">No live values are being simulated</span></div>
-      <div className="mi-metric-grid">{overviewMetrics.map((metric) => <MetricCard key={metric.label} metric={metric} />)}</div>
+      <div className="mi-section-heading"><div><p className="mi-eyebrow">MARKET SNAPSHOT</p><h2 id="mi-market-overview-title">Executive overview</h2></div><span className="mi-section-note">{retrievedAt ? `Retrieved ${new Date(retrievedAt).toLocaleString('en-IN')}` : 'No successful snapshot yet'} · auto-refresh 30s</span></div>
+      {error && <p className="mi-error" role="status">{error}</p>}
+      <div className="mi-metric-grid">{[
+        ...overviewMetrics,
+      ].map((metric) => <MetricCard key={metric.label} metric={metric} />)}</div>
+      <div className="mi-index-grid" aria-label="Major market indices">{['NIFTY 50', 'SENSEX', 'NIFTY BANK', 'INDIA VIX'].map((name) => {
+        const aliases = name === 'NIFTY 50' ? ['NIFTY50', 'NIFTY 50', 'NIFTY'] : name === 'SENSEX' ? ['SENSEX', 'BSE SENSEX'] : name === 'NIFTY BANK' ? ['NIFTY BANK', 'BANK NIFTY', 'BANKNIFTY'] : ['INDIA VIX', 'INDIAVIX', 'VIX'];
+        const item = snapshot.indices.find((row) => aliases.includes(String(row.label).toUpperCase().replace(/[^A-Z0-9]/g, '')));
+        return <article className="mi-index-card" key={name}><span>{name}</span><strong>{item ? formatNumber(item.value) : loading ? 'Loading…' : 'Unavailable'}</strong><small>{item?.change === null || item?.change === undefined ? (item?.exchange || 'Not returned by API') : `${item.change > 0 ? '+' : ''}${item.change.toFixed(2)}%`}</small></article>;
+      })}</div>
+      <div className="mi-movers-grid">
+        <div className="mi-movers-panel"><h3>Top gainers</h3>{snapshot.gainers.length ? snapshot.gainers.slice(0, 5).map((row) => <div className="mi-mover-row" key={`g-${row.exchange}-${row.symbol}`}><span><strong>{row.symbol}</strong><small>{row.name}</small></span><b className="mi-positive">{formatMover(row)}</b></div>) : <p className="mi-muted">{loading ? 'Loading market movers…' : 'No gainers returned by the market overview API.'}</p>}</div>
+        <div className="mi-movers-panel"><h3>Top losers</h3>{snapshot.losers.length ? snapshot.losers.slice(0, 5).map((row) => <div className="mi-mover-row" key={`l-${row.exchange}-${row.symbol}`}><span><strong>{row.symbol}</strong><small>{row.name}</small></span><b className="mi-negative">{formatMover(row)}</b></div>) : <p className="mi-muted">{loading ? 'Loading market movers…' : 'No losers returned by the market overview API.'}</p>}</div>
+      </div>
     </section>
 
     <section className="mi-section" aria-labelledby="mi-capabilities-title">

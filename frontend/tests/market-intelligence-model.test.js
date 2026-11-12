@@ -1,10 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getMetricDisplay, getCompletionSummary } from '../src/marketIntelligenceModel.js';
+import { getMetricDisplay, getCompletionSummary, getMarketSnapshot } from '../src/marketIntelligenceModel.js';
 
 
 test('extracts only finite index values and market movers from the existing overview response', () => {
-  const { getMarketSnapshot } = await import('../src/marketIntelligenceModel.js');
   const snapshot = getMarketSnapshot({
     indices: [{ name: 'NIFTY 50', last_price: 22450.5 }, { name: 'SENSEX', last_price: null }],
     market_movers: { gainers: [{ symbol: 'ABC', change_pct: 2.1 }], losers: [{ symbol: 'XYZ', change_pct: -1.4 }] },
@@ -15,8 +14,7 @@ test('extracts only finite index values and market movers from the existing over
   assert.equal(snapshot.losers.length, 1);
 });
 
-test('returns an empty snapshot for missing or malformed overview data', async () => {
-  const { getMarketSnapshot } = await import('../src/marketIntelligenceModel.js');
+test('returns an empty snapshot for missing or malformed overview data', () => {
   assert.deepEqual(getMarketSnapshot(null), { indices: [], gainers: [], losers: [] });
   assert.deepEqual(getMarketSnapshot({ indices: {}, market_movers: null }), { indices: [], gainers: [], losers: [] });
 });

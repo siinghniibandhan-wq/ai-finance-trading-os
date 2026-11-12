@@ -95,8 +95,8 @@ class BrokerOrderRequest(BaseModel):
 def _gateway_request(path: str, method: str, payload: dict | None = None, query: dict | None = None):
     if not GATEWAY_URL:
         raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_URL is not configured.")
-    # Local development may use loopback HTTP. Remote gateways (including
-    # the Vercel-hosted gateway) must use HTTPS before the shared secret is sent.
+    # Local development may use loopback HTTP. Remote gateways must use HTTPS
+    # before the shared secret is sent.
     parsed_gateway_url = urlsplit(GATEWAY_URL)
     is_loopback_http = (
         parsed_gateway_url.scheme == "http"

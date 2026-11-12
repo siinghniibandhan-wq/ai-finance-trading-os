@@ -6,7 +6,7 @@ import { getMetricDisplay, getCompletionSummary, getMarketSnapshot } from '../sr
 test('extracts only finite index values and market movers from the existing overview response', () => {
   const snapshot = getMarketSnapshot({
     indices: [{ name: 'NIFTY 50', last_price: 22450.5 }, { name: 'SENSEX', last_price: null }],
-    market_movers: { gainers: [{ symbol: 'ABC', change_pct: 2.1 }], losers: [{ symbol: 'XYZ', change_pct: -1.4 }] },
+    market_movers: { gainers: [{ symbol: 'ABC', ltp: 125.5, percent_change: 2.1 }], losers: [{ symbol: 'XYZ', ltp: 98.4, percent_change: -1.4 }] },
   });
   assert.equal(snapshot.indices[0].value, 22450.5);
   assert.equal(snapshot.indices[1].value, null);

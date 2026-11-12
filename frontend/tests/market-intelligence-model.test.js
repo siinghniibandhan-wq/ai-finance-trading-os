@@ -11,7 +11,10 @@ test('extracts only finite index values and market movers from the existing over
   assert.equal(snapshot.indices[0].value, 22450.5);
   assert.equal(snapshot.indices[1].value, null);
   assert.equal(snapshot.gainers.length, 1);
+  assert.equal(snapshot.gainers[0].change, 2.1);
+  assert.equal(snapshot.gainers[0].price, 125.5);
   assert.equal(snapshot.losers.length, 1);
+  assert.equal(snapshot.losers[0].change, -1.4);
 });
 
 test('returns an empty snapshot for missing or malformed overview data', () => {

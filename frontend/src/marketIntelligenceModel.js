@@ -14,17 +14,18 @@ export function getCompletionSummary(items) {
   };
 }
 
+const finiteOrNull = (value) => value === null || value === undefined || value === '' ? null : (Number.isFinite(Number(value)) ? Number(value) : null);
+
 export function getMarketSnapshot(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return { indices: [], gainers: [], losers: [] };
   }
   const indices = Array.isArray(payload.indices) ? payload.indices.filter((row) => row && typeof row === 'object' && !Array.isArray(row)).map((row) => {
     const raw = row.last_price ?? row.ltp ?? row.value;
-    const value = raw === null || raw === undefined || raw === '' ? null : Number(raw);
     return {
       label: row.name || row.symbol || row.index || 'Market index',
-      value: Number.isFinite(value) ? value : null,
-      change: Number.isFinite(Number(row.change_pct)) ? Number(row.change_pct) : null,
+      value: finiteOrNull(raw),
+      change: finiteOrNull(row.change_pct),
       exchange: row.exchange || null,
       status: row.status || null,
     };
@@ -33,8 +34,8 @@ export function getMarketSnapshot(payload) {
   const cleanMovers = (rows) => Array.isArray(rows) ? rows.filter((row) => row && typeof row === 'object' && !Array.isArray(row)).map((row) => ({
     symbol: row.symbol || row.trading_symbol || row.name || 'Unknown instrument',
     name: row.name || row.symbol || row.trading_symbol || 'Unknown instrument',
-    change: Number.isFinite(Number(row.change_pct ?? row.percent_change ?? row.change_percent)) ? Number(row.change_pct ?? row.percent_change ?? row.change_percent) : null,
-    price: Number.isFinite(Number(row.last_price ?? row.ltp)) ? Number(row.last_price ?? row.ltp) : null,
+    change: finiteOrNull(row.change_pct ?? row.percent_change ?? row.change_percent),
+    price: finiteOrNull(row.last_price ?? row.ltp),
     exchange: row.exchange || null,
   })) : [];
   return { indices, gainers: cleanMovers(movers.gainers), losers: cleanMovers(movers.losers) };

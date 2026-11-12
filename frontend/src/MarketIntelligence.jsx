@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { API_BASE_URL, apiFetch } from './api';
 import './market-intelligence.css';
-import { getCompletionSummary, getMarketSnapshot, getMetricDisplay } from './marketIntelligenceModel';
+import { getCompletionSummary, getMarketSnapshot } from './marketIntelligenceModel';
 
 const capabilities = [
   { id: 'futures', title: 'Futures positioning', description: 'Long build-up, short build-up, short covering and long unwinding classifications.', implementation: 'built', integration: 'pending', note: 'Calculation engine is implemented. A live futures/OI data source is not connected.' },
@@ -11,24 +11,9 @@ const capabilities = [
   { id: 'stream', title: 'Market streaming', description: 'm.Stock Type A frame decoder, bounded tick cache and reconnecting worker.', implementation: 'built', integration: 'pending', note: 'Worker and decoder exist in the feature branch. Existing Flask gateway integration and live connection are pending.' },
 ];
 
-const overviewMetrics = [
-  { label: 'Futures positioning', value: null, detail: 'Waiting for futures + OI feed' },
-  { label: 'Options PCR', value: null, detail: 'Waiting for option-chain feed' },
-  { label: 'Conviction score', value: null, detail: 'Waiting for five confirmation inputs' },
-  { label: 'Sector breadth', value: null, detail: 'Waiting for constituent feed' },
-];
-
 function StatusPill({ status }) {
   const label = status === 'built' ? 'Built' : status === 'integrated' ? 'Integrated' : 'Pending';
   return <span className={`mi-status mi-status-${status}`}>{label}</span>;
-}
-
-function MetricCard({ metric }) {
-  return <article className="mi-metric-card">
-    <span className="mi-eyebrow">{metric.label}</span>
-    <strong className="mi-metric-value">{getMetricDisplay(metric.value)}</strong>
-    <span className="mi-muted">{metric.detail}</span>
-  </article>;
 }
 
 export default function MarketIntelligence() {
@@ -102,9 +87,12 @@ export default function MarketIntelligence() {
     <section className="mi-section" aria-labelledby="mi-market-overview-title">
       <div className="mi-section-heading"><div><p className="mi-eyebrow">MARKET SNAPSHOT</p><h2 id="mi-market-overview-title">Executive overview</h2></div><span className="mi-section-note">{retrievedAt ? `Retrieved ${new Date(retrievedAt).toLocaleString('en-IN')}` : 'No successful snapshot yet'} · auto-refresh 30s</span></div>
       {error && <p className="mi-error" role="status">{error}</p>}
-      <div className="mi-metric-grid">{[
-        ...overviewMetrics,
-      ].map((metric) => <MetricCard key={metric.label} metric={metric} />)}</div>
+      <div className="mi-metric-grid">
+        <article className="mi-metric-card"><span className="mi-eyebrow">INDICES RECEIVED</span><strong className="mi-metric-value">{snapshot.indices.length}</strong><span className="mi-muted">From the existing market overview API</span></article>
+        <article className="mi-metric-card"><span className="mi-eyebrow">TOP GAINERS</span><strong className="mi-metric-value">{snapshot.gainers.length}</strong><span className="mi-muted">Returned by the provider snapshot</span></article>
+        <article className="mi-metric-card"><span className="mi-eyebrow">TOP LOSERS</span><strong className="mi-metric-value">{snapshot.losers.length}</strong><span className="mi-muted">Returned by the provider snapshot</span></article>
+        <article className="mi-metric-card"><span className="mi-eyebrow">SNAPSHOT STATUS</span><strong className="mi-metric-value">{loading ? 'Loading' : error ? 'Partial / unavailable' : 'Received'}</strong><span className="mi-muted">Polled every 30 seconds while visible</span></article>
+      </div>
       <div className="mi-index-grid" aria-label="Major market indices">{['NIFTY 50', 'SENSEX', 'NIFTY BANK', 'INDIA VIX'].map((name) => {
         const aliases = name === 'NIFTY 50' ? ['NIFTY50', 'NIFTY 50', 'NIFTY'] : name === 'SENSEX' ? ['SENSEX', 'BSE SENSEX'] : name === 'NIFTY BANK' ? ['NIFTY BANK', 'BANK NIFTY', 'BANKNIFTY'] : ['INDIA VIX', 'INDIAVIX', 'VIX'];
         const item = snapshot.indices.find((row) => aliases.includes(String(row.label).toUpperCase().replace(/[^A-Z0-9]/g, '')));

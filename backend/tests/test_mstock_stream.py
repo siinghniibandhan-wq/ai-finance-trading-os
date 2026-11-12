@@ -14,8 +14,10 @@ def _packet(token=1234, ltp=152345, oi=98765, oi_high=100000, oi_low=90000):
     return struct.pack(">16I", *values)
 
 
-def _frame(packet):
-    return struct.pack(">HH", 1, len(packet)) + packet
+def _frame(*packets):
+    return struct.pack(">H", len(packets)) + b"".join(
+        struct.pack(">H", len(packet)) + packet for packet in packets
+    )
 
 
 def test_parses_full_type_a_packet_and_open_interest():
@@ -23,7 +25,7 @@ def test_parses_full_type_a_packet_and_open_interest():
 
     assert len(ticks) == 1
     assert ticks[0]["token"] == 1234
-    assert ticks[0]["ltp"] == pytest.approx(1523.45)
+    assert ticks[0]["ltp_raw"] == 152345
     assert ticks[0]["open_interest"] == 98765
     assert ticks[0]["oi_day_high"] == 100000
     assert ticks[0]["oi_day_low"] == 90000
@@ -31,18 +33,16 @@ def test_parses_full_type_a_packet_and_open_interest():
 
 
 def test_parses_multiple_packets_in_one_frame():
-    first = _packet(token=1001)
-    second = _packet(token=1002, oi=123)
-    frame = struct.pack(">HH", 2, len(first)) + first + struct.pack(">H", len(second)) + second
-
-    ticks = parse_type_a_frame(frame)
+    ticks = parse_type_a_frame(
+        _frame(_packet(token=1001), _packet(token=1002, oi=123))
+    )
 
     assert [tick["token"] for tick in ticks] == [1001, 1002]
     assert [tick["open_interest"] for tick in ticks] == [98765, 123]
 
 
 def test_ignores_empty_heartbeat_frame():
-    assert parse_type_a_frame(b"") == b"" if False else parse_type_a_frame(b"") == []
+    assert parse_type_a_frame(b"") == []
 
 
 @pytest.mark.parametrize("frame", [b"\x00", b"\x00\x01\x00", b"\x00\x01\x00\x40short"])

@@ -1,0 +1,51 @@
+import struct
+
+import pytest
+
+from app.services.mstock_stream import parse_type_a_frame
+
+
+def _packet(token=1234, ltp=152345, oi=98765, oi_high=100000, oi_low=90000):
+    values = [
+        token, ltp, 10, 150000, 2500, 100, 120,
+        140000, 160000, 130000, 145000, 1700000000,
+        oi, oi_high, oi_low, 1700000001,
+    ]
+    return struct.pack(">16I", *values)
+
+
+def _frame(packet):
+    return struct.pack(">HH", 1, len(packet)) + packet
+
+
+def test_parses_full_type_a_packet_and_open_interest():
+    ticks = parse_type_a_frame(_frame(_packet()))
+
+    assert len(ticks) == 1
+    assert ticks[0]["token"] == 1234
+    assert ticks[0]["ltp"] == pytest.approx(1523.45)
+    assert ticks[0]["open_interest"] == 98765
+    assert ticks[0]["oi_day_high"] == 100000
+    assert ticks[0]["oi_day_low"] == 90000
+    assert ticks[0]["exchange_timestamp"] == 1700000001
+
+
+def test_parses_multiple_packets_in_one_frame():
+    first = _packet(token=1001)
+    second = _packet(token=1002, oi=123)
+    frame = struct.pack(">HH", 2, len(first)) + first + struct.pack(">H", len(second)) + second
+
+    ticks = parse_type_a_frame(frame)
+
+    assert [tick["token"] for tick in ticks] == [1001, 1002]
+    assert [tick["open_interest"] for tick in ticks] == [98765, 123]
+
+
+def test_ignores_empty_heartbeat_frame():
+    assert parse_type_a_frame(b"") == b"" if False else parse_type_a_frame(b"") == []
+
+
+@pytest.mark.parametrize("frame", [b"\x00", b"\x00\x01\x00", b"\x00\x01\x00\x40short"])
+def test_rejects_truncated_or_inconsistent_frames(frame):
+    with pytest.raises(ValueError):
+        parse_type_a_frame(frame)

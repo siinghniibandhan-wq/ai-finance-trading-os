@@ -34,7 +34,7 @@ export function getMarketSnapshot(payload) {
   const cleanMovers = (rows) => Array.isArray(rows) ? rows.filter((row) => row && typeof row === 'object' && !Array.isArray(row)).map((row) => ({
     symbol: row.symbol || row.trading_symbol || row.name || 'Unknown instrument',
     name: row.name || row.symbol || row.trading_symbol || 'Unknown instrument',
-    change: finiteOrNull(row.change_pct ?? row.percent_change ?? row.change_percent),
+    change: finiteOrNull(row.change_pct ?? row.percent_change ?? row.change_percent ?? row.change),
     price: finiteOrNull(row.last_price ?? row.ltp),
     exchange: row.exchange || null,
   })) : [];

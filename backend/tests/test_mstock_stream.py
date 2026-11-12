@@ -6,12 +6,12 @@ from app.services.mstock_stream import parse_type_a_frame
 
 
 def _packet(token=1234, ltp=152345, oi=98765, oi_high=100000, oi_low=90000):
-    values = [
-        token, ltp, 10, 150000, 2500, 100, 120,
+    prefix = struct.pack(
+        ">16I", token, ltp, 10, 150000, 2500, 100, 120,
         140000, 160000, 130000, 145000, 1700000000,
         oi, oi_high, oi_low, 1700000001,
-    ]
-    return struct.pack(">16I", *values)
+    )
+    return prefix + bytes(120)
 
 
 def _frame(*packets):
@@ -41,11 +41,27 @@ def test_parses_multiple_packets_in_one_frame():
     assert [tick["open_interest"] for tick in ticks] == [98765, 123]
 
 
+def test_parses_ltp_and_quote_packets():
+    ltp = struct.pack(">2I", 321, 123456)
+    quote = struct.pack(">11I", 321, 123456, 4, 123000, 99, 10, 20, 120000, 130000, 110000, 125000)
+
+    ticks = parse_type_a_frame(_frame(ltp, quote))
+
+    assert ticks[0] == {"token": 321, "mode": "ltp", "ltp_raw": 123456}
+    assert ticks[1]["mode"] == "quote"
+    assert ticks[1]["volume"] == 99
+
+
 def test_ignores_empty_heartbeat_frame():
     assert parse_type_a_frame(b"") == []
 
 
-@pytest.mark.parametrize("frame", [b"\x00", b"\x00\x01\x00", b"\x00\x01\x00\x40short"])
+@pytest.mark.parametrize("frame", [b"\x00", b"\x00\x01\x00", b"\x00\x01\x00\xb8short"])
 def test_rejects_truncated_or_inconsistent_frames(frame):
     with pytest.raises(ValueError):
         parse_type_a_frame(frame)
+
+
+def test_rejects_unsupported_64_byte_packet():
+    with pytest.raises(ValueError):
+        parse_type_a_frame(_frame(bytes(64)))

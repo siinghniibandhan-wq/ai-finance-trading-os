@@ -25,7 +25,7 @@ export function getMarketSnapshot(payload) {
     return {
       label: row.name || row.symbol || row.index || 'Market index',
       value: finiteOrNull(raw),
-      change: finiteOrNull(row.change_pct),
+      change: finiteOrNull(row.change_pct ?? row.percent_change ?? row.change_percent ?? row.change),
       exchange: row.exchange || null,
       status: row.status || null,
     };

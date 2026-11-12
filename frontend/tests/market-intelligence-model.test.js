@@ -36,3 +36,16 @@ test('completion summary counts implemented engines separately from live integra
     { implementation: 'pending', integration: 'pending' },
   ]), { built: 2, integrated: 1, total: 3 });
 });
+
+test('does not convert absent mover changes or prices into fabricated zeroes', () => {
+  const snapshot = getMarketSnapshot({
+    market_movers: {
+      gainers: [{ symbol: 'NO_DATA', change_pct: null, last_price: null }],
+      losers: [{ symbol: 'REAL', change_pct: -0.5, last_price: 125.25 }],
+    },
+  });
+  assert.equal(snapshot.gainers[0].change, null);
+  assert.equal(snapshot.gainers[0].price, null);
+  assert.equal(snapshot.losers[0].change, -0.5);
+  assert.equal(snapshot.losers[0].price, 125.25);
+});

@@ -78,9 +78,9 @@ export default function MarketIntelligence() {
         <span>Connected to live data sources</span>
       </article>
       <article className="mi-summary-card">
-        <span className="mi-eyebrow">LIVE DATA</span>
-        <strong>Pending</strong>
-        <span>Gateway integration and feed verification remain</span>
+        <span className="mi-eyebrow">MARKET SNAPSHOT</span>
+        <strong>Connected</strong>
+        <span>Existing m.Stock overview API · refreshed every 30 seconds</span>
       </article>
     </section>
 
@@ -121,7 +121,8 @@ export default function MarketIntelligence() {
         <div className="mi-connection-copy"><h3>m.Stock stream gateway integration pending</h3><p>The Type A decoder and worker are present in the backend feature branch. The worker has not yet been connected to the existing Flask gateway, so connection health, last tick time, reconnect count and cached ticks cannot be reported here.</p></div>
       </div>
       <div className="mi-verification-list">
-        <div><span>Analysis API</span><StatusPill status="built" /><small>Accepts normalized futures, options, sector and conviction inputs.</small></div>
+        <div><span>Market overview API</span><StatusPill status="integrated" /><small>Existing m.Stock gateway snapshot supplies indices, gainers and losers.</small></div>
+        <div><span>Analysis API</span><StatusPill status="built" /><small>Accepts normalized futures, options, sector and conviction inputs; not yet connected to a live F&O feed.</small></div>
         <div><span>Type A frame decoder</span><StatusPill status="built" /><small>Binary packet parsing is implemented.</small></div>
         <div><span>Existing gateway integration</span><StatusPill status="pending" /><small>Not yet connected to the running Flask gateway.</small></div>
         <div><span>Live feed verification</span><StatusPill status="pending" /><small>No live stream or market snapshot is claimed.</small></div>

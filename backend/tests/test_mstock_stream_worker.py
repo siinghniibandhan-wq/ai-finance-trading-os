@@ -33,6 +33,9 @@ def test_worker_starts_only_when_explicitly_started_and_stops_cleanly():
 
     assert worker.status()["running"] is False
     worker.start()
+    deadline = time.monotonic() + 1
+    while not socket.sent and time.monotonic() < deadline:
+        time.sleep(0.005)
     assert worker.status()["running"] is True
     worker.stop(timeout=1)
     assert worker.status()["running"] is False

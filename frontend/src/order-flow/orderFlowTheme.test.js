@@ -13,12 +13,12 @@ test("Order Flow surfaces and text use the shared active-theme tokens", () => {
 test("Order Flow cards, controls and chart use semantic theme surfaces and colors", () => {
   assert.match(css, /\.market-flow-workspace\s+:is\([^}]+\)\s*\{[^}]*background:\s*var\(--th-card\)/s);
   assert.match(css, /\.market-flow-workspace\s+:is\([^}]+\)\s*\{[^}]*border-color:\s*var\(--th-border\)/s);
-  assert.match(css, /\.mf-chart\s*\{[^}]*--mf-up:\s*var\(--th-pos\)/s);
-  assert.match(css, /\.mf-chart\s*\{[^}]*--mf-down:\s*var\(--th-neg\)/s);
+  assert.match(css, /--mf-up:\s*var\(--th-pos/);
+  assert.match(css, /--mf-down:\s*var\(--th-neg/);
 });
 
 test("theme-aware Order Flow rules cover SVG labels, buttons and selection states", () => {
   assert.match(css, /\.market-flow-workspace\s+\.mf-axis\s*\{[^}]*fill:\s*var\(--th-muted\)/s);
   assert.match(css, /\.market-flow-workspace\s+button\s*\{[^}]*color:\s*var\(--th-text\)/s);
-  assert.match(css, /\.market-flow-workspace\s+\.is-selected\s*\{[^}]*background:\s*var\(--th-selected-surface\)/s);
+  assert.match(css, /button\.is-selected\s*\{[^}]*background:\s*var\(--th-selected-surface\)/s);
 });

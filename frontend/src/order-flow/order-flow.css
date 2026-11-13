@@ -403,3 +403,7 @@
 .mf-diagram-foot { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:10px 14px; border-top:1px solid var(--th-border); color:var(--th-muted); font-size:9px; }
 .mf-diagram-foot span { display:flex; align-items:center; gap:6px; }.mf-diagram-foot i { width:7px;height:7px;border-radius:50%;background:var(--mf-up); }.mf-diagram-foot i.down { background:var(--mf-down); }
 @media (prefers-reduced-motion:reduce) { .mf-faithful-diagram * { transition:none!important; animation:none!important; } }
+
+.mf-native-node.is-sector-dim { opacity:.16; }
+.mf-native-node.is-sector-dim.is-lit { opacity:1; }
+.mf-native-node:focus-visible rect:first-child { stroke:var(--th-focus,var(--th-accent,currentColor)); stroke-width:2.5; }

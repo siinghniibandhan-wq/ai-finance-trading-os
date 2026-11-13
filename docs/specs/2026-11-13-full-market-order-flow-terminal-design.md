@@ -110,3 +110,13 @@ The overall product is decomposed into independently reviewable workstreams:
 - Added directional-flow motion with reduced-motion support.
 - All added styles are rooted under `.market-intelligence-page`; no shared/global selectors, routes, API contracts, broker/order functions, or other feature modules are changed.
 - New tests cover exchange-aware instrument identity, snapshot freshness states, Market Monitor styling scope and reduced-motion behavior.
+
+
+### Historical charts integration — 2026-11-13
+- Enabled Charts & Replay navigation only for the historical-chart capability already exposed by the authenticated `/api/market-charts/` route.
+- The workspace requests provider-backed OHLCV candles using the existing m.Stock instrument-master and `/historical/{exchange}/{instrument_token}/{interval}` gateway contract.
+- Added symbol, exchange, interval and date-range controls; renders the returned close-price series and candle table.
+- Added strict frontend normalization for timestamped OHLCV rows; malformed candles, impossible OHLC ranges, non-finite values and negative volume are discarded.
+- This is historical chart retrieval, not tick replay. Replay playback remains unavailable until an actual tick archive/replay contract is verified.
+- Futures, Options and Sector Flow remain gated: no verified provider endpoints or complete data payloads for futures OI, option chains or sector constituents are present in the Financial OS repository.
+- Live m.Stock stream worker remains unstarted: the repo contains a decoder/worker abstraction but no verified WebSocket URL, socket handshake contract, token provider or subscription lifecycle. No guessed connection protocol is enabled.

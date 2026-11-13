@@ -24,3 +24,10 @@ export function buildDemoFlow(scope="fno") {
  const sectors=[...sectorMap.values()].map(s=>({...s,changePct:round([...s.changes].sort((a,b)=>a-b)[Math.floor(s.changes.length/2)],2)})).sort((a,b)=>b.changePct-a.changePct);
  return {stocks,bullish,bearish,sectors,featured:{bullish:bullish.slice(0,3),bearish:bearish.slice(0,3)},asOf:Date.now()};
 }
+
+/** Return the adjacent item in a ranked side list; boundaries never wrap. */
+export function adjacentStock(items, symbol, direction) {
+  const index = items.findIndex(item => item.symbol === symbol);
+  const next = index + Math.sign(direction);
+  return index < 0 || next < 0 || next >= items.length ? null : items[next];
+}

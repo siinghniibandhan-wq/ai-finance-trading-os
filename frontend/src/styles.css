@@ -2896,7 +2896,10 @@ input, textarea { color-scheme: light; }
 @media (min-width: 801px) {
   .sidebar,
   .main-area {
-    transition: width .22s ease, margin-left .22s ease;
+    transition:
+      width .36s cubic-bezier(.16, 1, .3, 1),
+      margin-left .36s cubic-bezier(.16, 1, .3, 1);
+    will-change: width;
   }
   .sidebar .wealth-brand-text,
   .sidebar .navigation-title,
@@ -2906,9 +2909,9 @@ input, textarea { color-scheme: light; }
     transform: translateX(0);
     overflow: hidden;
     transition:
-      opacity .2s ease,
-      transform .34s cubic-bezier(.22, 1, .36, 1),
-      max-width .42s cubic-bezier(.22, 1, .36, 1),
+      opacity .18s ease-out,
+      transform .28s cubic-bezier(.16, 1, .3, 1),
+      max-width .36s cubic-bezier(.16, 1, .3, 1),
       visibility 0s linear 0s;
     visibility: visible;
     white-space: nowrap;
@@ -2928,7 +2931,20 @@ input, textarea { color-scheme: light; }
   .app-shell.sidebar-collapsed .sidebar .brand-logo-image { width: 38px; height: 38px; flex-basis: 38px; }
   .app-shell.sidebar-collapsed .sidebar .wealth-brand-text,
   .app-shell.sidebar-collapsed .sidebar .navigation-title,
-  .app-shell.sidebar-collapsed .sidebar .navigation-item > span { display: none; }
+  .app-shell.sidebar-collapsed .sidebar .navigation-item > span {
+    max-width: 0;
+    margin-left: 0;
+    margin-right: 0;
+    opacity: 0;
+    transform: translateX(-6px);
+    visibility: hidden;
+    transition:
+      opacity .14s ease-out,
+      transform .24s cubic-bezier(.16, 1, .3, 1),
+      max-width .36s cubic-bezier(.16, 1, .3, 1),
+      visibility 0s linear .24s;
+    pointer-events: none;
+  }
   .app-shell.sidebar-collapsed .sidebar .sidebar-collapse-toggle { margin-left: 0; }
   .app-shell.sidebar-collapsed .sidebar .navigation-item {
     justify-content: center;
@@ -2940,6 +2956,19 @@ input, textarea { color-scheme: light; }
   .app-shell.sidebar-collapsed .main-area {
     width: calc(100% - 88px);
     margin-left: 88px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .main-area,
+  .sidebar .wealth-brand-text,
+  .sidebar .navigation-title,
+  .sidebar .navigation-item > span,
+  .sidebar-collapse-toggle {
+    transition-duration: .01ms !important;
+    transition-delay: 0ms !important;
+    animation-duration: .01ms !important;
   }
 }
 

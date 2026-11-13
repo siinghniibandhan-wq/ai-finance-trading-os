@@ -234,3 +234,88 @@ Do not record secrets or full authentication headers in logs. A successful backu
 - [ ] Verify log rotation and backup restoration.
 - [ ] Complete the India-origin m.Stock WebSocket handshake comparison.
 
+
+
+## 13. Database migrations and automation
+
+### 13.1 Current repository evidence
+
+The reviewed repository contains:
+
+- Dated SQL files under `backend/migrations/`.
+- Additional standalone SQL migration files under `backend/`.
+- Application startup table/schema logic in the backend.
+- GitHub Actions CI and source-archive workflows described in Section 9.
+
+The reviewed repository tree does **not** contain a dedicated migration runner, migration ledger implementation, schema-application systemd unit/timer, cron migration definition or automatic production migration workflow. This is a repository finding only; it does not prove that no manually configured timer or script exists on a live EC2 host.
+
+Do not assume a committed SQL file is automatically applied. Do not run it against production without separate explicit approval.
+
+### 13.2 Current automation — actual behaviour
+
+| Mechanism | Trigger | Confirmed effect | Not confirmed / does not do |
+|---|---|---|---|
+| `.github/workflows/financial-os-ci.yml` | Push/PR to `main`; manual dispatch | Frontend install/audit, Order Flow tests, Vite build, backend install/audit, pytest and Gitleaks scan | No production deployment; no schema application |
+| `.github/workflows/package-aws-restored-source.yml` | Manual dispatch; workflow-file change on `main` | Packages source ZIP and uploads a 30-day GitHub Actions artifact | No EC2 deployment, service restart or database migration |
+| `mstock-gateway.service` | systemd service manager | Runs the recorded Flask gateway service | Not a schema runner or scheduler |
+| `financial-os-backend.service` | systemd service manager | Runs the recorded backend service | Not a schema runner or scheduler |
+
+No repository-defined systemd timer or scheduled schema runner was found in the reviewed branch. Inspect live `systemctl list-timers --all`, `systemctl list-units --type=service` and the applicable user's crontab before documenting the host's actual scheduled operations. Review output carefully and redact sensitive environment values.
+
+### 13.3 Migration controls required before implementation
+
+Any future migration mechanism should provide:
+
+1. Unique, immutable migration identity and deterministic ordering.
+2. Migration ledger recording file identity, checksum, execution timestamp, environment and result.
+3. Checksum mismatch detection; never silently rerun modified SQL.
+4. Dry-run and status inspection before execution.
+5. Verified backup gate before any production write.
+6. Explicit transaction/partial-failure policy and recovery instructions.
+7. Locking to prevent concurrent migration processes.
+8. Restricted execution identity and explicit environment targeting.
+9. Sanitised logs and alerting on failure.
+10. A tested restore/recovery path.
+
+The exact tool, transaction boundary, backup mechanism, rollback strategy, runner interface and scheduling cadence remain design decisions. Do not represent this recommended design as implemented.
+
+### 13.4 Safe operating sequence
+
+1. Review the migration SQL and its data/locking impact.
+2. Confirm the target environment and current migration ledger.
+3. Verify a fresh database backup and a tested restore path.
+4. Run validation/dry-run in a non-production environment.
+5. Apply to staging and run application regression tests.
+6. Obtain separate production approval.
+7. Apply in a controlled window and verify schema state and application health.
+8. Record migration identifier, checksum, commit, environment, backup reference and result.
+9. If execution fails, stop subsequent migrations and follow the approved recovery plan; do not blindly rerun.
+
+Keep schema files limited to schema/data migration intent. Do not embed service management, runner installation, timer creation or deployment-tool changes inside SQL files.
+
+## 14. Automation governance
+
+Every scheduled or event-driven automation must document:
+
+- Owner and purpose.
+- Trigger, cadence and timezone.
+- Target environment and execution identity.
+- Required permissions and secret references (never secret values).
+- Timeout, retry, idempotency and concurrency behaviour.
+- Logs, metrics, alert recipient and failure escalation.
+- Disable procedure and rollback/recovery method.
+
+A timer or cron job must not bypass backup verification, migration ledger checks or production approval. CI success is not deployment success. Artifact creation is not deployment. A running systemd service is not proof that a scheduled job or migration runner exists.
+
+## 15. AWS architecture implementation status
+
+The AWS architecture table in Section 4 describes purpose and verification status. Use these status labels consistently:
+
+- **Confirmed from repository/recorded evidence:** code or a dated operational record supports the statement.
+- **Partially confirmed:** some configuration is known, but live state or dependencies remain unverified.
+- **Recommended, not confirmed:** proposed architecture/control only.
+- **Not confirmed:** do not describe as deployed until verified in the AWS account.
+
+For the next live infrastructure audit, capture resource IDs, region, account/environment, tags, security-group references, subnet placement, IAM role, backup policy and last-verified timestamp. Never copy secret values or credential-bearing environment output into documentation.
+
+The application-owned AWS topology remains incomplete until the active frontend host, backend host, database host, network path, IAM/SSM secret retrieval, DNS/TLS edge, logging/alarms and backup/restore configuration have all been checked against the live account.

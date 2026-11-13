@@ -304,7 +304,11 @@ class MStockStreamRuntime:
             if not refreshed:
                 continue
             tokens = list(refreshed)
-            self._worker.update_subscriptions(tokens)
+            try:
+                self._worker.update_subscriptions(tokens)
+            except Exception:
+                # A concurrent socket reconnect applies the worker's updated token set.
+                continue
             self._instrument_metadata = refreshed
             self._configuration["tokens"] = tokens
             self._metadata_error = None

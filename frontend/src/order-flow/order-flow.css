@@ -248,3 +248,15 @@
 .market-flow-workspace :is(button,input,select,a):focus-visible {
   outline-color: var(--th-focus, var(--th-accent, currentColor));
 }
+
+
+/* Phase 1 interaction refinements */
+.mf-sector-rail button.is-selected { background: var(--th-selected-surface, var(--surface-raised, #eee)); outline: 1px solid var(--th-accent, currentColor); }
+.mf-clear-filter { border: 1px solid var(--th-border, currentColor); background: var(--th-inner, transparent); color: var(--th-text, inherit); border-radius: 999px; padding: 5px 9px; cursor: pointer; }
+.mf-tiles button:focus-visible { outline: 2px solid var(--th-focus, var(--th-accent, currentColor)); outline-offset: 2px; }
+
+.market-flow-workspace { color: var(--th-text); background: var(--th-page); }
+.market-flow-workspace :is(.mf-sector-rail,.mf-chart-panel,.mf-side,.mf-detail,.mf-detail-metrics article,.mf-levels>div) { color: var(--th-text); background: var(--th-card); border-color: var(--th-border); }
+.market-flow-workspace :is(.market-flow-subtitle,.market-flow-eyebrow,.mf-summary,.mf-chart-panel p,.mf-sector-rail button small,.mf-detail-metrics small,.mf-levels small) { color: var(--th-muted); }
+.market-flow-workspace button { color: var(--th-text); }
+.market-flow-workspace button.is-selected { background: var(--th-selected-surface); }

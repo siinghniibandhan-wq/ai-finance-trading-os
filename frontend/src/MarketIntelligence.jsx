@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_BASE_URL, apiFetch } from './api';
 import './market-intelligence.css';
-import { filterFlowRows, getFlowRows, getHistoricalChartRows, getMarketFeedState, getMarketSnapshot } from './marketIntelligenceModel';
+import { filterFlowRows, getFlowRows, getHistoricalChartRows, getMarketFeedState, getMarketSnapshot, getOptionMasterChoices, getOptionRows } from './marketIntelligenceModel';
 
 const WORKSPACES = [
   { id: 'flow', label: 'Market Flow', ready: true },
   { id: 'board', label: 'Flow Board', ready: true },
   { id: 'futures', label: 'Futures', ready: false },
-  { id: 'options', label: 'Options', ready: false },
+  { id: 'options', label: 'Options', ready: true },
   { id: 'sectors', label: 'Sectors', ready: false },
   { id: 'replay', label: 'Charts & Replay', ready: true },
   { id: 'monitor', label: 'Market Monitor', ready: true },
@@ -153,6 +153,65 @@ function HistoricalChartWorkspace({ selected }) {
   </section>;
 }
 
+
+function OptionsWorkspace() {
+  const [master, setMaster] = useState({ expiryChoices: [], underlyings: [] });
+  const [underlyingToken, setUnderlyingToken] = useState('');
+  const [expiryId, setExpiryId] = useState('');
+  const [rows, setRows] = useState([]);
+  const [metrics, setMetrics] = useState(null);
+  const [source, setSource] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    apiFetch(`${API_BASE_URL}/api/market-options/master?exchange=2`, { cache: 'no-store' })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(typeof payload?.detail === 'string' ? payload.detail : 'm.Stock option master is unavailable.');
+        if (!active) return;
+        const choices = getOptionMasterChoices(payload);
+        setMaster(choices);
+        setUnderlyingToken(choices.underlyings[0] ? String(choices.underlyings[0].token) : '');
+        setExpiryId(choices.underlyings[0]?.expiryIds[0] || '');
+        setSource(payload.source || 'm.Stock Type A');
+        if (!choices.underlyings.length) setError('The provider returned no supported option underlyings or expiries.');
+      })
+      .catch((requestError) => { if (active) setError(requestError?.message || 'Unable to load option master.'); });
+    return () => { active = false; };
+  }, []);
+  const selectedUnderlying = master.underlyings.find((item) => String(item.token) === underlyingToken);
+  const availableExpiries = master.expiryChoices.filter((item) => selectedUnderlying?.expiryIds.includes(item.id));
+  const loadChain = async () => {
+    const expiry = availableExpiries.find((item) => item.id === expiryId);
+    if (!selectedUnderlying || !expiry) { setError('Select an underlying and a valid expiry.'); return; }
+    setLoading(true); setError('');
+    try {
+      const params = new URLSearchParams({ exchange: '2', token: String(selectedUnderlying.token), expiry: String(expiry.timestamp) });
+      const response = await apiFetch(`${API_BASE_URL}/api/market-options/chain?${params.toString()}`, { cache: 'no-store' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(typeof payload?.detail === 'string' ? payload.detail : 'm.Stock option chain is unavailable.');
+      const normalized = getOptionRows(payload);
+      setRows(normalized); setMetrics(payload.metrics || null); setSource(payload.source || 'm.Stock Type A');
+      if (!normalized.length) setError('The provider returned no valid option strikes for this expiry.');
+    } catch (requestError) { setRows([]); setMetrics(null); setError(requestError?.message || 'Unable to load provider option chain.'); }
+    finally { setLoading(false); }
+  };
+  return <section className="mi-options-workspace">
+    <div className="mi-workspace-heading"><div><p className="mi-eyebrow">M.STOCK TYPE A OPTION CHAIN</p><h2>Options Analytics</h2></div><span className="mi-data-badge">Provider OI · Read-only</span></div>
+    <div className="mi-chart-controls">
+      <label>Underlying<select value={underlyingToken} onChange={(event) => { setUnderlyingToken(event.target.value); const next = master.underlyings.find((item) => String(item.token) === event.target.value); setExpiryId(next?.expiryIds[0] || ''); setRows([]); setMetrics(null); }}><option value="">Select underlying</option>{master.underlyings.map((item) => <option key={item.token} value={item.token}>{item.symbol}</option>)}</select></label>
+      <label>Expiry<select value={expiryId} onChange={(event) => setExpiryId(event.target.value)}><option value="">Select expiry</option>{availableExpiries.map((item) => <option key={item.id} value={item.id}>{new Date(item.timestamp * 1000).toLocaleDateString('en-IN')}</option>)}</select></label>
+      <button type="button" onClick={loadChain} disabled={loading || !selectedUnderlying || !expiryId}>{loading ? 'Loading…' : 'Load option chain'}</button>
+    </div>
+    {error && <p className="mi-error" role="status">{error}</p>}
+    {metrics && <div className="mi-flow-stats mi-options-metrics"><div><span>Put / Call OI</span><strong>{metrics.put_call_ratio === null ? '—' : fmt(metrics.put_call_ratio, 3)}</strong></div><div><span>Total Call OI</span><strong>{fmt(metrics.total_call_oi, 0)}</strong></div><div><span>Total Put OI</span><strong>{fmt(metrics.total_put_oi, 0)}</strong></div><div><span>Highest OI levels</span><strong>{fmt(metrics.support_strike, 2)} / {fmt(metrics.resistance_strike, 2)}</strong></div></div>}
+    {rows.length > 0 && <div className="mi-table-wrap"><table className="mi-flow-table"><thead><tr><th>Strike</th><th>Call OI</th><th>Put OI</th><th>Put − Call</th></tr></thead><tbody>{rows.map((row) => <tr key={row.strike}><td>{fmt(row.strike, 2)}</td><td>{fmt(row.call_oi, 0)}</td><td>{fmt(row.put_oi, 0)}</td><td>{fmt(row.put_oi - row.call_oi, 0)}</td></tr>)}</tbody></table></div>}
+    {!rows.length && !loading && !error && <div className="mi-flow-empty"><strong>Option chain not loaded</strong><span>Choose an underlying and expiry to request provider data. No sample OI or strikes are generated.</span></div>}
+    <p className="mi-monitor-note">Source: {source || 'm.Stock Type A Option Chain API'}. API entitlement and provider availability are verified only when a request succeeds. OI levels are descriptive analytics, not trading recommendations.</p>
+  </section>;
+}
+
 export default function MarketIntelligence() {
   const [snapshot, setSnapshot] = useState({ indices: [], gainers: [], losers: [] });
   const [loading, setLoading] = useState(true);
@@ -235,6 +294,7 @@ export default function MarketIntelligence() {
 
 
     {activeWorkspace === 'replay' && <HistoricalChartWorkspace selected={selected}/>}
+    {activeWorkspace === 'options' && <OptionsWorkspace/>}
 
     {activeWorkspace === 'monitor' && <section className="mi-monitor-workspace">
       <div className="mi-workspace-heading"><div><p className="mi-eyebrow">PROVIDER CONNECTIVITY</p><h2>Market Monitor</h2></div><span className={`mi-data-badge mi-feed-${feedState.kind}`}>{feedState.label}</span></div>
@@ -254,7 +314,7 @@ export default function MarketIntelligence() {
       <p className="mi-monitor-note">This page only reports data returned by the existing Market Overview API. A successful snapshot does not mean a live tick stream is connected.</p>
     </section>}
 
-    {['futures','options','sectors'].includes(activeWorkspace) && <section className="mi-unavailable-workspace"><p className="mi-eyebrow">DATA SOURCE REQUIRED</p><h2>{WORKSPACES.find((item) => item.id === activeWorkspace)?.label}</h2><p>This workspace is intentionally not displaying simulated data. The existing backend calculation engines can process normalized inputs, but the connected market overview does not supply the required {activeWorkspace === 'futures' ? 'futures price and open-interest history' : activeWorkspace === 'options' ? 'option-chain strikes and call/put open interest' : activeWorkspace === 'sectors' ? 'constituent-level sector breadth' : 'historical candles and replay data'}.</p><ul><li>Provider adapter and instrument mapping must be verified.</li><li>Source timestamps, freshness and missing-data states must be preserved.</li><li>Workspace will be enabled only after live data is validated.</li></ul></section>}
+    {['futures','sectors'].includes(activeWorkspace) && <section className="mi-unavailable-workspace"><p className="mi-eyebrow">DATA SOURCE REQUIRED</p><h2>{WORKSPACES.find((item) => item.id === activeWorkspace)?.label}</h2><p>This workspace is intentionally not displaying simulated data. The existing backend calculation engines can process normalized inputs, but the connected market overview does not supply the required {activeWorkspace === 'futures' ? 'futures price and open-interest history' : activeWorkspace === 'options' ? 'option-chain strikes and call/put open interest' : activeWorkspace === 'sectors' ? 'constituent-level sector breadth' : 'historical candles and replay data'}.</p><ul><li>Provider adapter and instrument mapping must be verified.</li><li>Source timestamps, freshness and missing-data states must be preserved.</li><li>Workspace will be enabled only after live data is validated.</li></ul></section>}
 
     <footer className="mi-terminal-footer"><span>Read-only analytics · No order placement from this workspace</span><span>Source: m.Stock via existing Market Overview API · Returned top movers only</span></footer>
   </main>;

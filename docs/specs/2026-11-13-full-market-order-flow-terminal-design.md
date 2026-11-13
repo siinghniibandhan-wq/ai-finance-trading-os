@@ -153,3 +153,5 @@ The overall product is decomposed into independently reviewable workstreams:
 - Explicit MSTOCK_STREAM_INSTRUMENT_TOKENS still overrides automatic discovery. MSTOCK_STREAM_AUTO_SUBSCRIBE_MOVERS can disable automatic discovery when operators want explicit subscriptions only.
 - Automatic discovery is limited to the current market-overview mover universe (the existing endpoint returns up to 20 gainers and 20 losers). It does not claim whole-market coverage or derivatives coverage.
 - Unresolved symbols are skipped; no symbol-only or cross-exchange guessing is used.
+
+- Automatic top-mover subscriptions refresh every 300 seconds by default (configurable through MSTOCK_STREAM_REFRESH_SECONDS). The worker sends only the added/removed token deltas over the existing socket and retains full mode for newly added instruments.

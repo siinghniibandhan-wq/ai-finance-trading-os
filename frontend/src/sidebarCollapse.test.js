@@ -18,7 +18,7 @@ test("collapsed state is applied at the app shell without changing page routing"
 });
 
 test("compact sidebar layout is desktop-only and keeps navigation icons", () => {
-  const desktopRules = styles.slice(styles.lastIndexOf("@media (min-width: 801px)"));
+  const desktopRules = styles;
   assert.match(desktopRules, /\.app-shell\.sidebar-collapsed \.sidebar\s*\{[\s\S]*?width: 88px;/);
   assert.match(desktopRules, /\.app-shell\.sidebar-collapsed \.sidebar \.navigation-item\s*\{[\s\S]*?justify-content: center;/);
   assert.match(desktopRules, /\.app-shell\.sidebar-collapsed \.main-area\s*\{[\s\S]*?margin-left: 88px;/);

@@ -153,3 +153,35 @@ test('overlays only exchange-matched WebSocket ticks onto REST movers', async ()
   assert.equal(merged[1].price, 121);
   assert.equal(merged[1].feedSource, 'Overview snapshot');
 });
+
+test('normalizes selected-instrument explorer metrics without inventing missing values', async () => {
+  const { getInstrumentExplorerMetrics } = await import('../src/marketIntelligenceModel.js');
+  assert.deepEqual(getInstrumentExplorerMetrics({
+    price: 125.5,
+    change: 1.2,
+    openInterest: 500,
+    volume: 1000,
+    marketDepth: { bids: [{ price: 125 }], asks: [{ price: 126 }] },
+    feedSource: 'm.Stock WebSocket',
+    tickAt: '2026-11-13T03:50:00+00:00',
+  }), {
+    price: 125.5,
+    change: 1.2,
+    openInterest: 500,
+    volume: 1000,
+    bidLevels: 1,
+    askLevels: 1,
+    feedSource: 'm.Stock WebSocket',
+    tickAt: '2026-11-13T03:50:00+00:00',
+  });
+  assert.deepEqual(getInstrumentExplorerMetrics({ symbol: 'NO-DATA' }), {
+    price: null,
+    change: null,
+    openInterest: null,
+    volume: null,
+    bidLevels: null,
+    askLevels: null,
+    feedSource: 'Overview snapshot',
+    tickAt: null,
+  });
+});

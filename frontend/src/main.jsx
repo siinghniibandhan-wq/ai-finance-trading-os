@@ -6,6 +6,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import LandingPage from "./LandingPage";
 import AuthPage from "./AuthPage";
+import ImportantNotice from "./ImportantNotice";
 import { API_BASE_URL, apiFetch, clearSession, getAccessToken } from "./api";
 import "./styles.css";
 import "./visual-design.css";
@@ -165,6 +166,6 @@ function RootRouter() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AppRenderBoundary><RootRouter /></AppRenderBoundary>
+    <AppRenderBoundary><><RootRouter /><ImportantNotice /></></AppRenderBoundary>
   </React.StrictMode>
 );

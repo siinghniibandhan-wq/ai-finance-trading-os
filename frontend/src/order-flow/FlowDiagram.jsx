@@ -1,14 +1,14 @@
 import React,{useMemo,useState}from"react";
 import{getFlowBoardLayout}from"./flowBoardLayout";
 const pct=n=>(n>0?"+":"")+Number(n||0).toFixed(2)+"%";
-export default function FlowDiagram({stocks,selected,onSelect,onPin}){
+export default function FlowDiagram({stocks,selected,onSelect,onPin,selectedSector}){
  const[panel,setPanel]=useState("diagram");const[crosshair,setCrosshair]=useState(null);
  const bulls=useMemo(()=>stocks.filter(s=>s.side==="bullish").sort((a,b)=>b.changePct-a.changePct),[stocks]);
  const bears=useMemo(()=>stocks.filter(s=>s.side==="bearish").sort((a,b)=>a.changePct-b.changePct),[stocks]);
  const leaders=[...bulls.slice(0,3),...bears.slice(0,3)];
  const layout=getFlowBoardLayout(typeof window==="undefined"?1600:window.innerWidth,typeof window==="undefined"?900:window.innerHeight);
  const rows=[...bulls.slice(0,8),...bears.slice(0,8)];
- const cls=(s)=>selected===s.symbol?"is-active":"";
+ const cls=(s)=>[selected===s.symbol?"is-active":"",selectedSector&&s.sector!==selectedSector?"is-sector-dim":""].filter(Boolean).join(" ");
  return <section className={"mf-flow-diagram mode-"+layout.mode} aria-label="Order Flow continuous diagram">
   <div className="mf-diagram-mobile-tabs" role="tablist" aria-label="Flow panels">{[["diagram","Flow"],["bullish","Bullish"],["bearish","Bearish"],["leaders","Leaders"]].map(([id,label])=><button key={id} role="tab" aria-selected={panel===id} className={panel===id?"active":""} onClick={()=>setPanel(id)}>{label}</button>)}</div>
   <div className="mf-diagram-columns">

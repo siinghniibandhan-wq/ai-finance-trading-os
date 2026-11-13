@@ -47,7 +47,11 @@ def test_parses_ltp_and_quote_packets():
 
     ticks = parse_type_a_frame(_frame(ltp, quote))
 
-    assert ticks[0] == {"token": 321, "mode": "ltp", "ltp_raw": 123456}
+    assert ticks[0]["token"] == 321
+    assert ticks[0]["mode"] == "ltp"
+    assert ticks[0]["ltp_raw"] == 123456
+    assert ticks[0]["ltp"] == 1234.56
+    assert ticks[0]["price_divisor"] == 100
     assert ticks[1]["mode"] == "quote"
     assert ticks[1]["volume"] == 99
 
@@ -86,9 +90,9 @@ def test_normalizes_type_a_prices_using_instrument_segment_divisor_and_1980_epoc
 
 
 def test_normalizes_currency_segment_prices_with_currency_divisor():
-    packet = struct.pack(">2I", (1234 << 8) | 3, 15234500000)
+    packet = struct.pack(">2I", (1234 << 8) | 3, 1523450000)
     tick = parse_type_a_frame(_frame(packet))[0]
-    assert tick["ltp"] == 1523.45
+    assert tick["ltp"] == 152.345
     assert tick["price_divisor"] == 10000000
 
 

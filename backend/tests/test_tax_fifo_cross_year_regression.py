@@ -107,3 +107,36 @@ def test_itr_report_does_not_match_future_buy_to_earlier_sale(monkeypatch):
     assert result["sales"][0]["matched_lots"][0]["quantity"] == Decimal("3.00")
     assert result["sales"][0]["unmatched_quantity"] == Decimal("2.00")
     assert result["sales"][0]["cost_basis"] == Decimal("30.00")
+
+
+def test_final_taxable_income_only_counts_matched_quantity_and_allocates_sale_fees(monkeypatch):
+    transactions = [
+        _tx(1, "BUY", "3", "10", date(2026, 5, 1)),
+        _tx(2, "SELL", "5", "20", date(2026, 6, 1), fees="10"),
+    ]
+    monkeypatch.setattr(final_taxable_income, "load_investments", lambda db, user_id: [_investment()])
+    monkeypatch.setattr(final_taxable_income, "load_investment_transactions", lambda db, user_id: transactions)
+
+    sales = final_taxable_income.calculate_capital_gains(None, 7, FY_START, FY_END)
+
+    assert len(sales) == 1
+    assert sales[0]["matched_quantity"] == Decimal("3")
+    assert sales[0]["unmatched_quantity"] == Decimal("2")
+    assert sales[0]["sale_proceeds"] == Decimal("60.00")
+    assert sales[0]["sale_fees"] == Decimal("6.00")
+    assert sales[0]["realised_gain_loss"] == Decimal("24.00")
+
+
+def test_final_taxable_income_does_not_overallocate_buy_fees_across_partial_sales(monkeypatch):
+    transactions = [
+        _tx(1, "BUY", "10", "10", date(2026, 5, 1), fees="100"),
+        _tx(2, "SELL", "5", "20", date(2026, 6, 1)),
+        _tx(3, "SELL", "2", "20", date(2026, 7, 1)),
+    ]
+    monkeypatch.setattr(final_taxable_income, "load_investments", lambda db, user_id: [_investment()])
+    monkeypatch.setattr(final_taxable_income, "load_investment_transactions", lambda db, user_id: transactions)
+
+    sales = final_taxable_income.calculate_capital_gains(None, 7, FY_START, FY_END)
+
+    assert len(sales) == 2
+    assert sum((sale["cost_basis"] for sale in sales), Decimal("0")) == Decimal("140.00")

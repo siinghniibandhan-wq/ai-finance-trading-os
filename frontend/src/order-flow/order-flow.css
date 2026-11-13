@@ -342,3 +342,5 @@
 .mf-fan-path.bearish { stroke:var(--mf-down); }
 .mf-fan-path.is-active { stroke-width:2;opacity:1;filter:drop-shadow(0 0 2px currentColor); }
 .mf-fan-path:focus-visible { stroke-width:2.4;opacity:1;outline:none; }
+
+.mf-fan-path.is-sector-dim,.mf-diagram-rank-groups button.is-sector-dim,.mf-leader-card.is-sector-dim { opacity:.16; }

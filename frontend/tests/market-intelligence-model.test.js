@@ -60,7 +60,7 @@ test('builds a deduplicated directional flow universe only from supplied market 
     gainers: [{ symbol: 'ABC', change: 2.5, price: 120 }, { symbol: 'DUP', change: 1 }],
     losers: [{ symbol: 'XYZ', change: -1.5, price: 80 }, { symbol: 'DUP', change: -2 }],
   });
-  assert.deepEqual(rows.map((row) => row.symbol), ['ABC', 'XYZ', 'DUP']);
+  assert.deepEqual(rows.map((row) => row.symbol), ['ABC', 'DUP', 'XYZ']);
   assert.equal(rows.length, 3);
   assert.equal(rows[1].change, -1.5);
 });

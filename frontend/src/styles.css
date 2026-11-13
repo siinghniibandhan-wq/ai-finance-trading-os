@@ -2900,9 +2900,9 @@ input, textarea { color-scheme: light; }
   }
   .sidebar-collapse-toggle { display: inline-flex; }
   .app-shell.sidebar-collapsed .sidebar {
-    width: 76px;
-    padding-left: 10px;
-    padding-right: 10px;
+    width: 88px;
+    padding-left: 8px;
+    padding-right: 8px;
   }
   .app-shell.sidebar-collapsed .sidebar .brand {
     justify-content: center;
@@ -2923,7 +2923,7 @@ input, textarea { color-scheme: light; }
   }
   .app-shell.sidebar-collapsed .sidebar .navigation-item:hover { transform: none; }
   .app-shell.sidebar-collapsed .main-area {
-    width: calc(100% - 76px);
-    margin-left: 76px;
+    width: calc(100% - 88px);
+    margin-left: 88px;
   }
 }

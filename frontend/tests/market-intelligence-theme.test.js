@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 const css = readFileSync(new URL('../src/market-intelligence.css', import.meta.url), 'utf8');
 
 test('Market Intelligence surfaces use the shared theme token contract', () => {
-  for (const token of ['--th-page', '--th-card', '--th-inner', '--th-text', '--th-muted', '--th-border', '--th-accent', '--th-on-accent', '--th-pos', '--th-neg', '--th-warn', '--th-radius', '--th-shadow', '--th-font']) {
+  for (const token of ['--th-page', '--th-card', '--th-inner', '--th-text', '--th-muted', '--th-border', '--th-accent', '--th-on-accent', '--th-pos', '--th-neg', '--th-warn', '--th-radius', '--th-card-shadow', '--th-font']) {
     assert.ok(css.includes(token), `Market Intelligence must consume ${token}`);
   }
 });

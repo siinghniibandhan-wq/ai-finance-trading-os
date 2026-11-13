@@ -85,26 +85,6 @@ class MarketStreamWorker:
                 self._connected = False
                 self._socket = None
 
-
-    def update_subscriptions(self, tokens: list[int]) -> dict[str, list[int]]:
-        """Replace the active token set and send only subscription deltas."""
-        normalized = list(dict.fromkeys(int(token) for token in tokens if int(token) > 0))
-        with self._lock:
-            previous = set(self._subscriptions)
-            current = set(normalized)
-            removed = sorted(previous - current)
-            added = sorted(current - previous)
-            self._subscriptions = normalized
-            sock = self._socket if self._connected else None
-        if sock is not None:
-            if removed:
-                sock.send(json.dumps({"a": "unsubscribe", "v": removed}))
-            if added:
-                sock.send(json.dumps({"a": "subscribe", "v": added}))
-                sock.send(json.dumps({"a": "mode", "v": ["full", added]}))
-        return {"added": added, "removed": removed}
-
-
     def _run(self) -> None:
         delay = self._reconnect_min
         try:

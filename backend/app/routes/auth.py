@@ -50,13 +50,16 @@ def _client_ip(request: Request) -> str:
     ignored because clients can forge it.
     """
     try:
-        proxies = int(os.getenv("TRUSTED_PROXY_COUNT", "0") or 0)
+        proxies = max(0, int(os.getenv("TRUSTED_PROXY_COUNT", "0") or 0))
     except ValueError:
         proxies = 0
     if proxies > 0:
         parts = [p.strip() for p in request.headers.get("x-forwarded-for", "").split(",") if p.strip()]
-        if len(parts) >= proxies:
-            return parts[-proxies]
+        # X-Forwarded-For is ordered client -> nearest proxy. Skip the
+        # configured trusted proxy hops from the right, then select the
+        # last address supplied before that trusted chain.
+        if len(parts) > proxies:
+            return parts[-(proxies + 1)]
     return request.client.host if request.client else "unknown"
 
 

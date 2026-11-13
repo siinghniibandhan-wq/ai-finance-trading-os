@@ -319,3 +319,24 @@ The AWS architecture table in Section 4 describes purpose and verification statu
 For the next live infrastructure audit, capture resource IDs, region, account/environment, tags, security-group references, subnet placement, IAM role, backup policy and last-verified timestamp. Never copy secret values or credential-bearing environment output into documentation.
 
 The application-owned AWS topology remains incomplete until the active frontend host, backend host, database host, network path, IAM/SSM secret retrieval, DNS/TLS edge, logging/alarms and backup/restore configuration have all been checked against the live account.
+
+
+## Addendum — Type A market-stream deployment evidence (13 November 2026)
+
+The user inspected the existing EC2 gateway directory through an authorized Session Manager session and supplied these deployed-host files for review:
+
+- `mstock_stream.py`: Type A binary-frame decoder.
+- `market_stream.py`: persistent WebSocket worker with token subscriptions, tick cache, reconnect backoff and stale status.
+- `market_stream_routes.py`: Flask blueprint exposing read-only `/market-stream/start`, `/stop`, `/status` and `/snapshot`.
+- EC2 `app.py` imports and registers `create_market_stream_blueprint` at lines 917–924.
+- `mstock-gateway.service` was observed active under systemd.
+
+This is evidence from the deployed EC2 host, not proof that the same files are committed to this GitHub repository. An active systemd process and registered blueprint do not prove the worker itself has been started or has received live ticks.
+
+A request to the stream status route returned `GATEWAY_SECRET_INVALID`. This indicates the request failed the gateway's internal shared-secret validation. It does not establish that m.Stock API credentials are invalid. The user reports that existing REST market data remains available; keep REST and WebSocket health separate. Resolve the internal secret mismatch using the existing server-side configuration without exposing or regenerating credentials.
+
+The gateway blueprint's `/market-stream/snapshot` route returns cached decoded ticks and stream status. The repository Order Flow adapter expects a different endpoint, `/order-flow/snapshot`, with normalized futures/options data. The adapter/route mapping and the Order Flow connection have not yet been verified. Do not report Order Flow as LIVE until authentication, worker startup, token subscriptions, fresh tick receipt, normalized snapshot delivery and frontend freshness display have all been tested.
+
+The prior Sydney-host HTTP 502 WebSocket-upgrade result is historical. It occurred before LOGIN/subscription and does not establish the current worker's connection state.
+
+**Safety:** Do not modify existing REST market-data routes, broker/order execution, production service configuration or database state during this verification. Database migrations and migration automation remain out of scope and untouched.

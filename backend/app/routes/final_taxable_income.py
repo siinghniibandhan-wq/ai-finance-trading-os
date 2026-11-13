@@ -35,7 +35,7 @@
 # ============================================================
 
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import APIRouter, Depends, Query, HTTPException
@@ -51,6 +51,7 @@ from app.house_property_calc import compute_house_property
 from app.routes.auth import get_current_user
 from app.tax_income_safety import non_income_reason, find_duplicates
 from app.finance_diary import record_finance_event
+from app.routes.capital_gains_classification import classify_gain_by_dates
 from app.routes.deductions_exempt_income import (
     DEDUCTION_CATALOG, EXEMPT_INCOME_CATALOG, HRAInputs, calculate_hra_exemption, regime_available,
 )
@@ -515,6 +516,8 @@ def calculate_capital_gains(
                         transaction_date,
                     "quantity_remaining":
                         quantity,
+                    "original_quantity":
+                        quantity,
                     "unit_price":
                         price,
                     "gross_buy_value":
@@ -536,9 +539,10 @@ def calculate_capital_gains(
 
             remaining_quantity = quantity
 
-            sale_proceeds = (
-                quantity * price
-            )
+            # Only matched units have a verified FIFO cost basis. Keep
+            # unmatched sale quantity visible for reconciliation, but do not
+            # manufacture a gain from units with no matched acquisition lot.
+            sale_proceeds = Decimal("0")
 
             sale_fee = fees
 
@@ -549,6 +553,14 @@ def calculate_capital_gains(
             matched_quantity = Decimal("0")
 
             matched_lots = []
+
+            # Capital-gain classification belongs to each FIFO acquisition
+            # lot, not to an average holding period across the whole sale.
+            classification_gains = {
+                "STCG": Decimal("0"),
+                "LTCG": Decimal("0"),
+                "UNCLASSIFIED": Decimal("0"),
+            }
 
             holding_days_weighted = (
                 Decimal("0")
@@ -626,11 +638,11 @@ def calculate_capital_gains(
                 # BUY FEE ALLOCATION
                 # ------------------------------------------
 
-                lot_original_quantity = (
-                    decimal(
-                        lot["quantity_remaining"]
-                    )
-                    + consumed_quantity
+                # Allocate acquisition fees against the immutable original
+                # lot quantity. Using the remaining quantity here overstates
+                # fees when a lot is sold in several partial transactions.
+                lot_original_quantity = decimal(
+                    lot["original_quantity"]
                 )
 
                 if (
@@ -654,6 +666,36 @@ def calculate_capital_gains(
                 matched_buy_fees += (
                     allocated_buy_fee
                 )
+
+                # Allocate sale fees and calculate gain at the matched-lot
+                # level so lots with different holding periods are never
+                # collapsed into one tax classification.
+                allocated_lot_sale_fee = (
+                    sale_fee * consumed_quantity / quantity
+                    if quantity > 0 else Decimal("0")
+                )
+                lot_sale_proceeds = consumed_quantity * price
+                lot_gain = (
+                    lot_sale_proceeds
+                    - allocated_lot_sale_fee
+                    - lot_cost
+                    - allocated_buy_fee
+                )
+                acquisition_date = (
+                    buy_date.date() if isinstance(buy_date, datetime) else buy_date
+                )
+                disposal_date = (
+                    transaction_date.date()
+                    if isinstance(transaction_date, datetime)
+                    else transaction_date
+                )
+                lot_classification_result = classify_gain_by_dates(
+                    acquisition_date,
+                    disposal_date,
+                    asset_class,
+                )
+                lot_classification = lot_classification_result["classification"]
+                classification_gains[lot_classification] += lot_gain
 
                 # ------------------------------------------
                 # HOLDING PERIOD
@@ -685,6 +727,16 @@ def calculate_capital_gains(
                             lot_unit_price,
                         "holding_days":
                             holding_days,
+                        "classification":
+                            lot_classification,
+                        "sale_proceeds":
+                            money(lot_sale_proceeds),
+                        "sale_fees":
+                            money(allocated_lot_sale_fee),
+                        "cost_basis":
+                            money(lot_cost + allocated_buy_fee),
+                        "realised_gain_loss":
+                            money(lot_gain),
                     }
                 )
 
@@ -726,12 +778,12 @@ def calculate_capital_gains(
 
             if quantity > 0:
                 allocated_sale_fee = (
-                    sale_fee
+                    sale_fee * matched_quantity / quantity
                 )
             else:
-                allocated_sale_fee = (
-                    Decimal("0")
-                )
+                allocated_sale_fee = Decimal("0")
+
+            sale_proceeds = matched_quantity * price
 
             # ------------------------------------------------
             # REALISED GAIN
@@ -756,17 +808,20 @@ def calculate_capital_gains(
             else:
                 weighted_holding_days = None
 
-            classification_result = (
-                classify_gain(
-                    int(
-                        weighted_holding_days
-                    )
-                    if weighted_holding_days
-                    is not None
-                    else 0,
-                    asset_class,
-                )
-            )
+            matched_classifications = {
+                lot["classification"] for lot in matched_lots
+            }
+            if len(matched_classifications) > 1:
+                sale_classification = "MIXED"
+            elif matched_classifications:
+                sale_classification = next(iter(matched_classifications))
+            else:
+                sale_classification = "UNCLASSIFIED"
+
+            classification_breakdown = {
+                key: money(value)
+                for key, value in classification_gains.items()
+            }
 
             if not report_sale:
                 continue
@@ -822,13 +877,17 @@ def calculate_capital_gains(
                             else None
                         ),
                     "classification":
-                        classification_result[
-                            "classification"
-                        ],
+                        sale_classification,
+                    "classification_breakdown":
+                        classification_breakdown,
                     "threshold_days":
-                        classification_result[
-                            "threshold_days"
-                        ],
+                        (
+                            classify_gain(
+                                int(weighted_holding_days)
+                                if weighted_holding_days is not None else 0,
+                                asset_class,
+                            )["threshold_days"]
+                        ),
                     "matched_lots":
                         matched_lots,
                 }
@@ -856,6 +915,26 @@ def calculate_capital_gain_totals(
     unclassified = Decimal("0")
 
     for sale in sales:
+
+        # Newer sale records carry tax classification per matched FIFO lot.
+        # Retain the legacy aggregate fallback for older callers/test fixtures.
+        if "classification_breakdown" in sale:
+            breakdown = sale["classification_breakdown"]
+            for classification in ("STCG", "LTCG", "UNCLASSIFIED"):
+                gain = decimal(breakdown.get(classification, 0))
+                if classification == "STCG":
+                    if gain >= 0:
+                        stcg += gain
+                    else:
+                        stcl += abs(gain)
+                elif classification == "LTCG":
+                    if gain >= 0:
+                        ltcg += gain
+                    else:
+                        ltcl += abs(gain)
+                else:
+                    unclassified += gain
+            continue
 
         gain = decimal(
             sale[

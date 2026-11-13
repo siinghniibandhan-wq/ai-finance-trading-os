@@ -1426,8 +1426,11 @@ def get_final_tax_liability(
     # 87A
     # ========================================================
 
+    # Section 156 rebate is limited to tax under the normal slab-rate
+    # provision. Special-rate capital gains (sections 196/198) are excluded
+    # from the rebate basis; use only the income that entered slab tax.
     rebate = calculate_87a_rebate(
-        available_taxable_income,
+        normal_taxable_income,
         normal_tax,
         tax_regime,
         residential_status,

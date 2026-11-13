@@ -77,32 +77,35 @@ The market-data path is deliberately separated into API modules:
 | Gainers / losers | `market_movers.py` | Uses the gateway's dedicated provider endpoint |
 | Charts | `market_charts.py` | Registered market chart API module |
 | Watchlist | `watchlist.py` | User market watchlist routes |
-| Live Order Flow | `frontend/src/order-flow/` plus gateway/stream services | UI and stream worker exist; live-feed health remains unresolved |
+| Live Order Flow | `frontend/src/order-flow/` plus the EC2 Type A stream worker | UI and gateway-side worker/routes exist on the inspected EC2 host; Order Flow adapter contract and live tick delivery remain unverified |
 
 The backend market overview currently reports market status as `unknown/not_connected`; do not describe exchange market-hours/status detection as complete without a verified source.
 
-### 2.5 m.Stock WebSocket incident — current technical status
+### 2.5 m.Stock Type A WebSocket and Order Flow integration — current technical status
 
-**Last recorded evidence:** 13 November 2026.  
-**Scope:** m.Stock live market-data WebSocket only. This is not a ChatGPT Operator issue.
+**Latest repository/EC2 evidence:** 13 November 2026. The user confirmed the m.Stock account is Type A and supplied the contents of three files from the EC2 gateway directory:
 
-- Endpoint tested: `wss://ws.mstock.trade`.
-- The tested gateway host was an EC2 instance in Sydney (`ap-southeast-2`); DNS for the provider endpoint resolved to AWS load-balancer addresses in Mumbai (`ap-south-1`).
-- TCP 443 and TLS 1.3 succeeded from that host, but the WebSocket HTTP upgrade repeatedly returned **502 Bad Gateway** with `awselb/2.0`.
-- The handshake failed before application LOGIN or subscription messages were sent. Therefore the current evidence does not establish a bad token, subscription payload, tick parser or frontend rendering defect.
-- The last captured worker status was disconnected/stale with repeated reconnects and no ticks. A reconnect loop running is not the same as a connected stream.
-- REST gateway checks for quote, index quote, gainers/losers, instruments and historical data returned HTTP 200 in the recorded test. REST success is separate from WebSocket health.
-- The Sydney-to-Mumbai path is a diagnostic lead, not proof of root cause. No India-origin handshake test is recorded yet.
-- Possible causes remain unconfirmed: provider-side WebSocket upstream/target health, load-balancer upgrade/routing/target-group health, or source-network/client-specific restrictions.
+- `mstock_stream.py`: Type A length-prefixed binary-frame decoder. It handles LTP, index quote/full, quote and full packets, and depth fields. The decoder includes a code comment that the documented 48-byte index layout differs from some offsets in the published SDK; this discrepancy must be validated against a real provider packet before relying on those fields.
+- `market_stream.py`: persistent worker that obtains the existing server-side access token/API key, connects to `wss://ws.mstock.trade`, sends Type A LOGIN and subscribe/mode messages, decodes frames, caches subscribed ticks, and reconnects with exponential backoff.
+- `market_stream_routes.py`: Flask blueprint with read-only `/market-stream/start`, `/stop`, `/status` and `/snapshot` routes protected by the gateway-secret check.
+
+The user also supplied output showing that EC2 `app.py` imports and registers `create_market_stream_blueprint` at lines 917–924, and `systemctl status mstock-gateway` showed the service active. This confirms the stream code is present on the inspected EC2 host and its blueprint is registered in the running application. It does **not** prove that the worker has been started, has completed the WebSocket handshake, has subscribed to instruments or has received fresh ticks.
+
+A diagnostic request to `/market-stream/status` returned `GATEWAY_SECRET_INVALID`. This means that particular HTTP request did not pass the gateway's internal shared-secret check. It does not establish that the user's m.Stock API credentials are invalid or that the existing REST market-data integration is down. The user reports that existing market data continues to work; REST market data and the new WebSocket stream are separate paths.
+
+**Order Flow connection gap:** the repository-side Order Flow service currently expects a normalized `GET /order-flow/snapshot` response through `MSTOCK_DERIVATIVES_GATEWAY_URL`. The inspected EC2 blueprint exposes `/market-stream/snapshot` and returns cached raw decoded ticks plus stream status. These are different paths/contracts. No verified adapter from the EC2 tick cache to the Order Flow normalized futures/options snapshot has yet been established. Therefore the stream implementation exists on EC2, but the Order Flow integration is not yet proven configured or complete.
+
+**Earlier WebSocket incident (historical):** a prior test from the Sydney EC2 host completed TCP/TLS but received HTTP 502 during the WebSocket upgrade, before LOGIN or subscription. This remains historical evidence and must not be presented as the current worker state. A successful REST quote response does not prove WebSocket health.
 
 **Required next checks**
-1. Perform a controlled WebSocket handshake test from an India-based network and record timestamp in IST, source provider/network, resolved IP, TLS result, HTTP status and sanitized headers.
-2. Compare with a second independent network/client while keeping endpoint, documented protocol and valid credentials constant.
-3. Ask m.Stock to inspect WebSocket listener, target-group and upstream health for the exact timestamps.
-4. Only after the handshake succeeds, validate LOGIN, subscription acknowledgement, heartbeat, tick receipt, cache freshness and reconnect behaviour.
-5. Keep REST and WebSocket health indicators separate in monitoring and UI.
+1. Resolve the gateway diagnostic shared-secret mismatch using the existing server-side systemd/environment configuration. Never print or share the secret; do not regenerate it or change m.Stock credentials.
+2. Call the authenticated stream status route and determine whether the worker is running, connected, subscribed and receiving fresh ticks.
+3. If it is not running, review the existing route/startup procedure and the intended NIFTY futures/options token list before starting it. Do not invent instrument tokens.
+4. Verify actual Type A WebSocket handshake, LOGIN/subscription acknowledgements, heartbeat, decoded packet sizes/fields, exchange timestamps and fresh tick receipt.
+5. Implement or configure a server-side adapter from the EC2 `/market-stream/snapshot` tick cache to the Financial OS `/order-flow/snapshot` normalized contract. Keep gateway secrets and m.Stock credentials server-side.
+6. Verify authenticated backend retrieval and frontend freshness display. Only then may Order Flow be marked LIVE.
 
-Do not change the WebSocket protocol, move the EC2 host, change trading/order execution, or repeatedly restart production services based solely on the current 502 evidence.
+Do not disturb existing REST market-data modules, broker/order execution, production services or database state while performing these checks. Database migrations and migration automation remain explicitly out of scope.
 
 ## 3. Existing feature inventory
 

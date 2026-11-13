@@ -364,8 +364,11 @@ def _rate_limit_client_ip(request: Request) -> str:
     except ValueError:
         trusted_proxy_count = 0
     forwarded = [part.strip() for part in request.headers.get("x-forwarded-for", "").split(",") if part.strip()]
-    if trusted_proxy_count and len(forwarded) >= trusted_proxy_count:
-        return forwarded[-trusted_proxy_count]
+    # X-Forwarded-For is ordered client -> nearest proxy. Ignore the
+    # configured trusted proxy hops from the right before selecting the
+    # last address supplied before that trusted chain.
+    if trusted_proxy_count and len(forwarded) > trusted_proxy_count:
+        return forwarded[-(trusted_proxy_count + 1)]
     return request.client.host if request.client else "unknown"
 
 

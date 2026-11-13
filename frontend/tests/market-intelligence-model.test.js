@@ -62,7 +62,7 @@ test('builds a deduplicated directional flow universe only from supplied market 
   });
   assert.deepEqual(rows.map((row) => row.symbol), ['ABC', 'DUP', 'XYZ']);
   assert.equal(rows.length, 3);
-  assert.equal(rows[1].change, -1.5);
+  assert.equal(rows[1].change, 1); // First occurrence wins when a symbol appears in both mover lists.
 });
 
 test('filters flow rows without converting missing changes into zero', async () => {

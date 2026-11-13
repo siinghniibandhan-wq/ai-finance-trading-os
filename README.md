@@ -101,14 +101,18 @@ The backend is responsible for authentication, authorization, data ownership, pe
 
 ### Market data and m.Stock
 
-REST and WebSocket are separate service paths and must have separate health indicators. Existing REST market data is reported by the user as working. On 13 November 2026, the EC2 gateway directory was inspected and found to contain a Type A binary decoder (`mstock_stream.py`), a persistent WebSocket worker (`market_stream.py`) and Flask routes (`market_stream_routes.py`). The EC2 `app.py` imports/registers the stream blueprint, and `mstock-gateway.service` was observed active.
+REST and WebSocket are separate service paths and must have separate health indicators. The user reports that existing REST market data remains available; this does not establish WebSocket health.
 
-This confirms that Type A stream code is present and registered on the inspected EC2 host; it does not prove that the worker is started, connected or receiving ticks. A diagnostic request to `/market-stream/status` returned `GATEWAY_SECRET_INVALID`, meaning the request failed the gateway's internal shared-secret check. It does not imply the m.Stock API key is invalid or that REST market data is unavailable.
+**Latest EC2 gateway check — 13 November 2026:**
+- mstock-gateway.service is active and the Flask app/stream blueprint are running.
+- The stream worker's authenticated status reports running=true, but connected=false, stale=true, zero cached instruments, no last tick and 933 reconnect attempts. The current status lists token 2885; its instrument identity is not independently verified.
+- The required gateway secret header works when supplied with the value read server-side from the running gateway process. The earlier 403 was caused by diagnostic curl requests omitting that header.
+- DNS and TLS verification for ws.mstock.trade succeed, but the WebSocket HTTP upgrade returns HTTP 502 from a provider AWS load-balancer response. The failure occurs before LOGIN or subscription messages. No live ticks have been received.
+- The user has already contacted m.Stock and is waiting for its response. The feed must remain labelled NOT LIVE.
 
-The EC2 blueprint exposes `/market-stream/start|stop|status|snapshot`. The repository Order Flow adapter expects a different normalized endpoint, `/order-flow/snapshot`. No verified bridge between the raw EC2 tick cache and that normalized Order Flow contract has yet been established. Consequently, the Order Flow workspace must not be described as live/fully integrated until gateway authentication, worker startup, instrument subscriptions, fresh ticks, normalization, backend retrieval and frontend display are verified.
+The EC2 blueprint exposes /market-stream/start|stop|status|snapshot. Its snapshot returns raw decoded tick-cache data, while the repository Order Flow adapter expects normalized /order-flow/snapshot futures/options data. The bridge between these contracts remains unimplemented/unverified. Do not infer instrument identity, expiry, option OI or other undocumented fields.
 
-An earlier Sydney-host WebSocket test returned HTTP 502 during upgrade before LOGIN/subscription. Treat that as historical evidence, not proof of the current worker state. Do not infer token or subscription failure from a pre-authentication HTTP 502. See [AUDIT_REPORT.md](AUDIT_REPORT.md#25-mstock-type-a-websocket-and-order-flow-integration--current-technical-status) and [SECURITY_OPERATIONS.md](SECURITY_OPERATIONS.md) for the updated diagnostic sequence.
-
+Do not mark Order Flow live until the WebSocket handshake, LOGIN, subscriptions, fresh decoded ticks, normalized backend response, backend-to-gateway authentication and frontend freshness display all pass end-to-end. See AUDIT_REPORT.md Section 2.5, SECURITY_OPERATIONS.md Section 8 and frontend/src/order-flow/README.md.
 ## Repository structure
 
 ```text

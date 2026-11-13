@@ -1,7 +1,7 @@
 """Pure decoder for m.Stock Type A binary market-data frames.
 
 No credentials, network connections, persistence, or order execution live here.
-Price values remain raw integers until instrument-specific scaling is resolved.
+Raw fields are preserved alongside instrument-segment-scaled prices and 1980-based Type A timestamps.
 """
 from __future__ import annotations
 

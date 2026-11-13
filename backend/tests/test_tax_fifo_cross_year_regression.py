@@ -159,3 +159,22 @@ def test_final_taxable_income_classifies_each_fifo_lot_independently(monkeypatch
     assert sales[0]["classification_breakdown"] == {"STCG": Decimal("10.00"), "LTCG": Decimal("10.00"), "UNCLASSIFIED": Decimal("0.00")}
     assert totals["stcg"] == Decimal("10.00")
     assert totals["ltcg"] == Decimal("10.00")
+
+
+
+def test_final_taxable_income_uses_calendar_month_holding_period(monkeypatch):
+    transactions = [
+        _tx(1, "BUY", "1", "10", date(2025, 6, 1)),
+        _tx(2, "SELL", "1", "20", date(2026, 6, 1)),
+        _tx(3, "BUY", "1", "10", date(2025, 6, 1)),
+        _tx(4, "SELL", "1", "20", date(2026, 6, 2)),
+    ]
+    monkeypatch.setattr(final_taxable_income, "load_investments", lambda db, user_id: [_investment()])
+    monkeypatch.setattr(final_taxable_income, "load_investment_transactions", lambda db, user_id: transactions)
+
+    sales = final_taxable_income.calculate_capital_gains(None, 7, FY_START, FY_END)
+
+    assert len(sales) == 2
+    # Exactly 12 calendar months is not "more than 12 months".
+    assert sales[0]["matched_lots"][0]["classification"] == "STCG"
+    assert sales[1]["matched_lots"][0]["classification"] == "LTCG"

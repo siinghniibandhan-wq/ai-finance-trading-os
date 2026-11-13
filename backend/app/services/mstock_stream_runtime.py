@@ -242,7 +242,12 @@ class MStockStreamRuntime:
             self._instrument_metadata = _fetch_auto_mover_instruments()
             tokens = list(self._instrument_metadata)
         self._configuration["tokens"] = tokens
-        self._metadata_error = (\n            "No configured tokens could be resolved through the market mover and instrument-master gateways."\n            if not tokens else\n            f"Instrument metadata resolved for {len(self._instrument_metadata)} of {len(tokens)} subscribed tokens."\n            if len(self._instrument_metadata) < len(tokens) else None\n        )
+        self._metadata_error = (
+            "No configured tokens could be resolved through the market mover and instrument-master gateways."
+            if not tokens else
+            f"Instrument metadata resolved for {len(self._instrument_metadata)} of {len(tokens)} subscribed tokens."
+            if len(self._instrument_metadata) < len(tokens) else None
+        )
         if not tokens:
             self._configuration["configured"] = False
             self._configuration["reason"] = self._metadata_error

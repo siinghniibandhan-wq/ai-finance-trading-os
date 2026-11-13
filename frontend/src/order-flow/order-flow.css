@@ -154,3 +154,97 @@
     justify-content: flex-start;
   }
 }
+
+
+/* Order Flow theme contract: every visual state follows the active app theme. */
+.market-flow-workspace {
+  --mf-up: var(--th-pos, #15803d);
+  --mf-down: var(--th-neg, #b91c1c);
+  color: var(--th-text, inherit);
+  background: var(--th-page, transparent);
+}
+.market-flow-workspace :is(h1,h2,h3,h4,h5,h6,strong,b,span,p,label,small,button,article,section,footer,header) {
+  color: inherit;
+}
+.market-flow-workspace :is(.market-flow-eyebrow,.market-flow-subtitle,.mf-summary,.mf-sector-rail button small,
+  .mf-chart-panel p,.mf-chart-panel>header>span,.mf-chart-panel footer,.mf-side>header>b,
+  .mf-tiles button small,.mf-featured button small,.mf-detail>header small,
+  .mf-detail-metrics small,.mf-levels small,.mf-oi-row,.mf-checks h3 small,.mf-disclaimer) {
+  color: var(--th-muted, currentColor);
+}
+.market-flow-workspace :is(.mf-sector-rail,.mf-chart-panel,.mf-side,.mf-detail) {
+  color: var(--th-text, inherit);
+  background: var(--th-card, transparent);
+  border-color: var(--th-border, currentColor);
+  border-radius: var(--th-radius, 12px);
+  box-shadow: var(--th-card-shadow, var(--th-shadow, none));
+}
+.market-flow-workspace :is(.mf-detail-metrics article,.mf-levels>div,.mf-checks>div) {
+  color: var(--th-text, inherit);
+  background: var(--th-inner, var(--th-card, transparent));
+  border-color: var(--th-border, currentColor);
+}
+.market-flow-workspace :is(.mf-scope,.mf-tiles button,.mf-oi-row>div) {
+  background: var(--th-inner, var(--th-card, transparent));
+  border-color: var(--th-border, currentColor);
+}
+.market-flow-workspace .mf-scope button {
+  color: var(--th-tab-text, var(--th-text, inherit));
+  background: transparent;
+}
+.market-flow-workspace .mf-scope button.active {
+  color: var(--th-tab-active-text, var(--th-on-accent, #fff));
+  background: var(--th-tab-active-bg, var(--th-accent, #555));
+  box-shadow: var(--th-tab-active-shadow, none);
+}
+.market-flow-workspace button {
+  color: var(--th-text, inherit);
+}
+.market-flow-workspace :is(.mf-detail>header button,.mf-detail-actions button) {
+  color: var(--th-button-secondary-text, var(--th-text, inherit));
+  background: var(--th-button-secondary-bg, var(--th-inner, transparent));
+  border: 1px solid var(--th-border, currentColor);
+  border-radius: var(--th-control-radius, var(--th-radius, 8px));
+}
+.market-flow-workspace .mf-provider-pill {
+  color: var(--th-pos, var(--mf-up));
+  border-color: var(--th-border, currentColor);
+  background: var(--th-selected-surface, transparent);
+}
+.market-flow-workspace .mf-tiles button {
+  color: var(--th-text, inherit);
+  background: var(--th-inner, var(--th-card, transparent));
+  border-color: var(--th-border, currentColor);
+}
+.market-flow-workspace .mf-tiles button.is-selected {
+  outline-color: var(--th-accent, currentColor);
+  background: var(--th-selected-surface, var(--th-inner, transparent));
+}
+.market-flow-workspace .mf-featured button {
+  color: var(--th-text, inherit);
+  background: var(--th-inner, transparent);
+  border-color: var(--th-border, currentColor);
+}
+.market-flow-workspace .mf-gridline {
+  stroke: var(--th-border, currentColor);
+}
+.market-flow-workspace .mf-axis {
+  fill: var(--th-muted, currentColor);
+}
+.market-flow-workspace .mf-oi-row>span:first-child {
+  color: var(--th-text, inherit);
+}
+.market-flow-workspace .mf-oi-row>div {
+  background: var(--th-inner, var(--th-card, transparent));
+}
+.market-flow-workspace .mf-oi-row .put i {
+  background: var(--th-pos, var(--mf-up));
+}
+.market-flow-workspace .mf-oi-row .call i {
+  background: var(--th-neg, var(--mf-down));
+}
+.market-flow-workspace .up { color: var(--th-pos, var(--mf-up)) !important; }
+.market-flow-workspace .down { color: var(--th-neg, var(--mf-down)) !important; }
+.market-flow-workspace :is(button,input,select,a):focus-visible {
+  outline-color: var(--th-focus, var(--th-accent, currentColor));
+}

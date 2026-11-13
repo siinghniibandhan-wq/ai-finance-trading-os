@@ -68,3 +68,38 @@ def test_option_chain_normalizes_provider_call_and_put_rows_by_strike(monkeypatc
 def test_option_chain_side_discards_malformed_and_negative_oi():
     rows = _parse_side(["1,2200000,100", "bad", "2,2210000,-5"], "call_oi")
     assert rows == {22000.0: {"strike": 22000.0, "call_oi": 100, "put_oi": 0}}
+
+
+from app.services.mstock_stream_runtime import parse_instrument_metadata
+
+
+def test_instrument_master_maps_configured_tokens_to_exchange_qualified_symbols():
+    csv_text = """instrument_token,tradingsymbol,name,segment,exchange,expiry,strike
+1234,RELIANCE-EQ,Reliance Industries,EQ,NSE,,
+5678,NIFTY26NOVFUT,NIFTY FUT,FUT,NFO,2026-11-26,
+"""
+    result = parse_instrument_metadata(csv_text, [1234, 5678, 9999])
+    assert result == {
+        1234: {
+            "symbol": "RELIANCE-EQ",
+            "name": "Reliance Industries",
+            "exchange": "NSE",
+            "segment": "EQ",
+            "instrument_key": "NSE:RELIANCE-EQ",
+            "expiry": None,
+            "strike": None,
+        },
+        5678: {
+            "symbol": "NIFTY26NOVFUT",
+            "name": "NIFTY FUT",
+            "exchange": "NFO",
+            "segment": "FUT",
+            "instrument_key": "NFO:NIFTY26NOVFUT",
+            "expiry": "2026-11-26",
+            "strike": None,
+        },
+    }
+
+
+def test_instrument_master_rejects_missing_required_columns():
+    assert parse_instrument_metadata("symbol,token\\nRELIANCE,1\\n", [1]) == {}

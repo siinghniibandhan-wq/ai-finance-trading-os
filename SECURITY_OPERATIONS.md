@@ -155,29 +155,66 @@ Verify current source and live settings before treating each control as effectiv
 
 ## 8. m.Stock WebSocket incident and operational response
 
-**Last recorded evidence:** 13 November 2026.
+**Latest diagnostic evidence:** 13 November 2026, approximately 15:08–15:12 UTC, from the user's SSM session on the Sydney EC2 gateway host.
 
-- Endpoint: `wss://ws.mstock.trade`.
-- From the Sydney EC2 gateway host, TCP 443 and TLS 1.3 succeeded, but WebSocket upgrade repeatedly returned HTTP 502 from a server identified as `awselb/2.0`.
-- Provider DNS resolved to AWS load-balancer IPs in Mumbai (`ap-south-1`); the tested client host was in Sydney (`ap-southeast-2`).
-- The failure occurred before LOGIN or subscription messages. The last captured worker was disconnected/stale and repeatedly reconnecting, with no ticks.
-- REST endpoints for quotes, index quotes, gainers/losers, instruments and historical data returned HTTP 200 in the recorded checks.
-- An India-origin WebSocket test has not yet been recorded. Region difference is a lead, not a proven root cause.
+### Confirmed gateway and authentication state
 
-### Diagnostic sequence
+- mstock-gateway.service was active (PID 76459) and the Flask listener was bound to 127.0.0.1:8000.
+- The gateway application registers the market_stream Flask blueprint. The stream worker is a background thread in the Flask process; it is not expected to appear as a separate market_stream.py OS process.
+- The required header is X-Financial-OS-Gateway-Secret; the gateway validates it against FINANCIAL_OS_GATEWAY_SECRET.
+- An earlier pair of curl diagnostics omitted the header and correctly returned HTTP 403 GATEWAY_SECRET_INVALID.
+- A subsequent diagnostic read the secret from the running process environment without printing it and sent it in the required header. Both /market-stream/status and /market-stream/snapshot then returned HTTP 200. This verifies the gateway's own shared-secret guard for that diagnostic. Both FINANCIAL_OS_GATEWAY_SECRET and MSTOCK_GATEWAY_SECRET variable names were present in the process environment; their values were not disclosed. This test alone does not prove that the Financial OS backend is configured with the same value.
 
-1. Test the handshake from India and a second independent network. Record timestamp (IST), source network, DNS answer, TLS result, HTTP status and sanitized response headers.
-2. Ask m.Stock to inspect WebSocket listener, target-group and upstream health for those exact timestamps.
-3. Compare results to distinguish provider-wide failure from source-network/geographic routing.
-4. Once handshake succeeds, test authentication, subscription acknowledgement, heartbeat, tick delivery and stale/reconnect handling.
-5. Keep REST health, WebSocket transport health and market-data freshness as separate monitoring signals.
+### Current WebSocket state
+
+The authenticated /market-stream/status response reported:
+
+| Field | Observed value |
+|---|---|
+| Worker running | true |
+| WebSocket connected | false |
+| stale | true |
+| cached_instruments | 0 |
+| last_tick_at / age | null |
+| reconnect_count | 933 |
+| Mode | 3 (full) |
+| Subscribed token | 2885 (instrument identity not verified) |
+| last_error | HTTP 502 during WebSocket handshake |
+
+The authenticated /market-stream/snapshot endpoint returned HTTP 200 with an empty ticks array. The worker thread is active and retrying; this is not a connected feed.
+
+### Network and handshake evidence
+
+- WebSocket endpoint: wss://ws.mstock.trade.
+- DNS resolved the host to provider AWS load-balancer addresses 13.200.68.179 and 15.206.54.73, associated with Mumbai (ap-south-1).
+- The EC2 gateway host is in Sydney (ap-southeast-2).
+- TCP/TLS connectivity succeeded; the certificate for ws.mstock.trade verified successfully with TLS 1.3.
+- No outbound proxy environment variables were configured.
+- Installed client library: websocket-client 1.9.0.
+- The worker constructs a credential-bearing WebSocket URL server-side, then sends LOGIN, subscribe and mode messages only after create_connection succeeds. The observed HTTP 502 happens during the handshake, before those messages are sent.
+- The HTTP response identified awselb/2.0. This indicates a provider-side load-balancer response path; it does not independently prove the exact failed upstream component or root cause.
+
+**Current diagnosis:** gateway service, internal shared-secret authentication, DNS and TLS are working. The m.Stock WebSocket HTTP upgrade is failing with HTTP 502. No live ticks have been received. This is not evidence that the m.Stock API key/access token is invalid, that the Type A decoder is wrong, or that the subscription was rejected: the handshake has not reached LOGIN or subscription.
+
+### Current support and next actions
+
+The user has already emailed m.Stock and elected to wait for its response rather than send duplicate requests immediately. No provider response has yet been recorded in this incident log.
+
+1. Wait for m.Stock's technical response. If requested, provide sanitized UTC/IST timestamps, source region, DNS/TLS results and HTTP 502 response details. Never provide API keys, access tokens, TOTP or gateway secrets.
+2. After provider feedback, repeat a controlled WebSocket handshake test and record the result. An India-origin comparison may help distinguish provider-wide failure from source-region/network routing, but region difference alone is not a proven cause.
+3. Once the handshake succeeds, verify LOGIN response, subscription acknowledgement, heartbeat, packet receipt, Type A decoding, exchange timestamps, cache population and stale/reconnect behaviour.
+4. Verify the instrument master and expiry/token mapping before adding NIFTY futures/options subscriptions. Token 2885 is observed in the current status but its instrument identity has not been independently verified.
+5. Separately implement and test the adapter from raw /market-stream/snapshot ticks to the Financial OS normalized /order-flow/snapshot futures/options contract.
+6. Verify the backend's gateway URL and shared-secret configuration against the gateway without displaying either secret, then verify frontend freshness display.
 
 ### Safeguards
 
-- Do not expose credentials, access tokens, TOTP or gateway secrets in diagnostics.
-- Do not change trading, order execution, broker integration or database state to fix a pre-authentication WebSocket 502.
-- Do not move the EC2 host, rewrite the protocol or repeatedly restart production services without evidence and approval.
-- Do not claim live streaming is healthy until ticks are received and freshness/reconnect checks pass.
+- Do not expose credentials, access tokens, TOTP or gateway secrets in diagnostics, logs, screenshots or documentation.
+- Do not change trading, order execution, broker integration, database state or migrations to fix a pre-authentication WebSocket 502.
+- Do not restart services, alter systemd configuration, change credentials, move the EC2 host/region or rewrite the decoder without evidence and explicit approval.
+- Keep REST market-data health, WebSocket transport health and market-data freshness as separate signals.
+- Do not mark the feed LIVE until fresh ticks and the full normalized application path are verified end-to-end.
+
 
 ## 9. Deployment and release workflow
 

@@ -102,4 +102,4 @@ def test_instrument_master_maps_configured_tokens_to_exchange_qualified_symbols(
 
 
 def test_instrument_master_rejects_missing_required_columns():
-    assert parse_instrument_metadata("symbol,token\\nRELIANCE,1\\n", [1]) == {}
+    assert parse_instrument_metadata("symbol,token\nRELIANCE,1\n", [1]) == {}

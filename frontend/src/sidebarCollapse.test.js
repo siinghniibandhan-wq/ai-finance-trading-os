@@ -34,3 +34,19 @@ test("mobile close control remains available and mobile layout is not collapsed"
   assert.match(styles, /@media \(max-width: 800px\)\s*\{\s*\.mobile-close \{ display: inline-flex; \}/);
   assert.doesNotMatch(styles, /@media \(max-width: 800px\)\s*\{[^}]*sidebar-collapsed/);
 });
+
+test("desktop collapse and expansion use a smooth eased transition", () => {
+  const desktopRules = styles.slice(styles.lastIndexOf("@media (min-width: 801px)"));
+  assert.match(desktopRules, /width \.4\d*s cubic-bezier\(\.22,\s*1,\s*\.36,\s*1\)/);
+  assert.match(desktopRules, /margin-left \.4\d*s cubic-bezier\(\.22,\s*1,\s*\.36,\s*1\)/);
+});
+
+test("sidebar labels animate instead of disappearing abruptly", () => {
+  assert.match(styles, /\.app-shell\.sidebar-collapsed \.sidebar \.wealth-brand-text,[\s\S]*?opacity: 0;/);
+  assert.match(styles, /\.app-shell\.sidebar-collapsed \.sidebar \.navigation-item > span[\s\S]*?visibility: hidden;/);
+  assert.doesNotMatch(styles, /\.app-shell\.sidebar-collapsed \.sidebar \.wealth-brand-text,[\s\S]*?display: none;/);
+});
+
+test("sidebar transitions respect reduced-motion preferences", () => {
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.sidebar,[\s\S]*?transition-duration: \.01ms/);
+});

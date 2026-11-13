@@ -74,6 +74,36 @@ export function getFlowRows(snapshot) {
     });
 }
 
+
+export function mergeStreamTicks(rows, ticks) {
+  const byInstrument = new Map();
+  (Array.isArray(ticks) ? ticks : []).forEach((tick) => {
+    const key = tick?.instrument?.instrument_key;
+    if (key && Number.isFinite(Number(tick.ltp)) && Number(tick.ltp) > 0) byInstrument.set(key, tick);
+  });
+  return (Array.isArray(rows) ? rows : []).map((row) => {
+    const tick = byInstrument.get(row.instrumentKey);
+    if (!tick) return { ...row, feedSource: row.feedSource || 'Overview snapshot' };
+    const close = finiteOrNull(tick.close);
+    const livePrice = finiteOrNull(tick.ltp);
+    const liveChange = close !== null && close > 0 && livePrice !== null
+      ? ((livePrice - close) / close) * 100
+      : row.change;
+    return {
+      ...row,
+      price: livePrice,
+      change: liveChange,
+      feedSource: 'm.Stock WebSocket',
+      tickAt: tick.exchange_time || null,
+      openInterest: finiteOrNull(tick.open_interest),
+      volume: finiteOrNull(tick.volume),
+      marketDepth: Array.isArray(tick.bids) && Array.isArray(tick.asks)
+        ? { bids: tick.bids, asks: tick.asks }
+        : null,
+    };
+  });
+}
+
 export function filterFlowRows(rows, { query = '', direction = 'all', sort = 'change' } = {}) {
   const needle = String(query).trim().toUpperCase();
   const filtered = (Array.isArray(rows) ? rows : []).filter((row) => {

@@ -222,6 +222,7 @@ export default function MarketIntelligence() {
   const [selectedInstrumentKey, setSelectedInstrumentKey] = useState('');
   const [lastSuccessAt, setLastSuccessAt] = useState(null);
   const [lastRefreshError, setLastRefreshError] = useState('');
+  const [streamStatus, setStreamStatus] = useState(null);
   const refreshSnapshot = useCallback(async () => {
     setError('');
     try {
@@ -237,6 +238,10 @@ export default function MarketIntelligence() {
         return;
       }
       setSnapshot(next);
+      apiFetch(`${API_BASE_URL}/api/market-stream/status`, { cache: 'no-store' }).then(async (streamResponse) => {
+        if (!streamResponse.ok) throw new Error('Stream diagnostics unavailable');
+        setStreamStatus(await streamResponse.json());
+      }).catch(() => setStreamStatus(null));
       setRetrievedAt(payload.retrieved_at || payload.last_updated || new Date().toISOString());
       setLastSuccessAt(Date.now());
       setProviderStatus(payload.status === 'partial' || (Array.isArray(payload.errors) && payload.errors.length) ? 'partial' : 'success');
@@ -299,7 +304,7 @@ export default function MarketIntelligence() {
     {activeWorkspace === 'monitor' && <section className="mi-monitor-workspace">
       <div className="mi-workspace-heading"><div><p className="mi-eyebrow">PROVIDER CONNECTIVITY</p><h2>Market Monitor</h2></div><span className={`mi-data-badge mi-feed-${feedState.kind}`}>{feedState.label}</span></div>
       <div className="mi-monitor-grid">
-        <article><span>Feed mode</span><strong>Periodic REST snapshot</strong><small>Not a verified streaming connection</small></article>
+        <article><span>Feed mode</span><strong>{streamStatus?.connected ? 'm.Stock Type A WebSocket' : streamStatus?.enabled ? 'Stream configured · awaiting connection' : 'Periodic REST snapshot'}</strong><small>{streamStatus?.connected ? 'Socket connected; tick freshness shown below.' : streamStatus?.configuration_reason || 'Streaming is not configured; REST snapshot remains active.'}</small></article>
         <article><span>Snapshot state</span><strong>{feedState.label}</strong><small>{feedState.stale ? 'Last successful data is retained and marked stale.' : 'Status derived from the existing market overview response.'}</small></article>
         <article><span>Last successful snapshot</span><strong>{retrievedAt ? new Date(retrievedAt).toLocaleString('en-IN') : 'Never received'}</strong><small>{lastSuccessAt ? `Age: ${Math.max(0, Math.floor((Date.now()-lastSuccessAt)/1000))} seconds` : 'No successful response recorded'}</small></article>
         <article><span>Data coverage</span><strong>{snapshot.indices.length} indices · {rows.length} movers</strong><small>Limited overview payload; not full F&O coverage</small></article>
@@ -308,10 +313,13 @@ export default function MarketIntelligence() {
         <div><dt>Refresh interval</dt><dd>30 seconds while page is visible</dd></div>
         <div><dt>Last request</dt><dd>{loading ? 'In progress' : lastRefreshError ? 'Failed / partial' : retrievedAt ? 'Completed' : 'Not completed'}</dd></div>
         <div><dt>Last error</dt><dd>{lastRefreshError || 'None reported'}</dd></div>
-        <div><dt>Streaming socket</dt><dd>Not connected / not verified</dd></div>
-        <div><dt>Reconnect count</dt><dd>Not available from current API</dd></div>
+        <div><dt>Streaming socket</dt><dd>{streamStatus?.connected ? 'Connected' : streamStatus?.enabled ? 'Disconnected / reconnecting' : 'Disabled / not configured'}</dd></div>
+        <div><dt>Last market tick</dt><dd>{streamStatus?.last_tick_at ? new Date(streamStatus.last_tick_at * 1000).toLocaleString('en-IN') : 'No tick received'}</dd></div>
+        <div><dt>Tick cache</dt><dd>{streamStatus?.cached_ticks ?? 0} instruments · {streamStatus?.stale ? 'Stale / empty' : 'Fresh'}</dd></div>
+        <div><dt>Reconnect count</dt><dd>{streamStatus?.reconnect_count ?? 'Unavailable'}</dd></div>
+        <div><dt>Stream error</dt><dd>{streamStatus?.last_error || 'None reported'}</dd></div>
       </dl></div>
-      <p className="mi-monitor-note">This page only reports data returned by the existing Market Overview API. A successful snapshot does not mean a live tick stream is connected.</p>
+      <p className="mi-monitor-note">REST snapshots and WebSocket ticks are reported independently. A successful REST snapshot does not mean the WebSocket is connected.</p>
     </section>}
 
     {['futures','sectors'].includes(activeWorkspace) && <section className="mi-unavailable-workspace"><p className="mi-eyebrow">DATA SOURCE REQUIRED</p><h2>{WORKSPACES.find((item) => item.id === activeWorkspace)?.label}</h2><p>This workspace is intentionally not displaying simulated data. The existing backend calculation engines can process normalized inputs, but the connected market overview does not supply the required {activeWorkspace === 'futures' ? 'futures price and open-interest history' : activeWorkspace === 'options' ? 'option-chain strikes and call/put open interest' : activeWorkspace === 'sectors' ? 'constituent-level sector breadth' : 'historical candles and replay data'}.</p><ul><li>Provider adapter and instrument mapping must be verified.</li><li>Source timestamps, freshness and missing-data states must be preserved.</li><li>Workspace will be enabled only after live data is validated.</li></ul></section>}

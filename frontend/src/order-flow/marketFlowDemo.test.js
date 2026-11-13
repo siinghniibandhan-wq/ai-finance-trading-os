@@ -18,3 +18,13 @@ test("classifies every underlying exactly once and supplies option positioning",
 test("keeps simulated data stable across repeated builds",()=>{
  assert.deepEqual(buildDemoFlow("nifty50").stocks,buildDemoFlow("nifty50").stocks);
 });
+
+test("steps through a side list without wrapping or losing the selected symbol", async()=>{
+ const { adjacentStock } = await import("./marketFlowDemo.js");
+ const items=[{symbol:"AAA"},{symbol:"BBB"},{symbol:"CCC"}];
+ assert.equal(adjacentStock(items,"BBB",-1).symbol,"AAA");
+ assert.equal(adjacentStock(items,"BBB",1).symbol,"CCC");
+ assert.equal(adjacentStock(items,"AAA",-1),null);
+ assert.equal(adjacentStock(items,"CCC",1),null);
+ assert.equal(adjacentStock(items,"MISSING",1),null);
+});

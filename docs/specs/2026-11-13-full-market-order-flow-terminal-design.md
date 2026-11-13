@@ -146,3 +146,10 @@ The overall product is decomposed into independently reviewable workstreams:
 - Live connection, account entitlements, gateway reachability and real tick receipt still require a configured non-production account/environment. These cannot be asserted from fixture tests.
 - Futures/OI positioning requires a verified futures contract universe and comparable prior OI observations; current full packets supply OI but not a previous-session OI baseline by themselves.
 - The option-chain adapter remains conditional on provider endpoint availability and entitlement; Sector Flow remains conditional on a provider-backed constituent map. Neither is simulated.
+
+
+### Automatic top-mover subscriptions — 2026-11-13
+- Streaming no longer requires manually maintained token IDs by default. When streaming is enabled with valid backend credentials and no explicit token list is supplied, the runtime obtains the existing gateway-backed top gainers and losers, resolves each exact exchange + trading-symbol pair against the gateway script master, and subscribes only to verified instrument tokens.
+- Explicit MSTOCK_STREAM_INSTRUMENT_TOKENS still overrides automatic discovery. MSTOCK_STREAM_AUTO_SUBSCRIBE_MOVERS can disable automatic discovery when operators want explicit subscriptions only.
+- Automatic discovery is limited to the current market-overview mover universe (the existing endpoint returns up to 20 gainers and 20 losers). It does not claim whole-market coverage or derivatives coverage.
+- Unresolved symbols are skipped; no symbol-only or cross-exchange guessing is used.

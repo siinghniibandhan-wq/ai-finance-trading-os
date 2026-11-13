@@ -1,3 +1,12 @@
+> **IMPORTANT NOTICE — PERSONAL USE ONLY**
+>
+> 1. This website and service are intended solely for individual, personal use.
+> 2. Plans and pricing are displayed for presentation and to provide a complete, premium website experience; they do not represent a current offer of commercial services.
+> 3. This application, website and service are not currently intended or permitted for commercial use. Any consideration of commercialisation would be no earlier than 3–5 years from now.
+> 4. For licensing-related questions or concerns, please use the Contact Details section or submit the contact form.
+>
+> This notice is shown on the public homepage. It is not displayed after login or within authenticated areas.
+>
 # Financial OS
 
 A unified personal-finance, wealth-management, investment, market-data, trading-support and Indian tax workspace.
@@ -157,6 +166,13 @@ Order Flow data-model tests:
 ```bash
 cd frontend
 npm run test:market-flow
+```
+
+Important Notice schedule tests:
+
+```bash
+cd frontend
+npm run test:notice
 ```
 
 ### Backend

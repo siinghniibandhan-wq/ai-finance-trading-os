@@ -168,6 +168,13 @@ cd frontend
 npm run test:market-flow
 ```
 
+Important Notice schedule tests:
+
+```bash
+cd frontend
+npm run test:notice
+```
+
 ### Backend
 
 ```bash

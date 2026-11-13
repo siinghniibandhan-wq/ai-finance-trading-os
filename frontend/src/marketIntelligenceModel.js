@@ -116,3 +116,34 @@ export function getHistoricalChartRows(payload) {
     return [{ timestamp: String(row.timestamp), open, high, low, close, volume }];
   });
 }
+
+
+export function getOptionMasterChoices(payload) {
+  const data = payload && typeof payload === 'object' ? payload : {};
+  const expiries = data.expiries && typeof data.expiries === 'object' ? data.expiries : {};
+  const expiryChoices = Object.entries(expiries).flatMap(([id, timestamp]) => {
+    const value = finiteOrNull(timestamp);
+    return value !== null && value > 0 ? [{ id, timestamp: value }] : [];
+  }).sort((a, b) => a.timestamp - b.timestamp);
+  const groups = data.underlyings && typeof data.underlyings === 'object' ? data.underlyings : {};
+  const underlyings = ['OPTIDX', 'OFSTK'].flatMap((group) => Array.isArray(groups[group]) ? groups[group] : []).flatMap((raw) => {
+    if (typeof raw !== 'string') return [];
+    const [symbol, token, ...expiryIds] = raw.split(',').map((part) => part.trim());
+    if (!symbol || !/^\\d+$/.test(token || '')) return [];
+    const validExpiryIds = expiryIds.filter((id) => expiryChoices.some((expiry) => expiry.id === id));
+    return validExpiryIds.length ? [{ symbol, token: Number(token), expiryIds: validExpiryIds }] : [];
+  });
+  return { expiryChoices, underlyings };
+}
+
+export function getOptionRows(payload) {
+  const source = Array.isArray(payload?.options) ? payload.options : [];
+  return source.flatMap((row) => {
+    if (!row || typeof row !== 'object') return [];
+    const strike = finiteOrNull(row.strike);
+    const callOI = finiteOrNull(row.call_oi);
+    const putOI = finiteOrNull(row.put_oi);
+    if (strike === null || strike <= 0 || callOI === null || callOI < 0 || putOI === null || putOI < 0) return [];
+    return [{ strike, call_oi: callOI, put_oi: putOI }];
+  }).sort((a, b) => a.strike - b.strike);
+}

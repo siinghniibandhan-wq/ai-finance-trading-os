@@ -1,3 +1,5 @@
+> **Integration status:** The canonical step-by-step m.Stock integration status and audit workflow is maintained in [MSTOCK_INTEGRATION_STATUS.md](./MSTOCK_INTEGRATION_STATUS.md). This file remains a historical static audit report; its recommendations are not automatically current requirements or approved work.
+
 # Financial OS audit (static review, no tests executed)
 
 Sandbox had no network, so dependencies could not be installed and pytest/vite build were NOT run.

@@ -101,9 +101,13 @@ The backend is responsible for authentication, authorization, data ownership, pe
 
 ### Market data and m.Stock
 
-REST and WebSocket are separate service paths and must have separate health indicators. The last recorded WebSocket test (13 November 2026) from the Sydney gateway host completed TCP/TLS but received HTTP 502 during the WebSocket upgrade, before LOGIN or subscription. REST endpoints returned HTTP 200 in the recorded checks. An India-origin WebSocket test and m.Stock-side load-balancer/target-health evidence are still required; the root cause is not confirmed.
+REST and WebSocket are separate service paths and must have separate health indicators. Existing REST market data is reported by the user as working. On 13 November 2026, the EC2 gateway directory was inspected and found to contain a Type A binary decoder (`mstock_stream.py`), a persistent WebSocket worker (`market_stream.py`) and Flask routes (`market_stream_routes.py`). The EC2 `app.py` imports/registers the stream blueprint, and `mstock-gateway.service` was observed active.
 
-Do not infer that a WebSocket token or subscription payload is invalid when the HTTP upgrade itself has not succeeded. See [SECURITY_OPERATIONS.md](SECURITY_OPERATIONS.md#market-data-incident-and-diagnostics) for the diagnostic sequence.
+This confirms that Type A stream code is present and registered on the inspected EC2 host; it does not prove that the worker is started, connected or receiving ticks. A diagnostic request to `/market-stream/status` returned `GATEWAY_SECRET_INVALID`, meaning the request failed the gateway's internal shared-secret check. It does not imply the m.Stock API key is invalid or that REST market data is unavailable.
+
+The EC2 blueprint exposes `/market-stream/start|stop|status|snapshot`. The repository Order Flow adapter expects a different normalized endpoint, `/order-flow/snapshot`. No verified bridge between the raw EC2 tick cache and that normalized Order Flow contract has yet been established. Consequently, the Order Flow workspace must not be described as live/fully integrated until gateway authentication, worker startup, instrument subscriptions, fresh ticks, normalization, backend retrieval and frontend display are verified.
+
+An earlier Sydney-host WebSocket test returned HTTP 502 during upgrade before LOGIN/subscription. Treat that as historical evidence, not proof of the current worker state. Do not infer token or subscription failure from a pre-authentication HTTP 502. See [AUDIT_REPORT.md](AUDIT_REPORT.md#25-mstock-type-a-websocket-and-order-flow-integration--current-technical-status) and [SECURITY_OPERATIONS.md](SECURITY_OPERATIONS.md) for the updated diagnostic sequence.
 
 ## Repository structure
 

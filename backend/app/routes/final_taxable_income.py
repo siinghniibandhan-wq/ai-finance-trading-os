@@ -515,6 +515,8 @@ def calculate_capital_gains(
                         transaction_date,
                     "quantity_remaining":
                         quantity,
+                    "original_quantity":
+                        quantity,
                     "unit_price":
                         price,
                     "gross_buy_value":
@@ -536,9 +538,10 @@ def calculate_capital_gains(
 
             remaining_quantity = quantity
 
-            sale_proceeds = (
-                quantity * price
-            )
+            # Only matched units have a verified FIFO cost basis. Keep
+            # unmatched sale quantity visible for reconciliation, but do not
+            # manufacture a gain from units with no matched acquisition lot.
+            sale_proceeds = Decimal("0")
 
             sale_fee = fees
 
@@ -626,11 +629,11 @@ def calculate_capital_gains(
                 # BUY FEE ALLOCATION
                 # ------------------------------------------
 
-                lot_original_quantity = (
-                    decimal(
-                        lot["quantity_remaining"]
-                    )
-                    + consumed_quantity
+                # Allocate acquisition fees against the immutable original
+                # lot quantity. Using the remaining quantity here overstates
+                # fees when a lot is sold in several partial transactions.
+                lot_original_quantity = decimal(
+                    lot["original_quantity"]
                 )
 
                 if (
@@ -726,12 +729,12 @@ def calculate_capital_gains(
 
             if quantity > 0:
                 allocated_sale_fee = (
-                    sale_fee
+                    sale_fee * matched_quantity / quantity
                 )
             else:
-                allocated_sale_fee = (
-                    Decimal("0")
-                )
+                allocated_sale_fee = Decimal("0")
+
+            sale_proceeds = matched_quantity * price
 
             # ------------------------------------------------
             # REALISED GAIN

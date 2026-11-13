@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_BASE_URL, apiFetch } from './api';
 import './market-intelligence.css';
-import { filterFlowRows, getFlowRows, getHistoricalChartRows, getMarketFeedState, getMarketSnapshot, getOptionMasterChoices, getOptionRows } from './marketIntelligenceModel';
+import { filterFlowRows, getFlowRows, getHistoricalChartRows, getMarketFeedState, getMarketSnapshot, getOptionMasterChoices, getOptionRows, mergeStreamTicks } from './marketIntelligenceModel';
 
 const WORKSPACES = [
   { id: 'flow', label: 'Market Flow', ready: true },
@@ -72,7 +72,7 @@ function FlowBoard({ rows, selected, onSelect }) {
     <div className="mi-table-wrap"><table className="mi-flow-table">
       <thead><tr><th>Instrument</th><th>Last price</th><th>Change</th><th>Exchange</th><th>Source</th></tr></thead>
       <tbody>{visible.map((row) => <tr key={row.instrumentKey} className={selected === row.instrumentKey ? 'is-selected' : ''} onClick={() => onSelect(row.instrumentKey)} tabIndex="0" onKeyDown={(event) => { if (event.key === 'Enter') onSelect(row.instrumentKey); }}>
-        <td><strong>{row.symbol}</strong><small>{row.name}</small></td><td>{row.price === null ? '—' : `₹${fmt(row.price)}`}</td><td><Change value={row.change}/></td><td>{row.exchange || '—'}</td><td><span className="mi-source-tag">Overview snapshot</span></td>
+        <td><strong>{row.symbol}</strong><small>{row.name}</small></td><td>{row.price === null ? '—' : `₹${fmt(row.price)}`}</td><td><Change value={row.change}/></td><td>{row.exchange || '—'}</td><td><span className="mi-source-tag">{row.feedSource || 'Overview snapshot'}</span></td>
       </tr>)}
       {!visible.length && <tr><td colSpan="5" className="mi-table-empty">No instruments match this filter.</td></tr>}</tbody>
     </table></div>
@@ -85,7 +85,7 @@ function InstrumentDetail({ row, onClear }) {
   return <aside className="mi-detail-panel">
     <div className="mi-detail-heading"><div><p className="mi-eyebrow">SELECTED INSTRUMENT</p><h3>{row.symbol}</h3><span>{row.name}</span></div><button type="button" onClick={onClear} aria-label="Clear selected instrument">×</button></div>
     <div className="mi-detail-price"><strong>{row.price === null ? '—' : `₹${fmt(row.price)}`}</strong><Change value={row.change}/></div>
-    <dl><div><dt>Exchange</dt><dd>{row.exchange || 'Unavailable'}</dd></div><div><dt>Price change</dt><dd>{signed(row.change)}</dd></div><div><dt>Open interest</dt><dd>Not supplied</dd></div><div><dt>Volume profile</dt><dd>Not supplied</dd></div><div><dt>Market depth</dt><dd>Not supplied</dd></div><div><dt>Data type</dt><dd>Market overview snapshot</dd></div></dl>
+    <dl><div><dt>Exchange</dt><dd>{row.exchange || 'Unavailable'}</dd></div><div><dt>Price change</dt><dd>{signed(row.change)}</dd></div><div><dt>Open interest</dt><dd>{row.openInterest === null || row.openInterest === undefined ? 'Not supplied' : fmt(row.openInterest, 0)}</dd></div><div><dt>Volume profile</dt><dd>{row.volume === null || row.volume === undefined ? 'Not supplied' : fmt(row.volume, 0)}</dd></div><div><dt>Market depth</dt><dd>{row.marketDepth ? row.marketDepth.bids.length + ' bid / ' + row.marketDepth.asks.length + ' ask levels' : 'Not supplied'}</dd></div><div><dt>Data type</dt><dd>{row.feedSource || 'Market overview snapshot'}</dd></div></dl>
     <p className="mi-detail-note">Futures positioning, OI and order-book depth require an instrument-level feed. They are not inferred from price movement.</p>
   </aside>;
 }
@@ -223,6 +223,7 @@ export default function MarketIntelligence() {
   const [lastSuccessAt, setLastSuccessAt] = useState(null);
   const [lastRefreshError, setLastRefreshError] = useState('');
   const [streamStatus, setStreamStatus] = useState(null);
+  const [streamTicks, setStreamTicks] = useState([]);
   const refreshSnapshot = useCallback(async () => {
     setError('');
     try {
@@ -264,7 +265,35 @@ export default function MarketIntelligence() {
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', onVisibility); };
   }, [refreshSnapshot]);
 
-  const rows = useMemo(() => getFlowRows(snapshot), [snapshot]);
+  useEffect(() => {
+    if (!streamStatus?.enabled || !streamStatus?.configured) {
+      setStreamTicks([]);
+      return undefined;
+    }
+    let active = true;
+    const pollStream = async () => {
+      try {
+        const response = await apiFetch(API_BASE_URL + '/api/market-stream/snapshot', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Market stream snapshot unavailable');
+        const payload = await response.json();
+        if (!active) return;
+        setStreamStatus(payload.status || null);
+        setStreamTicks(payload.status?.stale ? [] : (Array.isArray(payload.ticks) ? payload.ticks : []));
+      } catch {
+        if (active) setStreamTicks([]);
+      }
+    };
+    pollStream();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') pollStream();
+    }, 2000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [streamStatus?.enabled, streamStatus?.configured]);
+
+  const rows = useMemo(() => mergeStreamTicks(getFlowRows(snapshot), streamTicks), [snapshot, streamTicks]);
   const selected = rows.find((row) => row.instrumentKey === selectedInstrumentKey) || null;
   const feedState = getMarketFeedState({ status: providerStatus, hasData: rows.length > 0 || snapshot.indices.length > 0, lastSuccessAt, now: Date.now() });
   const advancing = rows.filter((row) => row.change > 0).length;
@@ -286,7 +315,7 @@ export default function MarketIntelligence() {
 
     {activeWorkspace === 'flow' && <section className="mi-terminal-layout">
       <div className="mi-primary-workspace">
-        <div className="mi-workspace-heading"><div><p className="mi-eyebrow">MARKET SNAPSHOT FLOW</p><h2>Market directional map</h2></div><span className="mi-data-badge">Snapshot · 30s refresh</span></div>
+        <div className="mi-workspace-heading"><div><p className="mi-eyebrow">MARKET SNAPSHOT FLOW</p><h2>Market directional map</h2></div><span className="mi-data-badge">REST snapshot · WebSocket overlay when subscribed</span></div>
         <div className="mi-flow-stats"><div><span>Advancing</span><strong className="mi-positive">{advancing}</strong></div><div><span>Declining</span><strong className="mi-negative">{declining}</strong></div><div><span>Returned movers</span><strong>{rows.length}</strong></div><div><span>F&O universe</span><strong>Not connected</strong></div></div>
         <FlowDiagram rows={rows} selected={selectedInstrumentKey} onSelect={setSelectedInstrumentKey}/>
         <div className="mi-workspace-subheading"><div><p className="mi-eyebrow">INSTRUMENT UNIVERSE</p><h2>Flow Board</h2></div><button type="button" className="mi-text-button" onClick={() => setActiveWorkspace('board')}>Open full board →</button></div>
@@ -316,10 +345,12 @@ export default function MarketIntelligence() {
         <div><dt>Streaming socket</dt><dd>{streamStatus?.connected ? 'Connected' : streamStatus?.enabled ? 'Disconnected / reconnecting' : 'Disabled / not configured'}</dd></div>
         <div><dt>Last market tick</dt><dd>{streamStatus?.last_tick_at ? new Date(streamStatus.last_tick_at * 1000).toLocaleString('en-IN') : 'No tick received'}</dd></div>
         <div><dt>Tick cache</dt><dd>{streamStatus?.cached_ticks ?? 0} instruments · {streamStatus?.stale ? 'Stale / empty' : 'Fresh'}</dd></div>
+        <div><dt>Instrument mapping</dt><dd>{streamStatus?.instrument_metadata_count ?? 0} / {streamStatus?.subscribed_instruments ?? 0} tokens resolved</dd></div>
+        <div><dt>Mapping diagnostic</dt><dd>{streamStatus?.instrument_metadata_error || 'No mapping error'}</dd></div>
         <div><dt>Reconnect count</dt><dd>{streamStatus?.reconnect_count ?? 'Unavailable'}</dd></div>
         <div><dt>Stream error</dt><dd>{streamStatus?.last_error || 'None reported'}</dd></div>
       </dl></div>
-      <p className="mi-monitor-note">REST snapshots and WebSocket ticks are reported independently. A successful REST snapshot does not mean the WebSocket is connected.</p>
+      <p className="mi-monitor-note">REST snapshots and WebSocket ticks are reported independently. Matching subscribed instruments update their price, OI and depth from normalized Type A ticks; unmatched instruments retain the REST snapshot.</p>
     </section>}
 
     {['futures','sectors'].includes(activeWorkspace) && <section className="mi-unavailable-workspace"><p className="mi-eyebrow">DATA SOURCE REQUIRED</p><h2>{WORKSPACES.find((item) => item.id === activeWorkspace)?.label}</h2><p>This workspace is intentionally not displaying simulated data. The existing backend calculation engines can process normalized inputs, but the connected market overview does not supply the required {activeWorkspace === 'futures' ? 'futures price and open-interest history' : activeWorkspace === 'options' ? 'option-chain strikes and call/put open interest' : activeWorkspace === 'sectors' ? 'constituent-level sector breadth' : 'historical candles and replay data'}.</p><ul><li>Provider adapter and instrument mapping must be verified.</li><li>Source timestamps, freshness and missing-data states must be preserved.</li><li>Workspace will be enabled only after live data is validated.</li></ul></section>}

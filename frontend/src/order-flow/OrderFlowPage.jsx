@@ -50,9 +50,9 @@ export default function OrderFlowPage() {
     const series = Array.isArray(market?.series) ? market.series : [];
     return series.map((item) => ({
       symbol: item.s || item.symbol,
-      change: Number(item.p ?? item.change ?? item.changePct ?? 0),
+      change: Number.isFinite(Number(item.sp)) && Number(item.pc) > 0 ? ((Number(item.sp) - Number(item.pc)) / Number(item.pc)) * 100 : null,
       raw: item,
-    })).filter((item) => item.symbol).sort((a, b) => b.change - a.change);
+    })).filter((item) => item.symbol && item.change !== null).sort((a, b) => b.change - a.change);
   }, [market]);
 
   const selected = rows.find((row) => row.symbol === symbol) || rows[0] || null;
@@ -65,7 +65,7 @@ export default function OrderFlowPage() {
         <div>
           <p className="market-flow-eyebrow">MARKET INTELLIGENCE</p>
           <h1 id="market-flow-title">Order Flow</h1>
-          <p className="market-flow-subtitle">Futures positioning and options open-interest flow</p>
+          <p className="market-flow-subtitle">Spot breadth from the Order Flow market feed</p>
         </div>
         <div className="market-flow-status">
           <span className={status?.ready ? "market-flow-dot is-ready" : "market-flow-dot"} />
@@ -85,7 +85,7 @@ export default function OrderFlowPage() {
         </section>
         <section className="market-flow-board">
           <div className="market-flow-board-head">
-            <div><h2>Market breadth</h2><p>Underlying move from the Order Flow feed</p></div>
+            <div><h2>Spot breadth</h2><p>Spot change from the previous close · futures and OI board integration in progress</p></div>
             <label>Instrument <select value={selected?.symbol || symbol} onChange={(e) => setSymbol(e.target.value)}>{rows.map((row) => <option key={row.symbol} value={row.symbol}>{row.symbol}</option>)}</select></label>
           </div>
           <div className="market-flow-columns">
@@ -94,7 +94,7 @@ export default function OrderFlowPage() {
           </div>
           {selected && <div className="market-flow-selection"><span>Selected underlying</span><strong>{selected.symbol}</strong><b className={selected.change >= 0 ? "is-bullish" : "is-bearish"}>{selected.change > 0 ? "+" : ""}{selected.change.toFixed(2)}%</b></div>}
         </section>
-        <p className="market-flow-footnote">{status?.provider?.label || "Order Flow provider"} · Values are shown as supplied by the configured provider. Verify provider mode before using signals.</p>
+        <p className="market-flow-footnote">{status?.provider?.label || "Order Flow provider"} · This interim view uses spot prices only; it is not a futures/OI signal. Verify provider mode before using any market data.</p>
       </>}
     </main>
   );

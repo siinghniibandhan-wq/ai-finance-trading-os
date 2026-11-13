@@ -44,10 +44,10 @@ function FlowDiagram({ rows, selected, onSelect }) {
       <circle cx={centerX} cy="50" r="9" className="mi-flow-core" />
       <text x={centerX} y="48.5" textAnchor="middle" className="mi-flow-core-title">MARKET</text>
       <text x={centerX} y="53.5" textAnchor="middle" className="mi-flow-core-sub">SNAPSHOT</text>
-      {left.map(({ row, x, y }) => <g key={`node-up-${row.instrumentKey}`} className={`mi-flow-node ${selected === row.instrumentKey ? 'is-selected' : ''}`} onClick={() => onSelect(row.instrumentKey)} role="button" tabIndex="0" aria-label={`${row.symbol}, up ${signed(row.change)}`} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(row.symbol); }}>
+      {left.map(({ row, x, y }) => <g key={`node-up-${row.instrumentKey}`} className={`mi-flow-node ${selected === row.instrumentKey ? 'is-selected' : ''}`} onClick={() => onSelect(row.instrumentKey)} role="button" tabIndex="0" aria-label={`${row.symbol}, up ${signed(row.change)}`} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(row.instrumentKey); }}>
         <circle cx={x} cy={y} r="4.5" className="mi-flow-node-up"/><text x={x} y={y+8} textAnchor="middle">{row.symbol.slice(0, 11)}</text>
       </g>)}
-      {right.map(({ row, x, y }) => <g key={`node-down-${row.instrumentKey}`} className={`mi-flow-node ${selected === row.instrumentKey ? 'is-selected' : ''}`} onClick={() => onSelect(row.instrumentKey)} role="button" tabIndex="0" aria-label={`${row.symbol}, down ${signed(row.change)}`} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(row.symbol); }}>
+      {right.map(({ row, x, y }) => <g key={`node-down-${row.instrumentKey}`} className={`mi-flow-node ${selected === row.instrumentKey ? 'is-selected' : ''}`} onClick={() => onSelect(row.instrumentKey)} role="button" tabIndex="0" aria-label={`${row.symbol}, down ${signed(row.change)}`} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(row.instrumentKey); }}>
         <circle cx={x} cy={y} r="4.5" className="mi-flow-node-down"/><text x={x} y={y+8} textAnchor="middle">{row.symbol.slice(0, 11)}</text>
       </g>)}
     </svg> : <div className="mi-flow-empty"><strong>No directional movers available</strong><span>The connected overview has not returned positive or negative mover changes.</span></div>}
@@ -71,7 +71,7 @@ function FlowBoard({ rows, selected, onSelect }) {
     </div>
     <div className="mi-table-wrap"><table className="mi-flow-table">
       <thead><tr><th>Instrument</th><th>Last price</th><th>Change</th><th>Exchange</th><th>Source</th></tr></thead>
-      <tbody>{visible.map((row) => <tr key={row.symbol} className={selected === row.instrumentKey ? 'is-selected' : ''} onClick={() => onSelect(row.instrumentKey)} tabIndex="0" onKeyDown={(event) => { if (event.key === 'Enter') onSelect(row.symbol); }}>
+      <tbody>{visible.map((row) => <tr key={row.instrumentKey} className={selected === row.instrumentKey ? 'is-selected' : ''} onClick={() => onSelect(row.instrumentKey)} tabIndex="0" onKeyDown={(event) => { if (event.key === 'Enter') onSelect(row.instrumentKey); }}>
         <td><strong>{row.symbol}</strong><small>{row.name}</small></td><td>{row.price === null ? '—' : `₹${fmt(row.price)}`}</td><td><Change value={row.change}/></td><td>{row.exchange || '—'}</td><td><span className="mi-source-tag">Overview snapshot</span></td>
       </tr>)}
       {!visible.length && <tr><td colSpan="5" className="mi-table-empty">No instruments match this filter.</td></tr>}</tbody>
@@ -159,7 +159,7 @@ export default function MarketIntelligence() {
 
     {activeWorkspace === 'flow' && <section className="mi-terminal-layout">
       <div className="mi-primary-workspace">
-        <div className="mi-workspace-heading"><div><p className="mi-eyebrow">LIVE SNAPSHOT FLOW</p><h2>Market directional map</h2></div><span className="mi-data-badge">Snapshot · 30s refresh</span></div>
+        <div className="mi-workspace-heading"><div><p className="mi-eyebrow">MARKET SNAPSHOT FLOW</p><h2>Market directional map</h2></div><span className="mi-data-badge">Snapshot · 30s refresh</span></div>
         <div className="mi-flow-stats"><div><span>Advancing</span><strong className="mi-positive">{advancing}</strong></div><div><span>Declining</span><strong className="mi-negative">{declining}</strong></div><div><span>Returned movers</span><strong>{rows.length}</strong></div><div><span>F&O universe</span><strong>Not connected</strong></div></div>
         <FlowDiagram rows={rows} selected={selectedInstrumentKey} onSelect={setSelectedInstrumentKey}/>
         <div className="mi-workspace-subheading"><div><p className="mi-eyebrow">INSTRUMENT UNIVERSE</p><h2>Flow Board</h2></div><button type="button" className="mi-text-button" onClick={() => setActiveWorkspace('board')}>Open full board →</button></div>
@@ -168,7 +168,7 @@ export default function MarketIntelligence() {
       <InstrumentDetail row={selected} onClear={() => setSelectedInstrumentKey('')}/>
     </section>}
 
-    {activeWorkspace === 'board' && <section className="mi-board-workspace"><div className="mi-workspace-heading"><div><p className="mi-eyebrow">PROVIDER RETURNED UNIVERSE</p><h2>Market Flow Board</h2></div><span className="mi-data-badge">Sortable · Filterable</span></div><FlowBoard rows={rows} selected={selectedInstrumentKey} onSelect={setSelectedInstrumentKey}/><InstrumentDetail row={selected} onClear={() => setSelectedSymbol('')}/></section>}
+    {activeWorkspace === 'board' && <section className="mi-board-workspace"><div className="mi-workspace-heading"><div><p className="mi-eyebrow">PROVIDER RETURNED UNIVERSE</p><h2>Market Flow Board</h2></div><span className="mi-data-badge">Sortable · Filterable</span></div><FlowBoard rows={rows} selected={selectedInstrumentKey} onSelect={setSelectedInstrumentKey}/><InstrumentDetail row={selected} onClear={() => setSelectedInstrumentKey('')}/></section>}
 
 
     {activeWorkspace === 'monitor' && <section className="mi-monitor-workspace">

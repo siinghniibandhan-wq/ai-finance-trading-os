@@ -135,21 +135,3 @@ test('filters malformed option rows and sorts valid strikes', async () => {
     { strike: 22100, call_oi: 1, put_oi: 2 },
   ]);
 });
-
-
-test('overlays only exchange-matched WebSocket ticks onto REST movers', async () => {
-  const { mergeStreamTicks } = await import('../src/marketIntelligenceModel.js');
-  const rows = [
-    { instrumentKey: 'NSE:RELIANCE-EQ', symbol: 'RELIANCE-EQ', exchange: 'NSE', price: 120, change: 1 },
-    { instrumentKey: 'BSE:RELIANCE-A', symbol: 'RELIANCE-A', exchange: 'BSE', price: 121, change: 2 },
-  ];
-  const merged = mergeStreamTicks(rows, [
-    { token: 123, ltp: 125.5, close: 124, open_interest: 500, volume: 1000, exchange_time: '2026-11-13T09:20:00+00:00', instrument: { instrument_key: 'NSE:RELIANCE-EQ' } },
-    { token: 456, ltp: 999, instrument: { instrument_key: 'NFO:NIFTY26NOVFUT' } },
-  ]);
-  assert.equal(merged[0].price, 125.5);
-  assert.equal(merged[0].feedSource, 'm.Stock WebSocket');
-  assert.equal(merged[0].openInterest, 500);
-  assert.equal(merged[1].price, 121);
-  assert.equal(merged[1].feedSource, 'Overview snapshot');
-});

@@ -76,3 +76,22 @@ test('filters flow rows without converting missing changes into zero', async () 
   assert.deepEqual(filterFlowRows(rows, { query: 'unknown' }).map((row) => row.symbol), ['UNKNOWN']);
   assert.deepEqual(filterFlowRows(rows, { sort: 'symbol' }).map((row) => row.symbol), ['DOWN', 'UNKNOWN', 'UP']);
 });
+
+
+test('keeps same-symbol instruments separate when their exchanges differ', async () => {
+  const { getFlowRows } = await import('../src/marketIntelligenceModel.js');
+  const rows = getFlowRows({
+    gainers: [{ symbol: 'ABC', exchange: 'NSE', change: 2 }],
+    losers: [{ symbol: 'ABC', exchange: 'BSE', change: -1 }],
+  });
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows.map((row) => row.instrumentKey).sort(), ['BSE:ABC', 'NSE:ABC']);
+});
+
+test('classifies snapshot freshness without calling a periodic snapshot a live stream', async () => {
+  const { getMarketFeedState } = await import('../src/marketIntelligenceModel.js');
+  assert.equal(getMarketFeedState({ status: 'success', hasData: true, lastSuccessAt: 1000, now: 2000 }).label, 'Snapshot received');
+  assert.equal(getMarketFeedState({ status: 'partial', hasData: true, lastSuccessAt: 1000, now: 2000 }).label, 'Partial snapshot');
+  assert.equal(getMarketFeedState({ status: 'error', hasData: true, lastSuccessAt: 1000, now: 40000 }).label, 'Stale snapshot');
+  assert.equal(getMarketFeedState({ status: 'error', hasData: false, lastSuccessAt: null, now: 40000 }).label, 'Disconnected');
+});

@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import * as flowLayout from "./flowBoardLayout.js";
 import { getFlowBoardLayout } from "./flowBoardLayout.js";
 
 test("uses the continuous full-width diagram on wide desktop workspaces",()=>{
@@ -19,4 +20,19 @@ test("keeps all column widths positive in compact and unusually wide viewports",
   const layout=getFlowBoardLayout(width,height);
   assert.ok(Object.values(layout.columns).every(value=>Number.isFinite(value)&&value>=0));
  }
+});
+test("keeps every bullish and bearish fan curve inside the chart viewport",()=>{
+ for(const side of ["bullish","bearish"]){
+  for(let index=0;index<8;index++){
+   const point=flowLayout.getFlowFanCoordinates(side,index);
+   assert.ok(point.y0>=0&&point.y0<=100,side+" start is visible");
+   assert.ok(point.y1>=0&&point.y1<=100,side+" end is visible");
+  }
+ }
+});
+test("mirrors bearish fan direction into the lower half of the chart",()=>{
+ const bullish=flowLayout.getFlowFanCoordinates("bullish",0);
+ const bearish=flowLayout.getFlowFanCoordinates("bearish",0);
+ assert.ok(bullish.y0>bullish.y1);
+ assert.ok(bearish.y0<bearish.y1);
 });

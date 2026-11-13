@@ -28,3 +28,11 @@ test('Market Intelligence animation respects reduced-motion preferences and page
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
   assert.match(css, /\.market-intelligence-page \.mi-monitor-workspace/);
 });
+
+
+test('Market Intelligence instrument selection consistently uses exchange-aware identity', () => {
+  const source = readFileSync(new URL('../src/MarketIntelligence.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /onSelect\(row\.symbol\)/);
+  assert.doesNotMatch(source, /setSelectedSymbol\(/);
+  assert.match(source, /key=\{row\.instrumentKey\}/);
+});

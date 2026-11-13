@@ -107,13 +107,19 @@ export default function MarketIntelligence() {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof payload?.detail === 'string' ? payload.detail : payload?.detail?.message || `Market overview returned ${response.status}`);
       const next = getMarketSnapshot(payload);
+      if (payload.status === 'error') {
+        const message = 'The market provider returned no usable data.';
+        setProviderStatus('error');
+        setLastRefreshError(message);
+        setError(message);
+        return;
+      }
       setSnapshot(next);
       setRetrievedAt(payload.retrieved_at || payload.last_updated || new Date().toISOString());
       setLastSuccessAt(Date.now());
-      setProviderStatus(payload.status === 'partial' || (Array.isArray(payload.errors) && payload.errors.length) ? 'partial' : payload.status === 'error' ? 'error' : 'success');
+      setProviderStatus(payload.status === 'partial' || (Array.isArray(payload.errors) && payload.errors.length) ? 'partial' : 'success');
       setLastRefreshError(Array.isArray(payload.errors) && payload.errors.length ? 'Some market sources are unavailable. Available results are shown.' : '');
-      if (payload.status === 'error') setError('The market provider returned no usable data.');
-      else if (Array.isArray(payload.errors) && payload.errors.length) setError('Some market sources are unavailable. Available results are shown.');
+      if (Array.isArray(payload.errors) && payload.errors.length) setError('Some market sources are unavailable. Available results are shown.');
     } catch (requestError) {
       const message = requestError?.message || 'Unable to load the market overview.';
       setError(message);

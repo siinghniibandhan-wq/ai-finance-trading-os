@@ -98,3 +98,21 @@ export function getMarketFeedState({ status, hasData, lastSuccessAt, now = Date.
   if (status === 'partial') return { label: 'Partial snapshot', kind: 'partial', stale: false };
   return { label: 'Snapshot received', kind: 'snapshot', stale: false };
 }
+
+
+export function getHistoricalChartRows(payload) {
+  const source = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.candles) ? payload.candles : [];
+  return source.flatMap((candle) => {
+    const row = Array.isArray(candle) ? {
+      timestamp: candle[0], open: candle[1], high: candle[2], low: candle[3], close: candle[4], volume: candle[5],
+    } : candle;
+    if (!row || typeof row !== 'object' || !row.timestamp) return [];
+    const open = finiteOrNull(row.open);
+    const high = finiteOrNull(row.high);
+    const low = finiteOrNull(row.low);
+    const close = finiteOrNull(row.close);
+    const volume = finiteOrNull(row.volume);
+    if ([open, high, low, close, volume].some((value) => value === null) || Math.min(open, high, low, close) <= 0 || volume < 0 || high < Math.max(open, low, close) || low > Math.min(open, high, close)) return [];
+    return [{ timestamp: String(row.timestamp), open, high, low, close, volume }];
+  });
+}

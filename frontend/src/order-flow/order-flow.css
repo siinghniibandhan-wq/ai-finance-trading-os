@@ -344,3 +344,10 @@
 .mf-fan-path:focus-visible { stroke-width:2.4;opacity:1;outline:none; }
 
 .mf-fan-path.is-sector-dim,.mf-diagram-rank-groups button.is-sector-dim,.mf-leader-card.is-sector-dim { opacity:.16; }
+
+.mf-live-feed{display:flex;flex-direction:column;gap:6px;margin:12px 0;padding:12px 15px;border:1px solid var(--th-border);border-radius:12px;background:var(--th-card);color:var(--th-text)}
+.mf-live-feed-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mf-live-feed-heading span{font-size:11px;font-weight:800;letter-spacing:.04em}
+.mf-feed-fresh{color:var(--mf-up)}
+.mf-feed-offline{color:var(--mf-down)}
+.mf-live-feed p{margin:0;color:var(--th-muted);font-size:12px;line-height:1.5}

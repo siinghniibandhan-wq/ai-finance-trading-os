@@ -344,7 +344,7 @@ export default function MarketIntelligence() {
         <div><dt>Last error</dt><dd>{lastRefreshError || 'None reported'}</dd></div>
         <div><dt>Streaming socket</dt><dd>{streamStatus?.connected ? 'Connected' : streamStatus?.enabled ? 'Disconnected / reconnecting' : 'Disabled / not configured'}</dd></div>
         <div><dt>Last market tick</dt><dd>{streamStatus?.last_tick_at ? new Date(streamStatus.last_tick_at * 1000).toLocaleString('en-IN') : 'No tick received'}</dd></div>
-        <div><dt>Tick cache</dt><dd>{streamStatus?.cached_ticks ?? 0} instruments · {streamStatus?.stale ? 'Stale / empty' : 'Fresh'}</dd></div>
+        <div><dt>Tick cache</dt><dd>{streamStatus?.cached_ticks ?? 0} instruments · {streamStatus?.stale ? 'Stale / empty' : 'Fresh'}</dd></div>\n        <div><dt>Instrument mapping</dt><dd>{streamStatus?.instrument_metadata_count ?? 0} / {streamStatus?.subscribed_instruments ?? 0} tokens resolved</dd></div>\n        <div><dt>Mapping diagnostic</dt><dd>{streamStatus?.instrument_metadata_error || 'No mapping error'}</dd></div>
         <div><dt>Reconnect count</dt><dd>{streamStatus?.reconnect_count ?? 'Unavailable'}</dd></div>
         <div><dt>Stream error</dt><dd>{streamStatus?.last_error || 'None reported'}</dd></div>
       </dl></div>

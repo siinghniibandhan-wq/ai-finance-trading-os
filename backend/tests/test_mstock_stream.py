@@ -74,3 +74,19 @@ def test_parses_documented_200_byte_full_packet_circuit_and_year_levels():
     assert ticks[0]["lower_circuit_raw"] == 50000
     assert ticks[0]["year_high_raw"] == 250000
     assert ticks[0]["year_low_raw"] == 10000
+
+
+def test_normalizes_type_a_prices_using_instrument_segment_divisor_and_1980_epoch():
+    packet = struct.pack(
+        ">2I", 1234, 152345
+    )
+    tick = parse_type_a_frame(_frame(packet))[0]
+    assert tick["ltp"] == 1523.45
+    assert tick["price_divisor"] == 100
+
+
+def test_normalizes_currency_segment_prices_with_currency_divisor():
+    packet = struct.pack(">2I", (1234 << 8) | 3, 15234500000)
+    tick = parse_type_a_frame(_frame(packet))[0]
+    assert tick["ltp"] == 1523.45
+    assert tick["price_divisor"] == 10000000

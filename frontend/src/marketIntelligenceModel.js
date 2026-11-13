@@ -33,6 +33,7 @@ export function getMarketSnapshot(payload) {
   const movers = payload.market_movers && typeof payload.market_movers === 'object' ? payload.market_movers : {};
   const cleanMovers = (rows) => Array.isArray(rows) ? rows.filter((row) => row && typeof row === 'object' && !Array.isArray(row)).map((row) => ({
     symbol: row.symbol || row.trading_symbol || row.name || 'Unknown instrument',
+    instrumentKey: `${String(row.exchange || 'UNKNOWN').trim().toUpperCase()}:${String(row.symbol || row.trading_symbol || row.name || 'UNKNOWN').trim().toUpperCase()}`,
     name: row.name || row.symbol || row.trading_symbol || 'Unknown instrument',
     change: finiteOrNull(row.change_pct ?? row.percent_change ?? row.change_percent ?? row.change),
     price: finiteOrNull(row.last_price ?? row.ltp),
@@ -54,12 +55,13 @@ export function getFlowRows(snapshot) {
     .map((row) => ({
       ...row,
       symbol: String(row.symbol || row.name || 'Unknown').trim().toUpperCase(),
+      instrumentKey: String(row.instrumentKey || `${String(row.exchange || 'UNKNOWN').trim().toUpperCase()}:${String(row.symbol || row.name || 'Unknown').trim().toUpperCase()}`),
       change: finiteOrNull(row.change),
       price: finiteOrNull(row.price),
     }))
     .filter((row) => {
-      if (seen.has(row.symbol)) return false;
-      seen.add(row.symbol);
+      if (seen.has(row.instrumentKey)) return false;
+      seen.add(row.instrumentKey);
       return true;
     })
     .sort((a, b) => {
@@ -84,4 +86,15 @@ export function filterFlowRows(rows, { query = '', direction = 'all', sort = 'ch
     if (sort === 'price') return (b.price ?? -Infinity) - (a.price ?? -Infinity);
     return (b.change ?? -Infinity) - (a.change ?? -Infinity);
   });
+}
+
+
+export function getMarketFeedState({ status, hasData, lastSuccessAt, now = Date.now(), staleAfterMs = 30000 } = {}) {
+  if (!hasData || !Number.isFinite(lastSuccessAt)) {
+    return { label: 'Disconnected', kind: 'disconnected', stale: false };
+  }
+  const stale = now - lastSuccessAt > staleAfterMs;
+  if (stale || status === 'error') return { label: 'Stale snapshot', kind: 'stale', stale: true };
+  if (status === 'partial') return { label: 'Partial snapshot', kind: 'partial', stale: false };
+  return { label: 'Snapshot received', kind: 'snapshot', stale: false };
 }

@@ -29,6 +29,9 @@ jobs:
       - name: Test daily Important Notice schedule
         working-directory: frontend
         run: npm run test:notice
+      - name: Test desktop sidebar collapse behavior
+        working-directory: frontend
+        run: npm run test:sidebar
       - name: Build frontend
         working-directory: frontend
         run: npm run build

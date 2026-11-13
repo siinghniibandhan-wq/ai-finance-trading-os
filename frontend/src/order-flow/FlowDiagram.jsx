@@ -57,7 +57,7 @@ export default function FlowDiagram({stocks=[],selected,onSelect=()=>{},onPin=()
  flowNames.forEach((s,i)=>gateRows.set(s.symbol,gateTop+(i+.5)/Math.max(1,flowNames.length)*(gateBottom-gateTop)));
  const maxMove=Math.max(1,...data.map(s=>Math.abs(s.changePct||0)));
  const yValue=v=>layout.zero-clamp(v/maxMove,-1,1)*(layout.zero-layout.top-8);
- const paths=data.map(s=>{const values=(s.candles||[]).map(c=>Number(c.change)||0);if(!values.length)values.push(0,Number(s.changePct)||0);const points=values.map((v,i)=>[layout.x0+i/Math.max(1,values.length-1)*(layout.x1-layout.x0),yValue(v)]);const row=gateRows.get(s.symbol);let d=pathFor(points);if(row!=null)d+=` C${layout.x1+28},${points.at(-1)[1]} ${layout.gateL-18},${row} ${layout.gateL},${row} L${layout.gateR},${row}`;return {stock:s,d,row}}).filter(p=>p.row!=null||p.stock.side==="rangebound");
+ const drawnPaths=data.map(s=>{const values=(s.candles||[]).map(c=>Number(c.change)||0);if(!values.length)values.push(0,Number(s.changePct)||0);const points=values.map((v,i)=>[layout.x0+i/Math.max(1,values.length-1)*(layout.x1-layout.x0),yValue(v)]);const row=gateRows.get(s.symbol);let d=pathFor(points);if(row!=null)d+=` C${layout.x1+28},${points.at(-1)[1]} ${layout.gateL-18},${row} ${layout.gateL},${row} L${layout.gateR},${row}`;return {stock:s,d,row}}).filter(p=>p.row!=null||p.stock.side==="rangebound");
  return {targets,gateRows,paths,maxMove,yValue,flowNames};
  },[data,layout,bulls,bears,flats]);
  const sectors=useMemo(()=>{const map=new Map();data.forEach(s=>{const a=map.get(s.sector)||[];a.push(s.changePct);map.set(s.sector,a)});return [...map].map(([name,values])=>({name,median:[...values].sort((a,b)=>a-b)[Math.floor(values.length/2)]})).sort((a,b)=>b.median-a.median).slice(0,8)},[data]);

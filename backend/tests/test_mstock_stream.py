@@ -90,3 +90,12 @@ def test_normalizes_currency_segment_prices_with_currency_divisor():
     tick = parse_type_a_frame(_frame(packet))[0]
     assert tick["ltp"] == 1523.45
     assert tick["price_divisor"] == 10000000
+
+
+def test_full_tick_exposes_scaled_prices_and_1980_based_exchange_timestamp():
+    tick = parse_type_a_frame(_frame(_packet(token=1234, ltp=152345)))[0]
+    assert tick["ltp"] == 1523.45
+    assert tick["open"] == 1400.0
+    assert tick["close"] == 1450.0
+    assert tick["exchange_time"] == "2033-11-15T01:46:41+00:00"
+    assert tick["bids"][0]["price"] == 0.0

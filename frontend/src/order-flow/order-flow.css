@@ -351,3 +351,61 @@
 .mf-feed-fresh{color:var(--mf-up)}
 .mf-feed-offline{color:var(--mf-down)}
 .mf-live-feed p{margin:0;color:var(--th-muted);font-size:12px;line-height:1.5}
+
+
+/* Faithful continuous Order Flow diagram: chart → convergence gate → tiles → featured cards. */
+.mf-faithful-diagram {
+  position:relative; width:100%; min-height:760px; overflow-x:auto; overflow-y:hidden;
+  border:1px solid var(--th-border); border-radius:14px; background:var(--th-card);
+  scrollbar-width:thin; scrollbar-color:var(--th-border) transparent;
+}
+.mf-faithful-svg { display:block; width:100%; min-width:1100px; height:760px; }
+.mf-diagram-half { fill:var(--th-inner); opacity:.38; stroke:var(--th-border); stroke-width:1; }
+.mf-diagram-half.is-up { fill:color-mix(in srgb,var(--mf-up) 7%,var(--th-card)); }
+.mf-diagram-half.is-down { fill:color-mix(in srgb,var(--mf-down) 7%,var(--th-card)); }
+.mf-half-label,.mf-diagram-caption { font:700 9px/1 var(--font-sans,system-ui); letter-spacing:.12em; fill:var(--th-muted); }
+.mf-half-label.is-up { fill:var(--mf-up); }.mf-half-label.is-down { fill:var(--mf-down); }
+.mf-sector-pill { fill:var(--th-inner); stroke:var(--th-border); stroke-width:1; }
+.mf-sector-name { font:700 8px var(--font-sans,system-ui); fill:var(--th-text); }
+.mf-sector-median { font:500 7px var(--font-sans,system-ui); fill:var(--th-muted); }
+.mf-diagram-grid { stroke:var(--th-border); stroke-width:.8; stroke-dasharray:3 5; opacity:.65; }
+.mf-diagram-axis { font:8px var(--font-sans,system-ui); fill:var(--th-muted); }
+.mf-diagram-zero { stroke:var(--th-text); stroke-width:1.1; opacity:.48; }
+.mf-sector-median-line { stroke:var(--th-muted); stroke-width:.8; stroke-dasharray:2 5; opacity:.28; }
+.mf-gate-shell { fill:url(#mf-gate-fill); stroke:var(--th-border); stroke-width:1.2; }
+.mf-zero-spine { fill:none; stroke:var(--th-inner); stroke-width:9; stroke-linecap:round; stroke-linejoin:round; }
+.mf-gate-row { stroke:var(--th-muted); stroke-width:.9; opacity:.35; }
+.mf-gate-row.up { stroke:var(--mf-up); }.mf-gate-row.down { stroke:var(--mf-down); }
+.mf-gate-word { font:800 10px var(--font-sans,system-ui); fill:var(--th-text); letter-spacing:.14em; }
+.mf-gate-count { font:8px var(--font-sans,system-ui); fill:var(--th-muted); }
+.mf-fan-path { fill:none; stroke:var(--mf-up); stroke-width:1; opacity:.22; pointer-events:stroke; transition:opacity .15s,stroke-width .15s; }
+.mf-fan-path.down { stroke:var(--mf-down); }.mf-fan-path.flat { stroke:var(--th-muted); }
+.mf-fan-path.is-active { stroke-width:2.5; opacity:.95; filter:drop-shadow(0 0 2px currentColor); }
+.mf-fan-path.is-sector-dim { opacity:.035; }
+.mf-gate-branch { fill:none; stroke:var(--mf-up); stroke-width:1; opacity:.28; pointer-events:none; }
+.mf-gate-branch.down { stroke:var(--mf-down); }.mf-gate-branch.is-active { opacity:.9; stroke-width:2; }
+.mf-card-joint { stroke:var(--mf-up); stroke-width:1.1; opacity:.55; }.mf-card-joint.bearish { stroke:var(--mf-down); }
+.mf-native-node { cursor:pointer; outline:none; }
+.mf-native-node rect:first-child { fill:var(--th-inner); stroke:var(--th-border); stroke-width:1; transition:stroke .15s,fill .15s; }
+.mf-native-node.is-up rect:first-child { fill:color-mix(in srgb,var(--mf-up) 8%,var(--th-inner)); }
+.mf-native-node.is-down rect:first-child { fill:color-mix(in srgb,var(--mf-down) 8%,var(--th-inner)); }
+.mf-native-node.is-lit rect:first-child,.mf-native-node:focus rect:first-child { stroke:var(--th-accent); stroke-width:2; }
+.mf-node-symbol { font:800 9px var(--font-sans,system-ui); fill:var(--th-text); }
+.mf-node-change { font:800 8px var(--font-sans,system-ui); fill:var(--mf-up); }
+.mf-native-node.is-down .mf-node-change { fill:var(--mf-down); }
+.mf-node-meta,.mf-strike { font:6.5px var(--font-sans,system-ui); fill:var(--th-muted); }
+.mf-node-spark { fill:none; stroke:var(--mf-up); stroke-width:1.25; opacity:.8; }
+.mf-native-node.is-down .mf-node-spark { stroke:var(--mf-down); }
+.mf-native-node.tall .mf-node-spark { opacity:.5; }
+.mf-oi-track { fill:var(--th-border); opacity:.55; }.mf-oi-put { fill:var(--mf-up); }.mf-oi-call { fill:var(--mf-down); }
+.mf-diagram-cross line { stroke:var(--th-text); stroke-width:1; stroke-dasharray:3 4; opacity:.7; }
+.mf-diagram-cross text { font:8px var(--font-sans,system-ui); fill:var(--th-text); }
+.mf-diagram-foot { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:10px 14px; border-top:1px solid var(--th-border); color:var(--th-muted); font-size:9px; }
+.mf-diagram-foot span { display:flex; align-items:center; gap:6px; }.mf-diagram-foot i { width:7px;height:7px;border-radius:50%;background:var(--mf-up); }.mf-diagram-foot i.down { background:var(--mf-down); }
+@media (prefers-reduced-motion:reduce) { .mf-faithful-diagram * { transition:none!important; animation:none!important; } }
+
+.mf-native-node.is-sector-dim { opacity:.16; }
+.mf-native-node.is-sector-dim.is-lit { opacity:1; }
+.mf-native-node:focus-visible rect:first-child { stroke:var(--th-focus,var(--th-accent,currentColor)); stroke-width:2.5; }
+
+/* Keep the original Order Flow controls and data panels untouched. */

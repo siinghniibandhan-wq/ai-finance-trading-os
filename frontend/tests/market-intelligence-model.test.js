@@ -52,3 +52,86 @@ test('does not convert absent mover changes or prices into fabricated zeroes', (
   assert.equal(snapshot.losers[0].change, -0.5);
   assert.equal(snapshot.losers[0].price, 125.25);
 });
+
+
+test('builds a deduplicated directional flow universe only from supplied market movers', async () => {
+  const { getFlowRows } = await import('../src/marketIntelligenceModel.js');
+  const rows = getFlowRows({
+    gainers: [{ symbol: 'ABC', change: 2.5, price: 120 }, { symbol: 'DUP', change: 1 }],
+    losers: [{ symbol: 'XYZ', change: -1.5, price: 80 }, { symbol: 'DUP', change: -2 }],
+  });
+  assert.deepEqual(rows.map((row) => row.symbol), ['ABC', 'DUP', 'XYZ']);
+  assert.equal(rows.length, 3);
+  assert.equal(rows[1].change, 1); // First occurrence wins when a symbol appears in both mover lists.
+});
+
+test('filters flow rows without converting missing changes into zero', async () => {
+  const { filterFlowRows } = await import('../src/marketIntelligenceModel.js');
+  const rows = [
+    { symbol: 'UP', name: 'Up Ltd', change: 2, price: 100 },
+    { symbol: 'DOWN', name: 'Down Ltd', change: -1, price: 90 },
+    { symbol: 'UNKNOWN', name: 'Unknown Ltd', change: null, price: null },
+  ];
+  assert.deepEqual(filterFlowRows(rows, { direction: 'down' }).map((row) => row.symbol), ['DOWN']);
+  assert.deepEqual(filterFlowRows(rows, { query: 'unknown' }).map((row) => row.symbol), ['UNKNOWN']);
+  assert.deepEqual(filterFlowRows(rows, { sort: 'symbol' }).map((row) => row.symbol), ['DOWN', 'UNKNOWN', 'UP']);
+});
+
+
+test('keeps same-symbol instruments separate when their exchanges differ', async () => {
+  const { getFlowRows } = await import('../src/marketIntelligenceModel.js');
+  const rows = getFlowRows({
+    gainers: [{ symbol: 'ABC', exchange: 'NSE', change: 2 }],
+    losers: [{ symbol: 'ABC', exchange: 'BSE', change: -1 }],
+  });
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows.map((row) => row.instrumentKey).sort(), ['BSE:ABC', 'NSE:ABC']);
+});
+
+test('classifies snapshot freshness without calling a periodic snapshot a live stream', async () => {
+  const { getMarketFeedState } = await import('../src/marketIntelligenceModel.js');
+  assert.equal(getMarketFeedState({ status: 'success', hasData: true, lastSuccessAt: 1000, now: 2000 }).label, 'Snapshot received');
+  assert.equal(getMarketFeedState({ status: 'partial', hasData: true, lastSuccessAt: 1000, now: 2000 }).label, 'Partial snapshot');
+  assert.equal(getMarketFeedState({ status: 'error', hasData: true, lastSuccessAt: 1000, now: 40000 }).label, 'Stale snapshot');
+  assert.equal(getMarketFeedState({ status: 'error', hasData: false, lastSuccessAt: null, now: 40000 }).label, 'Disconnected');
+});
+
+
+test('normalizes only valid provider OHLCV candles for historical charts', async () => {
+  const { getHistoricalChartRows } = await import('../src/marketIntelligenceModel.js');
+  const rows = getHistoricalChartRows({ candles: [
+    ['2026-11-10T09:15:00+05:30', 100, 110, 95, 105, 1200],
+    ['2026-11-11T09:15:00+05:30', 105, 108, 101, 103, 900],
+    ['bad', 1, 2],
+    ['2026-11-12T09:15:00+05:30', 1, 0, 0.5, 0.8, 10],
+  ] });
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows[0], { timestamp: '2026-11-10T09:15:00+05:30', open: 100, high: 110, low: 95, close: 105, volume: 1200 });
+});
+
+
+test('normalizes only supported m.Stock option master underlyings and expiry mappings', async () => {
+  const { getOptionMasterChoices } = await import('../src/marketIntelligenceModel.js');
+  const result = getOptionMasterChoices({
+    expiries: { '2': 1795876200, '3': 1796481000, invalid: 'bad' },
+    underlyings: { OPTIDX: ['NIFTY,26000,2,3', 'BROKEN,no-token,2'], OFSTK: ['RELIANCE,2885,2'], FUTIDX: ['NIFTY,26000,2'] },
+  });
+  assert.deepEqual(result.expiryChoices.map((item) => item.id), ['2', '3']);
+  assert.deepEqual(result.underlyings, [
+    { symbol: 'NIFTY', token: 26000, expiryIds: ['2', '3'] },
+    { symbol: 'RELIANCE', token: 2885, expiryIds: ['2'] },
+  ]);
+});
+
+test('filters malformed option rows and sorts valid strikes', async () => {
+  const { getOptionRows } = await import('../src/marketIntelligenceModel.js');
+  assert.deepEqual(getOptionRows({ options: [
+    { strike: 22100, call_oi: 1, put_oi: 2 },
+    { strike: 22000, call_oi: 3, put_oi: 4 },
+    { strike: -1, call_oi: 5, put_oi: 6 },
+    { strike: 22200, call_oi: -1, put_oi: 1 },
+  ] }), [
+    { strike: 22000, call_oi: 3, put_oi: 4 },
+    { strike: 22100, call_oi: 1, put_oi: 2 },
+  ]);
+});

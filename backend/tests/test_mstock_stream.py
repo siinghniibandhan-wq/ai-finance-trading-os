@@ -65,3 +65,12 @@ def test_rejects_truncated_or_inconsistent_frames(frame):
 def test_rejects_unsupported_64_byte_packet():
     with pytest.raises(ValueError):
         parse_type_a_frame(_frame(bytes(64)))
+
+
+def test_parses_documented_200_byte_full_packet_circuit_and_year_levels():
+    packet = _packet() + struct.pack(">4I", 200000, 50000, 250000, 10000)
+    ticks = parse_type_a_frame(_frame(packet))
+    assert ticks[0]["upper_circuit_raw"] == 200000
+    assert ticks[0]["lower_circuit_raw"] == 50000
+    assert ticks[0]["year_high_raw"] == 250000
+    assert ticks[0]["year_low_raw"] == 10000

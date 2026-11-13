@@ -1,3 +1,4 @@
+import json
 import threading
 import time
 
@@ -41,6 +42,7 @@ def test_worker_starts_only_when_explicitly_started_and_stops_cleanly():
     assert worker.status()["running"] is False
     assert socket.sent[0] == "LOGIN:test-token"
     assert '"subscribe"' in socket.sent[1]
+    assert json.loads(socket.sent[2]) == {"a": "mode", "v": ["full", [101]]}
     assert socket.closed is True
 
 

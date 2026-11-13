@@ -56,7 +56,7 @@ def _parse_packet(packet: memoryview) -> dict[str, Any]:
 
     # The documented full tradable-instrument packet is 184 bytes:
     # 64-byte quote/OI prefix followed by 120 bytes of five-level depth.
-    if size == 184:
+    if size in (184, 200):
         values = _FULL_PREFIX.unpack_from(packet)
         bids = []
         asks = []
@@ -74,6 +74,7 @@ def _parse_packet(packet: memoryview) -> dict[str, Any]:
                 "price_raw": struct.unpack_from(">I", packet, offset + 4)[0],
                 "orders": struct.unpack_from(">H", packet, offset + 8)[0],
             })
+        extras = struct.unpack_from(">4I", packet, 184) if size == 200 else (None, None, None, None)
         return {
             "token": values[0], "mode": "full",
             "ltp_raw": values[1], "last_traded_quantity": values[2],
@@ -85,6 +86,8 @@ def _parse_packet(packet: memoryview) -> dict[str, Any]:
             "open_interest": values[12], "oi_day_high": values[13],
             "oi_day_low": values[14], "exchange_timestamp": values[15],
             "bids": bids, "asks": asks,
+            "upper_circuit_raw": extras[0], "lower_circuit_raw": extras[1],
+            "year_high_raw": extras[2], "year_low_raw": extras[3],
         }
 
     raise ValueError(f"Unsupported Type A packet size: {size}")

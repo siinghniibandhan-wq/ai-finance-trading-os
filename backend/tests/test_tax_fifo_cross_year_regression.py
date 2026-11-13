@@ -140,3 +140,22 @@ def test_final_taxable_income_does_not_overallocate_buy_fees_across_partial_sale
 
     assert len(sales) == 2
     assert sum((sale["cost_basis"] for sale in sales), Decimal("0")) == Decimal("140.00")
+
+
+def test_final_taxable_income_classifies_each_fifo_lot_independently(monkeypatch):
+    transactions = [
+        _tx(1, "BUY", "1", "10", date(2025, 1, 1)),
+        _tx(2, "BUY", "1", "10", date(2026, 5, 1)),
+        _tx(3, "SELL", "2", "20", date(2026, 6, 1)),
+    ]
+    monkeypatch.setattr(final_taxable_income, "load_investments", lambda db, user_id: [_investment()])
+    monkeypatch.setattr(final_taxable_income, "load_investment_transactions", lambda db, user_id: transactions)
+
+    sales = final_taxable_income.calculate_capital_gains(None, 7, FY_START, FY_END)
+    totals = final_taxable_income.calculate_capital_gain_totals(sales)
+
+    assert len(sales) == 1
+    assert sales[0]["classification"] == "MIXED"
+    assert sales[0]["classification_breakdown"] == {"STCG": Decimal("10.00"), "LTCG": Decimal("10.00")}
+    assert totals["stcg"] == Decimal("10.00")
+    assert totals["ltcg"] == Decimal("10.00")

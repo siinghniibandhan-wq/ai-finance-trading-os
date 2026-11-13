@@ -40,10 +40,11 @@ def get_stream_config(environ=None) -> dict:
         tokens = _parse_tokens(str(env.get("MSTOCK_STREAM_INSTRUMENT_TOKENS", "")))
     except ValueError as exc:
         return {"enabled": enabled, "configured": False, "reason": str(exc), "tokens": []}
-    configured = bool(api_key and access_token and tokens and endpoint.startswith("wss://"))
+    auto_subscribe_movers = str(env.get("MSTOCK_STREAM_AUTO_SUBSCRIBE_MOVERS", "true")).strip().lower() in {"1", "true", "yes"}
+    configured = bool(api_key and access_token and endpoint.startswith("wss://") and (tokens or auto_subscribe_movers))
     reason = None
     if enabled and not configured:
-        reason = "Set the stream API key, access token, WSS endpoint and instrument token subscriptions."
+        reason = "Set the stream API key, access token and secure WSS endpoint; enable mover auto-subscription or provide instrument tokens."
     return {
         "enabled": enabled,
         "configured": configured,
@@ -52,6 +53,7 @@ def get_stream_config(environ=None) -> dict:
         "access_token": access_token,
         "endpoint": endpoint,
         "tokens": tokens,
+        "auto_subscribe_movers": auto_subscribe_movers,
     }
 
 
@@ -110,6 +112,82 @@ def parse_instrument_metadata(csv_text: str, tokens: list[int]) -> dict[int, dic
     return mapped
 
 
+
+def resolve_mover_instruments(csv_text: str, movers: list[dict]) -> dict[int, dict]:
+    """Resolve live mover rows to exact exchange-qualified script-master tokens."""
+    reader = csv.DictReader(StringIO(str(csv_text).lstrip("\ufeff")))
+    if not reader.fieldnames:
+        return {}
+    columns = {
+        "".join(char for char in name.lower() if char.isalnum()): name
+        for name in reader.fieldnames
+    }
+
+    def value(row, *names):
+        for name in names:
+            actual = columns.get("".join(char for char in name.lower() if char.isalnum()))
+            if actual:
+                raw = str(row.get(actual) or "").strip()
+                if raw:
+                    return raw
+        return None
+
+    master = {}
+    for row in reader:
+        symbol = value(row, "tradingsymbol", "symbol", "trading_symbol")
+        exchange = value(row, "exchange", "exch")
+        raw_token = value(row, "instrument_token", "token")
+        try:
+            token = int(raw_token) if raw_token else None
+        except ValueError:
+            continue
+        if symbol and exchange and token and token > 0:
+            master[(exchange.upper(), symbol.upper())] = {
+                "token": token,
+                "symbol": symbol,
+                "name": value(row, "name", "company_name") or symbol,
+                "exchange": exchange.upper(),
+                "segment": value(row, "segment"),
+                "instrument_type": value(row, "instrument_type", "type"),
+                "instrument_key": f"{exchange.upper()}:{symbol}",
+                "expiry": value(row, "expiry"),
+                "strike": value(row, "strike"),
+            }
+
+    resolved = {}
+    for mover in movers if isinstance(movers, list) else []:
+        if not isinstance(mover, dict):
+            continue
+        symbol = str(mover.get("symbol") or mover.get("trading_symbol") or "").strip().upper()
+        exchange = str(mover.get("exchange") or "").strip().upper()
+        item = master.get((exchange, symbol))
+        if item:
+            resolved[item["token"]] = {key: val for key, val in item.items() if key != "token"}
+    return resolved
+
+
+def _fetch_auto_mover_instruments() -> dict[int, dict]:
+    gateway = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
+    if not gateway:
+        return {}
+    try:
+        # Reuse the existing authenticated gateway-backed market mover service.
+        from app.routes.market_overview import fetch_overview_movers
+        movers = fetch_overview_movers("gainers") + fetch_overview_movers("losers")
+        headers = {"Accept": "text/csv"}
+        secret = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
+        if secret:
+            headers["X-Financial-OS-Gateway-Secret"] = secret
+        request = Request(f"{gateway}/instruments", headers=headers, method="GET")
+        with urlopen(request, timeout=8) as response:
+            if response.status != 200:
+                return {}
+            csv_text = response.read().decode("utf-8", errors="replace")
+        return resolve_mover_instruments(csv_text, movers)
+    except Exception:
+        return {}
+
+
 def _fetch_instrument_metadata(tokens: list[int]) -> dict[int, dict]:
     gateway = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
     if not gateway or not tokens:
@@ -156,9 +234,18 @@ class MStockStreamRuntime:
     def start(self) -> dict:
         config = get_stream_config()
         self._configuration = {key: value for key, value in config.items() if key not in {"api_key", "access_token"}}
-        self._instrument_metadata = _fetch_instrument_metadata(config.get("tokens", [])) if config["enabled"] and config["configured"] else {}
-        self._metadata_error = "Instrument metadata unavailable from the configured gateway." if config.get("tokens") and not self._instrument_metadata else None
         if not config["enabled"] or not config["configured"]:
+            return self.status()
+        self._instrument_metadata = _fetch_instrument_metadata(config.get("tokens", [])) if config.get("tokens") else {}
+        tokens = list(config.get("tokens", []))
+        if not tokens and config.get("auto_subscribe_movers"):
+            self._instrument_metadata = _fetch_auto_mover_instruments()
+            tokens = list(self._instrument_metadata)
+        self._configuration["tokens"] = tokens
+        self._metadata_error = "No configured tokens could be resolved through the market mover and instrument-master gateways." if not tokens else None
+        if not tokens:
+            self._configuration["configured"] = False
+            self._configuration["reason"] = self._metadata_error
             return self.status()
         api_key = config["api_key"]
         endpoint = config["endpoint"]
@@ -184,7 +271,7 @@ class MStockStreamRuntime:
         self._worker = MarketStreamWorker(
             token_provider=token_provider,
             socket_factory=socket_factory,
-            token_subscriptions=config["tokens"],
+            token_subscriptions=tokens,
             receive_timeout=receive_timeout,
             stale_after=float(os.getenv("MSTOCK_STREAM_STALE_AFTER", "15")),
         )

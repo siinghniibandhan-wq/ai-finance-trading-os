@@ -1,6 +1,6 @@
 # Financial OS
 
-Financial OS is a trading and investment application with market-data, broker-order, portfolio, reconciliation, and watchlist workflows.
+Financial OS is a trading and investment application with market-data, broker-order, portfolio, reconciliation, holdings, and watchlist workflows.
 
 ## m.Stock integration status
 
@@ -12,9 +12,18 @@ The agreed m.Stock integration review covers **five steps, all marked complete b
 4. Trade reconciliation and Portfolio
 5. Watchlist (intentional device-local storage)
 
-See **[MSTOCK_INTEGRATION_STATUS.md](./MSTOCK_INTEGRATION_STATUS.md)** for the accepted scope, owner decisions, five-step overview, review workflow, and change-control boundaries.
+## Investment workflow
 
-The historical static review is available in **[AUDIT_REPORT.md](./AUDIT_REPORT.md)**. It records the findings and recommendations from that review; those historical recommendations are not automatically approved work or current requirements.
+The application provides four related but distinct investment views:
+
+- **Portfolio** — individual investment records and portfolio-level overview; users can start a purchase through **Add Investment**.
+- **Holdings** — consolidated current positions by instrument, derived from investment BUY/SELL activity; users can buy/add to an existing holding.
+- **Market** — instrument discovery and detail pages; selecting BUY/SELL routes the chosen instrument and action into the Portfolio transaction form.
+- **Investment Transaction History** — the BUY/SELL ledger inside the Invest/Portfolio workflow. This is separate from Account/Money transaction history.
+
+All supported BUY/SELL entry points converge on the common investment transaction workflow. Completed activity is reflected in the relevant Portfolio, Holdings and investment-history views after refresh. See **[MSTOCK_INTEGRATION_STATUS.md](./MSTOCK_INTEGRATION_STATUS.md)** for the detailed distinctions, HDFC example, diagrams, code references and change-control rules.
+
+The historical static review is available in **[AUDIT_REPORT.md](./AUDIT_REPORT.md)**. Its historical recommendations are not automatically approved work or current requirements.
 
 ## Change-control
 

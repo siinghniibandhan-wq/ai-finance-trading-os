@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./order-flow.css";
+import { toSpotChangeRows } from "./marketFlowData";
 
 const API_BASE = (import.meta.env.VITE_MARKET_FLOW_API_BASE || "").replace(/\/$/, "");
 
@@ -47,12 +48,7 @@ export default function OrderFlowPage() {
   }, []);
 
   const rows = useMemo(() => {
-    const series = Array.isArray(market?.series) ? market.series : [];
-    return series.map((item) => ({
-      symbol: item.s || item.symbol,
-      change: Number.isFinite(Number(item.sp)) && Number(item.pc) > 0 ? ((Number(item.sp) - Number(item.pc)) / Number(item.pc)) * 100 : null,
-      raw: item,
-    })).filter((item) => item.symbol && item.change !== null).sort((a, b) => b.change - a.change);
+    return toSpotChangeRows(market?.series);
   }, [market]);
 
   const selected = rows.find((row) => row.symbol === symbol) || rows[0] || null;

@@ -156,6 +156,6 @@ def test_final_taxable_income_classifies_each_fifo_lot_independently(monkeypatch
 
     assert len(sales) == 1
     assert sales[0]["classification"] == "MIXED"
-    assert sales[0]["classification_breakdown"] == {"STCG": Decimal("10.00"), "LTCG": Decimal("10.00")}
+    assert sales[0]["classification_breakdown"] == {"STCG": Decimal("10.00"), "LTCG": Decimal("10.00"), "UNCLASSIFIED": Decimal("0.00")}
     assert totals["stcg"] == Decimal("10.00")
     assert totals["ltcg"] == Decimal("10.00")

@@ -29,6 +29,9 @@ jobs:
       - name: Test Order Flow data model
         working-directory: frontend
         run: npm run test:market-flow
+      - name: Test daily Important Notice schedule
+        working-directory: frontend
+        run: npm run test:notice
       - name: Build frontend
         working-directory: frontend
         run: npm run build

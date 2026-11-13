@@ -166,6 +166,6 @@ function RootRouter() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AppRenderBoundary><><RootRouter /><ImportantNotice /></></AppRenderBoundary>
+    <AppRenderBoundary><><RootRouter />{window.location.pathname === "/" && <ImportantNotice />}</></AppRenderBoundary>
   </React.StrictMode>
 );

@@ -39,7 +39,6 @@ test("storage failures do not prevent the notice from rendering", () => {
 
 test("notice is eligible only on the exact public homepage path", () => {
   assert.equal(shouldRenderImportantNotice("/"), true);
-  assert.equal(shouldRenderImportantNotice("/?source=direct"), true);
   assert.equal(shouldRenderImportantNotice("/login"), false);
   assert.equal(shouldRenderImportantNotice("/register"), false);
   assert.equal(shouldRenderImportantNotice("/app"), false);

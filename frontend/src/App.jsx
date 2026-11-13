@@ -28,6 +28,8 @@ import {
   Search,
   Menu,
   X,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   ArrowUpRight,
   ArrowDownRight,
@@ -242,6 +244,7 @@ const PRODUCT_TYPES_BY_ASSET_CLASS = {
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminAccessChecked, setAdminAccessChecked] = useState(false);
   const [headerPanel, setHeaderPanel] = useState("");
@@ -344,7 +347,7 @@ export default function App() {
   // ----------------------------------------------------------
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
 
       {/* =====================================================
           MOBILE OVERLAY
@@ -380,7 +383,21 @@ export default function App() {
           </div>
 
           <button
+            className="sidebar-collapse-toggle"
+            type="button"
+            aria-label={sidebarCollapsed ? "Expand navigation sidebar" : "Collapse navigation sidebar"}
+            aria-pressed={sidebarCollapsed}
+            aria-controls="financial-os-sidebar"
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+
+          <button
             className="mobile-close"
+            type="button"
+            aria-label="Close navigation menu"
             onClick={() => setSidebarOpen(false)}
           >
             <X size={20} />
@@ -416,6 +433,8 @@ export default function App() {
                     className={`navigation-item ${
                       active ? "active" : ""
                     }`}
+                    title={sidebarCollapsed ? item.name : undefined}
+                    aria-label={item.name}
                     onClick={() =>
                       handleNavigation(item.name)
                     }
@@ -442,6 +461,8 @@ export default function App() {
 
           <button
             className="navigation-item"
+            title={sidebarCollapsed ? "Settings" : undefined}
+            aria-label="Settings"
             onClick={() =>
               handleNavigation("Settings")
             }

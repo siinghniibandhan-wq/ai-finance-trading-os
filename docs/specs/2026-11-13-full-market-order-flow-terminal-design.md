@@ -100,3 +100,13 @@ The overall product is decomposed into independently reviewable workstreams:
 - Existing Type A decoder and stream worker are present, but this repository's market-price service delegates to a separate m.Stock Gateway. No gateway lifecycle hook or concrete socket adapter is present in this repository. Worker startup, subscriptions and live connection health therefore remain unintegrated.
 - Futures/OI, option-chain, sector constituents, historical candles and replay are not supplied by the current overview endpoint. Their workspaces remain gated until the actual provider contracts and coverage are verified.
 - PR #172 is draft and unmerged. CI has not yet reported a run for this draft PR. No local test/build execution is claimed.
+
+
+### Stage 1 hardening — 2026-11-13
+- Corrected feed semantics: the current API is explicitly labelled as a periodic snapshot, never as a verified live stream.
+- Added snapshot freshness states for received, partial, stale and disconnected responses. A failed refresh preserves the last successful values and timestamp while marking them stale.
+- Added Market Monitor inside the Market Intelligence page to show refresh mode, last successful snapshot, coverage and known connection diagnostics.
+- Instrument identity and selection now use exchange plus symbol so same-symbol listings on different exchanges are not collapsed.
+- Added directional-flow motion with reduced-motion support.
+- All added styles are rooted under `.market-intelligence-page`; no shared/global selectors, routes, API contracts, broker/order functions, or other feature modules are changed.
+- New tests cover exchange-aware instrument identity, snapshot freshness states, Market Monitor styling scope and reduced-motion behavior.

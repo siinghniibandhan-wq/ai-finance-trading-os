@@ -52,3 +52,27 @@ test('does not convert absent mover changes or prices into fabricated zeroes', (
   assert.equal(snapshot.losers[0].change, -0.5);
   assert.equal(snapshot.losers[0].price, 125.25);
 });
+
+
+test('builds a deduplicated directional flow universe only from supplied market movers', async () => {
+  const { getFlowRows } = await import('../src/marketIntelligenceModel.js');
+  const rows = getFlowRows({
+    gainers: [{ symbol: 'ABC', change: 2.5, price: 120 }, { symbol: 'DUP', change: 1 }],
+    losers: [{ symbol: 'XYZ', change: -1.5, price: 80 }, { symbol: 'DUP', change: -2 }],
+  });
+  assert.deepEqual(rows.map((row) => row.symbol), ['ABC', 'XYZ', 'DUP']);
+  assert.equal(rows.length, 3);
+  assert.equal(rows[1].change, -1.5);
+});
+
+test('filters flow rows without converting missing changes into zero', async () => {
+  const { filterFlowRows } = await import('../src/marketIntelligenceModel.js');
+  const rows = [
+    { symbol: 'UP', name: 'Up Ltd', change: 2, price: 100 },
+    { symbol: 'DOWN', name: 'Down Ltd', change: -1, price: 90 },
+    { symbol: 'UNKNOWN', name: 'Unknown Ltd', change: null, price: null },
+  ];
+  assert.deepEqual(filterFlowRows(rows, { direction: 'down' }).map((row) => row.symbol), ['DOWN']);
+  assert.deepEqual(filterFlowRows(rows, { query: 'unknown' }).map((row) => row.symbol), ['UNKNOWN']);
+  assert.deepEqual(filterFlowRows(rows, { sort: 'symbol' }).map((row) => row.symbol), ['DOWN', 'UNKNOWN', 'UP']);
+});

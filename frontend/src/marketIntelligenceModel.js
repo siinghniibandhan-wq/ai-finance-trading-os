@@ -129,7 +129,7 @@ export function getOptionMasterChoices(payload) {
   const underlyings = ['OPTIDX', 'OFSTK'].flatMap((group) => Array.isArray(groups[group]) ? groups[group] : []).flatMap((raw) => {
     if (typeof raw !== 'string') return [];
     const [symbol, token, ...expiryIds] = raw.split(',').map((part) => part.trim());
-    if (!symbol || !/^\\d+$/.test(token || '')) return [];
+    if (!symbol || !/^\d+$/.test(token || '')) return [];
     const validExpiryIds = expiryIds.filter((id) => expiryChoices.some((expiry) => expiry.id === id));
     return validExpiryIds.length ? [{ symbol, token: Number(token), expiryIds: validExpiryIds }] : [];
   });

@@ -278,7 +278,7 @@ export default function MarketIntelligence() {
         const payload = await response.json();
         if (!active) return;
         setStreamStatus(payload.status || null);
-        setStreamTicks(Array.isArray(payload.ticks) ? payload.ticks : []);
+        setStreamTicks(payload.status?.stale ? [] : (Array.isArray(payload.ticks) ? payload.ticks : []));
       } catch {
         if (active) setStreamTicks([]);
       }

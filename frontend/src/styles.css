@@ -2967,9 +2967,9 @@ input, textarea { color-scheme: light; }
     display: block;
   }
 
-  .app-shell.sidebar-collapsed .wealth-brand-text,
-  .app-shell.sidebar-collapsed .navigation-title,
-  .app-shell.sidebar-collapsed .navigation-item > span {
+  .app-shell.sidebar-collapsed .sidebar .wealth-brand-text,
+  .app-shell.sidebar-collapsed .sidebar .navigation-title,
+  .app-shell.sidebar-collapsed .sidebar .navigation-item > span {
     display: block;
     max-width: 0;
     opacity: 0;

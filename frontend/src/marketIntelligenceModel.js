@@ -40,3 +40,48 @@ export function getMarketSnapshot(payload) {
   })) : [];
   return { indices, gainers: cleanMovers(movers.gainers), losers: cleanMovers(movers.losers) };
 }
+
+
+export function getFlowRows(snapshot) {
+  const source = snapshot && typeof snapshot === 'object' ? snapshot : {};
+  const rows = [
+    ...(Array.isArray(source.gainers) ? source.gainers : []),
+    ...(Array.isArray(source.losers) ? source.losers : []),
+  ];
+  const seen = new Set();
+  return rows
+    .filter((row) => row && typeof row === 'object')
+    .map((row) => ({
+      ...row,
+      symbol: String(row.symbol || row.name || 'Unknown').trim().toUpperCase(),
+      change: finiteOrNull(row.change),
+      price: finiteOrNull(row.price),
+    }))
+    .filter((row) => {
+      if (seen.has(row.symbol)) return false;
+      seen.add(row.symbol);
+      return true;
+    })
+    .sort((a, b) => {
+      const av = a.change;
+      const bv = b.change;
+      if (av === null && bv === null) return a.symbol.localeCompare(b.symbol);
+      if (av === null) return 1;
+      if (bv === null) return -1;
+      return bv - av;
+    });
+}
+
+export function filterFlowRows(rows, { query = '', direction = 'all', sort = 'change' } = {}) {
+  const needle = String(query).trim().toUpperCase();
+  const filtered = (Array.isArray(rows) ? rows : []).filter((row) => {
+    const matchesQuery = !needle || row.symbol.includes(needle) || String(row.name || '').toUpperCase().includes(needle);
+    const matchesDirection = direction === 'all' || (direction === 'up' && row.change > 0) || (direction === 'down' && row.change < 0) || (direction === 'flat' && row.change === 0) || (direction === 'unknown' && row.change === null);
+    return matchesQuery && matchesDirection;
+  });
+  return [...filtered].sort((a, b) => {
+    if (sort === 'symbol') return a.symbol.localeCompare(b.symbol);
+    if (sort === 'price') return (b.price ?? -Infinity) - (a.price ?? -Infinity);
+    return (b.change ?? -Infinity) - (a.change ?? -Infinity);
+  });
+}

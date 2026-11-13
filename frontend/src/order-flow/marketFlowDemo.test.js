@@ -5,7 +5,7 @@ import { buildDemoFlow } from "./marketFlowDemo.js";
 test("builds deterministic, clearly separated Nifty 50 and F&O universes",()=>{
  const nifty=buildDemoFlow("nifty50"),all=buildDemoFlow("fno");
  assert.equal(nifty.stocks.length,51);
- assert.ok(all.stocks.length>nifty.stocks.length);
+ assert.equal(all.stocks.length,217);
  assert.ok(nifty.stocks.some(s=>s.symbol==="NIFTY"));
  assert.ok(nifty.stocks.every(s=>["bullish","bearish","rangebound"].includes(s.side)));
 });

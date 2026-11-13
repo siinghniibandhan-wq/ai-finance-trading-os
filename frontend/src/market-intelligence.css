@@ -1,10 +1,10 @@
 /* Market Order Flow Terminal — all colors inherit the Financial OS theme contract. */
 .market-intelligence-page {
-  --mi-panel:var(--th-card); --mi-inset:var(--th-inner); --mi-text:var(--th-text);
+  --mi-panel:var(--th-card); --mi-page:var(--th-page); --mi-on-accent:var(--th-on-accent); --mi-inset:var(--th-inner); --mi-text:var(--th-text);
   --mi-muted:var(--th-muted); --mi-border:var(--th-border); --mi-accent:var(--th-accent);
   --mi-positive:var(--th-pos); --mi-negative:var(--th-neg); --mi-warning:var(--th-warn);
   display:flex; flex-direction:column; gap:18px; min-width:0; color:var(--mi-text);
-  background:transparent; font-family:var(--th-font);
+  background:var(--mi-page); font-family:var(--th-font);
 }
 .market-intelligence-page *{box-sizing:border-box}
 .mi-page-header,.mi-header-actions,.mi-workspace-heading,.mi-workspace-subheading,.mi-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -14,7 +14,7 @@
 .mi-subtitle{color:var(--mi-muted);margin:0;font-size:12px;line-height:1.5}
 .mi-header-status{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--mi-border);border-radius:999px;padding:8px 11px;color:var(--mi-muted);background:var(--mi-inset);font-size:10px;font-weight:750}
 .mi-status-dot,.mi-live-indicator{width:7px;height:7px;border-radius:50%;background:var(--mi-warning);display:inline-block}
-.mi-refresh-button{border:1px solid var(--mi-border);background:var(--mi-panel);color:var(--mi-text);border-radius:8px;padding:9px 12px;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+.mi-refresh-button{border:1px solid var(--mi-border);background:var(--mi-accent);color:var(--mi-on-accent);border-radius:8px;padding:9px 12px;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
 .mi-refresh-button:hover:not(:disabled){border-color:var(--mi-accent);background:var(--th-hover-surface)}
 .mi-refresh-button:disabled{opacity:.55;cursor:wait}
 .market-intelligence-page :focus-visible{outline:2px solid var(--th-focus);outline-offset:3px}

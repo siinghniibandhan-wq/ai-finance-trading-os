@@ -11,14 +11,14 @@ function useBoardSize(ref){
  useEffect(()=>{const node=ref.current;if(!node)return;const measure=()=>{const r=node.getBoundingClientRect();setSize({width:Math.round(r.width),height:Math.max(640,Math.round(r.height))})};measure();const observer=new ResizeObserver(measure);observer.observe(node);return()=>observer.disconnect()},[ref]);
  return size;
 }
-function MiniProfile({stock,x,y,w,h,selected,onSelect,onPin,kind="tile"}){
+function MiniProfile({stock,x,y,w,h,selected,onSelect,onPin,selectedSector,kind="tile"}){
  const up=stock.side==="bullish",color=up?"var(--mf-up)":"var(--mf-down)";
  const values=(stock.candles||[]).map(c=>Number(c.change)||0);
  const max=Math.max(.5,...values.map(Math.abs));
  const points=values.map((v,i)=>[x+8+i/Math.max(1,values.length-1)*(w-16),y+h*.72-v/max*h*.25]);
  const spark=pathFor(points);
  const isCard=kind==="card",isTall=kind==="tall";
- return <g className={`mf-native-node ${kind} ${up?"is-up":"is-down"} ${selected===stock.symbol?"is-lit":""}`}
+ return <g className={`mf-native-node ${kind} ${up?"is-up":"is-down"} ${selected===stock.symbol?"is-lit":""} ${selectedSector&&stock.sector!==selectedSector?"is-sector-dim":""}`}
    onMouseEnter={()=>onSelect(stock.symbol)} onFocus={()=>onSelect(stock.symbol)} onClick={()=>{onSelect(stock.symbol);onPin(stock.symbol)}} tabIndex="0" role="button" aria-label={`Select ${stock.symbol}, ${pct(stock.changePct)}`}>
   <rect x={x} y={y} width={w} height={h} rx={isCard?9:6}/>
   <text className="mf-node-symbol" x={x+9} y={y+17}>{stock.symbol}</text>
@@ -35,7 +35,7 @@ export default function FlowDiagram({stocks=[],selected,onSelect=()=>{},onPin=()
  const bulls=useMemo(()=>data.filter(s=>s.side==="bullish").sort((a,b)=>b.changePct-a.changePct),[data]);
  const bears=useMemo(()=>data.filter(s=>s.side==="bearish").sort((a,b)=>a.changePct-b.changePct),[data]);
  const flats=useMemo(()=>data.filter(s=>s.side==="rangebound"),[data]);
- const width=Math.max(900,W||1500),height=width<760?980:width<1120?820:760;
+ const width=Math.max(1200,W||1500),height=width<760?980:width<1120?820:760;
  const layout=useMemo(()=>{
   const pad=14,axis=42,cardW=width>=1500?300:width>=1120?260:210,tallW=width>=1500?126:108,smallW=width>=1500?104:width>=1120?88:72,gap=5;
   const cardX=width-pad-cardW,tallX=cardX-10-tallW,smallStart=tallX-8-smallW*3-gap*2,gateR=smallStart-78,gateL=gateR-66,x0=pad+axis,x1=gateL-52;
@@ -73,17 +73,17 @@ export default function FlowDiagram({stocks=[],selected,onSelect=()=>{},onPin=()
    <text className="mf-diagram-caption" x={layout.gateL+4} y="22">CONVERGENCE GATE</text>
    <text className="mf-diagram-caption" x={layout.smallStart} y="22">UNDERLYING MAP</text>
    {sectors.map((s,i)=>{const x=sectorX+i*(sectorW+5),y=36;return <g key={s.name}><rect className="mf-sector-pill" x={x} y={y} width={sectorW} height="27" rx="7"/><text className="mf-sector-name" x={x+7} y={y+11}>{s.name}</text><text className="mf-sector-median" x={x+7} y={y+22}>{pct(s.median)} median</text></g>})}
-   {[-1,-.5,0,.5,1].map(v=><g key={v}><line className="mf-diagram-grid" x1={layout.x0} x2={layout.x1} y1={layout.zero-v*(layout.zero-layout.top-8)} y2={layout.zero-v*(layout.zero-layout.top-8)}/><text className="mf-diagram-axis" x={layout.x0-8} y={layout.zero-v*(layout.zero-layout.top-8)+3} textAnchor="end">{v>0?"+":""}{(v*layout.maxMove).toFixed(1)}%</text></g>)}
+   {[-1,-.5,0,.5,1].map(v=><g key={v}><line className="mf-diagram-grid" x1={layout.x0} x2={layout.x1} y1={layout.zero-v*(layout.zero-layout.top-8)} y2={layout.zero-v*(layout.zero-layout.top-8)}/><text className="mf-diagram-axis" x={layout.x0-8} y={layout.zero-v*(layout.zero-layout.top-8)+3} textAnchor="end">{v>0?"+":""}{(v*paths.maxMove).toFixed(1)}%</text></g>)}
    <line className="mf-diagram-zero" x1={layout.x0} x2={layout.x1} y1={layout.zero} y2={layout.zero}/>
    {sectors.map(s=>{const yy=layout.zero-(s.median/layout.maxMove)*(layout.zero-layout.top-8);return <line key={s.name} className="mf-sector-median-line" x1={layout.x0} x2={layout.x1} y1={yy} y2={yy}/>})}
    <path className="mf-gate-shell" d={`M${layout.gateL},${layout.top+10} Q${layout.gateL-12},${layout.top+10} ${layout.gateL-12},${layout.top+24} L${layout.gateL-12},${layout.bottom-24} Q${layout.gateL-12},${layout.bottom-10} ${layout.gateL},${layout.bottom-10} L${layout.gateR},${layout.bottom-10} Q${layout.gateR+12},${layout.bottom-10} ${layout.gateR+12},${layout.bottom-24} L${layout.gateR+12},${layout.top+24} Q${layout.gateR+12},${layout.top+10} ${layout.gateR},${layout.top+10} Z`}/>
    <path className="mf-zero-spine" d={`M${layout.x0},${layout.zero} H${layout.gateR+10} C${layout.gateR+28},${layout.zero} ${layout.gateR+22},${layout.mid} ${layout.smallStart-12},${layout.mid} H${width-layout.pad}`}/>
-   {paths.map(({stock,d,row})=><path key={stock.symbol} d={d} className={`mf-fan-path ${tone(stock)} ${selected===stock.symbol?"is-active":""} ${selectedSector&&stock.sector!==selectedSector?"is-sector-dim":""}`} onMouseEnter={()=>onSelect(stock.symbol)} onClick={()=>{onSelect(stock.symbol);onPin(stock.symbol)}}/>)}
+   {paths.paths.map(({stock,d,row})=><path key={stock.symbol} d={d} className={`mf-fan-path ${tone(stock)} ${selected===stock.symbol?"is-active":""} ${selectedSector&&stock.sector!==selectedSector?"is-sector-dim":""}`} onMouseEnter={()=>onSelect(stock.symbol)} onClick={()=>{onSelect(stock.symbol);onPin(stock.symbol)}}/>)}
    {[...bulls.filter(s=>gateRows.has(s.symbol)),...bears.filter(s=>gateRows.has(s.symbol))].map(s=>{const row=gateRows.get(s.symbol),target=targets.get(s.symbol);return <path key={s.symbol+"-branch"} className={`mf-gate-branch ${tone(s)} ${selected===s.symbol?"is-active":""}`} d={target?curve(layout.gateR,row,target.x,target.y):""}/>})}
    {flowNames.map(s=>{const y=gateRows.get(s.symbol);return <line key={s.symbol+"-gate"} className={`mf-gate-row ${tone(s)}`} x1={layout.gateL} x2={layout.gateR} y1={y} y2={y}/>})}
    <text className="mf-gate-word" x={(layout.gateL+layout.gateR)/2} y={layout.mid-4} textAnchor="middle">FLOW</text><text className="mf-gate-count" x={(layout.gateL+layout.gateR)/2} y={layout.mid+10} textAnchor="middle">{flowNames.length} paths</text>
-   {["bullish","bearish"].map(side=>boxes[side].map(b=><MiniProfile key={b.stock.symbol} {...b} selected={selected} onSelect={onSelect} onPin={onPin}/>))}
-   {["bullish","bearish"].map(side=>cardBoxes[side].map(b=><g key={b.stock.symbol}><MiniProfile stock={b.stock} {...b.tall} selected={selected} onSelect={onSelect} onPin={onPin} kind="tall"/><path className={`mf-card-joint ${side}`} d={`M${b.tall.x+b.tall.w},${b.y+Math.min(24,b.h/2)} H${b.card.x}`}/><MiniProfile stock={b.stock} {...b.card} selected={selected} onSelect={onSelect} onPin={onPin} kind="card"/></g>))}
+   {["bullish","bearish"].map(side=>boxes[side].map(b=><MiniProfile key={b.stock.symbol} {...b} selected={selected} onSelect={onSelect} onPin={onPin} selectedSector={selectedSector}/>))}
+   {["bullish","bearish"].map(side=>cardBoxes[side].map(b=><g key={b.stock.symbol}><MiniProfile stock={b.stock} {...b.tall} selected={selected} onSelect={onSelect} onPin={onPin} selectedSector={selectedSector} kind="tall"/><path className={`mf-card-joint ${side}`} d={`M${b.tall.x+b.tall.w},${b.y+Math.min(24,b.h/2)} H${b.card.x}`}/><MiniProfile stock={b.stock} {...b.card} selected={selected} onSelect={onSelect} onPin={onPin} selectedSector={selectedSector} kind="card"/></g>))}
    {cross!==null&&<g className="mf-diagram-cross" pointerEvents="none"><line x1={cross} x2={cross} y1={layout.top} y2={layout.bottom}/><text x={clamp(cross,layout.x0+20,layout.x1-20)} y={layout.top-6} textAnchor="middle">T+{Math.round((cross-layout.x0)/(layout.x1-layout.x0)*75)}m</text></g>}
   </svg>}
   <div className="mf-diagram-foot"><span><i className="up"/> Futures path → gate → underlying</span><span><i className="down"/> Featured cards include option OI by strike</span><span>{data.length} underlyings · {flats.length} rangebound</span></div>

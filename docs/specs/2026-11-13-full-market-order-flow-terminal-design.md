@@ -1,6 +1,6 @@
 # Full Market Order Flow Terminal — Design
 
-**Status:** Proposed implementation design, approved direction from the user; awaiting review of this written specification before implementation.
+**Status:** Approved direction; implementation in progress on `feature/full-market-order-flow-terminal`.
 
 ## Goal
 
@@ -83,3 +83,20 @@ The overall product is decomposed into independently reviewable workstreams:
 - Live futures and options coverage depends on the m.Stock account's subscribed instruments and the provider's actual payloads; do not assume that the current Type A quote/depth packet includes a complete F&O chain.
 - Historical chart/replay availability depends on an existing data store or provider history API; this must be confirmed before enabling those workspaces.
 - Any provider credentials or non-production connection setup must be supplied through existing secure backend configuration; never request or expose secrets in frontend code.
+
+
+## Implementation progress — 2026-11-13
+
+### Stage 1 delivered to draft PR #172
+- Replaced the card-led Market Intelligence page with the Market Flow terminal shell.
+- Added directional flow visualization for returned positive/negative movers.
+- Added selectable instrument context and a searchable, filterable, sortable Flow Board.
+- Preserved the existing market-overview API and visible-page 30-second refresh.
+- Added pure model functions and tests for mover normalization, deduplication and filtering.
+- Added responsive desktop/mobile layouts using existing theme tokens.
+
+### Verified limitations / remaining work
+- The overview API returns a limited top-movers snapshot, not the complete F&O instrument universe.
+- Existing Type A decoder and stream worker are present, but this repository's market-price service delegates to a separate m.Stock Gateway. No gateway lifecycle hook or concrete socket adapter is present in this repository. Worker startup, subscriptions and live connection health therefore remain unintegrated.
+- Futures/OI, option-chain, sector constituents, historical candles and replay are not supplied by the current overview endpoint. Their workspaces remain gated until the actual provider contracts and coverage are verified.
+- PR #172 is draft and unmerged. CI has not yet reported a run for this draft PR. No local test/build execution is claimed.

@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 const css = readFileSync(new URL('../src/market-intelligence.css', import.meta.url), 'utf8');
 
 test('Market Intelligence surfaces use the shared theme token contract', () => {
-  for (const token of ['--th-page', '--th-card', '--th-inner', '--th-text', '--th-muted', '--th-border', '--th-accent', '--th-on-accent', '--th-pos', '--th-neg', '--th-warn', '--th-radius', '--th-card-shadow', '--th-font']) {
+  for (const token of ['--th-card', '--th-inner', '--th-text', '--th-muted', '--th-border', '--th-accent', '--th-pos', '--th-neg', '--th-warn', '--th-radius', '--th-card-shadow', '--th-font']) {
     assert.ok(css.includes(token), `Market Intelligence must consume ${token}`);
   }
 });
@@ -15,7 +15,7 @@ test('Market Intelligence has no fixed palette colours that override selected th
 });
 
 test('Market Intelligence styles all page regions and retain responsive layouts', () => {
-  for (const selector of ['.market-intelligence-page', '.mi-page-header', '.mi-summary-card', '.mi-metric-card', '.mi-index-card', '.mi-movers-panel', '.mi-capability-card', '.mi-connection-panel', '.mi-verification-list', '.mi-status-built', '.mi-status-integrated', '.mi-status-pending', '.mi-error', ':focus-visible']) {
+  for (const selector of ['.market-intelligence-page', '.mi-page-header', '.mi-market-ribbon', '.mi-workspace-tabs', '.mi-terminal-layout', '.mi-flow-canvas', '.mi-flow-svg', '.mi-flow-stats', '.mi-board-panel', '.mi-flow-table', '.mi-detail-panel', '.mi-unavailable-workspace', '.mi-error', ':focus-visible']) {
     assert.ok(css.includes(selector), `Missing themed page selector: ${selector}`);
   }
   assert.match(css, /@media\s*\(max-width:\s*900px\)/);

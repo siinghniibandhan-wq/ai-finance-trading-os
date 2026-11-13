@@ -26,6 +26,9 @@ jobs:
       - name: Audit frontend dependencies
         working-directory: frontend
         run: npm audit --audit-level=high
+      - name: Test Order Flow data model
+        working-directory: frontend
+        run: npm run test:market-flow
       - name: Build frontend
         working-directory: frontend
         run: npm run build

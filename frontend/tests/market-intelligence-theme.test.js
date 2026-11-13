@@ -18,6 +18,6 @@ test('Market Intelligence styles all page regions and retain responsive layouts'
   for (const selector of ['.market-intelligence-page', '.mi-page-header', '.mi-market-ribbon', '.mi-workspace-tabs', '.mi-terminal-layout', '.mi-flow-canvas', '.mi-flow-svg', '.mi-flow-stats', '.mi-board-panel', '.mi-flow-table', '.mi-detail-panel', '.mi-unavailable-workspace', '.mi-error', ':focus-visible']) {
     assert.ok(css.includes(selector), `Missing themed page selector: ${selector}`);
   }
-  assert.match(css, /@media\s*\(max-width:\s*900px\)/);
-  assert.match(css, /@media\s*\(max-width:\s*640px\)/);
+  assert.match(css, /@media\s*\(max-width:\s*1050px\)/);
+  assert.match(css, /@media\s*\(max-width:\s*760px\)/);
 });

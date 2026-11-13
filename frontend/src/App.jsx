@@ -589,6 +589,8 @@ export default function App() {
    <InvestmentTransactions />
 ) : activePage === "Markets" ? (
    <MarketsPage />
+) : activePage === "Order Flow" ? (
+   <OrderFlowPage />
 ) : activePage === "Tax" ? (
    <TaxPage />
 ) : activePage === "Goals" ? (

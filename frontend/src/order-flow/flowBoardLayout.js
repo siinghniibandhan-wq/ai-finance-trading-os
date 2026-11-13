@@ -5,13 +5,13 @@ export function getFlowBoardLayout(width,height){
  return {mode,width:w,height:h,columns};
 }
 
-// Keep both directional fans within the SVG's 0–100 viewBox. The previous
-// bearish offset pushed its starting points below 100, clipping half the chart.
+// Mirror the bullish fan around the chart's horizontal midpoint. All points
+// stay inside the SVG viewBox, and bearish curves descend across the lower fan.
 export function getFlowFanCoordinates(side,index){
  const i=Math.max(0,Math.min(7,Number(index)||0));
  const offset=i*4.5;
  const endOffset=i*4.8;
  return side==="bearish"
-  ? {y0:50-offset,y1:50+endOffset}
+  ? {y0:50-offset,y1:92-endOffset}
   : {y0:50+offset,y1:8+endOffset};
 }

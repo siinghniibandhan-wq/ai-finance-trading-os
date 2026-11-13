@@ -1,0 +1,22 @@
+import React,{useMemo,useState}from"react";
+import{getFlowBoardLayout}from"./flowBoardLayout";
+const pct=n=>(n>0?"+":"")+Number(n||0).toFixed(2)+"%";
+export default function FlowDiagram({stocks,selected,onSelect,onPin}){
+ const[panel,setPanel]=useState("diagram");
+ const bulls=useMemo(()=>stocks.filter(s=>s.side==="bullish").sort((a,b)=>b.changePct-a.changePct),[stocks]);
+ const bears=useMemo(()=>stocks.filter(s=>s.side==="bearish").sort((a,b)=>a.changePct-b.changePct),[stocks]);
+ const leaders=[...bulls.slice(0,3),...bears.slice(0,3)];
+ const layout=getFlowBoardLayout(typeof window==="undefined"?1600:window.innerWidth,typeof window==="undefined"?900:window.innerHeight);
+ const rows=[...bulls.slice(0,8),...bears.slice(0,8)];
+ const cls=(s)=>selected===s.symbol?"is-active":"";
+ return <section className={"mf-flow-diagram mode-"+layout.mode} aria-label="Order Flow continuous diagram">
+  <div className="mf-diagram-mobile-tabs" role="tablist" aria-label="Flow panels">{[["diagram","Flow"],["bullish","Bullish"],["bearish","Bearish"],["leaders","Leaders"]].map(([id,label])=><button key={id} role="tab" aria-selected={panel===id} className={panel===id?"active":""} onClick={()=>setPanel(id)}>{label}</button>)}</div>
+  <div className="mf-diagram-columns">
+   <section className={"mf-diagram-chart "+(panel!=="diagram"?"mobile-hidden":"")}><header><div><b>Futures fan</b><small>Intraday change · simulated</small></div><span>0%</span></header><div className="mf-fan-plot">{Array.from({length:5},(_,i)=><i key={i} style={{top:(i*25)+"%"}}/>)}{rows.map((s,i)=><button key={s.symbol} title={s.symbol+" "+pct(s.changePct)} aria-label={"Focus "+s.symbol} className={"mf-fan-line "+s.side+" "+cls(s)} style={{top:(4+(i%8)*4.5+(s.side==="bearish"?52:0))+"%"}} onMouseEnter={()=>onSelect(s.symbol)} onFocus={()=>onSelect(s.symbol)} onClick={()=>onSelect(s.symbol)}><span>{s.symbol}</span></button>)}</div><footer><span className="up">Bullish fan</span><span className="down">Bearish fan</span></footer></section>
+   <div className="mf-diagram-gate" aria-hidden="true"><span>FLOW</span>{Array.from({length:8},(_,i)=><i key={i}/>)}</div>
+   <section className={"mf-diagram-ranks "+(panel!=="bullish"&&panel!=="bearish"&&panel!=="diagram"?"mobile-hidden":"")}><header><b>Ranked flow</b><small>{rows.length} leaders shown</small></header><div className="mf-diagram-rank-groups"><div><h3 className="up">Bullish <small>{bulls.length}</small></h3>{bulls.slice(0,8).map((s,i)=><button key={s.symbol} className={cls(s)} onMouseEnter={()=>onSelect(s.symbol)} onFocus={()=>onSelect(s.symbol)} onClick={()=>onSelect(s.symbol)}><small>{i+1}</small><b>{s.symbol}</b><strong className="up">{pct(s.changePct)}</strong></button>)}</div><div><h3 className="down">Bearish <small>{bears.length}</small></h3>{bears.slice(0,8).map((s,i)=><button key={s.symbol} className={cls(s)} onMouseEnter={()=>onSelect(s.symbol)} onFocus={()=>onSelect(s.symbol)} onClick={()=>onSelect(s.symbol)}><small>{i+1}</small><b>{s.symbol}</b><strong className="down">{pct(s.changePct)}</strong></button>)}</div></div></section>
+   <section className={"mf-diagram-leaders "+(panel!=="leaders"&&panel!=="diagram"?"mobile-hidden":"")}><header><b>Featured positions</b><small>Top 3 each side</small></header>{leaders.map(s=><button key={s.symbol} className={"mf-leader-card "+cls(s)} onMouseEnter={()=>onSelect(s.symbol)} onFocus={()=>onSelect(s.symbol)} onClick={()=>{onSelect(s.symbol);onPin(s.symbol)}}><span className={s.side==="bullish"?"up":"down"}>{s.side.toUpperCase()}</span><b>{s.symbol}</b><strong className={s.side==="bullish"?"up":"down"}>{pct(s.changePct)}</strong><small>OI {Number(s.oi).toLocaleString("en-IN")} · {s.buildup.replace("_"," ")}</small><small>Support {Number(s.support).toLocaleString("en-IN")} · Resistance {Number(s.resistance).toLocaleString("en-IN")}</small></button>)}</section>
+  </div>
+  <svg className="mf-diagram-connectors" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">{rows.map((s,i)=><path key={s.symbol} d={"M 2 "+(50+(i%8)*4.5+(s.side==="bearish"?52:0))+" C 24 "+(8+(i%8)*4.8+(s.side==="bearish"?52:0))+", 69 "+(8+(i%8)*4.8+(s.side==="bearish"?52:0))+", 98 "+(8+(i%8)*4.8+(s.side==="bearish"?52:0))} className={"mf-connector "+s.side+" "+cls(s)}/>)}</svg>
+ </section>
+}

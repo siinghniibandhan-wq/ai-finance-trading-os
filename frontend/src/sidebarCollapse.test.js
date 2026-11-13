@@ -35,3 +35,19 @@ test("mobile close control remains available and mobile layout is not collapsed"
   assert.doesNotMatch(styles, /@media \(max-width: 800px\)\s*\{[^}]*sidebar-collapsed/);
 });
 
+
+test("desktop sidebar uses a deliberate eased motion curve", () => {
+  const desktopRules = styles.slice(styles.lastIndexOf("@media (min-width: 801px)"));
+  assert.match(desktopRules, /width \.3\d*s cubic-bezier\(\.16,\s*1,\s*\.3,\s*1\)/);
+  assert.match(desktopRules, /margin-left \.3\d*s cubic-bezier\(\.16,\s*1,\s*\.3,\s*1\)/);
+});
+
+test("sidebar labels fade and slide before becoming hidden", () => {
+  const desktopRules = styles.slice(styles.lastIndexOf("@media (min-width: 801px)"));
+  assert.match(desktopRules, /\.app-shell\.sidebar-collapsed \.sidebar \.navigation-item > span[\s\S]*?opacity: 0;[\s\S]*?visibility: hidden;/);
+  assert.doesNotMatch(desktopRules, /\.app-shell\.sidebar-collapsed \.sidebar \.navigation-item > span \{ display: none; \}/);
+});
+
+test("sidebar animation honors reduced-motion preferences", () => {
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.sidebar[\s\S]*?transition-duration: \.01ms/);
+});

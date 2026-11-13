@@ -333,7 +333,7 @@ export default function MarketIntelligence() {
       <div className="mi-ribbon-meta"><span className={`mi-live-indicator mi-feed-${feedState.kind}`}/><strong>{rows.length}</strong><span>movers returned</span><small>{retrievedAt ? new Date(retrievedAt).toLocaleTimeString('en-IN') : 'Awaiting snapshot'}</small></div>
     </section>
 
-    <nav className="mi-workspace-tabs" aria-label="Market workspaces">{WORKSPACES.map((tab) => <button key={tab.id} type="button" className={activeWorkspace === tab.id ? 'active' : ''} onClick={() => tab.ready && setActiveWorkspace(tab.id)} disabled={!tab.ready} aria-current={activeWorkspace === tab.id ? 'page' : undefined}>{tab.label}{!tab.ready && <span>Pending feed</span>}</button>)}</nav>
+    <nav className="mi-workspace-tabs" aria-label="Market workspaces">{WORKSPACES.map((tab) => <button key={tab.id} type="button" className={activeWorkspace === tab.id ? 'active' : ''} onClick={() => setActiveWorkspace(tab.id)} aria-disabled={!tab.ready} aria-current={activeWorkspace === tab.id ? 'page' : undefined}>{tab.label}{!tab.ready && <span>Pending feed</span>}</button>)}</nav>
     {error && <p className="mi-error" role="status">{error}</p>}
 
     {activeWorkspace === 'flow' && <section className="mi-terminal-layout">

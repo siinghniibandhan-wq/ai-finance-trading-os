@@ -75,3 +75,21 @@ def test_worker_reports_disconnected_and_never_starts_implicitly():
     assert status["connected"] is False
     assert status["running"] is False
     assert status["last_error"] is None
+
+
+def test_worker_replaces_subscriptions_without_reconnecting_and_sends_only_deltas():
+    socket = FakeSocket()
+    worker = MarketStreamWorker(
+        token_provider=lambda: "test-token",
+        socket_factory=lambda token: socket,
+        token_subscriptions=[101, 202],
+    )
+    worker._socket = socket
+    worker._connected = True
+
+    worker.update_subscriptions([202, 303])
+
+    assert json.loads(socket.sent[0]) == {"a": "unsubscribe", "v": [101]}
+    assert json.loads(socket.sent[1]) == {"a": "subscribe", "v": [303]}
+    assert json.loads(socket.sent[2]) == {"a": "mode", "v": ["full", [303]]}
+    assert worker._subscriptions == [202, 303]

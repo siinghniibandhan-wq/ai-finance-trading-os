@@ -5,9 +5,9 @@ import { getFlowBoardLayout } from "./flowBoardLayout.js";
 test("uses the continuous full-width diagram on wide desktop workspaces",()=>{
  const layout=getFlowBoardLayout(1800,900);
  assert.equal(layout.mode,"diagram");
- assert.ok(layout.columns.diagram>0);
+ assert.ok(layout.columns.chart>0);
  assert.ok(layout.columns.cards>0);
- assert.ok(layout.columns.diagram+layout.columns.cards<=1800);
+ assert.ok(layout.columns.chart+layout.columns.gate+layout.columns.tiles+layout.columns.cards<=1800);
 });
 test("switches to split desktop, stacked tablet and switchable mobile panels",()=>{
  assert.equal(getFlowBoardLayout(1300,850).mode,"split");

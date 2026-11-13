@@ -235,14 +235,14 @@ def test_gateway_accepts_remote_https_endpoint_and_sends_secret(monkeypatch):
         captured["timeout"] = timeout
         return FakeResponse()
 
-    monkeypatch.setattr(broker_orders, "GATEWAY_URL", "https://gateway.example.vercel.app")
+    monkeypatch.setattr(broker_orders, "GATEWAY_URL", "https://gateway.example.com")
     monkeypatch.setattr(broker_orders, "GATEWAY_SECRET", "test-secret")
     monkeypatch.setattr(broker_orders, "urlopen", fake_urlopen)
 
-    result = broker_orders._gateway_request("/order", "POST", {"client_id": "vercel-1"})
+    result = broker_orders._gateway_request("/order", "POST", {"client_id": "aws-gateway-1"})
 
     assert result == {"success": True}
-    assert captured["url"] == "https://gateway.example.vercel.app/order"
+    assert captured["url"] == "https://gateway.example.com/order"
     assert captured["secret"] == "test-secret"
     assert captured["timeout"] == broker_orders.GATEWAY_TIMEOUT_SECONDS
 

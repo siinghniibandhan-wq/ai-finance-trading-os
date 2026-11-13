@@ -49,6 +49,7 @@ from app.routes import (
     watchlist,
     market_movers,
     market_indices,
+    market_order_flow,
     investment_transactions,
     holdings,
     investment_pnl,
@@ -93,12 +94,10 @@ from app.routes import (
 # ============================================================
 # CREATE DATABASE TABLES
 # ============================================================
-# Vercel may create multiple function instances concurrently. Never run
-# create_all() or ad-hoc ALTER TABLE statements during serverless imports.
-# Apply schema changes as a controlled, one-off database migration before
-# deploying the new release. Local/non-Vercel deployments retain the legacy
-# bootstrap behavior for backwards compatibility.
-if os.getenv("VERCEL") != "1":
+# Serverless deployments can disable startup schema bootstrap and must apply
+# schema changes through controlled migrations before deploying a new release.
+# AWS EC2 and local deployments retain the existing bootstrap behavior.
+if os.getenv("DISABLE_STARTUP_SCHEMA_BOOTSTRAP") != "1":
     
     Base.metadata.create_all(
         bind=engine
@@ -494,6 +493,7 @@ _include_private_router(market_charts.router)
 _include_private_router(watchlist.router)
 _include_private_router(market_movers.router)
 _include_private_router(market_indices.router)
+_include_private_router(market_order_flow.router)
 _include_private_router(investment_transactions.router)
 _include_private_router(holdings.router)
 _include_private_router(investment_pnl.router)

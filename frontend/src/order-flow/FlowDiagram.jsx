@@ -12,7 +12,7 @@ function useBoardSize(ref){
  return size;
 }
 function MiniProfile({stock,x,y,w,h,selected,onSelect,onPin,selectedSector,kind="tile"}){
- const up=stock.side==="bullish",color=up?"var(--mf-up)":"var(--mf-down)";
+ const up=stock.side==="bullish";
  const values=(stock.candles||[]).map(c=>Number(c.change)||0);
  const max=Math.max(.5,...values.map(Math.abs));
  const points=values.map((v,i)=>[x+8+i/Math.max(1,values.length-1)*(w-16),y+h*.72-v/max*h*.25]);

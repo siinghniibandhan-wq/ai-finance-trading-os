@@ -41,6 +41,7 @@ def test_worker_starts_only_when_explicitly_started_and_stops_cleanly():
     assert worker.status()["running"] is False
     assert socket.sent[0] == "LOGIN:test-token"
     assert '"subscribe"' in socket.sent[1]
+    assert '"full"' in socket.sent[2]
     assert socket.closed is True
 
 

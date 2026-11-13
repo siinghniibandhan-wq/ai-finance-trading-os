@@ -6,6 +6,7 @@ Price values remain raw integers until instrument-specific scaling is resolved.
 from __future__ import annotations
 
 import struct
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 
@@ -93,6 +94,50 @@ def _parse_packet(packet: memoryview) -> dict[str, Any]:
     raise ValueError(f"Unsupported Type A packet size: {size}")
 
 
+def _normalise_tick(tick: dict[str, Any]) -> dict[str, Any]:
+    """Add Type A SDK-compatible price and timestamp fields without losing raw data."""
+    token = tick.get("token")
+    if token is None:
+        return tick
+    segment = int(token) & 0xFF
+    divisor = 10_000_000 if segment == 3 else 10_000 if segment == 6 else 100
+    result = dict(tick)
+    result["price_divisor"] = divisor
+    price_fields = {
+        "ltp_raw": "ltp",
+        "average_price_raw": "average_price",
+        "open_raw": "open",
+        "high_raw": "high",
+        "low_raw": "low",
+        "close_raw": "close",
+        "change_raw": "change",
+        "upper_circuit_raw": "upper_circuit",
+        "lower_circuit_raw": "lower_circuit",
+        "year_high_raw": "year_high",
+        "year_low_raw": "year_low",
+    }
+    for raw_key, normalized_key in price_fields.items():
+        raw_value = tick.get(raw_key)
+        if raw_value is not None:
+            result[normalized_key] = raw_value / divisor
+    for side in ("bids", "asks"):
+        if isinstance(tick.get(side), list):
+            result[side] = [
+                {**level, "price": level["price_raw"] / divisor}
+                for level in tick[side]
+            ]
+    # Type A timestamps count seconds from 1980-01-01 UTC, not Unix epoch.
+    base = datetime(1980, 1, 1, tzinfo=timezone.utc)
+    for raw_key, normalized_key in (
+        ("last_trade_timestamp", "last_trade_at"),
+        ("exchange_timestamp", "exchange_time"),
+    ):
+        raw_value = tick.get(raw_key)
+        if raw_value:
+            result[normalized_key] = (base + timedelta(seconds=raw_value)).isoformat()
+    return result
+
+
 def parse_type_a_frame(frame: bytes | bytearray | memoryview) -> list[dict[str, Any]]:
     """Decode one length-prefixed Type A frame; empty frames are heartbeats."""
     view = memoryview(frame)
@@ -113,7 +158,7 @@ def parse_type_a_frame(frame: bytes | bytearray | memoryview) -> list[dict[str, 
         end = offset + packet_size
         if packet_size <= 0 or end > len(view):
             raise ValueError("Truncated Type A packet payload")
-        ticks.append(_parse_packet(view[offset:end]))
+        ticks.append(_normalise_tick(_parse_packet(view[offset:end])))
         offset = end
 
     if offset != len(view):

@@ -2865,7 +2865,7 @@ input, textarea { color-scheme: light; }
 
 /* Desktop navigation collapse — scoped to the application shell only. */
 .sidebar-collapse-toggle {
-  display: inline-flex;
+  display: none;
   align-items: center;
   justify-content: center;
   flex: 0 0 32px;
@@ -2888,6 +2888,10 @@ input, textarea { color-scheme: light; }
   outline-offset: 2px;
 }
 .mobile-close { display: none; }
+
+@media (max-width: 800px) {
+  .mobile-close { display: inline-flex; }
+}
 
 @media (min-width: 801px) {
   .sidebar,

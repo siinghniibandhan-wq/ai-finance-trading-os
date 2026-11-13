@@ -50,6 +50,7 @@ from app.routes import (
     market_movers,
     market_indices,
     market_order_flow,
+    market_stream,
     investment_transactions,
     holdings,
     investment_pnl,
@@ -494,6 +495,7 @@ _include_private_router(watchlist.router)
 _include_private_router(market_movers.router)
 _include_private_router(market_indices.router)
 _include_private_router(market_order_flow.router)
+_include_private_router(market_stream.router)
 _include_private_router(investment_transactions.router)
 _include_private_router(holdings.router)
 _include_private_router(investment_pnl.router)
@@ -563,3 +565,18 @@ _include_private_router(itr_ready_tax_report.router)
 _include_private_router(tax_business_income.router)
 _include_private_router(tax_house_property.router)
 _include_private_router(tax_review.router)
+
+
+# Optional, read-only m.Stock Type A market stream. Disabled unless explicitly
+# configured with backend-only credentials and instrument subscriptions.
+from app.services.mstock_stream_runtime import market_stream_runtime
+
+
+@app.on_event("startup")
+def _start_optional_market_stream():
+    market_stream_runtime.start()
+
+
+@app.on_event("shutdown")
+def _stop_optional_market_stream():
+    market_stream_runtime.stop()

@@ -6,8 +6,12 @@ and instrument tokens. No broker order APIs are used.
 """
 from __future__ import annotations
 
+import csv
 import os
+from io import StringIO
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 from app.services.mstock_stream_worker import MarketStreamWorker
 
@@ -58,6 +62,72 @@ def build_stream_url(endpoint: str, api_key: str, access_token: str) -> str:
     return endpoint + separator + urlencode({"API_KEY": api_key, "ACCESS_TOKEN": access_token})
 
 
+def parse_instrument_metadata(csv_text: str, tokens: list[int]) -> dict[int, dict]:
+    """Resolve only subscribed Type A tokens against the gateway script master."""
+    requested = {int(token) for token in tokens}
+    if not requested:
+        return {}
+    reader = csv.DictReader(StringIO(str(csv_text).lstrip("\ufeff")))
+    if not reader.fieldnames:
+        return {}
+    columns = {
+        "".join(char for char in name.lower() if char.isalnum()): name
+        for name in reader.fieldnames
+    }
+
+    def field(row, *names):
+        for name in names:
+            actual = columns.get("".join(char for char in name.lower() if char.isalnum()))
+            if actual:
+                value = str(row.get(actual) or "").strip()
+                if value:
+                    return value
+        return None
+
+    mapped = {}
+    for row in reader:
+        raw_token = field(row, "instrument_token", "token")
+        try:
+            token = int(raw_token) if raw_token else None
+        except ValueError:
+            continue
+        if token not in requested:
+            continue
+        symbol = field(row, "tradingsymbol", "symbol", "trading_symbol")
+        exchange = field(row, "exchange", "exch")
+        if not symbol or not exchange:
+            continue
+        exchange = exchange.upper()
+        mapped[token] = {
+            "symbol": symbol,
+            "name": field(row, "name", "company_name") or symbol,
+            "exchange": exchange,
+            "segment": field(row, "segment", "instrument_type"),
+            "instrument_key": f"{exchange}:{symbol}",
+            "expiry": field(row, "expiry"),
+            "strike": field(row, "strike"),
+        }
+    return mapped
+
+
+def _fetch_instrument_metadata(tokens: list[int]) -> dict[int, dict]:
+    gateway = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
+    if not gateway or not tokens:
+        return {}
+    headers = {"Accept": "text/csv"}
+    secret = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
+    if secret:
+        headers["X-Financial-OS-Gateway-Secret"] = secret
+    request = Request(f"{gateway}/instruments", headers=headers, method="GET")
+    try:
+        with urlopen(request, timeout=8) as response:
+            if response.status != 200:
+                return {}
+            return parse_instrument_metadata(response.read().decode("utf-8", errors="replace"), tokens)
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError):
+        return {}
+
+
 class _WebSocketClientAdapter:
     def __init__(self, socket):
         self._socket = socket
@@ -80,10 +150,14 @@ class MStockStreamRuntime:
     def __init__(self):
         self._worker: MarketStreamWorker | None = None
         self._configuration: dict = {"enabled": False, "configured": False, "reason": "Streaming is disabled."}
+        self._instrument_metadata: dict[int, dict] = {}
+        self._metadata_error: str | None = None
 
     def start(self) -> dict:
         config = get_stream_config()
         self._configuration = {key: value for key, value in config.items() if key not in {"api_key", "access_token"}}
+        self._instrument_metadata = _fetch_instrument_metadata(config.get("tokens", [])) if config["enabled"] and config["configured"] else {}
+        self._metadata_error = "Instrument metadata unavailable from the configured gateway." if config.get("tokens") and not self._instrument_metadata else None
         if not config["enabled"] or not config["configured"]:
             return self.status()
         api_key = config["api_key"]
@@ -133,13 +207,16 @@ class MStockStreamRuntime:
             "configured": bool(self._configuration.get("configured")),
             "configuration_reason": self._configuration.get("reason"),
             "subscribed_instruments": len(self._configuration.get("tokens", [])),
+            "instrument_metadata_count": len(self._instrument_metadata),
+            "instrument_metadata_error": self._metadata_error,
             **worker_status,
         }
 
     def snapshot(self) -> dict:
         status = self.status()
         ticks = self._worker.snapshot()["ticks"] if self._worker is not None else []
-        return {"status": status, "ticks": ticks, "read_only": True, "database_write": False}
+        enriched = [{**tick, "instrument": self._instrument_metadata.get(tick.get("token"))} for tick in ticks]
+        return {"status": status, "ticks": enriched, "read_only": True, "database_write": False}
 
 
 market_stream_runtime = MStockStreamRuntime()

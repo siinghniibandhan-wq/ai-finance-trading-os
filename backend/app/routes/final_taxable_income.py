@@ -553,6 +553,14 @@ def calculate_capital_gains(
 
             matched_lots = []
 
+            # Capital-gain classification belongs to each FIFO acquisition
+            # lot, not to an average holding period across the whole sale.
+            classification_gains = {
+                "STCG": Decimal("0"),
+                "LTCG": Decimal("0"),
+                "UNCLASSIFIED": Decimal("0"),
+            }
+
             holding_days_weighted = (
                 Decimal("0")
             )
@@ -658,6 +666,26 @@ def calculate_capital_gains(
                     allocated_buy_fee
                 )
 
+                # Allocate sale fees and calculate gain at the matched-lot
+                # level so lots with different holding periods are never
+                # collapsed into one tax classification.
+                allocated_lot_sale_fee = (
+                    sale_fee * consumed_quantity / quantity
+                    if quantity > 0 else Decimal("0")
+                )
+                lot_sale_proceeds = consumed_quantity * price
+                lot_gain = (
+                    lot_sale_proceeds
+                    - allocated_lot_sale_fee
+                    - lot_cost
+                    - allocated_buy_fee
+                )
+                lot_classification = classify_gain(
+                    holding_days if holding_days is not None else 0,
+                    asset_class,
+                )["classification"]
+                classification_gains[lot_classification] += lot_gain
+
                 # ------------------------------------------
                 # HOLDING PERIOD
                 # ------------------------------------------
@@ -688,6 +716,16 @@ def calculate_capital_gains(
                             lot_unit_price,
                         "holding_days":
                             holding_days,
+                        "classification":
+                            lot_classification,
+                        "sale_proceeds":
+                            money(lot_sale_proceeds),
+                        "sale_fees":
+                            money(allocated_lot_sale_fee),
+                        "cost_basis":
+                            money(lot_cost + allocated_buy_fee),
+                        "realised_gain_loss":
+                            money(lot_gain),
                     }
                 )
 
@@ -759,17 +797,20 @@ def calculate_capital_gains(
             else:
                 weighted_holding_days = None
 
-            classification_result = (
-                classify_gain(
-                    int(
-                        weighted_holding_days
-                    )
-                    if weighted_holding_days
-                    is not None
-                    else 0,
-                    asset_class,
-                )
-            )
+            matched_classifications = {
+                lot["classification"] for lot in matched_lots
+            }
+            if len(matched_classifications) > 1:
+                sale_classification = "MIXED"
+            elif matched_classifications:
+                sale_classification = next(iter(matched_classifications))
+            else:
+                sale_classification = "UNCLASSIFIED"
+
+            classification_breakdown = {
+                key: money(value)
+                for key, value in classification_gains.items()
+            }
 
             if not report_sale:
                 continue
@@ -825,13 +866,17 @@ def calculate_capital_gains(
                             else None
                         ),
                     "classification":
-                        classification_result[
-                            "classification"
-                        ],
+                        sale_classification,
+                    "classification_breakdown":
+                        classification_breakdown,
                     "threshold_days":
-                        classification_result[
-                            "threshold_days"
-                        ],
+                        (
+                            classify_gain(
+                                int(weighted_holding_days)
+                                if weighted_holding_days is not None else 0,
+                                asset_class,
+                            )["threshold_days"]
+                        ),
                     "matched_lots":
                         matched_lots,
                 }
@@ -859,6 +904,26 @@ def calculate_capital_gain_totals(
     unclassified = Decimal("0")
 
     for sale in sales:
+
+        # Newer sale records carry tax classification per matched FIFO lot.
+        # Retain the legacy aggregate fallback for older callers/test fixtures.
+        if "classification_breakdown" in sale:
+            breakdown = sale["classification_breakdown"]
+            for classification in ("STCG", "LTCG", "UNCLASSIFIED"):
+                gain = decimal(breakdown.get(classification, 0))
+                if classification == "STCG":
+                    if gain >= 0:
+                        stcg += gain
+                    else:
+                        stcl += abs(gain)
+                elif classification == "LTCG":
+                    if gain >= 0:
+                        ltcg += gain
+                    else:
+                        ltcl += abs(gain)
+                else:
+                    unclassified += gain
+            continue
 
         gain = decimal(
             sale[

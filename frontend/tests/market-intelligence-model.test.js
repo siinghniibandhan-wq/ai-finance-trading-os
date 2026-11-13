@@ -108,3 +108,30 @@ test('normalizes only valid provider OHLCV candles for historical charts', async
   assert.equal(rows.length, 2);
   assert.deepEqual(rows[0], { timestamp: '2026-11-10T09:15:00+05:30', open: 100, high: 110, low: 95, close: 105, volume: 1200 });
 });
+
+
+test('normalizes only supported m.Stock option master underlyings and expiry mappings', async () => {
+  const { getOptionMasterChoices } = await import('../src/marketIntelligenceModel.js');
+  const result = getOptionMasterChoices({
+    expiries: { '2': 1795876200, '3': 1796481000, invalid: 'bad' },
+    underlyings: { OPTIDX: ['NIFTY,26000,2,3', 'BROKEN,no-token,2'], OFSTK: ['RELIANCE,2885,2'], FUTIDX: ['NIFTY,26000,2'] },
+  });
+  assert.deepEqual(result.expiryChoices.map((item) => item.id), ['2', '3']);
+  assert.deepEqual(result.underlyings, [
+    { symbol: 'NIFTY', token: 26000, expiryIds: ['2', '3'] },
+    { symbol: 'RELIANCE', token: 2885, expiryIds: ['2'] },
+  ]);
+});
+
+test('filters malformed option rows and sorts valid strikes', async () => {
+  const { getOptionRows } = await import('../src/marketIntelligenceModel.js');
+  assert.deepEqual(getOptionRows({ options: [
+    { strike: 22100, call_oi: 1, put_oi: 2 },
+    { strike: 22000, call_oi: 3, put_oi: 4 },
+    { strike: -1, call_oi: 5, put_oi: 6 },
+    { strike: 22200, call_oi: -1, put_oi: 1 },
+  ] }), [
+    { strike: 22000, call_oi: 3, put_oi: 4 },
+    { strike: 22100, call_oi: 1, put_oi: 2 },
+  ]);
+});

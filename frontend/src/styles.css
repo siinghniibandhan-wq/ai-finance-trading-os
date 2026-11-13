@@ -2927,3 +2927,89 @@ input, textarea { color-scheme: light; }
     margin-left: 88px;
   }
 }
+
+/* Smoother desktop sidebar collapse/expand.
+   Keep labels mounted so they fade and slide instead of disappearing abruptly. */
+@media (min-width: 801px) {
+  .app-shell .sidebar {
+    transition:
+      width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      padding 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.25s ease;
+    will-change: width;
+  }
+
+  .app-shell .main-area {
+    transition:
+      width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      margin-left 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: width, margin-left;
+  }
+
+  .app-shell .wealth-brand-text,
+  .app-shell .navigation-title,
+  .app-shell .navigation-item > span {
+    display: block;
+    max-width: 190px;
+    overflow: hidden;
+    white-space: nowrap;
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    transition:
+      max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.18s ease,
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s linear 0s;
+  }
+
+  .app-shell .navigation-title {
+    display: block;
+  }
+
+  .app-shell.sidebar-collapsed .sidebar .wealth-brand-text,
+  .app-shell.sidebar-collapsed .sidebar .navigation-title,
+  .app-shell.sidebar-collapsed .sidebar .navigation-item > span {
+    display: block;
+    max-width: 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-7px);
+    pointer-events: none;
+    transition:
+      max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.16s ease,
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0s linear 0.28s;
+  }
+
+  .app-shell .brand-logo-image {
+    transition:
+      width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      height 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      flex-basis 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .app-shell .navigation-item {
+    transition:
+      background 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s ease,
+      padding 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      gap 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .sidebar,
+  .app-shell .main-area,
+  .app-shell .wealth-brand-text,
+  .app-shell .navigation-title,
+  .app-shell .navigation-item,
+  .app-shell .navigation-item > span,
+  .app-shell .brand-logo-image {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

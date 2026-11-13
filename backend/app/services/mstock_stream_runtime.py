@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import os
+import threading
 from io import StringIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -230,6 +231,9 @@ class MStockStreamRuntime:
         self._configuration: dict = {"enabled": False, "configured": False, "reason": "Streaming is disabled."}
         self._instrument_metadata: dict[int, dict] = {}
         self._metadata_error: str | None = None
+        self._refresh_stop = threading.Event()
+        self._refresh_thread: threading.Thread | None = None
+        self._auto_refresh_enabled = False
 
     def start(self) -> dict:
         config = get_stream_config()
@@ -238,7 +242,8 @@ class MStockStreamRuntime:
             return self.status()
         self._instrument_metadata = _fetch_instrument_metadata(config.get("tokens", [])) if config.get("tokens") else {}
         tokens = list(config.get("tokens", []))
-        if not tokens and config.get("auto_subscribe_movers"):
+        self._auto_refresh_enabled = not tokens and bool(config.get("auto_subscribe_movers"))
+        if self._auto_refresh_enabled:
             self._instrument_metadata = _fetch_auto_mover_instruments()
             tokens = list(self._instrument_metadata)
         self._configuration["tokens"] = tokens
@@ -281,9 +286,33 @@ class MStockStreamRuntime:
             stale_after=float(os.getenv("MSTOCK_STREAM_STALE_AFTER", "15")),
         )
         self._worker.start()
+        if self._auto_refresh_enabled:
+            self._refresh_stop.clear()
+            self._refresh_thread = threading.Thread(target=self._refresh_mover_subscriptions, name="mstock-mover-subscriptions", daemon=True)
+            self._refresh_thread.start()
         return self.status()
 
+    def _refresh_mover_subscriptions(self):
+        try:
+            interval = max(60.0, float(os.getenv("MSTOCK_STREAM_REFRESH_SECONDS", "300")))
+        except (TypeError, ValueError):
+            interval = 300.0
+        while not self._refresh_stop.wait(interval):
+            if self._worker is None:
+                continue
+            refreshed = _fetch_auto_mover_instruments()
+            if not refreshed:
+                continue
+            tokens = list(refreshed)
+            self._worker.update_subscriptions(tokens)
+            self._instrument_metadata = refreshed
+            self._configuration["tokens"] = tokens
+            self._metadata_error = None
+
     def stop(self):
+        self._refresh_stop.set()
+        if self._refresh_thread is not None and self._refresh_thread is not threading.current_thread():
+            self._refresh_thread.join(timeout=2.0)
         if self._worker is not None:
             self._worker.stop()
         return self.status()

@@ -333,3 +333,6 @@
  .mf-diagram-connectors { display:none; }
 }
 @media(prefers-reduced-motion:reduce){.mf-diagram *{scroll-behavior:auto!important;transition:none!important;}}
+
+.market-flow-workspace .mf-axis { fill: var(--th-muted); }
+.market-flow-workspace button.is-selected { background: var(--th-selected-surface); }

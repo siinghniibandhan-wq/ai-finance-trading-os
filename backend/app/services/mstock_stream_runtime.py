@@ -67,7 +67,7 @@ def parse_instrument_metadata(csv_text: str, tokens: list[int]) -> dict[int, dic
     requested = {int(token) for token in tokens}
     if not requested:
         return {}
-    reader = csv.DictReader(StringIO(str(csv_text).lstrip("\\ufeff")))
+    reader = csv.DictReader(StringIO(str(csv_text).lstrip("\ufeff")))
     if not reader.fieldnames:
         return {}
     columns = {

@@ -95,3 +95,16 @@ test('classifies snapshot freshness without calling a periodic snapshot a live s
   assert.equal(getMarketFeedState({ status: 'error', hasData: true, lastSuccessAt: 1000, now: 40000 }).label, 'Stale snapshot');
   assert.equal(getMarketFeedState({ status: 'error', hasData: false, lastSuccessAt: null, now: 40000 }).label, 'Disconnected');
 });
+
+
+test('normalizes only valid provider OHLCV candles for historical charts', async () => {
+  const { getHistoricalChartRows } = await import('../src/marketIntelligenceModel.js');
+  const rows = getHistoricalChartRows({ candles: [
+    ['2026-11-10T09:15:00+05:30', 100, 110, 95, 105, 1200],
+    ['2026-11-11T09:15:00+05:30', 105, 108, 101, 103, 900],
+    ['bad', 1, 2],
+    ['2026-11-12T09:15:00+05:30', 1, 0, 0.5, 0.8, 10],
+  ] });
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows[0], { timestamp: '2026-11-10T09:15:00+05:30', open: 100, high: 110, low: 95, close: 105, volume: 1200 });
+});

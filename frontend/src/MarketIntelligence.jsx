@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_BASE_URL, apiFetch } from './api';
 import './market-intelligence.css';
-import { filterFlowRows, getFlowRows, getMarketFeedState, getMarketSnapshot } from './marketIntelligenceModel';
+import { filterFlowRows, getFlowRows, getHistoricalChartRows, getMarketFeedState, getMarketSnapshot } from './marketIntelligenceModel';
 
 const WORKSPACES = [
   { id: 'flow', label: 'Market Flow', ready: true },
@@ -9,7 +9,7 @@ const WORKSPACES = [
   { id: 'futures', label: 'Futures', ready: false },
   { id: 'options', label: 'Options', ready: false },
   { id: 'sectors', label: 'Sectors', ready: false },
-  { id: 'replay', label: 'Charts & Replay', ready: false },
+  { id: 'replay', label: 'Charts & Replay', ready: true },
   { id: 'monitor', label: 'Market Monitor', ready: true },
 ];
 
@@ -88,6 +88,69 @@ function InstrumentDetail({ row, onClear }) {
     <dl><div><dt>Exchange</dt><dd>{row.exchange || 'Unavailable'}</dd></div><div><dt>Price change</dt><dd>{signed(row.change)}</dd></div><div><dt>Open interest</dt><dd>Not supplied</dd></div><div><dt>Volume profile</dt><dd>Not supplied</dd></div><div><dt>Market depth</dt><dd>Not supplied</dd></div><div><dt>Data type</dt><dd>Market overview snapshot</dd></div></dl>
     <p className="mi-detail-note">Futures positioning, OI and order-book depth require an instrument-level feed. They are not inferred from price movement.</p>
   </aside>;
+}
+
+
+function HistoricalChartWorkspace({ selected }) {
+  const today = new Date();
+  const dateValue = (date) => date.toISOString().slice(0, 10);
+  const initialFrom = new Date(today.getTime() - 30 * 86400000);
+  const [symbol, setSymbol] = useState(selected?.symbol || '');
+  const [exchange, setExchange] = useState(selected?.exchange || 'NSE');
+  const [interval, setInterval] = useState('day');
+  const [fromDate, setFromDate] = useState(dateValue(initialFrom));
+  const [toDate, setToDate] = useState(dateValue(today));
+  const [rows, setRows] = useState([]);
+  const [chart, setChart] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const loadHistory = async () => {
+    if (!symbol.trim() || !fromDate || !toDate || fromDate > toDate) {
+      setError('Enter a symbol and a valid date range.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const params = new URLSearchParams({ symbol: symbol.trim().toUpperCase(), exchange, interval, from: fromDate, to: toDate });
+      const response = await apiFetch(`${API_BASE_URL}/api/market-charts/?${params.toString()}`, { cache: 'no-store' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(typeof payload?.detail === 'string' ? payload.detail : 'Historical market data is unavailable.');
+      const normalized = getHistoricalChartRows(payload);
+      setRows(normalized);
+      setChart(payload.chart || null);
+      if (!normalized.length) setError('The provider returned no valid OHLCV candles for this range.');
+    } catch (requestError) {
+      setRows([]);
+      setChart(null);
+      setError(requestError?.message || 'Unable to load historical market data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  const minClose = rows.length ? Math.min(...rows.map((row) => row.close)) : 0;
+  const maxClose = rows.length ? Math.max(...rows.map((row) => row.close)) : 0;
+  const span = maxClose - minClose || 1;
+  const points = rows.map((row, index) => `${rows.length < 2 ? 50 : 4 + index * 92 / (rows.length - 1)},${92 - ((row.close - minClose) / span) * 84}`).join(' ');
+  return <section className="mi-chart-workspace">
+    <div className="mi-workspace-heading"><div><p className="mi-eyebrow">M.STOCK HISTORICAL DATA</p><h2>Charts & Replay</h2></div><span className="mi-data-badge">Provider OHLCV · Read-only</span></div>
+    <div className="mi-chart-controls">
+      <label>Symbol<input value={symbol} onChange={(event) => setSymbol(event.target.value.toUpperCase())} placeholder="e.g. RELIANCE" /></label>
+      <label>Exchange<select value={exchange} onChange={(event) => setExchange(event.target.value)}><option>NSE</option><option>NFO</option><option>BSE</option><option>BFO</option></select></label>
+      <label>Interval<select value={interval} onChange={(event) => setInterval(event.target.value)}><option value="minute">1 minute</option><option value="3minute">3 minutes</option><option value="5minute">5 minutes</option><option value="10minute">10 minutes</option><option value="15minute">15 minutes</option><option value="30minute">30 minutes</option><option value="60minute">60 minutes</option><option value="day">Daily</option></select></label>
+      <label>From<input type="date" value={fromDate} max={toDate} onChange={(event) => setFromDate(event.target.value)} /></label>
+      <label>To<input type="date" value={toDate} min={fromDate} max={dateValue(today)} onChange={(event) => setToDate(event.target.value)} /></label>
+      <button type="button" onClick={loadHistory} disabled={loading || !symbol.trim()}>{loading ? 'Loading…' : 'Load chart'}</button>
+    </div>
+    {error && <p className="mi-error" role="status">{error}</p>}
+    {rows.length > 0 && <>
+      <div className="mi-chart-summary"><strong>{chart?.symbol || symbol} · {chart?.exchange || exchange}</strong><span>{rows.length} provider candles</span><span>{chart?.interval || interval}</span><span>{rows[0].timestamp} — {rows[rows.length - 1].timestamp}</span></div>
+      <div className="mi-chart-canvas"><svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={`${symbol} historical closing prices from provider candles`}><polyline points={points} fill="none" stroke="var(--mi-positive)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" /></svg></div>
+      <div className="mi-table-wrap"><table className="mi-flow-table"><thead><tr><th>Timestamp</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th></tr></thead><tbody>{rows.slice(-50).reverse().map((row) => <tr key={row.timestamp}><td>{row.timestamp}</td><td>{fmt(row.open)}</td><td>{fmt(row.high)}</td><td>{fmt(row.low)}</td><td>{fmt(row.close)}</td><td>{fmt(row.volume, 0)}</td></tr>)}</tbody></table></div>
+    </>}
+    {!rows.length && !loading && !error && <div className="mi-flow-empty"><strong>Historical chart not loaded</strong><span>Choose an instrument and date range to request actual m.Stock candles. No sample or replay data is generated.</span></div>}
+    <p className="mi-monitor-note">Source: existing authenticated Market Charts API → m.Stock Gateway historical endpoint. Replay playback controls are not enabled; this workspace currently provides verified historical chart retrieval only.</p>
+  </section>;
 }
 
 export default function MarketIntelligence() {
@@ -171,6 +234,8 @@ export default function MarketIntelligence() {
     {activeWorkspace === 'board' && <section className="mi-board-workspace"><div className="mi-workspace-heading"><div><p className="mi-eyebrow">PROVIDER RETURNED UNIVERSE</p><h2>Market Flow Board</h2></div><span className="mi-data-badge">Sortable · Filterable</span></div><FlowBoard rows={rows} selected={selectedInstrumentKey} onSelect={setSelectedInstrumentKey}/><InstrumentDetail row={selected} onClear={() => setSelectedInstrumentKey('')}/></section>}
 
 
+    {activeWorkspace === 'replay' && <HistoricalChartWorkspace selected={selected}/>}
+
     {activeWorkspace === 'monitor' && <section className="mi-monitor-workspace">
       <div className="mi-workspace-heading"><div><p className="mi-eyebrow">PROVIDER CONNECTIVITY</p><h2>Market Monitor</h2></div><span className={`mi-data-badge mi-feed-${feedState.kind}`}>{feedState.label}</span></div>
       <div className="mi-monitor-grid">
@@ -189,7 +254,7 @@ export default function MarketIntelligence() {
       <p className="mi-monitor-note">This page only reports data returned by the existing Market Overview API. A successful snapshot does not mean a live tick stream is connected.</p>
     </section>}
 
-    {['futures','options','sectors','replay'].includes(activeWorkspace) && <section className="mi-unavailable-workspace"><p className="mi-eyebrow">DATA SOURCE REQUIRED</p><h2>{WORKSPACES.find((item) => item.id === activeWorkspace)?.label}</h2><p>This workspace is intentionally not displaying simulated data. The existing backend calculation engines can process normalized inputs, but the connected market overview does not supply the required {activeWorkspace === 'futures' ? 'futures price and open-interest history' : activeWorkspace === 'options' ? 'option-chain strikes and call/put open interest' : activeWorkspace === 'sectors' ? 'constituent-level sector breadth' : 'historical candles and replay data'}.</p><ul><li>Provider adapter and instrument mapping must be verified.</li><li>Source timestamps, freshness and missing-data states must be preserved.</li><li>Workspace will be enabled only after live data is validated.</li></ul></section>}
+    {['futures','options','sectors'].includes(activeWorkspace) && <section className="mi-unavailable-workspace"><p className="mi-eyebrow">DATA SOURCE REQUIRED</p><h2>{WORKSPACES.find((item) => item.id === activeWorkspace)?.label}</h2><p>This workspace is intentionally not displaying simulated data. The existing backend calculation engines can process normalized inputs, but the connected market overview does not supply the required {activeWorkspace === 'futures' ? 'futures price and open-interest history' : activeWorkspace === 'options' ? 'option-chain strikes and call/put open interest' : activeWorkspace === 'sectors' ? 'constituent-level sector breadth' : 'historical candles and replay data'}.</p><ul><li>Provider adapter and instrument mapping must be verified.</li><li>Source timestamps, freshness and missing-data states must be preserved.</li><li>Workspace will be enabled only after live data is validated.</li></ul></section>}
 
     <footer className="mi-terminal-footer"><span>Read-only analytics · No order placement from this workspace</span><span>Source: m.Stock via existing Market Overview API · Returned top movers only</span></footer>
   </main>;

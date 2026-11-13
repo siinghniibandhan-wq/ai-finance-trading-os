@@ -503,11 +503,11 @@ export default function App() {
                   <label htmlFor="global-page-search">Search Financial OS</label>
                   <input id="global-page-search" autoFocus value={headerSearch} onChange={(event) => setHeaderSearch(event.target.value)} placeholder="Search pages…" />
                   <div className="header-search-results">
-                    {["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"]
+                    {["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Order Flow", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"]
                       .filter((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase()))
                       .slice(0, 8)
                       .map((page) => <button type="button" key={page} onClick={() => { setHeaderPanel(""); setHeaderSearch(""); handleNavigation(page); }}>{page}</button>)}
-                    {headerSearch.trim() && !["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"].some((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase())) && <p className="header-popover-empty">No matching pages found.</p>}
+                    {headerSearch.trim() && !["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Order Flow", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"].some((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase())) && <p className="header-popover-empty">No matching pages found.</p>}
                   </div>
                 </div>
               )}

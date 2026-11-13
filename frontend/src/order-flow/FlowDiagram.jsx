@@ -61,7 +61,7 @@ export default function FlowDiagram({stocks=[],selected,onSelect=()=>{},onPin=()
  return {targets,gateRows,paths,maxMove,yValue,flowNames};
  },[data,layout,bulls,bears,flats]);
  const sectors=useMemo(()=>{const map=new Map();data.forEach(s=>{const a=map.get(s.sector)||[];a.push(s.changePct);map.set(s.sector,a)});return [...map].map(([name,values])=>({name,median:[...values].sort((a,b)=>a-b)[Math.floor(values.length/2)]})).sort((a,b)=>b.median-a.median).slice(0,8)},[data]);
- const sectorX=layout.x0+12,sectorW=Math.max(80,Math.min(132,(layout.x1-layout.x0)/Math.max(1,sectors.length)-5));
+ const sectorPills=sectors.slice(0,Math.max(2,Math.min(5,Math.floor((layout.x1-layout.x0)/88))));\n const sectorX=layout.x0+12,sectorW=Math.max(64,Math.min(132,(layout.x1-layout.x0)/Math.max(1,sectorPills.length)-5));
  return <section ref={host} className="mf-flow-diagram mf-faithful-diagram" aria-label="Order Flow continuous market diagram">
   {W>0&&<svg className="mf-faithful-svg" viewBox={`0 0 ${width} ${height}`} onPointerMove={e=>{const r=e.currentTarget.getBoundingClientRect();setCross(clamp((e.clientX-r.left)/r.width*width,layout.x0,layout.x1))}} onPointerLeave={()=>setCross(null)} role="group" aria-label="Futures paths converge through the market flow gate and branch to stock tiles and featured option cards">
    <defs><linearGradient id="mf-gate-fill" x1="0" x2="1"><stop offset="0" stopColor="var(--mf-up)" stopOpacity=".13"/><stop offset=".5" stopColor="var(--th-muted)" stopOpacity=".08"/><stop offset="1" stopColor="var(--mf-down)" stopOpacity=".13"/></linearGradient></defs>
@@ -72,7 +72,7 @@ export default function FlowDiagram({stocks=[],selected,onSelect=()=>{},onPin=()
    <text className="mf-diagram-caption" x={layout.x0} y="22">INTRADAY FUTURES FAN</text>
    <text className="mf-diagram-caption" x={layout.gateL+4} y="22">CONVERGENCE GATE</text>
    <text className="mf-diagram-caption" x={layout.smallStart} y="22">UNDERLYING MAP</text>
-   {sectors.map((s,i)=>{const x=sectorX+i*(sectorW+5),y=36;return <g key={s.name}><rect className="mf-sector-pill" x={x} y={y} width={sectorW} height="27" rx="7"/><text className="mf-sector-name" x={x+7} y={y+11}>{s.name}</text><text className="mf-sector-median" x={x+7} y={y+22}>{pct(s.median)} median</text></g>})}
+   {sectorPills.map((s,i)=>{const x=sectorX+i*(sectorW+5),y=36;return <g key={s.name}><rect className="mf-sector-pill" x={x} y={y} width={sectorW} height="27" rx="7"/><text className="mf-sector-name" x={x+7} y={y+11}>{s.name}</text><text className="mf-sector-median" x={x+7} y={y+22}>{pct(s.median)} median</text></g>})}
    {[-1,-.5,0,.5,1].map(v=><g key={v}><line className="mf-diagram-grid" x1={layout.x0} x2={layout.x1} y1={layout.zero-v*(layout.zero-layout.top-8)} y2={layout.zero-v*(layout.zero-layout.top-8)}/><text className="mf-diagram-axis" x={layout.x0-8} y={layout.zero-v*(layout.zero-layout.top-8)+3} textAnchor="end">{v>0?"+":""}{(v*paths.maxMove).toFixed(1)}%</text></g>)}
    <line className="mf-diagram-zero" x1={layout.x0} x2={layout.x1} y1={layout.zero} y2={layout.zero}/>
    {sectors.map(s=>{const yy=layout.zero-(s.median/paths.maxMove)*(layout.zero-layout.top-8);return <line key={s.name} className="mf-sector-median-line" x1={layout.x0} x2={layout.x1} y1={yy} y2={yy}/>})}

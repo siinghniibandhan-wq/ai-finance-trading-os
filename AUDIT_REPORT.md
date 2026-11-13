@@ -223,3 +223,32 @@ The historical audit also identified unresolved design decisions: public market-
 - Keep one canonical explanation for each subject; link to it rather than creating near-duplicate files.
 - Every status update must distinguish repository evidence, test evidence, deployment evidence and production evidence.
 - Never document secrets, TOTP values, access tokens, private keys or full credential-bearing URLs.
+
+
+## 9. Architecture and automation implementation boundary
+
+The root `README.md` is the repository entry point and links to this report for product/feature status and to `SECURITY_OPERATIONS.md` for AWS and operational controls.
+
+The reviewed repository structure confirms a React/Vite frontend, FastAPI backend, SQLAlchemy persistence layer, market-data gateway integration, AI provider integrations, dated SQL files under `backend/migrations/`, additional standalone SQL files, and startup schema logic. The repository review did not identify a dedicated database migration runner, migration ledger/automation service, cron definition or systemd timer definition.
+
+Do not describe a migration runner, automated schema deployment, scheduled database job or production deployment pipeline as implemented until its executable code/configuration and successful run evidence exist. The current CI workflow validates builds/tests/audits; the source-packaging workflow creates an archive. Neither applies database migrations nor deploys the application.
+
+### Proposed implementation sequence
+
+1. Inventory every existing schema file and startup schema mutation; assign unique migration identities without renumbering/replaying already-applied production changes.
+2. Select and document one migration mechanism and migration ledger.
+3. Implement dry-run/status/checksum validation and safe ordered execution in a non-production environment.
+4. Add a verified backup gate and explicit failure/rollback procedure.
+5. Add environment-scoped execution permissions and audit logs.
+6. Test against a production-like database snapshot and verify restore before requesting production approval.
+7. Add a scheduler only after manual runner operation is proven safe; keep production application approval separate.
+
+These are proposed steps, not current implementation claims. Production migration or deployment is not authorised by this documentation update.
+
+## 10. Documentation cross-reference
+
+- `README.md`: entry point, setup, high-level architecture, CI/deployment distinction and roadmap links.
+- `SECURITY_OPERATIONS.md`: AWS architecture, service boundaries, security, deployment, migration governance and operational automation.
+- `THEME_SYSTEM_REDESIGN.md`: theme system only.
+
+Maintain one canonical document per subject and link to it rather than creating duplicate topic files.

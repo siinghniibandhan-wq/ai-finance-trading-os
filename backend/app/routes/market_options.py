@@ -10,6 +10,8 @@ from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.services.market_intelligence import calculate_option_metrics
+
 router = APIRouter(prefix="/api/market-options", tags=["Market Options"])
 API_BASE = "https://api.mstock.trade/openapi/typea"
 
@@ -108,6 +110,7 @@ def get_option_chain(
         for strike in strikes
     ]
     contract = data.get("contractModel") if isinstance(data.get("contractModel"), dict) else {}
+    metrics = calculate_option_metrics(rows) if rows else None
     return {
         "status": "success",
         "exchange": exchange,
@@ -117,6 +120,7 @@ def get_option_chain(
         "spot": data.get("spot"),
         "count": len(rows),
         "options": rows,
+        "metrics": metrics,
         "source": "m.Stock Type A Option Chain",
         "read_only": True,
         "database_write": False,

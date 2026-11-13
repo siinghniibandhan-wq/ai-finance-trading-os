@@ -103,3 +103,33 @@ def test_instrument_master_maps_configured_tokens_to_exchange_qualified_symbols(
 
 def test_instrument_master_rejects_missing_required_columns():
     assert parse_instrument_metadata("symbol,token\nRELIANCE,1\n", [1]) == {}
+
+
+def test_auto_subscription_resolves_market_movers_by_exact_exchange_and_symbol():
+    from app.services.mstock_stream_runtime import resolve_mover_instruments
+
+    csv_text = """instrument_token,tradingsymbol,name,segment,exchange,expiry,strike,instrument_type
+101,ABC,ABC LIMITED,EQ,NSE,,,EQ
+202,ABC,ABC LIMITED BSE,EQ,BSE,,,EQ
+303,ABC26NOVFUT,ABC FUT,FUT,NFO,2026-11-26,,FUTSTK
+"""
+    resolved = resolve_mover_instruments(csv_text, [
+        {"symbol": "ABC", "exchange": "NSE"},
+        {"symbol": "ABC", "exchange": "BSE"},
+        {"symbol": "ABC", "exchange": "NFO"},
+        {"symbol": "UNKNOWN", "exchange": "NSE"},
+    ])
+    assert list(resolved) == [101, 202]
+    assert resolved[101]["instrument_key"] == "NSE:ABC"
+    assert resolved[202]["instrument_key"] == "BSE:ABC"
+
+
+def test_stream_configuration_allows_auto_discovery_when_credentials_are_present():
+    config = get_stream_config({
+        "MSTOCK_STREAM_ENABLED": "true",
+        "MSTOCK_STREAM_API_KEY": "api-key",
+        "MSTOCK_STREAM_ACCESS_TOKEN": "access-token",
+    })
+    assert config["configured"] is True
+    assert config["tokens"] == []
+    assert config["auto_subscribe_movers"] is True

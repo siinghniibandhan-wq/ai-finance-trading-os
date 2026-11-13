@@ -9,6 +9,7 @@ import "./account-layout.css";
 import AdminPanel from "./AdminPanel";
 import AccountContactSettings from "./AccountContactSettings";
 import WealthManager from "./WealthManager";
+import OrderFlowPage from "./order-flow/OrderFlowPage";
 import LoanManagement from "./LoanManagement";
 import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession, friendlyErrorMessage, describeError } from "./api";
 
@@ -150,7 +151,7 @@ const navigation = [
 
   {
     section: "Markets",
-    items: [{ name: "Markets", icon: TrendingUp }]
+    items: [{ name: "Markets", icon: TrendingUp }, { name: "Order Flow", icon: BarChart3 }]
   },
 
   {
@@ -266,7 +267,7 @@ export default function App() {
   const validPages = new Set([
     "Dashboard", "Wealth Manager", "Accounts", "Account Profile", "Transactions", "Ledger", "Chart of Accounts",
     "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio",
-    "Holdings", "Investment Transactions", "Markets", "Goals",
+    "Holdings", "Investment Transactions", "Markets", "Order Flow", "Goals",
     "AI Assistant", "Tax", "Settings", "Finance Diary", "Admin Panel"
   ]);
   const getPageFromLocation = () => {

@@ -110,7 +110,7 @@ class MarketStreamWorker:
                     sock.send(f"LOGIN:{token}")
                     if self._subscriptions:
                         sock.send(json.dumps({"a": "subscribe", "v": self._subscriptions}))
-                        sock.send(json.dumps({"a": "mode", "v": ["full"]}))
+                        sock.send(json.dumps({"a": "mode", "v": ["full", self._subscriptions]}))
                     delay = self._reconnect_min
                     while not self._stop_event.is_set():
                         try:

@@ -51,3 +51,29 @@ def test_feed_status_distinguishes_fresh_stale_and_missing_ticks():
 def test_invalid_option_side_is_rejected():
     with pytest.raises(ValueError):
         aggregate_option_oi([{"strike": 25000, "option_type": "XX", "oi": 1}])
+
+
+def test_futures_contracts_require_provider_volume_and_open_interest():
+    with pytest.raises(ValueError, match="volume must be numeric"):
+        aggregate_contract_months([
+            {"symbol": "NIFTY", "expiry": "2026-11-26", "oi": 100}
+        ])
+
+
+def test_option_contracts_require_provider_open_interest():
+    with pytest.raises(ValueError, match="oi must be numeric"):
+        aggregate_option_oi([
+            {"strike": 25000, "option_type": "CE"}
+        ])
+
+
+@pytest.mark.parametrize("rows", [[None], ["invalid"], [123]])
+def test_contract_aggregators_reject_non_object_rows(rows):
+    with pytest.raises(ValueError, match="contract must be an object"):
+        aggregate_contract_months(rows)
+
+
+@pytest.mark.parametrize("rows", [[None], ["invalid"], [123]])
+def test_option_aggregator_rejects_non_object_rows(rows):
+    with pytest.raises(ValueError, match="contract must be an object"):
+        aggregate_option_oi(rows)

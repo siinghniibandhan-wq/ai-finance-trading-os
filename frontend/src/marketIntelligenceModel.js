@@ -104,6 +104,21 @@ export function mergeStreamTicks(rows, ticks) {
   });
 }
 
+
+export function getInstrumentExplorerMetrics(row) {
+  const depth = row && typeof row === 'object' ? row.marketDepth : null;
+  return {
+    price: finiteOrNull(row?.price),
+    change: finiteOrNull(row?.change),
+    openInterest: finiteOrNull(row?.openInterest),
+    volume: finiteOrNull(row?.volume),
+    bidLevels: Array.isArray(depth?.bids) ? depth.bids.length : null,
+    askLevels: Array.isArray(depth?.asks) ? depth.asks.length : null,
+    feedSource: typeof row?.feedSource === 'string' && row.feedSource ? row.feedSource : 'Overview snapshot',
+    tickAt: typeof row?.tickAt === 'string' && row.tickAt ? row.tickAt : null,
+  };
+}
+
 export function filterFlowRows(rows, { query = '', direction = 'all', sort = 'change' } = {}) {
   const needle = String(query).trim().toUpperCase();
   const filtered = (Array.isArray(rows) ? rows : []).filter((row) => {

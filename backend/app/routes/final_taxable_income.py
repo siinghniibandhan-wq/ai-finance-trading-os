@@ -51,6 +51,7 @@ from app.house_property_calc import compute_house_property
 from app.routes.auth import get_current_user
 from app.tax_income_safety import non_income_reason, find_duplicates
 from app.finance_diary import record_finance_event
+from app.routes.capital_gains_classification import classify_gain_by_dates
 from app.routes.deductions_exempt_income import (
     DEDUCTION_CATALOG, EXEMPT_INCOME_CATALOG, HRAInputs, calculate_hra_exemption, regime_available,
 )

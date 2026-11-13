@@ -34,3 +34,11 @@ test("mobile close control remains available and mobile layout is not collapsed"
   assert.match(styles, /@media \(max-width: 800px\)\s*\{\s*\.mobile-close \{ display: inline-flex; \}/);
   assert.doesNotMatch(styles, /@media \(max-width: 800px\)\s*\{[^}]*sidebar-collapsed/);
 });
+
+
+test("desktop sidebar width and label visibility animate smoothly without abrupt removal", () => {
+  assert.match(styles, /\.app-shell\.sidebar-collapsed \.sidebar \.wealth-brand-text[\s\S]*?opacity:\s*0;/);
+  assert.match(styles, /\.app-shell\.sidebar-collapsed \.sidebar \.navigation-item > span[\s\S]*?opacity:\s*0;/);
+  assert.match(styles, /transition:\s*width 0\.32s cubic-bezier\(0\.22, 1, 0\.36, 1\)/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.sidebar,[\s\S]*?transition-duration:\s*0\.01ms/);
+});

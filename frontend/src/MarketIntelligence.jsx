@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_BASE_URL, apiFetch } from './api';
 import './market-intelligence.css';
-import { filterFlowRows, getFlowRows, getHistoricalChartRows, getMarketFeedState, getMarketSnapshot, getOptionMasterChoices, getOptionRows, mergeStreamTicks } from './marketIntelligenceModel';
+import { filterFlowRows, getFlowRows, getHistoricalChartRows, getMarketFeedState, getMarketSnapshot, getOptionMasterChoices, getOptionRows, mergeStreamTicks, getInstrumentExplorerMetrics } from './marketIntelligenceModel';
 
 const WORKSPACES = [
   { id: 'flow', label: 'Market Flow', ready: true },
   { id: 'board', label: 'Flow Board', ready: true },
+  { id: 'stock', label: 'Stock Explorer', ready: true },
   { id: 'futures', label: 'Futures', ready: false },
   { id: 'options', label: 'Options', ready: true },
   { id: 'sectors', label: 'Sectors', ready: false },
@@ -88,6 +89,28 @@ function InstrumentDetail({ row, onClear }) {
     <dl><div><dt>Exchange</dt><dd>{row.exchange || 'Unavailable'}</dd></div><div><dt>Price change</dt><dd>{signed(row.change)}</dd></div><div><dt>Open interest</dt><dd>{row.openInterest === null || row.openInterest === undefined ? 'Not supplied' : fmt(row.openInterest, 0)}</dd></div><div><dt>Volume profile</dt><dd>{row.volume === null || row.volume === undefined ? 'Not supplied' : fmt(row.volume, 0)}</dd></div><div><dt>Market depth</dt><dd>{row.marketDepth ? row.marketDepth.bids.length + ' bid / ' + row.marketDepth.asks.length + ' ask levels' : 'Not supplied'}</dd></div><div><dt>Data type</dt><dd>{row.feedSource || 'Market overview snapshot'}</dd></div></dl>
     <p className="mi-detail-note">Futures positioning, OI and order-book depth require an instrument-level feed. They are not inferred from price movement.</p>
   </aside>;
+}
+
+
+
+function StockExplorerWorkspace({ selected, onClear }) {
+  if (!selected) return <section className="mi-unavailable-workspace">
+    <p className="mi-eyebrow">INSTRUMENT RESEARCH</p><h2>Stock Explorer</h2>
+    <p>Select an instrument from Market Flow or Flow Board to open its verified provider context.</p>
+  </section>;
+  const metrics = getInstrumentExplorerMetrics(selected);
+  return <section className="mi-stock-explorer">
+    <div className="mi-workspace-heading"><div><p className="mi-eyebrow">INSTRUMENT RESEARCH</p><h2>Stock Explorer · {selected.symbol}</h2></div><span className="mi-data-badge">{metrics.feedSource}</span></div>
+    <InstrumentDetail row={selected} onClear={onClear}/>
+    <div className="mi-flow-stats">
+      <div><span>Last price</span><strong>{metrics.price === null ? '—' : '₹' + fmt(metrics.price)}</strong></div>
+      <div><span>Open interest</span><strong>{metrics.openInterest === null ? 'Not supplied' : fmt(metrics.openInterest, 0)}</strong></div>
+      <div><span>Volume</span><strong>{metrics.volume === null ? 'Not supplied' : fmt(metrics.volume, 0)}</strong></div>
+      <div><span>Market depth</span><strong>{metrics.bidLevels === null || metrics.askLevels === null ? 'Not supplied' : metrics.bidLevels + ' bid / ' + metrics.askLevels + ' ask'}</strong></div>
+    </div>
+    <HistoricalChartWorkspace key={selected.instrumentKey} selected={selected}/>
+    <p className="mi-monitor-note">Instrument selection is shared with Market Flow and Flow Board. Historical data is requested from the authenticated provider API; unavailable fields remain explicitly unavailable.</p>
+  </section>;
 }
 
 
@@ -326,6 +349,8 @@ export default function MarketIntelligence() {
 
     {activeWorkspace === 'board' && <section className="mi-board-workspace"><div className="mi-workspace-heading"><div><p className="mi-eyebrow">PROVIDER RETURNED UNIVERSE</p><h2>Market Flow Board</h2></div><span className="mi-data-badge">Sortable · Filterable</span></div><FlowBoard rows={rows} selected={selectedInstrumentKey} onSelect={setSelectedInstrumentKey}/><InstrumentDetail row={selected} onClear={() => setSelectedInstrumentKey('')}/></section>}
 
+
+    {activeWorkspace === 'stock' && <StockExplorerWorkspace selected={selected} onClear={() => setSelectedInstrumentKey('')}/>}
 
     {activeWorkspace === 'replay' && <HistoricalChartWorkspace selected={selected}/>}
     {activeWorkspace === 'options' && <OptionsWorkspace/>}

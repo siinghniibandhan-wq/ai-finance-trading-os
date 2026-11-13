@@ -4,3 +4,14 @@ export function getFlowBoardLayout(width,height){
  const columns=mode==="diagram"?{chart:Math.max(280,Math.round(w*.34)),gate:56,tiles:Math.max(230,Math.round(w*.27)),cards:Math.max(250,Math.round(w*.25))}:mode==="split"?{chart:Math.round(w*.48),gate:0,tiles:Math.round(w*.26),cards:Math.round(w*.26)}:mode==="stacked"?{chart:w,gate:0,tiles:w,cards:w}:{chart:w,gate:0,tiles:w,cards:w};
  return {mode,width:w,height:h,columns};
 }
+
+// Keep both directional fans within the SVG's 0–100 viewBox. The previous
+// bearish offset pushed its starting points below 100, clipping half the chart.
+export function getFlowFanCoordinates(side,index){
+ const i=Math.max(0,Math.min(7,Number(index)||0));
+ const offset=i*4.5;
+ const endOffset=i*4.8;
+ return side==="bearish"
+  ? {y0:50-offset,y1:50+endOffset}
+  : {y0:50+offset,y1:8+endOffset};
+}

@@ -23,3 +23,8 @@ export function dismissImportantNotice(storage, now = new Date()) {
     return false;
   }
 }
+
+/** The notice belongs only to the public site root, never app/auth or other routes. */
+export function shouldRenderImportantNotice(pathname = window.location.pathname) {
+  return pathname === "/";
+}

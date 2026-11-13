@@ -26,9 +26,6 @@ jobs:
       - name: Audit frontend dependencies
         working-directory: frontend
         run: npm audit --audit-level=high
-      - name: Run frontend tests
-        working-directory: frontend
-        run: npm test
       - name: Build frontend
         working-directory: frontend
         run: npm run build

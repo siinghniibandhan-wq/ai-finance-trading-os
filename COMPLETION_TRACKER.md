@@ -62,3 +62,4 @@ This does not prove invalid credentials, a bad subscription payload, or a fronte
 ## Change log
 
 - 2026-11-13: Created this tracker on the dedicated audit branch. No production resources, database schema, broker settings or live orders were changed.
+- 2026-11-13: Draft PR #186 CI run 43437873703 passed: frontend production build, frontend notice/Order Flow tests, frontend dependency audit, backend dependency audit, backend tests (359 passed, 2 skipped), and repository secret scan. Backend emitted 635 warnings, including deprecated naive UTC datetime calls in `backend/app/routes/auth.py`; these are recorded for security/maintenance review.

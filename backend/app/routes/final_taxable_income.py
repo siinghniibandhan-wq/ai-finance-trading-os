@@ -35,7 +35,7 @@
 # ============================================================
 
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import APIRouter, Depends, Query, HTTPException
@@ -680,10 +680,20 @@ def calculate_capital_gains(
                     - lot_cost
                     - allocated_buy_fee
                 )
-                lot_classification = classify_gain(
-                    holding_days if holding_days is not None else 0,
+                acquisition_date = (
+                    buy_date.date() if isinstance(buy_date, datetime) else buy_date
+                )
+                disposal_date = (
+                    transaction_date.date()
+                    if isinstance(transaction_date, datetime)
+                    else transaction_date
+                )
+                lot_classification_result = classify_gain_by_dates(
+                    acquisition_date,
+                    disposal_date,
                     asset_class,
-                )["classification"]
+                )
+                lot_classification = lot_classification_result["classification"]
                 classification_gains[lot_classification] += lot_gain
 
                 # ------------------------------------------

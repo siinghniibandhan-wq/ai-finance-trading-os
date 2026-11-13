@@ -149,11 +149,15 @@ class _WebSocketClientAdapter:
 class MStockStreamRuntime:
     def __init__(self):
         self._worker: MarketStreamWorker | None = None
-        self._configuration: dict = {"enabled": False, "configured": False, "reason": "Streaming is disabled."}\n        self._instrument_metadata: dict[int, dict] = {}\n        self._metadata_error: str | None = None
+        self._configuration: dict = {"enabled": False, "configured": False, "reason": "Streaming is disabled."}
+        self._instrument_metadata: dict[int, dict] = {}
+        self._metadata_error: str | None = None
 
     def start(self) -> dict:
         config = get_stream_config()
         self._configuration = {key: value for key, value in config.items() if key not in {"api_key", "access_token"}}
+        self._instrument_metadata = _fetch_instrument_metadata(config.get("tokens", [])) if config["enabled"] and config["configured"] else {}
+        self._metadata_error = "Instrument metadata unavailable from the configured gateway." if config.get("tokens") and not self._instrument_metadata else None
         if not config["enabled"] or not config["configured"]:
             return self.status()
         api_key = config["api_key"]
@@ -203,13 +207,16 @@ class MStockStreamRuntime:
             "configured": bool(self._configuration.get("configured")),
             "configuration_reason": self._configuration.get("reason"),
             "subscribed_instruments": len(self._configuration.get("tokens", [])),
+            "instrument_metadata_count": len(self._instrument_metadata),
+            "instrument_metadata_error": self._metadata_error,
             **worker_status,
         }
 
     def snapshot(self) -> dict:
         status = self.status()
         ticks = self._worker.snapshot()["ticks"] if self._worker is not None else []
-        return {"status": status, "ticks": ticks, "read_only": True, "database_write": False}
+        enriched = [{**tick, "instrument": self._instrument_metadata.get(tick.get("token"))} for tick in ticks]
+        return {"status": status, "ticks": enriched, "read_only": True, "database_write": False}
 
 
 market_stream_runtime = MStockStreamRuntime()

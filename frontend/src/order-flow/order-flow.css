@@ -407,3 +407,5 @@
 .mf-native-node.is-sector-dim { opacity:.16; }
 .mf-native-node.is-sector-dim.is-lit { opacity:1; }
 .mf-native-node:focus-visible rect:first-child { stroke:var(--th-focus,var(--th-accent,currentColor)); stroke-width:2.5; }
+
+/* Keep the original Order Flow controls and data panels untouched. */

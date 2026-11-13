@@ -152,9 +152,3 @@
 .market-intelligence-page .mi-options-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 760px) { .market-intelligence-page .mi-options-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-
-/* Dedicated Stock Explorer workspace; all values remain provider-backed. */
-.market-intelligence-page .mi-stock-explorer{display:grid;gap:16px;min-width:0}
-.market-intelligence-page .mi-stock-explorer>.mi-detail-panel{width:100%}
-.market-intelligence-page .mi-stock-explorer .mi-flow-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
-@media(max-width:760px){.market-intelligence-page .mi-stock-explorer .mi-flow-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}

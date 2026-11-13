@@ -130,3 +130,19 @@ The overall product is decomposed into independently reviewable workstreams:
 - Binary decoder accepts the 184-byte full packets used by the official SDK and the 200-byte full packet described by the current Type A documentation, including upper/lower circuit and year high/low raw fields when present. All price values remain raw until instrument-specific scaling is verified.
 - Futures positioning and sector breadth remain unavailable: Type A stream packets supply current LTP/OI and depth, but the repo still lacks a verified instrument-token-to-price-scale mapping plus previous OI baseline for build-up classifications; the official provider contract for sector membership/constituent classification is also not integrated. These are not fabricated.
 - Charts are historical candle retrieval only. Tick-by-tick replay is not available until a tick archive and retention source exist.
+
+
+### Stage 2 integration hardening — 2026-11-13
+- Added Type A SDK-compatible normalization while preserving every raw integer field. Price divisor follows the instrument-token segment byte: CDS (3) uses 10,000,000; BCD (6) uses 10,000; other documented Type A segments use 100.
+- Converted Type A timestamps from the provider's 1980-01-01 UTC epoch into explicit ISO-8601 UTC timestamps.
+- Added gateway script-master lookup for the configured stream token set. Stream snapshots now attach exchange-qualified instrument identity, name, segment, expiry and strike where the gateway master resolves the token.
+- The Market Flow model now overlays only ticks whose exchange-qualified instrument identity exactly matches the REST mover. Matching live ticks update price, derived percentage move (when a valid close is supplied), volume, OI and five-level depth. Unmatched movers retain their REST snapshot values.
+- The frontend polls the read-only stream snapshot while streaming is configured and the page is visible; stale stream snapshots are not applied as live values.
+- No order, portfolio, account, database or broker mutation paths were added.
+
+### Remaining external activation requirements
+- MSTOCK_STREAM_ENABLED=true, a valid Type A API key/access token, and the instrument tokens to subscribe must be configured in the backend secret environment. Access tokens are short-lived and must be refreshed through the existing secure login process.
+- MSTOCK_GATEWAY_URL must resolve the existing gateway /instruments script-master endpoint so token metadata can be attached. A missing gateway mapping leaves ticks unlabelled and therefore they are not overlaid into the named Market Flow rows.
+- Live connection, account entitlements, gateway reachability and real tick receipt still require a configured non-production account/environment. These cannot be asserted from fixture tests.
+- Futures/OI positioning requires a verified futures contract universe and comparable prior OI observations; current full packets supply OI but not a previous-session OI baseline by themselves.
+- The option-chain adapter remains conditional on provider endpoint availability and entitlement; Sector Flow remains conditional on a provider-backed constituent map. Neither is simulated.

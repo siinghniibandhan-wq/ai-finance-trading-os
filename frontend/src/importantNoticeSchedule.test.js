@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   dismissImportantNotice,
   shouldShowImportantNotice,
+  shouldRenderImportantNotice,
 } from "./importantNoticeSchedule.js";
 
 const makeStorage = () => {
@@ -34,4 +35,14 @@ test("storage failures do not prevent the notice from rendering", () => {
   };
   assert.equal(shouldShowImportantNotice(unavailableStorage), true);
   assert.equal(dismissImportantNotice(unavailableStorage), false);
+});
+
+test("notice is eligible only on the exact public homepage path", () => {
+  assert.equal(shouldRenderImportantNotice("/"), true);
+  assert.equal(shouldRenderImportantNotice("/?source=direct"), true);
+  assert.equal(shouldRenderImportantNotice("/login"), false);
+  assert.equal(shouldRenderImportantNotice("/register"), false);
+  assert.equal(shouldRenderImportantNotice("/app"), false);
+  assert.equal(shouldRenderImportantNotice("/app/dashboard"), false);
+  assert.equal(shouldRenderImportantNotice("/contact"), false);
 });

@@ -35,11 +35,14 @@ def _request(url, accept, *, method="GET", body=None):
     secret = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
     if not secret:
         raise OrderFlowFeedError("Market-data gateway authentication is not configured.")
-    request = Request(url, headers={
+    headers = {
         "Accept": accept,
         "X-Financial-OS-Gateway-Secret": secret,
         "User-Agent": "Financial-OS/1.0",
-    }, data=body, method=method)
+    }
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    request = Request(url, headers=headers, data=body, method=method)
     try:
         with urlopen(request, timeout=8) as response:
             return response.read()

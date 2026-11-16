@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 from datetime import datetime, timezone
 
@@ -37,7 +39,7 @@ def reset_master_cache():
 
 
 def test_raw_type_a_ticks_are_joined_to_verified_instrument_metadata():
-    master = list(__import__("csv").DictReader(__import__("io").StringIO(MASTER)))
+    master = list(csv.DictReader(io.StringIO(MASTER)))
     now = datetime.now(timezone.utc).timestamp()
     result = adapter.normalize_market_stream(master, [
         {"token": 101, "mode": "full", "ltp_raw": 2500000, "volume": 100,
@@ -84,7 +86,7 @@ def test_gateway_snapshot_uses_existing_raw_stream_and_instrument_master(monkeyp
     calls = []
 
     def fake_urlopen(request, timeout):
-        calls.append((request.full_url, request.get_header("X-financial-os-gateway-secret")))
+        calls.append((request.full_url, request.get_header("X-financial-os-gateway-secret"), request.get_method(), request.data))
         if request.full_url.endswith("/instruments"):
             return FakeResponse(MASTER)
         return FakeResponse(json.dumps({
@@ -110,8 +112,12 @@ def test_gateway_snapshot_uses_existing_raw_stream_and_instrument_master(monkeyp
     assert result["option_oi_by_strike"] == [
         {"strike": 25000.0, "ce_oi": 500.0, "pe_oi": 700.0}
     ]
-    assert all(secret == "test-secret" for _, secret in calls)
-    assert any(url.endswith("/market-stream/snapshot") for url, _ in calls)
+    assert all(secret == "test-secret" for _, secret, _, _ in calls)
+    assert any(url.endswith("/market-stream/snapshot") for url, _, _, _ in calls)
+    start_calls = [call for call in calls if call[0].endswith("/market-stream/start")]
+    assert len(start_calls) == 1
+    assert start_calls[0][2] == "POST"
+    assert json.loads(start_calls[0][3]) == {"tokens": [101, 102, 103], "mode": 3}
 
 
 def test_gateway_configuration_fails_closed(monkeypatch):
@@ -126,3 +132,20 @@ def test_gateway_authentication_fails_closed(monkeypatch):
     monkeypatch.delenv("MSTOCK_GATEWAY_SECRET", raising=False)
     with pytest.raises(OrderFlowFeedError, match="authentication is not configured"):
         get_order_flow_snapshot()
+
+
+
+def test_gateway_url_requires_explicit_configuration(monkeypatch):
+    monkeypatch.delenv("MSTOCK_DERIVATIVES_GATEWAY_URL", raising=False)
+    monkeypatch.delenv("MSTOCK_GATEWAY_URL", raising=False)
+    assert adapter._gateway_url() == ""
+
+
+def test_stream_subscription_rejects_more_than_gateway_token_limit():
+    master = [
+        {"instrument_token": str(token), "name": "NIFTY",
+         "expiry": "2026-11-26", "instrument_type": "OPTIDX"}
+        for token in range(1, 202)
+    ]
+    with pytest.raises(OrderFlowFeedError, match="gateway limit is 200"):
+        adapter._start_stream("https://gateway.example", master, "NIFTY")

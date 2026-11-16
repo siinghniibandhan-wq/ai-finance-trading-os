@@ -13,14 +13,14 @@ The source project's interaction/layout model has been adapted to Financial OS; 
 - Pure backend transformations for futures contract-month aggregation, current OI change/percentage, and strike-wise CE/PE OI aggregation.
 - Feed freshness classification: `fresh`, `stale`, `disconnected`.
 - Authenticated, read-only API: `GET /api/order-flow/snapshot?symbol=NIFTY`.
-- Server-side derivatives gateway adapter, using `MSTOCK_DERIVATIVES_GATEWAY_URL` and the existing gateway secret header.
+- Server-side derivatives gateway adapter, using `MSTOCK_DERIVATIVES_GATEWAY_URL` (preferred) or `MSTOCK_GATEWAY_URL`, plus `MSTOCK_GATEWAY_SECRET`.
 - Frontend feed status panel with authenticated polling, freshness display and bounded exponential retry (10–60 seconds).
 - Backend tests for aggregation, freshness, gateway payload validation and fail-closed configuration.
 - Historical OI is deliberately excluded.
 
 ## Gateway contract — remaining external integration
 
-The application-side adapter now reads the existing authenticated `GET /market-stream/snapshot` raw tick cache and `GET /instruments` CSV from the configured m.Stock gateway. It joins ticks to the provider instrument master by instrument token and maps futures/options only when provider metadata and full-packet tick fields are present. The gateway still owns m.Stock authentication, WebSocket lifecycle, Type A decoding, subscriptions and reconnects. The application does not invent missing contract identity, previous OI, or price scaling. The Type A decoder currently exposes raw LTP, so the application labels it `price_raw` until the provider's exact price divisor is verified.
+For a requested underlying (for example `NIFTY`), the application adapter reads `GET /instruments`, selects provider-listed derivative tokens, calls `POST /market-stream/start` in full mode (maximum 200 tokens, matching the gateway contract), then reads `GET /market-stream/snapshot`. It joins ticks to the provider instrument master by instrument token and maps futures/options only when provider metadata and full-packet tick fields are present. The gateway still owns m.Stock authentication, WebSocket lifecycle, Type A decoding, subscription acknowledgement and reconnects. The gateway worker must apply token changes to an already-connected WebSocket; simply updating its in-memory token list is not sufficient. The application does not invent missing contract identity, previous OI, or price scaling. The Type A decoder currently exposes raw LTP, so the application labels it `price_raw` until the provider's exact price divisor is verified.
 
 ```json
 {
@@ -64,7 +64,7 @@ The user's AWS Systems Manager session confirmed the following on the EC2 gatewa
 
 The user has already contacted m.Stock and is waiting for its response. Do not resend duplicate support requests while waiting. Once a provider response or new handshake evidence is available, resume with a controlled connection test. Do not restart services, change credentials, move regions, alter the decoder or change trading/order execution without evidence and explicit approval.
 
-**Order Flow integration remains incomplete:** the application adapter expects GET /order-flow/snapshot with normalized futures/options data, while the EC2 Flask blueprint currently exposes /market-stream/snapshot with raw decoded tick-cache data and stream status. No verified mapping from raw ticks to the normalized contract has been established. The token master/expiry mapping and provider packet-field validation also remain outstanding. Do not invent tokens, infer undocumented OI fields, or report LIVE until fresh subscriptions, valid decoded ticks, normalized adapter output, backend authentication and frontend freshness display are verified end-to-end.
+**Current integration status:** the application adapter now bridges the raw gateway contract through the instrument master and requests derivative subscriptions for a selected underlying. This is application-side code only. The uploaded gateway worker source still sends LOGIN and SUBSCRIBE back-to-back and does not resubscribe an already-connected socket when its token list changes; both behaviors need a gateway-side patch and controlled verification. The previously observed upstream WebSocket HTTP 502 also remains unresolved in the historical evidence. Do not report LIVE until the gateway handshake, LOGIN acknowledgement, active subscriptions, fresh decoded ticks, normalized API output and frontend freshness display are verified end-to-end.
 
 The current application-side hardening changes are in draft PR #188. Local test execution and CI status must be checked on the exact PR head before describing those changes as verified.
 ## Attribution and licence

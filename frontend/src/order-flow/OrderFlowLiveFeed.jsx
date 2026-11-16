@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch, API_BASE_URL, friendlyErrorMessage } from "../api";
+import { isLiveFeed } from "./liveFeedStatus";
 
 const POLL_MS = 10000;
 const MAX_RETRY_MS = 60000;
@@ -14,11 +15,13 @@ export default function OrderFlowLiveFeed({ symbol }) {
   const [snapshot, setSnapshot] = useState(null);
   const [error, setError] = useState("");
   const [retryIn, setRetryIn] = useState(POLL_MS);
+  const [lastPollSucceeded, setLastPollSucceeded] = useState(false);
 
   useEffect(() => {
     let active = true;
     let timer;
     let delay = POLL_MS;
+    setLastPollSucceeded(false);
 
     const poll = async () => {
       try {
@@ -32,10 +35,12 @@ export default function OrderFlowLiveFeed({ symbol }) {
         if (!active) return;
         setSnapshot(payload);
         setError("");
+        setLastPollSucceeded(true);
         delay = POLL_MS;
       } catch (cause) {
         if (!active) return;
         setError(cause?.message || "Live derivatives feed is unavailable.");
+        setLastPollSucceeded(false);
         delay = Math.min(Math.max(POLL_MS, delay * 2), MAX_RETRY_MS);
       } finally {
         if (active) {
@@ -53,7 +58,7 @@ export default function OrderFlowLiveFeed({ symbol }) {
   }, [symbol]);
 
   const feed = snapshot?.feed;
-  const isLive = snapshot?.status === "success" && feed?.status === "fresh";
+  const isLive = isLiveFeed(snapshot, lastPollSucceeded);
 
   return (
     <section className="mf-live-feed" aria-live="polite" aria-label="Live derivatives feed status">

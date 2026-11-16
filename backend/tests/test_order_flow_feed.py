@@ -73,7 +73,7 @@ def test_unknown_tokens_and_incomplete_metadata_are_never_guessed():
 
 
 def test_underlying_filter_is_applied_from_instrument_master():
-    master = list(__import__("csv").DictReader(__import__("io").StringIO(MASTER)))
+    master = list(csv.DictReader(io.StringIO(MASTER)))
     result = adapter.normalize_market_stream(master, [
         {"token": 101, "open_interest": 1200, "volume": 100, "received_at": 1},
         {"token": 104, "open_interest": 3000, "volume": 200, "received_at": 1},

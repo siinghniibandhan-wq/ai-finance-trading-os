@@ -68,3 +68,28 @@ def test_snapshot_rejects_untrusted_gateway_payload(monkeypatch):
     }))
     with pytest.raises(OrderFlowFeedError, match="invalid contract collections"):
         get_order_flow_snapshot()
+
+
+@pytest.mark.parametrize(
+    ("futures", "options"),
+    [
+        ([None], []),
+        (["not-an-object"], []),
+        ([], [None]),
+        ([], ["not-an-object"]),
+    ],
+)
+def test_snapshot_rejects_non_object_contract_rows(monkeypatch, futures, options):
+    monkeypatch.setenv("MSTOCK_DERIVATIVES_GATEWAY_URL", "https://gateway.example")
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
+    monkeypatch.setattr(order_flow_feed, "urlopen", lambda request, timeout: FakeResponse({
+        "status": "success",
+        "data": {
+            "last_tick_at": datetime.now(timezone.utc).isoformat(),
+            "futures_contracts": futures,
+            "option_contracts": options,
+        },
+    }))
+
+    with pytest.raises(OrderFlowFeedError, match="contract rows must be objects"):
+        get_order_flow_snapshot()

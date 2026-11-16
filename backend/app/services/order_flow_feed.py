@@ -6,7 +6,6 @@ reconnects; credentials must never be sent to browser clients.
 """
 import json
 import os
-from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -64,6 +63,8 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
     options = data.get("option_contracts", [])
     if not isinstance(contracts, list) or not isinstance(options, list):
         raise OrderFlowFeedError("Derivatives gateway returned invalid contract collections.")
+    if any(not isinstance(row, dict) for row in contracts + options):
+        raise OrderFlowFeedError("Derivatives gateway contract rows must be objects.")
 
     try:
         contract_months = aggregate_contract_months(contracts)

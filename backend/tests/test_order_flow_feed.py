@@ -115,8 +115,7 @@ def test_gateway_snapshot_uses_existing_raw_stream_and_instrument_master(monkeyp
 
 
 def test_gateway_configuration_fails_closed(monkeypatch):
-    monkeypatch.delenv("MSTOCK_GATEWAY_URL", raising=False)
-    monkeypatch.delenv("MSTOCK_DERIVATIVES_GATEWAY_URL", raising=False)
+    monkeypatch.setattr(adapter, "_gateway_url", lambda: "")
     monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
     with pytest.raises(OrderFlowFeedError, match="URL is not configured"):
         get_order_flow_snapshot()

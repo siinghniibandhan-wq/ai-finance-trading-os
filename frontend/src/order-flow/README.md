@@ -20,7 +20,7 @@ The source project's interaction/layout model has been adapted to Financial OS; 
 
 ## Gateway contract — remaining external integration
 
-The application-side adapter expects the configured gateway to implement `GET /order-flow/snapshot`. The gateway must authenticate its m.Stock session server-side, renew tokens as required, own the WebSocket connection and binary packet decoder, subscribe to relevant futures/options instruments, reconnect with backoff, and return a normalized JSON snapshot in this shape:
+The application-side adapter now reads the existing authenticated `GET /market-stream/snapshot` raw tick cache and `GET /instruments` CSV from the configured m.Stock gateway. It joins ticks to the provider instrument master by instrument token and maps futures/options only when provider metadata and full-packet tick fields are present. The gateway still owns m.Stock authentication, WebSocket lifecycle, Type A decoding, subscriptions and reconnects. The application does not invent missing contract identity, previous OI, or price scaling. The Type A decoder currently exposes raw LTP, so the application labels it `price_raw` until the provider's exact price divisor is verified.
 
 ```json
 {

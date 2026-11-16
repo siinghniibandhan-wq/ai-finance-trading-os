@@ -117,6 +117,7 @@ def test_gateway_snapshot_uses_existing_raw_stream_and_instrument_master(monkeyp
     start_calls = [call for call in calls if call[0].endswith("/market-stream/start")]
     assert len(start_calls) == 1
     assert start_calls[0][2] == "POST"
+    assert start_calls[0][0].endswith("/market-stream/start")
     assert json.loads(start_calls[0][3]) == {"tokens": [101, 102, 103], "mode": 3}
 
 

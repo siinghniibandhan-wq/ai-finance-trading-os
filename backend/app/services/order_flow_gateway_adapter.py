@@ -1,6 +1,7 @@
 """Join m.Stock Type A ticks to verified derivative instrument metadata."""
 import csv
 import json
+import math
 import os
 import threading
 import time
@@ -27,11 +28,10 @@ def _gateway_url():
     return (
         os.getenv("MSTOCK_DERIVATIVES_GATEWAY_URL", "").strip()
         or os.getenv("MSTOCK_GATEWAY_URL", "").strip()
-        or "http://54.153.201.74:8000"
     ).rstrip("/")
 
 
-def _request(url, accept):
+def _request(url, accept, *, method="GET", body=None):
     secret = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
     if not secret:
         raise OrderFlowFeedError("Market-data gateway authentication is not configured.")
@@ -39,7 +39,7 @@ def _request(url, accept):
         "Accept": accept,
         "X-Financial-OS-Gateway-Secret": secret,
         "User-Agent": "Financial-OS/1.0",
-    }, method="GET")
+    }, data=body, method=method)
     try:
         with urlopen(request, timeout=8) as response:
             return response.read()
@@ -81,11 +81,53 @@ def _instrument_master(base):
         return rows
 
 
+
+def _start_stream(base, master_rows, symbol):
+    """Ensure the gateway subscribes the selected underlying's derivative tokens."""
+    if not symbol:
+        return
+    wanted = symbol.strip().upper()
+    tokens = set()
+    for row in master_rows:
+        underlying = (_value(row, "underlying", "underlying_symbol", "name") or "").upper()
+        kind = (_value(row, "instrument_type", "type") or "").upper()
+        expiry = _value(row, "expiry", "expiry_date")
+        token = _value(row, "instrument_token", "token", "security_id", "scrip_code")
+        if underlying != wanted or not expiry or not token or not ("FUT" in kind or "OPT" in kind):
+            continue
+        try:
+            parsed = int(token)
+        except (TypeError, ValueError):
+            continue
+        if parsed > 0:
+            tokens.add(parsed)
+    if not tokens:
+        raise OrderFlowFeedError("No derivative instrument tokens found for " + wanted + ".")
+    if len(tokens) > 200:
+        raise OrderFlowFeedError(
+            wanted + " has " + str(len(tokens)) + " derivative tokens; gateway limit is 200. "
+            "Narrow the subscribed expiry/strike set before starting the stream."
+        )
+    body = json.dumps({"tokens": sorted(tokens), "mode": 3}).encode("utf-8")
+    try:
+        response = _request(
+            base + "/market-stream/start",
+            "application/json",
+            method="POST",
+            body=body,
+        )
+        payload = json.loads(response.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise OrderFlowFeedError("Market-stream gateway returned an invalid start response.") from exc
+    if not isinstance(payload, dict) or payload.get("status") != "success":
+        raise OrderFlowFeedError("Market-stream gateway did not confirm derivative subscriptions.")
+
+
 def _number(value):
     if value is None or str(value).strip() == "":
         raise ValueError("missing numeric market field")
     number = float(value)
-    if number < 0 or number == float("inf") or number != number:
+    if not math.isfinite(number) or number < 0:
         raise ValueError("invalid numeric market field")
     return number
 
@@ -179,6 +221,7 @@ def get_order_flow_snapshot(symbol=None):
     if not base:
         raise OrderFlowFeedError("m.Stock gateway URL is not configured.")
     master = _instrument_master(base)
+    _start_stream(base, master, symbol)
     try:
         payload = json.loads(_request(f"{base}/market-stream/snapshot", "application/json").decode("utf-8"))
     except (ValueError, UnicodeDecodeError) as exc:

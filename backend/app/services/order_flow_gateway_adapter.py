@@ -27,6 +27,7 @@ def _gateway_url():
     return (
         os.getenv("MSTOCK_DERIVATIVES_GATEWAY_URL", "").strip()
         or os.getenv("MSTOCK_GATEWAY_URL", "").strip()
+        or "http://54.153.201.74:8000"
     ).rstrip("/")
 
 

@@ -55,7 +55,6 @@ def test_snapshot_normalizes_futures_contracts_and_strike_oi(monkeypatch):
 
 def test_snapshot_fails_closed_when_gateway_is_not_configured(monkeypatch):
     monkeypatch.delenv("MSTOCK_GATEWAY_URL", raising=False)
-    monkeypatch.delenv("MSTOCK_GATEWAY_URL", raising=False)
     monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
     with pytest.raises(OrderFlowFeedError, match="not configured"):
         get_order_flow_snapshot()
@@ -86,7 +85,7 @@ def test_snapshot_rejects_non_object_contract_rows(monkeypatch):
         get_order_flow_snapshot()
 
 
-def test_snapshot_falls_back_to_existing_mstock_gateway_url(monkeypatch):
+def test_snapshot_uses_existing_mstock_gateway_url(monkeypatch):
     now = datetime.now(timezone.utc)
     payload = {
         "status": "success",
@@ -96,7 +95,6 @@ def test_snapshot_falls_back_to_existing_mstock_gateway_url(monkeypatch):
             "option_contracts": [],
         },
     }
-    monkeypatch.delenv("MSTOCK_GATEWAY_URL", raising=False)
     monkeypatch.setenv("MSTOCK_GATEWAY_URL", "http://127.0.0.1:8000")
     monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
     requested = {}

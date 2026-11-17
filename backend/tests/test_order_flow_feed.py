@@ -55,6 +55,7 @@ def test_snapshot_normalizes_futures_contracts_and_strike_oi(monkeypatch):
 
 def test_snapshot_fails_closed_when_gateway_is_not_configured(monkeypatch):
     monkeypatch.delenv("MSTOCK_DERIVATIVES_GATEWAY_URL", raising=False)
+    monkeypatch.delenv("MSTOCK_GATEWAY_URL", raising=False)
     monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
     with pytest.raises(OrderFlowFeedError, match="not configured"):
         get_order_flow_snapshot()

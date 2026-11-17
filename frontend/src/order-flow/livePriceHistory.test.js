@@ -7,8 +7,8 @@ test("records one real futures-price point per new exchange timestamp", () => {
   const first = appendLivePricePoint([], {
     feed: { status: "fresh", last_tick_at: "2026-11-18T03:00:00+00:00" },
     futures_contracts: [
-      { tradingsymbol: "NIFTY26NOVFUT", price: 25000 },
-      { tradingsymbol: "NIFTY27JANFUT", price: 25100 },
+      { tradingsymbol: "NIFTY26NOVFUT", price: 25000, exchange_timestamp: "2026-11-18T03:00:00+00:00" },
+      { tradingsymbol: "NIFTY27JANFUT", price: 25100, exchange_timestamp: "2026-11-18T03:00:00+00:00" },
     ],
   });
 
@@ -18,7 +18,7 @@ test("records one real futures-price point per new exchange timestamp", () => {
   }]);
   assert.equal(appendLivePricePoint(first, {
     feed: { status: "fresh", last_tick_at: "2026-11-18T03:00:00+00:00" },
-    futures_contracts: [{ tradingsymbol: "NIFTY26NOVFUT", price: 25001 }],
+    futures_contracts: [{ tradingsymbol: "NIFTY26NOVFUT", price: 25001, exchange_timestamp: "2026-11-18T03:00:00+00:00" }],
   }), first);
 });
 
@@ -37,7 +37,7 @@ test("keeps only the newest configured number of real chart points", () => {
   }));
   const next = appendLivePricePoint(history, {
     feed: { status: "fresh", last_tick_at: "2026-11-18T03:00:03+00:00" },
-    futures_contracts: [{ tradingsymbol: "NIFTY26NOVFUT", price: 25003 }],
+    futures_contracts: [{ tradingsymbol: "NIFTY26NOVFUT", price: 25003, exchange_timestamp: "2026-11-18T03:00:03+00:00" }],
   }, 3);
 
   assert.deepEqual(next.map(point => point.prices.NIFTY26NOVFUT), [25001, 25002, 25003]);

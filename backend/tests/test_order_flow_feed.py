@@ -139,6 +139,7 @@ def test_snapshot_maps_real_type_a_tokens_using_gateway_instrument_master(monkey
         "ticks": [
             {"token": 101, "last_price": 25000.0, "volume": 1200,
              "open_interest": 450000, "exchange_timestamp": exchange_seconds,
+             "last_traded_timestamp": exchange_seconds,
              "received_at": "2026-11-18T03:00:01+00:00"},
             {"token": 102, "last_price": 110.0, "volume": 300,
              "open_interest": 12000, "exchange_timestamp": exchange_seconds,
@@ -177,6 +178,7 @@ def test_snapshot_maps_real_type_a_tokens_using_gateway_instrument_master(monkey
         "expiry": "2026-11-26", "price": 25000.0, "volume": 1200.0,
         "oi": 450000.0, "instrument_token": "101",
         "exchange_timestamp": exchange_time.isoformat(),
+        "last_traded_at": exchange_time.isoformat(),
         "received_at": "2026-11-18T03:00:01+00:00",
     }]
     assert result["option_oi_by_strike"] == [{

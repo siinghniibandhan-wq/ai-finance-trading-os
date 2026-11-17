@@ -42,3 +42,11 @@ test("keeps only the newest configured number of real chart points", () => {
 
   assert.deepEqual(next.map(point => point.prices.NIFTY26NOVFUT), [25001, 25002, 25003]);
 });
+
+test("does not chart stale exchange ticks as live price history", () => {
+  const history = [];
+  assert.equal(appendLivePricePoint(history, {
+    feed: { status: "stale", last_tick_at: "2026-11-18T03:00:00+00:00" },
+    futures_contracts: [{ tradingsymbol: "NIFTY26NOVFUT", price: 25000 }],
+  }), history);
+});

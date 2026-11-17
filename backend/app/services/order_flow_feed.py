@@ -180,6 +180,7 @@ def _normalize_type_a_ticks(ticks: list, rows_by_token: dict, symbol: str | None
             "oi": oi,
             "instrument_token": token,
             "exchange_timestamp": exchange_timestamp,
+            "last_traded_at": _exchange_timestamp(tick.get("last_traded_timestamp")),
             "received_at": tick.get("received_at"),
         }
         if instrument["instrument_type"].startswith("FUT"):

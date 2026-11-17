@@ -40,3 +40,14 @@ test("missing price and OI remain unavailable, not zero", () => {
   assert.equal(view.support,null);
   assert.equal(formatMarketValue(view.futures[0].price),"Unavailable");
 });
+
+test("initial request is connecting, not offline or live", () => {
+  assert.equal(getMarketFlowStatus(null), "CONNECTING");
+});
+test("gateway start errors and broker auth requirements stay offline", () => {
+  assert.equal(getMarketFlowStatus({coverage:{state:"error"}}), "OFFLINE");
+  assert.equal(getMarketFlowStatus({coverage:{state:"auth_required"}}), "OFFLINE");
+});
+test("ready worker without a tick remains connecting", () => {
+  assert.equal(getMarketFlowStatus({feed:{status:"disconnected"},coverage:{state:"ready"},stream:{running:true}}), "CONNECTING");
+});

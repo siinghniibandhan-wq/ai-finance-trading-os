@@ -15,6 +15,25 @@ function formatAge(seconds) {
   return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s ago`;
 }
 
+function LiveOptionOIChart({ options }) {
+  const maximum = Math.max(1, ...options.flatMap(item => [Number(item.ce_oi) || 0, Number(item.pe_oi) || 0]));
+  return (
+    <div className="mf-live-option-chart" aria-label="Live option open interest chart">
+      {options.map(item => (
+        <div className="mf-live-option-row" key={`${item.symbol || ""}-${item.strike}`}>
+          <b>{item.symbol || "Underlying"} · {number(item.strike)}</b>
+          <div className="mf-live-option-bars">
+            <div className="mf-live-option-ce"><i style={{ width: `${(Number(item.ce_oi || 0) / maximum) * 100}%` }} /></div>
+            <div className="mf-live-option-pe"><i style={{ width: `${(Number(item.pe_oi || 0) / maximum) * 100}%` }} /></div>
+          </div>
+          <small>CE {number(item.ce_oi)} · PE {number(item.pe_oi)}</small>
+        </div>
+      ))}
+      <div className="mf-live-chart-legend"><span>CE open interest</span><span>PE open interest</span></div>
+    </div>
+  );
+}
+
 function LivePriceChart({ history }) {
   const series = [...new Set(history.flatMap(point => Object.keys(point.prices)))].slice(0, 5);
   const allValues = history.flatMap(point => Object.values(point.prices));
@@ -145,6 +164,7 @@ export default function OrderFlowLiveFeed({ symbol }) {
           {options.length > 0 && (
             <div className="mf-live-contracts">
               <h3>Live option open interest by strike</h3>
+              <LiveOptionOIChart options={options} />
               <div className="mf-live-table-wrap">
                 <table>
                   <thead><tr><th>Underlying</th><th>Strike</th><th>CE OI</th><th>PE OI</th></tr></thead>

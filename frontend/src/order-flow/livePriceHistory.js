@@ -1,15 +1,37 @@
 export function appendLivePricePoint(history, snapshot, limit = 60) {
-  const timestamp = snapshot?.feed?.last_tick_at;
+  const latestFeedTime = Date.parse(snapshot?.feed?.last_tick_at || "");
   const contracts = snapshot?.futures_contracts;
-  if (snapshot?.feed?.status !== "fresh" || !timestamp || !Array.isArray(contracts)) return history;
+  if (
+    snapshot?.feed?.status !== "fresh"
+    || !Number.isFinite(latestFeedTime)
+    || !Array.isArray(contracts)
+  ) return history;
 
-  const prices = Object.fromEntries(
-    contracts
-      .filter(item => item?.tradingsymbol && Number.isFinite(Number(item.price)))
-      .map(item => [item.tradingsymbol, Number(item.price)])
-  );
-  if (Object.keys(prices).length === 0) return history;
-  if (history.at(-1)?.timestamp === timestamp) return history;
+  let next = history.slice();
+  for (const item of contracts) {
+    const timestamp = item?.exchange_timestamp;
+    const time = Date.parse(timestamp || "");
+    const symbol = item?.tradingsymbol;
+    const price = Number(item?.price);
+    if (!symbol || !Number.isFinite(time) || !Number.isFinite(price) || price <= 0) continue;
+    if (latestFeedTime - time > 15000) continue;
 
-  return [...history, { timestamp, prices }].slice(-Math.max(1, limit));
+    const previous = [...next].reverse().find(point => (
+      Object.prototype.hasOwnProperty.call(point.prices, symbol)
+    ));
+    if (previous && time <= Date.parse(previous.timestamp)) continue;
+
+    const sameTimeIndex = next.findIndex(point => point.timestamp === timestamp);
+    if (sameTimeIndex >= 0) {
+      next[sameTimeIndex] = {
+        ...next[sameTimeIndex],
+        prices: { ...next[sameTimeIndex].prices, [symbol]: price },
+      };
+    } else {
+      next.push({ timestamp, prices: { [symbol]: price } });
+    }
+  }
+
+  next.sort((left, right) => Date.parse(left.timestamp) - Date.parse(right.timestamp));
+  return next.slice(-Math.max(1, limit));
 }

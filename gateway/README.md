@@ -17,6 +17,8 @@ The uploaded Flask gateway already defines authenticated routes:
 Install `market_stream.py` and `mstock_stream.py` beside the gateway's existing `app.py`. Keep the existing route definitions and existing `ACCESS_TOKEN`, token validation, SSM API-key parameter and `FINANCIAL_OS_GATEWAY_SECRET` wiring. Do not replace the production `app.py` with the reconstructed upload.
 
 ## Verification
+The repository CI workflow runs the gateway tests as a dedicated step after the backend regression suite. A successful gateway test step does not replace the backend, frontend, dependency-audit or secret-scan checks.
+
 Run from this directory:
 ```bash
 python -m pytest -q

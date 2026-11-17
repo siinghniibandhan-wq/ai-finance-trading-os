@@ -1,5 +1,6 @@
 export function getMarketFlowStatus(snapshot, requestError = "") {
-  if (!snapshot || requestError) return "OFFLINE";
+  if (requestError) return "OFFLINE";
+  if (!snapshot) return "CONNECTING";
   const coverage = snapshot.coverage?.state;
   const feed = snapshot.feed?.status;
   const stream = snapshot.stream || {};

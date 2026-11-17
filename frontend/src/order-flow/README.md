@@ -13,39 +13,22 @@ The source project's interaction/layout model has been adapted to Financial OS; 
 - Pure backend transformations for futures contract-month aggregation, current OI change/percentage, and strike-wise CE/PE OI aggregation.
 - Feed freshness classification: `fresh`, `stale`, `disconnected`.
 - Authenticated, read-only API: `GET /api/order-flow/snapshot?symbol=NIFTY`.
-- Server-side derivatives gateway adapter, using `MSTOCK_DERIVATIVES_GATEWAY_URL` and the existing gateway secret header.
-- Frontend feed status panel with authenticated polling, freshness display and bounded exponential retry (10–60 seconds).
+- Server-side adapter reusing `MSTOCK_GATEWAY_URL` and `MSTOCK_GATEWAY_SECRET`; no separate derivatives gateway or secret is required.
+- Frontend feed panel with authenticated polling, exchange-timestamped live futures price history, live CE/PE OI-by-strike bars, freshness display and bounded exponential retry (10–60 seconds).
 - Backend tests for aggregation, freshness, gateway payload validation and fail-closed configuration.
 - Historical OI is deliberately excluded.
 
-## Gateway contract — remaining external integration
+## Existing gateway contract and normalization
 
-The application-side adapter expects the configured gateway to implement `GET /order-flow/snapshot`. The gateway must authenticate its m.Stock session server-side, renew tokens as required, own the WebSocket connection and binary packet decoder, subscribe to relevant futures/options instruments, reconnect with backoff, and return a normalized JSON snapshot in this shape:
+Financial OS reuses the existing `MSTOCK_GATEWAY_URL` and `MSTOCK_GATEWAY_SECRET`. It calls the deployed Flask gateway's authenticated read-only `GET /market-stream/snapshot` endpoint and the existing `GET /instruments` CSV endpoint. The browser never receives broker credentials or the gateway secret.
 
-```json
-{
-  "status": "success",
-  "data": {
-    "last_tick_at": "2026-11-13T10:00:00+05:30",
-    "futures_contracts": [
-      {
-        "symbol": "NIFTY",
-        "expiry": "2026-11-26",
-        "price": 25000.0,
-        "volume": 1200,
-        "oi": 450000,
-        "previous_oi": 430000
-      }
-    ],
-    "option_contracts": [
-      {"strike": 25000, "option_type": "CE", "oi": 12000},
-      {"strike": 25000, "option_type": "PE", "oi": 14000}
-    ]
-  }
-}
-```
+The market-stream snapshot returns top-level `status`, `ticks` and `stream` fields. Type-A decoded ticks carry the instrument `token`, `last_price`, `volume`, `open_interest`, `exchange_timestamp` and `received_at`. The gateway's instrument-master CSV includes `instrument_token`, `tradingsymbol`, `name`, `expiry`, `strike`, `instrument_type`, `segment` and `exchange`.
 
-The gateway must source these values from verified provider fields and preserve the exchange timestamp. Do not infer option OI from an undocumented field, fabricate missing ticks, or report a stale/disconnected feed as live. Browser clients never receive m.Stock API keys or access tokens. If the gateway is absent or unavailable, the API returns 503 and the UI clearly shows **NOT CONNECTED** while retaining the demo disclaimer.
+The adapter resolves each tick token against the instrument master, classifies `FUT*` and `OPT*` instruments, reads the underlying from the master `name` field, and derives CE/PE only from the option trading-symbol suffix. Missing or unknown token metadata is counted as unmapped; contract identity is never guessed.
+
+The Type-A decoder already applies the `1/100` price divisor. The adapter passes `last_price` through unchanged. Type-A exchange timestamps are seconds since `1980-01-01 UTC` and are converted to timezone-aware ISO-8601 timestamps before freshness evaluation. Current OI and volume are read from the decoded tick. A previous-session OI baseline is not supplied by this snapshot, so OI change is not fabricated.
+
+The authenticated Financial OS endpoint remains `GET /api/order-flow/snapshot` and retains the existing Bearer-session dependency. It returns mapped futures contracts, contract-month aggregates and strike-wise CE/PE OI. The UI plots real futures price observations captured on new exchange timestamps and real current option OI by strike. The broader sector/conviction/flow-board demo indicators remain explicitly labelled simulated because the gateway snapshot does not provide historical candles or the full derived analytics inputs.
 
 **Deployment and integration status (verified 13 November 2026):**
 

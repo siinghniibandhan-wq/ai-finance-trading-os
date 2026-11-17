@@ -126,7 +126,7 @@ class FakeTextResponse(FakeResponse):
 
 def test_snapshot_maps_real_type_a_tokens_using_gateway_instrument_master(monkeypatch):
     monkeypatch.setattr(order_flow_feed, "_instrument_master_cache", {"csv": None, "loaded_at": 0.0, "rows_by_token": {}})
-    exchange_time = datetime(2026, 11, 18, 3, 0, tzinfo=timezone.utc)
+    exchange_time = datetime.now(timezone.utc).replace(microsecond=0)
     type_a_epoch = datetime(1980, 1, 1, tzinfo=timezone.utc)
     exchange_seconds = int((exchange_time - type_a_epoch).total_seconds())
     instrument_master = (
@@ -173,12 +173,12 @@ def test_snapshot_maps_real_type_a_tokens_using_gateway_instrument_master(monkey
     result = get_order_flow_snapshot("NIFTY")
 
     assert result["feed"]["status"] == "fresh"
-    assert result["feed"]["last_tick_at"] == "2026-11-18T03:00:00+00:00"
+    assert result["feed"]["last_tick_at"] == exchange_time.isoformat()
     assert result["futures_contracts"] == [{
         "symbol": "NIFTY", "tradingsymbol": "NIFTY26NOVFUT",
         "expiry": "2026-11-26", "price": 25000.0, "volume": 1200.0,
         "oi": 450000.0, "instrument_token": "101",
-        "exchange_timestamp": "2026-11-18T03:00:00+00:00",
+        "exchange_timestamp": exchange_time.isoformat(),
         "received_at": "2026-11-18T03:00:01+00:00",
     }]
     assert result["option_oi_by_strike"] == [{
@@ -192,7 +192,7 @@ def test_snapshot_maps_real_type_a_tokens_using_gateway_instrument_master(monkey
 
 def test_snapshot_filters_instrument_master_mapping_by_requested_underlying(monkeypatch):
     monkeypatch.setattr(order_flow_feed, "_instrument_master_cache", {"csv": None, "loaded_at": 0.0, "rows_by_token": {}})
-    exchange_time = datetime(2026, 11, 18, 3, 0, tzinfo=timezone.utc)
+    exchange_time = datetime.now(timezone.utc).replace(microsecond=0)
     exchange_seconds = int((exchange_time - datetime(1980, 1, 1, tzinfo=timezone.utc)).total_seconds())
     instrument_master = (
         "instrument_token,tradingsymbol,name,expiry,strike,instrument_type,segment,exchange\n"

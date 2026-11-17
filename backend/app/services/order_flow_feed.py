@@ -88,4 +88,6 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
         "contract_months": contract_months,
         "option_oi_by_strike": option_oi,
         "historical_oi_included": False,
+        "coverage": data.get("coverage"),
+        "stream": data.get("stream"),
     }

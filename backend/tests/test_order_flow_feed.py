@@ -1,5 +1,7 @@
 import csv
 import io
+import csv
+import io
 import json
 from datetime import datetime, timezone
 
@@ -89,6 +91,10 @@ def test_gateway_snapshot_uses_existing_raw_stream_and_instrument_master(monkeyp
         calls.append((request.full_url, request.get_header("X-financial-os-gateway-secret"), request.get_method(), request.data))
         if request.full_url.endswith("/instruments"):
             return FakeResponse(MASTER)
+        if request.full_url.endswith("/market-stream/start"):
+            assert request.get_method() == "POST"
+            assert json.loads(request.data.decode()) == {"tokens": [101, 102, 103], "mode": 3}
+            return FakeResponse(json.dumps({"status": "success", "started": True}))
         return FakeResponse(json.dumps({
             "status": "success",
             "ticks": [
@@ -150,3 +156,8 @@ def test_stream_subscription_rejects_more_than_gateway_token_limit():
     ]
     with pytest.raises(OrderFlowFeedError, match="gateway limit is 200"):
         adapter._start_stream("https://gateway.example", master, "NIFTY")
+
+def test_gateway_url_has_no_implicit_public_ip_fallback(monkeypatch):
+    monkeypatch.delenv("MSTOCK_DERIVATIVES_GATEWAY_URL", raising=False)
+    monkeypatch.delenv("MSTOCK_GATEWAY_URL", raising=False)
+    assert adapter._gateway_url() == ""

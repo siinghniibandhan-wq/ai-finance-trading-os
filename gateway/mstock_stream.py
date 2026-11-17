@@ -42,8 +42,7 @@ def parse_type_a_frame(frame):
         elif size == 184:
             values = struct.unpack_from(">16I", packet)
             tick = {"token": values[0], "mode": "full", "ltp_raw": values[1],
-                    "high_raw": values[2], "low_raw": values[3], "open_raw": values[4],
-                    "close_raw": values[5], "volume": values[4], "open_interest": values[12],
+                    "volume": values[4], "open_interest": values[12],
                     "oi_day_high": values[13], "oi_day_low": values[14],
                     "exchange_timestamp": values[15]}
         else:

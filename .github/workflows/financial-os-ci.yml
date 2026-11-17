@@ -75,9 +75,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Fetch pull request base history
+      - name: Fetch complete pull request base history
         if: github.event_name == 'pull_request'
-        run: git fetch --no-tags --depth=2 origin ${{ github.event.pull_request.base.sha }}
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+            git fetch --no-tags --unshallow origin
+          fi
+          git fetch --no-tags origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+          git cat-file -e "$BASE_SHA^{commit}"
       - name: Scan repository history for secrets
         uses: gitleaks/gitleaks-action@v2
         env:

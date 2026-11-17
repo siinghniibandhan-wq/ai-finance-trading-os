@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch, API_BASE_URL, friendlyErrorMessage } from "../api";
+import { getMarketFlowStatus } from "./marketFlowLive";
 
 const POLL_MS = 10000;
 const MAX_RETRY_MS = 60000;
 
-function formatAge(seconds) {
-  if (seconds == null) return "No tick received";
-  if (seconds < 60) return `${Math.round(seconds)}s ago`;
-  return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s ago`;
+function formatTickTime(value) {
+  if (!value) return "No provider tick received";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Timestamp unavailable" : date.toLocaleString("en-IN", {
+    dateStyle: "medium", timeStyle: "medium", timeZone: "Asia/Kolkata"
+  }) + " IST";
 }
 
-export default function OrderFlowLiveFeed({ symbol }) {
+export default function OrderFlowLiveFeed({ symbol, onSnapshot, onStatus }) {
   const [snapshot, setSnapshot] = useState(null);
   const [error, setError] = useState("");
   const [retryIn, setRetryIn] = useState(POLL_MS);
@@ -26,16 +29,19 @@ export default function OrderFlowLiveFeed({ symbol }) {
         if (symbol) url.searchParams.set("symbol", symbol);
         const response = await apiFetch(url.toString(), { method: "GET" });
         const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(friendlyErrorMessage(response.status, payload));
-        }
+        if (!response.ok) throw new Error(friendlyErrorMessage(response.status, payload));
         if (!active) return;
         setSnapshot(payload);
         setError("");
+        onSnapshot?.(payload);
+        const nextStatus = getMarketFlowStatus(payload);
+        onStatus?.(nextStatus);
         delay = POLL_MS;
       } catch (cause) {
         if (!active) return;
-        setError(cause?.message || "Live derivatives feed is unavailable.");
+        const message = cause?.message || "Live derivatives feed is unavailable.";
+        setError(message);
+        onStatus?.("OFFLINE");
         delay = Math.min(Math.max(POLL_MS, delay * 2), MAX_RETRY_MS);
       } finally {
         if (active) {
@@ -50,27 +56,22 @@ export default function OrderFlowLiveFeed({ symbol }) {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [symbol]);
+  }, [symbol, onSnapshot, onStatus]);
 
-  const feed = snapshot?.feed;
-  const isLive = snapshot?.status === "success" && feed?.status === "fresh";
-
+  const status = getMarketFlowStatus(snapshot, error);
+  const coverage = snapshot?.coverage || {};
+  const stream = snapshot?.stream || {};
+  const lastTick = snapshot?.feed?.last_tick_at || snapshot?.as_of;
   return (
     <section className="mf-live-feed" aria-live="polite" aria-label="Live derivatives feed status">
       <div className="mf-live-feed-heading">
         <b>m.Stock derivatives feed</b>
-        <span className={isLive ? "mf-feed-fresh" : "mf-feed-offline"}>
-          {isLive ? "LIVE · FRESH" : feed?.status === "stale" ? "STALE" : "NOT CONNECTED"}
-        </span>
+        <span className={"mf-feed-state mf-feed-" + status.toLowerCase()}>{status}</span>
       </div>
-      {isLive ? (
-        <>
-          <p>Last provider tick: {formatAge(feed.age_seconds)} · {snapshot.futures_contracts.length} futures contracts · {snapshot.option_oi_by_strike.length} option strikes</p>
-          <p>Live feed values are available from the gateway snapshot. Demo charts and derived indicators below remain labelled simulated.</p>
-        </>
-      ) : (
-        <p>{error || "Waiting for an authenticated provider tick."} Automatic retry in {Math.round(retryIn / 1000)}s. Demo values below are not live market data.</p>
-      )}
+      <p>Last tick: {formatTickTime(lastTick)}</p>
+      <p>Coverage: {coverage.state || "unknown"} · Stream: {stream.login_state || "not started"} · Contracts: {coverage.futures_with_data ?? 0}/{coverage.futures_planned ?? 0} futures, {coverage.options_with_data ?? 0}/{coverage.options_planned ?? 0} options</p>
+      {error ? <p role="status">{error} · Retry in {Math.round(retryIn / 1000)}s</p> : null}
+      {coverage.start_error ? <p role="status">Gateway start: {coverage.start_error}</p> : null}
     </section>
   );
 }

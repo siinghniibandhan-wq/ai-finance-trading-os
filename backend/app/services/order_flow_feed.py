@@ -126,7 +126,7 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
         else:
             unmapped = []
         if not isinstance(contracts, list) or not isinstance(options, list):
-            raise ValueError("contract collections must be lists")
+            raise ValueError("invalid contract collections: expected lists")
         contract_months = aggregate_contract_months(contracts) if contracts else []
         option_oi = aggregate_option_oi(options) if options else []
         futures = []

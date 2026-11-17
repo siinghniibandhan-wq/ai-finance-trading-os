@@ -83,3 +83,14 @@ def test_worker_rejects_binary_frame_as_login_ack():
     assert worker.status()["connected"] is False
     assert sock.sent == ["LOGIN:token"]
     worker.stop()
+
+
+def test_worker_accepts_login_ack_with_type_and_message_fields():
+    sock = FakeSocket(['{"type":"login","message":"success"}', frame_ltp()])
+    worker = MarketStreamWorker(lambda: "token", lambda: "key",
+                                websocket_factory=lambda *a, **k: sock, recv_timeout=1)
+    worker.start([123])
+    assert wait_for(lambda: bool(worker.snapshot()))
+    assert sock.sent[0] == "LOGIN:token"
+    assert sock.sent[1] == '{"a": "subscribe", "v": [123]}'
+    worker.stop()

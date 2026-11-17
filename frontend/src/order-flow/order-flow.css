@@ -421,3 +421,15 @@
 .mf-live-table-wrap th:first-child,
 .mf-live-table-wrap td:first-child { text-align: left; }
 .mf-live-table-wrap th { color: var(--text-muted, #777); font-weight: 600; }
+
+
+.mf-live-chart { margin-top: 8px; padding: 10px 12px; border: 1px solid var(--th-border); border-radius: 9px; background: var(--th-inner); }
+.mf-live-chart-heading { display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.mf-live-chart-heading b { font-size:12px; }
+.mf-live-chart-heading small { color:var(--th-muted); font-size:10px; }
+.mf-live-chart svg { display:block; width:100%; height:auto; min-height:110px; overflow:visible; }
+.mf-live-chart svg line { stroke:var(--th-border); stroke-dasharray:3 4; }
+.mf-live-chart svg text { fill:var(--th-muted); font-size:10px; }
+.mf-live-price-line { fill:none; stroke:var(--mf-up); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+.mf-live-chart-legend { display:flex; gap:12px; flex-wrap:wrap; color:var(--th-muted); font-size:10px; }
+.mf-live-contracts>p { margin-top:7px; font-size:10px; }

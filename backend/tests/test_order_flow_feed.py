@@ -83,3 +83,32 @@ def test_snapshot_rejects_non_object_contract_rows(monkeypatch):
     }))
     with pytest.raises(OrderFlowFeedError, match="contract must be an object"):
         get_order_flow_snapshot()
+
+
+def test_snapshot_falls_back_to_existing_mstock_gateway_url(monkeypatch):
+    now = datetime.now(timezone.utc)
+    payload = {
+        "status": "success",
+        "data": {
+            "last_tick_at": now.isoformat(),
+            "futures_contracts": [],
+            "option_contracts": [],
+        },
+    }
+    monkeypatch.delenv("MSTOCK_DERIVATIVES_GATEWAY_URL", raising=False)
+    monkeypatch.setenv("MSTOCK_GATEWAY_URL", "http://127.0.0.1:8000")
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
+    requested = {}
+
+    def fake_urlopen(request, timeout):
+        requested["url"] = request.full_url
+        requested["secret"] = request.get_header("X-financial-os-gateway-secret")
+        return FakeResponse(payload)
+
+    monkeypatch.setattr(order_flow_feed, "urlopen", fake_urlopen)
+
+    result = get_order_flow_snapshot("NIFTY")
+
+    assert requested["url"] == "http://127.0.0.1:8000/order-flow/snapshot?symbol=NIFTY"
+    assert requested["secret"] == "test-secret"
+    assert result["feed"]["status"] == "fresh"

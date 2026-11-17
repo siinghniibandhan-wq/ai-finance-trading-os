@@ -169,3 +169,104 @@ def test_snapshot_does_not_infer_contract_identity_from_token_only_ticks(monkeyp
     assert result["option_oi_by_strike"] == []
     assert result["unmapped_tick_count"] == 1
     assert result["feed"]["status"] == "fresh"
+
+
+
+class FakeTextResponse(FakeResponse):
+    def __init__(self, text):
+        self.text = text
+
+    def read(self):
+        return self.text.encode("utf-8")
+
+
+def test_snapshot_maps_real_type_a_tokens_using_gateway_instrument_master(monkeypatch):
+    exchange_time = datetime(2026, 11, 18, 3, 0, tzinfo=timezone.utc)
+    type_a_epoch = datetime(1980, 1, 1, tzinfo=timezone.utc)
+    exchange_seconds = int((exchange_time - type_a_epoch).total_seconds())
+    instrument_master = (
+        "instrument_token,exchange_token,tradingsymbol,name,last_price,expiry,strike,"
+        "tick_size,lot_size,instrument_type,segment,exchange\n"
+        "101,101,NIFTY26NOVFUT,NIFTY,25000,2026-11-26,,0.05,25,FUTIDX,NSEFO,NSE\n"
+        "102,102,NIFTY26NOV25000CE,NIFTY,110,2026-11-26,25000,0.05,25,OPTIDX,NSEFO,NSE\n"
+        "103,103,NIFTY26NOV25000PE,NIFTY,120,2026-11-26,25000,0.05,25,OPTIDX,NSEFO,NSE\n"
+    )
+    snapshot = {
+        "status": "success",
+        "ticks": [
+            {"token": 101, "last_price": 25000.0, "volume": 1200,
+             "open_interest": 450000, "exchange_timestamp": exchange_seconds,
+             "received_at": "2026-11-18T03:00:01+00:00"},
+            {"token": 102, "last_price": 110.0, "volume": 300,
+             "open_interest": 12000, "exchange_timestamp": exchange_seconds,
+             "received_at": "2026-11-18T03:00:01+00:00"},
+            {"token": 103, "last_price": 120.0, "volume": 250,
+             "open_interest": 14000, "exchange_timestamp": exchange_seconds,
+             "received_at": "2026-11-18T03:00:01+00:00"},
+            {"token": 999, "last_price": 1.0, "volume": 1,
+             "open_interest": 1, "exchange_timestamp": exchange_seconds,
+             "received_at": "2026-11-18T03:00:01+00:00"},
+        ],
+        "stream": {"connected": True, "stale": False, "mode": 3,
+                   "cached_instruments": 4, "reconnect_count": 0},
+        "read_only": True,
+    }
+    monkeypatch.setenv("MSTOCK_GATEWAY_URL", "http://127.0.0.1:8000")
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
+    requested = []
+
+    def fake_urlopen(request, timeout):
+        requested.append((request.full_url, request.get_header("X-financial-os-gateway-secret")))
+        if request.full_url.endswith("/instruments"):
+            return FakeTextResponse(instrument_master)
+        if request.full_url == "http://127.0.0.1:8000/market-stream/snapshot":
+            return FakeResponse(snapshot)
+        raise AssertionError(f"Unexpected gateway request: {request.full_url}")
+
+    monkeypatch.setattr(order_flow_feed, "urlopen", fake_urlopen)
+
+    result = get_order_flow_snapshot("NIFTY")
+
+    assert result["feed"]["status"] == "fresh"
+    assert result["feed"]["last_tick_at"] == "2026-11-18T03:00:00+00:00"
+    assert result["futures_contracts"] == [{
+        "symbol": "NIFTY", "tradingsymbol": "NIFTY26NOVFUT",
+        "expiry": "2026-11-26", "price": 25000.0, "volume": 1200,
+        "oi": 450000, "instrument_token": "101",
+    }]
+    assert result["option_oi_by_strike"] == [{
+        "strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 14000.0,
+    }]
+    assert result["unmapped_tick_count"] == 1
+    assert result["price_scaling"] == "Type A decoder already applied the 1/100 divisor; no additional scaling"
+    assert all(secret == "test-secret" for _, secret in requested)
+
+
+def test_snapshot_filters_instrument_master_mapping_by_requested_underlying(monkeypatch):
+    exchange_time = datetime(2026, 11, 18, 3, 0, tzinfo=timezone.utc)
+    exchange_seconds = int((exchange_time - datetime(1980, 1, 1, tzinfo=timezone.utc)).total_seconds())
+    instrument_master = (
+        "instrument_token,tradingsymbol,name,expiry,strike,instrument_type,segment,exchange\n"
+        "201,NIFTY26NOVFUT,NIFTY,2026-11-26,,FUTIDX,NSEFO,NSE\n"
+        "202,BANKNIFTY26NOVFUT,BANKNIFTY,2026-11-26,,FUTIDX,NSEFO,NSE\n"
+    )
+    snapshot = {"status": "success", "ticks": [
+        {"token": 201, "last_price": 25000, "volume": 100, "open_interest": 500,
+         "exchange_timestamp": exchange_seconds},
+        {"token": 202, "last_price": 56000, "volume": 200, "open_interest": 700,
+         "exchange_timestamp": exchange_seconds},
+    ], "stream": {"connected": True, "stale": False}}
+    monkeypatch.setenv("MSTOCK_GATEWAY_URL", "http://127.0.0.1:8000")
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
+
+    def fake_urlopen(request, timeout):
+        if request.full_url.endswith("/instruments"):
+            return FakeTextResponse(instrument_master)
+        return FakeResponse(snapshot)
+
+    monkeypatch.setattr(order_flow_feed, "urlopen", fake_urlopen)
+
+    result = get_order_flow_snapshot("NIFTY")
+
+    assert [item["symbol"] for item in result["futures_contracts"]] == ["NIFTY"]
+    assert result["futures_contracts"][0]["price"] == 25000

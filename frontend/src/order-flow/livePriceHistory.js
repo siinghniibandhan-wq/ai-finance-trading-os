@@ -1,7 +1,7 @@
 export function appendLivePricePoint(history, snapshot, limit = 60) {
   const timestamp = snapshot?.feed?.last_tick_at;
   const contracts = snapshot?.futures_contracts;
-  if (!timestamp || !Array.isArray(contracts)) return history;
+  if (snapshot?.feed?.status !== "fresh" || !timestamp || !Array.isArray(contracts)) return history;
 
   const prices = Object.fromEntries(
     contracts

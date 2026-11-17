@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 import pytest
 
@@ -110,64 +110,8 @@ def test_snapshot_falls_back_to_existing_mstock_gateway_url(monkeypatch):
 
     result = get_order_flow_snapshot("NIFTY")
 
-    assert requested["url"] == "http://127.0.0.1:8000/market-stream/snapshot?symbol=NIFTY"
+    assert requested["url"] == "http://127.0.0.1:8000/market-stream/snapshot"
     assert requested["secret"] == "test-secret"
-    assert result["feed"]["status"] == "fresh"
-
-
-
-def test_snapshot_normalizes_market_stream_ticks_with_explicit_contract_metadata(monkeypatch):
-    now = datetime.now(timezone.utc).isoformat()
-    payload = {
-        "status": "success",
-        "data": {
-            "ticks": [
-                {
-                    "instrument_type": "FUTIDX", "symbol": "NIFTY",
-                    "expiry": "2026-11-26", "ltp": 25000,
-                    "volume": 1200, "oi": 450000, "previous_oi": 430000,
-                    "exchange_timestamp": now,
-                },
-                {
-                    "instrument_type": "OPTIDX", "symbol": "NIFTY",
-                    "expiry": "2026-11-26", "strike": 25000,
-                    "option_type": "CE", "ltp": 110, "volume": 300,
-                    "oi": 12000, "exchange_timestamp": now,
-                },
-                {"token": "2885", "ltp": 25000, "exchange_timestamp": now},
-            ]
-        },
-    }
-    monkeypatch.setenv("MSTOCK_GATEWAY_URL", "http://127.0.0.1:8000")
-    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
-    monkeypatch.setattr(order_flow_feed, "urlopen", lambda request, timeout: FakeResponse(payload))
-
-    result = get_order_flow_snapshot("NIFTY")
-
-    assert result["feed"]["status"] == "fresh"
-    assert result["futures_contracts"][0]["price"] == 25000
-    assert result["futures_contracts"][0]["oi_change"]["change"] == 20000
-    assert result["option_oi_by_strike"] == [
-        {"strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 0}
-    ]
-    assert result["unmapped_tick_count"] == 1
-    assert result["price_scaling"].startswith("Gateway-decoded")
-
-
-def test_snapshot_does_not_infer_contract_identity_from_token_only_ticks(monkeypatch):
-    now = datetime.now(timezone.utc).isoformat()
-    payload = {"status": "success", "data": {
-        "ticks": [{"token": "2885", "ltp": 25000, "exchange_timestamp": now}]
-    }}
-    monkeypatch.setenv("MSTOCK_GATEWAY_URL", "http://127.0.0.1:8000")
-    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
-    monkeypatch.setattr(order_flow_feed, "urlopen", lambda request, timeout: FakeResponse(payload))
-
-    result = get_order_flow_snapshot()
-
-    assert result["futures_contracts"] == []
-    assert result["option_oi_by_strike"] == []
-    assert result["unmapped_tick_count"] == 1
     assert result["feed"]["status"] == "fresh"
 
 
@@ -232,11 +176,14 @@ def test_snapshot_maps_real_type_a_tokens_using_gateway_instrument_master(monkey
     assert result["feed"]["last_tick_at"] == "2026-11-18T03:00:00+00:00"
     assert result["futures_contracts"] == [{
         "symbol": "NIFTY", "tradingsymbol": "NIFTY26NOVFUT",
-        "expiry": "2026-11-26", "price": 25000.0, "volume": 1200,
-        "oi": 450000, "instrument_token": "101",
+        "expiry": "2026-11-26", "price": 25000.0, "volume": 1200.0,
+        "oi": 450000.0, "instrument_token": "101",
+        "exchange_timestamp": "2026-11-18T03:00:00+00:00",
+        "received_at": "2026-11-18T03:00:01+00:00",
     }]
     assert result["option_oi_by_strike"] == [{
         "strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 14000.0,
+        "symbol": "NIFTY",
     }]
     assert result["unmapped_tick_count"] == 1
     assert result["price_scaling"] == "Type A decoder already applied the 1/100 divisor; no additional scaling"

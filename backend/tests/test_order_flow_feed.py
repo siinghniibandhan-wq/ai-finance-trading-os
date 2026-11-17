@@ -239,8 +239,8 @@ def test_snapshot_honors_gateway_stale_flag_even_with_recent_tick(monkeypatch):
     exchange_time = datetime.now(timezone.utc).replace(microsecond=0)
     exchange_seconds = int((exchange_time - datetime(1980, 1, 1, tzinfo=timezone.utc)).total_seconds())
     master = (
-        "instrument_token,tradingsymbol,name,expiry,strike,instrument_type,segment,exchange\\n"
-        "301,NIFTY26NOVFUT,NIFTY,2026-11-26,,FUTIDX,NSEFO,NSE\\n"
+        "instrument_token,tradingsymbol,name,expiry,strike,instrument_type,segment,exchange\n"
+        "301,NIFTY26NOVFUT,NIFTY,2026-11-26,,FUTIDX,NSEFO,NSE\n"
     )
     snapshot = {"status": "success", "ticks": [{
         "token": 301, "last_price": 25000, "volume": 100,

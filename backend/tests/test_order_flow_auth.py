@@ -15,3 +15,15 @@ def test_order_flow_snapshot_rejects_anonymous_requests():
     response = client.get("/api/order-flow/snapshot?symbol=NIFTY")
 
     assert response.status_code == 401
+
+
+def test_order_flow_snapshot_rejects_anonymous_request_without_symbol():
+    assert client.get("/api/order-flow/snapshot").status_code == 401
+
+
+def test_order_flow_snapshot_rejects_non_bearer_authorization_scheme():
+    response = client.get(
+        "/api/order-flow/snapshot", headers={"Authorization": "Basic dXNlcjpwYXNz"}
+    )
+
+    assert response.status_code == 401

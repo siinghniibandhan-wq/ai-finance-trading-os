@@ -8,6 +8,7 @@ export function appendLivePricePoint(history, snapshot, limit = 60) {
   ) return history;
 
   let next = history.slice();
+  let changed = false;
   for (const item of contracts) {
     const timestamp = item?.exchange_timestamp;
     const time = Date.parse(timestamp || "");
@@ -23,15 +24,20 @@ export function appendLivePricePoint(history, snapshot, limit = 60) {
 
     const sameTimeIndex = next.findIndex(point => point.timestamp === timestamp);
     if (sameTimeIndex >= 0) {
-      next[sameTimeIndex] = {
-        ...next[sameTimeIndex],
-        prices: { ...next[sameTimeIndex].prices, [symbol]: price },
-      };
+      if (next[sameTimeIndex].prices[symbol] !== price) {
+        next[sameTimeIndex] = {
+          ...next[sameTimeIndex],
+          prices: { ...next[sameTimeIndex].prices, [symbol]: price },
+        };
+        changed = true;
+      }
     } else {
       next.push({ timestamp, prices: { [symbol]: price } });
+      changed = true;
     }
   }
 
+  if (!changed) return history;
   next.sort((left, right) => Date.parse(left.timestamp) - Date.parse(right.timestamp));
   return next.slice(-Math.max(1, limit));
 }

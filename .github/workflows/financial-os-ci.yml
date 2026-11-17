@@ -62,6 +62,11 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}/backend
         run: pytest -q
+      - name: Test m.Stock gateway stream worker
+        working-directory: gateway
+        env:
+          PYTHONPATH: ${{ github.workspace }}/gateway
+        run: pytest -q tests
 
 
   secrets:

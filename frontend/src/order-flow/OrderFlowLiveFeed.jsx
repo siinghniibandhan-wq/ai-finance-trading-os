@@ -59,7 +59,22 @@ function LivePriceChart({ history }) {
             .map((point, index) => point.prices[contract] == null ? null : `${x(index)},${y(point.prices[contract])}`)
             .filter(Boolean)
             .join(" ");
-          return <polyline key={contract} points={points} className="mf-live-price-line" opacity={1 - seriesIndex * 0.12} />;
+          const lastIndex = history.reduce((found, point, index) => (
+            point.prices[contract] == null ? found : index
+          ), -1);
+          return (
+            <g key={contract} opacity={1 - seriesIndex * 0.12}>
+              <polyline points={points} className="mf-live-price-line" />
+              {lastIndex >= 0 && (
+                <circle
+                  cx={x(lastIndex)}
+                  cy={y(history[lastIndex].prices[contract])}
+                  r="3.5"
+                  className="mf-live-price-point"
+                />
+              )}
+            </g>
+          );
         })}
         <text x="24" y="160">{number(minimum)}</text>
         <text x="616" y="160" textAnchor="end">{number(maximum)}</text>

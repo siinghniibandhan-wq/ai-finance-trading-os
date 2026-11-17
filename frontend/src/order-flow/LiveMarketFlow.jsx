@@ -28,6 +28,7 @@ export default function LiveMarketFlow({ snapshot, symbol, onSymbolChange }) {
         <article><small>Max put OI · support</small><b>{view.support ? fmt(view.support.strike) : "Unavailable"}</b><small>{view.support ? compact(view.support.oi) + " OI" : "No option OI"}</small></article>
         <article><small>Max call OI · resistance</small><b>{view.resistance ? fmt(view.resistance.strike) : "Unavailable"}</b><small>{view.resistance ? compact(view.resistance.oi) + " OI" : "No option OI"}</small></article>
         <article><small>Intraday candles</small><b>Unavailable</b><small>No intraday history source</small></article>
+        <article><small>Buildup</small><b>Unavailable</b><small>No reliable intraday price/OI history</small></article>
         <article><small>OI change %</small><b>Unavailable</b><small>No previous-day OI source</small></article>
       </div>
       <div className="mf-live-grid">

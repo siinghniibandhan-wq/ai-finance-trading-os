@@ -116,7 +116,7 @@ def _load_instrument_master(base: str, secret: str) -> dict:
                 "rows_by_token": rows_by_token,
             })
             return rows_by_token
-        except (HTTPError, URLError, TimeoutError, OSError, UnicodeDecodeError, ValueError) as exc:
+        except (HTTPError, URLError, TimeoutError, OSError, UnicodeDecodeError, csv.Error, ValueError) as exc:
             raise OrderFlowFeedError(f"Unable to load m.Stock instrument master: {exc}") from exc
 
 
@@ -127,7 +127,10 @@ def _exchange_timestamp(value):
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         if not isfinite(float(value)) or value <= 0:
             return None
-        return (_TYPE_A_EPOCH + timedelta(seconds=float(value))).isoformat()
+        try:
+            return (_TYPE_A_EPOCH + timedelta(seconds=float(value))).isoformat()
+        except (OverflowError, ValueError):
+            return None
     if isinstance(value, str):
         try:
             parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
@@ -140,6 +143,8 @@ def _exchange_timestamp(value):
 
 
 def _positive_number(value):
+    if isinstance(value, bool):
+        return None
     try:
         number = float(value)
     except (TypeError, ValueError):
@@ -188,7 +193,7 @@ def _normalize_type_a_ticks(ticks: list, rows_by_token: dict, symbol: str | None
         else:
             strike = _positive_number(instrument.get("strike"))
             side = instrument.get("option_type")
-            if strike is None or side not in {"CE", "PE"}:
+            if strike is None or strike <= 0 or side not in {"CE", "PE"}:
                 unmapped.append(tick)
                 continue
             options.append({

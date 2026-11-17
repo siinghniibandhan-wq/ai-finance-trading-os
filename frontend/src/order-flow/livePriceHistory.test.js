@@ -50,3 +50,18 @@ test("does not chart stale exchange ticks as live price history", () => {
     futures_contracts: [{ tradingsymbol: "NIFTY26NOVFUT", price: 25000 }],
   }), history);
 });
+
+test("uses each contract exchange timestamp instead of the newest unrelated tick", () => {
+  const result = appendLivePricePoint([], {
+    feed: { status: "fresh", last_tick_at: "2026-11-18T03:00:05+00:00" },
+    futures_contracts: [
+      { tradingsymbol: "NIFTY26NOVFUT", price: 25000, exchange_timestamp: "2026-11-18T03:00:00+00:00" },
+      { tradingsymbol: "NIFTY27JANFUT", price: 25100, exchange_timestamp: "2026-11-18T03:00:05+00:00" },
+    ],
+  });
+
+  assert.deepEqual(result, [
+    { timestamp: "2026-11-18T03:00:00+00:00", prices: { NIFTY26NOVFUT: 25000 } },
+    { timestamp: "2026-11-18T03:00:05+00:00", prices: { NIFTY27JANFUT: 25100 } },
+  ]);
+});

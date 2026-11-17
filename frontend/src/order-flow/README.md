@@ -13,14 +13,16 @@ The source project's interaction/layout model has been adapted to Financial OS; 
 - Pure backend transformations for futures contract-month aggregation, current OI change/percentage, and strike-wise CE/PE OI aggregation.
 - Feed freshness classification: `fresh`, `stale`, `disconnected`.
 - Authenticated, read-only API: `GET /api/order-flow/snapshot?symbol=NIFTY`.
-- Server-side derivatives gateway adapter, using `MSTOCK_DERIVATIVES_GATEWAY_URL` (preferred) or `MSTOCK_GATEWAY_URL`, plus `MSTOCK_GATEWAY_SECRET`.
+- Server-side adapter for a separately configured derivatives gateway using `MSTOCK_DERIVATIVES_GATEWAY_URL` and `MSTOCK_GATEWAY_SECRET`.
 - Frontend feed status panel with authenticated polling, freshness display and bounded exponential retry (10–60 seconds).
-- Backend tests for aggregation, freshness, gateway payload validation and fail-closed configuration.
+- Regression tests for aggregation, freshness, gateway payload validation and fail-closed configuration.
 - Historical OI is deliberately excluded.
 
-## Gateway contract — remaining external integration
+## Raw m.Stock stream integration — not yet connected to the application API
 
-For a requested underlying (for example `NIFTY`), the application adapter reads `GET /instruments`, selects provider-listed derivative tokens, calls `POST /market-stream/start` in full mode (maximum 200 tokens, matching the gateway contract), then reads `GET /market-stream/snapshot`. It joins ticks to the provider instrument master by instrument token and maps futures/options only when provider metadata and full-packet tick fields are present. The gateway still owns m.Stock authentication, WebSocket lifecycle, Type A decoding, subscription acknowledgement and reconnects. The accompanying gateway worker patch waits for a successful LOGIN acknowledgement before subscribing and reconnects when the requested token set changes. It is committed as gateway/market_stream.py and gateway/mstock_stream.py, with focused worker tests. This patch is not deployed to EC2. The application does not invent missing contract identity, previous OI, or price scaling. The Type A decoder currently exposes raw LTP, so the application labels it `price_raw` until the provider's exact price divisor is verified.
+The application API continues to consume the established normalized `GET /order-flow/snapshot` gateway contract. The raw stream worker added in this PR exposes the gateway-side worker implementation and focused tests, but the repository does not yet contain a verified route that exposes the provider instrument master or bridges raw ticks into the normalized derivatives snapshot. Do not assume a `GET /instruments` route exists, do not point the derivatives adapter at the cash-market gateway, and do not report the raw stream as integrated or live.
+
+The gateway worker patch is application-side source only and is not deployed to EC2. The provider LOGIN acknowledgement format and live WebSocket handshake remain unverified. The existing backend adapter and its regression tests are retained until the gateway's real route contract is implemented and verified end-to-end.
 
 ```json
 {

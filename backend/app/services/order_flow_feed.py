@@ -266,7 +266,14 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
                 futures, options, unmapped = [], [], []
             contract_months = aggregate_contract_months(futures) if futures else []
             option_oi = aggregate_option_oi(options) if options else []
-            last_tick_at = _latest_exchange_timestamp(ticks)
+            if cleaned_symbol:
+                matched_timestamps = [
+                    item["exchange_timestamp"] for item in futures + options
+                    if item.get("exchange_timestamp")
+                ]
+                last_tick_at = max(matched_timestamps) if matched_timestamps else None
+            else:
+                last_tick_at = _latest_exchange_timestamp(ticks)
             feed = feed_status(last_tick_at)
             if stream.get("connected") is False:
                 feed["status"] = "disconnected"

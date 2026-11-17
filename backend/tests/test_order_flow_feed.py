@@ -232,3 +232,32 @@ def test_option_oi_aggregation_keeps_underlyings_separate_at_same_strike():
         {"symbol": "BANKNIFTY", "strike": 25000.0, "ce_oi": 7000.0, "pe_oi": 0},
         {"symbol": "NIFTY", "strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 0},
     ]
+
+
+def test_snapshot_honors_gateway_stale_flag_even_with_recent_tick(monkeypatch):
+    monkeypatch.setattr(order_flow_feed, "_instrument_master_cache", {"csv": None, "loaded_at": 0.0, "rows_by_token": {}})
+    exchange_time = datetime.now(timezone.utc).replace(microsecond=0)
+    exchange_seconds = int((exchange_time - datetime(1980, 1, 1, tzinfo=timezone.utc)).total_seconds())
+    master = (
+        "instrument_token,tradingsymbol,name,expiry,strike,instrument_type,segment,exchange\\n"
+        "301,NIFTY26NOVFUT,NIFTY,2026-11-26,,FUTIDX,NSEFO,NSE\\n"
+    )
+    snapshot = {"status": "success", "ticks": [{
+        "token": 301, "last_price": 25000, "volume": 100,
+        "open_interest": 500, "exchange_timestamp": exchange_seconds,
+    }], "stream": {"connected": True, "stale": True}}
+    monkeypatch.setenv("MSTOCK_GATEWAY_URL", "http://127.0.0.1:8000")
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
+
+    def fake_urlopen(request, timeout):
+        if request.full_url.endswith("/instruments"):
+            return FakeTextResponse(master)
+        return FakeResponse(snapshot)
+
+    monkeypatch.setattr(order_flow_feed, "urlopen", fake_urlopen)
+
+    result = get_order_flow_snapshot("NIFTY")
+
+    assert result["feed"]["status"] == "stale"
+    assert result["feed"]["connected"] is True
+    assert result["feed"]["stale"] is True

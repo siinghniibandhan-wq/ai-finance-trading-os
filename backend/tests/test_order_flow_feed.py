@@ -181,6 +181,7 @@ class FakeTextResponse(FakeResponse):
 
 
 def test_snapshot_maps_real_type_a_tokens_using_gateway_instrument_master(monkeypatch):
+    monkeypatch.setattr(order_flow_feed, "_instrument_master_cache", {"csv": None, "loaded_at": 0.0, "rows_by_token": {}})
     exchange_time = datetime(2026, 11, 18, 3, 0, tzinfo=timezone.utc)
     type_a_epoch = datetime(1980, 1, 1, tzinfo=timezone.utc)
     exchange_seconds = int((exchange_time - type_a_epoch).total_seconds())
@@ -243,6 +244,7 @@ def test_snapshot_maps_real_type_a_tokens_using_gateway_instrument_master(monkey
 
 
 def test_snapshot_filters_instrument_master_mapping_by_requested_underlying(monkeypatch):
+    monkeypatch.setattr(order_flow_feed, "_instrument_master_cache", {"csv": None, "loaded_at": 0.0, "rows_by_token": {}})
     exchange_time = datetime(2026, 11, 18, 3, 0, tzinfo=timezone.utc)
     exchange_seconds = int((exchange_time - datetime(1980, 1, 1, tzinfo=timezone.utc)).total_seconds())
     instrument_master = (

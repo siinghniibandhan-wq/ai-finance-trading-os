@@ -433,3 +433,19 @@
 .mf-live-price-line { fill:none; stroke:var(--mf-up); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
 .mf-live-chart-legend { display:flex; gap:12px; flex-wrap:wrap; color:var(--th-muted); font-size:10px; }
 .mf-live-contracts>p { margin-top:7px; font-size:10px; }
+
+
+.mf-live-option-chart { display:grid; gap:8px; margin:8px 0 12px; }
+.mf-live-option-row { display:grid; grid-template-columns:minmax(110px,160px) minmax(120px,1fr) minmax(150px,auto); align-items:center; gap:10px; }
+.mf-live-option-row>b { font-size:10px; white-space:nowrap; }
+.mf-live-option-row>small { color:var(--th-muted); font-size:9px; white-space:nowrap; text-align:right; }
+.mf-live-option-bars { display:grid; gap:3px; }
+.mf-live-option-bars>div { height:7px; border-radius:99px; overflow:hidden; background:var(--th-border); }
+.mf-live-option-bars i { display:block; height:100%; border-radius:99px; }
+.mf-live-option-ce i { background:var(--mf-up); }
+.mf-live-option-pe i { background:var(--mf-down); }
+@media(max-width:560px) {
+  .mf-live-option-row { grid-template-columns:minmax(0,1fr) auto; gap:5px 8px; }
+  .mf-live-option-bars { grid-column:1/-1; grid-row:2; }
+  .mf-live-option-row>small { grid-column:2; grid-row:1; }
+}

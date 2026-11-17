@@ -24,7 +24,12 @@ class OrderFlowFeedError(Exception):
 
 
 def _gateway_url() -> str:
-    return os.getenv("MSTOCK_DERIVATIVES_GATEWAY_URL", "").strip().rstrip("/")
+    # Prefer a dedicated derivatives endpoint when configured, but reuse the
+    # already-deployed m.Stock gateway base URL by default. Both services run
+    # on the same EC2 host in the standard deployment.
+    configured = os.getenv("MSTOCK_DERIVATIVES_GATEWAY_URL", "").strip()
+    fallback = os.getenv("MSTOCK_GATEWAY_URL", "").strip()
+    return (configured or fallback).rstrip("/")
 
 
 def get_order_flow_snapshot(symbol: str | None = None) -> dict:

@@ -23,7 +23,7 @@ test("live view derives PCR and max OI levels without fabricated values", () => 
     feed:{last_tick_at:"2026-11-17T09:20:00+00:00"}
   });
   assert.equal(view.futures[0].price,25000);
-  assert.equal(view.pcr,1);
+  assert.ok(Math.abs(view.pcr - (500 / 600)) < 1e-12);
   assert.deepEqual(view.support,{strike:24900,oi:300});
   assert.deepEqual(view.resistance,{strike:25000,oi:500});
   assert.equal(view.unavailable.length,1);

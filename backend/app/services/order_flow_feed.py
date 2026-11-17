@@ -83,6 +83,8 @@ def _load_instrument_master(base: str, secret: str) -> dict:
             rows_by_token = {}
             for row in reader:
                 token = get(row, "instrument_token", "token", "security_id")
+                if token.endswith(".0") and token[:-2].isdigit():
+                    token = token[:-2]
                 kind = get(row, "instrument_type", "type").upper()
                 if not token or not (kind.startswith("FUT") or kind.startswith("OPT")):
                     continue
@@ -154,6 +156,8 @@ def _normalize_type_a_ticks(ticks: list, rows_by_token: dict, symbol: str | None
             unmapped.append(tick)
             continue
         token = str(tick.get("token", "")).strip()
+        if token.endswith(".0") and token[:-2].isdigit():
+            token = token[:-2]
         instrument = rows_by_token.get(token)
         if not instrument:
             unmapped.append(tick)
@@ -165,7 +169,7 @@ def _normalize_type_a_ticks(ticks: list, rows_by_token: dict, symbol: str | None
         volume = _positive_number(tick.get("volume"))
         oi = _positive_number(tick.get("open_interest"))
         exchange_timestamp = _exchange_timestamp(tick.get("exchange_timestamp"))
-        if price is None or volume is None or oi is None or not exchange_timestamp:
+        if price is None or price <= 0 or volume is None or oi is None or not exchange_timestamp:
             unmapped.append(tick)
             continue
 
@@ -255,8 +259,11 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
         if ticks is not None:
             if not isinstance(ticks, list):
                 raise ValueError("ticks must be a list")
-            rows_by_token = _load_instrument_master(base, secret)
-            futures, options, unmapped = _normalize_type_a_ticks(ticks, rows_by_token, cleaned_symbol)
+            if ticks:
+                rows_by_token = _load_instrument_master(base, secret)
+                futures, options, unmapped = _normalize_type_a_ticks(ticks, rows_by_token, cleaned_symbol)
+            else:
+                futures, options, unmapped = [], [], []
             contract_months = aggregate_contract_months(futures) if futures else []
             option_oi = aggregate_option_oi(options) if options else []
             last_tick_at = _latest_exchange_timestamp(ticks)
@@ -288,7 +295,7 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
         "contract_months": contract_months,
         "option_contracts": options,
         "option_oi_by_strike": option_oi,
-        "raw_ticks": ticks or [] if ticks is not None else [],
+        "raw_ticks": ticks or [],
         "unmapped_tick_count": len(unmapped),
         "price_scaling": "Type A decoder already applied the 1/100 divisor; no additional scaling",
         "historical_oi_included": False,

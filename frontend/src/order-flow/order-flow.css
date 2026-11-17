@@ -409,3 +409,15 @@
 .mf-native-node:focus-visible rect:first-child { stroke:var(--th-focus,var(--th-accent,currentColor)); stroke-width:2.5; }
 
 /* Keep the original Order Flow controls and data panels untouched. */
+
+
+/* Live provider values are visually separated from the illustrative demo board. */
+.mf-live-contracts { margin-top: 12px; }
+.mf-live-contracts h3 { margin: 0 0 8px; font-size: 0.9rem; }
+.mf-live-table-wrap { width: 100%; overflow-x: auto; }
+.mf-live-table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.mf-live-table-wrap th,
+.mf-live-table-wrap td { padding: 7px 10px; border-bottom: 1px solid var(--border, rgba(127,127,127,.2)); text-align: right; white-space: nowrap; }
+.mf-live-table-wrap th:first-child,
+.mf-live-table-wrap td:first-child { text-align: left; }
+.mf-live-table-wrap th { color: var(--text-muted, #777); font-weight: 600; }

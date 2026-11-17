@@ -159,10 +159,10 @@ class MarketStreamWorker:
             except (TypeError, ValueError):
                 payload = None
             if isinstance(payload, dict):
-                status = str(payload.get("status", payload.get("type", payload.get("message", "")))).lower()
-                if status in {"success", "ok", "authenticated", "login_success", "login successful"}:
-                    return
+                values = [str(value).strip().lower() for value in payload.values() if isinstance(value, (str, int, float))]
                 if payload.get("success") is True or payload.get("authenticated") is True:
+                    return
+                if any(value in {"success", "ok", "authenticated", "login_success", "login successful"} for value in values):
                     return
                 continue
             if any(phrase in lowered for phrase in ("login successful", "login success", "logged in", "authenticated", "login:success")):

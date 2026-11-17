@@ -449,3 +449,5 @@
   .mf-live-option-bars { grid-column:1/-1; grid-row:2; }
   .mf-live-option-row>small { grid-column:2; grid-row:1; }
 }
+
+.mf-live-price-point { fill:var(--mf-up);stroke:var(--th-card);stroke-width:1.5; }

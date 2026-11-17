@@ -19,20 +19,30 @@ def _number(value: Any, field: str) -> float:
     return number
 
 
+def _require_contract(row: Any) -> dict:
+    if not isinstance(row, dict):
+        raise ValueError("contract must be an object")
+    return row
+
+
 def aggregate_contract_months(rows: Iterable[dict]) -> list[dict]:
     """Group normalized futures contracts by underlying and expiry."""
     grouped = {}
-    for row in rows:
+    for raw_row in rows:
+        row = _require_contract(raw_row)
         symbol = str(row.get("symbol") or "").strip().upper()
         expiry = str(row.get("expiry") or "").strip()
         if not symbol or not expiry:
             raise ValueError("Each contract requires symbol and expiry")
+        # Missing provider values must not silently become fabricated zeroes.
+        volume = _number(row.get("volume"), "volume")
+        oi = _number(row.get("oi"), "oi")
         key = (symbol, expiry)
         bucket = grouped.setdefault(key, {"symbol": symbol, "expiry": expiry,
                                           "contracts": 0, "volume": 0, "oi": 0})
         bucket["contracts"] += 1
-        bucket["volume"] += _number(row.get("volume", 0), "volume")
-        bucket["oi"] += _number(row.get("oi", 0), "oi")
+        bucket["volume"] += volume
+        bucket["oi"] += oi
     return [grouped[key] for key in sorted(grouped, key=lambda item: (item[0], item[1]))]
 
 
@@ -49,12 +59,13 @@ def calculate_oi_change(current_oi: Any, previous_oi: Any) -> dict:
 def aggregate_option_oi(rows: Iterable[dict]) -> list[dict]:
     """Aggregate open interest by strike, keeping calls and puts separate."""
     grouped = defaultdict(lambda: {"ce_oi": 0, "pe_oi": 0})
-    for row in rows:
+    for raw_row in rows:
+        row = _require_contract(raw_row)
         strike = _number(row.get("strike"), "strike")
         side = str(row.get("option_type") or "").strip().upper()
         if side not in {"CE", "PE"}:
             raise ValueError("option_type must be CE or PE")
-        oi = _number(row.get("oi", 0), "oi")
+        oi = _number(row.get("oi"), "oi")
         grouped[strike]["ce_oi" if side == "CE" else "pe_oi"] += oi
     return [
         {"strike": strike, **grouped[strike]}

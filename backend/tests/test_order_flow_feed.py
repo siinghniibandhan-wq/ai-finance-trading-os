@@ -272,3 +272,18 @@ def test_snapshot_filters_instrument_master_mapping_by_requested_underlying(monk
 
     assert [item["symbol"] for item in result["futures_contracts"]] == ["NIFTY"]
     assert result["futures_contracts"][0]["price"] == 25000
+
+
+
+def test_option_oi_aggregation_keeps_underlyings_separate_at_same_strike():
+    from app.services.order_flow_data import aggregate_option_oi
+
+    result = aggregate_option_oi([
+        {"symbol": "NIFTY", "strike": 25000, "option_type": "CE", "oi": 12000},
+        {"symbol": "BANKNIFTY", "strike": 25000, "option_type": "CE", "oi": 7000},
+    ])
+
+    assert result == [
+        {"symbol": "BANKNIFTY", "strike": 25000.0, "ce_oi": 7000.0, "pe_oi": 0},
+        {"symbol": "NIFTY", "strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 0},
+    ]

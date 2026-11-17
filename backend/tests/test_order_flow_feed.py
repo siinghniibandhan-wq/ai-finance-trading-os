@@ -37,7 +37,7 @@ def test_snapshot_normalizes_futures_contracts_and_strike_oi(monkeypatch):
             ],
         },
     }
-    monkeypatch.setenv("MSTOCK_DERIVATIVES_GATEWAY_URL", "https://gateway.example")
+    monkeypatch.setenv("MSTOCK_GATEWAY_URL", "https://gateway.example")
     monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
     monkeypatch.setattr(order_flow_feed, "urlopen", lambda request, timeout: FakeResponse(payload))
 
@@ -54,7 +54,7 @@ def test_snapshot_normalizes_futures_contracts_and_strike_oi(monkeypatch):
 
 
 def test_snapshot_fails_closed_when_gateway_is_not_configured(monkeypatch):
-    monkeypatch.delenv("MSTOCK_DERIVATIVES_GATEWAY_URL", raising=False)
+    monkeypatch.delenv("MSTOCK_GATEWAY_URL", raising=False)
     monkeypatch.delenv("MSTOCK_GATEWAY_URL", raising=False)
     monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
     with pytest.raises(OrderFlowFeedError, match="not configured"):
@@ -62,7 +62,7 @@ def test_snapshot_fails_closed_when_gateway_is_not_configured(monkeypatch):
 
 
 def test_snapshot_rejects_untrusted_gateway_payload(monkeypatch):
-    monkeypatch.setenv("MSTOCK_DERIVATIVES_GATEWAY_URL", "https://gateway.example")
+    monkeypatch.setenv("MSTOCK_GATEWAY_URL", "https://gateway.example")
     monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
     monkeypatch.setattr(order_flow_feed, "urlopen", lambda request, timeout: FakeResponse({
         "status": "success", "data": {"futures_contracts": "not-a-list", "option_contracts": []}
@@ -72,7 +72,7 @@ def test_snapshot_rejects_untrusted_gateway_payload(monkeypatch):
 
 
 def test_snapshot_rejects_non_object_contract_rows(monkeypatch):
-    monkeypatch.setenv("MSTOCK_DERIVATIVES_GATEWAY_URL", "https://gateway.example")
+    monkeypatch.setenv("MSTOCK_GATEWAY_URL", "https://gateway.example")
     monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
     monkeypatch.setattr(order_flow_feed, "urlopen", lambda request, timeout: FakeResponse({
         "status": "success",
@@ -96,7 +96,7 @@ def test_snapshot_falls_back_to_existing_mstock_gateway_url(monkeypatch):
             "option_contracts": [],
         },
     }
-    monkeypatch.delenv("MSTOCK_DERIVATIVES_GATEWAY_URL", raising=False)
+    monkeypatch.delenv("MSTOCK_GATEWAY_URL", raising=False)
     monkeypatch.setenv("MSTOCK_GATEWAY_URL", "http://127.0.0.1:8000")
     monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
     requested = {}

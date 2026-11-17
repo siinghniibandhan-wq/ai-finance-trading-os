@@ -57,21 +57,24 @@ def calculate_oi_change(current_oi: Any, previous_oi: Any) -> dict:
 
 
 def aggregate_option_oi(rows: Iterable[dict]) -> list[dict]:
-    """Aggregate open interest by strike, keeping calls and puts separate."""
+    """Aggregate open interest by underlying and strike, keeping calls and puts separate."""
     grouped = defaultdict(lambda: {"ce_oi": 0, "pe_oi": 0})
     for raw_row in rows:
         row = _require_contract(raw_row)
         strike = _number(row.get("strike"), "strike")
+        symbol = str(row.get("symbol") or "").strip().upper()
         side = str(row.get("option_type") or "").strip().upper()
         if side not in {"CE", "PE"}:
             raise ValueError("option_type must be CE or PE")
         oi = _number(row.get("oi"), "oi")
-        grouped[strike]["ce_oi" if side == "CE" else "pe_oi"] += oi
-    return [
-        {"strike": strike, **grouped[strike]}
-        for strike in sorted(grouped)
-    ]
-
+        grouped[(symbol, strike)]["ce_oi" if side == "CE" else "pe_oi"] += oi
+    result = []
+    for symbol, strike in sorted(grouped, key=lambda item: (item[0], item[1])):
+        row = {"strike": strike, **grouped[(symbol, strike)]}
+        if symbol:
+            row["symbol"] = symbol
+        result.append(row)
+    return result
 
 def _parse_timestamp(value: Any) -> datetime | None:
     if value is None:

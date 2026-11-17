@@ -137,6 +137,8 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
             futures.append(item)
         tick_times = [_tick_timestamp(t) for t in ticks if isinstance(t, dict) and _tick_timestamp(t)]
         last_tick_at = data.get("last_tick_at") or data.get("last_tick") or (tick_times[-1] if tick_times else None)
+        if isinstance(last_tick_at, dict):
+            last_tick_at = _tick_timestamp(last_tick_at)
         feed = feed_status(last_tick_at)
     except (TypeError, ValueError) as exc:
         raise OrderFlowFeedError(f"Market-stream data validation failed: {exc}") from exc

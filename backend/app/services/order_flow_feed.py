@@ -34,9 +34,7 @@ _TYPE_A_EPOCH = datetime(1980, 1, 1, tzinfo=timezone.utc)
 
 
 def _gateway_url() -> str:
-    configured = os.getenv("MSTOCK_DERIVATIVES_GATEWAY_URL", "").strip()
-    fallback = os.getenv("MSTOCK_GATEWAY_URL", "").strip()
-    return (configured or fallback).rstrip("/")
+    return os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
 
 
 def _gateway_request(url: str, secret: str, *, timeout: int = 8):

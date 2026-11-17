@@ -68,3 +68,43 @@ def test_snapshot_rejects_untrusted_gateway_payload(monkeypatch):
     }))
     with pytest.raises(OrderFlowFeedError, match="invalid contract collections"):
         get_order_flow_snapshot()
+
+
+def test_snapshot_passes_through_coverage_and_stream_without_changing_existing_keys(monkeypatch):
+    now = datetime.now(timezone.utc)
+    coverage = {"state": "ready", "futures_planned": 2, "futures_with_data": 1,
+                "unavailable": [{"tradingsymbol": "NIFTY26NOVFUT", "reason": "no tick received"}]}
+    stream = {"running": True, "connected": True, "authenticated": True,
+              "login_state": "authenticated", "login_confirmed_by": "first_tick"}
+    payload = {
+        "status": "success",
+        "data": {
+            "last_tick_at": now.isoformat(),
+            "futures_contracts": [
+                {"symbol": "NIFTY", "expiry": "2026-11-26", "price": 25000,
+                 "volume": 100, "oi": 1200, "previous_oi": None},
+            ],
+            "option_contracts": [
+                {"strike": 25000, "option_type": "CE", "oi": 500},
+                {"strike": 25000, "option_type": "PE", "oi": 700},
+            ],
+            "coverage": coverage,
+            "stream": stream,
+        },
+    }
+    monkeypatch.setenv("MSTOCK_DERIVATIVES_GATEWAY_URL", "https://gateway.example")
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
+    monkeypatch.setattr(order_flow_feed, "urlopen", lambda request, timeout: FakeResponse(payload))
+
+    result = get_order_flow_snapshot("NIFTY")
+
+    assert result["coverage"] == coverage
+    assert result["stream"] == stream
+    assert set(result) == {
+        "status", "source", "read_only", "as_of", "feed", "futures_contracts",
+        "contract_months", "option_oi_by_strike", "historical_oi_included",
+        "coverage", "stream",
+    }
+    assert result["futures_contracts"][0]["price"] == 25000
+    assert result["futures_contracts"][0]["oi"] == 1200
+    assert "oi_change" not in result["futures_contracts"][0]

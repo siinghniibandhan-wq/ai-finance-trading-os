@@ -173,7 +173,7 @@ def _matches_symbol(instrument: dict, symbol: str | None) -> bool:
         return False
     underlying = _symbol_key(instrument.get("symbol"))
     tradingsymbol = _symbol_key(instrument.get("tradingsymbol"))
-    return underlying == wanted or tradingsymbol.startswith(wanted)
+    return underlying == wanted or (tradingsymbol.startswith(wanted) and len(tradingsymbol) > len(wanted) and tradingsymbol[len(wanted)].isdigit())
 
 
 def _select_subscription_tokens(

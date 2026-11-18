@@ -164,9 +164,9 @@ export default function AdvancedChartPage() {
         horzLines: { color: getComputedStyle(container).getPropertyValue("--finos-border").trim() || "#30343d" },
       },
       crosshair: { mode: 0 },
-      rightPriceScale: { borderColor: "var(--finos-border, #30343d)" },
+      rightPriceScale: { borderColor: getComputedStyle(container).getPropertyValue("--finos-border").trim() || "#30343d" },
       timeScale: {
-        borderColor: "var(--finos-border, #30343d)",
+        borderColor: getComputedStyle(container).getPropertyValue("--finos-border").trim() || "#30343d",
         timeVisible: true,
         secondsVisible: false,
       },
@@ -301,7 +301,7 @@ export default function AdvancedChartPage() {
         {historyError && <div className="advanced-chart-warning" role="status">{historyError}</div>}
         <div className="advanced-chart-canvas" ref={chartContainerRef} aria-label="Interactive candlestick and volume chart" />
         <div className="advanced-chart-footnote">
-          Historical candles: m.Stock provider data. Quote updates: 10-second REST snapshots, not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · tradingview.com.
+          Historical candles: m.Stock provider data. Quote updates: 10-second REST snapshots, not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a>.
         </div>
       </section>
     </main>

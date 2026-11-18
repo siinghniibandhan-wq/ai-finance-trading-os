@@ -1,126 +1,166 @@
-import struct
+import sys
 import time
+import types
+
+import pytest
 
 from market_stream import MarketStreamWorker
 
 
-class FakeSocket:
-    def __init__(self, frames):
-        self.frames = iter(frames)
-        self.sent = []
+class FakeTicker:
+    MODE_LTP = 1
+    MODE_QUOTE = 2
+    MODE_FULL = 3
+    instances = []
+
+    def __init__(self, api_key, access_token, **kwargs):
+        self.api_key = api_key
+        self.access_token = access_token
+        self.kwargs = kwargs
+        self.subscribed_tokens = {}
+        self.calls = []
         self.closed = False
+        type(self).instances.append(self)
 
-    def send(self, value):
-        self.sent.append(value)
+    def send_login_after_connect(self):
+        self.calls.append(("login",))
+        return True
 
-    def recv(self):
-        try:
-            return next(self.frames)
-        except StopIteration:
-            time.sleep(.01)
-            raise TimeoutError("read timed out")
+    def connect(self, threaded=False):
+        self.calls.append(("connect", threaded))
+        self.on_open(self)
+        self.on_connect(self, {"status": "connected"})
+
+    def subscribe(self, tokens):
+        self.calls.append(("subscribe", list(tokens)))
+        for token in tokens:
+            self.subscribed_tokens[token] = self.MODE_QUOTE
+
+    def unsubscribe(self, tokens):
+        self.calls.append(("unsubscribe", list(tokens)))
+        for token in tokens:
+            self.subscribed_tokens.pop(token, None)
+
+    def set_mode(self, mode, tokens):
+        self.calls.append(("set_mode", mode, list(tokens)))
 
     def close(self):
         self.closed = True
+        self.on_close(self, 1000, "closed")
 
 
-def frame_ltp(token=123, ltp=456):
-    packet = struct.pack(">2I", token, ltp)
-    return struct.pack(">H", 1) + struct.pack(">H", len(packet)) + packet
+@pytest.fixture
+def sdk(monkeypatch):
+    FakeTicker.instances.clear()
+    package = types.ModuleType("tradingapi_a")
+    module = types.ModuleType("tradingapi_a.mticker")
+    module.MTicker = FakeTicker
+    package.mticker = module
+    monkeypatch.setitem(sys.modules, "tradingapi_a", package)
+    monkeypatch.setitem(sys.modules, "tradingapi_a.mticker", module)
+    return FakeTicker
 
 
-def wait_for(predicate, timeout=1):
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        if predicate():
-            return True
-        time.sleep(.01)
-    return bool(predicate())
+def make_worker(**kwargs):
+    return MarketStreamWorker(lambda: "access-token", lambda: "api-key", **kwargs)
 
 
-def test_worker_waits_for_login_ack_before_subscribing_and_caches_ticks():
-    sock = FakeSocket(['{"status":"success"}', frame_ltp()])
-    worker = MarketStreamWorker(lambda: "token", lambda: "key",
-                                websocket_factory=lambda *a, **k: sock, recv_timeout=1)
-    worker.start([123])
-    assert wait_for(lambda: bool(worker.snapshot()))
-    ticks = worker.snapshot()
-    assert ticks[0]["token"] == 123 and ticks[0]["ltp_raw"] == 456
-    assert sock.sent[0] == "LOGIN:token"
-    assert sock.sent[1] == '{"a": "subscribe", "v": [123]}'
-    assert worker.status()["connected"] is True
-    assert worker.status()["cached_instruments"] == 1
+def test_worker_uses_production_mstock_sdk_and_subscribes_after_login(sdk):
+    worker = make_worker()
+    result = worker.start([123])
+    ticker = sdk.instances[-1]
+    assert result["started"] is True
+    assert ticker.access_token == "access-token"
+    assert ticker.kwargs["root"] == "wss://ws.mstock.trade"
+    assert ("login",) in ticker.calls
+    assert ("subscribe", [123]) in ticker.calls
+    assert ("set_mode", FakeTicker.MODE_FULL, [123]) in ticker.calls
+    assert worker.status()["connected"] is False  # socket alone is not feed verification
     worker.stop()
 
 
-def test_worker_rejects_unsafe_or_oversized_subscriptions():
-    worker = MarketStreamWorker(lambda: None, lambda: "key")
-    for tokens in ([], [0], list(range(1, 202))):
-        try:
-            worker.start(tokens)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError("invalid token list accepted")
-
-
-def test_worker_rejects_login_failure_without_subscribing():
-    sock = FakeSocket(['{"status":"error","message":"invalid token"}'])
-    worker = MarketStreamWorker(lambda: "token", lambda: "key",
-                                websocket_factory=lambda *a, **k: sock, recv_timeout=1)
+def test_only_tick_for_current_subscription_verifies_stream(sdk):
+    worker = make_worker()
     worker.start([123])
-    assert wait_for(lambda: worker.status()["last_error"] is not None)
-    assert worker.status()["connected"] is False
-    assert sock.sent == ["LOGIN:token", '{"a": "subscribe", "v": [123]}']
-    worker.stop()
-
-
-def test_worker_uses_first_subscribed_market_tick_as_stream_verification():
-    sock = FakeSocket([frame_ltp(token=999), frame_ltp(token=123, ltp=789)])
-    worker = MarketStreamWorker(lambda: "token", lambda: "key",
-                                websocket_factory=lambda *a, **k: sock, recv_timeout=1)
-    worker.start([123])
-    assert wait_for(lambda: bool(worker.snapshot()))
+    ticker = sdk.instances[-1]
+    worker._on_ticks(ticker, [{"instrument_token": 999, "last_price": 1}])
+    assert worker.status()["stream_verified"] is False
+    assert worker.snapshot() == []
+    worker._on_ticks(ticker, [{"instrument_token": 123, "last_price": 456, "oi": 12}])
     status = worker.status()
     assert status["stream_verified"] is True
     assert status["connected"] is True
-    assert [tick["token"] for tick in worker.snapshot()] == [123]
-    assert sock.sent == ["LOGIN:token", '{"a": "subscribe", "v": [123]}']
+    assert worker.snapshot()[0]["last_price"] == 456
     worker.stop()
 
 
-def test_worker_does_not_require_a_login_ack_before_subscribing():
-    sock = FakeSocket([frame_ltp(token=123, ltp=789)])
-    worker = MarketStreamWorker(lambda: "token", lambda: "key",
-                                websocket_factory=lambda *a, **k: sock, recv_timeout=1)
+def test_reconnect_invalidates_previous_verification_and_cached_ticks(sdk):
+    worker = make_worker()
     worker.start([123])
-    assert wait_for(lambda: bool(worker.snapshot()))
-    assert sock.sent[0] == "LOGIN:token"
-    assert sock.sent[1] == '{"a": "subscribe", "v": [123]}'
-    assert worker.status()["stream_verified"] is True
+    ticker = sdk.instances[-1]
+    worker._on_ticks(ticker, [{"instrument_token": 123, "last_price": 456}])
+    assert worker.status()["connected"] is True
+    worker._on_reconnect(ticker, 1)
+    status = worker.status()
+    assert status["connected"] is False
+    assert status["stream_verified"] is False
+    assert status["last_tick_at"] is None
+    assert worker.snapshot() == []
     worker.stop()
 
 
-def test_worker_never_reports_stale_ticks_as_connected():
-    sock = FakeSocket([frame_ltp(token=123)])
-    worker = MarketStreamWorker(lambda: "token", lambda: "key",
-                                websocket_factory=lambda *a, **k: sock,
-                                recv_timeout=1, stale_after=0)
+def test_subscription_change_invalidates_old_ticks_and_verification(sdk):
+    worker = make_worker()
     worker.start([123])
-    assert wait_for(lambda: bool(worker.snapshot()))
-    time.sleep(.02)
+    ticker = sdk.instances[-1]
+    worker._on_ticks(ticker, [{"instrument_token": 123, "last_price": 456}])
+    assert worker.status()["connected"] is True
+    worker.start([456])
+    status = worker.status()
+    assert status["connected"] is False
+    assert status["stream_verified"] is False
+    assert worker.snapshot() == []
+    assert ("unsubscribe", [123]) in ticker.calls
+    assert ("subscribe", [456]) in ticker.calls
+    worker.stop()
+
+
+def test_stale_feed_is_never_connected(sdk):
+    worker = make_worker(stale_after=0)
+    worker.start([123])
+    ticker = sdk.instances[-1]
+    worker._on_ticks(ticker, [{"instrument_token": 123, "last_price": 456}])
+    time.sleep(.01)
     status = worker.status()
     assert status["stale"] is True
     assert status["connected"] is False
+    assert status["stream_verified"] is False
     worker.stop()
 
 
-def test_worker_accepts_login_ack_with_type_and_message_fields():
-    sock = FakeSocket(['{"type":"login","message":"success"}', frame_ltp()])
-    worker = MarketStreamWorker(lambda: "token", lambda: "key",
-                                websocket_factory=lambda *a, **k: sock, recv_timeout=1)
+def test_close_and_error_invalidate_stream_state(sdk):
+    worker = make_worker()
     worker.start([123])
-    assert wait_for(lambda: bool(worker.snapshot()))
-    assert sock.sent[0] == "LOGIN:token"
-    assert sock.sent[1] == '{"a": "subscribe", "v": [123]}'
+    ticker = sdk.instances[-1]
+    worker._on_ticks(ticker, [{"instrument_token": 123, "last_price": 456}])
+    worker._on_close(ticker, 1006, "connection lost")
+    assert worker.status()["connected"] is False
+    assert worker.snapshot() == []
+    worker._on_ticks(ticker, [{"instrument_token": 123, "last_price": 457}])
+    worker._on_error(ticker, RuntimeError("provider error"))
+    assert worker.status()["stream_verified"] is False
+    assert worker.snapshot() == []
     worker.stop()
+
+
+def test_worker_validates_subscription_bounds(sdk):
+    worker = make_worker()
+    for tokens in ([], [0], list(range(1, 202))):
+        with pytest.raises(ValueError):
+            worker.start(tokens)
+
+
+def test_worker_requires_gateway_authentication(sdk):
+    worker = MarketStreamWorker(lambda: None, lambda: "api-key")
+    with pytest.raises(RuntimeError, match="authentication"):
+        worker.start([123])

@@ -29,6 +29,9 @@ jobs:
       - name: Test desktop sidebar collapse behavior
         working-directory: frontend
         run: npm run test:sidebar
+      - name: Test market overview partial-refresh handling
+        working-directory: frontend
+        run: npm run test:market
       - name: Build frontend
         working-directory: frontend
         run: npm run build

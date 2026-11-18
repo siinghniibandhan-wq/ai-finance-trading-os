@@ -11,6 +11,7 @@ import AccountContactSettings from "./AccountContactSettings";
 import WealthManager from "./WealthManager";
 import LoanManagement from "./LoanManagement";
 import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession, friendlyErrorMessage, describeError } from "./api";
+import { mergeMarketOverview } from "./marketOverviewState.js";
 
 import {
   LayoutDashboard,
@@ -2524,6 +2525,8 @@ function MarketsPage() {
   const [overview, setOverview] = useState(null);
   const [busy, setBusy] = useState(true);
   const [overviewError, setOverviewError] = useState("");
+  // Prevent overlapping overview refreshes from racing and clearing loading state early.
+  const overviewRefreshInFlightRef = useRef(false);
   const [query, setQuery] = useState("RELIANCE");
   const [results, setResults] = useState([]);
   // Selected instrument controls a focused, single-stock view.
@@ -2580,16 +2583,29 @@ function MarketsPage() {
   };
 
   const refresh = async () => {
-    setBusy(true); setOverviewError("");
+    // Never allow timer/manual/StrictMode refreshes to overlap and race state updates.
+    if (overviewRefreshInFlightRef.current) return;
+    overviewRefreshInFlightRef.current = true;
+    setBusy(true);
+    setOverviewError("");
     try {
-      const response = await apiFetch(`${API}/api/market-overview/`);
+      const response = await apiFetch(`${API}/api/market-overview/`, { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Market overview returned ${response.status}`);
-      setOverview(data); setUpdated(new Date().toLocaleString("en-IN"));
-      if (data?.status === "error") setOverviewError("Market provider returned no usable data. Check the gateway.");
-      else if (Array.isArray(data?.errors) && data.errors.length) setOverviewError("Some market sources are unavailable; available results are shown.");
-    } catch (e) { setOverviewError(e?.message || "Unable to load market overview."); }
-    finally { setBusy(false); }
+      setOverview((previous) => mergeMarketOverview(previous, data));
+      setUpdated(new Date().toLocaleString("en-IN"));
+      if (data?.status === "error") {
+        setOverviewError("Market refresh failed. The last successful market values are retained where available.");
+      } else if (Array.isArray(data?.errors) && data.errors.length) {
+        setOverviewError("Some market sources failed to refresh. Their last successful values are retained and marked as stale.");
+      }
+    } catch (e) {
+      // Keep the last successful overview visible if a refresh request fails.
+      setOverviewError(e?.message || "Unable to refresh market overview. Showing the last successful data where available.");
+    } finally {
+      overviewRefreshInFlightRef.current = false;
+      setBusy(false);
+    }
   };
   // Initial market load. Manual refresh remains available as a fallback.
   useEffect(() => { refresh(); }, []);
@@ -2852,6 +2868,10 @@ function MarketsPage() {
   const movers = overview?.market_movers || {};
   const gainers = Array.isArray(movers.gainers) ? movers.gainers : [];
   const losers = Array.isArray(movers.losers) ? movers.losers : [];
+  const staleSections = overview?.stale_sections || {};
+  const staleIndexNames = Array.isArray(staleSections.indices) ? staleSections.indices : [];
+  const gainersStale = staleSections.gainers === true;
+  const losersStale = staleSections.losers === true;
   return <div className="markets-workspace" style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
     <section aria-label="Market overview" style={{ padding: "4px 0 2px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}>
@@ -2861,9 +2881,9 @@ function MarketsPage() {
     </section>
       <section aria-label="Major Indian market indices" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" }}>
         {requestedIndices.map((item, i) => <div key={item.label} style={{ ...card, position: "relative", overflow: "hidden", padding: "15px", borderRadius: "18px", border: "1px solid rgba(167,139,250,.18)", background: i % 2 === 0 ? "linear-gradient(145deg, rgba(124,58,237,0.24), rgba(13,18,38,.78))" : "linear-gradient(145deg, rgba(14,165,233,0.18), rgba(13,18,38,.78))", boxShadow: "0 12px 28px rgba(0,0,0,.12)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}><strong style={{ fontSize: "11px", letterSpacing: ".07em" }}>{item.label}</strong><span style={{ ...muted, fontSize: "10px" }}>{item.data?.status || (busy ? "Loading" : "Market index")}</span></div>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}><strong style={{ fontSize: "11px", letterSpacing: ".07em" }}>{item.label}</strong><span style={{ ...muted, fontSize: "10px" }}>{staleIndexNames.some((name) => String(name).toUpperCase() === String(item.data?.name || item.label).toUpperCase()) ? "Last successful" : (item.data?.status || (busy ? "Loading" : "Market index"))}</span></div>
           <div style={{ fontSize: "clamp(20px, 4vw, 27px)", fontWeight: 850, marginTop: "12px", letterSpacing: "-.04em", overflowWrap: "anywhere" }}>{item.data?.last_price != null && Number.isFinite(Number(item.data.last_price)) ? Number(item.data.last_price).toLocaleString("en-IN", { maximumFractionDigits: 2 }) : busy ? "Loading…" : "Unavailable"}</div>
-          <div style={{ ...muted, marginTop: "5px", fontSize: "11px" }}>{item.data ? `${item.data.exchange || "Indian market"} · Latest available` : "Not currently returned by market API"}</div>
+          <div style={{ ...muted, marginTop: "5px", fontSize: "11px" }}>{item.data ? `${item.data.exchange || "Indian market"} · ${staleIndexNames.some((name) => String(name).toUpperCase() === String(item.data.name || item.label).toUpperCase()) ? "last successful value; refresh failed" : "Latest available"}` : "Not currently returned by market API"}</div>
           <div aria-hidden="true" style={{ height: "3px", borderRadius: "9px", marginTop: "14px", background: "linear-gradient(90deg, rgba(167,139,250,.95), rgba(56,189,248,.35), transparent)" }} />
         </div>)}
       </section>
@@ -2940,8 +2960,8 @@ function MarketsPage() {
     {!selectedInstrument && <>
 
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px" }}>
-        <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}><div><div style={muted}>Market breadth · returned by provider</div><strong style={{ fontSize: "18px" }}>Top gainers</strong><div style={muted}>Stocks moving higher</div></div><div style={{ fontSize: "28px", fontWeight: 850, color: "var(--finos-positive)" }}>{gainers.length}</div></div>
-        <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}><div><div style={muted}>Market breadth · returned by provider</div><strong style={{ fontSize: "18px" }}>Top losers</strong><div style={muted}>Stocks moving lower</div></div><div style={{ fontSize: "28px", fontWeight: 850, color: "var(--finos-negative)" }}>{losers.length}</div></div>
+        <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}><div><div style={muted}>{gainersStale ? "Last successful provider result · refresh failed" : "Market breadth · returned by provider"}</div><strong style={{ fontSize: "18px" }}>Top gainers</strong><div style={muted}>Stocks moving higher</div></div><div style={{ fontSize: "28px", fontWeight: 850, color: "var(--finos-positive)" }}>{gainers.length}</div></div>
+        <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}><div><div style={muted}>{losersStale ? "Last successful provider result · refresh failed" : "Market breadth · returned by provider"}</div><strong style={{ fontSize: "18px" }}>Top losers</strong><div style={muted}>Stocks moving lower</div></div><div style={{ fontSize: "28px", fontWeight: 850, color: "var(--finos-negative)" }}>{losers.length}</div></div>
       </section>
       <section style={card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}><div><h3 style={{ margin: "0 0 4px" }}>My Watchlist</h3><p style={{ ...muted, margin: 0 }}>Your saved instruments on this device.</p></div><span style={muted}>{watchlist.length} saved</span></div>

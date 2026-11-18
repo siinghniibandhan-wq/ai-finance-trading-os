@@ -124,6 +124,7 @@ export default function OrderFlowPage() {
           { key: "low", label: "Day low", render: (row) => formatMarketNumber(row.ohlc?.low) },
           { key: "close", label: "Prev close", render: (row) => formatMarketNumber(row.ohlc?.close) },
           { key: "averageTradedPrice", label: "Avg traded", render: (row) => formatMarketNumber(row.averageTradedPrice) },
+          { key: "lastTradedQuantity", label: "Last trade qty", render: (row) => formatMarketNumber(row.lastTradedQuantity) },
           { key: "volume", label: "Volume", render: (row) => formatMarketNumber(row.volume) },
           { key: "oi", label: "Open interest", render: (row) => formatMarketNumber(row.oi) },
           { key: "totalBuyQuantity", label: "Total bid qty", render: (row) => formatMarketNumber(row.totalBuyQuantity) },
@@ -146,6 +147,7 @@ export default function OrderFlowPage() {
           { key: "optionType", label: "Type" },
           { key: "price", label: "LTP", render: (row) => row.price == null ? "—" : `₹${formatMarketNumber(row.price)}` },
           { key: "changePct", label: "Change", render: (row) => formatMarketPercent(row.changePct) },
+          { key: "lastTradedQuantity", label: "Last trade qty", render: (row) => formatMarketNumber(row.lastTradedQuantity) },
           { key: "volume", label: "Volume", render: (row) => formatMarketNumber(row.volume) },
           { key: "oi", label: "Open interest", render: (row) => formatMarketNumber(row.oi) },
         ]}

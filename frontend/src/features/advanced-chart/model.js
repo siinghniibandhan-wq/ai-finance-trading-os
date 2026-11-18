@@ -3,7 +3,14 @@ const toUnixSeconds = (value) => {
     return Math.floor(value > 1e12 ? value / 1000 : value);
   }
   if (typeof value !== "string" || !value.trim()) return null;
-  const parsed = Date.parse(value);
+  const trimmed = value.trim();
+  if (/^\\d+(?:\\.\\d+)?$/.test(trimmed)) {
+    const numeric = Number(trimmed);
+    return Number.isFinite(numeric)
+      ? Math.floor(numeric > 1e12 ? numeric / 1000 : numeric)
+      : null;
+  }
+  const parsed = Date.parse(trimmed);
   return Number.isFinite(parsed) ? Math.floor(parsed / 1000) : null;
 };
 
@@ -37,8 +44,9 @@ export function normalizeCandles(rawCandles) {
 
     if (
       time === null ||
-      [open, high, low, close, volume].some((value) => value === null) ||
-      open <= 0 || high <= 0 || low <= 0 || close <= 0 || volume < 0 ||
+      [open, high, low, close].some((value) => value === null) ||
+      open <= 0 || high <= 0 || low <= 0 || close <= 0 ||
+      (volume !== null && volume < 0) ||
       high < Math.max(open, close, low) ||
       low > Math.min(open, close, high)
     ) continue;

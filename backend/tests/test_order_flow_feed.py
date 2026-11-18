@@ -215,3 +215,24 @@ def test_symbol_matching_does_not_confuse_prefix_underlyings():
         {"symbol": "NIFTY", "tradingsymbol": "NIFTY26NOVFUT"},
         "NIFTY",
     ) is True
+
+
+def test_persistent_stream_snapshot_does_not_restart_gateway_subscription(monkeypatch):
+    calls = configure_gateway(monkeypatch, {
+        "status": "success",
+        "ticks": [],
+        "stream": {
+            "running": True,
+            "connected": False,
+            "stream_verified": False,
+            "stale": True,
+            "last_tick_at": None,
+        },
+    })
+
+    result = get_order_flow_snapshot("NIFTY", ensure_started=False)
+
+    assert result["feed"]["status"] == "disconnected"
+    assert len(calls) == 2
+    assert calls[0][0].full_url.endswith("/instruments")
+    assert "/market-stream/snapshot" in calls[1][0].full_url

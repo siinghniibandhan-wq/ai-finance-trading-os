@@ -257,3 +257,34 @@ def test_type_a_raw_price_divisor_uses_instrument_token_segment():
     tick = {"token": 259, "ltp_raw": 125000000, "volume": 1, "open_interest": 2}
     normalized = order_flow_feed._normalise_tick(tick, instrument)
     assert normalized["price"] == 12.5
+
+
+
+def test_feed_never_reports_live_when_socket_is_reconnected_but_not_verified():
+    now = time.time()
+    feed = order_flow_feed._feed_state(
+        {
+            "connected": False,
+            "socket_connected": True,
+            "stream_verified": False,
+            "stale": False,
+            "last_tick_age_seconds": 1,
+        },
+        order_flow_feed._timestamp_iso(now),
+    )
+    assert feed["status"] == "disconnected"
+
+
+def test_feed_never_reports_live_when_stream_socket_is_closed():
+    now = time.time()
+    feed = order_flow_feed._feed_state(
+        {
+            "connected": True,
+            "socket_connected": False,
+            "stream_verified": True,
+            "stale": False,
+            "last_tick_age_seconds": 1,
+        },
+        order_flow_feed._timestamp_iso(now),
+    )
+    assert feed["status"] == "disconnected"

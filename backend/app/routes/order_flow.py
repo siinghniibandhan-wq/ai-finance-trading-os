@@ -70,6 +70,9 @@ async def order_flow_stream(websocket: WebSocket):
     try:
         _authenticate_stream_token(token)
     except Exception:
+        # Complete the handshake so browsers receive the explicit auth close
+        # code and stop retrying with an expired/revoked Financial OS token.
+        await websocket.accept(subprotocol="financial-os")
         await websocket.close(code=4401)
         return
 

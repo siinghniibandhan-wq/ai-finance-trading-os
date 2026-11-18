@@ -3,7 +3,7 @@ import { AreaSeries, BarSeries, CandlestickSeries, HistogramSeries, LineSeries, 
 import { loadChartHistory, loadLatestQuote, searchChartInstruments } from "./api";
 import MarketFlowBoard from "./MarketFlowBoard";
 import MarketMoversScanner from "./MarketMoversScanner";
-import { calculateEMA, calculateHeikinAshi, calculateSMA, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles, normalizeQuotePrice } from "./model";
+import { calculateBollingerBands, calculateEMA, calculateHeikinAshi, calculateMACD, calculateRSI, calculateSMA, calculateVWAP, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles, normalizeQuotePrice } from "./model";
 import "./advanced-chart.css";
 
 const INTERVALS = [
@@ -43,8 +43,15 @@ export default function AdvancedChartPage() {
   const [chartType, setChartType] = useState("candlestick");
   const [showSma, setShowSma] = useState(false);
   const [showEma, setShowEma] = useState(false);
+  const [showBollinger, setShowBollinger] = useState(false);
+  const [showVwap, setShowVwap] = useState(false);
+  const [activeIndicator, setActiveIndicator] = useState("none");
   const [hoveredCandle, setHoveredCandle] = useState(null);
   const chartContainerRef = useRef(null);
+  const indicatorContainerRef = useRef(null);
+  const indicatorChartRef = useRef(null);
+  const indicatorMainSeriesRef = useRef(null);
+  const indicatorSignalSeriesRef = useRef(null);
   const chartRef = useRef(null);
   const candleSeriesRef = useRef(null);
   const barSeriesRef = useRef(null);
@@ -54,6 +61,10 @@ export default function AdvancedChartPage() {
   const volumeSeriesRef = useRef(null);
   const smaSeriesRef = useRef(null);
   const emaSeriesRef = useRef(null);
+  const bollingerUpperRef = useRef(null);
+  const bollingerMiddleRef = useRef(null);
+  const bollingerLowerRef = useRef(null);
+  const vwapSeriesRef = useRef(null);
   const lastPriceLineRef = useRef(null);
   const lastPriceLineSeriesRef = useRef(null);
 
@@ -234,6 +245,10 @@ export default function AdvancedChartPage() {
       visible: showEma,
       title: "EMA 20",
     });
+    const bollingerUpper = chart.addSeries(LineSeries, { color: "rgba(139,108,240,.7)", lineWidth: 1, visible: false, priceLineVisible: false, lastValueVisible: false, title: "BB Upper" });
+    const bollingerMiddle = chart.addSeries(LineSeries, { color: "rgba(139,108,240,.5)", lineWidth: 1, visible: false, priceLineVisible: false, lastValueVisible: false, title: "BB Middle" });
+    const bollingerLower = chart.addSeries(LineSeries, { color: "rgba(139,108,240,.7)", lineWidth: 1, visible: false, priceLineVisible: false, lastValueVisible: false, title: "BB Lower" });
+    const vwapSeries = chart.addSeries(LineSeries, { color: "#e6a23c", lineWidth: 2, visible: false, priceLineVisible: false, lastValueVisible: false, title: "VWAP" });
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" },
       priceScaleId: "",
@@ -262,6 +277,10 @@ export default function AdvancedChartPage() {
     volumeSeriesRef.current = volumeSeries;
     smaSeriesRef.current = smaSeries;
     emaSeriesRef.current = emaSeries;
+    bollingerUpperRef.current = bollingerUpper;
+    bollingerMiddleRef.current = bollingerMiddle;
+    bollingerLowerRef.current = bollingerLower;
+    vwapSeriesRef.current = vwapSeries;
 
     const resize = () => {
       chart.applyOptions(getChartDimensions(container.clientWidth, container.clientHeight));
@@ -284,6 +303,10 @@ export default function AdvancedChartPage() {
       volumeSeriesRef.current = null;
       smaSeriesRef.current = null;
       emaSeriesRef.current = null;
+      bollingerUpperRef.current = null;
+      bollingerMiddleRef.current = null;
+      bollingerLowerRef.current = null;
+      vwapSeriesRef.current = null;
     };
   }, []);
 
@@ -305,6 +328,11 @@ export default function AdvancedChartPage() {
       })));
     smaSeriesRef.current.setData(calculateSMA(candles, 20));
     emaSeriesRef.current.setData(calculateEMA(candles, 20));
+    const bands = calculateBollingerBands(candles, 20, 2);
+    bollingerUpperRef.current?.setData(bands.upper);
+    bollingerMiddleRef.current?.setData(bands.middle);
+    bollingerLowerRef.current?.setData(bands.lower);
+    vwapSeriesRef.current?.setData(calculateVWAP(candles));
     if (candles.length) chartRef.current?.timeScale().fitContent();
   }, [candles]);
 
@@ -319,7 +347,60 @@ export default function AdvancedChartPage() {
   useEffect(() => {
     smaSeriesRef.current?.applyOptions({ visible: showSma });
     emaSeriesRef.current?.applyOptions({ visible: showEma });
-  }, [showSma, showEma]);
+    bollingerUpperRef.current?.applyOptions({ visible: showBollinger });
+    bollingerMiddleRef.current?.applyOptions({ visible: showBollinger });
+    bollingerLowerRef.current?.applyOptions({ visible: showBollinger });
+    vwapSeriesRef.current?.applyOptions({ visible: showVwap });
+  }, [showSma, showEma, showBollinger, showVwap]);
+
+  useEffect(() => {
+    const container = indicatorContainerRef.current;
+    if (!container || activeIndicator === "none" || !candles.length) {
+      indicatorChartRef.current?.remove();
+      indicatorChartRef.current = null;
+      indicatorMainSeriesRef.current = null;
+      indicatorSignalSeriesRef.current = null;
+      return undefined;
+    }
+    const chart = createChart(container, {
+      ...getChartDimensions(container.clientWidth, 190),
+      layout: { background: { color: "transparent" }, textColor: getComputedStyle(container).getPropertyValue("--finos-muted").trim() || "#9ca3af" },
+      grid: { vertLines: { color: "rgba(128,128,128,.12)" }, horzLines: { color: "rgba(128,128,128,.12)" } },
+      rightPriceScale: { borderVisible: false },
+      timeScale: { timeVisible: true, secondsVisible: false, borderVisible: false },
+    });
+    const main = activeIndicator === "rsi"
+      ? chart.addSeries(LineSeries, { color: "#8b6cf0", lineWidth: 2, title: "RSI 14" })
+      : chart.addSeries(HistogramSeries, { priceFormat: { type: "price", precision: 4, minMove: 0.0001 }, title: "MACD Histogram" });
+    const signal = activeIndicator === "macd"
+      ? chart.addSeries(LineSeries, { color: "#e6a23c", lineWidth: 2, title: "MACD" })
+      : null;
+    if (activeIndicator === "rsi") {
+      main.setData(calculateRSI(candles, 14));
+      main.createPriceLine({ price: 70, color: "rgba(224,82,96,.7)", lineStyle: 2, axisLabelVisible: false, title: "70" });
+      main.createPriceLine({ price: 30, color: "rgba(22,163,106,.7)", lineStyle: 2, axisLabelVisible: false, title: "30" });
+      chart.priceScale("right").applyOptions({ autoScale: false, scaleMargins: { top: .08, bottom: .08 } });
+    } else {
+      const macd = calculateMACD(candles);
+      main.setData(macd.histogram.map((point) => ({ ...point, color: point.value >= 0 ? "rgba(22,163,106,.7)" : "rgba(224,82,96,.7)" })));
+      signal?.setData(macd.macd);
+      chart.addSeries(LineSeries, { color: "#4b9fe8", lineWidth: 2, title: "Signal" }).setData(macd.signal);
+    }
+    chart.timeScale().fitContent();
+    const resize = () => chart.applyOptions(getChartDimensions(container.clientWidth, 190));
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
+    observer?.observe(container);
+    indicatorChartRef.current = chart;
+    indicatorMainSeriesRef.current = main;
+    indicatorSignalSeriesRef.current = signal;
+    return () => {
+      observer?.disconnect();
+      chart.remove();
+      indicatorChartRef.current = null;
+      indicatorMainSeriesRef.current = null;
+      indicatorSignalSeriesRef.current = null;
+    };
+  }, [activeIndicator, candles]);
 
   const lastPrice = quote?.quote?.last_price;
   const normalizedLastPrice = normalizeQuotePrice(quote);
@@ -465,7 +546,10 @@ export default function AdvancedChartPage() {
               <span>OVERLAYS</span>
               <label><input type="checkbox" checked={showSma} disabled={!candles.length} onChange={(event) => setShowSma(event.target.checked)} /> SMA 20</label>
               <label><input type="checkbox" checked={showEma} disabled={!candles.length} onChange={(event) => setShowEma(event.target.checked)} /> EMA 20</label>
+              <label><input type="checkbox" checked={showBollinger} disabled={!candles.length} onChange={(event) => setShowBollinger(event.target.checked)} /> Bollinger 20/2</label>
+              <label><input type="checkbox" checked={showVwap} disabled={!candles.length || candles.some((candle) => !Number.isFinite(candle.volume) || candle.volume <= 0)} onChange={(event) => setShowVwap(event.target.checked)} /> VWAP</label>
             </div>
+            <label className="advanced-chart-control"><span>Indicator pane</span><select value={activeIndicator} disabled={!candles.length} onChange={(event) => setActiveIndicator(event.target.value)}><option value="none">Off</option><option value="rsi">RSI 14</option><option value="macd">MACD 12/26/9</option></select></label>
             <div className="advanced-chart-status">
             {historyLoading ? "Loading historical data…" : candles.length ? `${candles.length.toLocaleString("en-IN")} candles loaded` : "No chart data"}
             {quoteBusy && <small>Refreshing quote</small>}
@@ -482,7 +566,8 @@ export default function AdvancedChartPage() {
           <span>C <strong>{readoutCandle ? money(readoutCandle.close) : "—"}</strong></span>
           <span>V <strong>{readoutCandle?.volume === null || readoutCandle?.volume === undefined ? "—" : Number(readoutCandle.volume).toLocaleString("en-IN")}</strong></span>
         </div>
-        <div className="advanced-chart-canvas" ref={chartContainerRef} aria-label="Interactive candlestick and volume chart" />
+        <div className="advanced-chart-canvas" ref={chartContainerRef} aria-label="Interactive price and volume chart" />
+        {activeIndicator !== "none" && <div className="advanced-chart-indicator-pane"><div className="advanced-chart-indicator-title">{activeIndicator === "rsi" ? "RELATIVE STRENGTH INDEX · 14" : "MOVING AVERAGE CONVERGENCE DIVERGENCE · 12 / 26 / 9"}</div><div ref={indicatorContainerRef} className="advanced-chart-indicator-canvas" aria-label={`${activeIndicator.toUpperCase()} indicator chart`} /></div>}
         <div className="advanced-chart-footnote">
           Historical candles: m.Stock provider data. The LTP line refreshes from authenticated REST quote snapshots every 10 seconds; quote snapshots do not rewrite OHLC candles and are not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a>.
         </div>

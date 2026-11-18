@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field, model_validator
 from app.routes.auth import get_current_admin
 from app.models import User, BrokerOrderSubmission, BrokerTradingControl
 from app.database.database import get_db
+from app.services.mstock_gateway import MSTOCK_GATEWAY_URL, MSTOCK_GATEWAY_SECRET
 
 router = APIRouter(prefix="/api/broker-orders", tags=["Broker Orders"])
 logger = logging.getLogger(__name__)
@@ -39,8 +40,8 @@ class DefiniteGatewayRejection(HTTPException):
     def __init__(self, detail: str, gateway_status: int):
         super().__init__(status_code=502, detail=detail)
         self.gateway_status = gateway_status
-GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").rstrip("/")
-GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
+GATEWAY_URL = MSTOCK_GATEWAY_URL
+GATEWAY_SECRET = MSTOCK_GATEWAY_SECRET
 GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/order")
 GATEWAY_ORDER_BOOK_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_BOOK_PATH", "/orderbook")
 GATEWAY_TIMEOUT_SECONDS = 15

@@ -29,15 +29,13 @@ from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.services.mstock_gateway import MSTOCK_GATEWAY_URL, MSTOCK_GATEWAY_SECRET
+
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = os.getenv(
-    "MSTOCK_GATEWAY_URL",
-    "http://54.153.201.74:8000",
-).rstrip("/")
 
 
 # ============================================================
@@ -80,6 +78,9 @@ def get_market_history(
         description="End date in YYYY-MM-DD format",
     ),
 ):
+    if not MSTOCK_GATEWAY_URL:
+        raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_URL is not configured.")
+
     cleaned_symbol = symbol.strip().upper()
     cleaned_exchange = exchange.strip().upper()
     cleaned_interval = interval.strip().lower()
@@ -167,6 +168,10 @@ def get_market_history(
     try:
         search_request = Request(
             search_url,
+            headers={
+                "Accept": "text/csv,application/json",
+                "X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET,
+            },
             method="GET",
         )
 
@@ -279,6 +284,10 @@ def get_market_history(
     try:
         historical_request = Request(
             f"{historical_url}?{query_string}",
+            headers={
+                "Accept": "application/json",
+                "X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET,
+            },
             method="GET",
         )
 

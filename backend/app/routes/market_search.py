@@ -30,15 +30,12 @@ from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.services.mstock_gateway import MSTOCK_GATEWAY_URL, MSTOCK_GATEWAY_SECRET
+
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
-
-MSTOCK_GATEWAY_URL = os.getenv(
-    "MSTOCK_GATEWAY_URL",
-    "http://54.153.201.74:8000",
-).rstrip("/")
 
 # Cache the gateway's instrument master in this backend process. This is read-only
 # and deliberately does not change the search response or ranking behaviour.
@@ -55,6 +52,8 @@ _instrument_master_cache_lock = threading.Lock()
 
 def _get_instrument_master_csv():
     """Return the cached instrument-master CSV, refreshing it after the TTL."""
+    if not MSTOCK_GATEWAY_URL:
+        raise HTTPException(status_code=503, detail="MSTOCK_GATEWAY_URL is not configured.")
     now = time.monotonic()
     cached_text = _instrument_master_cache["text"]
     if cached_text is not None and now - _instrument_master_cache["loaded_at"] < MARKET_INSTRUMENT_CACHE_TTL_SECONDS:
@@ -68,7 +67,14 @@ def _get_instrument_master_csv():
             return cached_text
 
         try:
-            request = Request(f"{MSTOCK_GATEWAY_URL}/instruments", method="GET")
+            request = Request(
+                f"{MSTOCK_GATEWAY_URL}/instruments",
+                headers={
+                    "Accept": "text/csv,application/json",
+                    "X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET,
+                },
+                method="GET",
+            )
             with urlopen(request, timeout=8) as response:
                 status_code = response.status
                 response_text = response.read().decode("utf-8", errors="replace")

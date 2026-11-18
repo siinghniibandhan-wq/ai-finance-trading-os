@@ -1,0 +1,104 @@
+name: Frontend production build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-build.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Run theme regression checks
+        run: node scripts/theme-audit.mjs
+      - name: Build production bundle
+        env:
+          VITE_API_BASE_URL: https://wealthmanager.duckdns.org
+        run: |
+          npm run build
+          test -s dist/index.html
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish-frontend:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-frontend
+      cancel-in-progress: false
+    steps:
+      - name: Check whether frontend files changed
+        id: changed
+        env:
+          BEFORE: ${{ github.event.before }}
+          CURRENT: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
+          TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git init -q source-check
+          cd source-check
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${REPOSITORY}.git"
+          if ! git fetch --no-tags --depth=2 origin "$CURRENT" "$BEFORE"; then
+            echo "Could not fetch comparison commits; refusing to publish."
+            exit 1
+          fi
+          if git diff --name-only "$BEFORE" "$CURRENT" | grep -Eq '^(frontend/|\.github/workflows/frontend-build\.yml$)'; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download frontend build
+        if: steps.changed.outputs.go == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+      - name: Publish to frontend-dist
+        if: steps.changed.outputs.go == 'true'
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          git init -q
+          git checkout -q -b frontend-dist
+          git config user.name github-actions
+          git config user.email actions@github.com
+          git add -A
+          git commit -q -m "Build ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${REPOSITORY}.git" frontend-dist

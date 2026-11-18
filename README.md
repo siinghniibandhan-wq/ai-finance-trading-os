@@ -20,7 +20,7 @@ A unified personal-finance, wealth-management, investment, market-data, trading-
 | Frontend | React 18 + Vite 6 |
 | Backend | FastAPI + Python |
 | Persistence | SQLAlchemy with PostgreSQL driver/configuration |
-| Market-data integration | m.Stock REST gateway and WebSocket stream path |
+| Market-data integration | m.Stock REST gateway (quotes, search, indices, movers and historical data) |
 | AI integration | Google Gemini and configurable AI gateway providers |
 | Cloud/operations | Recorded AWS EC2 services for the market-data gateway and backend; live infrastructure inventory remains to be verified |
 
@@ -73,9 +73,6 @@ FastAPI backend
   +--> m.Stock gateway (restricted HTTP service)
           |
           +--> m.Stock REST endpoints
-          |
-          +--> m.Stock WebSocket endpoint
-               wss://ws.mstock.trade
 ```
 
 ### Frontend
@@ -98,14 +95,17 @@ The backend is responsible for authentication, authorization, data ownership, pe
 
 ### Market data and m.Stock
 
-REST and WebSocket are separate service paths and must have separate health indicators. The user reports that existing REST market data remains available; this does not establish WebSocket health.
+The current Financial OS backend integrates with the m.Stock gateway through REST endpoints. The registered market capabilities are market overview, quotes, instrument search, indices, gainers/losers, historical data, charts and watchlists.
 
-**Latest EC2 gateway check — 13 November 2026:**
-- mstock-gateway.service is active and the Flask app/stream blueprint are running.
-- The stream worker's authenticated status reports running=true, but connected=false, stale=true, zero cached instruments, no last tick and 933 reconnect attempts. The current status lists token 2885; its instrument identity is not independently verified.
-- The required gateway secret header works when supplied with the value read server-side from the running gateway process. The earlier 403 was caused by diagnostic curl requests omitting that header.
-- DNS and TLS verification for ws.mstock.trade succeed, but the WebSocket HTTP upgrade returns HTTP 502 from a provider AWS load-balancer response. The failure occurs before LOGIN or subscription messages. No live ticks have been received.
-- The user has already contacted m.Stock and is waiting for its response. The feed must remain labelled NOT LIVE.
+**Market Flow / Order Flow / streaming status (reviewed 18 November 2026):**
+- The current backend entry point, `backend/app/main.py`, registers the REST market routers only. It does not register a Market Flow, Order Flow or market-stream router.
+- The reviewed backend source contains no active Market Flow or Order Flow adapter and no consumer of `/market-stream/snapshot`.
+- The latest Gateway `mstock-gateway-app.py` uploaded for review contains no Market Flow, `/market-stream/*`, snapshot or stream implementation. Its WebSocket mention is confined to a legacy index-test heading.
+- Consequently, the current documented application path is REST market data. Do not describe a live WebSocket feed, Gateway stream worker, Market Flow dashboard or Order Flow adapter as present or operational.
+- Older WebSocket incident notes and stream deployment descriptions are historical records only; they are not evidence of current code or runtime state.
+
+The REST market APIs and broker-order safeguards are separate existing functionality. Removing Market Flow/streaming does not imply removing or changing market quotes, history, charts, indices, movers, search, watchlists or broker order execution.
+
 
 
 ## Repository structure
@@ -272,7 +272,7 @@ Recommended release sequence:
 4. Apply any approved database migration separately, with a verified backup and rollback plan.
 5. Deploy using the confirmed hosting mechanism.
 6. Run safe smoke tests for health, login, account/transaction reads, market REST and gateway connectivity.
-7. Verify WebSocket tick freshness separately from REST health.
+7. Verify m.Stock REST responses and gateway authentication using safe read-only checks.
 8. Keep broker kill switches and live-order safeguards in the approved state.
 9. Record commit SHA, CI run, deployment identifier, environment, smoke-test results and rollback reference.
 
@@ -312,19 +312,19 @@ Any future scheduled task must document owner, trigger/cadence, target environme
 
 ## Current implementation status and roadmap
 
-### Current known blocker
+### Current market integration status
 
-- m.Stock WebSocket handshake from the recorded Sydney host returns HTTP 502 before authentication/subscription. India-origin comparison and provider-side investigation are pending.
-- Market REST checks passed in the recorded test; this does not establish live streaming health.
+- The current application code documents and registers the m.Stock REST integration only.
+- Market Flow, Order Flow and the application-level market-stream consumer are absent from the reviewed current backend source.
+- Historical WebSocket incident and deployment records are retained in the security log as history, not as current blockers or active features.
 
 ### Prioritised roadmap
 
-1. **P0 — Market streaming:** run India-origin and independent-network handshake tests; obtain provider-side LB/target health evidence; only then validate login, subscriptions, ticks, heartbeat and stale/reconnect handling.
-2. **P1 — Infrastructure truth:** complete live AWS inventory; confirm database hosting, frontend hosting, network boundaries, secrets store, monitoring, backups and restore procedure.
-3. **P1 — Release assurance:** verify the real production deployment path and rollback; record test/deployment evidence per commit.
-4. **P2 — Database governance:** implement a controlled migration runner and migration ledger; remove ad-hoc schema mutation only through a separately tested migration project.
-5. **P2 — Maintainability:** modularise oversized frontend/tax modules without breaking existing workflows; improve structured logs, metrics and alerting.
-6. **P3 — Security lifecycle:** evaluate MFA, email verification, password reset, CSP and safer session handling with coordinated backend/frontend changes.
+1. **P1 — Infrastructure truth:** complete live AWS inventory; confirm database hosting, frontend hosting, network boundaries, secrets store, monitoring, backups and restore procedure.
+2. **P1 — Release assurance:** verify the real production deployment path and rollback; record test/deployment evidence per commit.
+3. **P2 — Database governance:** implement a controlled migration runner and migration ledger; remove ad-hoc schema mutation only through a separately tested migration project.
+4. **P2 — Maintainability:** modularise oversized frontend/tax modules without breaking existing workflows; improve structured logs, metrics and alerting.
+5. **P3 — Security lifecycle:** evaluate MFA, email verification, password reset, CSP and safer session handling with coordinated backend/frontend changes.
 
 The roadmap is a prioritised engineering view, not a claim that every item is approved or scheduled. Detailed status and feature definitions are maintained in [AUDIT_REPORT.md](AUDIT_REPORT.md).
 

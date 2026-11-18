@@ -166,20 +166,36 @@ def get_market_movers(
         type_flag=type_flag,
     )
 
-    if not provider_response.get("status"):
+    # The Gateway forwards the Type A provider envelope. Require an explicit
+    # success status; the string "error" is truthy and must never be treated
+    # as a successful empty market.
+    if not isinstance(provider_response, dict):
         raise HTTPException(
             status_code=502,
-            detail="Market movers provider returned an unsuccessful response.",
+            detail="Market movers gateway returned an invalid response.",
         )
 
-    raw_data = provider_response.get(
-        "data",
-        [],
-    )
+    if provider_response.get("status") != "success":
+        raise HTTPException(
+            status_code=502,
+            detail=provider_response.get(
+                "message",
+                "Market movers provider returned an unsuccessful response.",
+            ),
+        )
+
+    raw_data = provider_response.get("data", [])
+    if not isinstance(raw_data, list):
+        raise HTTPException(
+            status_code=502,
+            detail="Market movers gateway returned invalid data.",
+        )
 
     movers = []
 
     for item in raw_data[:limit]:
+        if not isinstance(item, dict):
+            continue
 
         movers.append({
             "symbol": item.get("symbol"),

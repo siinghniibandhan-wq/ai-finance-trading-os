@@ -154,12 +154,26 @@ export function appendLivePriceHistory(history, snapshot, maxPoints = 1800) {
   const next = Array.isArray(history) ? history.slice() : [];
   for (const point of incoming) {
     const key = point.symbol + "|" + point.contract;
-    const lastIndex = next.findLastIndex((item) => item.symbol + "|" + item.contract === key);
+    let lastIndex = -1;
+    for (let index = next.length - 1; index >= 0; index -= 1) {
+      if (next[index].symbol + "|" + next[index].contract === key) {
+        lastIndex = index;
+        break;
+      }
+    }
     if (lastIndex >= 0 && next[lastIndex].timestamp === point.timestamp) {
       next[lastIndex] = point;
     } else {
       next.push(point);
     }
   }
-  return next.slice(-Math.max(1, Number(maxPoints) || 1800));
+  const grouped = new Map();
+  for (const point of next) {
+    const key = point.symbol + "|" + point.contract;
+    const group = grouped.get(key) || [];
+    group.push(point);
+    grouped.set(key, group);
+  }
+  const cap = Math.max(1, Number(maxPoints) || 1800);
+  return [...grouped.values()].flatMap((group) => group.slice(-cap));
 }

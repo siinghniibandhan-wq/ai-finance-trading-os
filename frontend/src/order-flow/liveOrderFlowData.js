@@ -26,7 +26,11 @@ export function buildLiveOrderFlow(snapshot, selectedSymbol = "") {
   const matches = (row) => !selected || cleanSymbol(row?.symbol) === selected;
   const futures = (Array.isArray(snapshot.futures_contracts) ? snapshot.futures_contracts : [])
     .filter(matches)
-    .map((row) => ({
+    .map((row) => {
+      const totalBuyQuantity = finiteNumber(row.total_buy_quantity);
+      const totalSellQuantity = finiteNumber(row.total_sell_quantity);
+      const totalDepthQuantity = (totalBuyQuantity || 0) + (totalSellQuantity || 0);
+      return {
       symbol: cleanSymbol(row.symbol),
       contract: String(row.tradingsymbol || ""),
       exchange: String(row.exchange || ""),
@@ -44,11 +48,15 @@ export function buildLiveOrderFlow(snapshot, selectedSymbol = "") {
       openInterestHigh: finiteNumber(row.open_interest_high),
       openInterestLow: finiteNumber(row.open_interest_low),
       averageTradedPrice: finiteNumber(row.average_traded_price),
-      totalBuyQuantity: finiteNumber(row.total_buy_quantity),
-      totalSellQuantity: finiteNumber(row.total_sell_quantity),
+      totalBuyQuantity,
+      totalSellQuantity,
+      buySellBalancePct: totalDepthQuantity > 0
+        ? ((totalBuyQuantity - totalSellQuantity) / totalDepthQuantity) * 100
+        : null,
       receivedAt: row.received_at || null,
       exchangeTimestamp: row.exchange_timestamp || null,
-    }))
+    };
+    })
     .filter((row) => row.symbol && row.price !== null && row.price > 0)
     .sort((a, b) => a.symbol.localeCompare(b.symbol) || a.expiry.localeCompare(b.expiry));
 

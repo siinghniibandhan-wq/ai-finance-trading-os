@@ -27,6 +27,17 @@ test("sorts the scanner by largest absolute provider percentage move", () => {
   assert.deepEqual(rows.map((row) => row.symbol), ["B", "C", "A"]);
 });
 
+test("filters out rows whose provider movement contradicts the requested scanner", () => {
+  assert.deepEqual(normalizeMoverRows([
+    { symbol: "UP", exchange: "NSE", ltp: 10, percent_change: 1 },
+    { symbol: "DOWN", exchange: "NSE", ltp: 10, percent_change: -1 },
+  ], "losers").map((row) => row.symbol), ["DOWN"]);
+  assert.deepEqual(normalizeMoverRows([
+    { symbol: "UP", exchange: "NSE", ltp: 10, percent_change: 1 },
+    { symbol: "DOWN", exchange: "NSE", ltp: 10, percent_change: -1 },
+  ], "gainers").map((row) => row.symbol), ["UP"]);
+});
+
 test("summarizes only validated provider rows and preserves unavailable volume", () => {
   const summary = summarizeMoverRows(normalizeMoverRows([
     { symbol: "A", exchange: "NSE", ltp: 10, percent_change: -2, volume: 100 },

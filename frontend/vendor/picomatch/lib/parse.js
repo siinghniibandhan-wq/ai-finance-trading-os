@@ -119,6 +119,41 @@ const isPlainBranch = branch => {
   return true;
 };
 
+const branchContainsGlobStar = branch => {
+  let escaped = false;
+  let bracket = 0;
+
+  for (let i = 0; i < branch.length; i++) {
+    const ch = branch[i];
+
+    if (escaped === true) {
+      escaped = false;
+      continue;
+    }
+
+    if (ch === '\\') {
+      escaped = true;
+      continue;
+    }
+
+    if (ch === '[') {
+      bracket++;
+      continue;
+    }
+
+    if (ch === ']' && bracket > 0) {
+      bracket--;
+      continue;
+    }
+
+    if (bracket === 0 && ch === '*' && branch[i + 1] !== '(') {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 const normalizeSimpleBranch = branch => {
   let value = branch.trim();
   let changed = true;
@@ -139,20 +174,18 @@ const normalizeSimpleBranch = branch => {
   return value.replace(/\\(.)/g, '$1');
 };
 
-const hasRepeatedCharPrefixOverlap = branches => {
+const hasBranchRepetitionOverlap = branches => {
   const values = branches.map(normalizeSimpleBranch).filter(Boolean);
 
   for (let i = 0; i < values.length; i++) {
     for (let j = i + 1; j < values.length; j++) {
       const a = values[i];
       const b = values[j];
-      const char = a[0];
+      const [short, long] = a.length <= b.length ? [a, b] : [b, a];
 
-      if (!char || a !== char.repeat(a.length) || b !== char.repeat(b.length)) {
-        continue;
-      }
-
-      if (a === b || a.startsWith(b) || b.startsWith(a)) {
+      if (short.length > 0
+        && long.length % short.length === 0
+        && long === short.repeat(long.length / short.length)) {
         return true;
       }
     }
@@ -270,17 +303,6 @@ const getStarExtglobSequenceChars = pattern => {
   return chars;
 };
 
-// A leading unanchored glob quantifier inside a repeated extglob can
-// create nested unbounded quantifiers and catastrophic RegExp backtracking.
-// Literalize those branches while preserving anchored/safe patterns.
-const hasUnsafeLeadingQuantifier = branch => {
-  let i = 0;
-  while (i < branch.length && (branch[i] === '*' || branch[i] === '?') && branch[i + 1] !== '(') {
-    i++;
-  }
-  return i > 0 && i < branch.length;
-};
-
 const repeatedExtglobRecursion = pattern => {
   let depth = 0;
   let value = pattern.trim();
@@ -307,11 +329,15 @@ const analyzeRepeatedExtglob = (body, options) => {
 
   const branches = splitTopLevel(body).map(branch => branch.trim());
 
+  if (branches.some(branchContainsGlobStar)) {
+    return { risky: true };
+  }
+
   if (branches.length > 1) {
     if (
       branches.some(branch => branch === '') ||
       branches.some(branch => /^[*?]+$/.test(branch)) ||
-      hasRepeatedCharPrefixOverlap(branches)
+      hasBranchRepetitionOverlap(branches)
     ) {
       return { risky: true };
     }
@@ -342,10 +368,6 @@ const analyzeRepeatedExtglob = (body, options) => {
     }
 
     combinable = false;
-
-    if (hasUnsafeLeadingQuantifier(branch)) {
-      return { risky: true };
-    }
 
     if (repeatedExtglobRecursion(branch) > max) {
       return { risky: true };

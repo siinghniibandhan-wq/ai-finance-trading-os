@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CandlestickSeries, HistogramSeries, createChart } from "lightweight-charts";
+import { CandlestickSeries, HistogramSeries, LineSeries, createChart } from "lightweight-charts";
 import { loadChartHistory, loadLatestQuote, searchChartInstruments } from "./api";
-import { getChartDimensions, getDefaultChartRange, normalizeCandles } from "./model";
+import { calculateEMA, calculateSMA, getChartDimensions, getDefaultChartRange, normalizeCandles } from "./model";
 import "./advanced-chart.css";
 
 const INTERVALS = [
@@ -36,10 +36,14 @@ export default function AdvancedChartPage() {
   const [quote, setQuote] = useState(null);
   const [quoteError, setQuoteError] = useState("");
   const [quoteBusy, setQuoteBusy] = useState(false);
+  const [showSma, setShowSma] = useState(false);
+  const [showEma, setShowEma] = useState(false);
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const candleSeriesRef = useRef(null);
   const volumeSeriesRef = useRef(null);
+  const smaSeriesRef = useRef(null);
+  const emaSeriesRef = useRef(null);
 
   const selectedLabel = useMemo(() => {
     if (!instrument) return "Select an instrument";
@@ -184,6 +188,22 @@ export default function AdvancedChartPage() {
       wickDownColor: "#e05260",
       priceLineVisible: true,
     });
+    const smaSeries = chart.addSeries(LineSeries, {
+      color: "#e6a23c",
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      visible: showSma,
+      title: "SMA 20",
+    });
+    const emaSeries = chart.addSeries(LineSeries, {
+      color: "#4b9fe8",
+      lineWidth: 2,
+      priceLineVisible: false,
+      lastValueVisible: false,
+      visible: showEma,
+      title: "EMA 20",
+    });
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" },
       priceScaleId: "",
@@ -196,6 +216,8 @@ export default function AdvancedChartPage() {
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
+    smaSeriesRef.current = smaSeries;
+    emaSeriesRef.current = emaSeries;
 
     const resize = () => {
       chart.applyOptions(getChartDimensions(container.clientWidth, container.clientHeight));
@@ -211,19 +233,25 @@ export default function AdvancedChartPage() {
       chartRef.current = null;
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
+      smaSeriesRef.current = null;
+      emaSeriesRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    if (!candleSeriesRef.current || !volumeSeriesRef.current) return;
+    if (!candleSeriesRef.current || !volumeSeriesRef.current || !smaSeriesRef.current || !emaSeriesRef.current) return;
     candleSeriesRef.current.setData(candles);
     volumeSeriesRef.current.setData(candles.map((candle) => ({
       time: candle.time,
       value: candle.volume,
       color: candle.close >= candle.open ? "rgba(22,163,106,0.48)" : "rgba(224,82,96,0.48)",
     })));
+    smaSeriesRef.current.setData(calculateSMA(candles, 20));
+    emaSeriesRef.current.setData(calculateEMA(candles, 20));
+    smaSeriesRef.current.applyOptions({ visible: showSma });
+    emaSeriesRef.current.applyOptions({ visible: showEma });
     if (candles.length) chartRef.current?.timeScale().fitContent();
-  }, [candles]);
+  }, [candles, showSma, showEma]);
 
   const lastPrice = quote?.quote?.last_price;
   const retrievalTime = quote?.retrieved_at
@@ -302,12 +330,20 @@ export default function AdvancedChartPage() {
             <h2>{instrument ? instrument.symbol : "Price chart"}</h2>
             <span>{instrument ? `${instrument.exchange} · ${INTERVALS.find((item) => item.value === interval)?.label} · OHLCV` : "Search and select an instrument to load provider candles"}</span>
           </div>
-          <div className="advanced-chart-status">
+          <div className="advanced-chart-panel-actions">
+            <div className="advanced-chart-overlays" aria-label="Technical overlays">
+              <span>OVERLAYS</span>
+              <label><input type="checkbox" checked={showSma} disabled={!candles.length} onChange={(event) => setShowSma(event.target.checked)} /> SMA 20</label>
+              <label><input type="checkbox" checked={showEma} disabled={!candles.length} onChange={(event) => setShowEma(event.target.checked)} /> EMA 20</label>
+            </div>
+            <div className="advanced-chart-status">
             {historyLoading ? "Loading historical data…" : candles.length ? `${candles.length.toLocaleString("en-IN")} candles loaded` : "No chart data"}
             {quoteBusy && <small>Refreshing quote</small>}
+            </div>
           </div>
         </div>
         {historyError && <div className="advanced-chart-warning" role="status">{historyError}</div>}
+        {(showSma || showEma) && candles.length < 20 && <div className="advanced-chart-message" role="status">20-period overlays appear after at least 20 valid candles are available.</div>}
         <div className="advanced-chart-canvas" ref={chartContainerRef} aria-label="Interactive candlestick and volume chart" />
         <div className="advanced-chart-footnote">
           Historical candles: m.Stock provider data. Quote updates: 10-second REST snapshots, not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a>.

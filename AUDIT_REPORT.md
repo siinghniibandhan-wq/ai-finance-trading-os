@@ -13,7 +13,7 @@
 Financial OS is a personal-finance, wealth-management, investment, trading-support and Indian tax-planning application. The repository contains a React/Vite frontend and a FastAPI/Python backend. The backend uses SQLAlchemy and PostgreSQL-compatible configuration, exposes authenticated finance APIs, and integrates with external services including m.Stock market data and Google Gemini AI.
 
 
-**Important operating distinction:** market REST endpoints responding successfully does not prove that the m.Stock live WebSocket feed is healthy. Likewise, source code existing in the repository does not prove that a feature is deployed or production-ready.
+**Important operating distinction:** successful market REST responses establish only the tested REST path. Source code existing in a repository does not prove that a feature is deployed or production-ready. The current reviewed market integration is REST-only.
 
 ## 2. System architecture
 

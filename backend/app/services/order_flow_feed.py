@@ -10,7 +10,7 @@ import json
 import os
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from io import StringIO
 from urllib.error import HTTPError, URLError
@@ -237,6 +237,8 @@ def _ensure_stream_started(
     tokens = _select_subscription_tokens(metadata, symbol=symbol)
     if not tokens:
         raise OrderFlowFeedError("Instrument master contains no eligible derivative subscriptions.")
+    # The Order Flow routes reuse this same MarketStreamWorker. Start and read
+    # it through the low-level market-stream contract only; never start a second worker.
     result = _request_json(
         f"{base}/market-stream/start",
         secret,
@@ -286,16 +288,78 @@ def _numeric_tick_value(tick: dict, field: str):
     return number
 
 
+def _type_a_price_divisor(instrument_token: int) -> float:
+    """Match the official m.Stock Type A SDK segment-based price divisor."""
+    segment = instrument_token & 0xFF
+    if segment == 3:  # CDS
+        return 10_000_000.0
+    if segment == 6:  # BCD
+        return 10_000.0
+    return 100.0
+
+
+def _type_a_timestamp_iso(value):
+    """Type A wire timestamps are seconds since 1980-01-01, not Unix seconds."""
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        seconds = float(value)
+        if seconds < 0 or not seconds.is_integer():
+            return None
+        parsed = datetime(1980, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=seconds)
+        return parsed.isoformat()
+    except (OverflowError, OSError, TypeError, ValueError):
+        return None
+
+
 def _normalise_tick(tick: dict, instrument: dict) -> dict:
-    """Join SDK-decoded fields with instrument-master identity; do not rescale."""
+    """Join SDK-decoded or raw Type A fields with verified instrument identity."""
+    token_value = tick.get("instrument_token", tick.get("token", instrument.get("instrument_token")))
+    try:
+        token = int(token_value)
+    except (TypeError, ValueError):
+        token = 0
+    divisor = _type_a_price_divisor(token)
+
+    # SDK-normalized fields take precedence and must never be divided twice.
+    price = _numeric_tick_value(tick, "last_price")
+    if price is None:
+        raw_price = _numeric_tick_value(tick, "ltp_raw")
+        price = raw_price / divisor if raw_price is not None else None
+
+    volume = _numeric_tick_value(tick, "volume_traded")
+    if volume is None:
+        volume = _numeric_tick_value(tick, "volume")
+
+    oi = _numeric_tick_value(tick, "oi")
+    if oi is None:
+        oi = _numeric_tick_value(tick, "open_interest")
+
+    average_price = _numeric_tick_value(tick, "average_traded_price")
+    if average_price is None:
+        raw_average = _numeric_tick_value(tick, "average_price_raw")
+        average_price = raw_average / divisor if raw_average is not None else None
+
+    exchange_timestamp = tick.get("exchange_timestamp")
+    if "ltp_raw" in tick and isinstance(exchange_timestamp, (int, float)):
+        exchange_timestamp = _type_a_timestamp_iso(exchange_timestamp)
+    else:
+        exchange_timestamp = _timestamp_iso(exchange_timestamp)
+
+    previous_close = _numeric_tick_value(tick, "close")
+    if previous_close is None:
+        raw_close = _numeric_tick_value(tick, "close_raw")
+        previous_close = raw_close / divisor if raw_close is not None else None
+
     return {
         **instrument,
-        "price": _numeric_tick_value(tick, "last_price"),
-        "volume": _numeric_tick_value(tick, "volume_traded"),
-        "oi": _numeric_tick_value(tick, "oi"),
+        "price": price,
+        "volume": volume,
+        "oi": oi,
         "last_traded_quantity": _numeric_tick_value(tick, "last_traded_quantity"),
-        "average_traded_price": _numeric_tick_value(tick, "average_traded_price"),
-        "exchange_timestamp": _timestamp_iso(tick.get("exchange_timestamp")),
+        "average_traded_price": average_price,
+        "previous_close": previous_close,
+        "exchange_timestamp": exchange_timestamp,
         "received_at": _timestamp_iso(tick.get("received_at")),
         "price_units": "provider_sdk_decoded",
     }
@@ -321,6 +385,7 @@ def _feed_state(stream: dict, last_tick_at: str | None) -> dict:
     elif not (
         stream.get("connected") is True
         and stream.get("stream_verified") is True
+        and stream.get("socket_connected", True) is True
     ):
         feed["status"] = "disconnected"
     return feed

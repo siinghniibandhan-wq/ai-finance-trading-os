@@ -409,3 +409,37 @@
 .mf-native-node:focus-visible rect:first-child { stroke:var(--th-focus,var(--th-accent,currentColor)); stroke-width:2.5; }
 
 /* Keep the original Order Flow controls and data panels untouched. */
+
+
+/* Live-only Market Flow dashboard */
+.live-market-flow .mf-provider-pill.is-live { color:var(--th-pos,#15966a); }
+.live-market-flow .mf-provider-pill.is-offline { color:var(--th-muted,#888); }
+.mf-live-summary { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:14px 0; }
+.mf-live-summary article { display:grid;gap:6px;min-width:0;padding:12px;border:1px solid var(--th-border);border-radius:10px;background:var(--th-card); }
+.mf-live-summary small { color:var(--th-muted);font-size:10px; }
+.mf-live-summary b { color:var(--th-text);font-size:18px;font-variant-numeric:tabular-nums; }
+.mf-live-contracts,.mf-live-options,.mf-live-empty { margin:12px 0;padding:15px;border:1px solid var(--th-border);border-radius:12px;background:var(--th-card);color:var(--th-text); }
+.mf-live-contracts>header,.mf-live-options>header { display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px; }
+.mf-live-contracts h2,.mf-live-options h2,.mf-live-empty h2 { margin:0;font-size:16px; }
+.mf-live-contracts header p,.mf-live-options header p,.mf-live-empty p,.mf-live-empty-note { margin:5px 0 0;color:var(--th-muted);font-size:12px;line-height:1.5; }
+.mf-live-contracts header>span { color:var(--th-muted);font-size:11px;white-space:nowrap; }
+.mf-live-table-wrap { width:100%;overflow:auto; }
+.mf-live-table { width:100%;border-collapse:collapse;white-space:nowrap;font-size:11px;font-variant-numeric:tabular-nums; }
+.mf-live-table th,.mf-live-table td { padding:10px 11px;border-bottom:1px solid var(--th-border);text-align:right; }
+.mf-live-table th { color:var(--th-muted);font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase; }
+.mf-live-table th:first-child,.mf-live-table td:first-child,.mf-live-table th:nth-child(2),.mf-live-table td:nth-child(2) { text-align:left; }
+.mf-live-table tbody tr { cursor:pointer; }
+.mf-live-table tbody tr:hover,.mf-live-table tbody tr.is-selected { background:var(--th-selected-surface); }
+.mf-symbol-select { border:0;background:transparent;color:var(--th-accent);font-weight:800;cursor:pointer;padding:0; }
+.mf-live-price { font-weight:800;color:var(--th-text); }
+.mf-oi-bars { display:flex;gap:3px;width:110px;height:7px;margin-left:auto;overflow:hidden;border-radius:99px;background:var(--th-inner); }
+.mf-oi-bars .put { background:var(--th-pos);height:100%; }
+.mf-oi-bars .call { background:var(--th-neg);height:100%; }
+.mf-live-empty { padding:24px; }
+.mf-live-empty h2 { margin-bottom:8px; }
+@media(max-width:760px) {
+ .mf-live-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .mf-live-summary article:last-child { grid-column:1/-1; }
+ .mf-live-contracts,.mf-live-options { padding:11px; }
+ .mf-live-table { min-width:760px; }
+}

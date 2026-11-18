@@ -1,7 +1,98 @@
-import React,{useEffect,useMemo,useState}from"react";import{adjacentStock,buildDemoFlow}from"./marketFlowDemo";import{loadOrderFlowPreferences,saveOrderFlowPreferences}from"./marketFlowPreferences";import FlowDiagram from"./FlowDiagram";import OrderFlowLiveFeed from"./OrderFlowLiveFeed";import"./order-flow.css";
-const pct=n=>(n>0?"+":"")+n.toFixed(2)+"%";const fmt=n=>new Intl.NumberFormat("en-IN",{maximumFractionDigits:2}).format(n);
-function Chart({stocks,selected,onSelect}){const w=760,h=300,p=28,all=stocks.slice(0,45),m=Math.max(1,...all.flatMap(s=>s.candles.map(c=>Math.abs(c.change))));const x=i=>p+i/75*(w-2*p),y=v=>h/2-v/m*(h/2-p);const[cursor,setCursor]=useState(null);const onPointerMove=e=>{const rect=e.currentTarget.getBoundingClientRect();const ratio=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));setCursor({index:Math.round(ratio*75),x:p+ratio*(w-2*p)})};return <svg viewBox={`0 0 ${w} ${h}`} className="mf-chart" role="img" aria-label="Simulated intraday futures flow" onPointerMove={onPointerMove} onPointerLeave={()=>setCursor(null)}>{[-1,-.5,0,.5,1].map(v=><g key={v}><line x1={p} x2={w-p} y1={y(v*m)} y2={y(v*m)} className="mf-gridline"/><text x="4" y={y(v*m)+4} className="mf-axis">{(v*m).toFixed(1)}%</text></g>)}{all.map(s=><polyline key={s.symbol} onMouseEnter={()=>onSelect(s.symbol)} onClick={()=>onSelect(s.symbol)} points={s.candles.map((c,i)=>x(i)+","+y(c.change)).join(" ")} fill="none" stroke={s.side==="bullish"?"var(--mf-up)":"var(--mf-down)"} strokeWidth={selected===s.symbol?2.8:1} opacity={selected===s.symbol?1:.35} className="mf-flow-line"/>)}{cursor&&<g className="mf-crosshair" pointerEvents="none"><line x1={cursor.x} x2={cursor.x} y1={p} y2={h-p} stroke="currentColor" strokeDasharray="3 3" opacity=".65"/><rect x={Math.min(w-90,Math.max(2,cursor.x-35))} y="5" width="70" height="18" rx="5" fill="var(--surface-raised,#eee)"/><text x={Math.min(w-55,Math.max(37,cursor.x))} y="18" textAnchor="middle" className="mf-axis">T+{cursor.index}m</text></g>}</svg>}
-function Side({title,items,selected,onSelect,side}){return <section className="mf-side"><header><h3>{title}</h3><b>{items.length}</b></header><div className="mf-tiles">{items.map((s,i)=><button key={s.symbol} className={selected===s.symbol?"is-selected":""} onMouseEnter={()=>onSelect(s.symbol)} onClick={()=>onSelect(s.symbol)}><small>{i+1}</small><b>{s.symbol}</b><strong>{pct(s.changePct)}</strong><small>{s.buildup.replace("_"," ")}</small></button>)}</div><div className="mf-featured">{items.slice(0,2).map(s=><button key={s.symbol} onClick={()=>onSelect(s.symbol)}><b>{s.symbol} · FEATURED</b><strong>{pct(s.changePct)}</strong><small>OI {fmt(s.oi)} · Support {fmt(s.support)} · Resistance {fmt(s.resistance)}</small></button>)}</div></section>}
-export default function OrderFlowPage(){const initial=useMemo(()=>loadOrderFlowPreferences(),[]);const[scope,setScope]=useState(initial.scope),[selected,setSelected]=useState(initial.selectedSymbol),[pinned,setPinned]=useState(false),[selectedSector,setSelectedSector]=useState(null);const flow=useMemo(()=>buildDemoFlow(scope),[scope]);const visibleStocks=flow.stocks;const stock=visibleStocks.find(s=>s.symbol===selected)||visibleStocks[0]||flow.stocks[0],choose=s=>{if(pinned)return;setSelected(s)},bullish=visibleStocks.filter(s=>s.side==="bullish").sort((a,b)=>b.changePct-a.changePct),bearish=visibleStocks.filter(s=>s.side==="bearish").sort((a,b)=>a.changePct-b.changePct),range=visibleStocks.filter(s=>s.side==="rangebound");const displayFlow={...flow,stocks:visibleStocks,bullish,bearish};const sideItems=stock.side==="bullish"?bullish:stock.side==="bearish"?bearish:[];useEffect(()=>{saveOrderFlowPreferences({scope,selectedSymbol:selected})},[scope,selected]);
-useEffect(()=>{if(!pinned)return;const previous=document.activeElement;const dialog=document.querySelector(".mf-detail.is-popup");const first=dialog?.querySelector("button:not(:disabled)");first?.focus();const priorOverflow=document.body.style.overflow;document.body.style.overflow="hidden";const onKey=e=>{if(e.key==="Escape"){setPinned(false);return}if(e.key==="ArrowLeft"||e.key==="ArrowRight"){const next=adjacentStock(sideItems,stock.symbol,e.key==="ArrowRight"?1:-1);if(next)setSelected(next.symbol)}if(e.key==="Tab"&&dialog){const items=[...dialog.querySelectorAll("button:not(:disabled),a[href],[tabindex=\"0\"]")];if(!items.length)return;const firstItem=items[0],lastItem=items[items.length-1];if(e.shiftKey&&document.activeElement===firstItem){e.preventDefault();lastItem.focus()}else if(!e.shiftKey&&document.activeElement===lastItem){e.preventDefault();firstItem.focus()}}};window.addEventListener("keydown",onKey);return()=>{window.removeEventListener("keydown",onKey);document.body.style.overflow=priorOverflow;if(previous instanceof HTMLElement)previous.focus()}},[pinned,sideItems,stock.symbol]);
-return <main className="market-flow-workspace ui-flow oi-design"><header className="market-flow-header"><div><p className="market-flow-eyebrow">MARKET INTELLIGENCE · SIMULATED DATA</p><h1>Order Flow</h1><p className="market-flow-subtitle">Futures direction, open-interest build-up and option positioning</p></div><span className="mf-provider-pill">● DEMO · SIMULATED</span></header><div className="mf-toolbar"><div className="mf-scope"><button className={scope==="nifty50"?"active":""} aria-pressed={scope==="nifty50"} onClick={()=>{setScope("nifty50");setSelected("NIFTY");setSelectedSector(null);setPinned(false)}}>Nifty 50</button><button className={scope==="fno"?"active":""} aria-pressed={scope==="fno"} onClick={()=>{setScope("fno");setSelected("NIFTY");setSelectedSector(null);setPinned(false)}}>All F&amp;O</button></div><div className="mf-summary"><span className="up">{bullish.length} Bullish</span><span className="down">{bearish.length} Bearish</span><span>{range.length} Rangebound</span><span>{visibleStocks.length} underlyings</span></div></div><div className="mf-sector-strip"><b>SECTORS</b>{flow.sectors.map(s=><button key={s.id} aria-pressed={selectedSector===s.id} className={selectedSector===s.id?"is-selected":""} onClick={()=>{setSelectedSector(selectedSector===s.id?null:s.id);const first=flow.stocks.find(x=>x.sector===s.id);if(first)choose(first.symbol)}}><span>{s.label}</span><strong className={s.changePct>=0?"up":"down"}>{pct(s.changePct)}</strong></button>)}</div><OrderFlowLiveFeed symbol={stock?.symbol}/><FlowDiagram flow={flow} stocks={visibleStocks} selected={stock.symbol} onSelect={choose} onPin={()=>setPinned(true)} selectedSector={selectedSector}/>{pinned&&<button className="mf-popup-backdrop" aria-label="Close instrument details" onClick={()=>setPinned(false)}/>}<section className={"mf-detail"+(pinned?" is-popup":"")} role={pinned?"dialog":undefined} aria-modal={pinned?"true":undefined} aria-label={pinned?stock.symbol+" instrument details":undefined}><header><div><small>UNDERLYING DETAIL · {stock.side.toUpperCase()}</small><h2>{stock.symbol}</h2></div><div className="mf-detail-actions">{pinned&&sideItems.length>0&&<><button aria-label="Previous underlying" disabled={!adjacentStock(sideItems,stock.symbol,-1)} onClick={()=>{const next=adjacentStock(sideItems,stock.symbol,-1);if(next)setSelected(next.symbol)}}>← Previous</button><button aria-label="Next underlying" disabled={!adjacentStock(sideItems,stock.symbol,1)} onClick={()=>{const next=adjacentStock(sideItems,stock.symbol,1);if(next)setSelected(next.symbol)}}>Next →</button></>}<button aria-pressed={pinned} onClick={()=>setPinned(!pinned)}>{pinned?"Close detail":"Open full detail"}</button></div></header><div className="mf-detail-metrics">{[["Spot","₹"+fmt(stock.spot)],["Spot change",pct(stock.changePct)],["Demo future","₹"+fmt(stock.future)],["OI change",pct(stock.oiChangePct)],["Build-up",stock.buildup.replace("_"," ")],["Conviction",stock.strength+"/100"],["PCR",stock.pcr]].map(([k,v])=><article key={k}><small>{k}</small><b>{v}</b></article>)}</div><div className="mf-levels"><div><small>Support</small><b>₹{fmt(stock.support)}</b></div><div><small>Resistance</small><b>₹{fmt(stock.resistance)}</b></div><div><small>OI zone</small><b>₹{fmt(stock.zone.low)} – ₹{fmt(stock.zone.high)}</b></div></div><div className="mf-checks"><h3>Conviction checks <small>SIMULATED</small></h3>{stock.checks.map(check=><div key={check.label}><span>{check.label}</span><b className={check.pass?"up":"down"}>{check.pass?"PASS":"CHECK"}</b></div>)}</div><h3>Illustrative option OI profile</h3><div className="mf-oi-profile">{stock.strikes.map(s=><div className="mf-oi-row" key={s.strike}><span>{fmt(s.strike)}</span><div className="put"><i style={{width:(s.put/Math.max(...stock.strikes.map(x=>Math.max(x.put,x.call)))*100)+"%"}}/></div><div className="call"><i style={{width:(s.call/Math.max(...stock.strikes.map(x=>Math.max(x.put,x.call)))*100)+"%"}}/></div><span>{fmt(s.put)}</span><span>{fmt(s.call)}</span></div>)}</div></section><p className="mf-disclaimer">All displayed futures, OI, option levels, sector and conviction values are deterministic simulated demo data, not live NSE data or trading signals. Feed connection, freshness and retry are unavailable until the separately scoped Phase 2 market-data integration.</p></main>}
+import React, { useMemo, useState } from "react";
+import OrderFlowLiveFeed from "./OrderFlowLiveFeed";
+import { mapLiveOrderFlowSnapshot } from "./liveOrderFlowData";
+import "./order-flow.css";
+
+const number = (value) => value == null
+  ? "—"
+  : new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(value);
+const price = (value) => value == null ? "—" : "₹" + number(value);
+const percent = (value) => value == null ? "—" : (value > 0 ? "+" : "") + value.toFixed(2) + "%";
+const time = (value) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+};
+
+export default function OrderFlowPage() {
+  const [snapshot, setSnapshot] = useState(null);
+  const [selected, setSelected] = useState("");
+  const market = useMemo(() => mapLiveOrderFlowSnapshot(snapshot), [snapshot]);
+  const active = market.stocks.find((item) => item.symbol === selected) || market.stocks[0] || null;
+  const positive = market.stocks.filter((item) => item.changePct > 0).length;
+  const negative = market.stocks.filter((item) => item.changePct < 0).length;
+
+  return (
+    <main className="market-flow-workspace live-market-flow">
+      <header className="market-flow-header">
+        <div>
+          <p className="market-flow-eyebrow">FINANCIAL OS · M.STOCK PROVIDER FEED</p>
+          <h1>Market Flow</h1>
+          <p className="market-flow-subtitle">Live NFO futures, options open interest, traded volume and provider timestamps</p>
+        </div>
+        <span className={"mf-provider-pill " + (market.isLive ? "is-live" : "is-offline")}>
+          {market.isLive ? "● LIVE PROVIDER DATA" : "● WAITING FOR LIVE DATA"}
+        </span>
+      </header>
+
+      <OrderFlowLiveFeed onSnapshot={setSnapshot} />
+
+      <section className="mf-live-summary" aria-label="Live market summary">
+        <article><small>Futures contracts</small><b>{market.futuresCount}</b></article>
+        <article><small>Option contracts</small><b>{market.optionsCount}</b></article>
+        <article><small>Advancing</small><b className="up">{positive}</b></article>
+        <article><small>Declining</small><b className="down">{negative}</b></article>
+        <article><small>Provider snapshot</small><b>{time(market.asOf)}</b></article>
+      </section>
+
+      {!market.isLive ? (
+        <section className="mf-live-empty" role="status">
+          <h2>No verified live market ticks received</h2>
+          <p>Market Flow will populate only after the authenticated m.Stock gateway supplies fresh, instrument-matched futures or options ticks. No demo instruments, simulated prices or placeholder analytics are displayed.</p>
+        </section>
+      ) : (
+        <>
+          <section className="mf-live-contracts">
+            <header><div><h2>Live futures contracts</h2><p>Prices and metrics below are read from the latest fresh m.Stock snapshot.</p></div><span>{market.futuresCount} contracts</span></header>
+            <div className="mf-live-table-wrap">
+              <table className="mf-live-table">
+                <thead><tr><th>Underlying</th><th>Contract</th><th>Expiry</th><th>Last price</th><th>Change</th><th>Volume</th><th>Open interest</th><th>Exchange time</th></tr></thead>
+                <tbody>
+                  {market.stocks.map((item) => (
+                    <tr key={item.instrumentToken ?? item.contract} className={active?.contract === item.contract ? "is-selected" : ""} onClick={() => setSelected(item.symbol)}>
+                      <td><button type="button" className="mf-symbol-select" onClick={() => setSelected(item.symbol)}>{item.symbol}</button></td>
+                      <td>{item.contract}</td>
+                      <td>{item.expiry || "—"}</td>
+                      <td className="mf-live-price">{price(item.price)}</td>
+                      <td className={item.changePct > 0 ? "up" : item.changePct < 0 ? "down" : ""}>{percent(item.changePct)}</td>
+                      <td>{number(item.volume)}</td>
+                      <td>{number(item.oi)}</td>
+                      <td>{time(item.exchangeTimestamp || item.receivedAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="mf-live-options">
+            <header><div><h2>Live option open interest</h2><p>{active ? active.symbol + " · strike-wise call and put OI from received option ticks" : "Select an underlying"}</p></div></header>
+            {active?.strikes?.length ? (
+              <div className="mf-live-table-wrap">
+                <table className="mf-live-table mf-option-table">
+                  <thead><tr><th>Strike</th><th>Put OI</th><th>Call OI</th><th>Put / Call OI</th></tr></thead>
+                  <tbody>{active.strikes.map((strike) => {
+                    const max = Math.max(1, strike.put, strike.call);
+                    return <tr key={strike.strike}><td>{number(strike.strike)}</td><td>{number(strike.put)}</td><td>{number(strike.call)}</td><td><span className="mf-oi-bars"><i className="put" style={{ width: (strike.put / max * 100) + "%" }} /><i className="call" style={{ width: (strike.call / max * 100) + "%" }} /></span></td></tr>;
+                  })}</tbody>
+                </table>
+              </div>
+            ) : <p className="mf-live-empty-note">No fresh option OI ticks for this underlying in the current provider snapshot.</p>}
+          </section>
+        </>
+      )}
+
+      <p className="mf-disclaimer">Provider values are shown only when the gateway reports a fresh stream and supplies matching instrument tokens. Missing provider fields remain blank; historical price paths, OI change, sentiment and trading signals are not inferred from a single snapshot.</p>
+    </main>
+  );
+}

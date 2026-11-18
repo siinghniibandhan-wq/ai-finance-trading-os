@@ -3,6 +3,7 @@ import { CandlestickSeries, HistogramSeries, LineSeries, createChart } from "lig
 import { loadChartHistory, loadLatestQuote, searchChartInstruments } from "./api";
 import MarketFlowBoard from "./MarketFlowBoard";
 import { calculateEMA, calculateSMA, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles, normalizeQuotePrice } from "./model";
+import { calculateBollingerBands, calculateVWAP } from "./indicators";
 import "./advanced-chart.css";
 
 const INTERVALS = [
@@ -41,6 +42,8 @@ export default function AdvancedChartPage() {
   const [quoteBusy, setQuoteBusy] = useState(false);
   const [showSma, setShowSma] = useState(false);
   const [showEma, setShowEma] = useState(false);
+  const [showVwap, setShowVwap] = useState(false);
+  const [showBollinger, setShowBollinger] = useState(false);
   const [hoveredCandle, setHoveredCandle] = useState(null);
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
@@ -48,6 +51,10 @@ export default function AdvancedChartPage() {
   const volumeSeriesRef = useRef(null);
   const smaSeriesRef = useRef(null);
   const emaSeriesRef = useRef(null);
+  const vwapSeriesRef = useRef(null);
+  const bollingerUpperRef = useRef(null);
+  const bollingerMiddleRef = useRef(null);
+  const bollingerLowerRef = useRef(null);
   const lastPriceLineRef = useRef(null);
 
   const selectedLabel = useMemo(() => {
@@ -209,6 +216,10 @@ export default function AdvancedChartPage() {
       visible: showEma,
       title: "EMA 20",
     });
+    const vwapSeries = chart.addSeries(LineSeries, { color: "#b58cff", lineWidth: 2, priceLineVisible: false, lastValueVisible: false, visible: showVwap, title: "VWAP" });
+    const bollingerUpper = chart.addSeries(LineSeries, { color: "rgba(91,156,245,0.8)", lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false, visible: showBollinger, title: "BB Upper" });
+    const bollingerMiddle = chart.addSeries(LineSeries, { color: "rgba(91,156,245,0.55)", lineWidth: 1, priceLineVisible: false, lastValueVisible: false, visible: showBollinger, title: "BB Middle" });
+    const bollingerLower = chart.addSeries(LineSeries, { color: "rgba(91,156,245,0.8)", lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false, visible: showBollinger, title: "BB Lower" });
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" },
       priceScaleId: "",
@@ -233,6 +244,10 @@ export default function AdvancedChartPage() {
     volumeSeriesRef.current = volumeSeries;
     smaSeriesRef.current = smaSeries;
     emaSeriesRef.current = emaSeries;
+    vwapSeriesRef.current = vwapSeries;
+    bollingerUpperRef.current = bollingerUpper;
+    bollingerMiddleRef.current = bollingerMiddle;
+    bollingerLowerRef.current = bollingerLower;
 
     const resize = () => {
       chart.applyOptions(getChartDimensions(container.clientWidth, container.clientHeight));
@@ -251,6 +266,10 @@ export default function AdvancedChartPage() {
       volumeSeriesRef.current = null;
       smaSeriesRef.current = null;
       emaSeriesRef.current = null;
+      vwapSeriesRef.current = null;
+      bollingerUpperRef.current = null;
+      bollingerMiddleRef.current = null;
+      bollingerLowerRef.current = null;
     };
   }, []);
 
@@ -267,13 +286,22 @@ export default function AdvancedChartPage() {
       })));
     smaSeriesRef.current.setData(calculateSMA(candles, 20));
     emaSeriesRef.current.setData(calculateEMA(candles, 20));
+    vwapSeriesRef.current?.setData(calculateVWAP(candles));
+    const bands = calculateBollingerBands(candles, 20, 2);
+    bollingerUpperRef.current?.setData(bands.map(({ time, upper }) => ({ time, value: upper })));
+    bollingerMiddleRef.current?.setData(bands.map(({ time, middle }) => ({ time, value: middle })));
+    bollingerLowerRef.current?.setData(bands.map(({ time, lower }) => ({ time, value: lower })));
     if (candles.length) chartRef.current?.timeScale().fitContent();
   }, [candles]);
 
   useEffect(() => {
     smaSeriesRef.current?.applyOptions({ visible: showSma });
     emaSeriesRef.current?.applyOptions({ visible: showEma });
-  }, [showSma, showEma]);
+    vwapSeriesRef.current?.applyOptions({ visible: showVwap });
+    bollingerUpperRef.current?.applyOptions({ visible: showBollinger });
+    bollingerMiddleRef.current?.applyOptions({ visible: showBollinger });
+    bollingerLowerRef.current?.applyOptions({ visible: showBollinger });
+  }, [showSma, showEma, showVwap, showBollinger]);
 
   const lastPrice = quote?.quote?.last_price;
   const normalizedLastPrice = normalizeQuotePrice(quote);
@@ -397,6 +425,8 @@ export default function AdvancedChartPage() {
               <span>OVERLAYS</span>
               <label><input type="checkbox" checked={showSma} disabled={!candles.length} onChange={(event) => setShowSma(event.target.checked)} /> SMA 20</label>
               <label><input type="checkbox" checked={showEma} disabled={!candles.length} onChange={(event) => setShowEma(event.target.checked)} /> EMA 20</label>
+              <label><input type="checkbox" checked={showVwap} disabled={!candles.some((candle) => Number.isFinite(candle.volume) && candle.volume > 0)} onChange={(event) => setShowVwap(event.target.checked)} /> VWAP</label>
+              <label><input type="checkbox" checked={showBollinger} disabled={candles.length < 20} onChange={(event) => setShowBollinger(event.target.checked)} /> Bollinger 20,2</label>
             </div>
             <div className="advanced-chart-status">
             {historyLoading ? "Loading historical data…" : candles.length ? `${candles.length.toLocaleString("en-IN")} candles loaded` : "No chart data"}
@@ -405,7 +435,8 @@ export default function AdvancedChartPage() {
           </div>
         </div>
         {historyError && <div className="advanced-chart-warning" role="status">{historyError}</div>}
-        {(showSma || showEma) && candles.length < 20 && <div className="advanced-chart-message" role="status">20-period overlays appear after at least 20 valid candles are available.</div>}
+        {(showSma || showEma || showBollinger) && candles.length < 20 && <div className="advanced-chart-message" role="status">20-period overlays appear after at least 20 valid candles are available.</div>
+        {showVwap && !candles.some((candle) => Number.isFinite(candle.volume) && candle.volume > 0) && <div className="advanced-chart-message" role="status">VWAP requires provider-supplied candle volume.</div>}}
         <div className="advanced-chart-ohlcv" aria-label="Selected candle OHLCV" aria-live="polite">
           <span className="advanced-chart-ohlcv-time">{readoutCandle ? formatChartTime(readoutCandle.time) : "—"}</span>
           <span>O <strong>{readoutCandle ? money(readoutCandle.open) : "—"}</strong></span>

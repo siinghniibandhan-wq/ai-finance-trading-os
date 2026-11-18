@@ -17,7 +17,7 @@ def order_flow_snapshot(
 ):
     """Return the latest normalized futures and option OI snapshot."""
     cleaned = symbol.strip().upper() if symbol else None
-    if cleaned and not cleaned.replace("-", "").isalnum():
+    if cleaned and (not any(character.isalnum() for character in cleaned) or not all(character.isalnum() or character in {"-", "&", "."} for character in cleaned)):
         raise HTTPException(status_code=400, detail="Invalid underlying symbol.")
     try:
         return get_order_flow_snapshot(cleaned)

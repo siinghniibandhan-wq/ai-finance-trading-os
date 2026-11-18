@@ -1,0 +1,16 @@
+{
+  "name": "picomatch",
+  "version": "4.0.8-sb.1",
+  "description": "Super Bajaar maintained security-patched picomatch 4.0.7 fork",
+  "license": "MIT",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "posix.js",
+    "lib"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=12"
+  }
+}

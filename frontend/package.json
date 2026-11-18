@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test:market-flow": "node --test src/order-flow/*.test.js",
     "test:notice": "node --test src/importantNoticeSchedule.test.js",
-    "test:sidebar": "node --test src/sidebarCollapse.test.js"
+    "test:sidebar": "node --test src/sidebarCollapse.test.js",
+    "test:security": "node --test security-tests/*.test.cjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -18,6 +19,10 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^6.0.5"
+    "vite": "^6.0.5",
+    "picomatch": "file:./vendor/picomatch"
+  },
+  "overrides": {
+    "picomatch": "$picomatch"
   }
 }

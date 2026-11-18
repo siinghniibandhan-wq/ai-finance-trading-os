@@ -23,6 +23,27 @@ def test_market_quote_route_calls_service_without_recursing(monkeypatch):
     assert response["cache_hit"] is False
 
 
+def test_market_quote_route_exposes_provider_market_timestamp(monkeypatch):
+    market_timestamp = "2026-11-18T09:20:00+05:30"
+    monkeypatch.setattr(
+        market_quote_route,
+        "fetch_market_quote",
+        lambda symbol: {
+            "price": 123.45,
+            "details": {"exchange_timestamp": market_timestamp},
+            "retrieved_at": "2026-11-18T03:50:01+00:00",
+            "cache_hit": False,
+            "cache_age_seconds": 0,
+            "provider_latency_ms": 42,
+        },
+    )
+
+    response = market_quote_route.get_market_quote("RELIANCE", exchange="NSE")
+
+    assert response["provider_market_timestamp"] == market_timestamp
+    assert response["freshness_note"] == "Provider market timestamp is supplied by the broker."
+
+
 def test_market_quote_route_uses_requested_exchange(monkeypatch):
     calls = []
     monkeypatch.setattr(

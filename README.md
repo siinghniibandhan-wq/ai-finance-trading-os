@@ -97,12 +97,11 @@ The backend is responsible for authentication, authorization, data ownership, pe
 
 The current Financial OS backend integrates with the m.Stock gateway through REST endpoints. The registered market capabilities are market overview, quotes, instrument search, indices, gainers/losers, historical data, charts and watchlists.
 
-**Market Flow / Order Flow / streaming status (reviewed 18 November 2026):**
-- The current backend entry point, `backend/app/main.py`, registers the REST market routers only. It does not register a Market Flow, Order Flow or market-stream router.
-- The reviewed backend source contains no active Market Flow or Order Flow adapter and no consumer of `/market-stream/snapshot`.
-- The latest Gateway `mstock-gateway-app.py` uploaded for review contains no Market Flow, `/market-stream/*`, snapshot or stream implementation. Its WebSocket mention is confined to a legacy index-test heading.
-- Consequently, the current documented application path is REST market data. Do not describe a live WebSocket feed, Gateway stream worker, Market Flow dashboard or Order Flow adapter as present or operational.
-- Older WebSocket incident notes and stream deployment descriptions are historical records only; they are not evidence of current code or runtime state.
+**Market data transport policy:**
+- The application uses authenticated REST APIs for market overview, quotes, instrument search, indices, gainers/losers, historical data and charts.
+- Market Flow chart work must remain REST-only. Do not add WebSocket, socket, event-stream or continuous streaming transports.
+- Periodic refreshes must be bounded REST requests. Quote snapshots must not be represented as exchange ticks or continuous live feeds.
+- Preserve existing authentication, gateway shared-secret validation, market routes and broker-order safeguards.
 
 The REST market APIs and broker-order safeguards are separate existing functionality. Removing Market Flow/streaming does not imply removing or changing market quotes, history, charts, indices, movers, search, watchlists or broker order execution.
 

@@ -22,7 +22,7 @@
 | Backend service | `financial-os-backend.service` | Recorded Gunicorn service on `127.0.0.1:8001`; verify current unit |
 | Secrets integration | boto3 dependency and SSM Parameter Store configuration guidance | Actual IAM permissions and parameter names must be checked in AWS |
 | Frontend hosting | Vite build and CI present; historical deployment references are mixed | Confirm active production host from deployment records |
-| AWS load balancer for m.Stock WebSocket | Provider response identified `awselb/2.0` | This is the remote m.Stock endpoint path; not evidence of an application-owned ALB |
+| Historical m.Stock WebSocket response | Earlier provider response identified `awselb/2.0` | Historical incident evidence only; not a current application dependency |
 
 Do not infer that the application uses AWS RDS, ALB, WAF, CloudFront, S3, Route 53, CloudWatch alarms or multi-AZ infrastructure until the live account configuration confirms those resources.
 
@@ -49,7 +49,7 @@ Financial OS API (FastAPI / Gunicorn or Uvicorn)
           |
           +--> m.Stock REST APIs
           |
-          +--> m.Stock WebSocket endpoint
+          +--> (no application WebSocket stream is currently documented)
                wss://ws.mstock.trade
                Provider DNS/ELB observed in Mumbai (ap-south-1)
 ```
@@ -213,7 +213,7 @@ Recommended controls to implement/verify:
 - Daily database backups, documented retention and periodic restore tests.
 - EC2 recovery procedure and tested service restart steps.
 - Credential rotation and incident escalation contacts.
-- Separate operational dashboards for backend API, m.Stock REST and m.Stock WebSocket.
+- Monitor the backend API and m.Stock REST gateway independently; no application market-stream health dashboard is currently in scope.
 
 Do not record secrets or full authentication headers in logs. A successful backup job is not sufficient: restore testing is required.
 
@@ -237,7 +237,7 @@ Do not record secrets or full authentication headers in logs. A successful backu
 - [ ] Confirm CloudWatch log groups, retention, metrics and alarms.
 - [ ] Confirm WAF/edge rate limiting or document the compensating controls.
 - [ ] Verify log rotation and backup restoration.
-- [ ] Complete the India-origin m.Stock WebSocket handshake comparison.
+- [x] Reconcile Market Flow / market-stream documentation with the current backend and latest uploaded Gateway source (18 November 2026).
 
 
 

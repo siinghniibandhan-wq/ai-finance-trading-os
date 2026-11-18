@@ -37,7 +37,7 @@ The browser sends the existing Financial OS access token in the WebSocket subpro
 Only a successful snapshot with a fresh, verified feed is displayed as LIVE. The workspace currently displays provider-backed:
 
 - Futures contract, expiry, last traded price and provider-computed percentage change
-- Futures session OHLC, volume, average traded price, open interest, provider OI high/low, and total buy/sell quantities with a derived balance
+- Futures session OHLC, volume, average traded price, open interest, provider OI high/low, and total bid/ask depth quantities with a derived depth balance (not executed trades)
 - Option contracts, strike, CE/PE side, price, provider-computed percentage change, volume and open interest
 - Aggregated CE/PE open interest by underlying, expiry and strike (contracts are never mixed across symbols)
 - Feed connection and freshness

@@ -89,7 +89,12 @@ def _resolve_instrument_from_csv(csv_text, symbol, exchange):
         row_symbol = (value_for(row, "symbol") or "").upper()
         token = value_for(row, "token")
         if row_exchange == requested_exchange and row_symbol == requested_symbol and token:
-            return token, row_symbol, value_for(row, "name")
+            try:
+                numeric_token = int(token)
+            except (TypeError, ValueError):
+                continue
+            if numeric_token > 0:
+                return str(numeric_token), row_symbol, value_for(row, "name")
     return None
 
 

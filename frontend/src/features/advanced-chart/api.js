@@ -1,4 +1,5 @@
 import { API_BASE_URL, apiFetch } from "../../api";
+import { buildInstrumentSearchParams } from "./model";
 
 async function readResponse(response, label) {
   const payload = await response.json().catch(() => ({}));
@@ -11,13 +12,8 @@ async function readResponse(response, label) {
   return payload;
 }
 
-export async function searchChartInstruments(query) {
-  const params = new URLSearchParams({
-    query: query.trim(),
-    exchange: "ALL",
-    limit: "20",
-    product_type: "Stocks",
-  });
+export async function searchChartInstruments(query, exchange = "ALL") {
+  const params = buildInstrumentSearchParams(query, exchange);
   const response = await apiFetch(`${API_BASE_URL}/api/market-search/?${params}`, {
     cache: "no-store",
   });

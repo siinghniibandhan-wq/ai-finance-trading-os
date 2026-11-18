@@ -304,5 +304,11 @@ def test_adapter_normalizes_actual_mstock_type_a_full_tick_shape(monkeypatch):
     assert future["last_traded_at"] == "2026-11-18T09:20:00+00:00"
     assert future["exchange_timestamp"] == "2026-11-18T09:20:01+00:00"
     assert result["option_oi_by_strike"] == [
-        {"strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 14000.0}
+        {
+            "symbol": "NIFTY",
+            "expiry": "2026-11-26",
+            "strike": 25000.0,
+            "ce_oi": 12000.0,
+            "pe_oi": 14000.0,
+        }
     ]

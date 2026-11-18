@@ -29,9 +29,7 @@ export default function OrderFlowLiveFeed({ symbol, onSnapshot = NOOP_SNAPSHOT }
         if (symbol) url.searchParams.set("symbol", symbol);
         const response = await apiFetch(url.toString(), { method: "GET" });
         const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(friendlyErrorMessage(response.status, payload));
-        }
+        if (!response.ok) throw new Error(friendlyErrorMessage(response.status, payload));
         if (!active) return;
         setSnapshot(payload);
         onSnapshot(payload);
@@ -66,16 +64,13 @@ export default function OrderFlowLiveFeed({ symbol, onSnapshot = NOOP_SNAPSHOT }
       <div className="mf-live-feed-heading">
         <b>m.Stock derivatives feed</b>
         <span className={isLive ? "mf-feed-fresh" : "mf-feed-offline"}>
-          {isLive ? "LIVE · FRESH" : feed?.status === "stale" ? "STALE" : "NOT CONNECTED"}
+          {isLive ? "LIVE · FRESH" : feed?.status === "stale" ? "STALE · NOT LIVE" : "NOT CONNECTED"}
         </span>
       </div>
       {isLive ? (
-        <>
-          <p>Last provider tick: {formatAge(feed.age_seconds)} · {snapshot.futures_contracts.length} futures contracts · {snapshot.option_contracts?.length || snapshot.option_oi_by_strike.length} option contracts</p>
-          <p>Verified futures price, futures OI, volume and option OI are overlaid on matching instruments. Derived charts and indicators remain simulated.</p>
-        </>
+        <p>Latest provider tick: {formatAge(feed.age_seconds)} · polling every {POLL_MS / 1000}s. Only received provider contracts are displayed.</p>
       ) : (
-        <p>{error || "Waiting for an authenticated provider tick."} Automatic retry in {Math.round(retryIn / 1000)}s. Demo values below are not live market data.</p>
+        <p>{error || "Waiting for a fresh authenticated m.Stock provider tick."} Retrying in {Math.round(retryIn / 1000)}s. No simulated market values are shown.</p>
       )}
     </section>
   );

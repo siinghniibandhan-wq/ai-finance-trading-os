@@ -301,3 +301,23 @@
     align-items: flex-start;
   }
 }
+
+.advanced-chart-ohlcv {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-height: 28px;
+  padding: 0 2px 8px;
+  color: var(--finos-muted, #a1a1aa);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.advanced-chart-ohlcv strong {
+  color: var(--finos-text, #f4f4f5);
+  font-weight: 700;
+}
+.advanced-chart-ohlcv-time {
+  color: var(--finos-muted, #a1a1aa);
+  font-weight: 650;
+}

@@ -49,3 +49,10 @@ test("deduplicates timestamps and keeps the last valid candle", () => {
 test("returns an empty series for a non-array provider response", () => {
   assert.deepEqual(normalizeCandles(null), []);
 });
+
+test("keeps chart dimensions aligned with the responsive chart container", async () => {
+  const { getChartDimensions } = await import("./model.js");
+  assert.deepEqual(getChartDimensions(280, 360), { width: 320, height: 360 });
+  assert.deepEqual(getChartDimensions(960, 430), { width: 960, height: 430 });
+  assert.deepEqual(getChartDimensions(0, 0), { width: 320, height: 520 });
+});

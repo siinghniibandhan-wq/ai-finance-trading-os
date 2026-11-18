@@ -1,43 +1,62 @@
-# Order Flow workspace
+# Market Flow
 
-The Financial OS navigation exposes **Order Flow** separately from the existing **Markets** workspace. Existing Markets, portfolio and broker order workflows remain separate and unchanged.
+Market Flow is a live, read-only derivatives workspace. It is separate from the **Markets** page, which continues to use the existing m.Stock REST quote and market-overview APIs.
 
-## Phase 1 — interactive board
+## Shared m.Stock login
 
-The workspace includes the responsive Flow Diagram, ranked bullish/bearish instruments, sector highlighting, linked chart/list focus, pinned instrument details, option OI profile, support/resistance, conviction checks, keyboard navigation and persistent universe/instrument preferences.
+- Financial OS sign-in remains the application's Bearer-token authentication.
+- The m.Stock broker session is authenticated once through `POST /api/market-broker/authenticate`, which forwards the six-digit TOTP to the gateway's `POST /auth`.
+- The gateway keeps the resulting broker access token in its existing process-level session. Its REST quote endpoints and the SDK WebSocket worker both use that same token.
+- `GET /api/market-broker/status` reads the gateway's `GET /auth/status` endpoint without exposing the access token.
+- When a new TOTP login replaces the access token, the gateway worker must recreate its SDK connection so it does not keep using the old token.
 
-The source project's interaction/layout model has been adapted to Financial OS; this is not a verbatim component transplant.
+## Live data path
 
-## Phase 2 — implemented application-side work
+```text
+Markets page
+  └─ Financial OS REST APIs
+       └─ m.Stock Gateway REST (/quote, /index-quote, /gainers-losers, ...)
 
-- Pure backend transformations for futures contract-month aggregation, current OI change/percentage, and strike-wise CE/PE OI aggregation.
-- Feed freshness classification: `fresh`, `stale`, `disconnected`.
-- Authenticated, read-only API: `GET /api/order-flow/snapshot?symbol=NIFTY`.
-- Server-side adapter for the production `/market-stream/*` routes, using the existing gateway URL/secret and verified instrument-master token mapping.
-- Frontend feed status panel with authenticated polling, freshness display and bounded exponential retry (10–60 seconds).
-- Backend tests for aggregation, freshness, gateway payload validation and fail-closed configuration.
-- Historical OI is deliberately excluded.
+Market Flow page
+  └─ Browser WebSocket (/api/order-flow/stream)
+       └─ FastAPI validates the existing Financial OS Bearer session
+            └─ Order Flow adapter
+                 ├─ /instruments (verified instrument master)
+                 ├─ POST /market-stream/start (idempotent subscription)
+                 └─ /market-stream/snapshot (gateway's live tick cache)
+                      └─ m.Stock SDK WebSocket worker
+                           └─ wss://ws.mstock.trade
+```
 
-## Production m.Stock gateway contract
+The browser no longer polls `GET /api/order-flow/snapshot`. It receives snapshots over the authenticated WebSocket. The backend starts the gateway subscription on the first stream read and then relays the gateway's latest decoded snapshot at one-second intervals. The gateway remains the owner of the upstream m.Stock WebSocket connection and reconnect lifecycle.
 
-The Financial OS backend now adapts the production Flask gateway contract instead of expecting the obsolete normalized `/order-flow/snapshot` route.
+The browser sends the existing Financial OS access token in the WebSocket subprotocol, not in the URL. Broker credentials and the gateway shared secret never reach the browser.
 
-1. Read the gateway's `/instruments` CSV and validate derivative instrument metadata (token, exchange, segment, underlying, expiry, strike, option side and lot size).
-2. Select the active Order Flow underlying's verified futures/options tokens, capped at 200; a request without a symbol uses a balanced derivative universe.
-3. Idempotently call authenticated `POST /market-stream/start` with `{"tokens":[...],"mode":3}`. The gateway worker retains its SDK connection and reconnect lifecycle.
-4. Read authenticated `GET /market-stream/snapshot`, which returns `ticks` plus `stream` status.
-5. Join each decoded SDK tick to the verified instrument master and normalize futures, options, price, volume, OI and timestamps for the existing Order Flow API.
+## Data integrity
 
-The backend uses the existing `MSTOCK_GATEWAY_URL` and `MSTOCK_GATEWAY_SECRET` settings and the existing `X-Financial-OS-Gateway-Secret` header. It does not require a second derivatives-gateway URL or expose broker credentials to the browser. The existing Bearer authentication on `GET /api/order-flow/snapshot` remains unchanged.
+Only a successful snapshot with a fresh, verified feed is displayed as LIVE. The workspace currently displays provider-backed:
 
-The SDK supplies decoded prices; the adapter does not divide or rescale them again. OI is taken only from the SDK's `oi` field. The stream does not supply previous-session OI, so the adapter does not invent `previous_oi` or OI change. Historical OI remains excluded. Unknown tokens are counted as unmapped rather than assigned a guessed identity.
+- Futures contract, expiry, last traded price and provider-computed percentage change
+- Futures session OHLC, volume, average traded price, open interest, provider OI high/low, and total bid/ask depth quantities with a derived depth balance (not executed trades)
+- Option contracts, strike, CE/PE side, price, provider-computed percentage change, volume and open interest
+- Aggregated CE/PE open interest by underlying, expiry and strike (contracts are never mixed across symbols)
+- Feed connection and freshness
 
-The frontend reports LIVE only when the gateway reports a verified connected stream and the last tick is fresh. Empty, stale or disconnected snapshots remain NOT CONNECTED/STALE; demo charts and derived indicators remain labelled simulated.
+The current gateway adapter does not provide verified spot percentage change, intraday historical candle series, previous-session OI, OI change, PCR history, support/resistance or conviction signals. Those values are not generated or filled with demo data. Missing provider fields remain unavailable.
 
-**Current upstream limitation:** the latest verified EC2 diagnostics recorded an HTTP 502 during the m.Stock WebSocket upgrade, before LOGIN or subscription acknowledgement. No live ticks were received in that diagnostic. The backend adapter can now request subscriptions and normalize returned ticks, but it cannot make the provider's WebSocket handshake succeed. Until a fresh authenticated tick is observed end-to-end, the feed must remain NOT LIVE.
+The adapter follows the bundled Type A SDK field names: `last_price`, `volume_traded`, `change`, `ohlc`, and `open_interest`. The SDK currently emits its `open_interest`, `open_interest_high` and `open_interest_low` values as one-element tuples; the adapter unwraps only that documented one-element representation. The SDK's `change` is its percentage change against the OHLC close, so it is exposed as `change_pct`. Price scaling is not applied a second time to SDK-decoded values.
 
-The adapter changes are on branch `fix/order-flow-market-stream-contract` in PR #196. The current PR head's backend regression suite passed (374 passed, 2 skipped). Full CI is not green: the frontend dependency audit reports four high-severity issues in the existing Vite/fdir/picomatch dependency chain, so frontend tests/build were skipped. The adapter is not merged or deployed. The upstream WebSocket 502 also means the feed remains NOT LIVE.
+Unknown instrument tokens are not assigned guessed symbols.
+
+## Deployment and verification requirements
+
+- The matching EC2 gateway changes are in the separate `mstock-gateway-update.zip` package. They add shared-secret checks for the broker-auth and market REST/instrument endpoints, `/auth/status`, and SDK reconnection when the broker token changes.
+- The gateway's `FINANCIAL_OS_GATEWAY_SECRET` and Financial OS backend's `MSTOCK_GATEWAY_SECRET` must match.
+- The backend reverse proxy must support WebSocket Upgrade for `/api/order-flow/stream`.
+- Do not report LIVE until the upstream WebSocket is connected, the SDK login/subscription succeeds, fresh ticks arrive, and the normalized futures/options data reaches this page.
+
+The uploaded gateway archive's `mticker.log` contains repeated WebSocket close code `1006` events. That indicates an abnormal connection close but does not, by itself, identify whether the cause is the provider, network path or SDK. A fresh post-deployment end-to-end check is still required.
 
 ## Attribution and licence
 
-The source Order Flow project is by Mr. Chartist (https://mrchartist.com), from https://github.com/MrChartist/order-flow. Its original PolyForm Noncommercial License 1.0.0 and required copyright notice are preserved in this directory's `LICENSE` file. Any commercial use requires a separate licence from the rights holder.
+The legacy Flow Diagram source is by Mr. Chartist (https://mrchartist.com), from https://github.com/MrChartist/order-flow. Its original PolyForm Noncommercial License 1.0.0 and required copyright notice are preserved in this directory's `LICENSE` file. The current live Market Flow page does not render the legacy simulated board.

@@ -137,3 +137,29 @@ export function formatMarketPercent(value) {
   if (number === null) return "—";
   return `${number > 0 ? "+" : ""}${number.toFixed(2)}%`;
 }
+
+
+export function appendLivePriceHistory(history, snapshot, maxPoints = 1800) {
+  if (snapshot?.status !== "success" || snapshot?.feed?.status !== "fresh") return history;
+  const incoming = (Array.isArray(snapshot.futures_contracts) ? snapshot.futures_contracts : [])
+    .map((row) => ({
+      symbol: cleanSymbol(row?.symbol),
+      contract: String(row?.tradingsymbol || ""),
+      price: finiteNumber(row?.price),
+      timestamp: row?.exchange_timestamp || row?.received_at || snapshot.as_of || null,
+    }))
+    .filter((row) => row.symbol && row.contract && row.price !== null && row.price > 0 && row.timestamp &&
+      !Number.isNaN(new Date(row.timestamp).getTime()));
+  if (!incoming.length) return history;
+  const next = Array.isArray(history) ? history.slice() : [];
+  for (const point of incoming) {
+    const key = point.symbol + "|" + point.contract;
+    const lastIndex = next.findLastIndex((item) => item.symbol + "|" + item.contract === key);
+    if (lastIndex >= 0 && next[lastIndex].timestamp === point.timestamp) {
+      next[lastIndex] = point;
+    } else {
+      next.push(point);
+    }
+  }
+  return next.slice(-Math.max(1, Number(maxPoints) || 1800));
+}

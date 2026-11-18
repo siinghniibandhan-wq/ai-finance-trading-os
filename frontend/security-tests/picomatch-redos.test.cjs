@@ -9,14 +9,14 @@ test('literalizes repeated extglobs containing glob stars', () => {
   ];
   for (const pattern of vulnerablePatterns) {
     const source = picomatch.makeRe(pattern).source;
-    assert.ok(source.includes('\\\\+(') || source.includes('\\\\*('), pattern + ' must be literalized');
+    assert.ok(source.includes('\\+(') || source.includes('\\*('), pattern + ' must be literalized');
   }
 });
 
 test('literalizes repeated extglobs with repeated-branch overlap', () => {
   for (const pattern of ['+(ab|abab)', '+(abc|abcabc)']) {
     const source = picomatch.makeRe(pattern).source;
-    assert.ok(source.includes('\\\\+('), pattern + ' must be literalized');
+    assert.ok(source.includes('\\+('), pattern + ' must be literalized');
   }
 });
 

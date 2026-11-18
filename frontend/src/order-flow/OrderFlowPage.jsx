@@ -7,6 +7,7 @@ import {
   formatMarketTimestamp,
 } from "./liveOrderFlowData";
 import "./order-flow.css";
+import "./live-order-flow.css";
 
 function Metric({ label, value, detail }) {
   return (

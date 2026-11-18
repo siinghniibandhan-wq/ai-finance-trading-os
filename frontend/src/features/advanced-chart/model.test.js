@@ -116,3 +116,36 @@ test("builds instrument search parameters with an explicit supported exchange fi
   assert.equal(buildInstrumentSearchParams("TCS", "BSE").get("exchange"), "BSE");
   assert.equal(buildInstrumentSearchParams("TCS", "INVALID").get("exchange"), "ALL");
 });
+
+
+test("preserves valid OHLC candles when the provider does not supply volume", async () => {
+  const { normalizeCandles } = await import("./model.js");
+  assert.deepEqual(normalizeCandles([
+    {
+      timestamp: "2026-11-18T09:15:00+05:30",
+      open: 100,
+      high: 105,
+      low: 99,
+      close: 103,
+      volume: null,
+    },
+  ]), [
+    {
+      time: Math.floor(Date.parse("2026-11-18T09:15:00+05:30") / 1000),
+      open: 100,
+      high: 105,
+      low: 99,
+      close: 103,
+      volume: null,
+    },
+  ]);
+});
+
+test("normalizes numeric Unix timestamps supplied as strings", async () => {
+  const { normalizeCandles } = await import("./model.js");
+  assert.deepEqual(normalizeCandles([
+    ["1794973500", 100, 102, 99, 101, 10],
+  ]), [
+    { time: 1794973500, open: 100, high: 102, low: 99, close: 101, volume: 10 },
+  ]);
+});

@@ -65,7 +65,9 @@ The reference's own feed is HTTP/REST based: the market file is polled every min
 - [x] No demo feed, simulated prices, fake candles or fabricated OI are used.
 - [x] No gateway secret, Bearer auth, backend gateway, AWS/systemd or deployment configuration changes.
 - [ ] Authenticated production runtime smoke test with a valid user session and real provider data.
-- [ ] Final PR regression run after the latest Phase 1 changes and confirmation that the original Markets page's requests and refresh cadence are unchanged.
+- [x] Final PR CI regression run on commit `aefe161e9a62036969249f425c287db4370fd275`: frontend tests/build, backend regression tests, dependency audits and repository secret scan all passed.
+- [x] App navigation diff reviewed: only the Advanced Chart import, Markets submenu item, valid-page entry and isolated render branch were added; the existing Markets component branch remains unchanged.
+- [ ] Authenticated runtime smoke test against real provider data.
 
 ## Phase 1 visualisation boundary
 

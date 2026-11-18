@@ -52,7 +52,7 @@ def order_flow_snapshot(
     _current_user=Depends(get_current_user),
 ):
     cleaned = symbol.strip().upper() if symbol else None
-    if cleaned and not re.fullmatch(r"[A-Z0-9&._-]{1,40}", cleaned):
+    if cleaned and not re.fullmatch(r"(?=.*[A-Z0-9])[A-Z0-9&._-]{1,40}", cleaned):
         raise HTTPException(status_code=400, detail="Invalid underlying symbol.")
     try:
         return get_order_flow_snapshot(cleaned)

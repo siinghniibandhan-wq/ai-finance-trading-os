@@ -84,13 +84,16 @@ export function buildLiveOrderFlow(snapshot, selectedSymbol = "") {
 
   const optionOiByStrike = (Array.isArray(snapshot.option_oi_by_strike) ? snapshot.option_oi_by_strike : [])
     .map((row) => ({
+      symbol: cleanSymbol(row?.symbol),
+      expiry: String(row?.expiry || ""),
       strike: finiteNumber(row?.strike),
       callOi: finiteNumber(row?.ce_oi),
       putOi: finiteNumber(row?.pe_oi),
     }))
-    .filter((row) => row.strike !== null && row.strike > 0 &&
+    .filter((row) => row.symbol && row.expiry && row.strike !== null && row.strike > 0 &&
       (row.callOi !== null || row.putOi !== null))
-    .sort((a, b) => a.strike - b.strike);
+    .sort((a, b) => a.symbol.localeCompare(b.symbol) ||
+      a.expiry.localeCompare(b.expiry) || a.strike - b.strike);
 
   const underlyings = [...new Set([
     ...futures.map((row) => row.symbol),

@@ -23,9 +23,6 @@ jobs:
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm install
-      - name: Audit frontend dependencies
-        working-directory: frontend
-        run: npm audit --audit-level=high
       - name: Test daily Important Notice schedule
         working-directory: frontend
         run: npm run test:notice
@@ -38,6 +35,11 @@ jobs:
       - name: Test Order Flow data model
         working-directory: frontend
         run: npm run test:market-flow
+      # Run the security gate after functional checks so an unresolved
+      # upstream advisory does not hide frontend test/build regressions.
+      - name: Audit frontend dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high
 
   backend:
     name: Backend regression tests

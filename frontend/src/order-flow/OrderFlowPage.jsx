@@ -110,7 +110,7 @@ export default function OrderFlowPage() {
 
       <DataTable
         title="Live futures"
-        description="Latest provider-decoded futures price, volume and open interest. No estimated values are inserted."
+        description="Latest provider-decoded futures price, volume, open interest and total bid/ask depth. Depth quantities are not executed trades."
         rows={futuresRows}
         empty="No fresh futures ticks are available. Confirm the m.Stock session and WebSocket status above."
         columns={[
@@ -126,9 +126,9 @@ export default function OrderFlowPage() {
           { key: "averageTradedPrice", label: "Avg traded", render: (row) => formatMarketNumber(row.averageTradedPrice) },
           { key: "volume", label: "Volume", render: (row) => formatMarketNumber(row.volume) },
           { key: "oi", label: "Open interest", render: (row) => formatMarketNumber(row.oi) },
-          { key: "totalBuyQuantity", label: "Buy quantity", render: (row) => formatMarketNumber(row.totalBuyQuantity) },
-          { key: "totalSellQuantity", label: "Sell quantity", render: (row) => formatMarketNumber(row.totalSellQuantity) },
-          { key: "buySellBalancePct", label: "Buy/sell balance", render: (row) => formatMarketPercent(row.buySellBalancePct) },
+          { key: "totalBuyQuantity", label: "Total bid qty", render: (row) => formatMarketNumber(row.totalBuyQuantity) },
+          { key: "totalSellQuantity", label: "Total ask qty", render: (row) => formatMarketNumber(row.totalSellQuantity) },
+          { key: "buySellBalancePct", label: "Depth balance", render: (row) => formatMarketPercent(row.buySellBalancePct) },
           { key: "exchangeTimestamp", label: "Exchange time", render: (row) => formatMarketTimestamp(row.exchangeTimestamp || row.receivedAt) },
         ]}
       />

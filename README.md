@@ -48,7 +48,7 @@ The application navigation and backend modules cover the following areas:
 - **Personal finance:** Dashboard, Wealth Manager, Accounts, Transactions, Ledger, Chart of Accounts, Categories, Bills, Loans & Liabilities, Budgets, Goals and Finance Diary.
 - **Investments:** Portfolio, Holdings, Investment Transactions, investment P&L, watchlists and broker reconciliation.
 - **Markets:** Market overview, quotes, instrument search, indices, gainers/losers, historical market data and charts.
-- **Order Flow:** order-flow workspace and broker-order service boundaries. Live execution remains subject to explicit operational safeguards and verification.
+- **Order Flow:** read-only live derivatives workspace for futures, options and open interest. It is separate from broker order execution and must remain NOT LIVE until fresh provider ticks are verified end-to-end.
 - **Indian tax:** income aggregation, deductions/exempt income, capital gains, house property, business income, loss set-off, tax liability and ITR-ready reporting.
 - **AI and administration:** AI Assistant, account/profile settings and admin-only operations.
 - **Themes:** central theme system and visual preferences.
@@ -110,9 +110,9 @@ REST and WebSocket are separate service paths and must have separate health indi
 - DNS and TLS verification for ws.mstock.trade succeed, but the WebSocket HTTP upgrade returns HTTP 502 from a provider AWS load-balancer response. The failure occurs before LOGIN or subscription messages. No live ticks have been received.
 - The user has already contacted m.Stock and is waiting for its response. The feed must remain labelled NOT LIVE.
 
-The EC2 blueprint exposes /market-stream/start|stop|status|snapshot. Its snapshot returns raw decoded SDK tick-cache data. The Order Flow bridge has been implemented on branch `fix/order-flow-market-stream-contract`: it validates the `/instruments` master, idempotently starts a bounded derivatives subscription, joins ticks to verified instrument metadata, and normalizes futures/options data. The backend regression suite passed on the current PR head (374 passed, 2 skipped). Full CI remains red because the existing frontend dependency audit reports four high-severity vulnerabilities in the Vite/fdir/picomatch dependency chain; frontend tests/build were skipped by that job. The branch is not merged or deployed. Do not infer instrument identity, expiry, previous OI or undocumented fields.
+The EC2 blueprint exposes `/market-stream/start|stop|status|snapshot`. Its snapshot returns raw decoded SDK tick-cache data. PR #203 adds the shared m.Stock TOTP session flow, a Financial OS browser WebSocket relay, and a live-only Market Flow interface. The browser no longer polls the Order Flow snapshot REST endpoint. The backend starts the gateway subscription once and relays the gateway's latest decoded ticks over the authenticated WebSocket. Only fresh provider-backed futures/options/OI fields are displayed; unsupported indicators are not simulated.
 
-Do not mark Order Flow live until the WebSocket handshake, LOGIN, subscriptions, fresh decoded ticks, normalized backend response, backend-to-gateway authentication and frontend freshness display all pass end-to-end. See AUDIT_REPORT.md Section 2.5, SECURITY_OPERATIONS.md Section 8 and frontend/src/order-flow/README.md.
+The PR CI is green: frontend production build and Order Flow tests passed, backend regression suite passed (382 passed, 2 skipped), dependency audits passed, and repository secret scanning passed. The PR and gateway changes are not deployed. The uploaded 18 Nov gateway archive contains repeated SDK WebSocket close code `1006` events; this is an abnormal close and does not by itself establish whether the cause is the provider, network path or SDK. A matching gateway source patch is packaged separately. Do not mark Order Flow live until the gateway patch, reverse-proxy WebSocket Upgrade path, upstream SDK login/subscription, fresh ticks, normalized response and frontend freshness display are verified end-to-end. Do not infer instrument identity, expiry, previous OI or undocumented fields. See `frontend/src/order-flow/README.md`, `AUDIT_REPORT.md` Section 2.5 and `SECURITY_OPERATIONS.md` Section 8.
 ## Repository structure
 
 ```text
@@ -324,8 +324,9 @@ Any future scheduled task must document owner, trigger/cadence, target environme
 
 ### Current known blocker
 
-- m.Stock WebSocket handshake from the recorded Sydney host returns HTTP 502 before authentication/subscription. India-origin comparison and provider-side investigation are pending.
-- Market REST checks passed in the recorded test; this does not establish live streaming health.
+- The latest uploaded gateway archive includes repeated m.Stock SDK WebSocket close code `1006` events. This confirms abnormal connection closures in that log, but does not identify the cause or prove the current live state.
+- The matching gateway patch and backend reverse-proxy WebSocket Upgrade configuration still need deployment and verification.
+- Market REST and browser WebSocket CI checks passing do not establish that the production upstream m.Stock stream is live.
 
 ### Prioritised roadmap
 

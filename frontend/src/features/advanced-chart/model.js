@@ -45,14 +45,6 @@ export function normalizeCandles(rawCandles) {
   return [...byTime.values()].sort((a, b) => a.time - b.time);
 }
 
-export function toVolumeSeries(candles) {
-  return candles.map(({ time, close, volume }) => ({
-    time,
-    value: volume,
-    color: close >= 0 ? undefined : undefined,
-  }));
-}
-
 export function formatLocalDate(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");

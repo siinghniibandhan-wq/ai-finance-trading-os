@@ -153,67 +153,36 @@ Rotate any credential that may have been exposed. Removing a value from the late
 
 Verify current source and live settings before treating each control as effective in production.
 
-## 8. m.Stock WebSocket incident and operational response
+## 8. Market Flow and market-stream removal status
 
-**Latest diagnostic evidence:** 13 November 2026, approximately 15:08–15:12 UTC, from the user's SSM session on the Sydney EC2 gateway host.
+**Current source review — 18 November 2026**
 
-### Confirmed gateway and authentication state
+The following statements describe the latest source artifacts reviewed, not a live EC2 inspection:
 
-- mstock-gateway.service was active (PID 76459) and the Flask listener was bound to 127.0.0.1:8000.
-- The gateway application registers the market_stream Flask blueprint. The stream worker is a background thread in the Flask process; it is not expected to appear as a separate market_stream.py OS process.
-- The required header is X-Financial-OS-Gateway-Secret; the gateway validates it against FINANCIAL_OS_GATEWAY_SECRET.
-- An earlier pair of curl diagnostics omitted the header and correctly returned HTTP 403 GATEWAY_SECRET_INVALID.
-- A subsequent diagnostic read the secret from the running process environment without printing it and sent it in the required header. Both /market-stream/status and /market-stream/snapshot then returned HTTP 200. This verifies the gateway's own shared-secret guard for that diagnostic. Both FINANCIAL_OS_GATEWAY_SECRET and MSTOCK_GATEWAY_SECRET variable names were present in the process environment; their values were not disclosed. This test alone does not prove that the Financial OS backend is configured with the same value.
+- The current Financial OS backend entry point, `backend/app/main.py`, registers the REST market routers. It does not register Market Flow, Order Flow or market-stream routes.
+- The reviewed backend source does not contain the Market Flow/Order Flow adapter or a consumer of `/market-stream/snapshot`.
+- The latest uploaded Gateway source file, `mstock-gateway-app.py`, contains no Market Flow, `/market-stream/*`, snapshot or stream implementation. Its single WebSocket text match is a legacy index-test heading.
+- Therefore, do not describe the Gateway stream worker or market-stream endpoints as present in the latest uploaded Gateway source. Do not treat historical EC2 observations below as proof that those endpoints remain deployed.
+- Existing REST market-data routes and broker-order functionality are separate. Do not remove or alter them when maintaining this removal.
 
-### Current WebSocket state
+### Historical incident record — 13 November 2026
 
-The authenticated /market-stream/status response reported:
+The following observations were supplied from an earlier SSM session on the Sydney EC2 host. They are retained for audit history only and do not describe the latest uploaded Gateway source:
 
-| Field | Observed value |
-|---|---|
-| Worker running | true |
-| WebSocket connected | false |
-| stale | true |
-| cached_instruments | 0 |
-| last_tick_at / age | null |
-| reconnect_count | 933 |
-| Mode | 3 (full) |
-| Subscribed token | 2885 (instrument identity not verified) |
-| last_error | HTTP 502 during WebSocket handshake |
+- At that time, `mstock-gateway.service` was observed active with a Flask listener on `127.0.0.1:8000`.
+- The then-deployed Gateway source reportedly included a Type A decoder, a WebSocket worker and Flask routes for `/market-stream/start`, `/stop`, `/status` and `/snapshot`.
+- A diagnostic request without `X-Financial-OS-Gateway-Secret` returned `GATEWAY_SECRET_INVALID`; a later authenticated diagnostic returned HTTP 200 for status and snapshot.
+- The historical worker status reported disconnected/stale, zero cached instruments and no last tick. A WebSocket handshake attempt returned HTTP 502 before LOGIN or subscription.
+- These observations do not establish current Gateway files, current service state, current WebSocket connectivity or current provider behaviour.
 
-The authenticated /market-stream/snapshot endpoint returned HTTP 200 with an empty ticks array. The worker thread is active and retrying; this is not a connected feed.
+### Operational boundaries
 
-### Network and handshake evidence
+- Keep existing m.Stock REST routes, quote contracts, market history, charts, indices, movers, search and watchlists intact.
+- Keep broker-order execution safeguards, authentication and gateway shared-secret controls intact.
+- Do not reintroduce Market Flow, Order Flow or streaming routes unless explicitly requested and separately reviewed.
+- Do not infer current live service state from this historical incident record. Verify the actual host and exact deployed file before any infrastructure action.
+- Never include API keys, access tokens, TOTP values or gateway shared secrets in diagnostics or documentation.
 
-- WebSocket endpoint: wss://ws.mstock.trade.
-- DNS resolved the host to provider AWS load-balancer addresses 13.200.68.179 and 15.206.54.73, associated with Mumbai (ap-south-1).
-- The EC2 gateway host is in Sydney (ap-southeast-2).
-- TCP/TLS connectivity succeeded; the certificate for ws.mstock.trade verified successfully with TLS 1.3.
-- No outbound proxy environment variables were configured.
-- Installed client library: websocket-client 1.9.0.
-- The worker constructs a credential-bearing WebSocket URL server-side, then sends LOGIN, subscribe and mode messages only after create_connection succeeds. The observed HTTP 502 happens during the handshake, before those messages are sent.
-- The HTTP response identified awselb/2.0. This indicates a provider-side load-balancer response path; it does not independently prove the exact failed upstream component or root cause.
-
-**Current diagnosis:** gateway service, internal shared-secret authentication, DNS and TLS are working. The m.Stock WebSocket HTTP upgrade is failing with HTTP 502. No live ticks have been received. This is not evidence that the m.Stock API key/access token is invalid, that the Type A decoder is wrong, or that the subscription was rejected: the handshake has not reached LOGIN or subscription.
-
-### Current support and next actions
-
-The user has already emailed m.Stock and elected to wait for its response rather than send duplicate requests immediately. No provider response has yet been recorded in this incident log.
-
-1. Wait for m.Stock's technical response. If requested, provide sanitized UTC/IST timestamps, source region, DNS/TLS results and HTTP 502 response details. Never provide API keys, access tokens, TOTP or gateway secrets.
-2. After provider feedback, repeat a controlled WebSocket handshake test and record the result. An India-origin comparison may help distinguish provider-wide failure from source-region/network routing, but region difference alone is not a proven cause.
-3. Once the handshake succeeds, verify LOGIN response, subscription acknowledgement, heartbeat, packet receipt, Type A decoding, exchange timestamps, cache population and stale/reconnect behaviour.
-4. Verify the instrument master and expiry/token mapping before adding NIFTY futures/options subscriptions. Token 2885 is observed in the current status but its instrument identity has not been independently verified.
-5. The Financial OS Order Flow adapter has been removed; the Gateway market-stream endpoints remain Gateway-only.
-6. Verify the backend's gateway URL and shared-secret configuration against the gateway without displaying either secret, then verify frontend freshness display.
-
-### Safeguards
-
-- Do not expose credentials, access tokens, TOTP or gateway secrets in diagnostics, logs, screenshots or documentation.
-- Do not change trading, order execution, broker integration, database state or migrations to fix a pre-authentication WebSocket 502.
-- Do not restart services, alter systemd configuration, change credentials, move the EC2 host/region or rewrite the decoder without evidence and explicit approval.
-- Keep REST market-data health, WebSocket transport health and market-data freshness as separate signals.
-- Do not mark the feed LIVE until fresh ticks and the full normalized application path are verified end-to-end.
 
 
 ## 9. Deployment and release workflow
@@ -356,22 +325,8 @@ For the next live infrastructure audit, capture resource IDs, region, account/en
 The application-owned AWS topology remains incomplete until the active frontend host, backend host, database host, network path, IAM/SSM secret retrieval, DNS/TLS edge, logging/alarms and backup/restore configuration have all been checked against the live account.
 
 
-## Addendum — Type A market-stream deployment evidence (13 November 2026)
+## Historical deployment note — Type A market stream (13 November 2026)
 
-The user inspected the existing EC2 gateway directory through an authorized Session Manager session and supplied these deployed-host files for review:
+An earlier EC2 inspection documented a Type A decoder, a persistent WebSocket worker and Flask market-stream routes. That evidence belongs to the 13 November deployment snapshot only. The latest uploaded Gateway `mstock-gateway-app.py` reviewed on 18 November no longer contains those routes or worker references. Do not use this historical addendum as a current deployment inventory.
 
-- `mstock_stream.py`: Type A binary-frame decoder.
-- `market_stream.py`: persistent WebSocket worker with token subscriptions, tick cache, reconnect backoff and stale status.
-- `market_stream_routes.py`: Flask blueprint exposing read-only `/market-stream/start`, `/stop`, `/status` and `/snapshot`.
-- EC2 `app.py` imports and registers `create_market_stream_blueprint` at lines 917–924.
-- `mstock-gateway.service` was observed active under systemd.
-
-This is evidence from the deployed EC2 host, not proof that the same files are committed to this GitHub repository. An active systemd process and registered blueprint do not prove the worker itself has been started or has received live ticks.
-
-A request to the stream status route returned `GATEWAY_SECRET_INVALID`. This indicates the request failed the gateway's internal shared-secret validation. It does not establish that m.Stock API credentials are invalid. The user reports that existing REST market data remains available; keep REST and WebSocket health separate. Resolve the internal secret mismatch using the existing server-side configuration without exposing or regenerating credentials.
-
-The gateway blueprint's `/market-stream/snapshot` route returns cached decoded ticks and stream status. The Financial OS Order Flow consumer and its `/order-flow/snapshot` adapter have been removed. The Gateway market-stream service remains separate and is not consumed by a Market Flow section in Financial OS.
-
-The prior Sydney-host HTTP 502 WebSocket-upgrade result is historical. It occurred before LOGIN/subscription and does not establish the current worker's connection state.
-
-**Safety:** Do not modify existing REST market-data routes, broker/order execution, production service configuration or database state during this verification. Database migrations and migration automation remain out of scope and untouched.
+The Financial OS Order Flow adapter and Market Flow integration are absent from the reviewed current backend source. The current application market-data integration is REST-based. Existing REST and broker-order functionality must remain unchanged.

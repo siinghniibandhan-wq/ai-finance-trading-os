@@ -68,3 +68,36 @@ export function getChartDimensions(width, height) {
   const safeHeight = Number.isFinite(height) && height > 0 ? height : 520;
   return { width: safeWidth, height: safeHeight };
 }
+
+export function calculateSMA(candles, period = 20) {
+  if (!Array.isArray(candles) || !Number.isInteger(period) || period < 1 || candles.length < period) return [];
+  const points = [];
+  let sum = 0;
+  for (let index = 0; index < candles.length; index += 1) {
+    const close = candles[index]?.close;
+    if (!Number.isFinite(close)) return [];
+    sum += close;
+    if (index >= period) sum -= candles[index - period].close;
+    if (index >= period - 1) {
+      points.push({ time: candles[index].time, value: sum / period });
+    }
+  }
+  return points;
+}
+
+export function calculateEMA(candles, period = 20) {
+  if (!Array.isArray(candles) || !Number.isInteger(period) || period < 1 || candles.length < period) return [];
+  const initialWindow = candles.slice(0, period);
+  if (initialWindow.some((candle) => !Number.isFinite(candle?.close))) return [];
+  let ema = initialWindow.reduce((sum, candle) => sum + candle.close, 0) / period;
+  const points = [{ time: initialWindow[period - 1].time, value: ema }];
+  const multiplier = 2 / (period + 1);
+
+  for (let index = period; index < candles.length; index += 1) {
+    const candle = candles[index];
+    if (!Number.isFinite(candle?.close)) return [];
+    ema = (candle.close - ema) * multiplier + ema;
+    points.push({ time: candle.time, value: ema });
+  }
+  return points;
+}

@@ -64,10 +64,9 @@ The reference's own feed is HTTP/REST based: the market file is polled every min
 - [x] Provider/source, quote retrieval time and gateway cache age are disclosed.
 - [x] No demo feed, simulated prices, fake candles or fabricated OI are used.
 - [x] No gateway secret, Bearer auth, backend gateway, AWS/systemd or deployment configuration changes.
-- [ ] Authenticated production runtime smoke test with a valid user session and real provider data.
 - [x] Final PR CI regression run on commit `aefe161e9a62036969249f425c287db4370fd275`: frontend tests/build, backend regression tests, dependency audits and repository secret scan all passed.
 - [x] App navigation diff reviewed: only the Advanced Chart import, Markets submenu item, valid-page entry and isolated render branch were added; the existing Markets component branch remains unchanged.
-- [ ] Authenticated runtime smoke test against real provider data.
+- [ ] Authenticated production runtime smoke test against real provider data (not run in this code-only work; no environment access was requested or used).
 
 ## Phase 1 visualisation boundary
 
@@ -79,6 +78,15 @@ The full market-wide flow and advanced derivatives parity remain Phase 2 work un
 
 The previously recorded CI run for commit `a3a09c4836f34a178344f542f15cbc34dcc11f23` passed the backend regression suite, frontend production build, existing notice/sidebar/Market Overview regressions, Advanced Chart candle normalization tests, dependency audits and secret scan.
 
-Additional Phase 1 changes on this branch add tests for quote-price normalization and exchange-filtered search parameters. The latest commit's CI and authenticated runtime smoke test must pass before Phase 1 is declared complete or the PR is merged.
+Additional Phase 1 changes on this branch harden provider timestamp parsing, preserve valid OHLC rows when volume is unavailable, and align historical instrument resolution with the provider header aliases already supported by Market Search. Regression tests cover these cases.
+
+Code verification for PR #216, head commit 87f8c8c2b001af7186b29faac0ee3cd58a304318:
+- Frontend production build: PASS (workflow run 44409927316).
+- Financial OS CI: PASS (workflow run 44409927419).
+- Backend regression suite: 380 passed, 2 skipped.
+- Frontend Advanced Chart candle normalization tests: PASS.
+- Repository secret scan and dependency audits: PASS.
+
+The authenticated production runtime smoke test was intentionally not run in this code-only work. It is recorded separately from repository-code completion and remains unverified until an authorized runtime check is requested.
 
 **No merge is authorised by this audit record.**

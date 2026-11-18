@@ -111,33 +111,50 @@ def _load_instrument_metadata(base: str) -> dict[int, dict]:
                 token = int(str(row.get("instrument_token") or row.get("token") or "").strip())
             except (TypeError, ValueError):
                 continue
-            if token <= 0:
+            if token <= 0 or token in metadata:
                 continue
             segment = str(row.get("segment") or "").strip().upper()
             instrument_type = str(row.get("instrument_type") or "").strip().upper()
+            exchange = str(row.get("exchange") or "").strip().upper()
+            symbol = str(row.get("name") or "").strip().upper()
+            tradingsymbol = str(row.get("tradingsymbol") or "").strip()
+            expiry = str(row.get("expiry") or "").strip()
+            try:
+                lot_size = int(str(row.get("lot_size") or "").strip())
+            except (TypeError, ValueError):
+                continue
+            try:
+                datetime.strptime(expiry, "%Y-%m-%d")
+            except (TypeError, ValueError):
+                continue
+            if not symbol or not tradingsymbol or exchange not in {"NFO", "BFO", "CDS"} or lot_size <= 0:
+                continue
+
             if segment in {"FUTIDX", "FUTSTK", "FUTCUR"}:
                 kind = "future"
+                strike = None
             elif segment in {"OPTIDX", "OPTSTK", "OPTCUR"} and instrument_type in {"CE", "PE"}:
                 kind = "option"
+                try:
+                    strike = float(row.get("strike"))
+                except (TypeError, ValueError):
+                    continue
+                if strike <= 0:
+                    continue
             else:
                 continue
 
-            try:
-                strike = float(row["strike"]) if str(row.get("strike") or "").strip() else None
-            except (TypeError, ValueError):
-                strike = None
-
             metadata[token] = {
                 "instrument_token": token,
-                "symbol": str(row.get("name") or "").strip().upper(),
-                "tradingsymbol": str(row.get("tradingsymbol") or "").strip(),
-                "exchange": str(row.get("exchange") or "").strip().upper(),
+                "symbol": symbol,
+                "tradingsymbol": tradingsymbol,
+                "exchange": exchange,
                 "segment": segment,
                 "instrument_kind": kind,
                 "option_type": instrument_type if kind == "option" else None,
-                "expiry": str(row.get("expiry") or "").strip() or None,
+                "expiry": expiry,
                 "strike": strike,
-                "lot_size": row.get("lot_size"),
+                "lot_size": lot_size,
             }
 
         _INSTRUMENT_CACHE.update({"loaded_at": time.monotonic(), "items": metadata})

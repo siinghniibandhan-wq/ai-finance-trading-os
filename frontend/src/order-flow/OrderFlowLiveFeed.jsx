@@ -19,6 +19,8 @@ export default function OrderFlowLiveFeed({ symbol, onSnapshot = () => {} }) {
     let active = true;
     let timer;
     let delay = POLL_MS;
+    setSnapshot(null);
+    onSnapshot(null);
 
     const poll = async () => {
       try {

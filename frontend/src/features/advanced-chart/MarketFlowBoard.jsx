@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { loadMarketOverview } from "./api";
 import { normalizeMarketFlow, summarizeMarketFlow } from "./marketFlowModel";
+import "./market-flow.css";
 
 const money = (value) => new Intl.NumberFormat("en-IN", {
   minimumFractionDigits: 2,

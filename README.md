@@ -59,25 +59,25 @@ This is a repository feature inventory, not a certification that every workflow 
 
 ```text
 Browser
+  | HTTPS REST                    | WSS /api/order-flow/stream
+  v                               v
+React 18 + Vite frontend <----> FastAPI backend
+  |                               |
+  |                               +--> PostgreSQL-compatible database
+  |                               +--> AI provider integrations
   |
-  | HTTPS
-  v
-React 18 + Vite frontend
-  |
-  | HTTPS API requests
-  v
-FastAPI backend
-  |                 |                    |
-  |                 |                    +--> AI provider integrations
-  |                 |
-  |                 +--> PostgreSQL-compatible database via SQLAlchemy
-  |
-  +--> m.Stock gateway (restricted HTTP service)
-          |
-          +--> m.Stock REST endpoints
-          |
-          +--> m.Stock WebSocket endpoint
-               wss://ws.mstock.trade
+  +--> Market REST APIs --> m.Stock gateway --> m.Stock REST endpoints
+                                ^
+                                | internal authenticated snapshot/start calls
+                                |
+                        Order Flow adapter
+                                ^
+                                | gateway tick cache
+                                |
+                        m.Stock SDK WebSocket worker
+                                |
+                                v
+                        wss://ws.mstock.trade
 ```
 
 ### Frontend

@@ -169,6 +169,8 @@ def _matches_symbol(instrument: dict, symbol: str | None) -> bool:
     if not symbol:
         return True
     wanted = _symbol_key(symbol)
+    if not wanted:
+        return False
     underlying = _symbol_key(instrument.get("symbol"))
     tradingsymbol = _symbol_key(instrument.get("tradingsymbol"))
     return underlying == wanted or tradingsymbol.startswith(wanted)

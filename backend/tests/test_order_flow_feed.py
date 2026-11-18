@@ -110,7 +110,7 @@ def test_snapshot_adapts_production_market_stream_ticks_using_instrument_master(
         "instrument_token": 101,
     }
     assert result["option_oi_by_strike"] == [
-        {"strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 14000.0}
+        {"symbol": "NIFTY", "expiry": "2026-11-26", "strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 14000.0}
     ]
     assert result["feed"]["status"] == "fresh"
     assert result["stream"]["connected"] is True

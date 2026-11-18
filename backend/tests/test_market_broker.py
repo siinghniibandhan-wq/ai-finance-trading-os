@@ -51,6 +51,8 @@ def test_broker_authentication_forwards_one_totp_to_the_shared_gateway_session(m
     assert result["status"] == "success"
     assert result["broker_authenticated"] is True
     assert result["market_stream"]["status"] == "disconnected"
+    assert result["market_stream"]["running"] is True
+    assert result["market_stream"]["cached_instruments"] == 0
     assert len(requests) == 1
 
 

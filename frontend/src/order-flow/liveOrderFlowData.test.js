@@ -38,7 +38,7 @@ test("maps provider change and OHLC without inventing historical candles", () =>
         strike: 25000, option_type: "CE", oi: 12000 },
     ],
     option_oi_by_strike: [
-      { strike: 25000, ce_oi: 12000, pe_oi: 14000 },
+      { symbol: "NIFTY", expiry: "2026-11-26", strike: 25000, ce_oi: 12000, pe_oi: 14000 },
     ],
   });
 
@@ -52,7 +52,7 @@ test("maps provider change and OHLC without inventing historical candles", () =>
   assert.deepEqual(result.futures[0].ohlc, { open: 25020, high: 25100, low: 24900, close: 25000 });
   assert.equal(result.options[0].optionType, "CE");
   assert.deepEqual(result.optionOiByStrike, [
-    { strike: 25000, callOi: 12000, putOi: 14000 },
+    { symbol: "NIFTY", expiry: "2026-11-26", strike: 25000, callOi: 12000, putOi: 14000 },
   ]);
   assert.equal("changePct" in result.futures[0], true);
   assert.equal("candles" in result.futures[0], false);

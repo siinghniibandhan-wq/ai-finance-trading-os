@@ -92,10 +92,14 @@ def fetch_overview_movers(mover_type: str):
             "Invalid Market Movers provider response"
         )
 
-    if not provider_response.get("status"):
-        raise ValueError(
-            "Market Movers provider request failed"
+    # The Gateway preserves the Type A provider status. Do not convert an
+    # error envelope (whose status string is truthy) into an empty success.
+    if provider_response.get("status") != "success":
+        message = provider_response.get(
+            "message",
+            "Market Movers provider request failed",
         )
+        raise ValueError(str(message))
 
     raw_data = provider_response.get("data", [])
 

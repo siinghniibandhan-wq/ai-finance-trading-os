@@ -8,8 +8,8 @@ test("normalizes valid m.Stock OHLCV candles into sorted chart points", () => {
     ["2026-11-18T09:15:00+05:30", 99, 102, 98, 101, 900],
   ];
   assert.deepEqual(normalizeCandles(candles), [
-    { time: Math.floor(Date.parse("2026-11-18T09:15:00+05:30") / 1000), open: 99, high: 102, low: 98, close: 101 },
-    { time: Math.floor(Date.parse("2026-11-18T09:20:00+05:30") / 1000), open: 101, high: 104, low: 100, close: 103 },
+    { time: Math.floor(Date.parse("2026-11-18T09:15:00+05:30") / 1000), open: 99, high: 102, low: 98, close: 101, volume: 900 },
+    { time: Math.floor(Date.parse("2026-11-18T09:20:00+05:30") / 1000), open: 101, high: 104, low: 100, close: 103, volume: 1200 },
   ]);
 });
 
@@ -29,7 +29,7 @@ test("deduplicates timestamps and keeps the last valid candle", () => {
     [1794973500, 101, 104, 100, 103, 20],
   ];
   assert.deepEqual(normalizeCandles(candles), [
-    { time: 1794973500, open: 101, high: 104, low: 100, close: 103 },
+    { time: 1794973500, open: 101, high: 104, low: 100, close: 103, volume: 20 },
   ]);
 });
 

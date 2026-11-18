@@ -124,6 +124,12 @@ class MarketStreamWorker:
                             continue
                         raise
                     if isinstance(frame, str):
+                        try:
+                            message = json.loads(frame)
+                        except (TypeError, ValueError):
+                            message = None
+                        if isinstance(message, dict) and str(message.get("status", "")).lower() in {"error", "failed", "failure"}:
+                            raise RuntimeError("m.Stock rejected market stream login")
                         continue
                     for tick in parse_type_a_frame(frame):
                         instrument = int(tick["token"])

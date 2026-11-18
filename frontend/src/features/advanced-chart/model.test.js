@@ -167,3 +167,39 @@ test("returns no Heikin-Ashi data for malformed OHLC input", async () => {
   const { calculateHeikinAshi } = await import("./model.js");
   assert.deepEqual(calculateHeikinAshi([{ time: 1, open: 10, high: 9, low: 8, close: 11 }]), []);
 });
+
+test("calculates RSI from actual closes and bounds values to 0-100", async () => {
+  const { calculateRSI } = await import("./model.js");
+  const candles = Array.from({ length: 16 }, (_, index) => ({
+    time: index + 1, open: 10, high: 12, low: 9, close: 10 + index,
+  }));
+  const result = calculateRSI(candles, 14);
+  assert.equal(result.length, 2);
+  assert.ok(result.every((point) => point.value >= 0 && point.value <= 100));
+  assert.equal(result[0].value, 100);
+});
+
+test("calculates MACD line, signal and histogram from actual closes", async () => {
+  const { calculateMACD } = await import("./model.js");
+  const candles = Array.from({ length: 40 }, (_, index) => ({
+    time: index + 1, open: 10, high: 20 + index, low: 9, close: 10 + index,
+  }));
+  const result = calculateMACD(candles);
+  assert.ok(result.macd.length > 0);
+  assert.equal(result.macd.length, result.signal.length);
+  assert.equal(result.macd.length, result.histogram.length);
+  assert.ok(result.histogram.every((point) => Number.isFinite(point.value)));
+});
+
+test("calculates Bollinger bands and volume-weighted average price only when volume exists", async () => {
+  const { calculateBollingerBands, calculateVWAP } = await import("./model.js");
+  const candles = Array.from({ length: 22 }, (_, index) => ({
+    time: index + 1, open: 10, high: 12, low: 8, close: 10 + index, volume: 100,
+  }));
+  const bands = calculateBollingerBands(candles, 20, 2);
+  assert.equal(bands.middle.length, 3);
+  assert.ok(bands.upper[0].value > bands.middle[0].value);
+  assert.ok(bands.lower[0].value < bands.middle[0].value);
+  assert.equal(calculateVWAP(candles).length, 22);
+  assert.deepEqual(calculateVWAP(candles.map(({ volume, ...candle }) => candle)), []);
+});

@@ -421,7 +421,13 @@ def get_order_flow_snapshot(symbol: str | None = None, *, ensure_started: bool =
 
     # Only ticks carrying a provider OI value contribute to strike-wise OI.
     option_oi = aggregate_option_oi([
-        {"strike": item["strike"], "option_type": item["option_type"], "oi": item["oi"]}
+        {
+            "symbol": item["symbol"],
+            "expiry": item["expiry"],
+            "strike": item["strike"],
+            "option_type": item["option_type"],
+            "oi": item["oi"],
+        }
         for item in options
         if item.get("strike") is not None and item.get("oi") is not None
     ])

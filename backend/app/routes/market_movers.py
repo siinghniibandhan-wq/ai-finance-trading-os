@@ -29,6 +29,8 @@ import json
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.services.mstock_gateway import MSTOCK_GATEWAY_URL, MSTOCK_GATEWAY_SECRET
+
 
 router = APIRouter(
     prefix="/api/market-movers",
@@ -40,7 +42,7 @@ router = APIRouter(
 # CONFIGURATION
 # ============================================================
 
-MSTOCK_GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
+
 
 
 # ============================================================
@@ -68,7 +70,7 @@ def fetch_movers(
         method="POST",
         headers={
             "Content-Type": "application/x-www-form-urlencoded",
-            "X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip(),
+            "X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET,
         },
     )
 

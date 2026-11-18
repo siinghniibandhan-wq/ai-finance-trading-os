@@ -4,7 +4,7 @@ const toUnixSeconds = (value) => {
   }
   if (typeof value !== "string" || !value.trim()) return null;
   const trimmed = value.trim();
-  if (/^\\d+(?:\\.\\d+)?$/.test(trimmed)) {
+  if (/^\d+(?:\.\d+)?$/.test(trimmed)) {
     const numeric = Number(trimmed);
     return Number.isFinite(numeric)
       ? Math.floor(numeric > 1e12 ? numeric / 1000 : numeric)

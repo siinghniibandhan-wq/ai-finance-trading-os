@@ -91,3 +91,9 @@ test("returns no moving-average points until a full period exists", async () => 
   assert.deepEqual(calculateSMA(candles, 3), []);
   assert.deepEqual(calculateEMA(candles, 3), []);
 });
+
+test("formats Lightweight Charts business-day values without timezone conversion", async () => {
+  const { formatChartTime } = await import("./model.js");
+  assert.equal(formatChartTime({ year: 2026, month: 11, day: 19 }), "19/11/2026");
+  assert.equal(formatChartTime(null), "—");
+});

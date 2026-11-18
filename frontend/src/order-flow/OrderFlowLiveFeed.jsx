@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { API_BASE_URL, getAccessToken } from "../api";
+import { buildOrderFlowWebSocketProtocols, buildOrderFlowWebSocketUrl } from "./orderFlowSocket";
 
 const NOOP_SNAPSHOT = () => {};
 const MAX_RETRY_MS = 30000;
@@ -8,13 +9,6 @@ function formatAge(seconds) {
   if (seconds == null) return "No provider tick received";
   if (seconds < 60) return `${Math.round(seconds)}s ago`;
   return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s ago`;
-}
-
-function websocketUrl(symbol) {
-  const url = new URL("/api/order-flow/stream", API_BASE_URL);
-  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-  if (symbol) url.searchParams.set("symbol", symbol);
-  return url.toString();
 }
 
 export default function OrderFlowLiveFeed({ symbol, onSnapshot = NOOP_SNAPSHOT }) {
@@ -45,8 +39,8 @@ export default function OrderFlowLiveFeed({ symbol, onSnapshot = NOOP_SNAPSHOT }
       setConnection("connecting");
       try {
         socket = new WebSocket(
-          websocketUrl(symbol),
-          ["financial-os", `bearer.${token}`],
+          buildOrderFlowWebSocketUrl(API_BASE_URL, symbol),
+          buildOrderFlowWebSocketProtocols(token),
         );
       } catch {
         scheduleReconnect("Unable to create the Market Flow WebSocket connection.");

@@ -71,7 +71,7 @@ def test_worker_rejects_login_failure_without_subscribing():
     worker.start([123])
     assert wait_for(lambda: worker.status()["last_error"] is not None)
     assert worker.status()["connected"] is False
-    assert sock.sent == ["LOGIN:token"]
+    assert sock.sent == ["LOGIN:token", '{"a": "subscribe", "v": [123]}']
     worker.stop()
 
 

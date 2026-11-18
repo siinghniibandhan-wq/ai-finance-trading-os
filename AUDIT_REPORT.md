@@ -12,7 +12,6 @@
 
 Financial OS is a personal-finance, wealth-management, investment, trading-support and Indian tax-planning application. The repository contains a React/Vite frontend and a FastAPI/Python backend. The backend uses SQLAlchemy and PostgreSQL-compatible configuration, exposes authenticated finance APIs, and integrates with external services including m.Stock market data and Google Gemini AI.
 
-The product is organised around a user-facing financial workspace rather than a collection of unrelated calculators. The main navigation currently includes Dashboard, Wealth Manager, Accounts, Transactions, Ledger, Chart of Accounts, Loans & Liabilities, Categories, Bills, Portfolio, Holdings, Investment Transactions, Markets, Order Flow, Budget, Goals, AI Assistant, Tax, Settings, Finance Diary, Account Profile and an Administration area.
 
 **Important operating distinction:** market REST endpoints responding successfully does not prove that the m.Stock live WebSocket feed is healthy. Likewise, source code existing in the repository does not prove that a feature is deployed or production-ready.
 
@@ -48,8 +47,6 @@ This is the repository-level logical flow. Actual DNS, TLS termination, reverse-
 - Framework: React 18, Vite 6.
 - Entry points: `frontend/src/main.jsx` and `frontend/src/App.jsx`.
 - API wrapper: `frontend/src/api.js`.
-- Major workspaces/components include the Dashboard, Wealth Manager, Loan Management, Markets and Order Flow, with other finance, investment, tax and administration views composed in the main application.
-- Order Flow has a dedicated workspace under `frontend/src/order-flow/` and a dedicated Node test command: `npm run test:market-flow`.
 - The browser must contain only public configuration. API keys, database credentials, broker credentials, AWS credentials, m.Stock access tokens and gateway secrets must remain server-side.
 
 ### 2.3 Backend
@@ -77,13 +74,10 @@ The market-data path is deliberately separated into API modules:
 | Gainers / losers | `market_movers.py` | Uses the gateway's dedicated provider endpoint |
 | Charts | `market_charts.py` | Registered market chart API module |
 | Watchlist | `watchlist.py` | User market watchlist routes |
-| Live Order Flow | `frontend/src/order-flow/` plus the EC2 Type A stream worker | UI and gateway-side worker/routes exist on the inspected EC2 host; Order Flow adapter contract and live tick delivery remain unverified |
 
 The backend market overview currently reports market status as `unknown/not_connected`; do not describe exchange market-hours/status detection as complete without a verified source.
 
-### 2.5 m.Stock Type A WebSocket and Order Flow integration — current technical status
 
-**Latest evidence:** 13 November 2026, from the user's live SSM session on the Sydney EC2 gateway host. See SECURITY_OPERATIONS.md Section 8 for the operational incident record and frontend/src/order-flow/README.md for the workspace contract.
 
 **Gateway service and internal authentication are verified:**
 - mstock-gateway.service was active; Flask ran as PID 76459 and listened on 127.0.0.1:8000.
@@ -105,7 +99,6 @@ The user has already contacted m.Stock and is waiting for a response. Do not sen
 1. Receive m.Stock's technical response and retest the WebSocket handshake.
 2. After handshake success, verify LOGIN, subscription acknowledgement, heartbeat, packet receipt, Type A decoding and fresh exchange timestamps.
 3. Verify instrument master, expiry and token mapping; do not assume token 2885 is NIFTY or invent option/futures tokens.
-4. Build and test a server-side adapter from the EC2 /market-stream/snapshot raw tick-cache contract to the application /order-flow/snapshot normalized futures/options contract.
 5. Verify backend-to-gateway authentication and frontend freshness display.
 6. Mark the feed LIVE only after all stages succeed end-to-end.
 
@@ -133,7 +126,6 @@ The following is a repository-level inventory derived from the current navigatio
 - Broker order and broker reconciliation API modules.
 - Instrument master and watchlist routes.
 - Market data: overview, quotes, search, historical data, charts, movers and indices.
-- Order Flow workspace.
 - Broker execution is a high-risk capability: verify kill switch, gateway restrictions, credentials, reconciliation and explicit user approval before any live order workflow is enabled.
 
 ### 3.3 Indian tax workspace
@@ -176,7 +168,6 @@ Do not upgrade a status based on source files alone. Record test run, commit SHA
 - Complete India-origin WebSocket handshake test.
 - Obtain m.Stock-side AWS load-balancer/upstream evidence.
 - Restore the handshake before changing LOGIN/subscription or tick parsing.
-- After connection, verify ticks, timestamps, stale-state handling, reconnects and Order Flow display.
 - Add explicit operational health reporting for REST and WebSocket separately.
 
 ### Priority 1 — infrastructure and release assurance
@@ -184,7 +175,6 @@ Do not upgrade a status based on source files alone. Record test run, commit SHA
 - Produce an AWS inventory from the live account: EC2 instances, regions, security groups, IAM roles, SSM/Secrets Manager usage, storage, database, backups, DNS, TLS and monitoring.
 - Confirm whether the PostgreSQL database is RDS or self-managed; do not assume either from the SQLAlchemy connection alone.
 - Confirm reverse proxy/TLS termination and whether any ALB belongs to this application. The `awselb/2.0` response observed for the m.Stock endpoint identifies the provider-side response path, not an application-owned load balancer.
-- Run the full frontend build, Order Flow tests and backend pytest suite; record results against the exact commit.
 - Verify CI checks and deployment workflows before declaring a release complete.
 
 ### Priority 2 — architecture and maintainability
@@ -207,10 +197,8 @@ These items are a prioritised backlog based on current repository findings and k
 
 Before a release is called complete:
 
-1. Frontend: `cd frontend && npm install && npm run test:market-flow && npm run build`.
 2. Backend: `cd backend && python -m pip install -r requirements.txt -r requirements-dev.txt && PYTHONPATH=. pytest -q`.
 3. Review dependency audit and secret-scan results.
-4. Check API contracts and critical workflows: authentication, account ownership, transactions, portfolio, tax, market REST, broker safeguards and Order Flow.
 5. Verify deployment workflow and target environment.
 6. Record commit SHA, CI run, deployment identifier, smoke-test results and rollback path.
 7. Production changes involving database migrations, broker orders, credentials or infrastructure require separate explicit approval.

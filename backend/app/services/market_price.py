@@ -29,12 +29,12 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from app.services.mstock_gateway import MSTOCK_GATEWAY_URL, MSTOCK_GATEWAY_SECRET
+
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
-
-MSTOCK_GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
 
 
 def _read_cache_ttl() -> float:
@@ -162,7 +162,7 @@ def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
         headers={
             "Accept": "application/json",
             "User-Agent": "Financial-OS/1.0",
-            "X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip(),
+            "X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET,
         },
         method="GET",
     )

@@ -32,6 +32,9 @@ jobs:
       - name: Test market overview partial-refresh handling
         working-directory: frontend
         run: npm run test:market
+      - name: Test Advanced Chart candle normalization
+        working-directory: frontend
+        run: npm run test:advanced-chart
       - name: Build frontend
         working-directory: frontend
         run: npm run build

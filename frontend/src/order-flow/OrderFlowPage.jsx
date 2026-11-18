@@ -123,8 +123,12 @@ export default function OrderFlowPage() {
           { key: "high", label: "Day high", render: (row) => formatMarketNumber(row.ohlc?.high) },
           { key: "low", label: "Day low", render: (row) => formatMarketNumber(row.ohlc?.low) },
           { key: "close", label: "Prev close", render: (row) => formatMarketNumber(row.ohlc?.close) },
+          { key: "averageTradedPrice", label: "Avg traded", render: (row) => formatMarketNumber(row.averageTradedPrice) },
           { key: "volume", label: "Volume", render: (row) => formatMarketNumber(row.volume) },
           { key: "oi", label: "Open interest", render: (row) => formatMarketNumber(row.oi) },
+          { key: "totalBuyQuantity", label: "Buy quantity", render: (row) => formatMarketNumber(row.totalBuyQuantity) },
+          { key: "totalSellQuantity", label: "Sell quantity", render: (row) => formatMarketNumber(row.totalSellQuantity) },
+          { key: "buySellBalancePct", label: "Buy/sell balance", render: (row) => formatMarketPercent(row.buySellBalancePct) },
           { key: "exchangeTimestamp", label: "Exchange time", render: (row) => formatMarketTimestamp(row.exchangeTimestamp || row.receivedAt) },
         ]}
       />

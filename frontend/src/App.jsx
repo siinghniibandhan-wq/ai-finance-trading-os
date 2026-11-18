@@ -12,6 +12,7 @@ import WealthManager from "./WealthManager";
 import LoanManagement from "./LoanManagement";
 import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession, friendlyErrorMessage, describeError } from "./api";
 import { mergeMarketOverview } from "./marketOverviewState.js";
+import AdvancedChartPage from "./features/advanced-chart/AdvancedChartPage.jsx";
 
 import {
   LayoutDashboard,
@@ -153,7 +154,10 @@ const navigation = [
 
   {
     section: "Markets",
-    items: [{ name: "Markets", icon: TrendingUp }]
+    items: [
+      { name: "Markets", icon: TrendingUp },
+      { name: "Advanced Chart", icon: BarChart3 }
+    ]
   },
 
   {
@@ -270,7 +274,7 @@ export default function App() {
   const validPages = new Set([
     "Dashboard", "Wealth Manager", "Accounts", "Account Profile", "Transactions", "Ledger", "Chart of Accounts",
     "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio",
-    "Holdings", "Investment Transactions", "Markets", "Goals",
+    "Holdings", "Investment Transactions", "Markets", "Advanced Chart", "Goals",
     "AI Assistant", "Tax", "Settings", "Finance Diary", "Admin Panel"
   ]);
   const getPageFromLocation = () => {
@@ -610,7 +614,9 @@ export default function App() {
    <InvestmentTransactions />
 ) : activePage === "Markets" ? (
    <MarketsPage />
-) : activePage === "Tax" ? (
+) : activePage === "Advanced Chart" ? (
+    <AdvancedChartPage />
+ ) : activePage === "Tax" ? (
    <TaxPage />
 ) : activePage === "Goals" ? (
    <PlanPage />

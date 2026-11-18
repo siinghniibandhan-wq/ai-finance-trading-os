@@ -282,7 +282,9 @@ def _timestamp_iso(value):
         return None
 
 
-def _numeric_tick_value(tick: dict, field: str, fallback: str | None = None):
+def _numeric_tick_value(
+    tick: dict, field: str, fallback: str | None = None, *, allow_negative: bool = False
+):
     value = tick.get(field)
     if value is None and fallback:
         value = tick.get(fallback)
@@ -299,7 +301,7 @@ def _numeric_tick_value(tick: dict, field: str, fallback: str | None = None):
         number = float(value)
     except (TypeError, ValueError):
         return None
-    if number < 0 or number != number or number in (float("inf"), float("-inf")):
+    if (number < 0 and not allow_negative) or number != number or number in (float("inf"), float("-inf")):
         return None
     return number
 
@@ -319,7 +321,7 @@ def _normalise_tick(tick: dict, instrument: dict) -> dict:
     return {
         **instrument,
         "price": _numeric_tick_value(tick, "last_price"),
-        "change_pct": _numeric_tick_value(tick, "change"),
+        "change_pct": _numeric_tick_value(tick, "change", allow_negative=True),
         "ohlc": _normalise_ohlc(tick),
         "volume": _numeric_tick_value(tick, "volume_traded"),
         "oi": _numeric_tick_value(tick, "open_interest", fallback="oi"),

@@ -2,7 +2,7 @@
 
 Gateway contract:
   POST /order         -> broker order placement
-  GET  /orders        -> broker order book (optional user-independent account book)
+  GET  /orderbook     -> broker order book (optional user-independent account book)
 The gateway owns m.Stock credentials and must validate product/validity/order fields.
 This API never records a holding from order placement alone; confirmed-fill reconciliation
 must be implemented separately before updating portfolio quantities.
@@ -42,7 +42,7 @@ class DefiniteGatewayRejection(HTTPException):
 GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").rstrip("/")
 GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
 GATEWAY_ORDER_PLACE_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_PLACE_PATH", "/order")
-GATEWAY_ORDER_BOOK_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_BOOK_PATH", "/orders")
+GATEWAY_ORDER_BOOK_PATH = os.getenv("MSTOCK_GATEWAY_ORDER_BOOK_PATH", "/orderbook")
 GATEWAY_TIMEOUT_SECONDS = 15
 
 

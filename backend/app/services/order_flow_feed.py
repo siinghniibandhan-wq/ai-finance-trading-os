@@ -14,7 +14,6 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from io import StringIO
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from app.services.order_flow_data import (
@@ -41,16 +40,16 @@ def _gateway_secret() -> str:
     return os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
 
 
-def _request_json(url: str, secret: str) -> dict:
-    request = Request(
-        url,
-        headers={
-            "Accept": "application/json",
-            "X-Financial-OS-Gateway-Secret": secret,
-            "User-Agent": "Financial-OS/1.0",
-        },
-        method="GET",
-    )
+def _request_json(url: str, secret: str, *, method: str = "GET", body: dict | None = None) -> dict:
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    headers = {
+        "Accept": "application/json",
+        "X-Financial-OS-Gateway-Secret": secret,
+        "User-Agent": "Financial-OS/1.0",
+    }
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    request = Request(url, data=data, headers=headers, method=method)
     try:
         with urlopen(request, timeout=8) as response:
             payload = json.loads(response.read().decode("utf-8"))
@@ -89,8 +88,7 @@ def _load_instrument_metadata(base: str) -> dict[int, dict]:
         if cached is not None and now - _INSTRUMENT_CACHE["loaded_at"] < ttl:
             return cached
 
-        request = Request(f"{base}/instruments", headers={"Accept": "text/csv"},
-                          method="GET")
+        request = Request(f"{base}/instruments", headers={"Accept": "text/csv"}, method="GET")
         try:
             with urlopen(request, timeout=8) as response:
                 csv_text = response.read().decode("utf-8-sig", errors="replace")
@@ -146,6 +144,72 @@ def _load_instrument_metadata(base: str) -> dict[int, dict]:
         return metadata
 
 
+def _select_subscription_tokens(metadata: dict[int, dict], limit: int = 200) -> list[int]:
+    """Select a balanced, bounded derivative universe across segments/underlyings."""
+    try:
+        configured_limit = int(os.getenv("MSTOCK_MARKET_STREAM_TOKEN_LIMIT", str(limit)))
+    except (TypeError, ValueError):
+        configured_limit = limit
+    if configured_limit < 1 or configured_limit > 200:
+        raise OrderFlowFeedError("Market-stream subscription limit must be between 1 and 200.")
+
+    grouped: dict[str, dict[str, list[int]]] = {}
+    for token, item in metadata.items():
+        segment = str(item.get("segment") or "")
+        underlying = str(item.get("symbol") or item.get("tradingsymbol") or token)
+        grouped.setdefault(segment, {}).setdefault(underlying, []).append(token)
+
+    states = {}
+    for segment, underlyings in grouped.items():
+        names = sorted(underlyings)
+        states[segment] = {
+            "names": names,
+            "queues": {name: sorted(underlyings[name]) for name in names},
+            "offsets": {name: 0 for name in names},
+            "cursor": 0,
+        }
+
+    selected = []
+    segments = sorted(states)
+    while len(selected) < configured_limit:
+        progressed = False
+        for segment in segments:
+            if len(selected) >= configured_limit:
+                break
+            state = states[segment]
+            names = state["names"]
+            for step in range(len(names)):
+                index = (state["cursor"] + step) % len(names)
+                name = names[index]
+                offset = state["offsets"][name]
+                queue = state["queues"][name]
+                if offset < len(queue):
+                    selected.append(queue[offset])
+                    state["offsets"][name] = offset + 1
+                    state["cursor"] = (index + 1) % len(names)
+                    progressed = True
+                    break
+        if not progressed:
+            break
+    return selected
+
+
+def _ensure_stream_started(base: str, secret: str, metadata: dict[int, dict]) -> None:
+    """Idempotently ensure the production worker subscribes to the derivative universe."""
+    tokens = _select_subscription_tokens(metadata)
+    if not tokens:
+        raise OrderFlowFeedError("Instrument master contains no eligible derivative subscriptions.")
+    result = _request_json(
+        f"{base}/market-stream/start",
+        secret,
+        method="POST",
+        body={"tokens": tokens, "mode": 3},
+    )
+    if result.get("status") != "success":
+        code = str(result.get("code") or "START_FAILED")
+        raise OrderFlowFeedError(f"Market-stream subscription could not be started ({code}).")
+
+
 def _timestamp_iso(value):
     """Convert SDK/Flask timestamp representations to an ISO-8601 UTC value."""
     if value is None:
@@ -186,20 +250,15 @@ def _numeric_tick_value(tick: dict, field: str):
 
 def _normalise_tick(tick: dict, instrument: dict) -> dict:
     """Join SDK-decoded fields with instrument-master identity; do not rescale."""
-    price = _numeric_tick_value(tick, "last_price")
-    volume = _numeric_tick_value(tick, "volume_traded")
-    oi = _numeric_tick_value(tick, "oi")
-    received_at = _timestamp_iso(tick.get("received_at"))
-    exchange_timestamp = _timestamp_iso(tick.get("exchange_timestamp"))
     return {
         **instrument,
-        "price": price,
-        "volume": volume,
-        "oi": oi,
+        "price": _numeric_tick_value(tick, "last_price"),
+        "volume": _numeric_tick_value(tick, "volume_traded"),
+        "oi": _numeric_tick_value(tick, "oi"),
         "last_traded_quantity": _numeric_tick_value(tick, "last_traded_quantity"),
         "average_traded_price": _numeric_tick_value(tick, "average_traded_price"),
-        "exchange_timestamp": exchange_timestamp,
-        "received_at": received_at,
+        "exchange_timestamp": _timestamp_iso(tick.get("exchange_timestamp")),
+        "received_at": _timestamp_iso(tick.get("received_at")),
         "price_units": "provider_sdk_decoded",
     }
 
@@ -235,9 +294,10 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
     if not secret:
         raise OrderFlowFeedError("Market gateway authentication is not configured.")
 
-    params = {"tokens": ""}  # Request the gateway's complete subscribed tick cache.
-    url = f"{base}/market-stream/snapshot"
-    payload = _request_json(url, secret)
+    metadata = _load_instrument_metadata(base)
+    _ensure_stream_started(base, secret, metadata)
+
+    payload = _request_json(f"{base}/market-stream/snapshot", secret)
     if payload.get("status") != "success":
         raise OrderFlowFeedError("Gateway did not return a successful market-stream snapshot.")
 
@@ -250,7 +310,6 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
     if any(not isinstance(tick, dict) for tick in ticks):
         raise OrderFlowFeedError("Gateway tick collection contains invalid entries.")
 
-    metadata = _load_instrument_metadata(base) if ticks else {}
     requested_symbol = symbol.strip().upper() if symbol else None
     futures = []
     options = []

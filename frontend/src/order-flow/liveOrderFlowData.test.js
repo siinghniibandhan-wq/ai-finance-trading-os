@@ -81,3 +81,51 @@ test("formats missing market values and timestamps without fabricated defaults",
   assert.equal(formatMarketPercent(0.5), "+0.50%");
   assert.equal(formatMarketTimestamp(null), "—");
 });
+
+
+test("appends only fresh provider futures ticks to live chart history", async () => {
+  const { appendLivePriceHistory } = await import("./liveOrderFlowData.js");
+  const history = appendLivePriceHistory([], {
+    status: "success",
+    as_of: "2026-11-19T03:45:00Z",
+    feed: { status: "fresh" },
+    futures_contracts: [
+      { symbol: "NIFTY", tradingsymbol: "NIFTY26NOVFUT", price: 25010, exchange_timestamp: "2026-11-19T03:44:59Z" },
+      { symbol: "BANKNIFTY", tradingsymbol: "BANKNIFTY26NOVFUT", price: null, exchange_timestamp: "2026-11-19T03:44:59Z" },
+    ],
+  });
+  assert.deepEqual(history, [{
+    symbol: "NIFTY",
+    contract: "NIFTY26NOVFUT",
+    price: 25010,
+    timestamp: "2026-11-19T03:44:59Z",
+  }]);
+});
+
+test("does not append stale or disconnected provider values to chart history", async () => {
+  const { appendLivePriceHistory } = await import("./liveOrderFlowData.js");
+  const existing = [{ symbol: "NIFTY", contract: "NIFTY26NOVFUT", price: 25000, timestamp: "2026-11-19T03:40:00Z" }];
+  assert.equal(appendLivePriceHistory(existing, {
+    status: "success", feed: { status: "stale" },
+    futures_contracts: [{ symbol: "NIFTY", tradingsymbol: "NIFTY26NOVFUT", price: 26000, received_at: "2026-11-19T03:45:00Z" }],
+  }), existing);
+});
+
+test("replaces duplicate contract timestamps and enforces the chart history cap", async () => {
+  const { appendLivePriceHistory } = await import("./liveOrderFlowData.js");
+  const first = { symbol: "NIFTY", contract: "NIFTY26NOVFUT", price: 25000, timestamp: "2026-11-19T03:40:00Z" };
+  const replaced = appendLivePriceHistory([first], {
+    status: "success", feed: { status: "fresh" },
+    futures_contracts: [{ symbol: "NIFTY", tradingsymbol: "NIFTY26NOVFUT", price: 25001, exchange_timestamp: first.timestamp }],
+  });
+  assert.equal(replaced.length, 1);
+  assert.equal(replaced[0].price, 25001);
+  const capped = appendLivePriceHistory([], {
+    status: "success", feed: { status: "fresh" },
+    futures_contracts: Array.from({ length: 5 }, (_, index) => ({
+      symbol: "NIFTY", tradingsymbol: "NIFTY26NOVFUT", price: 25000 + index,
+      received_at: `2026-11-19T03:4${index}:00Z`,
+    })),
+  }, 3);
+  assert.equal(capped.length, 3);
+});

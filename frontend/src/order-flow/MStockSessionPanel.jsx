@@ -28,7 +28,6 @@ export default function MStockSessionPanel({ onAuthenticated }) {
       // Keep a successful login in this page's state if an older gateway
       // deployment has not yet exposed /auth/status.
       setStatus((current) => current || null);
-      if (!localAuthenticated) setError(cause?.message || "Unable to check the m.Stock session.");
     } finally {
       setChecking(false);
     }

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { loadMarketMovers } from "./api";
 import { normalizeMoverRows, summarizeMoverRows } from "./marketScannerModel";
 import "./market-scanner.css";
@@ -16,23 +16,7 @@ export default function MarketMoversScanner({ type = "losers", onSelectInstrumen
   const [updatedAt, setUpdatedAt] = useState(null);
   const [query, setQuery] = useState("");
   const [exchange, setExchange] = useState("ALL");
-
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const next = await loadMarketMovers(type, 100);
-      if (next?.status !== "success" || !Array.isArray(next?.movers)) {
-        throw new Error("The REST API did not return a valid market-movers response.");
-      }
-      setPayload(next);
-      setUpdatedAt(new Date());
-    } catch (requestError) {
-      setError(requestError?.message || "Market scanner data is unavailable.");
-    } finally {
-      setLoading(false);
-    }
-  }, [type]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -67,9 +51,9 @@ export default function MarketMoversScanner({ type = "losers", onSelectInstrumen
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [type]);
+  }, [type, refreshKey]);
 
-  const rows = useMemo(() => normalizeMoverRows(payload?.movers), [payload]);
+  const rows = useMemo(() => normalizeMoverRows(payload?.movers, type), [payload, type]);
   const visibleRows = useMemo(() => rows.filter((row) =>
     (exchange === "ALL" || row.exchange === exchange) &&
     (!query.trim() || row.symbol.includes(query.trim().toUpperCase()) ||
@@ -86,7 +70,7 @@ export default function MarketMoversScanner({ type = "losers", onSelectInstrumen
           <h2>{isLoser ? "Loser Scanner" : "Gainer Scanner"}</h2>
           <p>Provider-reported {isLoser ? "decliners" : "advancers"}, ranked by percentage move. Values are not inferred.</p>
         </div>
-        <button type="button" onClick={refresh} disabled={loading}>
+        <button type="button" onClick={() => setRefreshKey((value) => value + 1)} disabled={loading}>
           {loading ? "Refreshing…" : "Refresh scanner"}
         </button>
       </header>

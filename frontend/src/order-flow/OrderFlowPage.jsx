@@ -4,6 +4,7 @@ import OrderFlowLiveFeed from "./OrderFlowLiveFeed";
 import {
   buildLiveOrderFlow,
   formatMarketNumber,
+  formatMarketPercent,
   formatMarketTimestamp,
 } from "./liveOrderFlowData";
 import "./order-flow.css";
@@ -117,6 +118,11 @@ export default function OrderFlowPage() {
           { key: "contract", label: "Contract" },
           { key: "expiry", label: "Expiry" },
           { key: "price", label: "LTP", render: (row) => row.price == null ? "—" : `₹${formatMarketNumber(row.price)}` },
+          { key: "changePct", label: "Change", render: (row) => formatMarketPercent(row.changePct) },
+          { key: "open", label: "Open", render: (row) => formatMarketNumber(row.ohlc?.open) },
+          { key: "high", label: "Day high", render: (row) => formatMarketNumber(row.ohlc?.high) },
+          { key: "low", label: "Day low", render: (row) => formatMarketNumber(row.ohlc?.low) },
+          { key: "close", label: "Prev close", render: (row) => formatMarketNumber(row.ohlc?.close) },
           { key: "volume", label: "Volume", render: (row) => formatMarketNumber(row.volume) },
           { key: "oi", label: "Open interest", render: (row) => formatMarketNumber(row.oi) },
           { key: "exchangeTimestamp", label: "Exchange time", render: (row) => formatMarketTimestamp(row.exchangeTimestamp || row.receivedAt) },
@@ -135,6 +141,7 @@ export default function OrderFlowPage() {
           { key: "strike", label: "Strike", render: (row) => formatMarketNumber(row.strike) },
           { key: "optionType", label: "Type" },
           { key: "price", label: "LTP", render: (row) => row.price == null ? "—" : `₹${formatMarketNumber(row.price)}` },
+          { key: "changePct", label: "Change", render: (row) => formatMarketPercent(row.changePct) },
           { key: "volume", label: "Volume", render: (row) => formatMarketNumber(row.volume) },
           { key: "oi", label: "Open interest", render: (row) => formatMarketNumber(row.oi) },
         ]}

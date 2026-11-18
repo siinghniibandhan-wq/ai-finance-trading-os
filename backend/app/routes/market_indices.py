@@ -14,6 +14,8 @@ from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException
 
+from app.services.mstock_gateway import MSTOCK_GATEWAY_URL, MSTOCK_GATEWAY_SECRET
+
 # --------------------------------------------------
 # Router configuration
 # --------------------------------------------------
@@ -27,7 +29,7 @@ router = APIRouter(
 # Existing m.Stock gateway configuration
 # --------------------------------------------------
 
-GATEWAY_URL = os.getenv("MSTOCK_GATEWAY_URL", "").strip().rstrip("/")
+GATEWAY_URL = MSTOCK_GATEWAY_URL
 
 # Request the four benchmarks required by the Market Workspace.
 # The gateway is queried independently per index; unsupported symbols are
@@ -57,7 +59,7 @@ def fetch_index(index):
         url,
         headers={
             "Accept": "application/json",
-            "X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip(),
+            "X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET,
         },
         method="GET",
     )

@@ -56,3 +56,38 @@ test("keeps chart dimensions aligned with the responsive chart container", async
   assert.deepEqual(getChartDimensions(960, 430), { width: 960, height: 430 });
   assert.deepEqual(getChartDimensions(0, 0), { width: 320, height: 520 });
 });
+
+test("calculates a simple moving average from actual candle closes", async () => {
+  const { calculateSMA } = await import("./model.js");
+  const candles = [
+    { time: 1, close: 10 },
+    { time: 2, close: 12 },
+    { time: 3, close: 14 },
+    { time: 4, close: 16 },
+  ];
+  assert.deepEqual(calculateSMA(candles, 3), [
+    { time: 3, value: 12 },
+    { time: 4, value: 14 },
+  ]);
+});
+
+test("calculates an exponential moving average seeded by the first period SMA", async () => {
+  const { calculateEMA } = await import("./model.js");
+  const candles = [
+    { time: 1, close: 10 },
+    { time: 2, close: 12 },
+    { time: 3, close: 14 },
+    { time: 4, close: 16 },
+  ];
+  assert.deepEqual(calculateEMA(candles, 3), [
+    { time: 3, value: 12 },
+    { time: 4, value: 14 },
+  ]);
+});
+
+test("returns no moving-average points until a full period exists", async () => {
+  const { calculateSMA, calculateEMA } = await import("./model.js");
+  const candles = [{ time: 1, close: 10 }, { time: 2, close: 12 }];
+  assert.deepEqual(calculateSMA(candles, 3), []);
+  assert.deepEqual(calculateEMA(candles, 3), []);
+});

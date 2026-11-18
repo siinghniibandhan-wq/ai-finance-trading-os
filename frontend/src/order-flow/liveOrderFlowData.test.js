@@ -30,7 +30,7 @@ test("maps provider change and OHLC without inventing historical candles", () =>
       { symbol: "NIFTY", tradingsymbol: "NIFTY26NOVFUT", exchange: "NFO",
         expiry: "2026-11-26", price: 25010.5, volume: 1000, oi: 50000,
         change_pct: -0.2, ohlc: { open: 25020, high: 25100, low: 24900, close: 25000 },
-        total_buy_quantity: 600, total_sell_quantity: 400 },
+        last_traded_quantity: 25, total_buy_quantity: 600, total_sell_quantity: 400 },
       { symbol: "BANKNIFTY", price: null },
     ],
     option_contracts: [
@@ -49,6 +49,7 @@ test("maps provider change and OHLC without inventing historical candles", () =>
   assert.equal(result.futures[0].oi, 50000);
   assert.equal(result.futures[0].changePct, -0.2);
   assert.equal(result.futures[0].buySellBalancePct, 20);
+  assert.equal(result.futures[0].lastTradedQuantity, 25);
   assert.deepEqual(result.futures[0].ohlc, { open: 25020, high: 25100, low: 24900, close: 25000 });
   assert.equal(result.options[0].optionType, "CE");
   assert.deepEqual(result.optionOiByStrike, [

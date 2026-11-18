@@ -33,10 +33,7 @@ Financial OS API — FastAPI / Uvicorn
   +--> m.Stock Gateway (private/restricted HTTP service)
           |
           +--> m.Stock REST APIs (quotes, indices, movers,
-          |    instrument master, historical data)
-          |
-          +--> m.Stock WebSocket service (live streaming;
-               currently failing at HTTP upgrade from tested host)
+               instrument master and historical data)
 ```
 
 This is the repository-level logical flow. Actual DNS, TLS termination, reverse-proxy placement, frontend hosting, database hosting, backup configuration and production network rules must be confirmed against the live AWS/account configuration before they are described as deployed facts.
@@ -62,7 +59,7 @@ This is the repository-level logical flow. Actual DNS, TLS termination, reverse-
 
 ### 2.4 Market-data architecture
 
-The market-data path is deliberately separated into API modules:
+The current backend exposes REST-based market capabilities through registered FastAPI routers:
 
 | Capability | Repository implementation | Data path / notes |
 |---|---|---|
@@ -77,32 +74,14 @@ The market-data path is deliberately separated into API modules:
 
 The backend market overview currently reports market status as `unknown/not_connected`; do not describe exchange market-hours/status detection as complete without a verified source.
 
+**Market Flow / Order Flow / market-stream status — source review 18 November 2026:**
+- `backend/app/main.py` registers the REST market routers above; no Market Flow, Order Flow or market-stream router is registered.
+- The reviewed backend source has no Market Flow/Order Flow adapter and no consumer for `/market-stream/snapshot`.
+- The latest uploaded Gateway `mstock-gateway-app.py` contains no Market Flow, `/market-stream/*`, snapshot or stream implementation. Its WebSocket mention is limited to a legacy index-test heading.
+- Accordingly, the current documented market-data integration is REST-only. Historical WebSocket incident/deployment observations are not evidence of current code or runtime state.
+- This removal does not remove existing REST market APIs or broker-order safeguards.
 
 
-**Gateway service and internal authentication are verified:**
-- mstock-gateway.service was active; Flask ran as PID 76459 and listened on 127.0.0.1:8000.
-- The stream blueprint is registered in app.py; the worker is a background thread inside the Flask process.
-- Initial unauthenticated curl requests returned HTTP 403 because they omitted X-Financial-OS-Gateway-Secret.
-- A subsequent request using the secret read from the running process environment (without printing it) returned HTTP 200 for both /market-stream/status and /market-stream/snapshot. The gateway's internal secret guard therefore works for this diagnostic. The backend-to-gateway secret match remains to be verified independently.
-
-**The WebSocket is not connected and no ticks are being received:**
-- Authenticated status: running=true, connected=false, stale=true, cached_instruments=0, no last tick, reconnect_count=933, mode 3 (full), subscribed token 2885 (instrument identity not verified).
-- Authenticated snapshot: HTTP 200 with an empty ticks array.
-- ws.mstock.trade DNS resolution and TLS certificate verification succeeded (TLS 1.3); no outbound proxy variables were configured.
-- The worker's websocket-client 1.9.0 connection attempt receives HTTP 502 from a response identifying awselb/2.0.
-- The 502 occurs during the WebSocket HTTP upgrade, before LOGIN, subscribe or mode messages. It is therefore not evidence of invalid broker credentials, a subscription rejection or a decoder failure.
-- The resolved provider load-balancer addresses are in Mumbai (ap-south-1); the EC2 gateway is in Sydney (ap-southeast-2). This regional difference is a diagnostic lead, not a proven root cause.
-
-The user has already contacted m.Stock and is waiting for a response. Do not send duplicate support requests immediately. Current feed status is **BLOCKED / NOT LIVE**.
-
-**Remaining integration work:**
-1. Receive m.Stock's technical response and retest the WebSocket handshake.
-2. After handshake success, verify LOGIN, subscription acknowledgement, heartbeat, packet receipt, Type A decoding and fresh exchange timestamps.
-3. Verify instrument master, expiry and token mapping; do not assume token 2885 is NIFTY or invent option/futures tokens.
-5. Verify backend-to-gateway authentication and frontend freshness display.
-6. Mark the feed LIVE only after all stages succeed end-to-end.
-
-Existing REST market-data operation is separate; the user reports it remains available, but it does not prove WebSocket health. No trading/order execution, existing REST routes, database state, migrations or production configuration were changed during these diagnostics.
 ## 3. Existing feature inventory
 
 The following is a repository-level inventory derived from the current navigation and registered backend modules. It is not a production acceptance certificate.
@@ -164,11 +143,8 @@ Do not upgrade a status based on source files alone. Record test run, commit SHA
 
 ## 5. Current known gaps and upcoming work
 
-### Priority 0 — restore and verify live market streaming
-- Complete India-origin WebSocket handshake test.
-- Obtain m.Stock-side AWS load-balancer/upstream evidence.
-- Restore the handshake before changing LOGIN/subscription or tick parsing.
-- Add explicit operational health reporting for REST and WebSocket separately.
+The Market Flow, Order Flow and application-level market-stream integration are not part of the reviewed current source. They are not active roadmap blockers in this audit. Existing market REST capabilities remain separate.
+
 
 ### Priority 1 — infrastructure and release assurance
 - Verify the actual frontend hosting target and custom-domain routing. Repository configuration and historical references mention more than one hosting platform; document the active production target only after checking its deployment configuration.

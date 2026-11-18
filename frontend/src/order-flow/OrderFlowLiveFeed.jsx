@@ -3,6 +3,7 @@ import { apiFetch, API_BASE_URL, friendlyErrorMessage } from "../api";
 
 const POLL_MS = 10000;
 const MAX_RETRY_MS = 60000;
+const NOOP_SNAPSHOT = () => {};
 
 function formatAge(seconds) {
   if (seconds == null) return "No tick received";
@@ -10,7 +11,7 @@ function formatAge(seconds) {
   return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s ago`;
 }
 
-export default function OrderFlowLiveFeed({ symbol }) {
+export default function OrderFlowLiveFeed({ symbol, onSnapshot = NOOP_SNAPSHOT }) {
   const [snapshot, setSnapshot] = useState(null);
   const [error, setError] = useState("");
   const [retryIn, setRetryIn] = useState(POLL_MS);
@@ -19,6 +20,8 @@ export default function OrderFlowLiveFeed({ symbol }) {
     let active = true;
     let timer;
     let delay = POLL_MS;
+    setSnapshot(null);
+    onSnapshot(null);
 
     const poll = async () => {
       try {
@@ -31,10 +34,13 @@ export default function OrderFlowLiveFeed({ symbol }) {
         }
         if (!active) return;
         setSnapshot(payload);
+        onSnapshot(payload);
         setError("");
         delay = POLL_MS;
       } catch (cause) {
         if (!active) return;
+        setSnapshot(null);
+        onSnapshot(null);
         setError(cause?.message || "Live derivatives feed is unavailable.");
         delay = Math.min(Math.max(POLL_MS, delay * 2), MAX_RETRY_MS);
       } finally {
@@ -50,7 +56,7 @@ export default function OrderFlowLiveFeed({ symbol }) {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [symbol]);
+  }, [symbol, onSnapshot]);
 
   const feed = snapshot?.feed;
   const isLive = snapshot?.status === "success" && feed?.status === "fresh";
@@ -65,8 +71,8 @@ export default function OrderFlowLiveFeed({ symbol }) {
       </div>
       {isLive ? (
         <>
-          <p>Last provider tick: {formatAge(feed.age_seconds)} · {snapshot.futures_contracts.length} futures contracts · {snapshot.option_oi_by_strike.length} option strikes</p>
-          <p>Live feed values are available from the gateway snapshot. Demo charts and derived indicators below remain labelled simulated.</p>
+          <p>Last provider tick: {formatAge(feed.age_seconds)} · {snapshot.futures_contracts?.length || 0} futures contracts · {snapshot.option_oi_by_strike?.length || 0} option strikes</p>
+          <p>Fields marked LIVE below come from this feed. Change %, charts and derived indicators remain simulated.</p>
         </>
       ) : (
         <p>{error || "Waiting for an authenticated provider tick."} Automatic retry in {Math.round(retryIn / 1000)}s. Demo values below are not live market data.</p>

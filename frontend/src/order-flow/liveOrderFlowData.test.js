@@ -20,7 +20,7 @@ test("never creates live rows from a disconnected or simulated-only snapshot", (
   assert.deepEqual(result.optionOiByStrike, []);
 });
 
-test("maps only provider futures, options and option OI without inventing change or candles", () => {
+test("maps provider change and OHLC without inventing historical candles", () => {
   const result = buildLiveOrderFlow({
     status: "success",
     as_of: "2026-11-18T09:30:00+00:00",
@@ -54,7 +54,7 @@ test("maps only provider futures, options and option OI without inventing change
   assert.deepEqual(result.optionOiByStrike, [
     { strike: 25000, callOi: 12000, putOi: 14000 },
   ]);
-  assert.equal("changePct" in result.futures[0], false);
+  assert.equal("changePct" in result.futures[0], true);
   assert.equal("candles" in result.futures[0], false);
 });
 

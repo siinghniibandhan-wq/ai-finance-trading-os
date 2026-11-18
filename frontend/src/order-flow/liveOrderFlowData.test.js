@@ -19,15 +19,15 @@ const snapshot = {
 
 test("builds the Market Flow universe exclusively from fresh provider contracts", () => {
   const result = mapLiveOrderFlowSnapshot(snapshot);
+  const nifty = result.stocks.find((item) => item.symbol === "NIFTY");
   assert.equal(result.isLive, true);
   assert.equal(result.stocks.length, 2);
-  assert.equal(result.stocks[0].symbol, "NIFTY");
-  assert.equal(result.stocks[0].price, 25012.5);
-  assert.equal(result.stocks[0].changePct, 0.05);
-  assert.equal(result.stocks[0].volume, 1200);
-  assert.equal(result.stocks[0].oi, 450000);
-  assert.deepEqual(result.stocks[0].strikes, [{ strike: 25000, put: 14000, call: 12000 }]);
-  assert.equal(result.stocks[0].simulated, undefined);
+  assert.equal(nifty.price, 25012.5);
+  assert.equal(nifty.changePct, 0.05);
+  assert.equal(nifty.volume, 1200);
+  assert.equal(nifty.oi, 450000);
+  assert.deepEqual(nifty.strikes, [{ strike: 25000, put: 14000, call: 12000 }]);
+  assert.equal(nifty.simulated, undefined);
 });
 
 test("does not create a demo universe when feed is missing, stale, or disconnected", () => {

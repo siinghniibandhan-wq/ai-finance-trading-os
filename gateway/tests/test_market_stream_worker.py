@@ -17,7 +17,8 @@ class FakeSocket:
         try:
             return next(self.frames)
         except StopIteration:
-            raise RuntimeError("socket closed")
+            time.sleep(.01)
+            raise TimeoutError("read timed out")
 
     def close(self):
         self.closed = True
@@ -74,14 +75,43 @@ def test_worker_rejects_login_failure_without_subscribing():
     worker.stop()
 
 
-def test_worker_rejects_binary_frame_as_login_ack():
-    sock = FakeSocket([frame_ltp()])
+def test_worker_uses_first_subscribed_market_tick_as_stream_verification():
+    sock = FakeSocket([frame_ltp(token=999), frame_ltp(token=123, ltp=789)])
     worker = MarketStreamWorker(lambda: "token", lambda: "key",
                                 websocket_factory=lambda *a, **k: sock, recv_timeout=1)
     worker.start([123])
-    assert wait_for(lambda: worker.status()["last_error"] is not None)
-    assert worker.status()["connected"] is False
-    assert sock.sent == ["LOGIN:token"]
+    assert wait_for(lambda: bool(worker.snapshot()))
+    status = worker.status()
+    assert status["stream_verified"] is True
+    assert status["connected"] is True
+    assert [tick["token"] for tick in worker.snapshot()] == [123]
+    assert sock.sent == ["LOGIN:token", '{"a": "subscribe", "v": [123]}']
+    worker.stop()
+
+
+def test_worker_does_not_require_a_login_ack_before_subscribing():
+    sock = FakeSocket([frame_ltp(token=123, ltp=789)])
+    worker = MarketStreamWorker(lambda: "token", lambda: "key",
+                                websocket_factory=lambda *a, **k: sock, recv_timeout=1)
+    worker.start([123])
+    assert wait_for(lambda: bool(worker.snapshot()))
+    assert sock.sent[0] == "LOGIN:token"
+    assert sock.sent[1] == '{"a": "subscribe", "v": [123]}'
+    assert worker.status()["stream_verified"] is True
+    worker.stop()
+
+
+def test_worker_never_reports_stale_ticks_as_connected():
+    sock = FakeSocket([frame_ltp(token=123)])
+    worker = MarketStreamWorker(lambda: "token", lambda: "key",
+                                websocket_factory=lambda *a, **k: sock,
+                                recv_timeout=1, stale_after=0)
+    worker.start([123])
+    assert wait_for(lambda: bool(worker.snapshot()))
+    time.sleep(.02)
+    status = worker.status()
+    assert status["stale"] is True
+    assert status["connected"] is False
     worker.stop()
 
 

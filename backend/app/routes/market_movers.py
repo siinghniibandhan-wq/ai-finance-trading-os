@@ -193,4 +193,3 @@ def get_market_movers(
         "database_write": False,
         "next_module": "Market Indices Engine",
     }
-}

@@ -1,14 +1,14 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import MStockSessionPanel from "./MStockSessionPanel";
 import OrderFlowLiveFeed from "./OrderFlowLiveFeed";
 import {
-  buildLiveOrderFlow,
+  appendLivePriceHistory,\n  buildLiveOrderFlow,
   formatMarketNumber,
   formatMarketPercent,
   formatMarketTimestamp,
 } from "./liveOrderFlowData";
 import "./order-flow.css";
-import "./live-order-flow.css";
+import "./live-order-flow.css";\nimport LiveMarketCharts from "./LiveMarketCharts";
 
 function Metric({ label, value, detail }) {
   return (
@@ -52,7 +52,7 @@ function DataTable({ title, description, columns, rows, empty }) {
 
 export default function OrderFlowPage() {
   const [snapshot, setSnapshot] = useState(null);
-  const [symbol, setSymbol] = useState("");
+  const [symbol, setSymbol] = useState("");\n  const [priceHistory, setPriceHistory] = useState([]);\n  useEffect(() => {\n    setPriceHistory((current) => appendLivePriceHistory(current, snapshot));\n  }, [snapshot]);
   const flow = useMemo(() => buildLiveOrderFlow(snapshot, symbol), [snapshot, symbol]);
   const stream = snapshot?.stream || {};
   const feed = snapshot?.feed || {};
@@ -101,7 +101,7 @@ export default function OrderFlowPage() {
 
       <OrderFlowLiveFeed symbol={symbol || undefined} onSnapshot={setSnapshot} />
 
-      <section className="mf-live-metrics">
+      <LiveMarketCharts flow={flow} history={priceHistory} symbol={symbol} />\n\n      <section className="mf-live-metrics">
         <Metric label="Futures contracts" value={flow.isLive ? flow.futures.length : "—"} detail="Provider ticks with valid LTP" />
         <Metric label="Options contracts" value={flow.isLive ? flow.options.length : "—"} detail="Provider ticks with valid OI" />
         <Metric label="Underlyings" value={flow.isLive ? flow.underlyings.length : "—"} detail="Verified instrument master" />

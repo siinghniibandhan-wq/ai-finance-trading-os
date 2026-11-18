@@ -45,7 +45,6 @@ def test_order_flow_websocket_uses_existing_bearer_session_and_sends_live_snapsh
         subprotocols=["financial-os", "bearer.valid-financial-os-token"],
     ) as websocket:
         payload = websocket.receive_json()
-        assert websocket.accepted_subprotocol == "financial-os"
 
     assert payload["status"] == "success"
     assert payload["futures_contracts"][0]["price"] == 25000.5

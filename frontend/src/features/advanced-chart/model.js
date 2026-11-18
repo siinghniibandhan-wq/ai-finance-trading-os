@@ -146,3 +146,150 @@ export function buildInstrumentSearchParams(query, exchange = "ALL") {
     product_type: "Stocks",
   });
 }
+
+/**
+ * Derive Heikin-Ashi display candles from validated provider OHLC candles.
+ * Source candles remain unchanged; no price observations are invented.
+ */
+export function calculateHeikinAshi(candles) {
+  if (!Array.isArray(candles) || !candles.length) return [];
+  const result = [];
+  let previousOpen = null;
+  let previousClose = null;
+  for (const candle of candles) {
+    const { time, open, high, low, close } = candle || {};
+    if (!Number.isFinite(time) || [open, high, low, close].some((value) => !Number.isFinite(value)) ||
+        open <= 0 || high < Math.max(open, close, low) || low > Math.min(open, close, high)) return [];
+    const haClose = (open + high + low + close) / 4;
+    const haOpen = previousOpen === null ? (open + close) / 2 : (previousOpen + previousClose) / 2;
+    const point = {
+      time,
+      open: haOpen,
+      high: Math.max(high, haOpen, haClose),
+      low: Math.min(low, haOpen, haClose),
+      close: haClose,
+    };
+    result.push(point);
+    previousOpen = haOpen;
+    previousClose = haClose;
+  }
+  return result;
+}
+
+function emaValues(values, period) {
+  if (!Array.isArray(values) || values.length < period || !Number.isInteger(period) || period < 1 ||
+      values.some((value) => !Number.isFinite(value))) return [];
+  const multiplier = 2 / (period + 1);
+  let ema = values.slice(0, period).reduce((sum, value) => sum + value, 0) / period;
+  const output = Array(period - 1).fill(null);
+  output.push(ema);
+  for (let index = period; index < values.length; index += 1) {
+    ema = (values[index] - ema) * multiplier + ema;
+    output.push(ema);
+  }
+  return output;
+}
+
+export function calculateRSI(candles, period = 14) {
+  if (!Array.isArray(candles) || !Number.isInteger(period) || period < 1 ||
+      candles.length <= period || candles.some((candle) => !Number.isFinite(candle?.close))) return [];
+  let gains = 0;
+  let losses = 0;
+  for (let index = 1; index <= period; index += 1) {
+    const change = candles[index].close - candles[index - 1].close;
+    gains += Math.max(change, 0);
+    losses += Math.max(-change, 0);
+  }
+  let averageGain = gains / period;
+  let averageLoss = losses / period;
+  const output = [];
+  const value = () => averageLoss === 0 ? (averageGain === 0 ? 50 : 100)
+    : 100 - 100 / (1 + averageGain / averageLoss);
+  output.push({ time: candles[period].time, value: value() });
+  for (let index = period + 1; index < candles.length; index += 1) {
+    const change = candles[index].close - candles[index - 1].close;
+    averageGain = (averageGain * (period - 1) + Math.max(change, 0)) / period;
+    averageLoss = (averageLoss * (period - 1) + Math.max(-change, 0)) / period;
+    output.push({ time: candles[index].time, value: value() });
+  }
+  return output;
+}
+
+export function calculateMACD(candles, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+  if (!Array.isArray(candles) || fastPeriod >= slowPeriod ||
+      candles.some((candle) => !Number.isFinite(candle?.close))) {
+    return { macd: [], signal: [], histogram: [] };
+  }
+  const closes = candles.map((candle) => candle.close);
+  const fast = emaValues(closes, fastPeriod);
+  const slow = emaValues(closes, slowPeriod);
+  const raw = [];
+  for (let index = 0; index < candles.length; index += 1) {
+    if (fast[index] !== null && slow[index] !== null) {
+      raw.push({ time: candles[index].time, value: fast[index] - slow[index] });
+    }
+  }
+  const signalValues = emaValues(raw.map((point) => point.value), signalPeriod);
+  const macd = raw.slice(signalPeriod - 1);
+  const signal = macd.map((point, index) => ({ time: point.time, value: signalValues[index + signalPeriod - 1] }));
+  const histogram = macd.map((point, index) => ({ time: point.time, value: point.value - signal[index].value }));
+  return { macd, signal, histogram };
+}
+
+export function calculateBollingerBands(candles, period = 20, multiplier = 2) {
+  if (!Array.isArray(candles) || !Number.isInteger(period) || period < 1 ||
+      !Number.isFinite(multiplier) || multiplier <= 0 || candles.length < period ||
+      candles.some((candle) => !Number.isFinite(candle?.close))) {
+    return { upper: [], middle: [], lower: [] };
+  }
+  const upper = [];
+  const middle = [];
+  const lower = [];
+  for (let index = period - 1; index < candles.length; index += 1) {
+    const window = candles.slice(index - period + 1, index + 1).map((candle) => candle.close);
+    const mean = window.reduce((sum, value) => sum + value, 0) / period;
+    const variance = window.reduce((sum, value) => sum + (value - mean) ** 2, 0) / period;
+    const deviation = Math.sqrt(variance);
+    const time = candles[index].time;
+    middle.push({ time, value: mean });
+    upper.push({ time, value: mean + multiplier * deviation });
+    lower.push({ time, value: mean - multiplier * deviation });
+  }
+  return { upper, middle, lower };
+}
+
+export function calculateVWAP(candles) {
+  if (!Array.isArray(candles) || !candles.length ||
+      candles.some((candle) => !Number.isFinite(candle?.time) ||
+        !Number.isFinite(candle?.high) || !Number.isFinite(candle?.low) ||
+        !Number.isFinite(candle?.close) || !Number.isFinite(candle?.volume) ||
+        candle.volume <= 0)) return [];
+
+  // VWAP is an intraday benchmark: cumulative price-volume and volume must
+  // restart at each exchange-local trading date, not span multiple sessions.
+  const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  let currentSession = null;
+  let cumulativePriceVolume = 0;
+  let cumulativeVolume = 0;
+
+  return candles.map((candle) => {
+    const parts = dateFormatter.formatToParts(new Date(candle.time * 1000));
+    const dateParts = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+    const session = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+    if (session !== currentSession) {
+      currentSession = session;
+      cumulativePriceVolume = 0;
+      cumulativeVolume = 0;
+    }
+
+    const typicalPrice = (candle.high + candle.low + candle.close) / 3;
+    cumulativePriceVolume += typicalPrice * candle.volume;
+    cumulativeVolume += candle.volume;
+    return { time: candle.time, value: cumulativePriceVolume / cumulativeVolume };
+  });
+}

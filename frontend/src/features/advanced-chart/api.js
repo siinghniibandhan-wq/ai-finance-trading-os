@@ -43,6 +43,14 @@ export async function loadLatestQuote({ symbol, exchange }) {
   return readResponse(response, "Latest quote");
 }
 
+export async function loadMarketMovers(type = "losers", limit = 100) {
+  const params = new URLSearchParams({ type, limit: String(limit) });
+  const response = await apiFetch(`${API_BASE_URL}/api/market-movers/?${params}`, {
+    cache: "no-store",
+  });
+  return readResponse(response, "Market movers");
+}
+
 export async function loadMarketOverview() {
   const response = await apiFetch(`${API_BASE_URL}/api/market-overview/`, {
     cache: "no-store",

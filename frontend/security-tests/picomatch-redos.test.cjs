@@ -2,6 +2,9 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const picomatch = require('../vendor/picomatch');
 
+const escapedPlus = String.fromCharCode(92) + '+';
+const escapedStar = String.fromCharCode(92) + '*';
+
 test('literalizes repeated extglobs containing glob stars', () => {
   const vulnerablePatterns = [
     '+(*)', '+(*a)', '+(a*)', '+(a*a)', '+(*)a',
@@ -9,14 +12,14 @@ test('literalizes repeated extglobs containing glob stars', () => {
   ];
   for (const pattern of vulnerablePatterns) {
     const source = picomatch.makeRe(pattern).source;
-    assert.ok(source.includes('\\+(') || source.includes('\\*('), pattern + ' must be literalized');
+    assert.ok(source.includes(escapedPlus) || source.includes(escapedStar), pattern + ' must be literalized');
   }
 });
 
 test('literalizes repeated extglobs with repeated-branch overlap', () => {
   for (const pattern of ['+(ab|abab)', '+(abc|abcabc)']) {
     const source = picomatch.makeRe(pattern).source;
-    assert.ok(source.includes('\\+('), pattern + ' must be literalized');
+    assert.ok(source.includes(escapedPlus), pattern + ' must be literalized');
   }
 });
 

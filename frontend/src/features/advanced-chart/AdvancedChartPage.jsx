@@ -24,6 +24,7 @@ const money = (value) => {
 
 export default function AdvancedChartPage() {
   const [query, setQuery] = useState("");
+  const [exchangeFilter, setExchangeFilter] = useState("ALL");
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
@@ -63,7 +64,7 @@ export default function AdvancedChartPage() {
     setSearchError("");
     setResults([]);
     try {
-      const matches = await searchChartInstruments(query);
+      const matches = await searchChartInstruments(query, exchangeFilter);
       setResults(matches);
       if (!matches.length) setSearchError("No NSE/BSE cash instruments matched that search.");
     } catch (error) {
@@ -324,6 +325,14 @@ export default function AdvancedChartPage() {
             <button type="submit" disabled={searching}>{searching ? "Searching…" : "Search"}</button>
           </div>
         </form>
+        <label className="advanced-chart-control">
+          <span>Exchange filter</span>
+          <select value={exchangeFilter} onChange={(event) => setExchangeFilter(event.target.value)}>
+            <option value="ALL">NSE + BSE</option>
+            <option value="NSE">NSE</option>
+            <option value="BSE">BSE</option>
+          </select>
+        </label>
         <div className="advanced-chart-selection">
           <span>SELECTED</span>
           <strong>{selectedLabel}</strong>

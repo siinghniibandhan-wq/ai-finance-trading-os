@@ -39,11 +39,14 @@ def configure_gateway(monkeypatch, snapshot):
     monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-secret")
 
     calls = []
+    monkeypatch.setattr(order_flow_feed, "_INSTRUMENT_CACHE", {"loaded_at": 0.0, "items": None})
 
     def fake_urlopen(request, timeout):
         calls.append((request, timeout))
         if request.full_url.endswith("/instruments"):
             return FakeResponse(INSTRUMENTS_CSV)
+        if request.full_url.endswith("/market-stream/start"):
+            return FakeResponse({"status": "success", "started": True, "read_only": True})
         if "/market-stream/snapshot" in request.full_url:
             return FakeResponse(snapshot)
         raise AssertionError(f"Unexpected gateway URL: {request.full_url}")
@@ -103,9 +106,15 @@ def test_snapshot_adapts_production_market_stream_ticks_using_instrument_master(
     assert result["stream"]["connected"] is True
     assert "previous_oi" not in result["futures_contracts"][0]
     assert "oi_change" not in result["futures_contracts"][0]
-    assert len(calls) == 2
+    assert len(calls) == 3
+    start_request = next(req for req, _ in calls if req.full_url.endswith("/market-stream/start"))
+    assert start_request.get_method() == "POST"
+    start_payload = json.loads(start_request.data.decode("utf-8"))
+    assert start_payload["mode"] == 3
+    assert set(start_payload["tokens"]) == {101, 102, 103, 104}
     snapshot_request = next(req for req, _ in calls if "/market-stream/snapshot" in req.full_url)
-    assert snapshot_request.get_header("X-financial-os-gateway-secret") == "test-secret"
+    assert next(value for key, value in snapshot_request.header_items()
+                if key.lower() == "x-financial-os-gateway-secret") == "test-secret"
 
 
 def test_snapshot_uses_shared_market_gateway_configuration(monkeypatch):

@@ -260,12 +260,33 @@ export function calculateBollingerBands(candles, period = 20, multiplier = 2) {
 
 export function calculateVWAP(candles) {
   if (!Array.isArray(candles) || !candles.length ||
-      candles.some((candle) => !Number.isFinite(candle?.high) ||
-        !Number.isFinite(candle?.low) || !Number.isFinite(candle?.close) ||
-        !Number.isFinite(candle?.volume) || candle.volume <= 0)) return [];
+      candles.some((candle) => !Number.isFinite(candle?.time) ||
+        !Number.isFinite(candle?.high) || !Number.isFinite(candle?.low) ||
+        !Number.isFinite(candle?.close) || !Number.isFinite(candle?.volume) ||
+        candle.volume <= 0)) return [];
+
+  // VWAP is an intraday benchmark: cumulative price-volume and volume must
+  // restart at each exchange-local trading date, not span multiple sessions.
+  const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  let currentSession = null;
   let cumulativePriceVolume = 0;
   let cumulativeVolume = 0;
+
   return candles.map((candle) => {
+    const parts = dateFormatter.formatToParts(new Date(candle.time * 1000));
+    const dateParts = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+    const session = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+    if (session !== currentSession) {
+      currentSession = session;
+      cumulativePriceVolume = 0;
+      cumulativeVolume = 0;
+    }
+
     const typicalPrice = (candle.high + candle.low + candle.close) / 3;
     cumulativePriceVolume += typicalPrice * candle.volume;
     cumulativeVolume += candle.volume;

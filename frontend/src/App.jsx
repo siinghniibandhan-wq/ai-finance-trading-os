@@ -10,6 +10,7 @@ import AdminPanel from "./AdminPanel";
 import AccountContactSettings from "./AccountContactSettings";
 import WealthManager from "./WealthManager";
 import OrderFlowPage from "./order-flow/OrderFlowPage";
+import MStockSessionPanel from "./order-flow/MStockSessionPanel";
 import LoanManagement from "./LoanManagement";
 import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession, friendlyErrorMessage, describeError } from "./api";
 
@@ -2862,6 +2863,7 @@ function MarketsPage() {
         <button className="secondary-button" type="button" onClick={refresh} disabled={busy}>{busy ? "Refreshing…" : "↻ Refresh"}</button>
       </div>
     </section>
+    <MStockSessionPanel onAuthenticated={refresh} />
       <section aria-label="Major Indian market indices" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" }}>
         {requestedIndices.map((item, i) => <div key={item.label} style={{ ...card, position: "relative", overflow: "hidden", padding: "15px", borderRadius: "18px", border: "1px solid rgba(167,139,250,.18)", background: i % 2 === 0 ? "linear-gradient(145deg, rgba(124,58,237,0.24), rgba(13,18,38,.78))" : "linear-gradient(145deg, rgba(14,165,233,0.18), rgba(13,18,38,.78))", boxShadow: "0 12px 28px rgba(0,0,0,.12)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}><strong style={{ fontSize: "11px", letterSpacing: ".07em" }}>{item.label}</strong><span style={{ ...muted, fontSize: "10px" }}>{item.data?.status || (busy ? "Loading" : "Market index")}</span></div>

@@ -112,3 +112,15 @@ export function formatChartTime(time) {
   }
   return "—";
 }
+
+
+/**
+ * Read the latest traded price from the authenticated Market Quote API response.
+ * Invalid, zero and missing values are intentionally treated as unavailable.
+ */
+export function normalizeQuotePrice(payload) {
+  const value = payload?.quote?.last_price;
+  if (value === null || value === undefined || value === "") return null;
+  const price = Number(value);
+  return Number.isFinite(price) && price > 0 ? price : null;
+}

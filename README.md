@@ -23,7 +23,6 @@ A unified personal-finance, wealth-management, investment, market-data, trading-
 | Market-data integration | m.Stock REST gateway and WebSocket stream path |
 | AI integration | Google Gemini and configurable AI gateway providers |
 | Cloud/operations | Recorded AWS EC2 services for the market-data gateway and backend; live infrastructure inventory remains to be verified |
-| CI | GitHub Actions for frontend build, Order Flow tests, backend tests, dependency audits and secret scanning |
 
 ## Contents
 
@@ -48,7 +47,6 @@ The application navigation and backend modules cover the following areas:
 - **Personal finance:** Dashboard, Wealth Manager, Accounts, Transactions, Ledger, Chart of Accounts, Categories, Bills, Loans & Liabilities, Budgets, Goals and Finance Diary.
 - **Investments:** Portfolio, Holdings, Investment Transactions, investment P&L, watchlists and broker reconciliation.
 - **Markets:** Market overview, quotes, instrument search, indices, gainers/losers, historical market data and charts.
-- **Order Flow:** order-flow workspace and broker-order service boundaries. Live execution remains subject to explicit operational safeguards and verification.
 - **Indian tax:** income aggregation, deductions/exempt income, capital gains, house property, business income, loss set-off, tax liability and ITR-ready reporting.
 - **AI and administration:** AI Assistant, account/profile settings and admin-only operations.
 - **Themes:** central theme system and visual preferences.
@@ -86,7 +84,6 @@ FastAPI backend
 - Entry files: `frontend/src/main.jsx`, `frontend/src/App.jsx`
 - API client: `frontend/src/api.js`
 - Build tool: Vite
-- Order Flow workspace: `frontend/src/order-flow/`
 
 ### Backend
 
@@ -110,9 +107,7 @@ REST and WebSocket are separate service paths and must have separate health indi
 - DNS and TLS verification for ws.mstock.trade succeed, but the WebSocket HTTP upgrade returns HTTP 502 from a provider AWS load-balancer response. The failure occurs before LOGIN or subscription messages. No live ticks have been received.
 - The user has already contacted m.Stock and is waiting for its response. The feed must remain labelled NOT LIVE.
 
-The EC2 blueprint exposes /market-stream/start|stop|status|snapshot. Its snapshot returns raw decoded SDK tick-cache data. The Order Flow bridge has been implemented on branch `fix/order-flow-market-stream-contract`: it validates the `/instruments` master, idempotently starts a bounded derivatives subscription, joins ticks to verified instrument metadata, and normalizes futures/options data. The backend regression suite passed on the current PR head (374 passed, 2 skipped). Full CI remains red because the existing frontend dependency audit reports four high-severity vulnerabilities in the Vite/fdir/picomatch dependency chain; frontend tests/build were skipped by that job. The branch is not merged or deployed. Do not infer instrument identity, expiry, previous OI or undocumented fields.
 
-Do not mark Order Flow live until the WebSocket handshake, LOGIN, subscriptions, fresh decoded ticks, normalized backend response, backend-to-gateway authentication and frontend freshness display all pass end-to-end. See AUDIT_REPORT.md Section 2.5, SECURITY_OPERATIONS.md Section 8 and frontend/src/order-flow/README.md.
 ## Repository structure
 
 ```text
@@ -135,7 +130,6 @@ Do not mark Order Flow live until the WebSocket handshake, LOGIN, subscriptions,
 │   └── requirements-dev.txt
 ├── frontend/
 │   ├── src/
-│   │   └── order-flow/
 │   ├── scripts/
 │   └── package.json
 ├── AUDIT_REPORT.md
@@ -169,11 +163,9 @@ cd frontend
 npm run build
 ```
 
-Order Flow data-model tests:
 
 ```bash
 cd frontend
-npm run test:market-flow
 ```
 
 Important Notice schedule tests:
@@ -223,7 +215,6 @@ The repository CI workflow is `.github/workflows/financial-os-ci.yml`. It runs o
 
 | Job | Current checks |
 |---|---|
-| Frontend | Node 20, dependency installation, npm audit, Order Flow tests and Vite production build |
 | Backend | Python 3.12, dependency installation, pip-audit and pytest |
 | Secrets | Gitleaks repository-history scan |
 
@@ -233,7 +224,6 @@ Run the same core checks locally:
 # Frontend
 cd frontend
 npm install
-npm run test:market-flow
 npm run build
 
 # Backend (from repository root)
@@ -358,7 +348,6 @@ The roadmap is a prioritised engineering view, not a claim that every item is ap
 | [SECURITY_OPERATIONS.md](SECURITY_OPERATIONS.md) | AWS infrastructure, security, secrets, deployment, migrations, automation and incident response |
 | [THEME_SYSTEM_REDESIGN.md](THEME_SYSTEM_REDESIGN.md) | Theme-system architecture and design decisions |
 | [backend/app/services/AI_PROVIDERS.md](backend/app/services/AI_PROVIDERS.md) | AI provider configuration and integration details |
-| [frontend/src/order-flow/README.md](frontend/src/order-flow/README.md) | Order Flow implementation-specific notes |
 
 ## Contribution and change-control expectations
 

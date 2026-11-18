@@ -204,7 +204,7 @@ The user has already emailed m.Stock and elected to wait for its response rather
 2. After provider feedback, repeat a controlled WebSocket handshake test and record the result. An India-origin comparison may help distinguish provider-wide failure from source-region/network routing, but region difference alone is not a proven cause.
 3. Once the handshake succeeds, verify LOGIN response, subscription acknowledgement, heartbeat, packet receipt, Type A decoding, exchange timestamps, cache population and stale/reconnect behaviour.
 4. Verify the instrument master and expiry/token mapping before adding NIFTY futures/options subscriptions. Token 2885 is observed in the current status but its instrument identity has not been independently verified.
-5. Separately implement and test the adapter from raw /market-stream/snapshot ticks to the Financial OS normalized /order-flow/snapshot futures/options contract.
+5. The Financial OS Order Flow adapter has been removed; the Gateway market-stream endpoints remain Gateway-only.
 6. Verify the backend's gateway URL and shared-secret configuration against the gateway without displaying either secret, then verify frontend freshness display.
 
 ### Safeguards
@@ -219,7 +219,6 @@ The user has already emailed m.Stock and elected to wait for its response rather
 ## 9. Deployment and release workflow
 
 The repository currently provides GitHub Actions workflows:
-- `financial-os-ci.yml`: frontend dependency installation/audit, Order Flow tests, Vite production build, backend dependency installation/audit, pytest and secret scanning.
 - `package-aws-restored-source.yml`: creates a source archive on workflow dispatch and on changes to that workflow.
 
 These workflows do not, by themselves, prove that production deploys automatically from `main`. Confirm the active deployment provider, branch mapping, build settings, environment variables, artifact promotion and rollback process from the live hosting configuration.
@@ -292,7 +291,6 @@ Do not assume a committed SQL file is automatically applied. Do not run it again
 
 | Mechanism | Trigger | Confirmed effect | Not confirmed / does not do |
 |---|---|---|---|
-| `.github/workflows/financial-os-ci.yml` | Push/PR to `main`; manual dispatch | Frontend install/audit, Order Flow tests, Vite build, backend install/audit, pytest and Gitleaks scan | No production deployment; no schema application |
 | `.github/workflows/package-aws-restored-source.yml` | Manual dispatch; workflow-file change on `main` | Packages source ZIP and uploads a 30-day GitHub Actions artifact | No EC2 deployment, service restart or database migration |
 | `mstock-gateway.service` | systemd service manager | Runs the recorded Flask gateway service | Not a schema runner or scheduler |
 | `financial-os-backend.service` | systemd service manager | Runs the recorded backend service | Not a schema runner or scheduler |
@@ -372,7 +370,7 @@ This is evidence from the deployed EC2 host, not proof that the same files are c
 
 A request to the stream status route returned `GATEWAY_SECRET_INVALID`. This indicates the request failed the gateway's internal shared-secret validation. It does not establish that m.Stock API credentials are invalid. The user reports that existing REST market data remains available; keep REST and WebSocket health separate. Resolve the internal secret mismatch using the existing server-side configuration without exposing or regenerating credentials.
 
-The gateway blueprint's `/market-stream/snapshot` route returns cached decoded ticks and stream status. The repository Order Flow adapter expects a different endpoint, `/order-flow/snapshot`, with normalized futures/options data. The adapter/route mapping and the Order Flow connection have not yet been verified. Do not report Order Flow as LIVE until authentication, worker startup, token subscriptions, fresh tick receipt, normalized snapshot delivery and frontend freshness display have all been tested.
+The gateway blueprint's `/market-stream/snapshot` route returns cached decoded ticks and stream status. The Financial OS Order Flow consumer and its `/order-flow/snapshot` adapter have been removed. The Gateway market-stream service remains separate and is not consumed by a Market Flow section in Financial OS.
 
 The prior Sydney-host HTTP 502 WebSocket-upgrade result is historical. It occurred before LOGIN/subscription and does not establish the current worker's connection state.
 

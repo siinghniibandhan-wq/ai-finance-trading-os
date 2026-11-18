@@ -32,9 +32,6 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         run: npm run build
-      - name: Test Order Flow data model
-        working-directory: frontend
-        run: npm run test:market-flow
       - name: Test picomatch ReDoS regression guard
         working-directory: frontend
         run: npm run test:security

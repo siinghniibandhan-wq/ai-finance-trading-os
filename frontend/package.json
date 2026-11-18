@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:market-flow": "node --test src/order-flow/*.test.js",
     "test:notice": "node --test src/importantNoticeSchedule.test.js",
     "test:sidebar": "node --test src/sidebarCollapse.test.js",
     "test:security": "node --test security-tests/*.test.cjs"

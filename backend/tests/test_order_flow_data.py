@@ -28,16 +28,20 @@ def test_oi_change_uses_previous_oi_and_handles_zero_baseline():
     assert calculate_oi_change(120, 0) == {"change": 120, "change_pct": None}
 
 
-def test_option_oi_aggregates_ce_and_pe_by_strike_without_mixing_sides():
+def test_option_oi_aggregates_by_underlying_expiry_and_strike_without_mixing_contracts():
     rows = [
-        {"strike": 25000, "option_type": "CE", "oi": 100},
-        {"strike": 25000, "option_type": "PE", "oi": 150},
-        {"strike": 25000, "option_type": "CE", "oi": 25},
-        {"strike": 25100, "option_type": "PE", "oi": 75},
+        {"symbol": "NIFTY", "expiry": "2026-11-26", "strike": 25000, "option_type": "CE", "oi": 100},
+        {"symbol": "NIFTY", "expiry": "2026-11-26", "strike": 25000, "option_type": "PE", "oi": 150},
+        {"symbol": "NIFTY", "expiry": "2026-11-26", "strike": 25000, "option_type": "CE", "oi": 25},
+        {"symbol": "NIFTY", "expiry": "2026-11-26", "strike": 25100, "option_type": "PE", "oi": 75},
+        {"symbol": "BANKNIFTY", "expiry": "2026-11-26", "strike": 25000, "option_type": "CE", "oi": 40},
+        {"symbol": "NIFTY", "expiry": "2026-12-31", "strike": 25000, "option_type": "PE", "oi": 30},
     ]
     assert aggregate_option_oi(rows) == [
-        {"strike": 25000, "ce_oi": 125, "pe_oi": 150},
-        {"strike": 25100, "ce_oi": 0, "pe_oi": 75},
+        {"symbol": "BANKNIFTY", "expiry": "2026-11-26", "strike": 25000, "ce_oi": 40, "pe_oi": 0},
+        {"symbol": "NIFTY", "expiry": "2026-11-26", "strike": 25000, "ce_oi": 125, "pe_oi": 150},
+        {"symbol": "NIFTY", "expiry": "2026-11-26", "strike": 25100, "ce_oi": 0, "pe_oi": 75},
+        {"symbol": "NIFTY", "expiry": "2026-12-31", "strike": 25000, "ce_oi": 0, "pe_oi": 30},
     ]
 
 
@@ -50,4 +54,4 @@ def test_feed_status_distinguishes_fresh_stale_and_missing_ticks():
 
 def test_invalid_option_side_is_rejected():
     with pytest.raises(ValueError):
-        aggregate_option_oi([{"strike": 25000, "option_type": "XX", "oi": 1}])
+        aggregate_option_oi([{"symbol": "NIFTY", "expiry": "2026-11-26", "strike": 25000, "option_type": "XX", "oi": 1}])

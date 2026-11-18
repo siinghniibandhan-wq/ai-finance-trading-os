@@ -88,7 +88,11 @@ def _load_instrument_metadata(base: str) -> dict[int, dict]:
         if cached is not None and now - _INSTRUMENT_CACHE["loaded_at"] < ttl:
             return cached
 
-        request = Request(f"{base}/instruments", headers={"Accept": "text/csv"}, method="GET")
+        request = Request(f"{base}/instruments", headers={
+            "Accept": "text/csv",
+            "X-Financial-OS-Gateway-Secret": _gateway_secret(),
+            "User-Agent": "Financial-OS/1.0",
+        }, method="GET")
         try:
             with urlopen(request, timeout=8) as response:
                 csv_text = response.read().decode("utf-8-sig", errors="replace")
@@ -263,7 +267,12 @@ def _timestamp_iso(value):
             try:
                 parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
             except ValueError:
-                parsed = parsedate_to_datetime(value)
+                try:
+                    # The m.Stock Type A SDK formats its exchange timestamps
+                    # as YYYY-mm-ddTHH:MM:SSAM/PM after converting from UTC.
+                    parsed = datetime.strptime(value, "%Y-%m-%dT%I:%M:%S%p").replace(tzinfo=timezone.utc)
+                except ValueError:
+                    parsed = parsedate_to_datetime(value)
         else:
             return None
         if parsed.tzinfo is None:
@@ -273,28 +282,56 @@ def _timestamp_iso(value):
         return None
 
 
-def _numeric_tick_value(tick: dict, field: str):
+def _numeric_tick_value(
+    tick: dict, field: str, fallback: str | None = None, *, allow_negative: bool = False
+):
     value = tick.get(field)
+    if value is None and fallback:
+        value = tick.get(fallback)
+    # The bundled m.Stock Type A SDK currently emits open_interest and its
+    # high/low fields as one-element tuples due to trailing commas in its
+    # decoder assignments. Accept that exact SDK representation.
+    if isinstance(value, (tuple, list)):
+        if len(value) != 1:
+            return None
+        value = value[0]
     if value is None:
         return None
     try:
         number = float(value)
     except (TypeError, ValueError):
         return None
-    if number < 0 or number != number or number in (float("inf"), float("-inf")):
+    if (number < 0 and not allow_negative) or number != number or number in (float("inf"), float("-inf")):
         return None
     return number
 
 
+def _normalise_ohlc(tick: dict) -> dict | None:
+    raw = tick.get("ohlc")
+    if not isinstance(raw, dict):
+        return None
+    return {
+        field: _numeric_tick_value(raw, field)
+        for field in ("open", "high", "low", "close")
+    }
+
+
 def _normalise_tick(tick: dict, instrument: dict) -> dict:
-    """Join SDK-decoded fields with instrument-master identity; do not rescale."""
+    """Join the actual m.Stock SDK fields to verified instrument identity; do not rescale."""
     return {
         **instrument,
         "price": _numeric_tick_value(tick, "last_price"),
+        "change_pct": _numeric_tick_value(tick, "change", allow_negative=True),
+        "ohlc": _normalise_ohlc(tick),
         "volume": _numeric_tick_value(tick, "volume_traded"),
-        "oi": _numeric_tick_value(tick, "oi"),
+        "oi": _numeric_tick_value(tick, "open_interest", fallback="oi"),
+        "open_interest_high": _numeric_tick_value(tick, "open_interest_high"),
+        "open_interest_low": _numeric_tick_value(tick, "open_interest_low"),
         "last_traded_quantity": _numeric_tick_value(tick, "last_traded_quantity"),
         "average_traded_price": _numeric_tick_value(tick, "average_traded_price"),
+        "total_buy_quantity": _numeric_tick_value(tick, "total_buy_quantity"),
+        "total_sell_quantity": _numeric_tick_value(tick, "total_sell_quantity"),
+        "last_traded_at": _timestamp_iso(tick.get("last_traded_timestamp")),
         "exchange_timestamp": _timestamp_iso(tick.get("exchange_timestamp")),
         "received_at": _timestamp_iso(tick.get("received_at")),
         "price_units": "provider_sdk_decoded",
@@ -326,7 +363,7 @@ def _feed_state(stream: dict, last_tick_at: str | None) -> dict:
     return feed
 
 
-def get_order_flow_snapshot(symbol: str | None = None) -> dict:
+def get_order_flow_snapshot(symbol: str | None = None, *, ensure_started: bool = True) -> dict:
     base = _gateway_url()
     secret = _gateway_secret()
     if not base:
@@ -335,7 +372,8 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
         raise OrderFlowFeedError("Market gateway authentication is not configured.")
 
     metadata = _load_instrument_metadata(base)
-    _ensure_stream_started(base, secret, metadata, symbol=symbol)
+    if ensure_started:
+        _ensure_stream_started(base, secret, metadata, symbol=symbol)
 
     payload = _request_json(f"{base}/market-stream/snapshot", secret)
     if payload.get("status") != "success":
@@ -383,7 +421,13 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
 
     # Only ticks carrying a provider OI value contribute to strike-wise OI.
     option_oi = aggregate_option_oi([
-        {"strike": item["strike"], "option_type": item["option_type"], "oi": item["oi"]}
+        {
+            "symbol": item["symbol"],
+            "expiry": item["expiry"],
+            "strike": item["strike"],
+            "option_type": item["option_type"],
+            "oi": item["oi"],
+        }
         for item in options
         if item.get("strike") is not None and item.get("oi") is not None
     ])

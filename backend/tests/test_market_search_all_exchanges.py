@@ -219,3 +219,19 @@ def test_product_type_rejects_unknown_values(monkeypatch):
         market_search.search_market(query="E", exchange="ALL", limit=12, product_type="Mutual Funds")
 
     assert error.value.status_code == 422
+
+
+
+def test_instrument_master_request_includes_gateway_shared_secret(monkeypatch):
+    monkeypatch.setenv("MSTOCK_GATEWAY_SECRET", "test-gateway-secret")
+    captured = []
+
+    def fake_urlopen(request, timeout):
+        captured.append(request)
+        return FakeResponse(CSV)
+
+    monkeypatch.setattr(market_search, "urlopen", fake_urlopen)
+
+    market_search.search_market(query="RELIANCE", exchange="ALL", limit=12)
+
+    assert captured[0].get_header("X-financial-os-gateway-secret") == "test-gateway-secret"

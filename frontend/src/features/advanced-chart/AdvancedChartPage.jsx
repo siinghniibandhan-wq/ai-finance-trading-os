@@ -229,7 +229,10 @@ export default function AdvancedChartPage() {
   const retrievalTime = quote?.retrieved_at
     ? new Date(quote.retrieved_at).toLocaleString("en-IN")
     : "Not available";
-  const gatewayCacheAge = Number.isFinite(Number(quote?.cache_age_seconds))
+  const hasGatewayCacheAge = quote?.cache_age_seconds !== null &&
+    quote?.cache_age_seconds !== undefined &&
+    Number.isFinite(Number(quote.cache_age_seconds));
+  const gatewayCacheAge = hasGatewayCacheAge
     ? `${Number(quote.cache_age_seconds).toFixed(1)}s`
     : "Not reported";
 

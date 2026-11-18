@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CandlestickSeries, HistogramSeries, LineSeries, createChart } from "lightweight-charts";
 import { loadChartHistory, loadLatestQuote, searchChartInstruments } from "./api";
+import MarketFlowBoard from "./MarketFlowBoard";
 import { calculateEMA, calculateSMA, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles, normalizeQuotePrice } from "./model";
 import "./advanced-chart.css";
 
@@ -23,6 +24,7 @@ const money = (value) => {
 };
 
 export default function AdvancedChartPage() {
+  const [activeView, setActiveView] = useState("flow");
   const [query, setQuery] = useState("");
   const [exchangeFilter, setExchangeFilter] = useState("ALL");
   const [results, setResults] = useState([]);
@@ -319,6 +321,14 @@ export default function AdvancedChartPage() {
         <div className="advanced-chart-source">SOURCE <strong>m.Stock · Financial OS API</strong></div>
       </header>
 
+      <nav className="advanced-chart-view-tabs" aria-label="Advanced Chart views">
+        <button type="button" className={activeView === "flow" ? "is-active" : ""} aria-pressed={activeView === "flow"} onClick={() => setActiveView("flow")}>Market Flow</button>
+        <button type="button" className={activeView === "chart" ? "is-active" : ""} aria-pressed={activeView === "chart"} onClick={() => setActiveView("chart")}>Advanced Chart</button>
+      </nav>
+      {activeView === "flow" ? (
+        <MarketFlowBoard onSelectInstrument={(item) => { selectInstrument(item); setActiveView("chart"); }} />
+      ) : (
+        <>
       <section className="advanced-chart-toolbar" aria-label="Chart controls">
         <form className="advanced-chart-search" onSubmit={runSearch}>
           <label htmlFor="advanced-chart-symbol">Instrument</label>
@@ -409,6 +419,8 @@ export default function AdvancedChartPage() {
           Historical candles: m.Stock provider data. The LTP line refreshes from authenticated REST quote snapshots every 10 seconds; quote snapshots do not rewrite OHLC candles and are not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a>.
         </div>
       </section>
+        </>
+      )}
     </main>
   );
 }

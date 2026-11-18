@@ -29,7 +29,7 @@ from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.services.mstock_gateway import MSTOCK_GATEWAY_URL
+from app.services.mstock_gateway import MSTOCK_GATEWAY_URL, MSTOCK_GATEWAY_SECRET
 
 
 # ============================================================
@@ -168,6 +168,10 @@ def get_market_history(
     try:
         search_request = Request(
             search_url,
+            headers={
+                "Accept": "text/csv,application/json",
+                "X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET,
+            },
             method="GET",
         )
 
@@ -280,6 +284,10 @@ def get_market_history(
     try:
         historical_request = Request(
             f"{historical_url}?{query_string}",
+            headers={
+                "Accept": "application/json",
+                "X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET,
+            },
             method="GET",
         )
 

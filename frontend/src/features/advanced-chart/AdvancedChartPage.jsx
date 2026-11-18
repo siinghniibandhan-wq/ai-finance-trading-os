@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CandlestickSeries, HistogramSeries, LineSeries, createChart } from "lightweight-charts";
 import { loadChartHistory, loadLatestQuote, searchChartInstruments } from "./api";
-import { calculateEMA, calculateSMA, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles } from "./model";
+import { calculateEMA, calculateSMA, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles, normalizeQuotePrice } from "./model";
 import "./advanced-chart.css";
 
 const INTERVALS = [
@@ -45,6 +45,7 @@ export default function AdvancedChartPage() {
   const volumeSeriesRef = useRef(null);
   const smaSeriesRef = useRef(null);
   const emaSeriesRef = useRef(null);
+  const lastPriceLineRef = useRef(null);
 
   const selectedLabel = useMemo(() => {
     if (!instrument) return "Select an instrument";
@@ -270,6 +271,29 @@ export default function AdvancedChartPage() {
   }, [showSma, showEma]);
 
   const lastPrice = quote?.quote?.last_price;
+  const normalizedLastPrice = normalizeQuotePrice(quote);
+
+  // The quote endpoint is polled every 10 seconds. Reflect only its verified
+  // last-traded price as a chart price line; do not fabricate or mutate an
+  // OHLC candle from a quote snapshot.
+  useEffect(() => {
+    const series = candleSeriesRef.current;
+    if (!series) return;
+    if (lastPriceLineRef.current) {
+      series.removePriceLine(lastPriceLineRef.current);
+      lastPriceLineRef.current = null;
+    }
+    if (normalizedLastPrice !== null) {
+      lastPriceLineRef.current = series.createPriceLine({
+        price: normalizedLastPrice,
+        color: "#e6a23c",
+        lineWidth: 2,
+        lineStyle: 2,
+        axisLabelVisible: true,
+        title: "LTP",
+      });
+    }
+  }, [normalizedLastPrice]);
   const retrievalTime = quote?.retrieved_at
     ? new Date(quote.retrieved_at).toLocaleString("en-IN")
     : "Not available";
@@ -371,7 +395,7 @@ export default function AdvancedChartPage() {
         </div>
         <div className="advanced-chart-canvas" ref={chartContainerRef} aria-label="Interactive candlestick and volume chart" />
         <div className="advanced-chart-footnote">
-          Historical candles: m.Stock provider data. Quote updates: 10-second REST snapshots, not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a>.
+          Historical candles: m.Stock provider data. The LTP line refreshes from authenticated REST quote snapshots every 10 seconds; quote snapshots do not rewrite OHLC candles and are not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a>.
         </div>
       </section>
     </main>

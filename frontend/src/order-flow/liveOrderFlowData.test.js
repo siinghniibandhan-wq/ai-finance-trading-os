@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildLiveOrderFlow,
   formatMarketNumber,
+  formatMarketPercent,
   formatMarketTimestamp,
 } from "./liveOrderFlowData.js";
 
@@ -27,7 +28,8 @@ test("maps only provider futures, options and option OI without inventing change
     stream: { running: true, connected: true },
     futures_contracts: [
       { symbol: "NIFTY", tradingsymbol: "NIFTY26NOVFUT", exchange: "NFO",
-        expiry: "2026-11-26", price: 25010.5, volume: 1000, oi: 50000 },
+        expiry: "2026-11-26", price: 25010.5, volume: 1000, oi: 50000,
+        change_pct: -0.2, ohlc: { open: 25020, high: 25100, low: 24900, close: 25000 } },
       { symbol: "BANKNIFTY", price: null },
     ],
     option_contracts: [
@@ -44,6 +46,8 @@ test("maps only provider futures, options and option OI without inventing change
   assert.equal(result.futures[0].price, 25010.5);
   assert.equal(result.futures[0].volume, 1000);
   assert.equal(result.futures[0].oi, 50000);
+  assert.equal(result.futures[0].changePct, -0.2);
+  assert.deepEqual(result.futures[0].ohlc, { open: 25020, high: 25100, low: 24900, close: 25000 });
   assert.equal(result.options[0].optionType, "CE");
   assert.deepEqual(result.optionOiByStrike, [
     { strike: 25000, callOi: 12000, putOi: 14000 },
@@ -70,5 +74,7 @@ test("filters the stream to the selected underlying", () => {
 test("formats missing market values and timestamps without fabricated defaults", () => {
   assert.equal(formatMarketNumber(null), "—");
   assert.equal(formatMarketNumber(25000.5), "25,000.5");
+  assert.equal(formatMarketPercent(-0.2), "-0.20%");
+  assert.equal(formatMarketPercent(0.5), "+0.50%");
   assert.equal(formatMarketTimestamp(null), "—");
 });

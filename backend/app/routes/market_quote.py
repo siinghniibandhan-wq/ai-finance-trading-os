@@ -150,10 +150,20 @@ def get_market_quote(
         "cache_hit": quote_data["cache_hit"],
         "cache_age_seconds": quote_data.get("cache_age_seconds", 0.0),
         "provider_latency_ms": quote_data.get("provider_latency_ms"),
-        "provider_market_timestamp": None,
+        "provider_market_timestamp": (
+            (quote_data.get("details") or {}).get("exchange_timestamp")
+            or (quote_data.get("details") or {}).get("exchange_time")
+            or (quote_data.get("details") or {}).get("last_traded_timestamp")
+            or (quote_data.get("details") or {}).get("last_traded_time")
+            or (quote_data.get("details") or {}).get("timestamp")
+        ),
         "freshness_note": (
-            "Timestamp indicates backend gateway retrieval time; the provider's "
-            "original market timestamp is not available from the current gateway response."
+            "Provider market timestamp is supplied by the broker."
+            if any((quote_data.get("details") or {}).get(key) for key in (
+                "exchange_timestamp", "exchange_time", "last_traded_timestamp",
+                "last_traded_time", "timestamp"
+            ))
+            else "Provider market timestamp is unavailable; retrieved_at records when the gateway returned this quote."
         ),
 
         "database_write": False,

@@ -68,30 +68,39 @@ def fetch_index(index):
     if not isinstance(result, dict):
         raise ValueError("Gateway returned an invalid response.")
 
-    # Support the gateway's top-level or nested response format.
-    price = result.get("last_price")
-
-    if price is None:
-        data = result.get("data", {})
-        if isinstance(data, dict):
-            quote = data.get(
-                f'{index["exchange"]}:{index["symbol"]}',
-                {},
-            )
-            if isinstance(quote, dict):
-                price = quote.get("last_price")
-
     if result.get("status") not in (None, "success"):
         raise ValueError("Gateway reported an unsuccessful response.")
 
-    if price is None:
-        raise ValueError("Index price was not present in the response.")
+    # The gateway may return a quote directly or inside its data object.
+    quote = result if result.get("last_price") is not None else None
+    if quote is None:
+        data = result.get("data", {})
+        if isinstance(data, dict):
+            expected_key = f'{index["exchange"]}:{index["symbol"]}'
+            quote = data.get(expected_key)
+            if not isinstance(quote, dict):
+                # Some gateway versions normalize index keys differently.
+                # A single-quote payload is unambiguous; never guess among many.
+                quote = next(iter(data.values()), None) if len(data) == 1 else None
 
-    try:
-        numeric_price = float(price)
-    except (TypeError, ValueError) as exc:
-        raise ValueError("Index price was not numeric.") from exc
-    if not math.isfinite(numeric_price) or numeric_price <= 0:
+    if not isinstance(quote, dict):
+        raise ValueError("Index quote was not present in the response.")
+
+    def numeric_field(*keys):
+        for key in keys:
+            value = quote.get(key)
+            if value in (None, ""):
+                continue
+            try:
+                number = float(value)
+            except (TypeError, ValueError):
+                continue
+            if math.isfinite(number):
+                return number
+        return None
+
+    numeric_price = numeric_field("last_price", "ltp", "lastPrice")
+    if numeric_price is None or numeric_price <= 0:
         raise ValueError("Index price was not a valid positive finite number.")
 
     return {
@@ -99,6 +108,19 @@ def fetch_index(index):
         "exchange": index["exchange"],
         "symbol": index["symbol"],
         "last_price": numeric_price,
+        "change": numeric_field("change", "net_change", "netChange"),
+        "percent_change": numeric_field("percent_change", "per_change", "change_percent", "pChange"),
+        "previous_close": numeric_field("previous_close", "prev_close", "previousClose", "close"),
+        "open": numeric_field("open", "open_price"),
+        "high": numeric_field("high", "day_high"),
+        "low": numeric_field("low", "day_low"),
+        "market_timestamp": (
+            quote.get("exchange_timestamp")
+            or quote.get("exchange_time")
+            or quote.get("last_traded_timestamp")
+            or quote.get("last_traded_time")
+            or quote.get("timestamp")
+        ),
         "status": "success",
     }
 

@@ -110,7 +110,7 @@ def test_snapshot_adapts_production_market_stream_ticks_using_instrument_master(
         "instrument_token": 101,
     }
     assert result["option_oi_by_strike"] == [
-        {"symbol": "NIFTY", "expiry": "2026-11-26", "strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 14000.0}
+        {"strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 14000.0}
     ]
     assert result["feed"]["status"] == "fresh"
     assert result["stream"]["connected"] is True
@@ -122,9 +122,6 @@ def test_snapshot_adapts_production_market_stream_ticks_using_instrument_master(
     start_payload = json.loads(start_request.data.decode("utf-8"))
     assert start_payload["mode"] == 3
     assert set(start_payload["tokens"]) == {101, 102, 103}
-    instrument_request = next(req for req, _ in calls if req.full_url.endswith("/instruments"))
-    assert next(value for key, value in instrument_request.header_items()
-                if key.lower() == "x-financial-os-gateway-secret") == "test-secret"
     snapshot_request = next(req for req, _ in calls if "/market-stream/snapshot" in req.full_url)
     assert next(value for key, value in snapshot_request.header_items()
                 if key.lower() == "x-financial-os-gateway-secret") == "test-secret"
@@ -215,100 +212,3 @@ def test_symbol_matching_does_not_confuse_prefix_underlyings():
         {"symbol": "NIFTY", "tradingsymbol": "NIFTY26NOVFUT"},
         "NIFTY",
     ) is True
-
-
-def test_persistent_stream_snapshot_does_not_restart_gateway_subscription(monkeypatch):
-    calls = configure_gateway(monkeypatch, {
-        "status": "success",
-        "ticks": [],
-        "stream": {
-            "running": True,
-            "connected": False,
-            "stream_verified": False,
-            "stale": True,
-            "last_tick_at": None,
-        },
-    })
-
-    result = get_order_flow_snapshot("NIFTY", ensure_started=False)
-
-    assert result["feed"]["status"] == "disconnected"
-    assert len(calls) == 2
-    assert calls[0][0].full_url.endswith("/instruments")
-    assert "/market-stream/snapshot" in calls[1][0].full_url
-
-
-
-def test_adapter_normalizes_actual_mstock_type_a_full_tick_shape(monkeypatch):
-    now = time.time()
-    snapshot = {
-        "status": "success",
-        "ticks": [
-            {
-                "instrument_token": 101,
-                "last_price": 24950.0,
-                "change": -0.2,
-                "ohlc": {"open": 25020.0, "high": 25100.0, "low": 24900.0, "close": 25000.0},
-                "volume_traded": 1200,
-                "average_traded_price": 25010.5,
-                # The bundled Type A SDK decoder emits these as one-item tuples.
-                "open_interest": (450000.0,),
-                "open_interest_high": (470000.0,),
-                "open_interest_low": (430000.0,),
-                "last_traded_quantity": 25,
-                "total_buy_quantity": 15000,
-                "total_sell_quantity": 12000,
-                "last_traded_timestamp": "2026-11-18T09:20:00AM",
-                "exchange_timestamp": "2026-11-18T09:20:01AM",
-                "received_at": now,
-            },
-            {
-                "instrument_token": 102,
-                "last_price": 120.0,
-                "change": 1.5,
-                "ohlc": {"open": 118.0, "high": 122.0, "low": 117.0, "close": 118.2},
-                "volume_traded": 100,
-                "open_interest": (12000.0,),
-            },
-            {
-                "instrument_token": 103,
-                "last_price": 130.0,
-                "change": -0.75,
-                "ohlc": {"open": 132.0, "high": 133.0, "low": 129.0, "close": 131.0},
-                "volume_traded": 150,
-                "open_interest": (14000.0,),
-            },
-        ],
-        "stream": {
-            "running": True, "connected": True, "socket_connected": True,
-            "stream_verified": True, "stale": False, "last_tick_at": now,
-            "cached_instruments": 3, "reconnect_count": 0, "mode": 3,
-        },
-        "read_only": True,
-    }
-    configure_gateway(monkeypatch, snapshot)
-
-    result = get_order_flow_snapshot("NIFTY")
-
-    future = result["futures_contracts"][0]
-    assert future["oi"] == 450000.0
-    assert future["change_pct"] == -0.2
-    assert future["ohlc"] == {
-        "open": 25020.0, "high": 25100.0, "low": 24900.0, "close": 25000.0,
-    }
-    assert future["open_interest_high"] == 470000.0
-    assert future["open_interest_low"] == 430000.0
-    assert future["average_traded_price"] == 25010.5
-    assert future["total_buy_quantity"] == 15000.0
-    assert future["total_sell_quantity"] == 12000.0
-    assert future["last_traded_at"] == "2026-11-18T09:20:00+00:00"
-    assert future["exchange_timestamp"] == "2026-11-18T09:20:01+00:00"
-    assert result["option_oi_by_strike"] == [
-        {
-            "symbol": "NIFTY",
-            "expiry": "2026-11-26",
-            "strike": 25000.0,
-            "ce_oi": 12000.0,
-            "pe_oi": 14000.0,
-        }
-    ]

@@ -85,6 +85,8 @@ def authenticate_broker_session(totp: str) -> dict:
         market_stream = {
             "status": str((feed or {}).get("status") or "disconnected"),
             "connected": bool((stream or {}).get("connected")),
+            "running": bool((stream or {}).get("running")),
+            "cached_instruments": (stream or {}).get("cached_instruments", 0),
             "last_tick_at": (feed or {}).get("last_tick_at"),
             "message": None,
         }

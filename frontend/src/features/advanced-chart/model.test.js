@@ -13,12 +13,25 @@ test("normalizes valid m.Stock OHLCV candles into sorted chart points", () => {
   ]);
 });
 
+test("normalizes the actual Market Charts API object response into sorted chart points", () => {
+  const candles = [
+    { timestamp: "2026-11-18T09:20:00+05:30", open: 101, high: 104, low: 100, close: 103, volume: 1200 },
+    { timestamp: "2026-11-18T09:15:00+05:30", open: 99, high: 102, low: 98, close: 101, volume: 900 },
+  ];
+  assert.deepEqual(normalizeCandles(candles), [
+    { time: Math.floor(Date.parse("2026-11-18T09:15:00+05:30") / 1000), open: 99, high: 102, low: 98, close: 101, volume: 900 },
+    { time: Math.floor(Date.parse("2026-11-18T09:20:00+05:30") / 1000), open: 101, high: 104, low: 100, close: 103, volume: 1200 },
+  ]);
+});
+
 test("drops malformed candles and rejects impossible OHLC ranges", () => {
   const candles = [
     ["2026-11-18T09:15:00+05:30", 100, 99, 98, 101, 20],
     ["bad-time", 100, 102, 98, 101, 20],
     ["2026-11-18T09:20:00+05:30", 100, 102, 98, 101, 20],
     ["2026-11-18T09:25:00+05:30", 100, 102, 98, 101, -1],
+    { timestamp: "bad-time", open: 100, high: 102, low: 98, close: 101, volume: 20 },
+    { timestamp: "2026-11-18T09:25:00+05:30", open: 100, high: 99, low: 98, close: 101, volume: 20 },
   ];
   assert.equal(normalizeCandles(candles).length, 1);
 });

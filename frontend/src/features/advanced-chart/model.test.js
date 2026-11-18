@@ -203,3 +203,19 @@ test("calculates Bollinger bands and volume-weighted average price only when vol
   assert.equal(calculateVWAP(candles).length, 22);
   assert.deepEqual(calculateVWAP(candles.map(({ volume, ...candle }) => candle)), []);
 });
+
+test("resets VWAP at each India trading-session date", async () => {
+  const { calculateVWAP } = await import("./model.js");
+  const firstSession = Math.floor(Date.parse("2026-11-18T09:15:00+05:30") / 1000);
+  const secondSession = Math.floor(Date.parse("2026-11-19T09:15:00+05:30") / 1000);
+  const candles = [
+    { time: firstSession, high: 110, low: 100, close: 105, volume: 100 },
+    { time: firstSession + 300, high: 120, low: 110, close: 115, volume: 100 },
+    { time: secondSession, high: 210, low: 200, close: 205, volume: 50 },
+  ];
+  const result = calculateVWAP(candles);
+  assert.equal(result.length, 3);
+  assert.equal(result[0].value, 105);
+  assert.equal(result[1].value, 110);
+  assert.equal(result[2].value, 205);
+});

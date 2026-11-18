@@ -3,6 +3,7 @@ import { apiFetch, API_BASE_URL, friendlyErrorMessage } from "../api";
 
 const POLL_MS = 10000;
 const MAX_RETRY_MS = 60000;
+const NOOP_SNAPSHOT = () => {};
 
 function formatAge(seconds) {
   if (seconds == null) return "No tick received";
@@ -10,7 +11,7 @@ function formatAge(seconds) {
   return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s ago`;
 }
 
-export default function OrderFlowLiveFeed({ symbol, onSnapshot = () => {} }) {
+export default function OrderFlowLiveFeed({ symbol, onSnapshot = NOOP_SNAPSHOT }) {
   const [snapshot, setSnapshot] = useState(null);
   const [error, setError] = useState("");
   const [retryIn, setRetryIn] = useState(POLL_MS);

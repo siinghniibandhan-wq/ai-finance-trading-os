@@ -200,3 +200,15 @@ def test_snapshot_rejects_ticks_without_verified_instrument_metadata(monkeypatch
     assert result["futures_contracts"] == []
     assert result["option_oi_by_strike"] == []
     assert result["coverage"]["unmapped_ticks"] == 1
+
+
+
+def test_symbol_matching_does_not_confuse_prefix_underlyings():
+    assert order_flow_feed._matches_symbol(
+        {"symbol": "NIFTYNXT50", "tradingsymbol": "NIFTYNXT5026NOVFUT"},
+        "NIFTY",
+    ) is False
+    assert order_flow_feed._matches_symbol(
+        {"symbol": "NIFTY", "tradingsymbol": "NIFTY26NOVFUT"},
+        "NIFTY",
+    ) is True

@@ -101,3 +101,14 @@ export function calculateEMA(candles, period = 20) {
   }
   return points;
 }
+
+export function formatChartTime(time) {
+  if (time && typeof time === "object" &&
+      Number.isInteger(time.year) && Number.isInteger(time.month) && Number.isInteger(time.day)) {
+    return `${String(time.day).padStart(2, "0")}/${String(time.month).padStart(2, "0")}/${time.year}`;
+  }
+  if (typeof time === "number" && Number.isFinite(time)) {
+    return new Date(time * 1000).toLocaleString("en-IN");
+  }
+  return "—";
+}

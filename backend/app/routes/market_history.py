@@ -52,7 +52,7 @@ def _resolve_instrument_from_csv(csv_text, symbol, exchange):
     import csv
     from io import StringIO
 
-    reader = csv.DictReader(StringIO(str(csv_text or "").lstrip("\\ufeff")))
+    reader = csv.DictReader(StringIO(str(csv_text or "").lstrip("\ufeff")))
     if not reader.fieldnames:
         return None
 

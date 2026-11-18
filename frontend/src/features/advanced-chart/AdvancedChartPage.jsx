@@ -569,7 +569,7 @@ export default function AdvancedChartPage() {
         <div className="advanced-chart-canvas" ref={chartContainerRef} aria-label="Interactive price and volume chart" />
         {activeIndicator !== "none" && <div className="advanced-chart-indicator-pane"><div className="advanced-chart-indicator-title">{activeIndicator === "rsi" ? "RELATIVE STRENGTH INDEX · 14" : "MOVING AVERAGE CONVERGENCE DIVERGENCE · 12 / 26 / 9"}</div><div ref={indicatorContainerRef} className="advanced-chart-indicator-canvas" aria-label={`${activeIndicator.toUpperCase()} indicator chart`} /></div>}
         <div className="advanced-chart-footnote">
-          Historical candles: m.Stock provider data. The LTP line refreshes from authenticated REST quote snapshots every 10 seconds; quote snapshots do not rewrite OHLC candles and are not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a>.
+          Historical candles: m.Stock provider data. The LTP line refreshes from authenticated REST quote snapshots every 10 seconds; quote snapshots do not rewrite OHLC candles. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a>.
         </div>
       </section>
         </>

@@ -256,11 +256,13 @@ export default function AdvancedChartPage() {
     if (!candleSeriesRef.current || !volumeSeriesRef.current || !smaSeriesRef.current || !emaSeriesRef.current) return;
     setHoveredCandle(null);
     candleSeriesRef.current.setData(candles);
-    volumeSeriesRef.current.setData(candles.map((candle) => ({
-      time: candle.time,
-      value: candle.volume,
-      color: candle.close >= candle.open ? "rgba(22,163,106,0.48)" : "rgba(224,82,96,0.48)",
-    })));
+    volumeSeriesRef.current.setData(candles
+      .filter((candle) => Number.isFinite(candle.volume) && candle.volume >= 0)
+      .map((candle) => ({
+        time: candle.time,
+        value: candle.volume,
+        color: candle.close >= candle.open ? "rgba(22,163,106,0.48)" : "rgba(224,82,96,0.48)",
+      })));
     smaSeriesRef.current.setData(calculateSMA(candles, 20));
     emaSeriesRef.current.setData(calculateEMA(candles, 20));
     if (candles.length) chartRef.current?.timeScale().fitContent();

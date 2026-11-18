@@ -37,6 +37,7 @@ export default function OrderFlowLiveFeed({ symbol, onSnapshot = () => {} }) {
       } catch (cause) {
         if (!active) return;
         setError(cause?.message || "Live derivatives feed is unavailable.");
+        setSnapshot(null);
         onSnapshot(null);
         delay = Math.min(Math.max(POLL_MS, delay * 2), MAX_RETRY_MS);
       } finally {
@@ -67,7 +68,7 @@ export default function OrderFlowLiveFeed({ symbol, onSnapshot = () => {} }) {
       </div>
       {isLive ? (
         <>
-          <p>Last provider tick: {formatAge(feed.age_seconds)} · {snapshot.futures_contracts.length} futures contracts · {snapshot.option_oi_by_strike.length} option strikes</p>
+          <p>Last provider tick: {formatAge(feed.age_seconds)} · {snapshot.futures_contracts.length} futures contracts · {snapshot.option_contracts?.length || snapshot.option_oi_by_strike.length} option contracts</p>
           <p>Verified futures price, futures OI, volume and option OI are overlaid on matching instruments. Derived charts and indicators remain simulated.</p>
         </>
       ) : (

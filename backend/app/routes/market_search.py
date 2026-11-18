@@ -68,7 +68,11 @@ def _get_instrument_master_csv():
             return cached_text
 
         try:
-            request = Request(f"{MSTOCK_GATEWAY_URL}/instruments", method="GET")
+            request = Request(
+                f"{MSTOCK_GATEWAY_URL}/instruments",
+                headers={"X-Financial-OS-Gateway-Secret": os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()},
+                method="GET",
+            )
             with urlopen(request, timeout=8) as response:
                 status_code = response.status
                 response_text = response.read().decode("utf-8", errors="replace")

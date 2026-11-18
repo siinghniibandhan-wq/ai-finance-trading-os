@@ -1,0 +1,31 @@
+.mstock-session-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid var(--finos-border, rgba(148, 163, 184, .2));
+  border-radius: 14px;
+  background: var(--finos-surface, rgba(15, 23, 42, .45));
+  color: var(--finos-text, inherit);
+}
+.mstock-session-copy { min-width: 220px; flex: 1 1 300px; }
+.mstock-session-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mstock-session-title strong { font-size: 13px; }
+.mstock-session-dot { width: 8px; height: 8px; border-radius: 50%; background: #d69b42; box-shadow: 0 0 0 3px rgba(214, 155, 66, .12); }
+.mstock-session-dot.is-connected { background: #20b982; box-shadow: 0 0 0 3px rgba(32, 185, 130, .12); }
+.mstock-session-state { color: #d69b42; font-size: 9px; font-weight: 800; letter-spacing: .09em; }
+.mstock-session-state.is-connected { color: #20b982; }
+.mstock-session-copy p { margin: 5px 0 0; color: var(--finos-muted, #94a3b8); font-size: 11px; line-height: 1.5; }
+.mstock-stream-state { display: inline-block; margin-top: 5px; color: #d69b42; font-size: 10px; }
+.mstock-stream-state.is-connected { color: #20b982; }
+.mstock-session-form, .mstock-session-actions { display: flex; align-items: end; gap: 8px; flex-wrap: wrap; }
+.mstock-totp-field { display: grid; gap: 4px; color: var(--finos-muted, #94a3b8); font-size: 10px; font-weight: 700; }
+.mstock-totp-field input { width: 124px; box-sizing: border-box; padding: 9px 10px; border: 1px solid var(--finos-border, rgba(148, 163, 184, .25)); border-radius: 8px; background: var(--finos-input, rgba(2, 6, 23, .4)); color: var(--finos-text, inherit); font: inherit; font-size: 13px; letter-spacing: .12em; }
+.mstock-session-primary, .mstock-session-secondary { min-height: 36px; padding: 8px 12px; border: 1px solid var(--finos-border, rgba(148, 163, 184, .25)); border-radius: 8px; background: transparent; color: var(--finos-text, inherit); font-size: 11px; font-weight: 700; cursor: pointer; }
+.mstock-session-primary { border-color: #2563eb; background: #2563eb; color: #fff; }
+.mstock-session-primary:disabled, .mstock-session-secondary:disabled { opacity: .55; cursor: not-allowed; }
+.mstock-session-message { flex-basis: 100%; margin: 0; font-size: 11px; line-height: 1.45; }
+.mstock-session-message.is-error { color: #e87979; }
+.mstock-session-message.is-success { color: #20b982; }

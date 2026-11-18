@@ -71,6 +71,13 @@ export default function MStockSessionPanel({ onAuthenticated }) {
 
   const authenticated = Boolean(status?.authenticated || localAuthenticated);
   const stream = status?.stream || {};
+  const lastTickValue = stream.last_tick_at;
+  const lastTickDate = lastTickValue == null
+    ? null
+    : new Date(typeof lastTickValue === "number" ? lastTickValue * 1000 : lastTickValue);
+  const lastTickLabel = lastTickDate && !Number.isNaN(lastTickDate.getTime())
+    ? lastTickDate.toLocaleTimeString("en-IN")
+    : null;
   const streamLabel = stream.connected
     ? "WebSocket connected"
     : stream.running
@@ -94,7 +101,7 @@ export default function MStockSessionPanel({ onAuthenticated }) {
         {authenticated && (
           <small className={stream.connected ? "mstock-stream-state is-connected" : "mstock-stream-state"}>
             {streamLabel}
-            {stream.last_tick_at ? ` · Last tick ${new Date(stream.last_tick_at).toLocaleTimeString("en-IN")}` : ""}
+            {lastTickLabel ? ` · Last tick ${lastTickLabel}` : ""}
           </small>
         )}
       </div>

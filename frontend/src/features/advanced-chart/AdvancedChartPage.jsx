@@ -155,12 +155,13 @@ export default function AdvancedChartPage() {
       height: 520,
       layout: {
         background: { color: "transparent" },
-        textColor: "var(--finos-muted, #9ca3af)",
+        attributionLogo: true,
+        textColor: getComputedStyle(container).getPropertyValue("--finos-muted").trim() || "#9ca3af",
         fontFamily: "Inter, system-ui, sans-serif",
       },
       grid: {
-        vertLines: { color: "var(--finos-border, #30343d)" },
-        horzLines: { color: "var(--finos-border, #30343d)" },
+        vertLines: { color: getComputedStyle(container).getPropertyValue("--finos-border").trim() || "#30343d" },
+        horzLines: { color: getComputedStyle(container).getPropertyValue("--finos-border").trim() || "#30343d" },
       },
       crosshair: { mode: 0 },
       rightPriceScale: { borderColor: "var(--finos-border, #30343d)" },
@@ -300,7 +301,7 @@ export default function AdvancedChartPage() {
         {historyError && <div className="advanced-chart-warning" role="status">{historyError}</div>}
         <div className="advanced-chart-canvas" ref={chartContainerRef} aria-label="Interactive candlestick and volume chart" />
         <div className="advanced-chart-footnote">
-          Historical candles: m.Stock provider data. Quote updates: 10-second REST snapshots, not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp.
+          Historical candles: m.Stock provider data. Quote updates: 10-second REST snapshots, not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · tradingview.com.
         </div>
       </section>
     </main>

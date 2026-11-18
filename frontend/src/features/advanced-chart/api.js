@@ -42,3 +42,10 @@ export async function loadLatestQuote({ symbol, exchange }) {
   });
   return readResponse(response, "Latest quote");
 }
+
+export async function loadMarketOverview() {
+  const response = await apiFetch(`${API_BASE_URL}/api/market-overview/`, {
+    cache: "no-store",
+  });
+  return readResponse(response, "Market overview");
+}

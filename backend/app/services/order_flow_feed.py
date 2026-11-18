@@ -88,7 +88,11 @@ def _load_instrument_metadata(base: str) -> dict[int, dict]:
         if cached is not None and now - _INSTRUMENT_CACHE["loaded_at"] < ttl:
             return cached
 
-        request = Request(f"{base}/instruments", headers={"Accept": "text/csv"}, method="GET")
+        request = Request(f"{base}/instruments", headers={
+            "Accept": "text/csv",
+            "X-Financial-OS-Gateway-Secret": _gateway_secret(),
+            "User-Agent": "Financial-OS/1.0",
+        }, method="GET")
         try:
             with urlopen(request, timeout=8) as response:
                 csv_text = response.read().decode("utf-8-sig", errors="replace")
@@ -326,7 +330,7 @@ def _feed_state(stream: dict, last_tick_at: str | None) -> dict:
     return feed
 
 
-def get_order_flow_snapshot(symbol: str | None = None) -> dict:
+def get_order_flow_snapshot(symbol: str | None = None, *, ensure_started: bool = True) -> dict:
     base = _gateway_url()
     secret = _gateway_secret()
     if not base:
@@ -335,7 +339,8 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
         raise OrderFlowFeedError("Market gateway authentication is not configured.")
 
     metadata = _load_instrument_metadata(base)
-    _ensure_stream_started(base, secret, metadata, symbol=symbol)
+    if ensure_started:
+        _ensure_stream_started(base, secret, metadata, symbol=symbol)
 
     payload = _request_json(f"{base}/market-stream/snapshot", secret)
     if payload.get("status") != "success":

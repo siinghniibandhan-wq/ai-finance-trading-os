@@ -267,7 +267,12 @@ def _timestamp_iso(value):
             try:
                 parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
             except ValueError:
-                parsed = parsedate_to_datetime(value)
+                try:
+                    # The m.Stock Type A SDK formats its exchange timestamps
+                    # as YYYY-mm-ddTHH:MM:SSAM/PM after converting from UTC.
+                    parsed = datetime.strptime(value, "%Y-%m-%dT%I:%M:%S%p").replace(tzinfo=timezone.utc)
+                except ValueError:
+                    parsed = parsedate_to_datetime(value)
         else:
             return None
         if parsed.tzinfo is None:
@@ -277,8 +282,17 @@ def _timestamp_iso(value):
         return None
 
 
-def _numeric_tick_value(tick: dict, field: str):
+def _numeric_tick_value(tick: dict, field: str, fallback: str | None = None):
     value = tick.get(field)
+    if value is None and fallback:
+        value = tick.get(fallback)
+    # The bundled m.Stock Type A SDK currently emits open_interest and its
+    # high/low fields as one-element tuples due to trailing commas in its
+    # decoder assignments. Accept that exact SDK representation.
+    if isinstance(value, (tuple, list)):
+        if len(value) != 1:
+            return None
+        value = value[0]
     if value is None:
         return None
     try:
@@ -290,15 +304,32 @@ def _numeric_tick_value(tick: dict, field: str):
     return number
 
 
+def _normalise_ohlc(tick: dict) -> dict | None:
+    raw = tick.get("ohlc")
+    if not isinstance(raw, dict):
+        return None
+    return {
+        field: _numeric_tick_value(raw, field)
+        for field in ("open", "high", "low", "close")
+    }
+
+
 def _normalise_tick(tick: dict, instrument: dict) -> dict:
-    """Join SDK-decoded fields with instrument-master identity; do not rescale."""
+    """Join the actual m.Stock SDK fields to verified instrument identity; do not rescale."""
     return {
         **instrument,
         "price": _numeric_tick_value(tick, "last_price"),
+        "change_pct": _numeric_tick_value(tick, "change"),
+        "ohlc": _normalise_ohlc(tick),
         "volume": _numeric_tick_value(tick, "volume_traded"),
-        "oi": _numeric_tick_value(tick, "oi"),
+        "oi": _numeric_tick_value(tick, "open_interest", fallback="oi"),
+        "open_interest_high": _numeric_tick_value(tick, "open_interest_high"),
+        "open_interest_low": _numeric_tick_value(tick, "open_interest_low"),
         "last_traded_quantity": _numeric_tick_value(tick, "last_traded_quantity"),
         "average_traded_price": _numeric_tick_value(tick, "average_traded_price"),
+        "total_buy_quantity": _numeric_tick_value(tick, "total_buy_quantity"),
+        "total_sell_quantity": _numeric_tick_value(tick, "total_sell_quantity"),
+        "last_traded_at": _timestamp_iso(tick.get("last_traded_timestamp")),
         "exchange_timestamp": _timestamp_iso(tick.get("exchange_timestamp")),
         "received_at": _timestamp_iso(tick.get("received_at")),
         "price_units": "provider_sdk_decoded",

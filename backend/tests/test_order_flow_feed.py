@@ -122,6 +122,9 @@ def test_snapshot_adapts_production_market_stream_ticks_using_instrument_master(
     start_payload = json.loads(start_request.data.decode("utf-8"))
     assert start_payload["mode"] == 3
     assert set(start_payload["tokens"]) == {101, 102, 103}
+    instrument_request = next(req for req, _ in calls if req.full_url.endswith("/instruments"))
+    assert next(value for key, value in instrument_request.header_items()
+                if key.lower() == "x-financial-os-gateway-secret") == "test-secret"
     snapshot_request = next(req for req, _ in calls if "/market-stream/snapshot" in req.full_url)
     assert next(value for key, value in snapshot_request.header_items()
                 if key.lower() == "x-financial-os-gateway-secret") == "test-secret"

@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CandlestickSeries, HistogramSeries, LineSeries, createChart } from "lightweight-charts";
+import { AreaSeries, BarSeries, CandlestickSeries, HistogramSeries, LineSeries, createChart } from "lightweight-charts";
 import { loadChartHistory, loadLatestQuote, searchChartInstruments } from "./api";
 import MarketFlowBoard from "./MarketFlowBoard";
 import MarketMoversScanner from "./MarketMoversScanner";
-import { calculateEMA, calculateSMA, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles, normalizeQuotePrice } from "./model";
+import { calculateEMA, calculateHeikinAshi, calculateSMA, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles, normalizeQuotePrice } from "./model";
 import "./advanced-chart.css";
 
 const INTERVALS = [
@@ -40,12 +40,17 @@ export default function AdvancedChartPage() {
   const [quote, setQuote] = useState(null);
   const [quoteError, setQuoteError] = useState("");
   const [quoteBusy, setQuoteBusy] = useState(false);
+  const [chartType, setChartType] = useState("candlestick");
   const [showSma, setShowSma] = useState(false);
   const [showEma, setShowEma] = useState(false);
   const [hoveredCandle, setHoveredCandle] = useState(null);
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const candleSeriesRef = useRef(null);
+  const barSeriesRef = useRef(null);
+  const lineChartSeriesRef = useRef(null);
+  const areaSeriesRef = useRef(null);
+  const heikinAshiSeriesRef = useRef(null);
   const volumeSeriesRef = useRef(null);
   const smaSeriesRef = useRef(null);
   const emaSeriesRef = useRef(null);
@@ -194,6 +199,24 @@ export default function AdvancedChartPage() {
       wickDownColor: "#e05260",
       priceLineVisible: true,
     });
+    const barSeries = chart.addSeries(BarSeries, {
+      upColor: "#16a36a", downColor: "#e05260", visible: false,
+      priceLineVisible: false, lastValueVisible: false,
+    });
+    const lineChartSeries = chart.addSeries(LineSeries, {
+      color: "#8b6cf0", lineWidth: 2, visible: false,
+      priceLineVisible: true, lastValueVisible: true, title: "Close",
+    });
+    const areaSeries = chart.addSeries(AreaSeries, {
+      lineColor: "#8b6cf0", topColor: "rgba(139,108,240,0.32)",
+      bottomColor: "rgba(139,108,240,0.02)", visible: false,
+      priceLineVisible: true, lastValueVisible: true, title: "Close",
+    });
+    const heikinAshiSeries = chart.addSeries(CandlestickSeries, {
+      upColor: "#16a36a", downColor: "#e05260", borderVisible: false,
+      wickUpColor: "#16a36a", wickDownColor: "#e05260", visible: false,
+      priceLineVisible: true, title: "Heikin-Ashi",
+    });
     const smaSeries = chart.addSeries(LineSeries, {
       color: "#e6a23c",
       lineWidth: 2,
@@ -231,6 +254,10 @@ export default function AdvancedChartPage() {
     chart.subscribeCrosshairMove(onCrosshairMove);
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
+    barSeriesRef.current = barSeries;
+    lineChartSeriesRef.current = lineChartSeries;
+    areaSeriesRef.current = areaSeries;
+    heikinAshiSeriesRef.current = heikinAshiSeries;
     volumeSeriesRef.current = volumeSeries;
     smaSeriesRef.current = smaSeries;
     emaSeriesRef.current = emaSeries;
@@ -249,6 +276,10 @@ export default function AdvancedChartPage() {
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
+      barSeriesRef.current = null;
+      lineChartSeriesRef.current = null;
+      areaSeriesRef.current = null;
+      heikinAshiSeriesRef.current = null;
       volumeSeriesRef.current = null;
       smaSeriesRef.current = null;
       emaSeriesRef.current = null;
@@ -259,6 +290,11 @@ export default function AdvancedChartPage() {
     if (!candleSeriesRef.current || !volumeSeriesRef.current || !smaSeriesRef.current || !emaSeriesRef.current) return;
     setHoveredCandle(null);
     candleSeriesRef.current.setData(candles);
+    barSeriesRef.current?.setData(candles);
+    const closePoints = candles.map(({ time, close }) => ({ time, value: close }));
+    lineChartSeriesRef.current?.setData(closePoints);
+    areaSeriesRef.current?.setData(closePoints);
+    heikinAshiSeriesRef.current?.setData(calculateHeikinAshi(candles));
     volumeSeriesRef.current.setData(candles
       .filter((candle) => Number.isFinite(candle.volume) && candle.volume >= 0)
       .map((candle) => ({
@@ -272,6 +308,14 @@ export default function AdvancedChartPage() {
   }, [candles]);
 
   useEffect(() => {
+    candleSeriesRef.current?.applyOptions({ visible: chartType === "candlestick" });
+    barSeriesRef.current?.applyOptions({ visible: chartType === "bar" });
+    lineChartSeriesRef.current?.applyOptions({ visible: chartType === "line" });
+    areaSeriesRef.current?.applyOptions({ visible: chartType === "area" });
+    heikinAshiSeriesRef.current?.applyOptions({ visible: chartType === "heikin-ashi" });
+  }, [chartType]);
+
+  useEffect(() => {
     smaSeriesRef.current?.applyOptions({ visible: showSma });
     emaSeriesRef.current?.applyOptions({ visible: showEma });
   }, [showSma, showEma]);
@@ -283,7 +327,13 @@ export default function AdvancedChartPage() {
   // last-traded price as a chart price line; do not fabricate or mutate an
   // OHLC candle from a quote snapshot.
   useEffect(() => {
-    const series = candleSeriesRef.current;
+    const series = ({
+      candlestick: candleSeriesRef.current,
+      bar: barSeriesRef.current,
+      line: lineChartSeriesRef.current,
+      area: areaSeriesRef.current,
+      "heikin-ashi": heikinAshiSeriesRef.current,
+    })[chartType];
     if (!series) return;
     if (lastPriceLineRef.current) {
       series.removePriceLine(lastPriceLineRef.current);
@@ -299,7 +349,7 @@ export default function AdvancedChartPage() {
         title: "LTP",
       });
     }
-  }, [normalizedLastPrice]);
+  }, [normalizedLastPrice, chartType]);
   const retrievalTime = quote?.retrieved_at
     ? new Date(quote.retrieved_at).toLocaleString("en-IN")
     : "Not available";
@@ -398,6 +448,16 @@ export default function AdvancedChartPage() {
             <span>{instrument ? `${instrument.exchange} · ${INTERVALS.find((item) => item.value === interval)?.label} · OHLCV` : "Search and select an instrument to load provider candles"}</span>
           </div>
           <div className="advanced-chart-panel-actions">
+            <label className="advanced-chart-control advanced-chart-type-control">
+              <span>Chart type</span>
+              <select value={chartType} onChange={(event) => setChartType(event.target.value)}>
+                <option value="candlestick">Candlestick</option>
+                <option value="bar">OHLC Bar</option>
+                <option value="line">Line</option>
+                <option value="area">Area</option>
+                <option value="heikin-ashi">Heikin-Ashi</option>
+              </select>
+            </label>
             <div className="advanced-chart-overlays" aria-label="Technical overlays">
               <span>OVERLAYS</span>
               <label><input type="checkbox" checked={showSma} disabled={!candles.length} onChange={(event) => setShowSma(event.target.checked)} /> SMA 20</label>

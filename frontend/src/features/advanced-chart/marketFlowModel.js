@@ -53,3 +53,26 @@ export function summarizeMarketFlow(groups) {
       : null,
   };
 }
+
+
+/** Build connector geometry from provider-reported percentage changes, never generated prices or time-series points. */
+export function buildMarketFlowDiagram(groups, { width = 1200, height = 700 } = {}) {
+  const zeroY = height / 2;
+  const scale = Math.max(8, height * 0.055);
+  const connections = [];
+  for (const side of ["bullish", "bearish"]) {
+    const rows = Array.isArray(groups?.[side]) ? groups[side] : [];
+    rows.forEach((item, index) => {
+      const change = finite(item.changePercent);
+      if (!item.symbol || change === null || change === 0 || !Number.isFinite(item.lastPrice) || item.lastPrice <= 0) return;
+      const magnitude = Math.min(Math.abs(change), 10);
+      const endY = Math.max(18, Math.min(height - 18, zeroY + (side === "bullish" ? -1 : 1) * magnitude * scale));
+      const tileY = side === "bullish"
+        ? Math.min(zeroY - 18, 42 + index * 32)
+        : Math.max(zeroY + 18, height - 42 - index * 32);
+      const path = `M 180 ${zeroY} C 340 ${zeroY}, 390 ${endY}, 560 ${endY} S 690 ${tileY}, 760 ${tileY}`;
+      connections.push({ symbol: item.symbol, exchange: item.exchange, side, changePercent: change, endY, tileY, path });
+    });
+  }
+  return { width, height, zeroY, connections };
+}

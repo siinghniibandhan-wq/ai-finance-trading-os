@@ -30,7 +30,7 @@ router = APIRouter(
 DEFAULT_EXCHANGE = 1
 DEFAULT_SECURITY_ID_CODE = 13
 DEFAULT_SEGMENT = 1
-DEFAULT_MOVER_LIMIT = 20
+DEFAULT_MOVER_LIMIT = 100
 
 
 def fetch_overview_movers(mover_type: str):

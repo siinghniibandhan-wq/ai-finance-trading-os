@@ -49,3 +49,31 @@ test("does not infer exchange when provider does not supply a supported exchange
 
   assert.deepEqual(result.bullish, []);
 });
+
+
+test("builds connected flow paths from each provider-reported mover and its actual percentage change", async () => {
+  const { buildMarketFlowDiagram } = await import("./marketFlowModel.js");
+  const groups = normalizeMarketFlow({ market_movers: {
+    gainers: [
+      { symbol: "AAA", exchange: "NSE", ltp: 125, percent_change: 4.2 },
+      { symbol: "BBB", exchange: "NSE", ltp: 80, percent_change: 1.1 },
+    ],
+    losers: [{ symbol: "CCC", exchange: "BSE", ltp: 55, percent_change: -3.4 }],
+  }});
+  const diagram = buildMarketFlowDiagram(groups, { width: 1200, height: 700 });
+  assert.equal(diagram.connections.length, 3);
+  assert.deepEqual(diagram.connections.map((item) => item.symbol), ["AAA", "BBB", "CCC"]);
+  assert.ok(diagram.connections[0].endY < diagram.zeroY);
+  assert.ok(diagram.connections[2].endY > diagram.zeroY);
+  assert.match(diagram.connections[0].path, /^M .* C .*$/);
+  assert.ok(diagram.connections.every((item) => item.path.includes(String(item.endY))));
+});
+
+test("does not draw flow paths for invalid or unchanged provider rows", async () => {
+  const { buildMarketFlowDiagram } = await import("./marketFlowModel.js");
+  const groups = normalizeMarketFlow({ market_movers: {
+    gainers: [{ symbol: "BAD", exchange: "NSE", ltp: null, percent_change: 2 }],
+    losers: [{ symbol: "FLAT", exchange: "NSE", ltp: 100, percent_change: 0 }],
+  }});
+  assert.deepEqual(buildMarketFlowDiagram(groups, { width: 900, height: 500 }).connections, []);
+});

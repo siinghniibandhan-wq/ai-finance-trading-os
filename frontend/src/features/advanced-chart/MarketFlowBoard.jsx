@@ -1,145 +1,106 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { loadMarketOverview } from "./api";
-import { normalizeMarketFlow, summarizeMarketFlow } from "./marketFlowModel";
+import { buildMarketFlowDiagram, normalizeMarketFlow } from "./marketFlowModel";
 import "./market-flow.css";
 
-const money = (value) => new Intl.NumberFormat("en-IN", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-}).format(value);
+const money = (value) => new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+const pct = (value) => `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
 
-function FlowTile({ item, direction, onSelect }) {
-  return (
-    <button
-      type="button"
-      className={`market-flow-tile is-${direction}`}
-      onClick={() => onSelect?.({ symbol: item.symbol, exchange: item.exchange, name: item.name })}
-      aria-label={`Open ${item.symbol} chart, ${item.changePercent.toFixed(2)} percent`}
-    >
-      <span className="market-flow-tile-symbol">{item.symbol}</span>
-      <strong className="market-flow-tile-change">
-        {item.changePercent > 0 ? "+" : ""}{item.changePercent.toFixed(2)}%
-      </strong>
-      <span className="market-flow-tile-price">₹{money(item.lastPrice)}</span>
-      <span className="market-flow-tile-exchange">{item.exchange}</span>
-    </button>
-  );
-}
-
-function FlowConnections({ bullishCount, bearishCount }) {
-  const upper = Math.min(Math.max(bullishCount, 1), 8);
-  const lower = Math.min(Math.max(bearishCount, 1), 8);
-  return (
-    <svg className="market-flow-connections" viewBox="0 0 900 330" preserveAspectRatio="none" aria-hidden="true">
-      {Array.from({ length: upper }, (_, index) => {
-        const y = 26 + index * (112 / Math.max(upper - 1, 1));
-        return <path key={`up-${index}`} d={`M 92 165 C 260 165, 290 ${y}, 470 ${y}`} className="flow-line flow-line-bullish" />;
-      })}
-      {Array.from({ length: lower }, (_, index) => {
-        const y = 218 + index * (86 / Math.max(lower - 1, 1));
-        return <path key={`down-${index}`} d={`M 92 165 C 260 165, 290 ${y}, 470 ${y}`} className="flow-line flow-line-bearish" />;
-      })}
-      <path d="M 0 165 H 900" className="flow-baseline" />
-    </svg>
-  );
+function InstrumentNode({ item, side, selected, onSelect }) {
+  return <button type="button" className={`mf-instrument-node is-${side}${selected ? " is-selected" : ""}`} onClick={() => onSelect(item)} aria-pressed={selected}>
+    <span className="mf-node-symbol">{item.symbol}</span>
+    <strong>{pct(item.changePercent)}</strong>
+    <small>₹{money(item.lastPrice)} · {item.exchange}</small>
+  </button>;
 }
 
 export default function MarketFlowBoard({ onSelectInstrument }) {
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [updatedAt, setUpdatedAt] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [retrievedAt, setRetrievedAt] = useState(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const next = await loadMarketOverview();
       setPayload(next);
-      setUpdatedAt(new Date());
+      setRetrievedAt(new Date());
     } catch (requestError) {
-      setError(requestError?.message || "Market Flow data is unavailable.");
+      setError(requestError?.message || "Live market data is unavailable.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    let inFlight = false;
+    const poll = async () => {
+      if (inFlight || document.visibilityState !== "visible") return;
+      inFlight = true;
+      try {
+        const next = await loadMarketOverview();
+        setPayload(next);
+        setRetrievedAt(new Date());
+        setError("");
+      } catch (requestError) {
+        setError(requestError?.message || "Live market data is unavailable.");
+      } finally { inFlight = false; }
+    };
+    const timer = window.setInterval(poll, 30000);
+    document.addEventListener("visibilitychange", poll);
+    return () => { window.clearInterval(timer); document.removeEventListener("visibilitychange", poll); };
+  }, []);
 
   const groups = useMemo(() => normalizeMarketFlow(payload), [payload]);
-  const summary = useMemo(() => summarizeMarketFlow(groups), [groups]);
+  const all = useMemo(() => [...groups.bullish, ...groups.bearish], [groups]);
+  const diagram = useMemo(() => buildMarketFlowDiagram(groups, { width: 1200, height: 700 }), [groups]);
   const indices = Array.isArray(payload?.indices) ? payload.indices : [];
-  const total = summary.bullish + summary.bearish + summary.unchanged;
+  const selectedItem = selected ? all.find((item) => item.symbol === selected.symbol && item.exchange === selected.exchange) || selected : null;
+  const sourceName = payload?.data_sources?.primary || "m.Stock via Financial OS REST API";
+  const hasRows = all.length > 0;
+  const chooseInstrument = (item) => setSelected(item);
 
-  return (
-    <section className="market-flow-board" aria-label="Market Flow workspace">
-      <header className="market-flow-heading">
-        <div>
-          <div className="market-flow-eyebrow">MARKET-WIDE DIRECTIONAL DISTRIBUTION</div>
-          <h2>Market Flow</h2>
-          <p>Provider-reported market movers arranged by price direction. This view does not represent traded capital flow.</p>
+  return <section className="mf-orderflow" aria-label="Order Flow live market visualisation">
+    <header className="mf-orderflow-header">
+      <div className="mf-brand-lockup"><span className="mf-brand-mark"/><div><div className="mf-eyebrow">FINANCIAL OS · LIVE MARKET DATA</div><h2>Order Flow</h2></div></div>
+      <div className="mf-header-controls"><span className={`mf-live-state${loading ? " is-loading" : hasRows ? " is-live" : " is-unavailable"}`}>{loading ? "FETCHING REST DATA" : hasRows ? "PROVIDER DATA RECEIVED" : "DATA UNAVAILABLE"}</span><button type="button" onClick={refresh} disabled={loading}>↻ Refresh</button></div>
+    </header>
+    <div className="mf-market-strip">
+      {indices.map((index) => <div className="mf-index-quote" key={`${index.exchange}-${index.symbol}`}><span>{index.name}</span><strong>{Number.isFinite(Number(index.last_price)) ? money(Number(index.last_price)) : "—"}</strong></div>)}
+      {!indices.length && <span className="mf-no-index">Index quotes not returned by provider</span>}
+      <span className="mf-universe-count">{all.length} returned movers</span>
+    </div>
+    {error && <div className="mf-data-alert" role="alert">REST data request failed: {error}. No simulated values are displayed.</div>}
+    {!error && !loading && !hasRows && <div className="mf-data-alert" role="status">The provider returned no valid market movers. The flow board is intentionally empty; no demo data is substituted.</div>}
+    <div className="mf-flow-layout">
+      <section className="mf-flow-canvas" aria-label="Connected bullish and bearish market flow">
+        <div className="mf-canvas-heading"><span>MARKET-WIDE PRICE DISTRIBUTION</span><span>Provider-reported percentage change</span></div>
+        <svg className="mf-flow-svg" viewBox="0 0 1200 700" preserveAspectRatio="none" aria-hidden="true">
+          <path d={`M 0 ${diagram.zeroY} H 1200`} className="mf-zero-line"/>
+          {diagram.connections.map((connection) => <path key={`${connection.exchange}-${connection.symbol}`} d={connection.path} className={`mf-flow-path is-${connection.side}`} vectorEffect="non-scaling-stroke" />)}
+        </svg>
+        <div className="mf-zero-label">0.00%</div>
+        <div className="mf-flow-gate"><span>MARKET</span><strong>FLOW</strong><small>{all.length ? `${all.length} provider rows` : "Awaiting provider data"}</small></div>
+        <div className="mf-flow-groups">
+          <div className="mf-flow-group mf-flow-group-bull"><div className="mf-flow-group-title"><span>BULLISH</span><strong>{groups.bullish.length}</strong></div><div className="mf-node-grid">{groups.bullish.map((item) => <InstrumentNode key={`${item.exchange}-${item.symbol}`} item={item} side="bullish" selected={selectedItem?.symbol === item.symbol && selectedItem?.exchange === item.exchange} onSelect={chooseInstrument}/>)}</div></div>
+          <div className="mf-flow-group mf-flow-group-bear"><div className="mf-flow-group-title"><span>BEARISH</span><strong>{groups.bearish.length}</strong></div><div className="mf-node-grid">{groups.bearish.map((item) => <InstrumentNode key={`${item.exchange}-${item.symbol}`} item={item} side="bearish" selected={selectedItem?.symbol === item.symbol && selectedItem?.exchange === item.exchange} onSelect={chooseInstrument}/>)}</div></div>
         </div>
-        <button type="button" className="market-flow-refresh" onClick={refresh} disabled={loading}>
-          {loading ? "Loading…" : "Refresh data"}
-        </button>
-      </header>
-
-      <div className="market-flow-index-strip">
-        {indices.map((index) => (
-          <div className="market-flow-index" key={`${index.exchange}-${index.symbol}`}>
-            <span>{index.name}</span>
-            <strong>{Number.isFinite(Number(index.last_price)) ? money(Number(index.last_price)) : "—"}</strong>
-          </div>
-        ))}
-        {!indices.length && <span className="market-flow-muted">Index snapshots unavailable</span>}
-      </div>
-
-      <div className="market-flow-summary">
-        <div className="flow-summary-bullish"><span>BULLISH</span><strong>{summary.bullish}</strong></div>
-        <div className="flow-summary-bearish"><span>BEARISH</span><strong>{summary.bearish}</strong></div>
-        <div><span>UNCHANGED</span><strong>{summary.unchanged}</strong></div>
-        <div><span>PROVIDER ROWS</span><strong>{total}</strong></div>
-      </div>
-
-      {error && <div className="market-flow-message is-error" role="alert">{error}</div>}
-      {!error && !loading && !total && (
-        <div className="market-flow-message" role="status">No valid market-mover rows were returned by the provider. No values have been substituted.</div>
-      )}
-
-      <div className="market-flow-network">
-        <div className="market-flow-side market-flow-side-bullish">
-          <div className="market-flow-side-heading"><span>BULLISH LEADERS</span><strong>{groups.bullish.length}</strong></div>
-          {groups.bullish.slice(0, 10).map((item) => (
-            <FlowTile key={`${item.exchange}-${item.symbol}`} item={item} direction="bullish" onSelect={onSelectInstrument} />
-          ))}
-          {!groups.bullish.length && <p className="market-flow-empty">No verified advancing rows</p>}
-        </div>
-
-        <div className="market-flow-core">
-          <FlowConnections bullishCount={groups.bullish.length} bearishCount={groups.bearish.length} />
-          <div className="market-flow-core-node">
-            <span>MARKET</span>
-            <strong>FLOW</strong>
-            <small>{total ? `${total} provider rows` : "Awaiting data"}</small>
-          </div>
-          <div className="market-flow-core-caption">Directional price distribution</div>
-        </div>
-
-        <div className="market-flow-side market-flow-side-bearish">
-          <div className="market-flow-side-heading"><span>BEARISH LEADERS</span><strong>{groups.bearish.length}</strong></div>
-          {groups.bearish.slice(0, 10).map((item) => (
-            <FlowTile key={`${item.exchange}-${item.symbol}`} item={item} direction="bearish" onSelect={onSelectInstrument} />
-          ))}
-          {!groups.bearish.length && <p className="market-flow-empty">No verified declining rows</p>}
-        </div>
-      </div>
-
-      <footer className="market-flow-footer">
-        <span>Source: {payload?.data_sources?.primary || "Financial OS market overview API"}</span>
-        <span>{updatedAt ? `Retrieved ${updatedAt.toLocaleTimeString("en-IN")}` : "Not yet retrieved"}</span>
-        <span>Coverage: provider movers response, limited to its returned rows</span>
-        {payload?.status === "partial" && <strong>Partial provider response</strong>}
-      </footer>
-    </section>
-  );
+      </section>
+      <aside className="mf-instrument-detail" aria-live="polite">
+        <div className="mf-detail-kicker">SELECTED INSTRUMENT</div>
+        {selectedItem ? <>
+          <div className="mf-detail-title"><div><h3>{selectedItem.symbol}</h3><span>{selectedItem.name} · {selectedItem.exchange}</span></div><button type="button" onClick={() => onSelectInstrument?.({ symbol: selectedItem.symbol, exchange: selectedItem.exchange, name: selectedItem.name })}>Open chart ↗</button></div>
+          <div className={`mf-detail-change ${selectedItem.changePercent >= 0 ? "is-up" : "is-down"}`}>{pct(selectedItem.changePercent)}</div>
+          <div className="mf-detail-price">₹{money(selectedItem.lastPrice)}</div>
+          <div className="mf-detail-stats"><div><span>VOLUME</span><strong>{selectedItem.volume == null ? "Not supplied" : new Intl.NumberFormat("en-IN").format(selectedItem.volume)}</strong></div><div><span>EXCHANGE</span><strong>{selectedItem.exchange}</strong></div></div>
+        </> : <div className="mf-detail-empty">Select an instrument from the flow network to inspect its provider-reported values.</div>}
+        <div className="mf-capability-block"><strong>Futures OI / option-chain analytics</strong><span>Not supplied by the currently connected m.Stock Type A REST contract. No OI curves, strike profiles or build-up labels are fabricated.</span></div>
+      </aside>
+    </div>
+    <footer className="mf-orderflow-footer"><span>Source: {sourceName}</span><span>{retrievedAt ? `Retrieved ${retrievedAt.toLocaleTimeString("en-IN")}` : "Not yet retrieved"}</span><span>Coverage: returned gainers and losers only; not full F&O breadth</span>{payload?.status === "partial" && <strong>PARTIAL PROVIDER RESPONSE</strong>}</footer>
+  </section>;
 }

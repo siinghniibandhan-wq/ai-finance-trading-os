@@ -56,3 +56,19 @@ def test_market_overview_keeps_successful_sources_when_one_source_fails(monkeypa
     assert result["market_movers"]["gainers"] == [{"symbol": "GAINERS"}]
     assert result["market_movers"]["losers"] == [{"symbol": "LOSERS"}]
     assert any(error.get("name") == "SENSEX" for error in result["errors"])
+
+
+def test_market_overview_returns_up_to_one_hundred_provider_movers(monkeypatch):
+    rows = [
+        {"symbol": f"STOCK{i}", "ltp": 100 + i, "per_change": 1.0}
+        for i in range(125)
+    ]
+    monkeypatch.setattr(
+        market_overview,
+        "fetch_movers",
+        lambda **kwargs: {"status": True, "data": rows},
+    )
+    result = market_overview.fetch_overview_movers("gainers")
+    assert len(result) == 100
+    assert result[0]["symbol"] == "STOCK0"
+    assert result[-1]["symbol"] == "STOCK99"

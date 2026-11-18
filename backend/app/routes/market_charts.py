@@ -24,6 +24,23 @@ router = APIRouter(
     tags=["Market Charts"],
 )
 
+def _normalize_chart_candles(candles):
+    """Map provider OHLC rows to chart objects, retaining rows without volume."""
+    chart_data = []
+    for candle in candles or []:
+        if not isinstance(candle, (list, tuple)) or len(candle) < 5:
+            continue
+        chart_data.append({
+            "timestamp": candle[0],
+            "open": candle[1],
+            "high": candle[2],
+            "low": candle[3],
+            "close": candle[4],
+            "volume": candle[5] if len(candle) > 5 else None,
+        })
+    return chart_data
+
+
 
 # ============================================================
 # MARKET CHART
@@ -84,21 +101,7 @@ def get_market_chart(
     # [timestamp, open, high, low, close, volume]
     # --------------------------------------------------------
 
-    chart_data = []
-
-    for candle in history.get("candles", []):
-
-        if len(candle) < 6:
-            continue
-
-        chart_data.append({
-            "timestamp": candle[0],
-            "open": candle[1],
-            "high": candle[2],
-            "low": candle[3],
-            "close": candle[4],
-            "volume": candle[5],
-        })
+    chart_data = _normalize_chart_candles(history.get("candles", []))
 
     # --------------------------------------------------------
     # Response

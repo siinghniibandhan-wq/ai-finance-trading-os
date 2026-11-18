@@ -39,7 +39,7 @@ Only a successful snapshot with a fresh, verified feed is displayed as LIVE. The
 - Futures contract, expiry, last traded price and provider-computed percentage change
 - Futures session OHLC, volume, average traded price, open interest, provider OI high/low, and total buy/sell quantities with a derived balance
 - Option contracts, strike, CE/PE side, price, provider-computed percentage change, volume and open interest
-- Aggregated CE/PE open interest by strike
+- Aggregated CE/PE open interest by underlying, expiry and strike (contracts are never mixed across symbols)
 - Feed connection and freshness
 
 The current gateway adapter does not provide verified spot percentage change, intraday historical candle series, previous-session OI, OI change, PCR history, support/resistance or conviction signals. Those values are not generated or filled with demo data. Missing provider fields remain unavailable.

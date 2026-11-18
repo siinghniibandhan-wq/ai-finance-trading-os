@@ -124,3 +124,17 @@ export function normalizeQuotePrice(payload) {
   const price = Number(value);
   return Number.isFinite(price) && price > 0 ? price : null;
 }
+
+
+/** Build the existing Market Search API query without changing its contract. */
+export function buildInstrumentSearchParams(query, exchange = "ALL") {
+  const selectedExchange = ["ALL", "NSE", "BSE"].includes(String(exchange).toUpperCase())
+    ? String(exchange).toUpperCase()
+    : "ALL";
+  return new URLSearchParams({
+    query: String(query ?? "").trim(),
+    exchange: selectedExchange,
+    limit: "20",
+    product_type: "Stocks",
+  });
+}

@@ -14,22 +14,26 @@ const finiteNumber = (value) => {
 };
 
 /**
- * Convert the m.Stock historical candle tuple
- * [timestamp, open, high, low, close, volume] into chart-library data.
- * Invalid provider rows are omitted; no values are inferred or filled.
+ * Convert either the Market Charts API candle object
+ * { timestamp, open, high, low, close, volume } or the underlying
+ * m.Stock tuple [timestamp, open, high, low, close, volume]
+ * into chart-library data. Invalid rows are omitted; no values are inferred.
  */
 export function normalizeCandles(rawCandles) {
   if (!Array.isArray(rawCandles)) return [];
 
   const byTime = new Map();
   for (const row of rawCandles) {
-    if (!Array.isArray(row) || row.length < 6) continue;
-    const time = toUnixSeconds(row[0]);
-    const open = finiteNumber(row[1]);
-    const high = finiteNumber(row[2]);
-    const low = finiteNumber(row[3]);
-    const close = finiteNumber(row[4]);
-    const volume = finiteNumber(row[5]);
+    const isTuple = Array.isArray(row);
+    if (isTuple && row.length < 6) continue;
+    if (!isTuple && (!row || typeof row !== "object")) continue;
+
+    const time = toUnixSeconds(isTuple ? row[0] : row.timestamp);
+    const open = finiteNumber(isTuple ? row[1] : row.open);
+    const high = finiteNumber(isTuple ? row[2] : row.high);
+    const low = finiteNumber(isTuple ? row[3] : row.low);
+    const close = finiteNumber(isTuple ? row[4] : row.close);
+    const volume = finiteNumber(isTuple ? row[5] : row.volume);
 
     if (
       time === null ||

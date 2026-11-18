@@ -32,8 +32,8 @@ def test_order_flow_accepts_ampersand_symbols_used_by_derivatives_universe(monke
     assert result == {"status": "success", "symbol": "GVT&D"}
 
 
-def test_order_flow_rejects_path_and_query_injection_in_symbol():
-    with pytest.raises(HTTPException) as error:
-        order_flow_route.order_flow_snapshot("NIFTY/../admin", _current_user=object())
-
-    assert error.value.status_code == 400
+def test_order_flow_rejects_invalid_or_empty_symbols():
+    for symbol in ("NIFTY/../admin", "&&"):
+        with pytest.raises(HTTPException) as error:
+            order_flow_route.order_flow_snapshot(symbol, _current_user=object())
+        assert error.value.status_code == 400

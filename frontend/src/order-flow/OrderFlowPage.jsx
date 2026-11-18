@@ -67,7 +67,7 @@ export default function OrderFlowPage() {
   }));
   const strikeRows = flow.optionOiByStrike.map((row) => ({
     ...row,
-    key: String(row.strike),
+    key: `${row.symbol}-${row.expiry}-${row.strike}`,
   }));
 
   return (
@@ -157,6 +157,8 @@ export default function OrderFlowPage() {
         rows={strikeRows}
         empty="Strike-wise OI will appear when fresh CE and PE ticks arrive."
         columns={[
+          { key: "symbol", label: "Underlying" },
+          { key: "expiry", label: "Expiry" },
           { key: "strike", label: "Strike", render: (row) => formatMarketNumber(row.strike) },
           { key: "callOi", label: "Call OI", render: (row) => formatMarketNumber(row.callOi) },
           { key: "putOi", label: "Put OI", render: (row) => formatMarketNumber(row.putOi) },

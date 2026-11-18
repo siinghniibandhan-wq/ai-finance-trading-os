@@ -248,10 +248,13 @@ export default function AdvancedChartPage() {
     })));
     smaSeriesRef.current.setData(calculateSMA(candles, 20));
     emaSeriesRef.current.setData(calculateEMA(candles, 20));
-    smaSeriesRef.current.applyOptions({ visible: showSma });
-    emaSeriesRef.current.applyOptions({ visible: showEma });
     if (candles.length) chartRef.current?.timeScale().fitContent();
-  }, [candles, showSma, showEma]);
+  }, [candles]);
+
+  useEffect(() => {
+    smaSeriesRef.current?.applyOptions({ visible: showSma });
+    emaSeriesRef.current?.applyOptions({ visible: showEma });
+  }, [showSma, showEma]);
 
   const lastPrice = quote?.quote?.last_price;
   const retrievalTime = quote?.retrieved_at

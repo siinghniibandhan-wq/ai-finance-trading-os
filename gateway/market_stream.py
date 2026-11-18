@@ -29,6 +29,8 @@ class MarketStreamWorker:
         self._subscription_revision = 0
         self._ticks: OrderedDict[int, dict] = OrderedDict()
         self._connected = False
+        self._socket_connected = False
+        self._stream_verified = False
         self._last_tick_at = None
         self._last_error = None
         self._reconnect_count = 0
@@ -44,6 +46,10 @@ class MarketStreamWorker:
             self._tokens, self._mode = clean, mode
             if changed:
                 self._subscription_revision += 1
+                self._ticks.clear()
+                self._last_tick_at = None
+                self._stream_verified = False
+                self._connected = False
             if self._thread and self._thread.is_alive():
                 ws = self._ws
                 if changed and ws:
@@ -71,6 +77,10 @@ class MarketStreamWorker:
             thread.join(timeout)
         with self._lock:
             self._connected = False
+            self._socket_connected = False
+            self._stream_verified = False
+            self._last_tick_at = None
+            self._ticks.clear()
         return {"stopped": not bool(thread and thread.is_alive())}
 
     def _run(self):
@@ -86,16 +96,19 @@ class MarketStreamWorker:
                 api_key = self.api_key_getter()
                 ws = factory(f"wss://ws.mstock.trade?API_KEY={api_key}&ACCESS_TOKEN={token}", timeout=self.recv_timeout)
                 with self._lock:
-                    self._ws, self._connected = ws, False
+                    self._ws = ws
+                    self._socket_connected = True
+                    self._stream_verified = False
+                    self._connected = False
+                    self._last_tick_at = None
+                    self._ticks.clear()
                     self._last_error = None
-                ws.send(f"LOGIN:{token}")
-                self._await_login_ack(ws)
-                with self._lock:
                     initial_tokens = self._tokens[:]
                     subscribed_revision = self._subscription_revision
+                # A successful LOGIN send is not provider authentication.
+                # A tick for a subscribed instrument is the verification signal.
+                ws.send(f"LOGIN:{token}")
                 ws.send(json.dumps({"a": "subscribe", "v": initial_tokens}))
-                with self._lock:
-                    self._connected = True
                 delay = 1
                 while not self._stop.is_set():
                     if self.token_getter() != token:
@@ -115,11 +128,19 @@ class MarketStreamWorker:
                     for tick in parse_type_a_frame(frame):
                         instrument = int(tick["token"])
                         with self._lock:
-                            self._ticks[instrument] = {**tick, "received_at": time.time()}
+                            if instrument not in self._tokens:
+                                continue
+                            received_at = time.time()
+                            self._ticks[instrument] = {
+                                **tick, "instrument_token": instrument,
+                                "received_at": received_at,
+                            }
                             self._ticks.move_to_end(instrument)
                             while len(self._ticks) > self.max_cache:
                                 self._ticks.popitem(last=False)
-                            self._last_tick_at = time.time()
+                            self._last_tick_at = received_at
+                            self._stream_verified = True
+                            self._connected = True
             except Exception as exc:
                 with self._lock:
                     self._last_error = str(exc)[:300]
@@ -127,6 +148,10 @@ class MarketStreamWorker:
             finally:
                 with self._lock:
                     self._connected = False
+                    self._socket_connected = False
+                    self._stream_verified = False
+                    self._last_tick_at = None
+                    self._ticks.clear()
                     self._ws = None
                 if ws:
                     try:
@@ -136,50 +161,26 @@ class MarketStreamWorker:
             self._stop.wait(delay)
             delay = min(delay * 2, 30)
 
-    def _await_login_ack(self, ws):
-        """Wait for an explicit successful LOGIN response before subscribing."""
-        deadline = time.monotonic() + max(10, self.recv_timeout * 2)
-        while not self._stop.is_set() and time.monotonic() < deadline:
-            try:
-                frame = ws.recv()
-            except Exception as exc:
-                if "timeout" in str(exc).lower() or "timed out" in str(exc).lower():
-                    continue
-                raise
-            if isinstance(frame, bytes):
-                continue
-            message = str(frame).strip()
-            if not message:
-                continue
-            lowered = message.lower()
-            if any(word in lowered for word in ("error", "failed", "failure", "invalid", "unauthorized", "denied")):
-                raise RuntimeError("m.Stock LOGIN rejected: " + message[:180])
-            try:
-                payload = json.loads(message)
-            except (TypeError, ValueError):
-                payload = None
-            if isinstance(payload, dict):
-                values = [str(value).strip().lower() for value in payload.values() if isinstance(value, (str, int, float))]
-                if payload.get("success") is True or payload.get("authenticated") is True:
-                    return
-                if any(value in {"success", "ok", "authenticated", "login_success", "login successful"} for value in values):
-                    return
-                continue
-            if any(phrase in lowered for phrase in ("login successful", "login success", "logged in", "authenticated", "login:success")):
-                return
-        if self._stop.is_set():
-            raise RuntimeError("Market stream stopped during m.Stock login")
-        raise TimeoutError("Timed out waiting for m.Stock LOGIN acknowledgement")
-
     def status(self):
         with self._lock:
             age = None if self._last_tick_at is None else max(0, time.time() - self._last_tick_at)
-            return {"connected": self._connected, "subscribed_tokens": self._tokens[:],
-                    "mode": self._mode, "cached_instruments": len(self._ticks),
-                    "last_tick_at": self._last_tick_at, "last_tick_age_seconds": age,
-                    "stale": age is None or age > self.stale_after,
-                    "last_error": self._last_error, "reconnect_count": self._reconnect_count,
-                    "read_only": True}
+            stale = age is None or age > self.stale_after
+            verified = self._stream_verified and not stale
+            connected = self._socket_connected and verified
+            return {
+                "connected": connected,
+                "socket_connected": self._socket_connected,
+                "stream_verified": verified,
+                "subscribed_tokens": self._tokens[:],
+                "mode": self._mode,
+                "cached_instruments": len(self._ticks),
+                "last_tick_at": self._last_tick_at,
+                "last_tick_age_seconds": age,
+                "stale": stale,
+                "last_error": self._last_error,
+                "reconnect_count": self._reconnect_count,
+                "read_only": True,
+            }
 
     def snapshot(self, tokens: list[int] | None = None):
         with self._lock:

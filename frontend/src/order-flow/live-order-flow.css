@@ -1,0 +1,20 @@
+.mf-live-workspace{display:grid;gap:18px}
+.mf-live-workspace .market-flow-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.mf-live-workspace .mf-live-feed{border:1px solid var(--border-color,rgba(128,128,128,.25));border-radius:12px;padding:14px 16px;background:var(--surface,transparent)}
+.mf-live-workspace .mf-live-feed-heading,.mf-live-data-section>header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.mf-live-workspace .mf-live-feed p{margin:8px 0 0;color:var(--text-secondary,inherit);font-size:.9rem}
+.mf-live-workspace .mf-feed-fresh{color:#16a34a}
+.mf-live-workspace .mf-feed-offline{color:#d97706}
+.mf-live-filter{display:grid;gap:7px;max-width:420px;font-size:.85rem;color:var(--text-secondary,inherit)}
+.mf-live-filter input{width:100%;min-height:42px;padding:9px 12px;border:1px solid var(--border-color,rgba(128,128,128,.3));border-radius:8px;background:var(--surface,transparent);color:inherit}
+.mf-live-data-section{min-width:0;border:1px solid var(--border-color,rgba(128,128,128,.25));border-radius:12px;padding:14px 16px;background:var(--surface,transparent)}
+.mf-live-data-section h2{font-size:1rem;margin:0}
+.mf-live-data-section>header>span{font-size:.8rem;color:var(--text-secondary,inherit)}
+.mf-live-table-wrap{width:100%;overflow-x:auto;margin-top:12px}
+.mf-live-table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:.86rem}
+.mf-live-table th,.mf-live-table td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border-color,rgba(128,128,128,.16))}
+.mf-live-table th{font-weight:600;color:var(--text-secondary,inherit);font-size:.78rem}
+.mf-live-table tbody tr:last-child td{border-bottom:0}
+.mf-live-empty{margin:12px 0 2px;color:var(--text-secondary,inherit);font-size:.9rem}
+.mf-live-workspace .mf-disclaimer{font-size:.8rem;color:var(--text-secondary,inherit);line-height:1.5}
+@media(max-width:640px){.mf-live-workspace .market-flow-header{display:grid}.mf-live-data-section{padding:12px}.mf-live-table{font-size:.8rem}}

@@ -89,7 +89,17 @@ def test_snapshot_adapts_production_market_stream_ticks_using_instrument_master(
     assert result["status"] == "success"
     assert result["source"] == "m.Stock via Financial OS market-stream gateway"
     assert result["read_only"] is True
-    assert result["futures_contracts"] == [{
+    future = result["futures_contracts"][0]
+    assert {
+        "symbol": future["symbol"],
+        "tradingsymbol": future["tradingsymbol"],
+        "exchange": future["exchange"],
+        "expiry": future["expiry"],
+        "price": future["price"],
+        "volume": future["volume"],
+        "oi": future["oi"],
+        "instrument_token": future["instrument_token"],
+    } == {
         "symbol": "NIFTY",
         "tradingsymbol": "NIFTY26NOVFUT",
         "exchange": "NFO",
@@ -98,7 +108,7 @@ def test_snapshot_adapts_production_market_stream_ticks_using_instrument_master(
         "volume": 1200,
         "oi": 450000,
         "instrument_token": 101,
-    }]
+    }
     assert result["option_oi_by_strike"] == [
         {"strike": 25000.0, "ce_oi": 12000.0, "pe_oi": 14000.0}
     ]

@@ -161,8 +161,23 @@ def _load_instrument_metadata(base: str) -> dict[int, dict]:
         return metadata
 
 
-def _select_subscription_tokens(metadata: dict[int, dict], limit: int = 200) -> list[int]:
-    """Select a balanced, bounded derivative universe across segments/underlyings."""
+def _symbol_key(value: str | None) -> str:
+    return "".join(character for character in str(value or "").upper() if character.isalnum())
+
+
+def _matches_symbol(instrument: dict, symbol: str | None) -> bool:
+    if not symbol:
+        return True
+    wanted = _symbol_key(symbol)
+    underlying = _symbol_key(instrument.get("symbol"))
+    tradingsymbol = _symbol_key(instrument.get("tradingsymbol"))
+    return underlying == wanted or tradingsymbol.startswith(wanted)
+
+
+def _select_subscription_tokens(
+    metadata: dict[int, dict], limit: int = 200, symbol: str | None = None
+) -> list[int]:
+    """Select a bounded derivative universe; focus on the active Order Flow symbol."""
     try:
         configured_limit = int(os.getenv("MSTOCK_MARKET_STREAM_TOKEN_LIMIT", str(limit)))
     except (TypeError, ValueError):
@@ -172,6 +187,8 @@ def _select_subscription_tokens(metadata: dict[int, dict], limit: int = 200) -> 
 
     grouped: dict[str, dict[str, list[int]]] = {}
     for token, item in metadata.items():
+        if not _matches_symbol(item, symbol):
+            continue
         segment = str(item.get("segment") or "")
         underlying = str(item.get("symbol") or item.get("tradingsymbol") or token)
         grouped.setdefault(segment, {}).setdefault(underlying, []).append(token)
@@ -211,9 +228,11 @@ def _select_subscription_tokens(metadata: dict[int, dict], limit: int = 200) -> 
     return selected
 
 
-def _ensure_stream_started(base: str, secret: str, metadata: dict[int, dict]) -> None:
-    """Idempotently ensure the production worker subscribes to the derivative universe."""
-    tokens = _select_subscription_tokens(metadata)
+def _ensure_stream_started(
+    base: str, secret: str, metadata: dict[int, dict], symbol: str | None = None
+) -> None:
+    """Idempotently subscribe to the active symbol's verified derivative contracts."""
+    tokens = _select_subscription_tokens(metadata, symbol=symbol)
     if not tokens:
         raise OrderFlowFeedError("Instrument master contains no eligible derivative subscriptions.")
     result = _request_json(
@@ -314,7 +333,7 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
         raise OrderFlowFeedError("Market gateway authentication is not configured.")
 
     metadata = _load_instrument_metadata(base)
-    _ensure_stream_started(base, secret, metadata)
+    _ensure_stream_started(base, secret, metadata, symbol=symbol)
 
     payload = _request_json(f"{base}/market-stream/snapshot", secret)
     if payload.get("status") != "success":
@@ -345,7 +364,7 @@ def get_order_flow_snapshot(symbol: str | None = None) -> dict:
         if instrument is None:
             unmapped += 1
             continue
-        if requested_symbol and instrument["symbol"] != requested_symbol:
+        if not _matches_symbol(instrument, requested_symbol):
             continue
 
         normalized = _normalise_tick(tick, instrument)

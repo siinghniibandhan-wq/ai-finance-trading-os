@@ -237,6 +237,8 @@ def _ensure_stream_started(
     tokens = _select_subscription_tokens(metadata, symbol=symbol)
     if not tokens:
         raise OrderFlowFeedError("Instrument master contains no eligible derivative subscriptions.")
+    # The Order Flow routes reuse this same MarketStreamWorker. Start and read
+    # it through the low-level market-stream contract only; never start a second worker.
     result = _request_json(
         f"{base}/market-stream/start",
         secret,
@@ -383,6 +385,7 @@ def _feed_state(stream: dict, last_tick_at: str | None) -> dict:
     elif not (
         stream.get("connected") is True
         and stream.get("stream_verified") is True
+        and stream.get("socket_connected", True) is True
     ):
         feed["status"] = "disconnected"
     return feed

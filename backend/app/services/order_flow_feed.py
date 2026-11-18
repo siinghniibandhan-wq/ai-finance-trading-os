@@ -293,7 +293,9 @@ def _stream_last_tick(stream: dict, ticks: list[dict]):
 
 def _feed_state(stream: dict, last_tick_at: str | None) -> dict:
     feed = feed_status(last_tick_at)
-    if feed["status"] == "stale" or stream.get("stale") is True:
+    if last_tick_at is None:
+        feed["status"] = "disconnected"
+    elif feed["status"] == "stale" or stream.get("stale") is True:
         feed["status"] = "stale"
     elif not (
         stream.get("connected") is True

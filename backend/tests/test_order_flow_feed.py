@@ -212,3 +212,48 @@ def test_symbol_matching_does_not_confuse_prefix_underlyings():
         {"symbol": "NIFTY", "tradingsymbol": "NIFTY26NOVFUT"},
         "NIFTY",
     ) is True
+
+
+
+def test_type_a_raw_tick_fields_are_scaled_and_timestamp_uses_1980_epoch():
+    from datetime import datetime, timezone
+
+    instrument = {
+        "instrument_token": 101,
+        "symbol": "NIFTY",
+        "tradingsymbol": "NIFTY26NOVFUT",
+        "exchange": "NFO",
+        "expiry": "2026-11-26",
+        "instrument_kind": "future",
+    }
+    tick = {
+        "token": 101,
+        "mode": "full",
+        "ltp_raw": 2501250,
+        "last_traded_quantity": 75,
+        "average_price_raw": 2500000,
+        "volume": 1200,
+        "open_interest": 450000,
+        "exchange_timestamp": 1450000000,
+        "received_at": time.time(),
+    }
+
+    normalized = order_flow_feed._normalise_tick(tick, instrument)
+
+    assert normalized["price"] == 25012.5
+    assert normalized["volume"] == 1200
+    assert normalized["oi"] == 450000
+    assert normalized["last_traded_quantity"] == 75
+    assert normalized["average_traded_price"] == 25000
+    expected_exchange_time = datetime.fromtimestamp(
+        315532800 + 1450000000, tz=timezone.utc
+    ).isoformat()
+    assert normalized["exchange_timestamp"] == expected_exchange_time
+    assert normalized["price_units"] == "provider_sdk_decoded"
+
+
+def test_type_a_raw_price_divisor_uses_instrument_token_segment():
+    instrument = {"instrument_token": 259, "instrument_kind": "future"}
+    tick = {"token": 259, "ltp_raw": 125000000, "volume": 1, "open_interest": 2}
+    normalized = order_flow_feed._normalise_tick(tick, instrument)
+    assert normalized["price"] == 12.5

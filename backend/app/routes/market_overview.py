@@ -1,5 +1,5 @@
 """
-Financial OS — Market Overview Engine v1.2
+Financial OS — Market Overview Engine v1.3
 
 Purpose:
 - Combine existing market indices and market movers.
@@ -13,17 +13,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from fastapi import APIRouter
 
-from app.routes.market_indices import (
-    SUPPORTED_INDICES,
-    fetch_index,
+from app.routes.market_indices import SUPPORTED_INDICES, fetch_index
+from app.routes.market_movers import (
+    extract_type_a_mover_rows,
+    fetch_movers,
+    normalize_mover,
 )
 
-from app.routes.market_movers import fetch_movers
-
-
-# ============================================================
-# ROUTER
-# ============================================================
 
 router = APIRouter(
     prefix="/api/market-overview",
@@ -31,51 +27,19 @@ router = APIRouter(
 )
 
 
-# ============================================================
-# MARKET MOVERS CONFIGURATION
-# Reuses the existing Market Movers provider function.
-# ============================================================
-
 DEFAULT_EXCHANGE = 1
 DEFAULT_SECURITY_ID_CODE = 13
 DEFAULT_SEGMENT = 1
 DEFAULT_MOVER_LIMIT = 20
 
 
-# ============================================================
-# FETCH AND NORMALIZE MARKET MOVERS
-# Does not call the FastAPI route directly.
-# Does not make an HTTP request to this application.
-# ============================================================
-
 def fetch_overview_movers(mover_type: str):
-    """
-    Fetch gainers or losers using the existing provider function.
-
-    mover_type:
-        gainers -> G
-        losers  -> L
-    """
-
-    # --------------------------------------------------------
-    # Validate the requested mover type
-    # --------------------------------------------------------
-
+    """Fetch and normalize gainers or losers through the shared Gateway path."""
     mover_type = mover_type.strip().lower()
-
     if mover_type not in ("gainers", "losers"):
-        raise ValueError(
-            "Mover type must be gainers or losers"
-        )
+        raise ValueError("Mover type must be gainers or losers")
 
-    type_flag = (
-        "G" if mover_type == "gainers" else "L"
-    )
-
-    # --------------------------------------------------------
-    # Request data from the existing m.Stock gateway integration
-    # --------------------------------------------------------
-
+    type_flag = "G" if mover_type == "gainers" else "L"
     provider_response = fetch_movers(
         exchange=DEFAULT_EXCHANGE,
         security_id_code=DEFAULT_SECURITY_ID_CODE,
@@ -83,76 +47,18 @@ def fetch_overview_movers(mover_type: str):
         type_flag=type_flag,
     )
 
-    # --------------------------------------------------------
-    # Validate provider response
-    # --------------------------------------------------------
+    raw_data = extract_type_a_mover_rows(provider_response)
+    return [
+        normalize_mover(item)
+        for item in raw_data[:DEFAULT_MOVER_LIMIT]
+        if isinstance(item, dict)
+    ]
 
-    if not isinstance(provider_response, dict):
-        raise ValueError(
-            "Invalid Market Movers provider response"
-        )
-
-    # The Gateway preserves the Type A provider status. Do not convert an
-    # error envelope (whose status string is truthy) into an empty success.
-    if provider_response.get("status") != "success":
-        message = provider_response.get(
-            "message",
-            "Market Movers provider request failed",
-        )
-        raise ValueError(str(message))
-
-    raw_data = provider_response.get("data", [])
-
-    if not isinstance(raw_data, list):
-        raise ValueError(
-            "Market Movers provider returned invalid data"
-        )
-
-    # --------------------------------------------------------
-    # Normalize the existing provider data
-    # Keep the same response fields as Market Movers Engine
-    # --------------------------------------------------------
-
-    movers = []
-
-    for item in raw_data[:DEFAULT_MOVER_LIMIT]:
-
-        if not isinstance(item, dict):
-            continue
-
-        movers.append({
-            "symbol": item.get("symbol"),
-
-            "name": (
-                item.get("symbol_name")
-                or item.get("display_name")
-            ),
-
-            "exchange": item.get("exchange"),
-            "segment": item.get("segment"),
-            "security_id": item.get("security_id"),
-            "ltp": item.get("ltp"),
-            "change": item.get("change"),
-
-            "percent_change": item.get("per_change"),
-
-            "volume": item.get("volume"),
-            "instrument": item.get("instrument"),
-            "series": item.get("series"),
-            "isin": item.get("isin"),
-        })
-
-    return movers
-
-
-# ============================================================
-# MARKET OVERVIEW ENDPOINT
-# ============================================================
 
 @router.get("/")
 def get_market_overview():
-    # Run independent Type A provider requests concurrently. A slow index or
-    # movers response must not hold up every other market card in the overview.
+    # Independent provider requests run concurrently; a failed movers request
+    # must not block or erase successful index/other-mover results.
     index_results = {}
     mover_results = {"gainers": [], "losers": []}
     errors = []
@@ -189,7 +95,6 @@ def get_market_overview():
                         "message": str(exc),
                     })
 
-    # Preserve the configured benchmark order regardless of completion order.
     indices = [
         index_results[index["name"]]
         for index in SUPPORTED_INDICES
@@ -197,7 +102,10 @@ def get_market_overview():
     ]
     gainers = mover_results["gainers"]
     losers = mover_results["losers"]
-    errors.sort(key=lambda item: (item.get("source", ""), item.get("name", item.get("type", ""))))
+    errors.sort(key=lambda item: (
+        item.get("source", ""),
+        item.get("name", item.get("type", "")),
+    ))
 
     if errors and not indices and not gainers and not losers:
         response_status = "error"
@@ -209,7 +117,7 @@ def get_market_overview():
     return {
         "status": response_status,
         "engine": "Market Overview Engine",
-        "version": "1.3",
+        "version": "1.4",
         "read_only": True,
         "market_status": {
             "status": "unknown",
@@ -245,3 +153,4 @@ def get_market_overview():
         "database_write": False,
         "next_module": "Market Workspace Integration",
     }
+}

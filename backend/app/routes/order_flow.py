@@ -90,7 +90,9 @@ async def order_flow_stream(websocket: WebSocket):
                     ensure_started=ensure_started,
                 )
                 await websocket.send_json(snapshot)
+                ensure_started = not bool((snapshot.get("stream") or {}).get("running"))
             except OrderFlowFeedError as exc:
+                ensure_started = True
                 await websocket.send_json({
                     "status": "error",
                     "message": str(exc),
@@ -101,7 +103,6 @@ async def order_flow_stream(websocket: WebSocket):
                 })
             except WebSocketDisconnect:
                 return
-            ensure_started = False
             await asyncio.sleep(1)
     except WebSocketDisconnect:
         return

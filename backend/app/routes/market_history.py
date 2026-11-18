@@ -47,6 +47,52 @@ router = APIRouter(
     tags=["Market History"],
 )
 
+def _resolve_instrument_from_csv(csv_text, symbol, exchange):
+    """Resolve the exact cash/derivative instrument using normalized CSV headers."""
+    import csv
+    from io import StringIO
+
+    reader = csv.DictReader(StringIO(str(csv_text or "").lstrip("\\ufeff")))
+    if not reader.fieldnames:
+        return None
+
+    def normalize_header(value):
+        return "".join(character for character in str(value or "").strip().lower() if character.isalnum())
+
+    headers = {normalize_header(name): name for name in reader.fieldnames}
+    aliases = {
+        "exchange": ("exchange", "exch", "exchseg", "exchangesegment", "marketsegment"),
+        "symbol": ("tradingsymbol", "tradingsym", "symbol", "tradingcode", "ticker"),
+        "token": ("instrumenttoken", "token", "securityid", "scripcode"),
+        "name": ("name", "companyname", "instrumentname", "securityname", "displayname"),
+    }
+
+    def value_for(row, field):
+        for alias in aliases[field]:
+            actual = headers.get(normalize_header(alias))
+            if actual is not None:
+                value = row.get(actual)
+                if value is not None and str(value).strip():
+                    return str(value).strip()
+        return None
+
+    requested_symbol = str(symbol or "").strip().upper()
+    requested_exchange = str(exchange or "").strip().upper()
+    exchange_aliases = {
+        "NSECM": "NSE", "NSE_EQ": "NSE", "NSE-EQ": "NSE", "NSE": "NSE",
+        "BSECM": "BSE", "BSE_EQ": "BSE", "BSE-EQ": "BSE", "BSE": "BSE",
+        "NFO": "NFO", "NSEFO": "NFO", "BFO": "BFO", "BSEFO": "BFO",
+    }
+
+    for row in reader:
+        row_exchange = exchange_aliases.get((value_for(row, "exchange") or "").upper())
+        row_symbol = (value_for(row, "symbol") or "").upper()
+        token = value_for(row, "token")
+        if row_exchange == requested_exchange and row_symbol == requested_symbol and token:
+            return token, row_symbol, value_for(row, "name")
+    return None
+
+
 
 # ============================================================
 # HISTORICAL MARKET DATA
@@ -213,48 +259,18 @@ def get_market_history(
     # Find instrument token
     # --------------------------------------------------------
 
-    import csv
-    from io import StringIO
-
-    reader = csv.DictReader(
-        StringIO(csv_text)
+    resolved = _resolve_instrument_from_csv(
+        csv_text,
+        cleaned_symbol,
+        cleaned_exchange,
     )
-
-    instrument_token = None
-    resolved_symbol = None
-    resolved_name = None
-
-    for row in reader:
-
-        row_exchange = (
-            (row.get("exchange") or "")
-            .strip()
-            .upper()
+    if resolved is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Market symbol '{cleaned_symbol}' was not found on {cleaned_exchange}.",
         )
 
-        row_symbol = (
-            (row.get("tradingsymbol") or "")
-            .strip()
-            .upper()
-        )
-
-        if (
-            row_exchange == cleaned_exchange
-            and row_symbol == cleaned_symbol
-        ):
-            instrument_token = (
-                row.get("instrument_token")
-            )
-
-            resolved_symbol = (
-                row.get("tradingsymbol")
-            )
-
-            resolved_name = (
-                row.get("name")
-            )
-
-            break
+    instrument_token, resolved_symbol, resolved_name = resolved
 
     if not instrument_token:
         raise HTTPException(

@@ -13,60 +13,31 @@ The source project's interaction/layout model has been adapted to Financial OS; 
 - Pure backend transformations for futures contract-month aggregation, current OI change/percentage, and strike-wise CE/PE OI aggregation.
 - Feed freshness classification: `fresh`, `stale`, `disconnected`.
 - Authenticated, read-only API: `GET /api/order-flow/snapshot?symbol=NIFTY`.
-- Server-side derivatives gateway adapter, using `MSTOCK_DERIVATIVES_GATEWAY_URL` and the existing gateway secret header.
+- Server-side adapter for the production `/market-stream/*` routes, using the existing gateway URL/secret and verified instrument-master token mapping.
 - Frontend feed status panel with authenticated polling, freshness display and bounded exponential retry (10–60 seconds).
 - Backend tests for aggregation, freshness, gateway payload validation and fail-closed configuration.
 - Historical OI is deliberately excluded.
 
-## Gateway contract — remaining external integration
+## Production m.Stock gateway contract
 
-The application-side adapter expects the configured gateway to implement `GET /order-flow/snapshot`. The gateway must authenticate its m.Stock session server-side, renew tokens as required, own the WebSocket connection and binary packet decoder, subscribe to relevant futures/options instruments, reconnect with backoff, and return a normalized JSON snapshot in this shape:
+The Financial OS backend now adapts the production Flask gateway contract instead of expecting the obsolete normalized `/order-flow/snapshot` route.
 
-```json
-{
-  "status": "success",
-  "data": {
-    "last_tick_at": "2026-11-13T10:00:00+05:30",
-    "futures_contracts": [
-      {
-        "symbol": "NIFTY",
-        "expiry": "2026-11-26",
-        "price": 25000.0,
-        "volume": 1200,
-        "oi": 450000,
-        "previous_oi": 430000
-      }
-    ],
-    "option_contracts": [
-      {"strike": 25000, "option_type": "CE", "oi": 12000},
-      {"strike": 25000, "option_type": "PE", "oi": 14000}
-    ]
-  }
-}
-```
+1. Read the gateway's `/instruments` CSV and validate derivative instrument metadata (token, exchange, segment, underlying, expiry, strike, option side and lot size).
+2. Select a balanced derivative subscription universe, capped at 200 tokens.
+3. Idempotently call authenticated `POST /market-stream/start` with `{"tokens":[...],"mode":3}`. The gateway worker retains its SDK connection and reconnect lifecycle.
+4. Read authenticated `GET /market-stream/snapshot`, which returns `ticks` plus `stream` status.
+5. Join each decoded SDK tick to the verified instrument master and normalize futures, options, price, volume, OI and timestamps for the existing Order Flow API.
 
-The gateway must source these values from verified provider fields and preserve the exchange timestamp. Do not infer option OI from an undocumented field, fabricate missing ticks, or report a stale/disconnected feed as live. Browser clients never receive m.Stock API keys or access tokens. If the gateway is absent or unavailable, the API returns 503 and the UI clearly shows **NOT CONNECTED** while retaining the demo disclaimer.
+The backend uses the existing `MSTOCK_GATEWAY_URL` and `MSTOCK_GATEWAY_SECRET` settings and the existing `X-Financial-OS-Gateway-Secret` header. It does not require a second derivatives-gateway URL or expose broker credentials to the browser. The existing Bearer authentication on `GET /api/order-flow/snapshot` remains unchanged.
 
-**Deployment and integration status (verified 13 November 2026):**
+The SDK supplies decoded prices; the adapter does not divide or rescale them again. OI is taken only from the SDK's `oi` field. The stream does not supply previous-session OI, so the adapter does not invent `previous_oi` or OI change. Historical OI remains excluded. Unknown tokens are counted as unmapped rather than assigned a guessed identity.
 
-The user's AWS Systems Manager session confirmed the following on the EC2 gateway host:
+The frontend reports LIVE only when the gateway reports a verified connected stream and the last tick is fresh. Empty, stale or disconnected snapshots remain NOT CONNECTED/STALE; demo charts and derived indicators remain labelled simulated.
 
-- mstock-gateway.service is active. The Flask application runs as PID 76459 and listens on 127.0.0.1:8000.
-- The gateway app registers create_market_stream_blueprint; the blueprint exposes read-only /market-stream/start, /stop, /status and /snapshot routes.
-- The stream worker runs as a background thread inside the Flask application, not as a separate operating-system process. Its authenticated status response reports running=true.
-- Gateway authentication is now verified for the diagnostic request: a request carrying X-Financial-OS-Gateway-Secret with the secret read directly from the running process's FINANCIAL_OS_GATEWAY_SECRET returned HTTP 200. The earlier HTTP 403 came from unauthenticated curl requests that omitted the required header. Both FINANCIAL_OS_GATEWAY_SECRET and MSTOCK_GATEWAY_SECRET variable names were present in the running process; secret values were not displayed.
-- The authenticated /market-stream/status response reported connected=false, stale=true, cached_instruments=0, no last tick timestamp, reconnect_count=933, mode=3 (full) and subscribed token 2885. The instrument identity for token 2885 has not been independently verified.
-- The authenticated /market-stream/snapshot route returned HTTP 200 with an empty ticks array.
-- DNS for ws.mstock.trade resolved to provider AWS load-balancer addresses in Mumbai (ap-south-1). TCP/TLS connectivity and certificate verification succeeded using TLS 1.3. No outbound proxy variables were configured. websocket-client version 1.9.0 is installed.
-- The worker's WebSocket handshake to wss://ws.mstock.trade repeatedly receives HTTP 502 from a server identifying as awselb/2.0. The failure occurs during the HTTP upgrade, before the worker sends LOGIN, subscribe or mode messages. No ticks have been received.
+**Current upstream limitation:** the latest verified EC2 diagnostics recorded an HTTP 502 during the m.Stock WebSocket upgrade, before LOGIN or subscription acknowledgement. No live ticks were received in that diagnostic. The backend adapter can now request subscriptions and normalize returned ticks, but it cannot make the provider's WebSocket handshake succeed. Until a fresh authenticated tick is observed end-to-end, the feed must remain NOT LIVE.
 
-**Current result: the gateway and its internal authentication work, but the upstream m.Stock WebSocket transport is disconnected. The Order Flow feed is NOT LIVE.** This 502 is not evidence of invalid m.Stock credentials, a decoder defect or a failed subscription because the handshake has not completed.
+The adapter changes are on branch `fix/order-flow-market-stream-contract`. They are not deployed to the backend and must not be described as live until tests, CI, review and deployment are complete.
 
-The user has already contacted m.Stock and is waiting for its response. Do not resend duplicate support requests while waiting. Once a provider response or new handshake evidence is available, resume with a controlled connection test. Do not restart services, change credentials, move regions, alter the decoder or change trading/order execution without evidence and explicit approval.
-
-**Order Flow integration remains incomplete:** the application adapter expects GET /order-flow/snapshot with normalized futures/options data, while the EC2 Flask blueprint currently exposes /market-stream/snapshot with raw decoded tick-cache data and stream status. No verified mapping from raw ticks to the normalized contract has been established. The token master/expiry mapping and provider packet-field validation also remain outstanding. Do not invent tokens, infer undocumented OI fields, or report LIVE until fresh subscriptions, valid decoded ticks, normalized adapter output, backend authentication and frontend freshness display are verified end-to-end.
-
-The current application-side hardening changes are in draft PR #188. Local test execution and CI status must be checked on the exact PR head before describing those changes as verified.
 ## Attribution and licence
 
 The source Order Flow project is by Mr. Chartist (https://mrchartist.com), from https://github.com/MrChartist/order-flow. Its original PolyForm Noncommercial License 1.0.0 and required copyright notice are preserved in this directory's `LICENSE` file. Any commercial use requires a separate licence from the rights holder.

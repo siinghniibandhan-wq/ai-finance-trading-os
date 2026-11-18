@@ -55,6 +55,7 @@ export default function AdvancedChartPage() {
   const smaSeriesRef = useRef(null);
   const emaSeriesRef = useRef(null);
   const lastPriceLineRef = useRef(null);
+  const lastPriceLineSeriesRef = useRef(null);
 
   const selectedLabel = useMemo(() => {
     if (!instrument) return "Select an instrument";
@@ -335,11 +336,12 @@ export default function AdvancedChartPage() {
       "heikin-ashi": heikinAshiSeriesRef.current,
     })[chartType];
     if (!series) return;
-    if (lastPriceLineRef.current) {
-      series.removePriceLine(lastPriceLineRef.current);
+    if (lastPriceLineRef.current && lastPriceLineSeriesRef.current) {
+      lastPriceLineSeriesRef.current.removePriceLine(lastPriceLineRef.current);
       lastPriceLineRef.current = null;
+      lastPriceLineSeriesRef.current = null;
     }
-    if (normalizedLastPrice !== null) {
+    if (series && normalizedLastPrice !== null) {
       lastPriceLineRef.current = series.createPriceLine({
         price: normalizedLastPrice,
         color: "#e6a23c",
@@ -348,6 +350,7 @@ export default function AdvancedChartPage() {
         axisLabelVisible: true,
         title: "LTP",
       });
+      lastPriceLineSeriesRef.current = series;
     }
   }, [normalizedLastPrice, chartType]);
   const retrievalTime = quote?.retrieved_at

@@ -1,5 +1,5 @@
 """
-Financial OS — Market Overview Engine v1.3
+Financial OS — Market Overview Engine v1.4
 
 Purpose:
 - Combine existing market indices and market movers.
@@ -153,4 +153,3 @@ def get_market_overview():
         "database_write": False,
         "next_module": "Market Workspace Integration",
     }
-}

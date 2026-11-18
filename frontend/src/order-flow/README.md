@@ -23,7 +23,7 @@ The source project's interaction/layout model has been adapted to Financial OS; 
 The Financial OS backend now adapts the production Flask gateway contract instead of expecting the obsolete normalized `/order-flow/snapshot` route.
 
 1. Read the gateway's `/instruments` CSV and validate derivative instrument metadata (token, exchange, segment, underlying, expiry, strike, option side and lot size).
-2. Select a balanced derivative subscription universe, capped at 200 tokens.
+2. Select the active Order Flow underlying's verified futures/options tokens, capped at 200; a request without a symbol uses a balanced derivative universe.
 3. Idempotently call authenticated `POST /market-stream/start` with `{"tokens":[...],"mode":3}`. The gateway worker retains its SDK connection and reconnect lifecycle.
 4. Read authenticated `GET /market-stream/snapshot`, which returns `ticks` plus `stream` status.
 5. Join each decoded SDK tick to the verified instrument master and normalize futures, options, price, volume, OI and timestamps for the existing Order Flow API.

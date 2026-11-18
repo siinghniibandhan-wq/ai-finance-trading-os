@@ -321,3 +321,9 @@
   color: var(--finos-muted, #a1a1aa);
   font-weight: 650;
 }
+
+
+.advanced-chart-indicator-pane{margin-top:12px;padding:10px 12px;border:1px solid var(--finos-border,#30343d);border-radius:10px;background:var(--t-card-bg,var(--finos-surface,#171923))}
+.advanced-chart-indicator-title{margin:0 0 6px;color:var(--finos-muted,#9ca3af);font-size:9px;font-weight:800;letter-spacing:.1em}
+.advanced-chart-indicator-canvas{width:100%;height:190px;min-height:190px}
+.advanced-chart-type-control select,.advanced-chart-control select{max-width:180px}

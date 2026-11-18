@@ -36,7 +36,7 @@ The frontend reports LIVE only when the gateway reports a verified connected str
 
 **Current upstream limitation:** the latest verified EC2 diagnostics recorded an HTTP 502 during the m.Stock WebSocket upgrade, before LOGIN or subscription acknowledgement. No live ticks were received in that diagnostic. The backend adapter can now request subscriptions and normalize returned ticks, but it cannot make the provider's WebSocket handshake succeed. Until a fresh authenticated tick is observed end-to-end, the feed must remain NOT LIVE.
 
-The adapter changes are on branch `fix/order-flow-market-stream-contract` in PR #196. The current PR head's backend regression suite passed (371 passed, 2 skipped). Full CI is not green: the frontend dependency audit reports four high-severity issues in the existing Vite/fdir/picomatch dependency chain, so frontend tests/build were skipped. The adapter is not merged or deployed. The upstream WebSocket 502 also means the feed remains NOT LIVE.
+The adapter changes are on branch `fix/order-flow-market-stream-contract` in PR #196. The current PR head's backend regression suite passed (374 passed, 2 skipped). Full CI is not green: the frontend dependency audit reports four high-severity issues in the existing Vite/fdir/picomatch dependency chain, so frontend tests/build were skipped. The adapter is not merged or deployed. The upstream WebSocket 502 also means the feed remains NOT LIVE.
 
 ## Attribution and licence
 

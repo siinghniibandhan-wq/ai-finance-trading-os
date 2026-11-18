@@ -48,6 +48,7 @@ export function buildLiveOrderFlow(snapshot, selectedSymbol = "") {
       openInterestHigh: finiteNumber(row.open_interest_high),
       openInterestLow: finiteNumber(row.open_interest_low),
       averageTradedPrice: finiteNumber(row.average_traded_price),
+      lastTradedQuantity: finiteNumber(row.last_traded_quantity),
       totalBuyQuantity,
       totalSellQuantity,
       buySellBalancePct: totalDepthQuantity > 0
@@ -73,6 +74,7 @@ export function buildLiveOrderFlow(snapshot, selectedSymbol = "") {
       volume: finiteNumber(row.volume),
       oi: finiteNumber(row.oi),
       changePct: finiteNumber(row.change_pct),
+      lastTradedQuantity: finiteNumber(row.last_traded_quantity),
       receivedAt: row.received_at || null,
       exchangeTimestamp: row.exchange_timestamp || null,
     }))

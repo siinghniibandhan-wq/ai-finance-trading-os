@@ -2528,6 +2528,7 @@ function MarketsPage() {
   const [overview, setOverview] = useState(null);
   const [busy, setBusy] = useState(true);
   const [overviewError, setOverviewError] = useState("");
+  const overviewRequestRef = useRef(false);
   const [query, setQuery] = useState("RELIANCE");
   const [results, setResults] = useState([]);
   // Selected instrument controls a focused, single-stock view.
@@ -2584,27 +2585,37 @@ function MarketsPage() {
   };
 
   const refresh = async () => {
+    // Prevent overlapping overview calls when the gateway is slow or the page
+    // becomes visible while a previous refresh is still running.
+    if (overviewRequestRef.current) return;
+    overviewRequestRef.current = true;
     setBusy(true); setOverviewError("");
     try {
-      const response = await apiFetch(`${API}/api/market-overview/`);
+      const response = await apiFetch(`${API}/api/market-overview/`, { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Market overview returned ${response.status}`);
       setOverview(data); setUpdated(new Date().toLocaleString("en-IN"));
       if (data?.status === "error") setOverviewError("Market provider returned no usable data. Check the gateway.");
       else if (Array.isArray(data?.errors) && data.errors.length) setOverviewError("Some market sources are unavailable; available results are shown.");
     } catch (e) { setOverviewError(e?.message || "Unable to load market overview."); }
-    finally { setBusy(false); }
+    finally { overviewRequestRef.current = false; setBusy(false); }
   };
   // Initial market load. Manual refresh remains available as a fallback.
   useEffect(() => { refresh(); }, []);
 
-  // Auto-refresh the market overview every 30 seconds while this page is visible.
-  // This is intentionally slower than quote refresh to reduce provider/API load.
+  // Refresh every 30 seconds and immediately when the user returns to this tab.
   useEffect(() => {
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") refresh();
     }, 30000);
-    return () => window.clearInterval(timer);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   const search = async (event) => {
@@ -2666,10 +2677,15 @@ function MarketsPage() {
     if (!selectedInstrument?.symbol) return undefined;
     const symbol = selectedInstrument.symbol;
     const marketExchange = selectedInstrument.exchange || "NSE";
-    const timer = window.setInterval(() => {
+    const refreshQuote = () => {
       if (document.visibilityState === "visible") getQuote(symbol, { exchange: marketExchange });
-    }, 10000);
-    return () => window.clearInterval(timer);
+    };
+    const timer = window.setInterval(refreshQuote, 10000);
+    document.addEventListener("visibilitychange", refreshQuote);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshQuote);
+    };
   }, [selectedInstrument?.symbol, selectedInstrument?.exchange]);
 
   // Watchlist quote refresh: use the existing quote API, preserve the last
@@ -2868,7 +2884,20 @@ function MarketsPage() {
         {requestedIndices.map((item, i) => <div key={item.label} style={{ ...card, position: "relative", overflow: "hidden", padding: "15px", borderRadius: "18px", border: "1px solid rgba(167,139,250,.18)", background: i % 2 === 0 ? "linear-gradient(145deg, rgba(124,58,237,0.24), rgba(13,18,38,.78))" : "linear-gradient(145deg, rgba(14,165,233,0.18), rgba(13,18,38,.78))", boxShadow: "0 12px 28px rgba(0,0,0,.12)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" }}><strong style={{ fontSize: "11px", letterSpacing: ".07em" }}>{item.label}</strong><span style={{ ...muted, fontSize: "10px" }}>{item.data?.status || (busy ? "Loading" : "Market index")}</span></div>
           <div style={{ fontSize: "clamp(20px, 4vw, 27px)", fontWeight: 850, marginTop: "12px", letterSpacing: "-.04em", overflowWrap: "anywhere" }}>{item.data?.last_price != null && Number.isFinite(Number(item.data.last_price)) ? Number(item.data.last_price).toLocaleString("en-IN", { maximumFractionDigits: 2 }) : busy ? "Loading…" : "Unavailable"}</div>
-          <div style={{ ...muted, marginTop: "5px", fontSize: "11px" }}>{item.data ? `${item.data.exchange || "Indian market"} · Latest available` : "Not currently returned by market API"}</div>
+          {(() => {
+            const change = Number(item.data?.change);
+            const previousClose = Number(item.data?.previous_close);
+            const providerPercent = Number(item.data?.percent_change);
+            const hasChange = item.data?.change !== null && item.data?.change !== undefined && item.data?.change !== "" && Number.isFinite(change);
+            const percent = item.data?.percent_change !== null && item.data?.percent_change !== undefined && item.data?.percent_change !== "" && Number.isFinite(providerPercent)
+              ? providerPercent
+              : (hasChange && Number.isFinite(previousClose) && previousClose > 0 ? change / previousClose * 100 : null);
+            return hasChange ? <div style={{ marginTop: "5px", fontSize: "12px", fontWeight: 700, color: change > 0 ? "var(--finos-positive)" : change < 0 ? "var(--finos-negative)" : "var(--finos-muted)" }}>
+              {change > 0 ? "+" : ""}{change.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+              {percent !== null ? ` (${percent > 0 ? "+" : ""}${percent.toFixed(2)}%)` : ""}
+            </div> : <div style={{ ...muted, marginTop: "5px", fontSize: "11px" }}>Change data unavailable from provider</div>;
+          })()}
+          <div style={{ ...muted, marginTop: "5px", fontSize: "11px" }}>{item.data ? `${item.data.exchange || "Indian market"} · ${item.data.market_timestamp ? `Market time ${new Date(item.data.market_timestamp).toLocaleTimeString("en-IN")}` : "Latest available"}` : "Not currently returned by market API"}</div>
           <div aria-hidden="true" style={{ height: "3px", borderRadius: "9px", marginTop: "14px", background: "linear-gradient(90deg, rgba(167,139,250,.95), rgba(56,189,248,.35), transparent)" }} />
         </div>)}
       </section>

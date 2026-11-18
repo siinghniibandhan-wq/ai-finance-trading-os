@@ -36,15 +36,17 @@ The browser sends the existing Financial OS access token in the WebSocket subpro
 
 Only a successful snapshot with a fresh, verified feed is displayed as LIVE. The workspace currently displays provider-backed:
 
-- Futures contract, expiry and last traded price
-- Futures volume and open interest
-- Option contracts, strike, CE/PE side, price, volume and open interest
+- Futures contract, expiry, last traded price and provider-computed percentage change
+- Futures session OHLC, volume, average traded price, open interest and provider OI high/low
+- Option contracts, strike, CE/PE side, price, provider-computed percentage change, volume and open interest
 - Aggregated CE/PE open interest by strike
 - Feed connection and freshness
 
-The current gateway adapter does not provide verified spot percentage change, historical candles, previous-session OI, OI change, PCR history, support/resistance or conviction signals. Those values are not generated or filled with demo data. Missing provider fields remain unavailable.
+The current gateway adapter does not provide verified spot percentage change, intraday historical candle series, previous-session OI, OI change, PCR history, support/resistance or conviction signals. Those values are not generated or filled with demo data. Missing provider fields remain unavailable.
 
-Unknown instrument tokens are not assigned guessed symbols. Price scaling is not applied a second time to SDK-decoded prices.
+The adapter follows the bundled Type A SDK field names: `last_price`, `volume_traded`, `change`, `ohlc`, and `open_interest`. The SDK currently emits its `open_interest`, `open_interest_high` and `open_interest_low` values as one-element tuples; the adapter unwraps only that documented one-element representation. The SDK's `change` is its percentage change against the OHLC close, so it is exposed as `change_pct`. Price scaling is not applied a second time to SDK-decoded values.
+
+Unknown instrument tokens are not assigned guessed symbols.
 
 ## Deployment and verification requirements
 

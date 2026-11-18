@@ -9,6 +9,7 @@ Purpose:
 """
 
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from fastapi import APIRouter
 
@@ -146,138 +147,86 @@ def fetch_overview_movers(mover_type: str):
 
 @router.get("/")
 def get_market_overview():
-
-    indices = []
-    gainers = []
-    losers = []
+    # Run independent Type A provider requests concurrently. A slow index or
+    # movers response must not hold up every other market card in the overview.
+    index_results = {}
+    mover_results = {"gainers": [], "losers": []}
     errors = []
 
-    # --------------------------------------------------------
-    # 1. FETCH MARKET INDICES
-    # NIFTY 50 and SENSEX are fetched independently.
-    # --------------------------------------------------------
+    jobs = {}
+    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="market-overview") as executor:
+        for index in SUPPORTED_INDICES:
+            future = executor.submit(fetch_index, index)
+            jobs[future] = ("index", index)
 
-    for index in SUPPORTED_INDICES:
+        for mover_type in ("gainers", "losers"):
+            future = executor.submit(fetch_overview_movers, mover_type)
+            jobs[future] = ("movers", mover_type)
 
-        try:
-            index_data = fetch_index(index)
-            indices.append(index_data)
+        for future in as_completed(jobs):
+            source_type, source = jobs[future]
+            try:
+                result = future.result()
+                if source_type == "index":
+                    index_results[source["name"]] = result
+                else:
+                    mover_results[source] = result
+            except Exception as exc:
+                if source_type == "index":
+                    errors.append({
+                        "source": "market_indices",
+                        "name": source["name"],
+                        "message": str(exc),
+                    })
+                else:
+                    errors.append({
+                        "source": "market_movers",
+                        "type": source,
+                        "message": str(exc),
+                    })
 
-        except Exception as exc:
-            errors.append({
-                "source": "market_indices",
-                "name": index["name"],
-                "message": str(exc),
-            })
-
-    # --------------------------------------------------------
-    # 2. FETCH GAINERS AND LOSERS
-    # Uses the existing provider function directly.
-    # --------------------------------------------------------
-
-    for mover_type, target in (
-        ("gainers", gainers),
-        ("losers", losers),
-    ):
-
-        try:
-            mover_data = fetch_overview_movers(
-                mover_type
-            )
-
-            target.extend(mover_data)
-
-        except Exception as exc:
-            errors.append({
-                "source": "market_movers",
-                "type": mover_type,
-                "message": str(exc),
-            })
-
-    # --------------------------------------------------------
-    # 3. DETERMINE OVERALL RESPONSE STATUS
-    # --------------------------------------------------------
+    # Preserve the configured benchmark order regardless of completion order.
+    indices = [
+        index_results[index["name"]]
+        for index in SUPPORTED_INDICES
+        if index["name"] in index_results
+    ]
+    gainers = mover_results["gainers"]
+    losers = mover_results["losers"]
+    errors.sort(key=lambda item: (item.get("source", ""), item.get("name", item.get("type", ""))))
 
     if errors and not indices and not gainers and not losers:
-
         response_status = "error"
-
     elif errors:
-
         response_status = "partial"
-
     else:
-
         response_status = "success"
-
-    # --------------------------------------------------------
-    # 4. RETURN CONSOLIDATED MARKET OVERVIEW
-    # --------------------------------------------------------
 
     return {
         "status": response_status,
-
         "engine": "Market Overview Engine",
-        "version": "1.2",
-
+        "version": "1.3",
         "read_only": True,
-
-        # ----------------------------------------------------
-        # Market status
-        # ----------------------------------------------------
-
         "market_status": {
             "status": "unknown",
             "source": "not_connected",
         },
-
-        # ----------------------------------------------------
-        # Market indices
-        # ----------------------------------------------------
-
         "indices": indices,
-
-        # ----------------------------------------------------
-        # Market summary
-        # ----------------------------------------------------
-
         "market_summary": {
             "gainers": len(gainers),
             "losers": len(losers),
             "unchanged": 0,
         },
-
-        # ----------------------------------------------------
-        # Gainers and losers
-        # ----------------------------------------------------
-
         "market_movers": {
             "gainers": gainers,
             "losers": losers,
         },
-
-        # ----------------------------------------------------
-        # Data source information
-        # ----------------------------------------------------
-
         "data_sources": {
             "primary": "m.Stock via m.Stock Gateway",
             "indices": "Market Indices Engine",
             "market_movers": "Market Movers Engine",
         },
-
-        # ----------------------------------------------------
-        # Timestamp
-        # ----------------------------------------------------
-
-        "last_updated": datetime.now(
-            timezone.utc
-        ).isoformat(),
-
-        # ----------------------------------------------------
-        # Registered backend module indicators
-        # ----------------------------------------------------
-
+        "last_updated": datetime.now(timezone.utc).isoformat(),
         "modules": {
             "overview": True,
             "quote": True,
@@ -288,14 +237,7 @@ def get_market_overview():
             "market_movers": True,
             "market_indices": True,
         },
-
-        # ----------------------------------------------------
-        # Errors, if any
-        # ----------------------------------------------------
-
         "errors": errors,
-
         "database_write": False,
-
         "next_module": "Market Workspace Integration",
     }

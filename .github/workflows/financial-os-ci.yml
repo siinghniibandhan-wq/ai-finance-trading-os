@@ -35,13 +35,14 @@ jobs:
       - name: Test Order Flow data model
         working-directory: frontend
         run: npm run test:market-flow
-      # Vite/fdir/picomatch are build-only devDependencies, not shipped
-      # in the production bundle. Gate production runtime dependencies here.
-      # Keep the upstream GHSA visible as an open dev-tooling risk until
-      # picomatch publishes a patched release; do not pin an affected version.
-      - name: Audit production dependencies
+      - name: Test picomatch ReDoS regression guard
         working-directory: frontend
-        run: npm audit --omit=dev --audit-level=high
+        run: npm run test:security
+      # Audit the complete dependency tree. The picomatch override points to
+      # our source-patched local fork; do not narrow or skip dev dependencies.
+      - name: Audit all frontend dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high
 
   backend:
     name: Backend regression tests

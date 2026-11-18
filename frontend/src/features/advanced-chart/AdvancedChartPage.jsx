@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CandlestickSeries, HistogramSeries, createChart } from "lightweight-charts";
 import { loadChartHistory, loadLatestQuote, searchChartInstruments } from "./api";
-import { getDefaultChartRange, normalizeCandles } from "./model";
+import { getChartDimensions, getDefaultChartRange, normalizeCandles } from "./model";
 import "./advanced-chart.css";
 
 const INTERVALS = [
@@ -78,15 +78,18 @@ export default function AdvancedChartPage() {
     setSearchError("");
     setQuote(null);
     setQuoteError("");
+    setQuoteBusy(false);
   };
 
   useEffect(() => {
     if (!instrument) {
       setCandles([]);
+      setHistoryLoading(false);
       setHistoryError("");
       return undefined;
     }
     let current = true;
+    setCandles([]);
     setHistoryLoading(true);
     setHistoryError("");
     loadChartHistory({
@@ -151,8 +154,7 @@ export default function AdvancedChartPage() {
     if (!container) return undefined;
 
     const chart = createChart(container, {
-      width: Math.max(container.clientWidth, 320),
-      height: 520,
+      ...getChartDimensions(container.clientWidth, container.clientHeight),
       layout: {
         background: { color: "transparent" },
         attributionLogo: true,
@@ -196,7 +198,7 @@ export default function AdvancedChartPage() {
     volumeSeriesRef.current = volumeSeries;
 
     const resize = () => {
-      if (container.clientWidth > 0) chart.applyOptions({ width: container.clientWidth });
+      chart.applyOptions(getChartDimensions(container.clientWidth, container.clientHeight));
     };
     const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
     observer?.observe(container);
@@ -227,6 +229,9 @@ export default function AdvancedChartPage() {
   const retrievalTime = quote?.retrieved_at
     ? new Date(quote.retrieved_at).toLocaleString("en-IN")
     : "Not available";
+  const gatewayCacheAge = Number.isFinite(Number(quote?.cache_age_seconds))
+    ? `${Number(quote.cache_age_seconds).toFixed(1)}s`
+    : "Not reported";
 
   return (
     <main className="advanced-chart-page">
@@ -283,6 +288,7 @@ export default function AdvancedChartPage() {
         <div><span>LAST TRADED PRICE</span><strong>{lastPrice === null || lastPrice === undefined ? "—" : `₹${money(lastPrice)}`}</strong></div>
         <div><span>QUOTE SOURCE</span><strong>{quote?.source?.provider || "Awaiting quote"}</strong></div>
         <div><span>QUOTE RETRIEVED</span><strong>{retrievalTime}</strong></div>
+        <div><span>GATEWAY CACHE AGE</span><strong>{gatewayCacheAge}</strong></div>
         <div><span>QUOTE MODE</span><strong>{quote ? "10s snapshot polling" : "Not connected"}</strong></div>
       </section>
       {quoteError && <div className="advanced-chart-warning" role="status">{quoteError}{quote ? " · Showing the last successful quote." : ""}</div>}

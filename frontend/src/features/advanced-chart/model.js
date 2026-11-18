@@ -146,3 +146,32 @@ export function buildInstrumentSearchParams(query, exchange = "ALL") {
     product_type: "Stocks",
   });
 }
+
+/**
+ * Derive Heikin-Ashi display candles from validated provider OHLC candles.
+ * Source candles remain unchanged; no price observations are invented.
+ */
+export function calculateHeikinAshi(candles) {
+  if (!Array.isArray(candles) || !candles.length) return [];
+  const result = [];
+  let previousOpen = null;
+  let previousClose = null;
+  for (const candle of candles) {
+    const { time, open, high, low, close } = candle || {};
+    if (!Number.isFinite(time) || [open, high, low, close].some((value) => !Number.isFinite(value)) ||
+        open <= 0 || high < Math.max(open, close, low) || low > Math.min(open, close, high)) return [];
+    const haClose = (open + high + low + close) / 4;
+    const haOpen = previousOpen === null ? (open + close) / 2 : (previousOpen + previousClose) / 2;
+    const point = {
+      time,
+      open: haOpen,
+      high: Math.max(high, haOpen, haClose),
+      low: Math.min(low, haOpen, haClose),
+      close: haClose,
+    };
+    result.push(point);
+    previousOpen = haOpen;
+    previousClose = haClose;
+  }
+  return result;
+}

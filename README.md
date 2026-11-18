@@ -251,7 +251,7 @@ AWS capabilities to inventory and govern:
 - CloudWatch log groups, retention, metrics and alarms.
 - WAF or equivalent edge protections where deployed.
 
-Do not expose backend or gateway listeners publicly. Restrict database access to the backend. Keep secrets server-side. Never treat the provider's `awselb/2.0` WebSocket response as evidence that this application owns an AWS load balancer.
+Do not expose backend or gateway listeners publicly. Restrict database access to the backend. Keep secrets server-side.
 
 The detailed inventory, safeguards and operational checklist live in [SECURITY_OPERATIONS.md](SECURITY_OPERATIONS.md).
 

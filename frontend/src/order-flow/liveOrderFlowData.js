@@ -34,6 +34,18 @@ export function buildLiveOrderFlow(snapshot, selectedSymbol = "") {
       price: finiteNumber(row.price),
       volume: finiteNumber(row.volume),
       oi: finiteNumber(row.oi),
+      changePct: finiteNumber(row.change_pct),
+      ohlc: row.ohlc && typeof row.ohlc === "object" ? {
+        open: finiteNumber(row.ohlc.open),
+        high: finiteNumber(row.ohlc.high),
+        low: finiteNumber(row.ohlc.low),
+        close: finiteNumber(row.ohlc.close),
+      } : null,
+      openInterestHigh: finiteNumber(row.open_interest_high),
+      openInterestLow: finiteNumber(row.open_interest_low),
+      averageTradedPrice: finiteNumber(row.average_traded_price),
+      totalBuyQuantity: finiteNumber(row.total_buy_quantity),
+      totalSellQuantity: finiteNumber(row.total_sell_quantity),
       receivedAt: row.received_at || null,
       exchangeTimestamp: row.exchange_timestamp || null,
     }))
@@ -52,6 +64,7 @@ export function buildLiveOrderFlow(snapshot, selectedSymbol = "") {
       price: finiteNumber(row.price),
       volume: finiteNumber(row.volume),
       oi: finiteNumber(row.oi),
+      changePct: finiteNumber(row.change_pct),
       receivedAt: row.received_at || null,
       exchangeTimestamp: row.exchange_timestamp || null,
     }))
@@ -104,4 +117,10 @@ export function formatMarketTimestamp(value) {
     timeStyle: "medium",
     timeZone: "Asia/Kolkata",
   });
+}
+
+export function formatMarketPercent(value) {
+  const number = finiteNumber(value);
+  if (number === null) return "—";
+  return `${number > 0 ? "+" : ""}${number.toFixed(2)}%`;
 }

@@ -149,3 +149,21 @@ test("normalizes numeric Unix timestamps supplied as strings", async () => {
     { time: 1794973500, open: 100, high: 102, low: 99, close: 101, volume: 10 },
   ]);
 });
+
+test("builds Heikin-Ashi candles from provider OHLC without changing source candles", async () => {
+  const { calculateHeikinAshi } = await import("./model.js");
+  const source = [
+    { time: 1, open: 10, high: 14, low: 8, close: 12 },
+    { time: 2, open: 12, high: 16, low: 10, close: 14 },
+  ];
+  assert.deepEqual(calculateHeikinAshi(source), [
+    { time: 1, open: 11, high: 14, low: 8, close: 11 },
+    { time: 2, open: 11, high: 16, low: 10, close: 13 },
+  ]);
+  assert.equal(source[0].open, 10);
+});
+
+test("returns no Heikin-Ashi data for malformed OHLC input", async () => {
+  const { calculateHeikinAshi } = await import("./model.js");
+  assert.deepEqual(calculateHeikinAshi([{ time: 1, open: 10, high: 9, low: 8, close: 11 }]), []);
+});

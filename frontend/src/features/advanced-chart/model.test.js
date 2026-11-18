@@ -106,3 +106,13 @@ test("normalizes a real quote price for the chart last-price line", async () => 
   assert.equal(normalizeQuotePrice({ quote: { last_price: "not-a-price" } }), null);
   assert.equal(normalizeQuotePrice(null), null);
 });
+
+
+test("builds instrument search parameters with an explicit supported exchange filter", async () => {
+  const { buildInstrumentSearchParams } = await import("./model.js");
+  assert.deepEqual(Object.fromEntries(buildInstrumentSearchParams("  reliance ", "NSE")), {
+    query: "reliance", exchange: "NSE", limit: "20", product_type: "Stocks",
+  });
+  assert.equal(buildInstrumentSearchParams("TCS", "BSE").get("exchange"), "BSE");
+  assert.equal(buildInstrumentSearchParams("TCS", "INVALID").get("exchange"), "ALL");
+});

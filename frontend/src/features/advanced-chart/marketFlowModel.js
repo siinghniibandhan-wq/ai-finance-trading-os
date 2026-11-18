@@ -1,0 +1,55 @@
+const finite = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
+/**
+ * Convert only provider-supplied market movers into directional flow rows.
+ * Direction is based on the provider's percent_change; no flow volume or
+ * capital movement is inferred from price change.
+ */
+export function normalizeMarketFlow(payload) {
+  const raw = payload?.market_movers || {};
+  const groups = { bullish: [], bearish: [], unchanged: [] };
+
+  for (const [key, target] of [["gainers", "bullish"], ["losers", "bearish"]]) {
+    const rows = Array.isArray(raw[key]) ? raw[key] : [];
+    for (const row of rows) {
+      const symbol = String(row?.symbol || "").trim().toUpperCase();
+      const exchange = String(row?.exchange || "").trim().toUpperCase();
+      const lastPrice = finite(row?.ltp);
+      const changePercent = finite(row?.percent_change);
+      if (!symbol || !["NSE", "BSE"].includes(exchange) || lastPrice === null ||
+          lastPrice <= 0 || changePercent === null) continue;
+      const direction = changePercent > 0 ? "bullish" : changePercent < 0 ? "bearish" : "unchanged";
+      groups[direction].push({
+        symbol,
+        exchange,
+        name: String(row?.name || symbol),
+        lastPrice,
+        changePercent,
+        volume: finite(row?.volume),
+      });
+    }
+  }
+
+  const sortByMagnitude = (a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent);
+  groups.bullish.sort(sortByMagnitude);
+  groups.bearish.sort(sortByMagnitude);
+  return groups;
+}
+
+export function summarizeMarketFlow(groups) {
+  const bullish = Array.isArray(groups?.bullish) ? groups.bullish.length : 0;
+  const bearish = Array.isArray(groups?.bearish) ? groups.bearish.length : 0;
+  const unchanged = Array.isArray(groups?.unchanged) ? groups.unchanged.length : 0;
+  return {
+    bullish,
+    bearish,
+    unchanged,
+    advancingShare: bullish + bearish + unchanged
+      ? bullish / (bullish + bearish + unchanged)
+      : null,
+  };
+}

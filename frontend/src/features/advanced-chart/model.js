@@ -62,3 +62,9 @@ export function getDefaultChartRange(now = new Date(), calendarDays = 5) {
   from.setDate(from.getDate() - calendarDays);
   return { from: formatLocalDate(from), to: formatLocalDate(to) };
 }
+
+export function getChartDimensions(width, height) {
+  const safeWidth = Number.isFinite(width) && width > 0 ? Math.max(width, 320) : 320;
+  const safeHeight = Number.isFinite(height) && height > 0 ? height : 520;
+  return { width: safeWidth, height: safeHeight };
+}

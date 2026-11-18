@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CandlestickSeries, HistogramSeries, LineSeries, createChart } from "lightweight-charts";
 import { loadChartHistory, loadLatestQuote, searchChartInstruments } from "./api";
-import { calculateEMA, calculateSMA, getChartDimensions, getDefaultChartRange, normalizeCandles } from "./model";
+import { calculateEMA, calculateSMA, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles } from "./model";
 import "./advanced-chart.css";
 
 const INTERVALS = [
@@ -38,6 +38,7 @@ export default function AdvancedChartPage() {
   const [quoteBusy, setQuoteBusy] = useState(false);
   const [showSma, setShowSma] = useState(false);
   const [showEma, setShowEma] = useState(false);
+  const [hoveredCandle, setHoveredCandle] = useState(null);
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const candleSeriesRef = useRef(null);
@@ -213,6 +214,16 @@ export default function AdvancedChartPage() {
     volumeSeries.priceScale().applyOptions({
       scaleMargins: { top: 0.82, bottom: 0 },
     });
+    const onCrosshairMove = (param) => {
+      const candle = param?.seriesData?.get(candleSeries);
+      if (!candle) {
+        setHoveredCandle(null);
+        return;
+      }
+      const volume = param.seriesData.get(volumeSeries);
+      setHoveredCandle({ ...candle, volume: volume?.value ?? null });
+    };
+    chart.subscribeCrosshairMove(onCrosshairMove);
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
@@ -229,6 +240,7 @@ export default function AdvancedChartPage() {
     return () => {
       observer?.disconnect();
       window.removeEventListener("resize", resize);
+      chart.unsubscribeCrosshairMove(onCrosshairMove);
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
@@ -240,6 +252,7 @@ export default function AdvancedChartPage() {
 
   useEffect(() => {
     if (!candleSeriesRef.current || !volumeSeriesRef.current || !smaSeriesRef.current || !emaSeriesRef.current) return;
+    setHoveredCandle(null);
     candleSeriesRef.current.setData(candles);
     volumeSeriesRef.current.setData(candles.map((candle) => ({
       time: candle.time,
@@ -266,6 +279,7 @@ export default function AdvancedChartPage() {
   const gatewayCacheAge = hasGatewayCacheAge
     ? `${Number(quote.cache_age_seconds).toFixed(1)}s`
     : "Not reported";
+  const readoutCandle = hoveredCandle || candles[candles.length - 1] || null;
 
   return (
     <main className="advanced-chart-page">
@@ -347,6 +361,14 @@ export default function AdvancedChartPage() {
         </div>
         {historyError && <div className="advanced-chart-warning" role="status">{historyError}</div>}
         {(showSma || showEma) && candles.length < 20 && <div className="advanced-chart-message" role="status">20-period overlays appear after at least 20 valid candles are available.</div>}
+        <div className="advanced-chart-ohlcv" aria-label="Selected candle OHLCV" aria-live="polite">
+          <span className="advanced-chart-ohlcv-time">{readoutCandle ? formatChartTime(readoutCandle.time) : "—"}</span>
+          <span>O <strong>{readoutCandle ? money(readoutCandle.open) : "—"}</strong></span>
+          <span>H <strong>{readoutCandle ? money(readoutCandle.high) : "—"}</strong></span>
+          <span>L <strong>{readoutCandle ? money(readoutCandle.low) : "—"}</strong></span>
+          <span>C <strong>{readoutCandle ? money(readoutCandle.close) : "—"}</strong></span>
+          <span>V <strong>{readoutCandle?.volume === null || readoutCandle?.volume === undefined ? "—" : Number(readoutCandle.volume).toLocaleString("en-IN")}</strong></span>
+        </div>
         <div className="advanced-chart-canvas" ref={chartContainerRef} aria-label="Interactive candlestick and volume chart" />
         <div className="advanced-chart-footnote">
           Historical candles: m.Stock provider data. Quote updates: 10-second REST snapshots, not a continuous WebSocket tick stream. Quote retrieval time is not an exchange timestamp. TradingView Lightweight Charts™ Copyright (c) 2025 TradingView, Inc. · <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView</a>.

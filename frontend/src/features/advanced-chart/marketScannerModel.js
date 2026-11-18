@@ -8,7 +8,7 @@ const finite = (value) => {
  * Normalize only provider-returned m.Stock market-mover rows.
  * Missing identifiers, exchanges, prices or percentage changes are rejected.
  */
-export function normalizeMoverRows(rawRows) {
+export function normalizeMoverRows(rawRows, expectedType = null) {
   if (!Array.isArray(rawRows)) return [];
   const rows = [];
   for (const row of rawRows) {
@@ -18,6 +18,8 @@ export function normalizeMoverRows(rawRows) {
     const changePercent = finite(row?.percent_change);
     if (!symbol || !["NSE", "BSE"].includes(exchange) ||
         lastPrice === null || lastPrice <= 0 || changePercent === null) continue;
+    if (expectedType === "losers" && changePercent >= 0) continue;
+    if (expectedType === "gainers" && changePercent <= 0) continue;
     rows.push({
       symbol,
       exchange,

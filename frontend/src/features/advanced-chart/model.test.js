@@ -97,3 +97,12 @@ test("formats Lightweight Charts business-day values without timezone conversion
   assert.equal(formatChartTime({ year: 2026, month: 11, day: 19 }), "19/11/2026");
   assert.equal(formatChartTime(null), "—");
 });
+
+
+test("normalizes a real quote price for the chart last-price line", async () => {
+  const { normalizeQuotePrice } = await import("./model.js");
+  assert.equal(normalizeQuotePrice({ quote: { last_price: "123.45" } }), 123.45);
+  assert.equal(normalizeQuotePrice({ quote: { last_price: 0 } }), null);
+  assert.equal(normalizeQuotePrice({ quote: { last_price: "not-a-price" } }), null);
+  assert.equal(normalizeQuotePrice(null), null);
+});

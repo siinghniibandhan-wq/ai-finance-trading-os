@@ -38,7 +38,6 @@ MSTOCK_GATEWAY_URL = os.getenv(
     "MSTOCK_GATEWAY_URL",
     "http://54.153.201.74:8000",
 ).rstrip("/")
-MSTOCK_GATEWAY_SECRET = os.getenv("MSTOCK_GATEWAY_SECRET", "").strip()
 
 
 # ============================================================
@@ -168,7 +167,6 @@ def get_market_history(
     try:
         search_request = Request(
             search_url,
-            headers={"X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET},
             method="GET",
         )
 
@@ -281,7 +279,6 @@ def get_market_history(
     try:
         historical_request = Request(
             f"{historical_url}?{query_string}",
-            headers={"X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET},
             method="GET",
         )
 

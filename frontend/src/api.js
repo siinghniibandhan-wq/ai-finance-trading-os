@@ -3,6 +3,8 @@
 // AWS backend + session management
 // ============================================================
 
+// Backend/API origin only. This is not the public Wealth Manager website.
+// The public frontend is hosted by AWS Amplify.
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://wealthmanager.duckdns.org";

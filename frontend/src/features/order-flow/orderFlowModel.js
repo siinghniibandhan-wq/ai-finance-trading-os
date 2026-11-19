@@ -121,3 +121,28 @@ export function rankSectorIndices(sectors, quotes) {
     return bValue - aValue;
   });
 }
+
+
+/** Sum only provider-reported volume for the current returned mover set. */
+export function summarizeMoverVolume(rows) {
+  const summary = {
+    bullishVolume: 0, bearishVolume: 0, unchangedVolume: 0,
+    bullishCount: 0, bearishCount: 0, unchangedCount: 0, volumeReported: 0,
+  };
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const volume = num(row?.volume);
+    if (volume === null || volume < 0) continue;
+    if (row.direction === "bullish") {
+      summary.bullishVolume += volume;
+      summary.bullishCount += 1;
+    } else if (row.direction === "bearish") {
+      summary.bearishVolume += volume;
+      summary.bearishCount += 1;
+    } else if (row.direction === "unchanged") {
+      summary.unchangedVolume += volume;
+      summary.unchangedCount += 1;
+    } else continue;
+    summary.volumeReported += 1;
+  }
+  return summary;
+}

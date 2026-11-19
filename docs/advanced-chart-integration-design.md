@@ -38,7 +38,13 @@ React application (frontend/src/App.jsx)
   |       -> GET /api/market-quote/
   |
   +-- Options Hub
-        OptionsHubPage.jsx (currently gated; no connected options API)
+        OptionsHubPage.jsx
+          -> authenticated apiFetch via options-hub/api.js
+          -> GET /api/options-hub/master and /api/options-hub/chain
+
+FastAPI options_hub.py (private authenticated router)
+  -> m.Stock Gateway /options/master and /options/chain
+  -> gateway-owned Script Master parsing and batched REST contract quotes
 
 FastAPI backend (backend/app/main.py; private routers behind the existing
 authenticated-user dependency)
@@ -115,22 +121,23 @@ Indicators are derived from loaded source candles. VWAP is an intraday benchmark
 
 ## 6. Options and futures capability boundary
 
-The current Options Hub is a gated workspace. The Financial OS repository does not yet have a verified, connected Type A option-chain backend route. Provider documentation describes Type A option-chain master/data routes, but the master is marked "Coming Soon"; live account entitlement, response schema and field availability are not established.
+The Options Hub now has an additive, authenticated REST adapter and an independently authored strike-chain interface. It requests the gateway routes `/options/master` and `/options/chain`, which are present in the saved options-enabled gateway source variant. This repository branch does not prove that those routes are deployed on the active AWS gateway; a 404 is surfaced as an explicit gateway-unavailable state. The master/data provider APIs are documented but their runtime availability and account entitlement remain unverified.
 
-The following must remain unavailable until the real REST payload is verified and normalized:
+The current gateway options-chain variant builds CE/PE contracts from the provider Script Master and requests contract LTP/volume in batches. OI is passed through only if the quote response supplies it. The Financial OS model calculates PCR, Max Pain and the mirrored strike OI chart only when every displayed strike has both CE and PE contracts with valid non-negative OI. Otherwise those analytics are withheld.
 
-- expiry and contract mapping;
-- CE/PE strike prices and per-contract quotes;
-- open interest and OI change;
+The following must remain unavailable until the real REST payload supplies and verifies them:
+
+- bid/ask and quote fields not present in the gateway response;
+- OI change and historical OI observations;
 - futures price/OI observations;
 - long build-up, short build-up, short covering and long unwinding;
-- PCR, Max Pain, OI concentration and writer positioning;
+- OI concentration and writer positioning;
 - OI-derived support/resistance;
 - historical OI series, IV and Greeks.
 
 A single OI snapshot cannot be presented as historical OI change. Equity volume cannot substitute for futures OI. Spot prices cannot substitute for futures prices. Do not add placeholder charts or synthetic values to make these screens appear active.
 
-Gateway variants saved in the Library are not proof that the deployed AWS gateway exposes their routes. Before wiring derivatives, verify the exact deployed gateway source/version, authenticated upstream response, account entitlement, field definitions, units, expiry/token mapping, rate limits and failure behaviour. Any gateway change is a separate controlled change; do not change live secrets or systemd configuration as part of this repository-only branch.
+The current adapter expects the saved gateway options-enabled route contract. Before describing the Options Hub as live, verify the exact deployed gateway source/version, authenticated upstream response, account entitlement, field definitions, units, expiry/token mapping, quote coverage, rate limits and failure behaviour. Any gateway deployment/change is a separate controlled change; do not change live secrets or systemd configuration as part of this repository-only branch.
 
 ## 7. Capabilities not provided by current REST contracts
 
@@ -144,7 +151,9 @@ These are provider/data-contract gaps, not frontend components that can safely b
 | Historical sector rotation | Current sector index snapshot only | Verified index instrument tokens and daily historical index OHLC |
 | Delivery statistics | Not in current quote/mover contract | Documented provider REST endpoint and field contract |
 | Futures OI history | Not established by current history route | Verified futures contract mapping and historical OI source |
-| Options OI/IV/Greeks | Option-chain route not wired/verified | Authenticated real response with defined fields and units |
+| Option chain LTP/volume | Financial OS REST adapter now calls gateway options routes; deployment and provider coverage unverified | Authenticated live gateway response and quote coverage |
+| Options OI/PCR/Max Pain | Calculations implemented only for complete two-sided provider OI; current gateway may return null OI | Authenticated OI fields for every CE/PE contract with verified units |
+| Options IV/Greeks/bid-ask/OI change | Not supplied by the current saved gateway quote adapter | Documented provider REST fields and verified response |
 | Historical OI change | No historical OI observations | Time-series source or controlled snapshot collection |
 | Full-market turnover | Mover rows are a sample | Complete exchange-level turnover source |
 

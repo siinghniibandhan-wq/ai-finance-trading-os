@@ -45,3 +45,18 @@ export function normalizeSectorMovers(payload) {
   const sector = String(payload?.sector?.name || "").trim() || null;
   return rows.map(row => ({ ...row, sector }));
 }
+
+
+/** Filter only rows present in the validated provider snapshot. */
+export function filterOrderFlow(rows, filters = {}) {
+  const query = String(filters.query || "").trim().toLowerCase();
+  const exchange = String(filters.exchange || "ALL").trim().toUpperCase();
+  const direction = String(filters.direction || "ALL").trim().toLowerCase();
+  return (Array.isArray(rows) ? rows : []).filter(row => {
+    if (exchange !== "ALL" && row.exchange !== exchange) return false;
+    if (direction !== "all" && row.direction !== direction) return false;
+    if (!query) return true;
+    return [row.symbol, row.name, row.exchange, row.sector]
+      .some(value => String(value || "").toLowerCase().includes(query));
+  });
+}

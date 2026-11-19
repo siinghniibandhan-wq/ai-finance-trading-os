@@ -104,3 +104,19 @@ export function summarizeSectorMoverSample(rows) {
     unchanged: changes.filter(value => value === 0).length,
   };
 }
+
+
+/** Rank sector labels only by provider-returned index percentage changes. */
+export function rankSectorIndices(sectors, quotes) {
+  const byKey = new Map((Array.isArray(quotes) ? quotes : []).map(item => [item.key, item]));
+  return [...(Array.isArray(sectors) ? sectors : [])].sort((a, b) => {
+    const av = byKey.get(a.key)?.percent_change;
+    const bv = byKey.get(b.key)?.percent_change;
+    const aValue = av === null || av === undefined || !Number.isFinite(Number(av)) ? null : Number(av);
+    const bValue = bv === null || bv === undefined || !Number.isFinite(Number(bv)) ? null : Number(bv);
+    if (aValue === null && bValue === null) return 0;
+    if (aValue === null) return 1;
+    if (bValue === null) return -1;
+    return bValue - aValue;
+  });
+}

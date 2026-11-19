@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadChartHistory, loadMarketFlowSnapshot } from "../advanced-chart/api.js";
-import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries, summarizeSectorMoverSample, buildSectorFlowRows, summarizeMoverVolume } from "./orderFlowModel.js";
+import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries, summarizeSectorMoverSample, buildSectorFlowRows, summarizeMoverVolume, buildHistoricalCandleGeometry } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
@@ -240,43 +240,39 @@ function VolumeParticipation({ rows, label = "MARKET" }) {
   </section>;
 }
 
-function HistoricalFlowPanel({ series, loading, error, symbol }) {
-  if (loading) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p>Loading verified historical candles…</p></section>;
+function HistoricalFlowPanel({ series, loading, error, symbol, range, onRangeChange }) {
+  const geometry = useMemo(() => buildHistoricalCandleGeometry(series), [series]);
+  if (loading) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p>Loading verified daily candles…</p></section>;
   if (error) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p className="mfb-alert">{error}</p></section>;
   if (!series.length) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p>No historical OHLCV observations returned for {symbol}. No chart is fabricated.</p></section>;
 
-  const values = series.map(row => row.relativeChange);
-  const min = Math.min(0, ...values);
-  const max = Math.max(0, ...values);
-  const range = Math.max(0.01, max - min);
-  const points = series.map((row, index) => {
-    const x = 24 + (series.length === 1 ? 0 : index / (series.length - 1) * 672);
-    const y = 112 - ((row.relativeChange - min) / range) * 88;
-    return `${x},${y}`;
-  }).join(" ");
   const latest = series[series.length - 1];
-  const volumes = series.map(row => row.volume).filter(value => value !== null);
-  const maxVolume = Math.max(1, ...volumes);
+  const first = series[0];
+  const periodChange = first.close > 0 ? ((latest.close - first.close) / first.close) * 100 : null;
   return <section className="mfb-history">
-    <div className="mfb-history-head"><div><small>05 / HISTORICAL PRICE FLOW</small><b>{symbol} · daily candles</b></div>
-      <strong className={latest.relativeChange >= 0 ? "up" : "down"}>{pct(latest.relativeChange)} since first candle</strong></div>
-    <div className="mfb-history-ohlc"><span>O ₹{latest.open === null ? "—" : fmt(latest.open)}</span><span>H ₹{latest.high === null ? "—" : fmt(latest.high)}</span><span>L ₹{latest.low === null ? "—" : fmt(latest.low)}</span><span>C ₹{fmt(latest.close)}</span></div>
-    <svg viewBox="0 0 720 172" role="img" aria-label={`Historical relative price movement and actual volume for ${symbol}`}>
-      <line x1="24" x2="696" y1="112" y2="112" className="mfb-history-axis"/>
-      <polyline points={points} className="mfb-history-line" fill="none"/>
-      {series.map((row, index) => {
-        const x = 24 + (series.length === 1 ? 0 : index / (series.length - 1) * 672);
-        const height = row.volume === null ? 0 : row.volume / maxVolume * 30;
-        return <g key={String(row.timestamp) + index}>
-          <rect x={x - 2} y={158 - height} width="4" height={height} className="mfb-history-volume"/>
-          <title>{(Number.isFinite(Number(row.timestamp)) ? new Date(Number(row.timestamp) * (Number(row.timestamp) < 100000000000 ? 1000 : 1)) : new Date(row.timestamp)).toLocaleDateString("en-IN")} · ₹{fmt(row.close)} · {row.volume === null ? "Volume unavailable" : "Volume " + fmt(row.volume, 0)}</title>
-        </g>;
-      })}
-      <text x="24" y="12" className="mfb-history-label">{pct(min)}</text>
-      <text x="696" y="12" textAnchor="end" className="mfb-history-label">{pct(max)}</text>
-      <text x="24" y="170" className="mfb-history-label">VOLUME</text>
+    <div className="mfb-history-head"><div><small>05 / HISTORICAL PRICE FLOW</small><b>{symbol} · daily candlestick chart</b></div>
+      <strong className={periodChange === null ? "" : periodChange >= 0 ? "up" : "down"}>{periodChange === null ? "—" : pct(periodChange)} over selected period</strong></div>
+    <div className="mfb-history-toolbar" role="group" aria-label="Historical chart range">
+      <span>DAILY · REST HISTORY</span>
+      <div>{[["1M",30],["3M",90],["6M",180],["1Y",365],["5Y",1825]].map(([label]) =>
+        <button key={label} type="button" aria-pressed={range === label} className={range === label ? "selected" : ""} onClick={() => onRangeChange(label)}>{label}</button>
+      )}</div>
+    </div>
+    <div className="mfb-history-ohlc"><span>O ₹{latest.open === null ? "—" : fmt(latest.open)}</span><span>H ₹{latest.high === null ? "—" : fmt(latest.high)}</span><span>L ₹{latest.low === null ? "—" : fmt(latest.low)}</span><span>C ₹{fmt(latest.close)}</span><span>V {latest.volume === null ? "—" : fmt(latest.volume, 0)}</span></div>
+    <svg viewBox="0 0 720 196" role="img" aria-label={`Daily OHLC candlestick and volume chart for ${symbol}`}>
+      <line x1="24" x2="696" y1="130" y2="130" className="mfb-history-axis"/>
+      <line x1="24" x2="696" y1="18" y2="18" className="mfb-history-grid"/>
+      {geometry.map((candle, index) => <g key={String(candle.timestamp) + index} className={`mfb-candle ${candle.direction}`}>
+        <line x1={candle.x} x2={candle.x} y1={candle.highY} y2={candle.lowY} className="mfb-candle-wick"/>
+        <rect x={candle.x - 2.5} y={candle.bodyTop} width="5" height={candle.bodyHeight} rx=".5" className="mfb-candle-body"/>
+        {candle.volumeHeight > 0 && <rect x={candle.x - 2} y={candle.volumeY} width="4" height={candle.volumeHeight} className="mfb-candle-volume"/>}
+        <title>{(Number.isFinite(Number(candle.timestamp)) ? new Date(Number(candle.timestamp) * (Number(candle.timestamp) < 100000000000 ? 1000 : 1)) : new Date(candle.timestamp)).toLocaleDateString("en-IN")} · O {fmt(candle.open)} H {fmt(candle.high)} L {fmt(candle.low)} C {fmt(candle.close)} · {candle.volume === null ? "Volume unavailable" : "Volume " + fmt(candle.volume, 0)}</title>
+      </g>)}
+      <text x="24" y="12" className="mfb-history-label">₹{fmt(Math.max(...series.map(row => row.high ?? row.close)))}</text>
+      <text x="696" y="12" textAnchor="end" className="mfb-history-label">₹{fmt(Math.min(...series.map(row => row.low ?? row.close)))}</text>
+      <text x="24" y="195" className="mfb-history-label">VOLUME</text>
     </svg>
-    <div className="mfb-history-foot"><span>{series.length} actual candles</span><span>Close-based relative change · volume shown only when supplied</span></div>
+    <div className="mfb-history-foot"><span>{geometry.length} actual daily candles</span><span>OHLC and volume from existing Market Charts REST API · no intraday data</span></div>
   </section>;
 }
 
@@ -302,6 +298,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const [historySeries, setHistorySeries] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
+  const [historyRange, setHistoryRange] = useState("3M");
   const historyRequest = useRef(0);
   const sectorRequest = useRef(0);
   const sectorBusy = useRef(false);
@@ -366,7 +363,8 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
     setHistorySeries([]);
     const to = new Date();
     const from = new Date(to);
-    from.setDate(from.getDate() - 45);
+    const rangeDays = { "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825 };
+    from.setDate(from.getDate() - rangeDays[historyRange]);
     const formatDate = date => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
     loadChartHistory({ symbol: selected.symbol, exchange: selected.exchange, interval: "day", from: formatDate(from), to: formatDate(to) })
       .then(result => {
@@ -381,7 +379,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         if (mounted.current && requestId === historyRequest.current) setHistoryLoading(false);
       });
     return () => { historyRequest.current += 1; };
-  }, [selected?.symbol, selected?.exchange]);
+  }, [selected?.symbol, selected?.exchange, historyRange]);
 
   const loadSector = useCallback(async (sectorKey) => {
     if (sectorBusy.current) return;
@@ -481,7 +479,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         <button type="button" onClick={() => onSelectInstrument?.(selected)}>Open full chart</button></div>
         : <p>Select a flow path or tile. Only provider-returned fields are shown.</p>}
     </section>
-    {selected && <HistoricalFlowPanel series={historySeries} loading={historyLoading} error={historyError} symbol={selected.symbol}/>}
+    {selected && <HistoricalFlowPanel series={historySeries} loading={historyLoading} error={historyError} symbol={selected.symbol} range={historyRange} onRangeChange={setHistoryRange}/>}
     <footer className="mfb-footer"><span>Source: {payload?.data_sources?.primary || "m.Stock via Financial OS Gateway"}</span>
       <span>Snapshot assembled: {retrievedAt ? new Date(retrievedAt).toLocaleString("en-IN") : "—"}</span>
       <span>Read-only · REST only · no synthetic market values</span></footer>

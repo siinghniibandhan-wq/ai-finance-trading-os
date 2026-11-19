@@ -161,6 +161,64 @@ function SectorFlowDiagram({ sectors, selectedKey, loading, onSelect }) {
 }
 
 
+/** Sector node fans into the provider-ranked gainers and losers for that sector. */
+function SectorConstituentDiagram({ sectorName, board, selectedKey, focusedKey, onSelect, onHover }) {
+  const bullish = board.visibleBullish;
+  const bearish = board.visibleBearish;
+  const topStart = 48;
+  const topHeight = Math.max(120, bullish.length * 32);
+  const centerY = topStart + topHeight + 46;
+  const bottomStart = centerY + 48;
+  const bottomHeight = Math.max(120, bearish.length * 32);
+  const height = bottomStart + bottomHeight + 32;
+  const branches = [
+    ...bullish.map((row, index) => ({ row, side: "up", y: topStart + index * 32 })),
+    ...bearish.map((row, index) => ({ row, side: "down", y: bottomStart + index * 32 })),
+  ];
+
+  return <div className="mfb-constituent-flow-wrap">
+    <div className="mfb-constituent-flow-head">
+      <span>SELECTED SECTOR</span><strong>{sectorName}</strong>
+      <small>Provider-ranked gainers and losers · {bullish.length + bearish.length} returned instruments</small>
+    </div>
+    {branches.length ? <svg className="mfb-constituent-flow" viewBox={`0 0 1000 ${height}`} role="group" aria-label={`${sectorName} sector index connected to its provider-ranked stock gainers and losers`}>
+      <line x1="154" y1={centerY} x2="188" y2={centerY} className="mfb-constituent-root-line"/>
+      <circle cx="154" cy={centerY} r="7" className="mfb-constituent-root"/>
+      <text x="18" y={centerY - 5} className="mfb-constituent-root-label">SECTOR</text>
+      <text x="18" y={centerY + 11} className="mfb-constituent-root-sub">INDEX NODE</text>
+      <line x1="188" y1={topStart} x2="188" y2={bottomStart + Math.max(0, bearish.length - 1) * 32} className="mfb-constituent-spine"/>
+      <text x="430" y={topStart - 18} className="mfb-constituent-group up">GAINERS</text>
+      <text x="430" y={bottomStart - 18} className="mfb-constituent-group down">LOSERS</text>
+      {branches.map(({ row, side, y }) => {
+        const selected = keyOf(row) === selectedKey || keyOf(row) === focusedKey;
+        return <g key={keyOf(row)} role="button" tabIndex="0"
+          aria-label={`${row.name}, ${row.symbol}, ${pct(row.changePercent)}, price ${fmt(row.price)}, volume ${row.volume === null ? "unavailable" : fmt(row.volume, 0)}. Select stock`}
+          aria-pressed={keyOf(row) === selectedKey}
+          className={`mfb-constituent-node ${side}${selected ? " selected" : ""}`}
+          onMouseEnter={() => onHover(keyOf(row))} onMouseLeave={() => onHover(null)}
+          onFocus={() => onHover(keyOf(row))} onBlur={() => onHover(null)}
+          onClick={() => onSelect(row)}
+          onKeyDown={event => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onSelect(row);
+            }
+          }}>
+          <line x1="188" y1={centerY} x2="224" y2={centerY} className="mfb-constituent-branch"/>
+          <path d={`M 224 ${centerY} C 310 ${centerY}, 344 ${y}, 420 ${y}`} className="mfb-constituent-path"/>
+          <rect x="420" y={y - 13} width="550" height="26" rx="5" className="mfb-constituent-node-bg"/>
+          <text x="436" y={y + 4} className="mfb-constituent-symbol">{row.symbol}</text>
+          <text x="560" y={y + 4} className="mfb-constituent-price">₹{fmt(row.price)}</text>
+          <text x="690" y={y + 4} className="mfb-constituent-volume">{row.volume === null ? "Volume —" : "Vol " + fmt(row.volume, 0)}</text>
+          <text x="948" y={y + 4} textAnchor="end" className="mfb-constituent-change">{pct(row.changePercent)}</text>
+        </g>;
+      })}
+    </svg> : <p className="mfb-empty">No sector stock movers were returned by the provider.</p>}
+    <div className="mfb-constituent-flow-foot">Select a stock node to connect its quote, volume and historical OHLCV chart below.</div>
+  </div>;
+}
+
+
 function VolumeParticipation({ rows, label = "MARKET" }) {
   const summary = useMemo(() => summarizeMoverVolume(rows), [rows]);
   const max = Math.max(1, summary.bullishVolume, summary.bearishVolume, summary.unchangedVolume);
@@ -293,6 +351,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const sectorFlowRows = useMemo(() => buildSectorFlowRows(sectorOptions, sectorIndices), [sectorOptions, sectorIndices]);
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
   const sectorSampleSummary = useMemo(() => summarizeSectorMoverSample(sectorRows), [sectorRows]);
+  const sectorBoard = useMemo(() => buildMarketFlowBoard(sectorRows, 8), [sectorRows]);
   const selected = rows.find(row => keyOf(row) === selectedKey)
     || sectorRows.find(row => keyOf(row) === selectedKey) || null;
   const selectedSectorMover = selected && sectorRows.find(row => keyOf(row) === keyOf(selected));
@@ -400,12 +459,9 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
                 {sectorPayload.sector_index.percent_change !== null && sectorPayload.sector_index.percent_change !== undefined && Number.isFinite(Number(sectorPayload.sector_index.percent_change)) && <b className={Number(sectorPayload.sector_index.percent_change) >= 0 ? "up" : "down"}>{pct(Number(sectorPayload.sector_index.percent_change))}</b>}
                 <span>{sectorPayload.sector_index.previous_close ? "Previous close " + fmt(sectorPayload.sector_index.previous_close) : "Daily change unavailable from provider OHLC."}</span></div>}
               <Distribution eyebrow="SECTOR / PROVIDER-RANKED MOVERS" title={sectorPayload.sector?.name + " price distribution"} description="Actual sector-filtered gainers and losers returned by m.Stock. This is not the full sector constituent universe." rows={sectorRows} counts={buildMarketFlowBoard(sectorRows).counts} breadthAvailable={false} retrievedAt={sectorPayload.last_updated ? new Date(sectorPayload.last_updated).toLocaleTimeString("en-IN") : null}/><VolumeParticipation rows={sectorRows} label="SECTOR SAMPLE"/>
-              <div className="mfb-sector-movers">
-                <Side title="Sector gainers" side="up" rows={sectorRows.filter(row => row.direction === "bullish")}
-                  selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
-                <Side title="Sector losers" side="down" rows={sectorRows.filter(row => row.direction === "bearish")}
-                  selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
-              </div>
+              <SectorConstituentDiagram sectorName={sectorPayload.sector?.name || "Selected sector"}
+                board={sectorBoard} selectedKey={selectedKey} focusedKey={focusedKey}
+                onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
               {sectorPayload.errors?.length > 0 && <p className="mfb-alert">One sector mover source did not respond. Available real results are retained.</p>}
               <p className="mfb-sector-disclaimer">Median and directional counts describe only the {sectorSampleSummary.count} returned top movers. They are not full-sector performance or constituent breadth.</p>
             </>}

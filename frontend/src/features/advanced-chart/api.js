@@ -65,3 +65,28 @@ export async function loadMarketFlowSnapshot() {
   });
   return readResponse(response, "Chart Flow market snapshot");
 }
+
+/**
+ * Fetch the provider's Type A options-chain master through the authenticated
+ * Financial OS backend. The raw broker payload is retained without guessing
+ * the meaning of compact call/put/future fields.
+ */
+export async function loadOptionsChainMaster(exchangeId = 1) {
+  const params = new URLSearchParams({ exchange_id: String(exchangeId) });
+  const response = await apiFetch(`${API_BASE_URL}/api/options-chain/master?${params}`, {
+    cache: "no-store",
+  });
+  return readResponse(response, "Options-chain master");
+}
+
+export async function loadOptionsChain({ exchangeId = 1, expiry, token }) {
+  const params = new URLSearchParams({
+    exchange_id: String(exchangeId),
+    expiry: String(expiry),
+    token: String(token),
+  });
+  const response = await apiFetch(`${API_BASE_URL}/api/options-chain/?${params}`, {
+    cache: "no-store",
+  });
+  return readResponse(response, "Options chain");
+}

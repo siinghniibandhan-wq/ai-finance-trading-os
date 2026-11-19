@@ -206,3 +206,29 @@ test("builds candle geometry from actual OHLC values and preserves missing volum
   assert.ok(geometry.every(item => item.bodyHeight >= 1));
   assert.equal(buildHistoricalCandleGeometry([]).length, 0);
 });
+
+
+test("keeps dense five-year daily candle bodies within their horizontal slot", () => {
+  const rows = Array.from({ length: 1250 }, (_, index) => ({
+    timestamp: index + 1,
+    open: 100 + index / 100,
+    high: 102 + index / 100,
+    low: 99 + index / 100,
+    close: 101 + index / 100,
+    volume: 1000,
+  }));
+  const geometry = buildHistoricalCandleGeometry(rows);
+  const slotWidth = (720 - 48) / rows.length;
+  assert.equal(geometry.length, rows.length);
+  assert.ok(geometry.every(candle => candle.bodyWidth <= slotWidth));
+});
+
+test("rejects impossible OHLC ranges from candle geometry", () => {
+  const geometry = buildHistoricalCandleGeometry([
+    { timestamp: 1, open: 10, high: 9, low: 8, close: 10, volume: 10 },
+    { timestamp: 2, open: 10, high: 12, low: 11, close: 9, volume: 10 },
+    { timestamp: 3, open: 10, high: 12, low: 8, close: 11, volume: 10 },
+  ]);
+  assert.equal(geometry.length, 1);
+  assert.equal(geometry[0].timestamp, 3);
+});

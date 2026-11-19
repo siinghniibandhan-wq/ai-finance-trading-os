@@ -179,3 +179,51 @@ export function buildSectorFlowRows(sectors, quotes) {
       return b.percentChange - a.percentChange;
     });
 }
+
+
+/** Map validated daily OHLCV observations to deterministic SVG candlestick geometry. */
+export function buildHistoricalCandleGeometry(series, width = 720, height = 196) {
+  const valid = (Array.isArray(series) ? series : []).filter(row =>
+    [row?.open, row?.high, row?.low, row?.close].every(value =>
+      value !== null && value !== undefined && Number.isFinite(Number(value)) && Number(value) > 0
+    )
+  );
+  if (!valid.length) return [];
+  const min = Math.min(...valid.map(row => Number(row.low)));
+  const max = Math.max(...valid.map(row => Number(row.high)));
+  const span = Math.max(max - min, max * 0.001, 0.01);
+  const plotTop = 18;
+  const plotHeight = 112;
+  const volumeBase = 184;
+  const maxVolume = Math.max(1, ...valid.map(row => {
+    const value = num(row.volume);
+    return value !== null && value >= 0 ? value : 0;
+  }));
+  const xPadding = 24;
+  return valid.map((row, index) => {
+    const x = xPadding + (valid.length === 1 ? 0 : index / (valid.length - 1) * (width - xPadding * 2));
+    const y = value => plotTop + ((max - Number(value)) / span) * plotHeight;
+    const openY = y(row.open);
+    const closeY = y(row.close);
+    const volume = num(row.volume);
+    const volumeHeight = volume === null || volume < 0 ? 0 : volume / maxVolume * 36;
+    return {
+      timestamp: row.timestamp,
+      x,
+      highY: y(row.high),
+      lowY: y(row.low),
+      openY,
+      closeY,
+      bodyTop: Math.min(openY, closeY),
+      bodyHeight: Math.max(1, Math.abs(openY - closeY)),
+      volumeY: volumeBase - volumeHeight,
+      volumeHeight,
+      direction: Number(row.close) >= Number(row.open) ? "bullish" : "bearish",
+      open: Number(row.open),
+      high: Number(row.high),
+      low: Number(row.low),
+      close: Number(row.close),
+      volume,
+    };
+  });
+}

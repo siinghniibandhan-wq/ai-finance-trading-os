@@ -78,3 +78,26 @@ export function buildHistoricalFlowSeries(candles) {
     relativeChange: ((row.close - base) / base) * 100,
   }));
 }
+
+
+/** Summary of the provider-ranked rows returned for a selected sector, not the whole sector universe. */
+export function summarizeSectorMoverSample(rows) {
+  const changes = (Array.isArray(rows) ? rows : [])
+    .map(row => num(row?.changePercent))
+    .filter(value => value !== null)
+    .sort((a, b) => a - b);
+  const count = changes.length;
+  const middle = Math.floor(count / 2);
+  const medianChangePct = count === 0
+    ? null
+    : count % 2
+      ? changes[middle]
+      : (changes[middle - 1] + changes[middle]) / 2;
+  return {
+    count,
+    medianChangePct,
+    bullish: changes.filter(value => value > 0).length,
+    bearish: changes.filter(value => value < 0).length,
+    unchanged: changes.filter(value => value === 0).length,
+  };
+}

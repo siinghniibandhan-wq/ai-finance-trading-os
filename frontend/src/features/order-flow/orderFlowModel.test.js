@@ -1,4 +1,4 @@
-import test from"node:test";import assert from"node:assert/strict";import{normalizeOrderFlow,summarizeOrderFlow,sortOrderFlow,buildChartFlowPoints,buildMarketFlowBoard,buildDistributionDots,normalizeSectorMovers,filterOrderFlow,buildHistoricalFlowSeries}from"./orderFlowModel.js";
+import test from"node:test";import assert from"node:assert/strict";import{normalizeOrderFlow,summarizeOrderFlow,sortOrderFlow,buildChartFlowPoints,buildMarketFlowBoard,buildDistributionDots,normalizeSectorMovers,filterOrderFlow,buildHistoricalFlowSeries,summarizeSectorMoverSample}from"./orderFlowModel.js";
 test("normalizes only provider supplied NSE/BSE movers",()=>{const rows=normalizeOrderFlow({market_movers:{gainers:[{symbol:"abc",exchange:"NSE",ltp:"10",percent_change:"2"},{symbol:"bad",exchange:"NFO",ltp:2,percent_change:1}],losers:[{symbol:"xyz",exchange:"BSE",ltp:4,percent_change:-1}]}});assert.deepEqual(rows.map(r=>r.symbol),["ABC","XYZ"]);assert.deepEqual(rows.map(r=>r.direction),["bullish","bearish"]);});
 test("summarizes and sorts only normalized provider rows",()=>{const rows=normalizeOrderFlow({market_movers:{gainers:[{symbol:"a",exchange:"NSE",ltp:10,percent_change:1}],losers:[{symbol:"b",exchange:"BSE",ltp:20,percent_change:-2}]}});assert.equal(summarizeOrderFlow(rows).total,2);assert.deepEqual(sortOrderFlow(rows,"changePercent","desc").map(r=>r.symbol),["A","B"]);});
 test("builds a zero-centred chart-flow series from provider price changes",()=>{const rows=[{symbol:"UP",changePercent:4,direction:"bullish"},{symbol:"DOWN",changePercent:-2,direction:"bearish"},{symbol:"FLAT",changePercent:0,direction:"unchanged"}];const points=buildChartFlowPoints(rows);assert.equal(points.length,3);assert.equal(points[0].normalizedMove,1);assert.equal(points.find(r=>r.symbol==="DOWN").normalizedMove,-0.5);assert.equal(points.find(r=>r.symbol==="FLAT").normalizedMove,0);});
@@ -79,4 +79,17 @@ test("builds historical stock flow only from valid provider OHLCV observations",
   assert.equal(series[1].relativeChange, 100 / 11);
   assert.equal(series[2].relativeChange, -200 / 11);
   assert.equal(series[2].volume, null);
+});
+
+
+test("summarizes sector sample without calling it full-sector performance", () => {
+  const summary = summarizeSectorMoverSample([
+    { changePercent: 4, direction: "bullish" },
+    { changePercent: 2, direction: "bullish" },
+    { changePercent: -1, direction: "bearish" },
+  ]);
+  assert.equal(summary.count, 3);
+  assert.equal(summary.medianChangePct, 2);
+  assert.equal(summary.bullish, 2);
+  assert.equal(summary.bearish, 1);
 });

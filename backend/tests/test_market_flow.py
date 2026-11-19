@@ -115,6 +115,7 @@ def test_chart_flow_sector_movers_uses_mstock_sector_universe(monkeypatch):
     assert result["movers"]["gainers"][0]["sector"] == "Information Technology"
     assert result["sector_index"]["last_price"] == 25000
     assert result["capabilities"]["sector_index_quote"] is True
+    assert result["capabilities"]["sector_index_performance"] is True
 
 
 def test_chart_flow_sector_movers_marks_partial_provider_results(monkeypatch):

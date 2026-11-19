@@ -72,7 +72,12 @@ export function buildHistoricalFlowSeries(candles) {
     const close = num(row?.close);
     const volume = num(row?.volume);
     const timestamp = row?.timestamp;
-    if (close === null || close <= 0 || timestamp === null || timestamp === undefined) return null;
+    if (
+      timestamp === null || timestamp === undefined ||
+      [open, high, low, close].some(value => value === null || value <= 0) ||
+      high < Math.max(open, close, low) ||
+      low > Math.min(open, close, high)
+    ) return null;
     return { timestamp, open, high, low, close, volume: volume !== null && volume >= 0 ? volume : null };
   }).filter(Boolean);
   const base = valid[0]?.close;

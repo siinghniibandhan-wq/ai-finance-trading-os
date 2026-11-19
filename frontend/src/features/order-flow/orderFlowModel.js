@@ -37,3 +37,11 @@ export function buildDistributionDots(rows, width = 1000, height = 74) {
     return { ...row, x, y: height / 2 + (stack % 2 ? 1 : -1) * Math.ceil(stack / 2) * 5 };
   });
 }
+
+
+/** Normalize the selected sector's actual provider-ranked gainers and losers. */
+export function normalizeSectorMovers(payload) {
+  const rows = normalizeOrderFlow({ market_movers: payload?.movers });
+  const sector = String(payload?.sector?.name || "").trim() || null;
+  return rows.map(row => ({ ...row, sector }));
+}

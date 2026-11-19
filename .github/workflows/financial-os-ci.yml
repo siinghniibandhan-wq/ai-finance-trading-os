@@ -38,6 +38,9 @@ jobs:
       - name: Test Chart Flow market and sector models
         working-directory: frontend
         run: npm run test:order-flow
+      - name: Test Options Hub chain analytics
+        working-directory: frontend
+        run: npm run test:options-hub
       - name: Build frontend
         working-directory: frontend
         run: npm run build

@@ -37,3 +37,26 @@ export function buildDistributionDots(rows, width = 1000, height = 74) {
     return { ...row, x, y: height / 2 + (stack % 2 ? 1 : -1) * Math.ceil(stack / 2) * 5 };
   });
 }
+
+
+/** Validate provider OHLCV rows before passing them to a charting library. */
+export function normalizeMarketFlowCandles(rows) {
+  if (!Array.isArray(rows)) return [];
+  const normalized = [];
+  for (const row of rows) {
+    if (!Array.isArray(row) || row.length < 5) continue;
+    const time = Number(row[0]);
+    const open = num(row[1]);
+    const high = num(row[2]);
+    const low = num(row[3]);
+    const close = num(row[4]);
+    const volume = row.length > 5 ? num(row[5]) : null;
+    if (!Number.isInteger(time) || time <= 0 ||
+        [open, high, low, close].some(value => value === null || value <= 0) ||
+        high < Math.max(open, close, low) || low > Math.min(open, close, high) ||
+        (volume !== null && volume < 0)) continue;
+    normalized.push({ time, open, high, low, close, volume });
+  }
+  return normalized.sort((a, b) => a.time - b.time)
+    .filter((candle, index, all) => index === 0 || candle.time > all[index - 1].time);
+}

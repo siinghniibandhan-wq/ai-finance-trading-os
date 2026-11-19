@@ -9,7 +9,8 @@ export function buildChartFlowPoints(rows,limit=36){const safe=(Array.isArray(ro
 export function buildMarketFlowBoard(rows, perSide = 12, sortKey = "changePercent", sortDirection = "desc") {
   const safe = Array.isArray(rows) ? rows.filter(row => Number.isFinite(Number(row.changePercent))) : [];
   const bullish = sortOrderFlow(safe.filter(row => row.changePercent > 0), sortKey, sortDirection);
-  const bearish = sortOrderFlow(safe.filter(row => row.changePercent < 0), sortKey, sortDirection);
+  const bearishDirection = sortKey === "changePercent" ? (sortDirection === "asc" ? "desc" : "asc") : sortDirection;
+  const bearish = sortOrderFlow(safe.filter(row => row.changePercent < 0), sortKey, bearishDirection);
   const unchanged = sortOrderFlow(safe.filter(row => row.changePercent === 0), "symbol", "asc");
   return {
     bullish, bearish, unchanged,

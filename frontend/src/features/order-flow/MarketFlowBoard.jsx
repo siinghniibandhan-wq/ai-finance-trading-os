@@ -117,11 +117,11 @@ function SectorFlowDiagram({ sectors, selectedKey, loading, onSelect }) {
 
   return <div className="mfb-sector-flow-wrap">
     <div className="mfb-sector-flow-legend">
-      <span><i className="up"/> Provider index performance</span>
+      <span><i className="up"/> Calculated index change (LTP vs previous close)</span>
       <span><i className="down"/> Negative performance</span>
       <span>Unavailable values are not plotted</span>
     </div>
-    <svg className="mfb-sector-flow" viewBox={`0 0 1000 ${height}`} role="group" aria-label="Provider sector indices connected to the market flow, ranked by reported percentage change">
+    <svg className="mfb-sector-flow" viewBox={`0 0 1000 ${height}`} role="group" aria-label="Provider sector indices connected to the market flow, ranked by calculated percentage change">
       <line x1="116" y1={centerY} x2="190" y2={centerY} className="mfb-sector-root"/>
       <line x1="190" y1={top} x2="190" y2={top + (sectors.length - 1) * rowHeight} className="mfb-sector-spine"/>
       <circle cx="116" cy={centerY} r="7" className="mfb-sector-origin"/>
@@ -444,7 +444,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
       <div className="mfb-board">
         <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
           <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Explore sector constituents</b></div>
-            <p>Sector index performance uses provider OHLC previous-close data where available. Select a sector to open its actual ranked stock movers.</p>
+            <p>Sector index change is calculated from provider LTP and OHLC previous close where both are available. Select a sector to open its actual ranked stock movers.</p>
             <SectorFlowDiagram sectors={sectorFlowRows} selectedKey={selectedSectorKey}
               loading={sectorLoading} onSelect={loadSector}/>
             {!sectorIndices.length && <p className="mfb-sector-disclaimer">Sector index quotes are not available from the current provider response. Sector stock movers remain available on selection.</p>}

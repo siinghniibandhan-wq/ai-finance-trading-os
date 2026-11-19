@@ -21,13 +21,16 @@ export function createMarketOverviewStore(fetchOverview = loadMarketOverview, in
     inFlight = Promise.resolve()
       .then(() => fetchOverview())
       .then((next) => {
+        const totalFailure = next?.status === "error";
         snapshot = {
-          data: mergeMarketOverview(snapshot.data, next),
+          data: totalFailure ? snapshot.data : mergeMarketOverview(snapshot.data, next),
           loading: false,
-          error: Array.isArray(next?.errors) && next.errors.length
-            ? "Some market sources failed; retained values are marked stale."
-            : "",
-          updatedAt: next?.last_updated || new Date().toISOString(),
+          error: totalFailure
+            ? "Market refresh failed; the last successful snapshot is retained."
+            : Array.isArray(next?.errors) && next.errors.length
+              ? "Some market sources failed; retained values are marked stale."
+              : "",
+          updatedAt: totalFailure ? snapshot.updatedAt : (next?.last_updated || new Date().toISOString()),
         };
         emit();
         return snapshot.data;
@@ -39,7 +42,7 @@ export function createMarketOverviewStore(fetchOverview = loadMarketOverview, in
           error: error?.message || "Unable to refresh market overview.",
         };
         emit();
-        throw error;
+        return snapshot.data;
       })
       .finally(() => { inFlight = null; });
     return inFlight;

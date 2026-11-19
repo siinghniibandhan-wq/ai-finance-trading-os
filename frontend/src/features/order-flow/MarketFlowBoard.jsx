@@ -171,7 +171,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
     if (manual) setRefreshing(true);
     else if (!hasPayload.current) setLoading(true);
     try {
-      const next = await loadMarketFlowSnapshot();
+      const next = await loadMarketFlowSnapshot(null, true);
       if (!mounted.current) return;
       setPayload(next);
       hasPayload.current = true;
@@ -203,6 +203,9 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const board = useMemo(() => buildMarketFlowBoard(filteredRows), [filteredRows]);
   const indices = Array.isArray(payload?.indices) ? payload.indices : [];
   const sectorOptions = Array.isArray(payload?.sector_universes) ? payload.sector_universes : [];
+  const sectorIndices = Array.isArray(payload?.sector_indices) ? payload.sector_indices : [];
+  const sectorIndexByKey = useMemo(() => new Map(sectorIndices.map(item => [item.key, item])), [sectorIndices]);
+  const sectorIndexMaxAbs = Math.max(0.1, ...sectorIndices.map(item => Math.abs(Number(item.percent_change) || 0)));
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
   const sectorSampleSummary = useMemo(() => summarizeSectorMoverSample(sectorRows), [sectorRows]);
   const selected = rows.find(row => keyOf(row) === selectedKey)
@@ -296,15 +299,24 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
       <div className="mfb-board">
         <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
           <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Explore sector constituents</b></div>
-            <p>Choose a provider-supported sector to load its actual ranked gainers and losers.</p>
-            <div className="mfb-sector-selector" role="group" aria-label="Select a sector">
-              {sectorOptions.map(sector => <button key={sector.key} type="button"
-                className={selectedSectorKey === sector.key ? "selected" : ""}
-                aria-pressed={selectedSectorKey === sector.key}
-                onClick={() => loadSector(sector.key)} disabled={sectorLoading}>
-                {sector.name}
-              </button>)}
+            <p>Sector index performance uses provider OHLC previous-close data where available. Select a sector to open its actual ranked stock movers.</p>
+            <div className="mfb-sector-selector" role="group" aria-label="Compare and select sectors">
+              {sectorOptions.map(sector => {
+                const quote = sectorIndexByKey.get(sector.key);
+                const change = Number.isFinite(Number(quote?.percent_change)) ? Number(quote.percent_change) : null;
+                const barWidth = change === null ? 0 : Math.min(50, Math.abs(change) / sectorIndexMaxAbs * 50);
+                return <button key={sector.key} type="button"
+                  className={selectedSectorKey === sector.key ? "selected" : ""}
+                  aria-pressed={selectedSectorKey === sector.key}
+                  onClick={() => loadSector(sector.key)} disabled={sectorLoading}>
+                  <span>{sector.name}</span>
+                  <strong className={change === null ? "flat" : change >= 0 ? "up" : "down"}>{change === null ? "—" : pct(change)}</strong>
+                  <small>{quote?.last_price ? "Index " + fmt(quote.last_price) : "Index quote unavailable"}</small>
+                  <i className="mfb-sector-track"><b className={change === null ? "flat" : change >= 0 ? "up" : "down"} style={{ width: barWidth + "%" }}/></i>
+                </button>;
+              })}
             </div>
+            {!sectorIndices.length && <p className="mfb-sector-disclaimer">Sector index quotes are not available from the current provider response. Sector stock movers remain available on selection.</p>}
             {sectorLoading && <p role="status">Loading actual {sectorOptions.find(item => item.key === selectedSectorKey)?.name || "sector"} movers…</p>}
             {sectorError && <p className="mfb-alert" role="alert">{sectorError}</p>}
             {sectorPayload && <>
@@ -312,7 +324,9 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
                 <span>{sectorPayload.counts?.total_returned || 0} provider-ranked movers</span>
                 <span>{sectorPayload.status === "partial" ? "Partial response" : "REST data"}</span>
                 <span>Sample median {sectorSampleSummary.medianChangePct === null ? "—" : pct(sectorSampleSummary.medianChangePct)}</span></div>
-              {sectorPayload.sector_index && <div className="mfb-sector-index-quote"><small>{sectorPayload.sector_index.name} · CURRENT INDEX LEVEL</small><strong>{fmt(sectorPayload.sector_index.last_price)}</strong><span>Price only; percentage performance is not supplied by the current index quote contract.</span></div>}
+              {sectorPayload.sector_index && <div className="mfb-sector-index-quote"><small>{sectorPayload.sector_index.name} · INDEX LEVEL</small><strong>{fmt(sectorPayload.sector_index.last_price)}</strong>
+                {Number.isFinite(Number(sectorPayload.sector_index.percent_change)) && <b className={Number(sectorPayload.sector_index.percent_change) >= 0 ? "up" : "down"}>{pct(Number(sectorPayload.sector_index.percent_change))}</b>}
+                <span>{sectorPayload.sector_index.previous_close ? "Previous close " + fmt(sectorPayload.sector_index.previous_close) : "Daily change unavailable from provider OHLC."}</span></div>}
               <Distribution eyebrow="SECTOR / PROVIDER-RANKED MOVERS" title={sectorPayload.sector?.name + " price distribution"} description="Actual sector-filtered gainers and losers returned by m.Stock. This is not the full sector constituent universe." rows={sectorRows} counts={buildMarketFlowBoard(sectorRows).counts} breadthAvailable={false} retrievedAt={sectorPayload.last_updated ? new Date(sectorPayload.last_updated).toLocaleTimeString("en-IN") : null}/>
               <div className="mfb-sector-movers">
                 <Side title="Sector gainers" side="up" rows={sectorRows.filter(row => row.direction === "bullish")}

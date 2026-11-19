@@ -6,7 +6,7 @@ def test_market_overview_http_endpoint_remains_registered():
     matching_routes = [
         route
         for route in router.routes
-        if getattr(route, "path", None) == "/"
+        if getattr(route, "path", None) == "/api/market-overview/"
         and "GET" in getattr(route, "methods", set())
     ]
 

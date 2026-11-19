@@ -5,7 +5,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from app.routes.market_indices import SUPPORTED_INDICES, fetch_index
 from app.routes.market_movers import (
@@ -177,36 +177,11 @@ def _fetch_sector_movers_uncached(sector):
     }
 
 
-@router.get("/sectors")
-def get_market_flow_sectors():
-    """List the sector universes explicitly documented by m.Stock Type A."""
-    return {
-        "status": "success",
-        "sectors": [
-            {
-                "key": item["key"],
-                "name": item["name"],
-                "security_id_code": item["security_id_code"],
-                "index_symbol": item["index_symbol"],
-            }
-            for item in SECTOR_UNIVERSES
-        ],
-        "source": "m.Stock Type A Top Gainers/Losers SecurityIdCode table",
-        "read_only": True,
-    }
-
-
-@router.get("/sectors/{sector_key}")
-def get_sector_movers(sector_key: str):
-    sector = _SECTOR_BY_KEY.get(str(sector_key or "").strip().lower())
-    if sector is None:
-        raise HTTPException(status_code=404, detail="Unsupported Chart Flow sector.")
-
+def _get_cached_sector_movers(sector):
     now = time.monotonic()
     cached = _sector_cache.get(sector["key"])
     if cached and now - cached["loaded_at"] < SECTOR_CACHE_TTL_SECONDS:
         return cached["payload"]
-
     # Serialize cache misses so concurrent selections do not duplicate provider
     # calls and breach m.Stock's documented request-rate limit.
     with _sector_cache_lock:

@@ -1,8 +1,13 @@
-"""Authenticated read-only m.Stock option-chain proxy through the existing Gateway."""
+"""Authenticated read-only options market-data adapter through the existing m.Stock Gateway.
+
+The Gateway resolves derivatives from the provider Script Master and enriches
+contracts with the documented batched REST LTP endpoint. This route never
+places orders and never exposes broker credentials to the browser.
+"""
 
 import json
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException, Query
@@ -12,19 +17,19 @@ from app.services.mstock_gateway import MSTOCK_GATEWAY_URL, MSTOCK_GATEWAY_SECRE
 router = APIRouter(prefix="/api/options-chain", tags=["Options Chain"])
 
 
-def _exchange_code(exchange: str) -> str:
+def _exchange(exchange: str) -> str:
     cleaned = exchange.strip().upper()
-    mapping = {"NSE": "2", "NFO": "2", "BSE": "5", "BFO": "5"}
-    if cleaned not in mapping:
+    if cleaned not in {"NSE", "BSE"}:
         raise HTTPException(status_code=422, detail="Exchange must be NSE or BSE.")
-    return mapping[cleaned]
+    return cleaned
 
 
-def _gateway_get(path: str) -> dict:
+def _gateway_get(path: str, query: dict | None = None) -> dict:
     if not MSTOCK_GATEWAY_URL:
         raise HTTPException(status_code=503, detail="Market data gateway is not configured.")
+    suffix = f"?{urlencode(query)}" if query else ""
     request = Request(
-        f"{MSTOCK_GATEWAY_URL}/{path.lstrip('/')}",
+        f"{MSTOCK_GATEWAY_URL}/{path.lstrip('/')}{suffix}",
         headers={
             "Accept": "application/json",
             "X-Financial-OS-Gateway-Secret": MSTOCK_GATEWAY_SECRET,
@@ -32,22 +37,22 @@ def _gateway_get(path: str) -> dict:
         method="GET",
     )
     try:
-        with urlopen(request, timeout=35) as response:
+        with urlopen(request, timeout=45) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except HTTPError as exc:
         try:
             body = json.loads(exc.read().decode("utf-8"))
-            message = body.get("message", "Option-chain gateway request failed.")
+            message = body.get("message", "Options market-data request failed.")
         except Exception:
-            message = "Option-chain gateway request failed."
+            message = "Options market-data request failed."
         raise HTTPException(status_code=502, detail=message) from exc
     except URLError as exc:
         raise HTTPException(status_code=502, detail="Unable to reach the m.Stock Gateway.") from exc
     except (TimeoutError, ValueError, UnicodeDecodeError) as exc:
-        raise HTTPException(status_code=502, detail="The m.Stock Gateway returned an invalid or timed-out response.") from exc
+        raise HTTPException(status_code=502, detail="The m.Stock Gateway returned invalid or timed-out options data.") from exc
 
     if not isinstance(payload, dict) or payload.get("status") != "success":
-        message = payload.get("message", "Option-chain data is unavailable.") if isinstance(payload, dict) else "Invalid option-chain response."
+        message = payload.get("message", "Options market data is unavailable.") if isinstance(payload, dict) else "Invalid options response."
         raise HTTPException(status_code=502, detail=message)
     return payload
 
@@ -56,31 +61,38 @@ def _gateway_get(path: str) -> dict:
 def get_option_chain_master(
     exchange: str = Query("NSE", description="NSE or BSE derivatives exchange"),
 ):
-    """Return provider expiry and contract master data; no browser broker credentials."""
-    code = _exchange_code(exchange)
-    payload = _gateway_get(f"option-chain-master/{code}")
+    """Return available option underlyings and expiries from the broker Script Master."""
+    selected_exchange = _exchange(exchange)
+    payload = _gateway_get("options/master", {"exchange": selected_exchange})
     return {
         "status": "success",
-        "exchange": "NSE" if code == "2" else "BSE",
+        "exchange": selected_exchange,
         "provider": payload.get("provider", "m.Stock"),
-        "data": payload.get("data") or {},
+        "underlyings": payload.get("underlyings") or [],
+        "contract_count": payload.get("contract_count", 0),
+        "retrieved_at": payload.get("retrieved_at"),
     }
 
 
 @router.get("/")
 def get_option_chain(
-    expiry: int = Query(..., ge=1),
-    token: int = Query(..., ge=1),
+    underlying: str = Query(..., min_length=1, max_length=40),
+    expiry: str = Query(..., min_length=1, max_length=30),
     exchange: str = Query("NSE", description="NSE or BSE derivatives exchange"),
 ):
-    """Return the selected underlying's provider option chain and live LTP enrichment."""
-    code = _exchange_code(exchange)
-    payload = _gateway_get(
-        f"option-chain/{code}/{quote(str(expiry), safe='')}/{quote(str(token), safe='')}"
-    )
+    """Return provider contract metadata and actual REST LTPs for one expiry."""
+    selected_exchange = _exchange(exchange)
+    payload = _gateway_get("options/chain", {
+        "exchange": selected_exchange,
+        "underlying": underlying.strip().upper(),
+        "expiry": expiry.strip(),
+    })
+    contracts = payload.get("contracts")
+    if not isinstance(contracts, list):
+        raise HTTPException(status_code=502, detail="The Gateway returned no valid option contracts.")
     return {
         **payload,
-        "exchange": "NSE" if code == "2" else "BSE",
+        "exchange": selected_exchange,
         "read_only": True,
         "database_write": False,
     }

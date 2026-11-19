@@ -101,7 +101,9 @@ def test_chart_flow_sector_movers_uses_mstock_sector_universe(monkeypatch):
     monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
     monkeypatch.setattr(market_flow, "fetch_index", lambda index: {
         "name": index["name"], "exchange": index["exchange"], "symbol": index["symbol"],
-        "last_price": 25000, "status": "success",
+        "last_price": 25000, "previous_close": 24900,
+        "change": 100, "percent_change": (100 / 24900) * 100,
+        "status": "success",
     })
 
     result = market_flow.get_market_flow_snapshot("it")
@@ -151,14 +153,15 @@ def test_chart_flow_rejects_unknown_sector_key():
 
 
 def test_chart_flow_uses_one_shared_route_for_market_and_sector_queries():
-    routes = [
-        route for route in market_flow.router.routes
-        if getattr(route, "path", None) == "/"
-        and "GET" in getattr(route, "methods", set())
-    ]
+    import inspect
 
-    assert len(routes) == 1
-    assert "sector" in {parameter.name for parameter in routes[0].dependant.query_params}
+    parameters = inspect.signature(market_flow.get_market_flow_snapshot).parameters
+    assert "sector" in parameters
+    assert "include_sector_indices" in parameters
+    assert len([
+        route for route in market_flow.router.routes
+        if getattr(route, "endpoint", None) is market_flow.get_market_flow_snapshot
+    ]) == 1
 
 
 def test_chart_flow_sector_cache_reuses_recent_provider_snapshot(monkeypatch):

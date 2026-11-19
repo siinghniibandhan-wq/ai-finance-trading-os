@@ -340,7 +340,7 @@ async def plain_language_errors(request: Request, call_next):
 
 _raw_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").strip()
 CORS_ALLOWED_ORIGINS = [origin.strip().rstrip("/") for origin in _raw_cors_origins.split(",") if origin.strip()]
-CORS_ALLOWED_ORIGINS.append("https://main.d1qcu413dz9f9e.amplifyapp.com")
+CORS_ALLOWED_ORIGINS.append("https://main.d1qcu4l3dz9f9e.amplifyapp.com")
 if APP_ENV in {"development", "local", "test"}:
     CORS_ALLOWED_ORIGINS.extend(["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173"])
 CORS_ALLOWED_ORIGINS = list(dict.fromkeys(CORS_ALLOWED_ORIGINS))

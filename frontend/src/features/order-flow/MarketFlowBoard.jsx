@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadChartHistory, loadMarketFlowSnapshot } from "../advanced-chart/api.js";
-import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries, summarizeSectorMoverSample, rankSectorIndices, summarizeMoverVolume } from "./orderFlowModel.js";
+import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries, summarizeSectorMoverSample, buildSectorFlowRows, summarizeMoverVolume } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
@@ -95,6 +95,70 @@ function Side({ title, side, rows, selectedKey, focusedKey, onSelect, onHover })
   </section>;
 }
 
+
+
+/**
+ * Connected sector-index flow. The branch is sourced from the provider's
+ * sector universe; each diverging bar uses only the provider's index
+ * percentage change. A missing percentage remains an explicit gap.
+ */
+function SectorFlowDiagram({ sectors, selectedKey, loading, onSelect }) {
+  const rowHeight = 34;
+  const top = 44;
+  const height = Math.max(130, top + sectors.length * rowHeight + 24);
+  const centerY = top + Math.max(0, sectors.length - 1) * rowHeight / 2;
+  const centerX = 720;
+  const maxAbs = Math.max(0.1, ...sectors.map(row => row.percentChange === null ? 0 : Math.abs(row.percentChange)));
+  const halfWidth = 166;
+
+  if (!sectors.length) {
+    return <div className="mfb-sector-flow-empty" role="status">Sector universe is unavailable from the current REST response.</div>;
+  }
+
+  return <div className="mfb-sector-flow-wrap">
+    <div className="mfb-sector-flow-legend">
+      <span><i className="up"/> Provider index performance</span>
+      <span><i className="down"/> Negative performance</span>
+      <span>Unavailable values are not plotted</span>
+    </div>
+    <svg className="mfb-sector-flow" viewBox={`0 0 1000 ${height}`} role="group" aria-label="Provider sector indices connected to the market flow, ranked by reported percentage change">
+      <line x1="116" y1={centerY} x2="190" y2={centerY} className="mfb-sector-root"/>
+      <line x1="190" y1={top} x2="190" y2={top + (sectors.length - 1) * rowHeight} className="mfb-sector-spine"/>
+      <circle cx="116" cy={centerY} r="7" className="mfb-sector-origin"/>
+      <text x="18" y={centerY - 5} className="mfb-sector-root-label">MARKET</text>
+      <text x="18" y={centerY + 10} className="mfb-sector-root-sub">SECTOR FLOW</text>
+      <line x1={centerX} x2={centerX} y1={top - 18} y2={top + sectors.length * rowHeight - 12} className="mfb-sector-zero"/>
+      <text x={centerX} y={top - 24} textAnchor="middle" className="mfb-sector-axis-label">0%</text>
+      {sectors.map((sector, index) => {
+        const y = top + index * rowHeight;
+        const selected = sector.key === selectedKey;
+        const value = sector.percentChange;
+        const barWidth = value === null ? 0 : Math.abs(value) / maxAbs * halfWidth;
+        const barX = value === null ? centerX : value >= 0 ? centerX : centerX - barWidth;
+        return <g key={sector.key} role="button" tabIndex="0" aria-pressed={selected}
+          aria-label={`${sector.name}, ${value === null ? "index performance unavailable" : pct(value)}, ${sector.lastPrice === null ? "index level unavailable" : "index level " + fmt(sector.lastPrice)}. Select sector`}
+          className={`mfb-sector-flow-row${selected ? " selected" : ""}`}
+          onClick={() => onSelect(sector.key)}
+          onKeyDown={event => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onSelect(sector.key);
+            }
+          }}>
+          <line x1="190" y1={y} x2="222" y2={y} className="mfb-sector-branch"/>
+          <rect x="222" y={y - 14} width="758" height="28" rx="5" className="mfb-sector-row-bg"/>
+          <text x="238" y={y - 1} className="mfb-sector-name">{sector.name}</text>
+          <text x="238" y={y + 11} className="mfb-sector-symbol">{sector.indexSymbol || "Index symbol unavailable"}{sector.lastPrice === null ? "" : ` · ${fmt(sector.lastPrice)}`}</text>
+          {value !== null && <rect x={barX} y={y - 5} width={barWidth} height="10" rx="3" className={value > 0 ? "mfb-sector-bar-up" : value < 0 ? "mfb-sector-bar-down" : "mfb-sector-bar-flat"}/>}
+          <text x="930" y={y + 4} textAnchor="end" className={`mfb-sector-value ${value === null ? "unavailable" : value > 0 ? "up" : value < 0 ? "down" : "flat"}`}>{value === null ? "—" : pct(value)}</text>
+        </g>;
+      })}
+      <text x={centerX - halfWidth} y={height - 4} textAnchor="start" className="mfb-sector-axis-label">WEAKER</text>
+      <text x={centerX + halfWidth} y={height - 4} textAnchor="end" className="mfb-sector-axis-label">STRONGER</text>
+    </svg>
+    <div className="mfb-sector-flow-foot">{loading ? "Loading selected sector constituents…" : "Select a sector branch to reveal its provider-ranked stock movers."}</div>
+  </div>;
+}
 
 
 function VolumeParticipation({ rows, label = "MARKET" }) {
@@ -227,7 +291,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const sectorOptions = Array.isArray(payload?.sector_universes) ? payload.sector_universes : [];
   const sectorIndices = Array.isArray(payload?.sector_indices) ? payload.sector_indices : [];
   const sectorIndexByKey = useMemo(() => new Map(sectorIndices.map(item => [item.key, item])), [sectorIndices]);
-  const rankedSectorOptions = useMemo(() => rankSectorIndices(sectorOptions, sectorIndices), [sectorOptions, sectorIndices]);
+  const sectorFlowRows = useMemo(() => buildSectorFlowRows(sectorOptions, sectorIndices), [sectorOptions, sectorIndices]);
   const sectorIndexMaxAbs = Math.max(0.1, ...sectorIndices.map(item => Math.abs(Number(item.percent_change) || 0)));
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
   const sectorSampleSummary = useMemo(() => summarizeSectorMoverSample(sectorRows), [sectorRows]);
@@ -324,22 +388,8 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
           <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Explore sector constituents</b></div>
             <p>Sector index performance uses provider OHLC previous-close data where available. Select a sector to open its actual ranked stock movers.</p>
-            <div className="mfb-sector-selector" role="group" aria-label="Compare and select sectors">
-              {rankedSectorOptions.map(sector => {
-                const quote = sectorIndexByKey.get(sector.key);
-                const change = quote?.percent_change !== null && quote?.percent_change !== undefined && Number.isFinite(Number(quote.percent_change)) ? Number(quote.percent_change) : null;
-                const barWidth = change === null ? 0 : Math.min(50, Math.abs(change) / sectorIndexMaxAbs * 50);
-                return <button key={sector.key} type="button"
-                  className={selectedSectorKey === sector.key ? "selected" : ""}
-                  aria-pressed={selectedSectorKey === sector.key}
-                  onClick={() => loadSector(sector.key)} disabled={sectorLoading}>
-                  <span>{sector.name}</span>
-                  <strong className={change === null ? "flat" : change >= 0 ? "up" : "down"}>{change === null ? "—" : pct(change)}</strong>
-                  <small>{quote?.last_price ? "Index " + fmt(quote.last_price) : "Index quote unavailable"}</small>
-                  <i className="mfb-sector-track"><b className={change === null ? "flat" : change >= 0 ? "up" : "down"} style={{ width: barWidth + "%" }}/></i>
-                </button>;
-              })}
-            </div>
+            <SectorFlowDiagram sectors={sectorFlowRows} selectedKey={selectedSectorKey}
+              loading={sectorLoading} onSelect={loadSector}/>
             {!sectorIndices.length && <p className="mfb-sector-disclaimer">Sector index quotes are not available from the current provider response. Sector stock movers remain available on selection.</p>}
             {sectorLoading && <p role="status">Loading actual {sectorOptions.find(item => item.key === selectedSectorKey)?.name || "sector"} movers…</p>}
             {sectorError && <p className="mfb-alert" role="alert">{sectorError}</p>}

@@ -79,7 +79,7 @@ All frontend requests use the existing `apiFetch` authentication/session path. B
 - The frontend labels these as REST snapshots. Retrieval time is not an exchange event timestamp.
 - Advanced Chart uses authenticated REST history and quote snapshots. Existing Advanced Chart interval controls are preserved; this does not add intraday features to Chart Flow.
 - Chart Flow historical stock analysis uses daily OHLCV only. Do not add intraday reconstruction or intraday Chart Flow panels.
-- Requests must remain bounded, provider-rate-safe, cancellable/guarded on unmount, and honest about partial responses.
+- Requests must remain bounded, provider-rate-safe, cancellable/guarded on unmount, and honest about partial responses. The m.Stock Type A documentation currently specifies 1 data API request/second and 20 quote API requests/second; keep the shared mover-request pacing and do not assume the data-API allowance applies to quote endpoints.
 
 ## 4. Chart Flow data model and current implementation
 
@@ -87,7 +87,7 @@ All frontend requests use the existing `apiFetch` authentication/session path. B
 
 `backend/app/routes/market_flow.py` requests provider-ranked NSE and BSE cash-market gainers and losers using the Type A Top Gainers/Losers API with the provider's ALL security classification. The frontend builds a zero-centred distribution, bullish/bearish paths, filters, volume participation and instrument selection from the returned rows.
 
-**Important data boundary:** the provider mover endpoint returns ranked movers, not every unchanged listing. Current bullish/bearish counts and volume summaries describe only returned rows. They must never be labelled as full-exchange breadth, market-wide total volume or total listed-market participation.
+**Important data boundary:** the provider mover endpoint returns ranked movers, not every unchanged listing. The API response now labels this explicitly as `provider_ranked_sample`, sets `market_summary.sample_only=true` and `breadth_complete=false`, and leaves unchanged count null. Current bullish/bearish counts and volume summaries describe only returned rows. They must never be labelled as full-exchange breadth, market-wide total volume or total listed-market participation.
 
 ### Sector flow
 
@@ -145,7 +145,7 @@ These are provider/data-contract gaps, not frontend components that can safely b
 
 | Capability | Current boundary | Required evidence before implementation |
 |---|---|---|
-| Full NSE/BSE advance-decline breadth | Top-mover lists are not a complete instrument universe | Complete exchange universe plus current and previous-close observations |
+| Full NSE/BSE advance-decline breadth | Top-mover lists are not a complete instrument universe; the response is explicitly marked `provider_ranked_sample` | Complete exchange universe plus current and previous-close observations, with verified quote coverage |
 | Full sector constituent breadth | Selected-sector endpoint returns ranked movers | Complete, current sector membership and quote coverage |
 | Historical market-wide breadth | No persisted full-universe daily snapshots | Reliable complete daily observations and an approved persistence/retention design |
 | Historical sector rotation | Current sector index snapshot only | Verified index instrument tokens and daily historical index OHLC |

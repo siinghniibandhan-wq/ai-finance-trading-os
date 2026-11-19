@@ -290,9 +290,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const indices = Array.isArray(payload?.indices) ? payload.indices : [];
   const sectorOptions = Array.isArray(payload?.sector_universes) ? payload.sector_universes : [];
   const sectorIndices = Array.isArray(payload?.sector_indices) ? payload.sector_indices : [];
-  const sectorIndexByKey = useMemo(() => new Map(sectorIndices.map(item => [item.key, item])), [sectorIndices]);
   const sectorFlowRows = useMemo(() => buildSectorFlowRows(sectorOptions, sectorIndices), [sectorOptions, sectorIndices]);
-  const sectorIndexMaxAbs = Math.max(0.1, ...sectorIndices.map(item => Math.abs(Number(item.percent_change) || 0)));
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
   const sectorSampleSummary = useMemo(() => summarizeSectorMoverSample(sectorRows), [sectorRows]);
   const selected = rows.find(row => keyOf(row) === selectedKey)

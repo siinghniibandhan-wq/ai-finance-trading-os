@@ -195,7 +195,13 @@ def _get_cached_sector_movers(sector):
 
 
 @router.get("/")
-def get_market_flow_snapshot():
+def get_market_flow_snapshot(sector: str | None = Query(None, description="Optional m.Stock sector universe key")):
+    if sector is not None:
+        sector_config = _SECTOR_BY_KEY.get(str(sector).strip().lower())
+        if sector_config is None:
+            raise HTTPException(status_code=404, detail="Unsupported Chart Flow sector.")
+        return _get_cached_sector_movers(sector_config)
+
     movers, errors = fetch_all_cash_movers()
 
     indices = []

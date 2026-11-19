@@ -105,6 +105,7 @@ function HistoricalFlowPanel({ series, loading, error, symbol }) {
   return <section className="mfb-history">
     <div className="mfb-history-head"><div><small>05 / HISTORICAL PRICE FLOW</small><b>{symbol} · daily candles</b></div>
       <strong className={latest.relativeChange >= 0 ? "up" : "down"}>{pct(latest.relativeChange)} since first candle</strong></div>
+    <div className="mfb-history-ohlc"><span>O ₹{latest.open === null ? "—" : fmt(latest.open)}</span><span>H ₹{latest.high === null ? "—" : fmt(latest.high)}</span><span>L ₹{latest.low === null ? "—" : fmt(latest.low)}</span><span>C ₹{fmt(latest.close)}</span></div>
     <svg viewBox="0 0 720 172" role="img" aria-label={`Historical relative price movement and actual volume for ${symbol}`}>
       <line x1="24" x2="696" y1="112" y2="112" className="mfb-history-axis"/>
       <polyline points={points} className="mfb-history-line" fill="none"/>
@@ -191,6 +192,9 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const sectorSampleSummary = useMemo(() => summarizeSectorMoverSample(sectorRows), [sectorRows]);
   const selected = rows.find(row => keyOf(row) === selectedKey)
     || sectorRows.find(row => keyOf(row) === selectedKey) || null;
+  const selectedSectorMover = selected && sectorRows.find(row => keyOf(row) === keyOf(selected));
+  const relativeToSectorSample = selectedSectorMover && sectorSampleSummary.medianChangePct !== null
+    ? selectedSectorMover.changePercent - sectorSampleSummary.medianChangePct : null;
 
   useEffect(() => {
     if (!selected) { setHistorySeries([]); return undefined; }
@@ -301,6 +305,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
       {selected ? <div className="mfb-detail-values"><div><small>LAST PRICE</small><strong>₹{fmt(selected.price)}</strong></div>
         <div><small>PRICE CHANGE</small><strong className={selected.direction}>{pct(selected.changePercent)}</strong></div>
         <div><small>VOLUME</small><strong>{selected.volume === null ? "Not supplied" : fmt(selected.volume, 0)}</strong></div>
+        {relativeToSectorSample !== null && <div><small>VS RETURNED SECTOR SAMPLE</small><strong className={relativeToSectorSample >= 0 ? "up" : "down"}>{pct(relativeToSectorSample)}</strong></div>}
         <button type="button" onClick={() => onSelectInstrument?.(selected)}>Open full chart</button></div>
         : <p>Select a flow path or tile. Only provider-returned fields are shown.</p>}
     </section>

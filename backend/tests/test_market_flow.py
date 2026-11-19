@@ -76,3 +76,67 @@ def test_chart_flow_returns_502_when_every_source_fails(monkeypatch):
 
     assert exc.value.status_code == 502
     assert "Unable to retrieve Chart Flow" in exc.value.detail["message"]
+
+
+def test_chart_flow_sector_movers_uses_mstock_sector_universe(monkeypatch):
+    calls = []
+    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(market_flow, "_sector_cache", {})
+
+    def fake_fetch(**kwargs):
+        calls.append(kwargs)
+        flag = kwargs["type_flag"]
+        return {
+            "status": True,
+            "data": [{
+                "exchange": "NSE",
+                "symbol": "INFY" if flag == "G" else "WIPRO",
+                "symbol_name": "Infosys" if flag == "G" else "Wipro",
+                "ltp": 1500,
+                "per_change": 2 if flag == "G" else -1,
+                "volume": 1000,
+            }],
+        }
+
+    monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
+
+    result = market_flow.get_sector_movers("it")
+
+    assert [call["security_id_code"] for call in calls] == [21, 21]
+    assert [call["type_flag"] for call in calls] == ["G", "L"]
+    assert result["status"] == "success"
+    assert result["sector"]["key"] == "it"
+    assert result["movers"]["gainers"][0]["symbol"] == "INFY"
+    assert result["movers"]["losers"][0]["symbol"] == "WIPRO"
+    assert result["movers"]["gainers"][0]["sector"] == "Information Technology"
+
+
+def test_chart_flow_sector_movers_marks_partial_provider_results(monkeypatch):
+    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(market_flow, "_sector_cache", {})
+    calls = {"count": 0}
+
+    def fake_fetch(**kwargs):
+        calls["count"] += 1
+        if kwargs["type_flag"] == "L":
+            raise RuntimeError("sector losers unavailable")
+        return {"status": True, "data": [{
+            "exchange": "NSE", "symbol": "INFY", "ltp": 1500,
+            "per_change": 2, "volume": 1000,
+        }]}
+
+    monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
+
+    result = market_flow.get_sector_movers("it")
+
+    assert result["status"] == "partial"
+    assert len(result["movers"]["gainers"]) == 1
+    assert result["movers"]["losers"] == []
+    assert result["errors"][0]["type"] == "losers"
+
+
+def test_chart_flow_rejects_unknown_sector_key():
+    with pytest.raises(HTTPException) as exc:
+        market_flow.get_sector_movers("not-a-sector")
+
+    assert exc.value.status_code == 404

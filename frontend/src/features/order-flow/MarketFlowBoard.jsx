@@ -87,7 +87,13 @@ function Side({ title, side, rows, selectedKey, onSelect }) {
 export default function MarketFlowBoard({ onSelectInstrument }) {
   // Market and Order Flow subscribe to the same app-wide snapshot and refresh lifecycle.
   const { data: payload, loading, error, refresh } = useMarketOverview();
+  const [refreshing, setRefreshing] = useState(false);
   const retrievedAt = payload?.last_updated || null;
+  const refreshManually = useCallback(async () => {
+    setRefreshing(true);
+    try { await refresh(); } catch { /* The shared store retains the last successful snapshot. */ }
+    finally { setRefreshing(false); }
+  }, [refresh]);
 
   const rows = useMemo(() => normalizeOrderFlow(payload), [payload]);
   const board = useMemo(() => buildMarketFlowBoard(rows), [rows]);
@@ -106,7 +112,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
     <header className="mfb-header"><div><small>FINANCIAL OS / MARKETS / ORDER FLOW</small><h1>Chart Flow</h1>
       <p>Whole-market discovery from real provider-returned cash-equity movers and supported indices.</p></div>
       <div><span className={error ? "mfb-status error" : loading ? "mfb-status" : "mfb-status live"}>{error ? "SOURCE ERROR" : loading ? "CONNECTING" : payload?.status === "partial" ? "PARTIAL DATA" : "REST SNAPSHOT"}</span>
-        <button type="button" onClick={() => refresh(true)} disabled={loading || refreshing}>{refreshing ? "Refreshing…" : "Refresh"}</button></div>
+        <button type="button" onClick={refreshManually} disabled={loading || refreshing}>{refreshing ? "Refreshing…" : "Refresh"}</button></div>
     </header>
     <section className="mfb-index-rail">{indices.map(index => <div key={index.exchange + ":" + index.name}>
       <small>{index.name}</small><strong>{fmt(index.last_price)}</strong><span>{index.exchange}</span></div>)}

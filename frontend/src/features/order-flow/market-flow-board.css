@@ -39,3 +39,7 @@
 
 .mfb-history-ohlc{display:flex;gap:16px;flex-wrap:wrap;padding:8px 0;color:var(--muted);font-size:9px;font-variant-numeric:tabular-nums}
 .mfb-history-ohlc span{white-space:nowrap}
+
+.mfb-arrow-up{fill:var(--green)}
+.mfb-arrow-down{fill:var(--red)}
+.mfb-flow-origin{fill:var(--text);stroke:var(--panel);stroke-width:2}

@@ -27,7 +27,7 @@ function Distribution({ rows, counts, retrievedAt, breadthAvailable, eyebrow = "
   </section>;
 }
 
-function FlowDiagram({ board, selectedKey, onSelect }) {
+function FlowDiagram({ board, selectedKey, focusedKey, onSelect, onHover }) {
   const top = board.visibleBullish;
   const bottom = board.visibleBearish;
   const flat = board.unchanged.slice(0, 8);
@@ -51,9 +51,11 @@ function FlowDiagram({ board, selectedKey, onSelect }) {
       <text x="20" y={center - 14} className="mfb-zero-text">MARKET</text>
       <text x="20" y={center + 16} className="mfb-zero-text">0%</text>
       {paths.map(({ row, y, side }) => {
-        const selected = keyOf(row) === selectedKey;
+        const selected = keyOf(row) === selectedKey || keyOf(row) === focusedKey;
         const strength = Math.min(1, Math.abs(row.changePercent) / board.maxAbs);
         return <g key={keyOf(row)} role="button" tabIndex="0" className={"mfb-path " + side + (selected ? " selected" : "")}
+          onMouseEnter={() => onHover(keyOf(row))} onMouseLeave={() => onHover(null)}
+          onFocus={() => onHover(keyOf(row))} onBlur={() => onHover(null)}
           onClick={() => onSelect(row)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(row); } }}>
           <path d={"M 34 " + center + " C 170 " + center + ", 340 " + y + ", 570 " + y}
             markerEnd={side === "up" ? "url(#mfb-arrow-up)" : "url(#mfb-arrow-down)"}
@@ -75,13 +77,15 @@ function FlowDiagram({ board, selectedKey, onSelect }) {
   </div>;
 }
 
-function Side({ title, side, rows, selectedKey, onSelect }) {
+function Side({ title, side, rows, selectedKey, focusedKey, onSelect, onHover }) {
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? rows : rows.slice(0, 8);
   return <section className={"mfb-side " + side}>
     <div className="mfb-side-head"><h3>{title}</h3><b>{rows.length}</b></div>
     <div className="mfb-tiles">{visible.map(row => <button key={keyOf(row)} type="button"
-      className={"mfb-tile " + side + (keyOf(row) === selectedKey ? " selected" : "")} onClick={() => onSelect(row)}>
+      className={"mfb-tile " + side + (keyOf(row) === selectedKey || keyOf(row) === focusedKey ? " selected" : "")}
+      onMouseEnter={() => onHover(keyOf(row))} onMouseLeave={() => onHover(null)}
+      onFocus={() => onHover(keyOf(row))} onBlur={() => onHover(null)} onClick={() => onSelect(row)}>
       <span>{row.symbol}</span><strong>{pct(row.changePercent)}</strong>
       <small>₹{fmt(row.price)} · {row.exchange}</small>
       <small>Volume {row.volume === null ? "not supplied" : fmt(row.volume, 0)}</small>
@@ -139,6 +143,9 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [selectedKey, setSelectedKey] = useState("");
+  const [hoveredKey, setHoveredKey] = useState(null);
+  const focusedKey = hoveredKey || selectedKey;
+  const onHoverInstrument = useCallback(key => setHoveredKey(key), []);
   const [selectedSectorKey, setSelectedSectorKey] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [exchangeFilter, setExchangeFilter] = useState("ALL");
@@ -271,7 +278,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         <p>Actual price changes fan through the central gate into bullish and bearish instruments. This is a current snapshot, not a reconstructed intraday history.</p></div>
         <span className="mfb-poll">REST refresh · 30 seconds while visible</span></div>
       <div className="mfb-board">
-        <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>
+        <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
           <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Explore sector constituents</b></div>
             <p>Choose a provider-supported sector to load its actual ranked gainers and losers.</p>
             <div className="mfb-sector-selector" role="group" aria-label="Select a sector">
@@ -293,9 +300,9 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
               <Distribution eyebrow="SECTOR / PROVIDER-RANKED MOVERS" title={sectorPayload.sector?.name + " price distribution"} description="Actual sector-filtered gainers and losers returned by m.Stock. This is not the full sector constituent universe." rows={sectorRows} counts={buildMarketFlowBoard(sectorRows).counts} breadthAvailable={false} retrievedAt={sectorPayload.last_updated ? new Date(sectorPayload.last_updated).toLocaleTimeString("en-IN") : null}/>
               <div className="mfb-sector-movers">
                 <Side title="Sector gainers" side="up" rows={sectorRows.filter(row => row.direction === "bullish")}
-                  selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>
+                  selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
                 <Side title="Sector losers" side="down" rows={sectorRows.filter(row => row.direction === "bearish")}
-                  selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>
+                  selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
               </div>
               {sectorPayload.errors?.length > 0 && <p className="mfb-alert">One sector mover source did not respond. Available real results are retained.</p>}
               <p className="mfb-sector-disclaimer">Median and directional counts describe only the {sectorSampleSummary.count} returned top movers. They are not full-sector performance or constituent breadth.</p>
@@ -303,8 +310,8 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
             {!sectorOptions.length && <p>Sector universes were not returned by the backend.</p>}
           </section>
         </div>
-        <div className="mfb-sides"><Side title="Bullish" side="up" rows={board.bullish} selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>
-          <Side title="Bearish" side="down" rows={board.bearish} selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/></div>
+        <div className="mfb-sides"><Side title="Bullish" side="up" rows={board.bullish} selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
+          <Side title="Bearish" side="down" rows={board.bearish} selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/></div>
       </div>
     </section>
     <section className="mfb-detail"><div><small>04 / INSTRUMENT DETAIL</small><h2>{selected ? selected.name : "Select an instrument"}</h2>

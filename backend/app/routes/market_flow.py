@@ -132,6 +132,21 @@ def _fetch_sector_movers_uncached(sector):
                 "message": str(exc),
             })
 
+    sector_index = None
+    try:
+        sector_index = fetch_index({
+            "name": sector["name"],
+            "exchange": "NSE",
+            "symbol": sector["index_symbol"],
+        })
+    except Exception as exc:
+        errors.append({
+            "source": "m.Stock index quote",
+            "sector": sector["key"],
+            "type": "sector_index",
+            "message": str(exc),
+        })
+
     if errors and not movers["gainers"] and not movers["losers"]:
         raise HTTPException(
             status_code=502,
@@ -152,6 +167,7 @@ def _fetch_sector_movers_uncached(sector):
             "note": "These are the provider's top movers within the selected sector, not every sector constituent.",
         },
         "movers": movers,
+        "sector_index": sector_index,
         "counts": {
             "gainers": len(movers["gainers"]),
             "losers": len(movers["losers"]),
@@ -160,11 +176,11 @@ def _fetch_sector_movers_uncached(sector):
         "capabilities": {
             "sector_gainer_loser_lists": True,
             "full_sector_constituent_breadth": False,
-            "sector_index_quote": False,
+            "sector_index_quote": sector_index is not None,
         },
         "limitations": [
             "The provider response contains ranked movers, not the complete sector constituent universe.",
-            "Sector index price performance is not included in this endpoint response.",
+            "The existing index-quote contract supplies a current index price only; percentage performance is unavailable unless returned by the provider.",
         ],
         "data_sources": {
             "primary": "m.Stock Type A Top Gainers and Losers API",

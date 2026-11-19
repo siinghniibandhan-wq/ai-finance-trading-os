@@ -24,21 +24,33 @@ CASH_EXCHANGES = (
 )
 
 
+# One shared limiter for Chart Flow mover requests. m.Stock documents one
+# data-API request per second; it must also cover concurrent market/sector calls.
+_mstock_mover_lock = threading.Lock()
+_last_mstock_mover_request_at = 0.0
+MSTOCK_MOVER_MIN_INTERVAL_SECONDS = 1.05
+
+
+def _fetch_mstock_movers(**kwargs):
+    global _last_mstock_mover_request_at
+    with _mstock_mover_lock:
+        now = time.monotonic()
+        wait = MSTOCK_MOVER_MIN_INTERVAL_SECONDS - (now - _last_mstock_mover_request_at)
+        if wait > 0:
+            time.sleep(wait)
+        _last_mstock_mover_request_at = time.monotonic()
+        return fetch_movers(**kwargs)
+
+
 def fetch_all_cash_movers():
     """Fetch the provider's ALL-universe gainer and loser lists for both exchanges."""
     movers = {"gainers": [], "losers": []}
     errors = []
     seen = {"gainers": set(), "losers": set()}
-    request_count = 0
-
     for exchange in CASH_EXCHANGES:
         for mover_type, type_flag in (("gainers", "G"), ("losers", "L")):
-            # m.Stock documents a 1-request/second data-API limit.
-            if request_count:
-                time.sleep(1.05)
-            request_count += 1
             try:
-                response = fetch_movers(
+                response = _fetch_mstock_movers(
                     exchange=exchange["exchange"],
                     security_id_code=0,
                     segment=exchange["segment"],
@@ -102,12 +114,9 @@ def _fetch_sector_movers_uncached(sector):
     movers = {"gainers": [], "losers": []}
     errors = []
 
-    for position, (mover_type, type_flag) in enumerate((("gainers", "G"), ("losers", "L"))):
-        if position:
-            # m.Stock documents a one-request-per-second data API rate limit.
-            time.sleep(1.05)
+    for mover_type, type_flag in (("gainers", "G"), ("losers", "L")):
         try:
-            response = fetch_movers(
+            response = _fetch_mstock_movers(
                 exchange=1,
                 security_id_code=sector["security_id_code"],
                 segment=1,

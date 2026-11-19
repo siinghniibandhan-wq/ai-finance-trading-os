@@ -39,7 +39,10 @@ def test_chart_flow_requests_all_cash_movers_from_both_exchanges(monkeypatch):
     assert len(result["market_movers"]["gainers"]) == 2
     assert len(result["market_movers"]["losers"]) == 2
     assert result["market_summary"]["unchanged"] is None
-    assert result["scope"]["universe"].startswith("ALL cash-market")
+    assert result["scope"]["universe"] == "Provider-ranked cash-market gainers and losers requested with SecurityIdCode=0 (ALL)"
+    assert result["scope"]["completeness"] == "provider_ranked_sample"
+    assert result["market_summary"]["sample_only"] is True
+    assert result["market_summary"]["breadth_complete"] is False
 
 
 def test_chart_flow_marks_partial_provider_failures_without_filling_missing_data(monkeypatch):
@@ -118,6 +121,7 @@ def test_chart_flow_sector_movers_uses_mstock_sector_universe(monkeypatch):
     assert result["sector_index"]["last_price"] == 25000
     assert result["capabilities"]["sector_index_quote"] is True
     assert result["capabilities"]["sector_index_performance"] is True
+    assert all("index-quote contract supplies a current index price only" not in item for item in result["limitations"])
 
 
 def test_chart_flow_sector_movers_marks_partial_provider_results(monkeypatch):

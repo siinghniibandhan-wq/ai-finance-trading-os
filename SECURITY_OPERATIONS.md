@@ -325,3 +325,20 @@ The application-owned AWS topology remains incomplete until the active frontend 
 An earlier EC2 inspection documented a Type A decoder, a persistent WebSocket worker and Flask market-stream routes. That evidence belongs to the 13 November deployment snapshot only. The latest uploaded Gateway `mstock-gateway-app.py` reviewed on 18 November no longer contains those routes or worker references. Do not use this historical addendum as a current deployment inventory.
 
 The Financial OS Order Flow adapter and Market Flow integration are absent from the reviewed current backend source. The current application market-data integration is REST-based. Existing REST and broker-order functionality must remain unchanged.
+
+
+---
+
+## Operational status addendum — 20 November 2026
+
+### Authentication incident closure
+
+The HTTP 401 `Authentication is required` issue reported after OTP sign-in is **resolved per the latest user confirmation**. This is an incident-status update, not a claim that a new authentication mechanism was introduced. Preserve the existing Financial OS authentication flow and the gateway-owned m.Stock provider session. Do not create a parallel OTP/login flow or duplicate provider-token lifecycle.
+
+For release verification, test the complete sequence: OTP sign-in, access to an authenticated API route, continued session use beyond the previously observed short interval, explicit logout and sign-in again. Record the environment, timestamp and tested commit. Never include bearer tokens, OTP values, TOTP seeds or gateway secrets in the evidence.
+
+### BSE integration status
+
+The BSE market-data issue is **resolved per the latest user confirmation**. Current repository code includes BSE in the cash-market mover exchange mapping and accepts NSE/BSE in the Options Hub master and option-chain routes. The 19 November 2026 gateway discovery session returned NSE Futures 685, NSE Options 92,283, BSE Futures 661 and BSE Options 45,318 (138,947 observed contracts total). These counts are a dated observation only. LTP quote retrieval was tested; optional provider fields such as volume and open interest remain coverage-dependent.
+
+Continue to treat market requests as read-only REST operations. Do not infer complete exchange breadth from ranked movers or present missing provider fields as real values. The BSE issue is no longer an active incident in the latest user-confirmed status.

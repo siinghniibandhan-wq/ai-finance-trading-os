@@ -40,5 +40,6 @@ test("normalizes historical OHLCV candles into chart-safe time and price values"
   ]);
   assert.deepEqual(candles, [
     { time: 1795080600, open: 100, high: 105, low: 98, close: 103, volume: 1200 },
+    { time: 1795080600, open: 100, high: 105, low: 98, close: 103, volume: 1500 },
   ]);
 });

@@ -183,11 +183,14 @@ export function buildSectorFlowRows(sectors, quotes) {
 
 /** Map validated daily OHLCV observations to deterministic SVG candlestick geometry. */
 export function buildHistoricalCandleGeometry(series, width = 720, height = 196) {
-  const valid = (Array.isArray(series) ? series : []).filter(row =>
-    [row?.open, row?.high, row?.low, row?.close].every(value =>
+  const valid = (Array.isArray(series) ? series : []).filter(row => {
+    const values = [row?.open, row?.high, row?.low, row?.close];
+    if (!values.every(value =>
       value !== null && value !== undefined && Number.isFinite(Number(value)) && Number(value) > 0
-    )
-  );
+    )) return false;
+    const [open, high, low, close] = values.map(Number);
+    return high >= Math.max(open, close, low) && low <= Math.min(open, close, high);
+  });
   if (!valid.length) return [];
   const min = Math.min(...valid.map(row => Number(row.low)));
   const max = Math.max(...valid.map(row => Number(row.high)));
@@ -200,7 +203,10 @@ export function buildHistoricalCandleGeometry(series, width = 720, height = 196)
     return value !== null && value >= 0 ? value : 0;
   }));
   const xPadding = 24;
-  const bodyWidth = Math.max(1, Math.min(7, ((width - xPadding * 2) / Math.max(1, valid.length)) * 0.65));
+  const candleSlot = valid.length > 1
+    ? (width - xPadding * 2) / (valid.length - 1)
+    : width - xPadding * 2;
+  const bodyWidth = Math.max(0.35, Math.min(7, candleSlot * 0.65));
   return valid.map((row, index) => {
     const x = xPadding + (valid.length === 1 ? 0 : index / (valid.length - 1) * (width - xPadding * 2));
     const y = value => plotTop + ((max - Number(value)) / span) * plotHeight;

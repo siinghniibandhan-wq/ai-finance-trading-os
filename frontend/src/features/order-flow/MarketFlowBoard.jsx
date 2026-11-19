@@ -303,7 +303,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
             <div className="mfb-sector-selector" role="group" aria-label="Compare and select sectors">
               {sectorOptions.map(sector => {
                 const quote = sectorIndexByKey.get(sector.key);
-                const change = Number.isFinite(Number(quote?.percent_change)) ? Number(quote.percent_change) : null;
+                const change = quote?.percent_change !== null && quote?.percent_change !== undefined && Number.isFinite(Number(quote.percent_change)) ? Number(quote.percent_change) : null;
                 const barWidth = change === null ? 0 : Math.min(50, Math.abs(change) / sectorIndexMaxAbs * 50);
                 return <button key={sector.key} type="button"
                   className={selectedSectorKey === sector.key ? "selected" : ""}
@@ -325,7 +325,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
                 <span>{sectorPayload.status === "partial" ? "Partial response" : "REST data"}</span>
                 <span>Sample median {sectorSampleSummary.medianChangePct === null ? "—" : pct(sectorSampleSummary.medianChangePct)}</span></div>
               {sectorPayload.sector_index && <div className="mfb-sector-index-quote"><small>{sectorPayload.sector_index.name} · INDEX LEVEL</small><strong>{fmt(sectorPayload.sector_index.last_price)}</strong>
-                {Number.isFinite(Number(sectorPayload.sector_index.percent_change)) && <b className={Number(sectorPayload.sector_index.percent_change) >= 0 ? "up" : "down"}>{pct(Number(sectorPayload.sector_index.percent_change))}</b>}
+                {sectorPayload.sector_index.percent_change !== null && sectorPayload.sector_index.percent_change !== undefined && Number.isFinite(Number(sectorPayload.sector_index.percent_change)) && <b className={Number(sectorPayload.sector_index.percent_change) >= 0 ? "up" : "down"}>{pct(Number(sectorPayload.sector_index.percent_change))}</b>}
                 <span>{sectorPayload.sector_index.previous_close ? "Previous close " + fmt(sectorPayload.sector_index.previous_close) : "Daily change unavailable from provider OHLC."}</span></div>}
               <Distribution eyebrow="SECTOR / PROVIDER-RANKED MOVERS" title={sectorPayload.sector?.name + " price distribution"} description="Actual sector-filtered gainers and losers returned by m.Stock. This is not the full sector constituent universe." rows={sectorRows} counts={buildMarketFlowBoard(sectorRows).counts} breadthAvailable={false} retrievedAt={sectorPayload.last_updated ? new Date(sectorPayload.last_updated).toLocaleTimeString("en-IN") : null}/>
               <div className="mfb-sector-movers">

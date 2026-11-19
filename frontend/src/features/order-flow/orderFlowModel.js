@@ -132,7 +132,8 @@ export function rankSectorIndices(sectors, quotes) {
 export function summarizeMoverVolume(rows) {
   const summary = {
     bullishVolume: 0, bearishVolume: 0, unchangedVolume: 0,
-    bullishCount: 0, bearishCount: 0, unchangedCount: 0, volumeReported: 0,
+    bullishCount: 0, bearishCount: 0, unchangedCount: 0,
+    volumeReported: 0, positiveVolumeReported: 0, zeroVolumeReported: 0,
   };
   for (const row of Array.isArray(rows) ? rows : []) {
     const volume = num(row?.volume);
@@ -148,6 +149,8 @@ export function summarizeMoverVolume(rows) {
       summary.unchangedCount += 1;
     } else continue;
     summary.volumeReported += 1;
+    if (volume > 0) summary.positiveVolumeReported += 1;
+    else summary.zeroVolumeReported += 1;
   }
   return summary;
 }

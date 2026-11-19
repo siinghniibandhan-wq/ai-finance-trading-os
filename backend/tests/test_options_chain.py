@@ -15,7 +15,7 @@ def test_options_chain_master_uses_existing_gateway_secret_and_preserves_payload
         status = 200
         def __enter__(self): return self
         def __exit__(self, *args): return False
-        def read(self): return json.dumps({"contractModel": [], "spot": {}}).encode()
+        def read(self): return json.dumps({"status": "success", "data": {"contractModel": [], "spot": {}}}).encode()
 
     def fake_urlopen(request, timeout):
         captured["url"] = request.full_url
@@ -45,7 +45,7 @@ def test_options_chain_data_encodes_expiry_and_keeps_provider_fields(monkeypatch
         status = 200
         def __enter__(self): return self
         def __exit__(self, *args): return False
-        def read(self): return json.dumps({"call": ["1,2,3"], "put": ["4,5,6"], "future": []}).encode()
+        def read(self): return json.dumps({"status": "success", "data": {"call": ["1,2,3"], "put": ["4,5,6"], "future": []}}).encode()
 
     def fake_urlopen(request, timeout):
         captured["url"] = request.full_url

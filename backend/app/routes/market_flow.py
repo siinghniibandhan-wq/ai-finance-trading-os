@@ -98,8 +98,8 @@ SECTOR_UNIVERSES = (
     {"key": "infrastructure", "name": "Infrastructure", "security_id_code": 34, "index_symbol": "NIFTY INFRA"},
     {"key": "mnc", "name": "MNC", "security_id_code": 35, "index_symbol": "NIFTY MNC"},
     {"key": "services", "name": "Services", "security_id_code": 37, "index_symbol": "NIFTY SERV SECTOR"},
-    {"key": "consumer-durables", "name": "Consumer Durables", "security_id_code": 59, "index_symbol": "NIFTY CONSUMER DURABLES"},
-    {"key": "financial-services", "name": "Financial Services", "security_id_code": 60, "index_symbol": "NIFTY FINANCIAL SERVICES"},
+    {"key": "consumer-durables", "name": "Consumer Durables", "security_id_code": 59, "index_symbol": "NIFTY CONSUMER DURABLES", "quote_symbol": "NIFTYCONSRDURBL"},
+    {"key": "financial-services", "name": "Financial Services", "security_id_code": 60, "index_symbol": "NIFTY FINANCIAL SERVICES", "quote_symbol": "NIFTYFINSERVICE"},
     {"key": "oil-gas", "name": "Oil & Gas", "security_id_code": 61, "index_symbol": "NIFTY OIL AND GAS"},
     {"key": "healthcare", "name": "Healthcare", "security_id_code": 62, "index_symbol": "NIFTY HEALTHCARE"},
 )

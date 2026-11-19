@@ -4,75 +4,54 @@ from fastapi import HTTPException
 from app.routes import market_flow
 
 
-def test_chart_flow_requests_all_cash_movers_from_both_exchanges(monkeypatch):
+def _overview(status="success"):
+    return {
+        "status": status,
+        "indices": [{"name": "NIFTY 50", "exchange": "NSE", "last_price": 25281.75}],
+        "market_movers": {
+            "gainers": [
+                {"symbol": "RELIANCE", "name": "Reliance Industries", "exchange": "NSE",
+                 "ltp": 1450.5, "percent_change": 1.25, "volume": 1200},
+            ],
+            "losers": [
+                {"symbol": "PAYTM", "name": "One 97 Communications", "exchange": "NSE",
+                 "ltp": 350.0, "percent_change": -2.5, "volume": 900},
+            ],
+        },
+        "data_sources": {"primary": "m.Stock via Financial OS Gateway"},
+        "errors": [],
+        "last_updated": "2026-11-19T04:30:00+00:00",
+    }
+
+
+def test_chart_flow_reuses_the_working_market_overview_feed(monkeypatch):
     calls = []
-    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
-
-    def fake_fetch(**kwargs):
-        calls.append(kwargs)
-        exchange = "NSE" if kwargs["exchange"] == 1 else "BSE"
-        return {
-            "status": True,
-            "message": "SUCCESS",
-            "data": [{
-                "exchange": exchange,
-                "symbol": exchange + ("UP" if kwargs["type_flag"] == "G" else "DOWN"),
-                "symbol_name": exchange + " sample",
-                "ltp": 100,
-                "per_change": 1 if kwargs["type_flag"] == "G" else -1,
-                "volume": 500,
-            }],
-        }
-
-    monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
-    monkeypatch.setattr(market_flow, "fetch_index", lambda index: {
-        "name": index["name"], "exchange": index["exchange"], "symbol": index["symbol"],
-        "last_price": 100, "status": "success",
-    })
+    monkeypatch.setattr(market_flow, "get_market_overview", lambda: calls.append(True) or _overview())
 
     result = market_flow.get_market_flow_snapshot()
 
-    assert len(calls) == 4
-    assert all(call["security_id_code"] == 0 for call in calls)
-    assert {(call["exchange"], call["segment"]) for call in calls} == {(1, 1), (4, 2)}
-    assert {call["type_flag"] for call in calls} == {"G", "L"}
-    assert len(result["market_movers"]["gainers"]) == 2
-    assert len(result["market_movers"]["losers"]) == 2
-    assert result["market_summary"]["unchanged"] is None
-    assert result["scope"]["universe"].startswith("ALL cash-market")
+    assert calls == [True]
+    assert result["status"] == "success"
+    assert result["indices"][0]["last_price"] == 25281.75
+    assert result["market_movers"]["gainers"][0]["symbol"] == "RELIANCE"
+    assert result["market_movers"]["losers"][0]["symbol"] == "PAYTM"
+    assert result["market_summary"]["gainers"] == 1
+    assert result["market_summary"]["losers"] == 1
+    assert result["capabilities"]["full_advance_decline_breadth"] is False
 
 
-def test_chart_flow_marks_partial_provider_failures_without_filling_missing_data(monkeypatch):
-    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
-    call_count = {"value": 0}
-
-    def fake_fetch(**kwargs):
-        call_count["value"] += 1
-        if call_count["value"] == 1:
-            raise RuntimeError("provider unavailable")
-        return {"status": True, "data": []}
-
-    monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
-    monkeypatch.setattr(market_flow, "fetch_index", lambda index: {
-        "name": index["name"], "exchange": index["exchange"], "symbol": index["symbol"],
-        "last_price": 100, "status": "success",
-    })
-
+def test_chart_flow_preserves_partial_market_overview_data(monkeypatch):
+    monkeypatch.setattr(market_flow, "get_market_overview", lambda: _overview("partial"))
     result = market_flow.get_market_flow_snapshot()
-
     assert result["status"] == "partial"
-    assert result["errors"][0]["message"] == "provider unavailable"
-    assert result["market_movers"] == {"gainers": [], "losers": []}
-    assert result["market_summary"]["unchanged"] is None
+    assert result["market_movers"]["gainers"][0]["ltp"] == 1450.5
 
 
-def test_chart_flow_returns_502_when_every_source_fails(monkeypatch):
-    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
-    monkeypatch.setattr(market_flow, "fetch_movers", lambda **_kwargs: (_ for _ in ()).throw(RuntimeError("movers down")))
-    monkeypatch.setattr(market_flow, "fetch_index", lambda _index: (_ for _ in ()).throw(RuntimeError("index down")))
-
+def test_chart_flow_returns_502_when_working_market_feed_has_no_data(monkeypatch):
+    payload = _overview("error")
+    payload["indices"] = []
+    payload["market_movers"] = {"gainers": [], "losers": []}
+    monkeypatch.setattr(market_flow, "get_market_overview", lambda: payload)
     with pytest.raises(HTTPException) as exc:
         market_flow.get_market_flow_snapshot()
-
     assert exc.value.status_code == 502
-    assert "Unable to retrieve Chart Flow" in exc.value.detail["message"]

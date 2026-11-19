@@ -417,7 +417,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   }, [selectedSectorKey, loadSector]);
 
   return <main className="market-flow-board">
-    <header className="mfb-header"><div><small>FINANCIAL OS / MARKETS / ORDER FLOW</small><h1>Chart Flow</h1>
+    <header className="mfb-header"><div><small>FINANCIAL OS / MARKETS / CHART FLOW</small><h1>Chart Flow</h1>
       <p>Whole-market discovery from real provider-returned cash-equity movers and supported indices.</p></div>
       <div><span className={error ? "mfb-status error" : loading ? "mfb-status" : "mfb-status live"}>{error ? "SOURCE ERROR" : loading ? "CONNECTING" : payload?.status === "partial" ? "PARTIAL DATA" : "REST SNAPSHOT"}</span>
         <button type="button" onClick={() => refresh(true)} disabled={loading || refreshing}>{refreshing ? "Refreshing…" : "Refresh"}</button></div>

@@ -21,13 +21,18 @@ PR: #219 (draft; not merged)
 - Historical OHLCV uses authenticated `GET /api/market-charts/`; the LTP marker refreshes from authenticated REST quote snapshots.
 - Existing Markets tab and existing Market Flow board/workflow are preserved.
 
-## REST provider contracts — verified documentation vs application wiring
+## REST provider contracts — documentation vs application wiring
 
-- The current Type A gateway exposes authentication, LTP/quote, historical candles, script master, gainers/losers and index quote through REST.
-- m.Stock Type A option-chain documentation labels the option-chain APIs “Coming Soon”; this is not a dependable REST integration contract.
-- m.Stock Type B documents option-chain master and option-chain data REST endpoints. The master endpoint is marked “coming soon”. The data endpoint requires Type B Bearer JWT plus X-PrivateKey authentication, unlike the Type A authentication currently implemented by the gateway. It is documented but not wired into this application.
-- No verified REST endpoint is currently available in the integrated Type A contract for futures OI history, option-chain OI/PCR, or historical OI time series.
-- The m.Stock REST docs do not provide an app-ready sector constituent universe or a full listed-market advance/decline universe.
+- m.Stock publishes Type A REST routes for both option-chain master and option-chain data:
+  - `GET /openapi/typea/getoptionchainmaster/{exch}`
+  - `GET /openapi/typea/GetOptionChain/{exch}/{expiry}/{token}`
+- The Type A documentation page labels the option-chain feature “Coming Soon” and explicitly labels the master endpoint “coming soon”. It nevertheless documents the data endpoint, its request headers, and an example response containing `call`, `put`, `future`, and `spot` fields. Documentation and SDK route declarations establish that the API is published; they do not establish production enablement for this account.
+- The official m.Stock Type A Python SDK includes `option_chain_master` and `option_chain_data` route definitions. The official Type A Node SDK also exposes option-chain methods. Therefore the earlier statement that Type A has no documented option-chain REST capability was incorrect.
+- Type B publishes corresponding option-chain REST paths under `/openapi/typeb/`, with Type B-specific authentication. Its documentation also marks the option-chain master as “coming soon”. Type B is not part of this implementation.
+- The Type A example option-chain payload lists call/put contract rows as compact strings and includes a futures token and spot identifier. The example alone does not establish that OI, OI change, volume, IV, Greeks, or historical OI are included in that response. Those fields must be confirmed from live Type A responses and/or separately documented Type A REST quote fields before analytics are implemented.
+- The current Financial OS gateway integration does not yet expose Type A option-chain routes, and the Financial OS backend has no option-chain route. This is an application-wiring gap, not proof that the provider's Type A REST capability is absent.
+- No production request has yet been made against the user's authenticated Type A account in this work session. Endpoint availability, subscription entitlement, actual response schema, rate limits, and required quote enrichment remain unverified.
+- Sector constituent membership, a complete listed-market advance/decline universe, and historical OI series must be treated as separate data requirements; they are not established by the option-chain endpoint examples.
 
 ## Capability status
 
@@ -38,12 +43,15 @@ PR: #219 (draft; not merged)
 | Historical OHLCV | Existing gateway historical route and backend `GET /api/market-charts/` | Implemented |
 | Latest quote / LTP marker | Authenticated REST quote snapshot | Implemented |
 | Technical indicators | Deterministic derivations from loaded OHLCV | Implemented |
+| Type A option-chain master | Documented Type A REST route; documentation explicitly says “coming soon” | Published, runtime availability unverified |
+| Type A option-chain data | Documented Type A REST route and sample CE/PE contract response; not wired through current gateway/backend | Published, runtime availability unverified |
+| CE/PE option prices, OI and volume | Must be confirmed from actual chain and per-contract Type A REST quote responses | Not yet verified |
+| PCR, Max Pain and strike OI distribution | Requires complete, valid CE/PE OI for one expiry | Not yet implementable until live fields are verified |
+| Futures price + OI history | No verified historical Type A REST response contract in this application | Not yet verified |
 | Sector index performance | Index quote capability exists, but no verified sector-index symbol universe / historical index-token contract has been validated end-to-end | Not implemented |
-| Sector constituents / sector breadth | No verified constituent mapping or full-universe advances/declines REST feed | Not available |
-| Full-market breadth | Bounded top-movers endpoint is not a full market universe | Not available |
-| Futures price + OI history | No verified REST endpoint in the current Type A integration | Not available |
-| Option-chain CE/PE OI, OI change, expiry and PCR | Type B REST endpoint documented, but Type B auth/master are not wired; Type A chain docs marked coming soon | Not integrated |
-| Historical OI time series | No verified historical OI REST endpoint in the current Type A integration | Not available |
+| Sector constituents / sector breadth | No verified constituent mapping or full-universe advances/declines REST feed | Not available from current integration |
+| Full-market breadth | Bounded top-movers endpoint is not a full market universe | Not available from current integration |
+| Historical OI time series | No verified historical OI REST response contract in this application | Not yet verified |
 | Continuous live ticks | Excluded by the REST-only product requirement | Not in scope |
 
 ## Integrity and preservation constraints

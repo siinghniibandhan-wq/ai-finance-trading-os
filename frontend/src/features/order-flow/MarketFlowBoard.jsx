@@ -135,12 +135,12 @@ function SectorFlowDiagram({ sectors, selectedKey, loading, onSelect }) {
         const value = sector.percentChange;
         const barWidth = value === null ? 0 : Math.abs(value) / maxAbs * halfWidth;
         const barX = value === null ? centerX : value >= 0 ? centerX : centerX - barWidth;
-        return <g key={sector.key} role="button" tabIndex="0" aria-pressed={selected}
+        return <g key={sector.key} role="button" tabIndex="0" aria-disabled={loading} aria-pressed={selected}
           aria-label={`${sector.name}, ${value === null ? "index performance unavailable" : pct(value)}, ${sector.lastPrice === null ? "index level unavailable" : "index level " + fmt(sector.lastPrice)}. Select sector`}
           className={`mfb-sector-flow-row${selected ? " selected" : ""}`}
-          onClick={() => onSelect(sector.key)}
+          onClick={() => { if (!loading) onSelect(sector.key); }}
           onKeyDown={event => {
-            if (event.key === "Enter" || event.key === " ") {
+            if (!loading && (event.key === "Enter" || event.key === " ")) {
               event.preventDefault();
               onSelect(sector.key);
             }
@@ -182,7 +182,7 @@ function SectorConstituentDiagram({ sectorName, board, selectedKey, focusedKey, 
       <small>Provider-ranked gainers and losers · {bullish.length + bearish.length} returned instruments</small>
     </div>
     {branches.length ? <svg className="mfb-constituent-flow" viewBox={`0 0 1000 ${height}`} role="group" aria-label={`${sectorName} sector index connected to its provider-ranked stock gainers and losers`}>
-      <line x1="154" y1={centerY} x2="188" y2={centerY} className="mfb-constituent-root-line"/>
+      <line x1="154" y1={centerY} x2="224" y2={centerY} className="mfb-constituent-root-line"/>
       <circle cx="154" cy={centerY} r="7" className="mfb-constituent-root"/>
       <text x="18" y={centerY - 5} className="mfb-constituent-root-label">SECTOR</text>
       <text x="18" y={centerY + 11} className="mfb-constituent-root-sub">INDEX NODE</text>

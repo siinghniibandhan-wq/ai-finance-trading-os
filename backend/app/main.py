@@ -42,6 +42,7 @@ from app.routes import (
     market,
     market_overview,
     market_flow,
+    options_hub,
     market_quote,
     market_search,
     mutual_fund_search,
@@ -491,6 +492,7 @@ _include_private_router(investments.router)
 _include_private_router(market.router)
 _include_private_router(market_overview.router)
 _include_private_router(market_flow.router)
+_include_private_router(options_hub.router)
 _include_private_router(market_quote.router)
 _include_private_router(market_search.router)
 _include_private_router(mutual_fund_search.router)

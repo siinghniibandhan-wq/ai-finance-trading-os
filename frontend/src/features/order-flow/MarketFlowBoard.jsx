@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { loadMarketFlowSnapshot } from "../advanced-chart/api.js";
+import { useMarketOverview } from "../../marketOverviewStore.js";
 import { buildDistributionDots, buildMarketFlowBoard, normalizeOrderFlow } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
@@ -85,44 +85,9 @@ function Side({ title, side, rows, selectedKey, onSelect }) {
 }
 
 export default function MarketFlowBoard({ onSelectInstrument }) {
-  const [payload, setPayload] = useState(null);
-  const [retrievedAt, setRetrievedAt] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState("");
-  const [selectedKey, setSelectedKey] = useState("");
-  const busy = useRef(false);
-  const mounted = useRef(true);
-  const hasPayload = useRef(false);
-
-  const refresh = useCallback(async (manual = false) => {
-    if (busy.current || document.visibilityState !== "visible") return;
-    busy.current = true;
-    if (manual) setRefreshing(true);
-    else if (!hasPayload.current) setLoading(true);
-    try {
-      const next = await loadMarketFlowSnapshot();
-      if (!mounted.current) return;
-      setPayload(next);
-      hasPayload.current = true;
-      setRetrievedAt(next?.last_updated || new Date().toISOString());
-      setError("");
-    } catch (requestError) {
-      if (mounted.current) setError(requestError?.message || "Market data request failed.");
-    } finally {
-      busy.current = false;
-      if (mounted.current) { setLoading(false); setRefreshing(false); }
-    }
-  }, []);
-
-  useEffect(() => {
-    mounted.current = true;
-    refresh();
-    const poll = () => { if (document.visibilityState === "visible") refresh(); };
-    const timer = window.setInterval(poll, 30000);
-    document.addEventListener("visibilitychange", poll);
-    return () => { mounted.current = false; window.clearInterval(timer); document.removeEventListener("visibilitychange", poll); };
-  }, [refresh]);
+  // Market and Order Flow subscribe to the same app-wide snapshot and refresh lifecycle.
+  const { data: payload, loading, error, refresh } = useMarketOverview();
+  const retrievedAt = payload?.last_updated || null;
 
   const rows = useMemo(() => normalizeOrderFlow(payload), [payload]);
   const board = useMemo(() => buildMarketFlowBoard(rows), [rows]);

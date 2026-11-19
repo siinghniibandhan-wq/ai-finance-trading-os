@@ -139,3 +139,5 @@
 .mfb-constituent-node.down .mfb-constituent-change{fill:var(--red)}
 .mfb-constituent-flow-foot{padding:8px 2px 0;border-top:1px solid var(--line);color:var(--muted);font-size:9px}
 @media(max-width:700px){.mfb-constituent-flow-wrap{overflow-x:auto;padding:8px 5px}.mfb-constituent-flow{min-width:700px}}
+
+.mfb-sector-flow-row[aria-disabled="true"]{cursor:wait;opacity:.68}

@@ -160,6 +160,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const [historyError, setHistoryError] = useState("");
   const historyRequest = useRef(0);
   const sectorRequest = useRef(0);
+  const sectorBusy = useRef(false);
   const busy = useRef(false);
   const mounted = useRef(true);
   const hasPayload = useRef(false);
@@ -236,7 +237,11 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   }, [selected?.symbol, selected?.exchange]);
 
   const loadSector = useCallback(async (sectorKey) => {
+    if (sectorBusy.current) return;
+    sectorBusy.current = true;
     const requestId = ++sectorRequest.current;
+    setSelectedKey("");
+    setHoveredKey(null);
     setSelectedSectorKey(sectorKey);
     setSectorPayload(null);
     setSectorLoading(true);
@@ -249,9 +254,20 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         setSectorError(requestError?.message || "Sector market data request failed.");
       }
     } finally {
+      sectorBusy.current = false;
       if (mounted.current && requestId === sectorRequest.current) setSectorLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!selectedSectorKey) return undefined;
+    const poll = () => {
+      if (document.visibilityState === "visible" && !sectorBusy.current) loadSector(selectedSectorKey);
+    };
+    const timer = window.setInterval(poll, 60000);
+    document.addEventListener("visibilitychange", poll);
+    return () => { window.clearInterval(timer); document.removeEventListener("visibilitychange", poll); };
+  }, [selectedSectorKey, loadSector]);
 
   return <main className="market-flow-board">
     <header className="mfb-header"><div><small>FINANCIAL OS / MARKETS / ORDER FLOW</small><h1>Chart Flow</h1>
@@ -285,7 +301,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
               {sectorOptions.map(sector => <button key={sector.key} type="button"
                 className={selectedSectorKey === sector.key ? "selected" : ""}
                 aria-pressed={selectedSectorKey === sector.key}
-                onClick={() => loadSector(sector.key)} disabled={sectorLoading && selectedSectorKey === sector.key}>
+                onClick={() => loadSector(sector.key)} disabled={sectorLoading}>
                 {sector.name}
               </button>)}
             </div>

@@ -99,6 +99,9 @@ export default function OptionsHubPage() {
   const quoteCoverage = chain && Number(chain.quote_count) > 0
     ? `${number(chain.quote_coverage)} / ${number(chain.quote_count)}`
     : "—";
+  const showVolume = chain?.volume_available === true;
+  const showOI = chain?.open_interest_available === true;
+  const showOIAnalytics = showOI && analytics.oiComplete;
 
   return <main className="options-hub-page">
     <header className="options-hub-header">
@@ -153,24 +156,23 @@ export default function OptionsHubPage() {
         <span>Retrieved: {chain.retrieved_at ? new Date(chain.retrieved_at).toLocaleString("en-IN") : "not supplied"}</span>
       </section>
 
-      <section className="options-hub-analytics">
-        <div><small>PUT / CALL OI</small><strong>{analytics.pcr === null ? "Unavailable" : analytics.pcr.toFixed(2)}</strong></div>
-        <div><small>CALL OPEN INTEREST</small><strong>{analytics.callOI === null ? "Unavailable" : number(analytics.callOI)}</strong></div>
-        <div><small>PUT OPEN INTEREST</small><strong>{analytics.putOI === null ? "Unavailable" : number(analytics.putOI)}</strong></div>
-        <div><small>MAX PAIN STRIKE</small><strong>{analytics.maxPain === null ? "Unavailable" : number(analytics.maxPain)}</strong></div>
-      </section>
+      {showOIAnalytics && <section className="options-hub-analytics">
+        <div><small>PUT / CALL OI</small><strong>{analytics.pcr.toFixed(2)}</strong></div>
+        <div><small>CALL OPEN INTEREST</small><strong>{number(analytics.callOI)}</strong></div>
+        <div><small>PUT OPEN INTEREST</small><strong>{number(analytics.putOI)}</strong></div>
+        <div><small>MAX PAIN STRIKE</small><strong>{number(analytics.maxPain)}</strong></div>
+      </section>}
 
-      {!analytics.oiComplete && <p className="options-hub-data-note" role="status">
-        The current REST quote response does not provide a complete CE/PE open-interest sample for this expiry. PCR, Max Pain and the OI profile are withheld rather than estimated.
-      </p>}
-
-      <section className="options-hub-panel">
+      {showOIAnalytics && <section className="options-hub-panel">
         <div className="options-hub-panel-heading">
           <div><small>STRIKE DISTRIBUTION</small><h2>Call / Put Open Interest</h2></div>
-          <span>{analytics.oiComplete ? "Provider OI" : "OI unavailable"}</span>
+          <span>Provider OI</span>
         </div>
         <OptionOIProfile rows={analytics.rows}/>
-      </section>
+      </section>}
+      {showOI && !analytics.oiComplete && <p className="options-hub-data-note" role="status">
+        OI values are incomplete for this expiry. PCR, Max Pain and the OI profile are withheld.
+      </p>}
 
       <section className="options-hub-panel">
         <div className="options-hub-panel-heading">
@@ -180,15 +182,15 @@ export default function OptionsHubPage() {
         <div className="options-hub-table-scroll">
           <table className="options-hub-table">
             <thead><tr>
-              <th colSpan="3">CALL (CE)</th><th>STRIKE</th><th colSpan="3">PUT (PE)</th>
+              <th colSpan={1 + Number(showVolume) + Number(showOI)}>CALL (CE)</th><th>STRIKE</th><th colSpan={1 + Number(showVolume) + Number(showOI)}>PUT (PE)</th>
             </tr><tr>
-              <th>LTP</th><th>VOLUME</th><th>OI</th><th>PRICE</th><th>OI</th><th>VOLUME</th><th>LTP</th>
+              <th>LTP</th>{showVolume && <th>VOLUME</th>}{showOI && <th>OI</th>}<th>PRICE</th>{showOI && <th>OI</th>}{showVolume && <th>VOLUME</th>}<th>LTP</th>
             </tr></thead>
             <tbody>
               {analytics.rows.map(row => <tr key={row.strike}>
-                <td>{number(row.CE?.lastPrice)}</td><td>{number(row.CE?.volume)}</td><td>{number(row.CE?.openInterest)}</td>
+                <td>{number(row.CE?.lastPrice)}</td>{showVolume && <td>{number(row.CE?.volume)}</td>}{showOI && <td>{number(row.CE?.openInterest)}</td>}
                 <th>{number(row.strike)}</th>
-                <td>{number(row.PE?.openInterest)}</td><td>{number(row.PE?.volume)}</td><td>{number(row.PE?.lastPrice)}</td>
+                {showOI && <td>{number(row.PE?.openInterest)}</td>}{showVolume && <td>{number(row.PE?.volume)}</td>}<td>{number(row.PE?.lastPrice)}</td>
               </tr>)}
             </tbody>
           </table>

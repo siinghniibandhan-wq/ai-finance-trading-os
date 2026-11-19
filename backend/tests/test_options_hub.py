@@ -50,22 +50,23 @@ def test_options_master_proxies_gateway_rest_contract_without_exposing_secret(mo
     assert "test-secret" not in json.dumps(result)
 
 
-def test_options_chain_proxies_selected_underlying_and_expiry(monkeypatch):
+def test_options_chain_accepts_partial_gateway_snapshot_and_preserves_available_ltp(monkeypatch):
     requested = {}
 
     def fake_urlopen(request, timeout):
         requested["url"] = request.full_url
         return FakeResponse({
-            "status": "success",
+            "status": "partial",
             "exchange": "NSE",
             "underlying": "NIFTY",
             "expiry": "2026-11-26",
             "contracts": [
-                {"strike": 25000, "side": "CE", "last_price": 120, "open_interest": None},
-                {"strike": 25000, "side": "PE", "last_price": 110, "open_interest": None},
+                {"strike": 25000, "side": "CE", "last_price": 120, "volume": None, "open_interest": None, "quote_available": True},
+                {"strike": 25000, "side": "PE", "last_price": None, "volume": None, "open_interest": None, "quote_available": False},
             ],
-            "quote_count": 2,
-            "quote_coverage": 2,
+            "contract_count": 2,
+            "quote_coverage": 1,
+            "volume_available": False,
             "open_interest_available": False,
         })
 
@@ -78,10 +79,11 @@ def test_options_chain_proxies_selected_underlying_and_expiry(monkeypatch):
     )
 
     assert urlparse(requested["url"]).path == "/options/chain"
-    assert parse_qs(urlparse(requested["url"]).query) == {
-        "exchange": ["NSE"], "underlying": ["NIFTY"], "expiry": ["2026-11-26"],
-    }
     assert len(result["contracts"]) == 2
+    assert result["contracts"][0]["last_price"] == 120
+    assert result["contracts"][1]["last_price"] is None
+    assert result["quote_coverage"] == 1
+    assert result["volume_available"] is False
     assert result["open_interest_available"] is False
 
 

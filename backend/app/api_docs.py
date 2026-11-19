@@ -4,5 +4,5 @@ import os
 
 
 def api_docs_enabled() -> bool:
-    """Return whether API docs are explicitly enabled in any deployment environment."""
-    return os.getenv("ENABLE_API_DOCS", "").strip().lower() in {"1", "true", "yes", "on"}
+    """Enable API docs by default; set ENABLE_API_DOCS=0 to disable them."""
+    return os.getenv("ENABLE_API_DOCS", "1").strip().lower() not in {"0", "false", "no", "off"}

@@ -264,7 +264,7 @@ function HistoricalFlowPanel({ series, loading, error, symbol, range, onRangeCha
       <line x1="24" x2="696" y1="18" y2="18" className="mfb-history-grid"/>
       {geometry.map((candle, index) => <g key={String(candle.timestamp) + index} className={`mfb-candle ${candle.direction}`}>
         <line x1={candle.x} x2={candle.x} y1={candle.highY} y2={candle.lowY} className="mfb-candle-wick"/>
-        <rect x={candle.x - 2.5} y={candle.bodyTop} width="5" height={candle.bodyHeight} rx=".5" className="mfb-candle-body"/>
+        <rect x={candle.x - candle.bodyWidth / 2} y={candle.bodyTop} width={candle.bodyWidth} height={candle.bodyHeight} rx=".5" className="mfb-candle-body"/>
         {candle.volumeHeight > 0 && <rect x={candle.x - 2} y={candle.volumeY} width="4" height={candle.volumeHeight} className="mfb-candle-volume"/>}
         <title>{(Number.isFinite(Number(candle.timestamp)) ? new Date(Number(candle.timestamp) * (Number(candle.timestamp) < 100000000000 ? 1000 : 1)) : new Date(candle.timestamp)).toLocaleDateString("en-IN")} · O {fmt(candle.open)} H {fmt(candle.high)} L {fmt(candle.low)} C {fmt(candle.close)} · {candle.volume === null ? "Volume unavailable" : "Volume " + fmt(candle.volume, 0)}</title>
       </g>)}

@@ -107,7 +107,7 @@ export function summarizeSectorMoverSample(rows) {
 }
 
 
-/** Rank sector labels only by provider-returned index percentage changes. */
+/** Rank sector labels by the percentage change calculated from provider LTP and previous-close OHLC. */
 export function rankSectorIndices(sectors, quotes) {
   const byKey = new Map((Array.isArray(quotes) ? quotes : []).map(item => [item.key, item]));
   return [...(Array.isArray(sectors) ? sectors : [])].sort((a, b) => {

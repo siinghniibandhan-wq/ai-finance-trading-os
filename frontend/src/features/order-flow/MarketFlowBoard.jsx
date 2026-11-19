@@ -200,7 +200,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
     sortKey,
     sortDirection,
   ), [rows, searchQuery, exchangeFilter, directionFilter, sortKey, sortDirection]);
-  const board = useMemo(() => buildMarketFlowBoard(filteredRows), [filteredRows]);
+  const board = useMemo(() => buildMarketFlowBoard(filteredRows, 12, sortKey, sortDirection), [filteredRows, sortKey, sortDirection]);
   const indices = Array.isArray(payload?.indices) ? payload.indices : [];
   const sectorOptions = Array.isArray(payload?.sector_universes) ? payload.sector_universes : [];
   const sectorIndices = Array.isArray(payload?.sector_indices) ? payload.sector_indices : [];

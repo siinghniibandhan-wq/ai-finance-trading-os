@@ -53,7 +53,10 @@ function FlowDiagram({ board, selectedKey, focusedKey, onSelect, onHover }) {
       {paths.map(({ row, y, side }) => {
         const selected = keyOf(row) === selectedKey || keyOf(row) === focusedKey;
         const strength = Math.min(1, Math.abs(row.changePercent) / board.maxAbs);
-        return <g key={keyOf(row)} role="button" tabIndex="0" className={"mfb-path " + side + (selected ? " selected" : "")}
+        return <g key={keyOf(row)} role="button" tabIndex="0"
+          aria-label={`${row.name}, ${row.symbol}, ${pct(row.changePercent)}, ${row.exchange}. Select instrument`}
+          aria-pressed={keyOf(row) === selectedKey}
+          className={"mfb-path " + side + (selected ? " selected" : "")}
           onMouseEnter={() => onHover(keyOf(row))} onMouseLeave={() => onHover(null)}
           onFocus={() => onHover(keyOf(row))} onBlur={() => onHover(null)}
           onClick={() => onSelect(row)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(row); } }}>
@@ -69,8 +72,13 @@ function FlowDiagram({ board, selectedKey, focusedKey, onSelect, onHover }) {
       <text x="604" y="48" className="mfb-gate-label up">BULLISH</text>
       <text x="604" y={center + 4} className="mfb-gate-label flat">FLAT</text>
       <text x="604" y={height - 28} className="mfb-gate-label down">BEARISH</text>
-      {flat.map((row, i) => <g key={keyOf(row)} role="button" tabIndex="0" className={"mfb-flat-point" + (keyOf(row) === selectedKey ? " selected" : "")}
-        onClick={() => onSelect(row)} onKeyDown={event => { if (event.key === "Enter") onSelect(row); }}>
+      {flat.map((row, i) => <g key={keyOf(row)} role="button" tabIndex="0"
+        aria-label={`${row.name}, ${row.symbol}, unchanged, ${row.exchange}. Select instrument`}
+        aria-pressed={keyOf(row) === selectedKey}
+        className={"mfb-flat-point" + (keyOf(row) === selectedKey ? " selected" : "")}
+        onMouseEnter={() => onHover(keyOf(row))} onMouseLeave={() => onHover(null)}
+        onFocus={() => onHover(keyOf(row))} onBlur={() => onHover(null)}
+        onClick={() => onSelect(row)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(row); } }}>
         <circle cx={580 + (i % 3) * 7} cy={center + (Math.floor(i / 3) - 1) * 8} r="3"/><title>{row.symbol + ": unchanged"}</title></g>)}
     </svg>
     <div className="mfb-diagram-foot"><span>Movers start at the zero reference</span><span>Path positions use actual provider percentage changes</span></div>

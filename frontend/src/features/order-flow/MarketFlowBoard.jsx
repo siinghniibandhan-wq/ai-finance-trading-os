@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { loadMarketOverview } from "../advanced-chart/api.js";
+import { loadMarketFlowSnapshot } from "../advanced-chart/api.js";
 import { buildDistributionDots, buildMarketFlowBoard, normalizeOrderFlow } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
@@ -102,7 +102,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
     if (manual) setRefreshing(true);
     else if (!hasPayload.current) setLoading(true);
     try {
-      const next = await loadMarketOverview();
+      const next = await loadMarketFlowSnapshot();
       if (!mounted.current) return;
       setPayload(next);
       hasPayload.current = true;

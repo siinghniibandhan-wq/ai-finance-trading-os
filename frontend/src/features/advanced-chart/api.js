@@ -57,3 +57,11 @@ export async function loadMarketOverview() {
   });
   return readResponse(response, "Market overview");
 }
+
+
+export async function loadMarketFlowSnapshot() {
+  const response = await apiFetch(`${API_BASE_URL}/api/market-flow/`, {
+    cache: "no-store",
+  });
+  return readResponse(response, "Chart Flow market snapshot");
+}

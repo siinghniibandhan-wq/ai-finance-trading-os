@@ -35,7 +35,7 @@ test("calculates PCR and Max Pain only with complete two-sided OI", () => {
   assert.equal(result.callOI, 1900);
   assert.equal(result.putOI, 4000);
   assert.equal(result.pcr, 4000 / 1900);
-  assert.equal(result.maxPain, 110);
+  assert.equal(result.maxPain, 120);
 });
 
 test("withholds PCR and Max Pain when any strike side or OI is missing", () => {

@@ -44,22 +44,24 @@ export function normalizeMarketFlowCandles(rows) {
   if (!Array.isArray(rows)) return [];
   const normalized = [];
   for (const row of rows) {
-    if (!Array.isArray(row) || row.length < 5) continue;
-    const rawTime = row[0];
+    const tuple = Array.isArray(row);
+    if (!tuple && (!row || typeof row !== "object")) continue;
+    const rawTime = tuple ? row[0] : row.timestamp;
     const numericTime = Number(rawTime);
     const parsedTime = Number.isFinite(numericTime) ? numericTime : Date.parse(String(rawTime));
     const time = Number.isFinite(parsedTime) ? Math.floor(parsedTime > 1e12 ? parsedTime / 1000 : parsedTime) : null;
-    const open = num(row[1]);
-    const high = num(row[2]);
-    const low = num(row[3]);
-    const close = num(row[4]);
-    const volume = row.length > 5 ? num(row[5]) : null;
+    const open = num(tuple ? row[1] : row.open);
+    const high = num(tuple ? row[2] : row.high);
+    const low = num(tuple ? row[3] : row.low);
+    const close = num(tuple ? row[4] : row.close);
+    const rawVolume = tuple ? row[5] : row.volume;
+    const volume = rawVolume === undefined ? null : num(rawVolume);
     if (!Number.isInteger(time) || time <= 0 ||
         [open, high, low, close].some(value => value === null || value <= 0) ||
         high < Math.max(open, close, low) || low > Math.min(open, close, high) ||
         (volume !== null && volume < 0)) continue;
     normalized.push({ time, open, high, low, close, volume });
   }
-  return normalized.sort((a, b) => a.time - b.time)
-    .filter((candle, index, all) => index === 0 || candle.time > all[index - 1].time);
+  const byTime = new Map(normalized.map(candle => [candle.time, candle]));
+  return [...byTime.values()].sort((a, b) => a.time - b.time);
 }

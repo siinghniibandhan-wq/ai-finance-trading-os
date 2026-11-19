@@ -186,6 +186,7 @@ def _fetch_sector_movers_uncached(sector):
             "sector_gainer_loser_lists": True,
             "full_sector_constituent_breadth": False,
             "sector_index_quote": sector_index is not None,
+            "sector_index_performance": bool(sector_index and sector_index.get("percent_change") is not None),
         },
         "limitations": [
             "The provider response contains ranked movers, not the complete sector constituent universe.",

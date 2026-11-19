@@ -158,3 +158,7 @@
 .mfb-candle.bearish .mfb-candle-body{fill:var(--red);stroke:var(--red)}
 .mfb-candle-volume{fill:var(--flat);opacity:.48}
 @media(max-width:650px){.mfb-history-toolbar{align-items:flex-start;flex-direction:column}.mfb-history-toolbar>div{width:100%}.market-flow-board .mfb-history-toolbar button{flex:1;padding-inline:6px}}
+
+.mfb-history-chart-scroll{width:100%;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:thin;outline:none}
+.mfb-history-chart-scroll:focus-visible{outline:1px solid var(--muted);outline-offset:3px}
+.mfb-history-chart-scroll svg{display:block;max-width:none}

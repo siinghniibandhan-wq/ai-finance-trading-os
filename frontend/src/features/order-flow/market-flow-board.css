@@ -31,3 +31,8 @@
 .mfb-history-volume{fill:#527d9b;opacity:.65}
 .mfb-history-label{fill:var(--muted);font-size:9px}
 .mfb-history-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:9px;margin-top:6px}
+
+.mfb-sector-index-quote{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid var(--line)}
+.mfb-sector-index-quote small{font-size:8px;color:var(--muted)}
+.mfb-sector-index-quote strong{font-size:15px;font-variant-numeric:tabular-nums}
+.mfb-sector-index-quote span{font-size:8px;color:var(--muted)}

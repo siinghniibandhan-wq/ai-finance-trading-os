@@ -147,6 +147,7 @@ def _fetch_sector_movers_uncached(sector):
             "name": sector["name"],
             "exchange": "NSE",
             "symbol": sector["index_symbol"],
+            **({"quote_symbol": sector["quote_symbol"]} if sector.get("quote_symbol") else {}),
         })
     except Exception as exc:
         errors.append({
@@ -229,6 +230,7 @@ def fetch_sector_index_snapshots():
                     "name": sector["name"],
                     "exchange": "NSE",
                     "symbol": sector["index_symbol"],
+                    **({"quote_symbol": sector["quote_symbol"]} if sector.get("quote_symbol") else {}),
                 }): sector
                 for sector in SECTOR_UNIVERSES
             }

@@ -127,7 +127,7 @@ def test_chart_flow_sector_movers_marks_partial_provider_results(monkeypatch):
 
     monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
 
-    result = market_flow.get_sector_movers("it")
+    result = market_flow.get_market_flow_snapshot("it")
 
     assert result["status"] == "partial"
     assert len(result["movers"]["gainers"]) == 1
@@ -137,6 +137,6 @@ def test_chart_flow_sector_movers_marks_partial_provider_results(monkeypatch):
 
 def test_chart_flow_rejects_unknown_sector_key():
     with pytest.raises(HTTPException) as exc:
-        market_flow.get_sector_movers("not-a-sector")
+        market_flow.get_market_flow_snapshot("not-a-sector")
 
     assert exc.value.status_code == 404

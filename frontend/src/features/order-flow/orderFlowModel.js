@@ -200,6 +200,7 @@ export function buildHistoricalCandleGeometry(series, width = 720, height = 196)
     return value !== null && value >= 0 ? value : 0;
   }));
   const xPadding = 24;
+  const bodyWidth = Math.max(1, Math.min(7, ((width - xPadding * 2) / Math.max(1, valid.length)) * 0.65));
   return valid.map((row, index) => {
     const x = xPadding + (valid.length === 1 ? 0 : index / (valid.length - 1) * (width - xPadding * 2));
     const y = value => plotTop + ((max - Number(value)) / span) * plotHeight;
@@ -216,6 +217,7 @@ export function buildHistoricalCandleGeometry(series, width = 720, height = 196)
       closeY,
       bodyTop: Math.min(openY, closeY),
       bodyHeight: Math.max(1, Math.abs(openY - closeY)),
+      bodyWidth,
       volumeY: volumeBase - volumeHeight,
       volumeHeight,
       direction: Number(row.close) >= Number(row.open) ? "bullish" : "bearish",

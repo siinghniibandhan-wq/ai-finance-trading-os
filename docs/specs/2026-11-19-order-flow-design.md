@@ -41,8 +41,10 @@ Architecture:
 
 - REST only. No WebSockets, Socket.IO, EventSource, streaming workers or continuous subscriptions.
 - Reuse the existing `/api/market-flow/` route. An optional `sector` query selects a provider sector; do not create separate sector-list or sector-detail routes.
-- The default `/api/market-flow/` response supplies the shared market snapshot and the sector-universe metadata.
-- A selected sector uses `/api/market-flow/?sector=<key>` and returns its actual provider-ranked movers and the existing sector index quote.
+- The default `/api/market-flow/` response supplies the shared market snapshot and sector-universe metadata.
+- Chart Flow requests `/api/market-flow/?include_sector_indices=true` to load sector index quotes through the same route. Results are briefly cached server-side.
+- A selected sector uses `/api/market-flow/?sector=<key>` and returns its actual provider-ranked movers and the selected sector index quote.
+- The existing Gateway `/index-quote` contract is enriched best-effort with the existing m.Stock Type A OHLC API. Financial OS derives index daily change only from the provider's OHLC `close` (previous close) and LTP. If OHLC is not available for an index, its percentage change remains unavailable.
 - Reuse the existing authenticated `apiFetch` adapter in `frontend/src/features/advanced-chart/api.js`; do not create duplicate browser API clients.
 - Reuse the existing `/api/market-charts/` historical OHLCV route for selected-stock history. Do not create a duplicate historical endpoint.
 - Reuse existing index and quote services where their provider contracts are sufficient.
@@ -73,7 +75,7 @@ m.Stock Type A Top Gainers/Losers supports the `SecurityIdCode` sector/index uni
 | 61 | NIFTY OIL AND GAS |
 | 62 | NIFTY HEALTHCARE INDEX |
 
-This endpoint returns ranked gainers and losers within the selected provider universe. It does **not** return every sector constituent or establish full sector breadth. The current index-quote adapter returns a current index level; it must not be labelled as sector percentage performance unless the provider supplies a valid comparison value.
+This endpoint returns ranked gainers and losers within the selected provider universe. It does **not** return every sector constituent or establish full sector breadth. Sector index percentage performance is shown only when the existing Gateway returns provider OHLC previous-close data; an index LTP alone is never presented as percentage performance.
 
 ## Data and analytical boundaries
 

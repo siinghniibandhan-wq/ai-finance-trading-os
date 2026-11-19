@@ -9,12 +9,12 @@ const fmt = (value, digits = 2) => Number.isFinite(Number(value))
 const pct = value => (value > 0 ? "+" : "") + fmt(value) + "%";
 const keyOf = row => row.exchange + ":" + row.symbol;
 
-function Distribution({ rows, counts, retrievedAt, breadthAvailable }) {
+function Distribution({ rows, counts, retrievedAt, breadthAvailable, eyebrow = "01 / MARKET DISTRIBUTION", title = "Where the market is moving", description = "Every dot is an actual NSE/BSE mover returned by m.Stock. Counts describe this returned set, not full-exchange breadth." }) {
   const dots = useMemo(() => buildDistributionDots(rows), [rows]);
   return <section className="mfb-section mfb-distribution">
     <div className="mfb-section-head">
-      <div><small>01 / MARKET DISTRIBUTION</small><h2>Where the market is moving</h2>
-        <p>Every dot is an actual NSE/BSE mover returned by m.Stock. Counts describe this returned set, not full-exchange breadth.</p></div>
+      <div><small>{eyebrow}</small><h2>{title}</h2>
+        <p>{description}</p></div>
       <div className="mfb-counts"><b className="up">{counts.bullish} bullish</b><b className="down">{counts.bearish} bearish</b><b className="flat">{breadthAvailable ? counts.unchanged : "—"} flat</b></div>
     </div>
     <svg viewBox="0 0 1000 84" role="img" aria-label="Provider-returned percentage changes distributed around zero">
@@ -276,6 +276,8 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
               <div className="mfb-sector-result-head"><strong>{sectorPayload.sector?.name}</strong>
                 <span>{sectorPayload.counts?.total_returned || 0} provider-ranked movers</span>
                 <span>{sectorPayload.status === "partial" ? "Partial response" : "REST data"}</span></div>
+              {sectorPayload.sector_index && <div className="mfb-sector-index-quote"><small>{sectorPayload.sector_index.name} · CURRENT INDEX LEVEL</small><strong>{fmt(sectorPayload.sector_index.last_price)}</strong><span>Price only; percentage performance is not supplied by the current index quote contract.</span></div>}
+              <Distribution eyebrow="SECTOR / PROVIDER-RANKED MOVERS" title={sectorPayload.sector?.name + " price distribution"} description="Actual sector-filtered gainers and losers returned by m.Stock. This is not the full sector constituent universe." rows={sectorRows} counts={buildMarketFlowBoard(sectorRows).counts} breadthAvailable={false} retrievedAt={sectorPayload.last_updated ? new Date(sectorPayload.last_updated).toLocaleTimeString("en-IN") : null}/>
               <div className="mfb-sector-movers">
                 <Side title="Sector gainers" side="up" rows={sectorRows.filter(row => row.direction === "bullish")}
                   selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>

@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { loadMarketMovers } from "./api";
+import React, { useMemo, useState } from "react";
+import { useMarketOverview } from "../../marketOverviewStore.js";
 import { normalizeMoverRows, summarizeMoverRows } from "./marketScannerModel";
 import "./market-scanner.css";
 
@@ -10,48 +10,14 @@ const money = (value) => new Intl.NumberFormat("en-IN", {
 
 export default function MarketMoversScanner({ type = "losers", onSelectInstrument }) {
   const isLoser = type === "losers";
-  const [payload, setPayload] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [updatedAt, setUpdatedAt] = useState(null);
+  const { data: overview, loading, error, updatedAt: snapshotUpdatedAt, refresh } = useMarketOverview();
+  const payload = overview ? {
+    movers: Array.isArray(overview.market_movers?.[type]) ? overview.market_movers[type] : [],
+    source: overview.data_sources,
+  } : null;
+  const updatedAt = snapshotUpdatedAt ? new Date(snapshotUpdatedAt) : null;
   const [query, setQuery] = useState("");
   const [exchange, setExchange] = useState("ALL");
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    let inFlight = false;
-    const request = async () => {
-      if (!active || inFlight || document.visibilityState !== "visible") return;
-      inFlight = true;
-      setLoading(true);
-      setError("");
-      try {
-        const next = await loadMarketMovers(type, 100);
-        if (active) {
-          if (next?.status !== "success" || !Array.isArray(next?.movers)) {
-            throw new Error("The REST API did not return a valid market-movers response.");
-          }
-          setPayload(next);
-          setUpdatedAt(new Date());
-        }
-      } catch (requestError) {
-        if (active) setError(requestError?.message || "Market scanner data is unavailable.");
-      } finally {
-        inFlight = false;
-        if (active) setLoading(false);
-      }
-    };
-    const onVisibility = () => { if (document.visibilityState === "visible") request(); };
-    request();
-    const timer = window.setInterval(request, 30000);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      active = false;
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [type, refreshKey]);
 
   const rows = useMemo(() => normalizeMoverRows(payload?.movers, type), [payload, type]);
   const visibleRows = useMemo(() => rows.filter((row) =>
@@ -70,7 +36,7 @@ export default function MarketMoversScanner({ type = "losers", onSelectInstrumen
           <h2>{isLoser ? "Loser Scanner" : "Gainer Scanner"}</h2>
           <p>Provider-reported {isLoser ? "decliners" : "advancers"}, ranked by percentage move. Values are not inferred.</p>
         </div>
-        <button type="button" onClick={() => setRefreshKey((value) => value + 1)} disabled={loading}>
+        <button type="button" onClick={refresh} disabled={loading}>
           {loading ? "Refreshing…" : "Refresh scanner"}
         </button>
       </header>
@@ -111,7 +77,7 @@ export default function MarketMoversScanner({ type = "losers", onSelectInstrumen
       <footer className="market-scanner-footer">
         <span>Source: {payload?.source?.provider || "m.Stock REST API"} via Financial OS</span>
         <span>Retrieved: {updatedAt ? updatedAt.toLocaleTimeString("en-IN") : "Not yet retrieved"}</span>
-        <span>Auto-refresh: 30 seconds while this view is visible</span>
+        <span>Auto-refresh: shared Market feed · 30 seconds</span>
       </footer>
     </section>
   );

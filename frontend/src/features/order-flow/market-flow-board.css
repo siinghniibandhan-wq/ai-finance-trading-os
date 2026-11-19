@@ -36,3 +36,6 @@
 .mfb-sector-index-quote small{font-size:8px;color:var(--muted)}
 .mfb-sector-index-quote strong{font-size:15px;font-variant-numeric:tabular-nums}
 .mfb-sector-index-quote span{font-size:8px;color:var(--muted)}
+
+.mfb-history-ohlc{display:flex;gap:16px;flex-wrap:wrap;padding:8px 0;color:var(--muted);font-size:9px;font-variant-numeric:tabular-nums}
+.mfb-history-ohlc span{white-space:nowrap}

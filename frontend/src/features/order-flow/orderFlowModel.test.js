@@ -79,6 +79,9 @@ test("builds historical stock flow only from valid provider OHLCV observations",
   assert.equal(series[1].relativeChange, 100 / 11);
   assert.equal(series[2].relativeChange, -200 / 11);
   assert.equal(series[2].volume, null);
+  assert.equal(series[0].open, 10);
+  assert.equal(series[0].high, 12);
+  assert.equal(series[0].low, 9);
 });
 
 

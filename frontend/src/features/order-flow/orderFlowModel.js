@@ -6,11 +6,11 @@ export function buildChartFlowPoints(rows,limit=36){const safe=(Array.isArray(ro
 
 
 /** Organise the latest validated provider snapshot; this is not a full-exchange breadth estimate. */
-export function buildMarketFlowBoard(rows, perSide = 12) {
+export function buildMarketFlowBoard(rows, perSide = 12, sortKey = "changePercent", sortDirection = "desc") {
   const safe = Array.isArray(rows) ? rows.filter(row => Number.isFinite(Number(row.changePercent))) : [];
-  const bullish = safe.filter(row => row.changePercent > 0).sort((a, b) => b.changePercent - a.changePercent);
-  const bearish = safe.filter(row => row.changePercent < 0).sort((a, b) => a.changePercent - b.changePercent);
-  const unchanged = safe.filter(row => row.changePercent === 0).sort((a, b) => a.symbol.localeCompare(b.symbol));
+  const bullish = sortOrderFlow(safe.filter(row => row.changePercent > 0), sortKey, sortDirection);
+  const bearish = sortOrderFlow(safe.filter(row => row.changePercent < 0), sortKey, sortDirection);
+  const unchanged = sortOrderFlow(safe.filter(row => row.changePercent === 0), "symbol", "asc");
   return {
     bullish, bearish, unchanged,
     visibleBullish: bullish.slice(0, Math.max(0, perSide)),

@@ -9,13 +9,13 @@ const fmt = (value, digits = 2) => Number.isFinite(Number(value))
 const pct = value => (value > 0 ? "+" : "") + fmt(value) + "%";
 const keyOf = row => row.exchange + ":" + row.symbol;
 
-function Distribution({ rows, counts, retrievedAt }) {
+function Distribution({ rows, counts, retrievedAt, breadthAvailable }) {
   const dots = useMemo(() => buildDistributionDots(rows), [rows]);
   return <section className="mfb-section mfb-distribution">
     <div className="mfb-section-head">
       <div><small>01 / MARKET DISTRIBUTION</small><h2>Where the market is moving</h2>
         <p>Every dot is an actual NSE/BSE mover returned by m.Stock. Counts describe this returned set, not full-exchange breadth.</p></div>
-      <div className="mfb-counts"><b className="up">{counts.bullish} bullish</b><b className="down">{counts.bearish} bearish</b><b className="flat">{counts.unchanged} flat</b></div>
+      <div className="mfb-counts"><b className="up">{counts.bullish} bullish</b><b className="down">{counts.bearish} bearish</b><b className="flat">{breadthAvailable ? counts.unchanged : "—"} flat</b></div>
     </div>
     <svg viewBox="0 0 1000 84" role="img" aria-label="Provider-returned percentage changes distributed around zero">
       <line x1="40" x2="960" y1="42" y2="42" className="mfb-axis"/>
@@ -23,7 +23,7 @@ function Distribution({ rows, counts, retrievedAt }) {
       <text x="40" y="81">LOSERS</text><text x="500" y="81" textAnchor="middle">0%</text><text x="960" y="81" textAnchor="end">GAINERS</text>
       {dots.map((dot, i) => <g key={keyOf(dot) + i}><circle cx={dot.x} cy={dot.y} r="3.2" className={dot.changePercent > 0 ? "mfb-dot up" : dot.changePercent < 0 ? "mfb-dot down" : "mfb-dot flat"}/><title>{dot.symbol + " · " + pct(dot.changePercent)}</title></g>)}
     </svg>
-    <div className="mfb-foot"><span>{rows.length} provider-returned instruments</span><span>Gateway snapshot: {retrievedAt || "not received"}</span></div>
+    <div className="mfb-foot"><span>{rows.length} provider-returned instruments</span><span>Snapshot assembled: {retrievedAt || "not received"}</span></div>
   </section>;
 }
 
@@ -148,7 +148,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
       {!indices.length && <p>No index snapshots returned by the provider.</p>}</section>
     {error && <p className="mfb-alert" role="alert">{error}. Last successful data is retained; no demo feed is substituted.</p>}{payload?.status === "partial" && <p className="mfb-alert" role="status">Some provider requests failed. The board contains only the successful real responses; missing instruments are not filled with estimates.</p>}
     {!loading && !rows.length && !error && <p className="mfb-alert">No valid provider movers were returned. No simulated instruments are displayed.</p>}
-    <Distribution rows={rows} counts={board.counts} retrievedAt={retrievedAt ? new Date(retrievedAt).toLocaleTimeString("en-IN") : null}/>
+    <Distribution rows={rows} counts={board.counts} breadthAvailable={payload?.capabilities?.full_advance_decline_breadth === true} retrievedAt={retrievedAt ? new Date(retrievedAt).toLocaleTimeString("en-IN") : null}/>
     <section className="mfb-section mfb-flow">
       <div className="mfb-section-head"><div><small>02 / MARKET FLOW</small><h2>Zero-centred market flow</h2>
         <p>Actual price changes fan through the central gate into bullish and bearish instruments. This is a current snapshot, not a reconstructed intraday history.</p></div>
@@ -175,7 +175,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         : <p>Select a flow path or tile. Only provider-returned fields are shown.</p>}
     </section>
     <footer className="mfb-footer"><span>Source: {payload?.data_sources?.primary || "m.Stock via Financial OS Gateway"}</span>
-      <span>Gateway retrieval time: {retrievedAt ? new Date(retrievedAt).toLocaleString("en-IN") : "—"}</span>
+      <span>Snapshot assembled: {retrievedAt ? new Date(retrievedAt).toLocaleString("en-IN") : "—"}</span>
       <span>Read-only · REST only · no synthetic market values</span></footer>
   </main>;
 }

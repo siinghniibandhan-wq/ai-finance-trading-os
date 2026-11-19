@@ -12,6 +12,8 @@
 A unified personal-finance, wealth-management, investment, market-data, trading-support and Indian tax workspace.
 
 > **Documentation rule:** repository implementation, automated test success, deployment and production verification are separate states. A feature is not production-ready merely because its source code exists.
+>
+> **Current hosting boundary (19 November 2026):** AWS Amplify is the public frontend target (`main` branch, app root `frontend/`). The browser calls the backend API at `https://wealthmanager.duckdns.org`; DuckDNS is the API origin, not the public website. PR #223 removed the GitHub workflow that force-published compiled frontend files to `frontend-dist` and aligned backend CORS with the Amplify origin. EC2/Nginx static-frontend retirement and live Amplify deployment verification remain separate operational checks; do not assume those host-side steps are complete.
 
 ## Project at a glance
 
@@ -81,6 +83,8 @@ FastAPI backend
 - Entry files: `frontend/src/main.jsx`, `frontend/src/App.jsx`
 - API client: `frontend/src/api.js`
 - Build tool: Vite
+- Public hosting target: AWS Amplify, production branch `main`, monorepo app root `frontend/`, build command `npm run build`, artifact directory `dist` (verify live Amplify settings before operational changes).
+- Backend API origin: `https://wealthmanager.duckdns.org` via `VITE_API_BASE_URL`; DuckDNS remains backend/API-only and must not be treated as the public frontend origin.
 
 ### Backend
 
@@ -103,7 +107,7 @@ The current Financial OS backend integrates with the m.Stock gateway through RES
 - Periodic refreshes must be bounded REST requests. Quote snapshots must not be represented as exchange ticks or continuous live feeds.
 - Preserve existing authentication, gateway shared-secret validation, market routes and broker-order safeguards.
 
-The REST market APIs and broker-order safeguards are separate existing functionality. Removing Market Flow/streaming does not imply removing or changing market quotes, history, charts, indices, movers, search, watchlists or broker order execution.
+The REST market APIs and broker-order safeguards are separate existing functionality. Chart Flow is implemented as a read-only REST workspace backed by `GET /api/market-flow/`, with provider-returned cash-market movers, supported index snapshots and selected-sector mover/index requests. It reports partial provider responses and does not claim complete advance/decline breadth, full sector constituents, delivery statistics or historical market flow. Advanced Chart uses historical OHLCV and REST quote snapshots; quote retrieval time is not an exchange timestamp. No WebSocket/continuous market-data stream is part of the current Chart Flow/Advanced Chart design.
 
 
 
@@ -256,12 +260,14 @@ The detailed inventory, safeguards and operational checklist live in [SECURITY_O
 
 ## Deployment and release workflow
 
-Current repository automation:
+Current repository automation and hosting boundary (19 November 2026):
 
-1. Pull requests and pushes to `main` run the CI workflow described above.
-2. The `package-aws-restored-source.yml` workflow can be manually dispatched and also runs when that workflow file changes on `main`. It packages the source into a ZIP artifact retained for 30 days.
-3. The source-archive workflow is **not** an application deployment workflow.
-4. No automatic production deployment from `main` is established by these two workflow files. Confirm the actual hosting provider, connected branch, build settings, environment variables, deployment history and rollback path in the live hosting account.
+1. Pull requests and pushes to `main` run `.github/workflows/financial-os-ci.yml` (frontend build and regression tests, backend regression tests, dependency audits and repository secret scan).
+2. The `frontend-build.yml` workflow builds the frontend and uploads a CI artifact; the former `publish-frontend` job that force-pushed compiled files to `frontend-dist` has been removed by PR #223.
+3. AWS Amplify is configured by the user as the public frontend host, connected to `main` with app root `frontend/`; the frontend build uses `npm run build` and `dist` output. Confirm the live Amplify deployment record before claiming a particular commit is deployed.
+4. `VITE_API_BASE_URL=https://wealthmanager.duckdns.org` points the browser to the backend API. Backend CORS includes `https://main.d1qcu4l3dz9f9e.amplifyapp.com`.
+5. The source-archive workflow is **not** an application deployment workflow. The CI artifact is not an Amplify deployment confirmation.
+6. PR #223 does not change EC2/Nginx. Any EC2 static frontend root, frontend deploy timer/runner or redirect must be inspected and retired separately while preserving DuckDNS API routing, HTTPS, Bearer authentication and gateway connectivity.
 
 Recommended release sequence:
 

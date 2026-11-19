@@ -134,3 +134,15 @@ test("applies selected sort to bullish and bearish market flow lists", () => {
   assert.deepEqual(board.bullish.map(row => row.symbol), ["B", "A"]);
   assert.deepEqual(board.bearish.map(row => row.symbol), ["C", "D"]);
 });
+
+
+test("keeps strongest bullish and bearish price moves first by default", () => {
+  const board = buildMarketFlowBoard([
+    { symbol: "UP2", changePercent: 2 },
+    { symbol: "UP5", changePercent: 5 },
+    { symbol: "DOWN1", changePercent: -1 },
+    { symbol: "DOWN4", changePercent: -4 },
+  ]);
+  assert.deepEqual(board.bullish.map(row => row.symbol), ["UP5", "UP2"]);
+  assert.deepEqual(board.bearish.map(row => row.symbol), ["DOWN4", "DOWN1"]);
+});

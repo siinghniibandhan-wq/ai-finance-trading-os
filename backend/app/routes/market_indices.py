@@ -1,6 +1,6 @@
 """
 Market Indices Engine v1.0
-Fetches NIFTY 50 and SENSEX through the existing m.Stock gateway.
+Fetches benchmark and sector index snapshots through the existing m.Stock gateway.
 Read-only: does not write to the database.
 """
 

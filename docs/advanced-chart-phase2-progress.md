@@ -1,6 +1,6 @@
 # Advanced Chart Phase 2 — REST-only implementation status
 
-Baseline implementation: merged to `main` through PRs #219, #220 and #222 (18–19 November 2026). Current REST analytics completion work is on `feature/complete-rest-market-analytics`; it is not merged or production-deployed.  
+Baseline implementation: merged to `main` through PRs #219, #220 and #222 (18–19 November 2026). Current REST analytics completion work is on `feature/complete-rest-market-analytics`; this branch is not merged to main. Its repository changes and the separate production gateway smoke tests are tracked independently.  
 PR #219 merge: `aa1b8261d670d91622f9e59060634a619af45dfa`  
 PR #220 merge: `3911c70dddb643e0c2fa7d700d9bb444a4c2d156`  
 PR #222 merge: `6ac5571ecccf8f954a99342240409e3dfdfc986a`
@@ -96,3 +96,59 @@ PR #222 merge: `6ac5571ecccf8f954a99342240409e3dfdfc986a`
 - CI passed for the reviewed PR commits before merge. PR #223 later passed both Financial OS CI and Frontend production build before the Amplify cutover documentation/code changes were merged.
 - User-provided screenshots dated 19 November 2026 show the Amplify-hosted application rendering Markets, Chart Flow and Advanced Chart views. They are UI evidence, not a substitute for a live backend/provider contract test or a formal production smoke-test record.
 - The current source route and frontend integration are repository evidence; live provider completeness and EC2/Nginx state remain separate verification items.
+
+## Production smoke-test findings and active issues (19 November 2026)
+
+### Successfully verified against the active gateway
+
+The user executed authenticated, read-only tests against the running EC2 m.Stock gateway. The service was active and the health route returned HTTP 200.
+
+| Function | Result |
+|---|---|
+| Gateway health | HTTP 200; service online |
+| Gateway shared-secret authentication | Authenticated requests succeeded |
+| NSE equity quote + OHLC | RELIANCE returned LTP 1375.6 and OHLC 1361.9 / 1382.5 / 1349.7 / 1363 |
+| NSE index quote | NIFTY 50 returned LTP 25514.3 |
+| Trading status | Enabled; max quantity 100; max order value 10000 |
+| NSE/BSE Futures and Options master discovery | Tested endpoints returned contract lists |
+| NSE/BSE Futures and Options quote endpoints | Tested requests returned LTP data; field coverage is incomplete |
+
+These are production observations for the tested requests, not proof that every symbol, exchange or market-data field works.
+
+### Active issue register
+
+**AC-01 — BSE cash-equity latest quote fails**
+
+- Advanced Chart screenshot: BSE HDFC Bank historical chart request appears active, but the latest quote reports gateway HTTP 502.
+- Market screenshot: selected BSE RELIANCE historical price chart renders, but Latest Traded Price and quote details are unavailable.
+- Current backend/app/services/market_price.py appends -EQ to ordinary NSE and BSE qualified symbols. This is a leading suspect for BSE symbol/series mismatch, but the root cause is not confirmed until the exact BSE Script Master symbol is compared with the gateway request/response.
+- Fix: preserve and use the actual BSE tradingsymbol/series from instrument master end-to-end; keep NSE behaviour unchanged; add NSE/BSE mapping regression tests.
+- Status: Open.
+
+**AC-02 — Options chain Volume and Open Interest are missing**
+
+- Options Hub screenshot confirms CE/PE strike rows and LTP values are displayed. Volume and OI are unavailable.
+- Production chain responses returned LTP coverage, but the tested responses did not provide Volume or OI.
+- Current gateway code only maps volume and open_interest if those fields are present in the LTP quote response; a separate full-quote enrichment path is not implemented.
+- Fix: verify the supported m.Stock REST contract and account entitlement, retrieve fields through a documented rate-safe endpoint where available, and normalise the actual response. Keep unsupported values null.
+- Status: Open.
+
+**AC-03 — OI analytics are withheld because OI is missing**
+
+- Put/Call OI, PCR, Max Pain and strike-wise OI distribution are unavailable.
+- frontend/src/features/options-hub/optionsModel.js deliberately requires complete CE and PE OI at every displayed strike. This is a protective completeness rule, not a proven calculation bug.
+- Fix: retain the rule; verify calculations with genuine OI after AC-02 is resolved.
+- Status: Blocked by AC-02; no separate frontend defect established.
+
+### Work order
+
+1. Correct and verify BSE cash-equity symbol mapping and quote retrieval across Market and Advanced Chart.
+2. Investigate and implement supported Options Volume/OI retrieval without fabricated data.
+3. Re-verify existing PCR, Max Pain and OI distribution calculations using actual provider responses.
+4. Run focused regression, then the full backend/frontend suite and production smoke tests.
+
+Do not expand this work into an open-ended derivatives feature investigation. Do not alter the existing authentication, trading safeguards, Market/Advanced Chart workflows, AWS secrets or service configuration as part of documentation changes. Do not place live orders.
+
+### Documentation maintenance rule
+
+As each issue is addressed, update this progress document with the exact code paths changed, tests executed and their results, and production verification evidence. Keep code/test/production status separate; a passing unit test alone does not mark a production issue resolved.

@@ -2,7 +2,7 @@
 
 **Architecture baseline:** 19 November 2026  
 **Repository:** `siinghniibandhan-wq/ai-finance-trading-os`  
-**Status:** Updated to match the implemented source tree and approved REST-only scope.
+**Status:** Source architecture reconciled with implemented code; production smoke-test findings and open defects recorded in the 19 November 2026 runtime update below.
 
 ## 1. Product workspaces and navigation
 
@@ -123,7 +123,7 @@ Indicators are derived from loaded source candles. VWAP is an intraday benchmark
 
 The Options Hub now has an additive, authenticated REST adapter and an independently authored strike-chain interface. It requests the gateway routes `/options/master` and `/options/chain`, which are present in the saved options-enabled gateway source variant. This repository branch does not prove that those routes are deployed on the active AWS gateway; a 404 is surfaced as an explicit gateway-unavailable state. The master/data provider APIs are documented but their runtime availability and account entitlement remain unverified.
 
-The current gateway options-chain variant builds CE/PE contracts from the provider Script Master and requests contract LTP/volume in batches. OI is passed through only if the quote response supplies it. The Financial OS model calculates PCR, Max Pain and the mirrored strike OI chart only when every displayed strike has both CE and PE contracts with valid non-negative OI. Otherwise those analytics are withheld.
+The deployed gateway builds CE/PE contracts from the provider Script Master and batches contract LTP requests. In the production samples tested on 19 November 2026, LTP was available, while volume and open interest were absent. The gateway currently passes through volume and open_interest only if present in the LTP quote payload; it does not perform a separate full-quote enrichment request for each contract. The Financial OS model calculates PCR, Max Pain and the mirrored strike OI chart only when every displayed strike has both CE and PE contracts with valid non-negative OI. Therefore those analytics are correctly withheld until real OI observations are supplied.
 
 The following must remain unavailable until the real REST payload supplies and verifies them:
 
@@ -180,3 +180,58 @@ Before merge:
 7. Perform an authenticated production smoke test separately before describing sector indices or derivatives as live. Repository tests do not prove AWS gateway availability or m.Stock account entitlement.
 
 This document describes the architecture in the current source tree. It supersedes the older proposed navigation and streaming/intraday requirements recorded in earlier drafts.
+
+## 10. Production verification and active defects — 19 November 2026
+
+This section separates repository implementation evidence, production endpoint tests and issues observed in the Amplify-hosted UI. A successful HTTP response is not treated as proof that every market-data field is available.
+
+### Production functions successfully verified
+
+The user executed authenticated, read-only smoke tests against the active m.Stock gateway on EC2. The gateway service was active and /health returned HTTP 200.
+
+| Capability | Production evidence | Status |
+|---|---|---|
+| Gateway health | GET /health returned HTTP 200 and service online | Verified |
+| Gateway shared-secret authentication | Authenticated Python request using the running service environment returned successful responses | Verified |
+| NSE equity quote | GET /quote?symbol=NSE:RELIANCE-EQ returned LTP 1375.6 and OHLC open 1361.9, high 1382.5, low 1349.7, close 1363 | Verified |
+| NSE index quote | GET /index-quote?exchange=NSE&symbol=NIFTY 50 returned token 26000 and LTP 25514.3 | Verified |
+| Trading status | GET /trading-status returned trading enabled, max order quantity 100 and max order value 10000 | Verified |
+| NSE/BSE Futures and Options discovery | Master endpoints returned contract lists for both exchanges | Verified for tested requests |
+| NSE/BSE derivative quote endpoints | Tested requests returned successful responses and LTP coverage; field completeness differs | Endpoint response verified, not complete analytics |
+
+The successful equity and index tests establish that those specific NSE routes work. They do not establish BSE equity quote coverage.
+
+### Active issue register
+
+#### AC-01 — BSE cash-equity LTP quote failure
+
+- Observed: In the Advanced Chart screenshot, a BSE-listed HDFC Bank instrument had historical chart activity/loading, but its latest quote failed with gateway HTTP 502. The Market workspace screenshot also showed a selected BSE RELIANCE instrument with the latest traded price unavailable while its historical price chart rendered.
+- Source inspection: backend/app/services/market_price.py appends -EQ to ordinary exchange-qualified cash symbols for both NSE and BSE. This convention is documented in the code comment as a gateway expectation, but the current production evidence does not establish that the BSE Script Master uses the same tradingsymbol convention.
+- Assessment: BSE symbol/series mapping is the leading code-level suspect, not yet a proven root cause. The exact BSE symbol returned by instrument search/master must be compared with the gateway request and response before changing normalisation.
+- Impact: BSE LTP and quote metadata are unavailable in Advanced Chart and may also be unavailable in Market. Historical chart rendering is a separate route and does not prove quote success.
+- Correction: Resolve the exact BSE tradingsymbol/series from the instrument master; preserve that exchange-specific identity through search, quote request, response matching and cache key. Keep NSE normalisation unchanged. Add regression fixtures for NSE and BSE symbols and test both workspaces against the shared quote service.
+- Status: Open; root cause not yet confirmed.
+
+#### AC-02 — Options chain Volume and Open Interest not supplied to the UI
+
+- Observed: The production Options Hub screenshot displays strike rows and CE/PE LTP values, while Volume and OI cells and OI summary values are unavailable. Authenticated production chain requests returned successful LTP coverage, but the tested payloads reported zero volume coverage and zero OI coverage.
+- Source inspection: The gateway current options-chain implementation batches LTP quote requests and maps last_price, volume and open_interest only when those fields are present in the quote response. It does not currently add a separate full-quote enrichment path for each option contract.
+- Impact: The strike chain and latest prices work. Volume and OI-dependent analytics cannot be calculated from the available payload.
+- Correction: Verify the exact supported m.Stock Type A REST quote/market-data contract and account entitlement; implement a rate-safe retrieval path for any documented fields actually available; map provider field names and units into the existing contract response; preserve null/unavailable for unsupported fields. Do not fabricate volume or OI.
+- Status: Open; actual live REST samples tested so far do not contain the required fields.
+
+#### AC-03 — OI analytics unavailable as a consequence of missing OI
+
+- Observed: Put/Call OI, Call OI, Put OI, PCR, Max Pain and the strike OI distribution are withheld in the Options Hub.
+- Source inspection: frontend/src/features/options-hub/optionsModel.js deliberately requires complete two-sided CE/PE OI for every displayed strike before calculating PCR and Max Pain. This completeness gate prevents misleading calculations.
+- Assessment: This is currently expected behaviour under incomplete source data, not a separately demonstrated frontend calculation defect.
+- Correction: Keep the completeness gate. Once verified OI values are available, exercise the existing calculations against real-response fixtures and production samples. Do not relax the gate or substitute synthetic values.
+- Status: Blocked by AC-02; no independent UI calculation defect established.
+
+### Verification boundary and next work
+
+- The production smoke tests establish working NSE equity quote/OHLC, NIFTY 50 index LTP, trading status and the tested derivatives discovery/LTP endpoints.
+- They do not establish successful BSE cash-equity LTP, complete option Volume/OI, complete option analytics, or full regression of every legacy route.
+- The current immediate correction scope is AC-01 and AC-02. AC-03 should be re-verified after AC-02 is resolved.
+- Continue updating this issue register and the implementation notes as each correction is coded and verified. Record source changes, test evidence and production evidence separately.
+- No production deployment, gateway restart, secret change, order placement or change to existing trading safeguards is authorised by this documentation update.

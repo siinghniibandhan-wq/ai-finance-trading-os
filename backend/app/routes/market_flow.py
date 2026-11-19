@@ -202,6 +202,44 @@ def _fetch_sector_movers_uncached(sector):
     }
 
 
+def fetch_sector_index_snapshots():
+    """Read current OHLC-enriched index quotes for the supported NSE sectors."""
+    results = []
+    errors = []
+    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="chart-flow-sector-index") as executor:
+        jobs = {
+            executor.submit(fetch_index, {
+                "name": sector["name"],
+                "exchange": "NSE",
+                "symbol": sector["index_symbol"],
+            }): sector
+            for sector in SECTOR_UNIVERSES
+        }
+        for future in as_completed(jobs):
+            sector = jobs[future]
+            try:
+                quote = future.result()
+                results.append({
+                    **quote,
+                    "key": sector["key"],
+                    "index_symbol": sector["index_symbol"],
+                })
+            except Exception as exc:
+                errors.append({
+                    "source": "m.Stock sector index quote",
+                    "sector": sector["key"],
+                    "name": sector["name"],
+                    "message": str(exc),
+                })
+
+    results.sort(key=lambda item: (
+        item.get("percent_change") is None,
+        -(item.get("percent_change") or 0),
+        item["name"],
+    ))
+    return results, errors
+
+
 def _get_cached_sector_movers(sector):
     now = time.monotonic()
     cached = _sector_cache.get(sector["key"])
@@ -222,7 +260,7 @@ def _get_cached_sector_movers(sector):
 
 
 @router.get("/")
-def get_market_flow_snapshot(sector: str | None = None):
+def get_market_flow_snapshot(sector: str | None = None, include_sector_indices: bool = False):
     if sector is not None:
         sector_config = _SECTOR_BY_KEY.get(str(sector).strip().lower())
         if sector_config is None:
@@ -251,6 +289,11 @@ def get_market_flow_snapshot(sector: str | None = None):
         len(SUPPORTED_INDICES),
     ))
 
+    sector_indices = []
+    if include_sector_indices:
+        sector_indices, sector_index_errors = fetch_sector_index_snapshots()
+        errors.extend(sector_index_errors)
+
     gainers = movers["gainers"]
     losers = movers["losers"]
     if errors and not indices and not gainers and not losers:
@@ -271,6 +314,7 @@ def get_market_flow_snapshot(sector: str | None = None):
             "note": "The provider returns top gainers and losers, not every unchanged listing.",
         },
         "indices": indices,
+        "sector_indices": sector_indices,
         "sector_universes": [
             {key: item[key] for key in ("key", "name", "security_id_code", "index_symbol")}
             for item in SECTOR_UNIVERSES
@@ -286,6 +330,8 @@ def get_market_flow_snapshot(sector: str | None = None):
             "all_exchange_mover_lists": True,
             "full_advance_decline_breadth": False,
             "sector_classification": False,
+            "sector_index_quotes": bool(sector_indices),
+            "sector_index_performance": any(item.get("percent_change") is not None for item in sector_indices),
             "delivery_statistics": False,
             "historical_market_flow": False,
         },

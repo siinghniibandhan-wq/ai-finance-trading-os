@@ -50,6 +50,7 @@ from app.routes import (
     watchlist,
     market_movers,
     market_indices,
+    options_chain,
     investment_transactions,
     holdings,
     investment_pnl,
@@ -499,6 +500,7 @@ _include_private_router(market_charts.router)
 _include_private_router(watchlist.router)
 _include_private_router(market_movers.router)
 _include_private_router(market_indices.router)
+_include_private_router(options_chain.router)
 _include_private_router(investment_transactions.router)
 _include_private_router(holdings.router)
 _include_private_router(investment_pnl.router)

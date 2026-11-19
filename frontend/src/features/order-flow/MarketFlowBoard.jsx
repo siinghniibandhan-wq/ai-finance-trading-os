@@ -21,8 +21,7 @@ function Distribution({ rows, counts, retrievedAt }) {
       <line x1="40" x2="960" y1="42" y2="42" className="mfb-axis"/>
       <line x1="500" x2="500" y1="8" y2="70" className="mfb-zero"/>
       <text x="40" y="81">LOSERS</text><text x="500" y="81" textAnchor="middle">0%</text><text x="960" y="81" textAnchor="end">GAINERS</text>
-      {dots.map((dot, i) => <circle key={keyOf(dot) + i} cx={dot.x} cy={dot.y} r="3.2" className={dot.changePercent > 0 ? "mfb-dot up" : dot.changePercent < 0 ? "mfb-dot down" : "mfb-dot flat"}>
-        <title>{dot.symbol + " · " + pct(dot.changePercent)}</title></circle>)}
+      {dots.map((dot, i) => <g key={keyOf(dot) + i}><circle cx={dot.x} cy={dot.y} r="3.2" className={dot.changePercent > 0 ? "mfb-dot up" : dot.changePercent < 0 ? "mfb-dot down" : "mfb-dot flat"}/><title>{dot.symbol + " · " + pct(dot.changePercent)}</title></g>)}
     </svg>
     <div className="mfb-foot"><span>{rows.length} provider-returned instruments</span><span>Gateway snapshot: {retrievedAt || "not received"}</span></div>
   </section>;
@@ -141,13 +140,13 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   return <main className="market-flow-board">
     <header className="mfb-header"><div><small>FINANCIAL OS / MARKETS / ORDER FLOW</small><h1>Chart Flow</h1>
       <p>Whole-market discovery from real provider-returned cash-equity movers and supported indices.</p></div>
-      <div><span className={error ? "mfb-status error" : loading ? "mfb-status" : "mfb-status live"}>{error ? "SOURCE ERROR" : loading ? "CONNECTING" : "REST SNAPSHOT"}</span>
+      <div><span className={error ? "mfb-status error" : loading ? "mfb-status" : "mfb-status live"}>{error ? "SOURCE ERROR" : loading ? "CONNECTING" : payload?.status === "partial" ? "PARTIAL DATA" : "REST SNAPSHOT"}</span>
         <button type="button" onClick={() => refresh(true)} disabled={loading || refreshing}>{refreshing ? "Refreshing…" : "Refresh"}</button></div>
     </header>
     <section className="mfb-index-rail">{indices.map(index => <div key={index.exchange + ":" + index.name}>
       <small>{index.name}</small><strong>{fmt(index.last_price)}</strong><span>{index.exchange}</span></div>)}
       {!indices.length && <p>No index snapshots returned by the provider.</p>}</section>
-    {error && <p className="mfb-alert" role="alert">{error}. Last successful data is retained; no demo feed is substituted.</p>}
+    {error && <p className="mfb-alert" role="alert">{error}. Last successful data is retained; no demo feed is substituted.</p>}{payload?.status === "partial" && <p className="mfb-alert" role="status">Some provider requests failed. The board contains only the successful real responses; missing instruments are not filled with estimates.</p>}
     {!loading && !rows.length && !error && <p className="mfb-alert">No valid provider movers were returned. No simulated instruments are displayed.</p>}
     <Distribution rows={rows} counts={board.counts} retrievedAt={retrievedAt ? new Date(retrievedAt).toLocaleTimeString("en-IN") : null}/>
     <section className="mfb-section mfb-flow">

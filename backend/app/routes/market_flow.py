@@ -98,8 +98,8 @@ SECTOR_UNIVERSES = (
     {"key": "infrastructure", "name": "Infrastructure", "security_id_code": 34, "index_symbol": "NIFTY INFRA"},
     {"key": "mnc", "name": "MNC", "security_id_code": 35, "index_symbol": "NIFTY MNC"},
     {"key": "services", "name": "Services", "security_id_code": 37, "index_symbol": "NIFTY SERV SECTOR"},
-    {"key": "consumer-durables", "name": "Consumer Durables", "security_id_code": 59, "index_symbol": "NIFTY CONSUMER DURABLES"},
-    {"key": "financial-services", "name": "Financial Services", "security_id_code": 60, "index_symbol": "NIFTY FINANCIAL SERVICES"},
+    {"key": "consumer-durables", "name": "Consumer Durables", "security_id_code": 59, "index_symbol": "NIFTY CONSUMER DURABLES", "quote_symbol": "NIFTYCONSRDURBL"},
+    {"key": "financial-services", "name": "Financial Services", "security_id_code": 60, "index_symbol": "NIFTY FINANCIAL SERVICES", "quote_symbol": "NIFTYFINSERVICE"},
     {"key": "oil-gas", "name": "Oil & Gas", "security_id_code": 61, "index_symbol": "NIFTY OIL AND GAS"},
     {"key": "healthcare", "name": "Healthcare", "security_id_code": 62, "index_symbol": "NIFTY HEALTHCARE"},
 )
@@ -147,6 +147,7 @@ def _fetch_sector_movers_uncached(sector):
             "name": sector["name"],
             "exchange": "NSE",
             "symbol": sector["index_symbol"],
+            **({"quote_symbol": sector["quote_symbol"]} if sector.get("quote_symbol") else {}),
         })
     except Exception as exc:
         errors.append({
@@ -229,6 +230,7 @@ def fetch_sector_index_snapshots():
                     "name": sector["name"],
                     "exchange": "NSE",
                     "symbol": sector["index_symbol"],
+                    **({"quote_symbol": sector["quote_symbol"]} if sector.get("quote_symbol") else {}),
                 }): sector
                 for sector in SECTOR_UNIVERSES
             }

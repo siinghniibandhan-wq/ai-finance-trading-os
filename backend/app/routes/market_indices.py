@@ -53,7 +53,8 @@ def fetch_index(index):
     # previous_close and daily index performance can be derived from the
     # provider's actual OHLC close. /index-quote only proxies LTP and therefore
     # cannot support a daily percentage-change chart.
-    instrument = f'{index["exchange"]}:{index["symbol"]}'
+    quote_symbol = index.get("quote_symbol") or index["symbol"]
+    instrument = f'{index["exchange"]}:{quote_symbol}'
     query = urlencode({"symbol": instrument})
     url = f"{GATEWAY_URL}/quote?{query}"
 
@@ -77,7 +78,7 @@ def fetch_index(index):
     quote = {}
     data = result.get("data", {})
     if isinstance(data, dict):
-        candidate = data.get(f'{index["exchange"]}:{index["symbol"]}', {})
+        candidate = data.get(instrument, {})
         if isinstance(candidate, dict):
             quote = candidate
             if price is None:

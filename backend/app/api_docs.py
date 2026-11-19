@@ -4,5 +4,5 @@ import os
 
 
 def api_docs_enabled() -> bool:
-    """Enable API docs by default; set ENABLE_API_DOCS=0 to disable them."""
-    return os.getenv("ENABLE_API_DOCS", "1").strip().lower() not in {"0", "false", "no", "off"}
+    """Keep API docs disabled by default; require explicit ENABLE_API_DOCS opt-in."""
+    return os.getenv("ENABLE_API_DOCS", "0").strip().lower() in {"1", "true", "yes", "on"}

@@ -46,4 +46,20 @@ def test_api_responses_include_security_headers():
 
 def test_api_documentation_is_disabled_in_production():
     assert client.get("/docs").status_code == 404
+    assert client.get("/redoc").status_code == 404
     assert client.get("/openapi.json").status_code == 404
+
+
+def test_api_documentation_requires_explicit_opt_in(monkeypatch):
+    from app.api_docs import api_docs_enabled
+
+    monkeypatch.delenv("ENABLE_API_DOCS", raising=False)
+    assert api_docs_enabled() is False
+
+    for value in ("1", "true", "yes", "on"):
+        monkeypatch.setenv("ENABLE_API_DOCS", value)
+        assert api_docs_enabled() is True
+
+    for value in ("0", "false", "no", "off"):
+        monkeypatch.setenv("ENABLE_API_DOCS", value)
+        assert api_docs_enabled() is False

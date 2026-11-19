@@ -88,6 +88,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   // Market and Order Flow subscribe to the same app-wide snapshot and refresh lifecycle.
   const { data: payload, loading, error, refresh } = useMarketOverview();
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedKey, setSelectedKey] = useState(null);
   const retrievedAt = payload?.last_updated || null;
   const refreshManually = useCallback(async () => {
     setRefreshing(true);
@@ -123,7 +124,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
     <section className="mfb-section mfb-flow">
       <div className="mfb-section-head"><div><small>02 / MARKET FLOW</small><h2>Zero-centred market flow</h2>
         <p>Actual price changes fan through the central gate into bullish and bearish instruments. This is a current snapshot, not a reconstructed intraday history.</p></div>
-        <span className="mfb-poll">REST refresh · 30 seconds while visible</span></div>
+        <span className="mfb-poll">Shared Market feed · 30-second refresh</span></div>
       <div className="mfb-board">
         <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>
           <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Sector participation</b></div>

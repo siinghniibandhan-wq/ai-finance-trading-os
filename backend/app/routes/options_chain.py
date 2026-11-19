@@ -82,10 +82,14 @@ def get_option_chain(
 ):
     """Return provider contract metadata and actual REST LTPs for one expiry."""
     selected_exchange = _exchange(exchange)
+    clean_underlying = underlying.strip().upper()
+    clean_expiry = expiry.strip()
+    if not clean_underlying or not clean_expiry:
+        raise HTTPException(status_code=422, detail="Underlying and expiry are required.")
     payload = _gateway_get("options/chain", {
         "exchange": selected_exchange,
-        "underlying": underlying.strip().upper(),
-        "expiry": expiry.strip(),
+        "underlying": clean_underlying,
+        "expiry": clean_expiry,
     })
     contracts = payload.get("contracts")
     if not isinstance(contracts, list):

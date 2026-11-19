@@ -11,7 +11,7 @@ import AccountContactSettings from "./AccountContactSettings";
 import WealthManager from "./WealthManager";
 import LoanManagement from "./LoanManagement";
 import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession, friendlyErrorMessage, describeError } from "./api";
-import { mergeMarketOverview } from "./marketOverviewState.js";
+import { useMarketOverview } from "./marketOverviewStore.js";
 import AdvancedChartPage from "./features/advanced-chart/AdvancedChartPage.jsx";
 import OrderFlowPage from "./features/order-flow/OrderFlowPage.jsx";
 import OptionsHubPage from "./features/options-hub/OptionsHubPage.jsx";
@@ -2537,11 +2537,7 @@ function calculateTechnicalIndicators(rows) {
 // ============================================================
 function MarketsPage() {
   const API = API_BASE_URL;
-  const [overview, setOverview] = useState(null);
-  const [busy, setBusy] = useState(true);
-  const [overviewError, setOverviewError] = useState("");
-  // Prevent overlapping overview refreshes from racing and clearing loading state early.
-  const overviewRefreshInFlightRef = useRef(false);
+  const { data: overview, loading: busy, error: overviewError, updatedAt: overviewUpdatedAt, refresh } = useMarketOverview();
   const [query, setQuery] = useState("RELIANCE");
   const [results, setResults] = useState([]);
   // Selected instrument controls a focused, single-stock view.
@@ -2561,7 +2557,7 @@ function MarketsPage() {
   // Prevent overlapping refreshes for the same symbol and ignore stale responses
   // when the user switches instruments before a previous request completes.
   const quoteRequestRef = useRef({ activeSymbol: null, inFlightSymbols: new Set() });
-  const [updated, setUpdated] = useState("");
+  const updated = overviewUpdatedAt ? new Date(overviewUpdatedAt).toLocaleString("en-IN") : "";
   // Historical chart state — uses the existing read-only backend route.
   const [chartSymbol, setChartSymbol] = useState("RELIANCE");
   const [chartExchange, setChartExchange] = useState("NSE");
@@ -2596,43 +2592,6 @@ function MarketsPage() {
     if (globalThis.crypto?.randomUUID) return `finos-${globalThis.crypto.randomUUID()}`;
     return `finos-${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
   };
-
-  const refresh = async () => {
-    // Never allow timer/manual/StrictMode refreshes to overlap and race state updates.
-    if (overviewRefreshInFlightRef.current) return;
-    overviewRefreshInFlightRef.current = true;
-    setBusy(true);
-    setOverviewError("");
-    try {
-      const response = await apiFetch(`${API}/api/market-overview/`, { cache: "no-store" });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(typeof data?.detail === "string" ? data.detail : data?.detail?.message || `Market overview returned ${response.status}`);
-      setOverview((previous) => mergeMarketOverview(previous, data));
-      setUpdated(new Date().toLocaleString("en-IN"));
-      if (data?.status === "error") {
-        setOverviewError("Market refresh failed. The last successful market values are retained where available.");
-      } else if (Array.isArray(data?.errors) && data.errors.length) {
-        setOverviewError("Some market sources failed to refresh. Their last successful values are retained and marked as stale.");
-      }
-    } catch (e) {
-      // Keep the last successful overview visible if a refresh request fails.
-      setOverviewError(e?.message || "Unable to refresh market overview. Showing the last successful data where available.");
-    } finally {
-      overviewRefreshInFlightRef.current = false;
-      setBusy(false);
-    }
-  };
-  // Initial market load. Manual refresh remains available as a fallback.
-  useEffect(() => { refresh(); }, []);
-
-  // Auto-refresh the market overview every 30 seconds while this page is visible.
-  // This is intentionally slower than quote refresh to reduce provider/API load.
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") refresh();
-    }, 30000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   const search = async (event) => {
     event.preventDefault();

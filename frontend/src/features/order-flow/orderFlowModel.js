@@ -37,3 +37,31 @@ export function buildDistributionDots(rows, width = 1000, height = 74) {
     return { ...row, x, y: height / 2 + (stack % 2 ? 1 : -1) * Math.ceil(stack / 2) * 5 };
   });
 }
+
+
+/** Validate provider OHLCV rows before passing them to a charting library. */
+export function normalizeMarketFlowCandles(rows) {
+  if (!Array.isArray(rows)) return [];
+  const normalized = [];
+  for (const row of rows) {
+    const tuple = Array.isArray(row);
+    if (!tuple && (!row || typeof row !== "object")) continue;
+    const rawTime = tuple ? row[0] : row.timestamp;
+    const numericTime = Number(rawTime);
+    const parsedTime = Number.isFinite(numericTime) ? numericTime : Date.parse(String(rawTime));
+    const time = Number.isFinite(parsedTime) ? Math.floor(parsedTime > 1e12 ? parsedTime / 1000 : parsedTime) : null;
+    const open = num(tuple ? row[1] : row.open);
+    const high = num(tuple ? row[2] : row.high);
+    const low = num(tuple ? row[3] : row.low);
+    const close = num(tuple ? row[4] : row.close);
+    const rawVolume = tuple ? row[5] : row.volume;
+    const volume = rawVolume === undefined ? null : num(rawVolume);
+    if (!Number.isInteger(time) || time <= 0 ||
+        [open, high, low, close].some(value => value === null || value <= 0) ||
+        high < Math.max(open, close, low) || low > Math.min(open, close, high) ||
+        (volume !== null && volume < 0)) continue;
+    normalized.push({ time, open, high, low, close, volume });
+  }
+  const byTime = new Map(normalized.map(candle => [candle.time, candle]));
+  return [...byTime.values()].sort((a, b) => a.time - b.time);
+}

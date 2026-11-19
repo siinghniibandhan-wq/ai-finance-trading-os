@@ -1,7 +1,7 @@
 # Financial OS — AWS Infrastructure, Security & Operations
 
 **Document role:** Canonical infrastructure and security operations guide  
-**Last review:** 13 November 2026  
+**Last review:** 19 November 2026  
 **Scope:** Repository security controls and the known AWS-hosted market-data gateway. Verify live AWS resources before treating this document as a complete account inventory.
 
 ---
@@ -21,7 +21,7 @@
 | Gateway service | `mstock-gateway.service` | systemd service |
 | Backend service | `financial-os-backend.service` | Recorded Gunicorn service on `127.0.0.1:8001`; verify current unit |
 | Secrets integration | boto3 dependency and SSM Parameter Store configuration guidance | Actual IAM permissions and parameter names must be checked in AWS |
-| Frontend hosting | Vite build and CI present; historical deployment references are mixed | Confirm active production host from deployment records |
+| Frontend hosting | AWS Amplify is configured as the public frontend target; production branch `main`, app root `frontend/` | User-provided Amplify configuration/screenshot; verify live deployment ID and deployed commit in Amplify |
 | Historical m.Stock WebSocket response | Earlier provider response identified `awselb/2.0` | Historical incident evidence only; not a current application dependency |
 
 Do not infer that the application uses AWS RDS, ALB, WAF, CloudFront, S3, Route 53, CloudWatch alarms or multi-AZ infrastructure until the live account configuration confirms those resources.
@@ -33,9 +33,9 @@ Browser
   |
   | HTTPS
   v
-Frontend hosting (active provider to be confirmed)
+AWS Amplify (public frontend; deployment record to be verified)
   |
-  | HTTPS API requests
+  | HTTPS API requests to https://wealthmanager.duckdns.org
   v
 Financial OS API (FastAPI / Gunicorn or Uvicorn)
   |                         |
@@ -153,44 +153,37 @@ Rotate any credential that may have been exposed. Removing a value from the late
 
 Verify current source and live settings before treating each control as effective in production.
 
-## 8. Market Flow and market-stream removal status
+## 8. Chart Flow, REST market data and streaming boundary
 
-**Current source review — 18 November 2026**
+**Current source review — 19 November 2026**
 
-The following statements describe the latest source artifacts reviewed, not a live EC2 inspection:
-
-- The current Financial OS backend entry point, `backend/app/main.py`, registers the REST market routers. It does not register Market Flow, Order Flow or market-stream routes.
-- The reviewed backend source does not contain the Market Flow/Order Flow adapter or a consumer of `/market-stream/snapshot`.
-- The latest uploaded Gateway source file, `mstock-gateway-app.py`, contains no Market Flow, `/market-stream/*`, snapshot or stream implementation. Its single WebSocket text match is a legacy index-test heading.
-- Therefore, do not describe the Gateway stream worker or market-stream endpoints as present in the latest uploaded Gateway source. Do not treat historical EC2 observations below as proof that those endpoints remain deployed.
-- Existing REST market-data routes and broker-order functionality are separate. Do not remove or alter them when maintaining this removal.
+- `backend/app/routes/market_flow.py` defines the read-only `GET /api/market-flow/` endpoint. `backend/app/main.py` imports and registers `market_flow.router` through the authenticated-user router helper.
+- The market snapshot fetches m.Stock Type A provider-ranked cash-market gainers and losers for NSE and BSE (`SecurityIdCode=0`) and the supported market-index snapshots.
+- The optional sector-index snapshot mode requests the configured sector index quotes. A sector-specific request returns provider-ranked movers for that sector and the associated sector-index quote.
+- The provider returns ranked movers, not every listed instrument or every sector constituent. The API explicitly reports that full advance/decline breadth, full sector constituent breadth, delivery statistics and historical market flow are unavailable. Do not describe the returned mover counts as complete exchange breadth.
+- Provider request pacing, bounded caching, partial-result reporting and read-only/no-database-write behaviour are implemented in the route.
+- Chart Flow and Advanced Chart use REST data paths. Periodic refreshes are bounded HTTP requests; quote retrieval time is not an exchange timestamp. No WebSocket/continuous market-data stream is part of the current Chart Flow/Advanced Chart runtime.
+- The latest uploaded Gateway source reviewed in the earlier source audit had no Market Flow or `/market-stream/*` implementation. This is a source-file observation, not proof of the current live EC2 deployment.
 
 ### Historical incident record — 13 November 2026
 
-The following observations were supplied from an earlier SSM session on the Sydney EC2 host. They are retained for audit history only and do not describe the latest uploaded Gateway source:
-
-- At that time, `mstock-gateway.service` was observed active with a Flask listener on `127.0.0.1:8000`.
-- The then-deployed Gateway source reportedly included a Type A decoder, a WebSocket worker and Flask routes for `/market-stream/start`, `/stop`, `/status` and `/snapshot`.
-- A diagnostic request without `X-Financial-OS-Gateway-Secret` returned `GATEWAY_SECRET_INVALID`; a later authenticated diagnostic returned HTTP 200 for status and snapshot.
-- The historical worker status reported disconnected/stale, zero cached instruments and no last tick. A WebSocket handshake attempt returned HTTP 502 before LOGIN or subscription.
-- These observations do not establish current Gateway files, current service state, current WebSocket connectivity or current provider behaviour.
+Earlier SSM observations about a Gateway WebSocket worker, `/market-stream/*` routes, `GATEWAY_SECRET_INVALID`, and provider handshake failures are retained as historical audit evidence only. They do not establish current repository code, deployed Gateway files, live service state or current provider connectivity.
 
 ### Operational boundaries
 
-- Keep existing m.Stock REST routes, quote contracts, market history, charts, indices, movers, search and watchlists intact.
-- Keep broker-order execution safeguards, authentication and gateway shared-secret controls intact.
-- Do not reintroduce Market Flow, Order Flow or streaming routes unless explicitly requested and separately reviewed.
-- Do not infer current live service state from this historical incident record. Verify the actual host and exact deployed file before any infrastructure action.
+- Preserve m.Stock REST routes, quote contracts, market history, charts, indices, movers, search, watchlists and broker-order safeguards.
+- Preserve existing Bearer authentication and gateway shared-secret validation. Chart Flow is a private read-only API route and does not replace these controls.
+- Do not reintroduce WebSocket market streaming or `/market-stream/*` dependencies into Chart Flow/Advanced Chart unless separately requested and reviewed.
 - Never include API keys, access tokens, TOTP values or gateway shared secrets in diagnostics or documentation.
-
-
 
 ## 9. Deployment and release workflow
 
 The repository currently provides GitHub Actions workflows:
+- `financial-os-ci.yml`: runs frontend production build/regression checks, backend regression tests, dependency audits and repository secret scanning on pushes/PRs to `main` and manual dispatch.
+- `frontend-build.yml`: builds the frontend and uploads a CI artifact. The former `publish-frontend` job that force-pushed compiled assets to `frontend-dist` was removed by PR #223.
 - `package-aws-restored-source.yml`: creates a source archive on workflow dispatch and on changes to that workflow.
 
-These workflows do not, by themselves, prove that production deploys automatically from `main`. Confirm the active deployment provider, branch mapping, build settings, environment variables, artifact promotion and rollback process from the live hosting configuration.
+AWS Amplify is configured as the public frontend target on branch `main`, with app root `frontend/`, `npm run build` and `dist` output. The browser API origin remains `https://wealthmanager.duckdns.org`, and backend CORS includes `https://main.d1qcu4l3dz9f9e.amplifyapp.com`. This configuration does not prove which commit is currently deployed. PR #223 did not change EC2/Nginx, DNS, TLS, backend services or Gateway services. Inspect and retire any EC2 static frontend root, redirect or frontend deploy timer/runner separately; preserve DuckDNS API reverse-proxy routes and backend/Gateway connectivity.
 
 ### Release checklist
 
@@ -232,7 +225,9 @@ Do not record secrets or full authentication headers in logs. A successful backu
 - [ ] Inspect security groups, subnet routing, NACLs and outbound egress.
 - [ ] Confirm actual database host/type, subnet access, encryption, backups and restore procedure.
 - [ ] Confirm SSM Parameter Store vs Secrets Manager use and IAM policies.
-- [ ] Confirm active frontend hosting provider and deployment branch/workflow.
+- [x] Record AWS Amplify as the public frontend target (`main`, app root `frontend/`) and DuckDNS as backend API origin only.
+- [ ] Verify the live Amplify deployment ID/commit and smoke-test the public frontend against the DuckDNS API.
+- [ ] Inspect EC2/Nginx static frontend root, redirects and frontend deploy timer/runner; retire only frontend serving while preserving API proxy routes.
 - [ ] Confirm TLS termination, certificate renewal and DNS ownership.
 - [ ] Confirm CloudWatch log groups, retention, metrics and alarms.
 - [ ] Confirm WAF/edge rate limiting or document the compensating controls.

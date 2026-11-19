@@ -146,3 +146,36 @@ export function summarizeMoverVolume(rows) {
   }
   return summary;
 }
+
+
+/**
+ * Build the sector-flow rail from the provider's sector universe and index
+ * quotes. Missing quotes and missing percentage changes remain unavailable;
+ * index levels are never treated as performance.
+ */
+export function buildSectorFlowRows(sectors, quotes) {
+  const byKey = new Map((Array.isArray(quotes) ? quotes : []).map(item => [item.key, item]));
+  return (Array.isArray(sectors) ? sectors : [])
+    .map(sector => {
+      const quote = byKey.get(sector.key);
+      const rawChange = num(quote?.percent_change);
+      const percentChange = rawChange === null ? null : rawChange;
+      const lastPrice = num(quote?.last_price);
+      return {
+        key: sector.key,
+        name: sector.name,
+        indexSymbol: sector.index_symbol || quote?.index_symbol || null,
+        lastPrice: lastPrice !== null && lastPrice > 0 ? lastPrice : null,
+        percentChange,
+        direction: percentChange === null ? null
+          : percentChange > 0 ? "bullish"
+            : percentChange < 0 ? "bearish" : "unchanged",
+      };
+    })
+    .sort((a, b) => {
+      if (a.percentChange === null && b.percentChange === null) return a.name.localeCompare(b.name);
+      if (a.percentChange === null) return 1;
+      if (b.percentChange === null) return -1;
+      return b.percentChange - a.percentChange;
+    });
+}

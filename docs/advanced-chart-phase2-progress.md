@@ -1,7 +1,9 @@
 # Advanced Chart Phase 2 — REST-only implementation status
 
-Branch: `feature/market-flow-chart-suite-stage-1`  
-PR: #219 (draft; not merged)
+Implementation status: merged to `main` through PRs #219, #220 and #222 (18–19 November 2026).  
+PR #219 merge: `aa1b8261d670d91622f9e59060634a619af45dfa`  
+PR #220 merge: `3911c70dddb643e0c2fa7d700d9bb444a4c2d156`  
+PR #222 merge: `6ac5571ecccf8f954a99342240409e3dfdfc986a`
 
 ## Data transport policy
 
@@ -19,7 +21,17 @@ PR: #219 (draft; not merged)
 - Technical overlays: SMA 20, EMA 20, Bollinger Bands (20, 2) and intraday VWAP. VWAP resets by India trading-session date and requires positive volume on every candle.
 - Indicator pane: RSI 14 and MACD (12, 26, 9), derived from loaded provider closes.
 - Historical OHLCV uses authenticated `GET /api/market-charts/`; the LTP marker refreshes from authenticated REST quote snapshots.
-- Existing Markets tab and existing Market Flow board/workflow are preserved.
+- Existing Markets tab and existing market overview workflow are preserved. The REST Chart Flow workspace is implemented separately through `GET /api/market-flow/` and is registered as an authenticated backend route.
+
+## Current integrated Chart Flow and market overview state (19 November 2026)
+
+- Chart Flow backend route: `backend/app/routes/market_flow.py`, registered in `backend/app/main.py` behind the authenticated-user dependency.
+- The market snapshot combines provider-ranked NSE/BSE cash-market gainers and losers with supported index snapshots. Optional sector index snapshots and sector-specific provider-ranked mover lists are supported.
+- Sector requests return the provider's ranked movers for the selected sector and an index quote; they do not represent every constituent in that sector.
+- The route enforces pacing for m.Stock mover requests, caches eligible complete sector/index responses, returns partial status and provider errors when only part of the snapshot succeeds, and declares the operation read-only with no database writes.
+- Full exchange advance/decline breadth, full sector constituent breadth, delivery statistics and historical market-flow history are not supplied by this endpoint. UI counts must be described as provider-returned mover rows, not total listed-market breadth.
+- PR #220 consolidated the Market overview feed and its REST refresh lifecycle. PR #222 added the REST sector explorer and safe provider integration. Both are merged to `main`.
+- Chart Flow remains REST-only and excludes intraday history reconstruction and continuous market streaming. Advanced Chart historical OHLCV and quote snapshots are a separate instrument-analysis workflow.
 
 ## REST provider contracts — documentation vs application wiring
 
@@ -62,11 +74,12 @@ PR: #219 (draft; not merged)
 - No option-chain PCR, writer positioning or OI-derived support/resistance without actual option-chain observations.
 - Exchange timestamps must remain distinct from backend retrieval timestamps.
 - Preserve existing Bearer authentication, shared-secret validation, Markets tab, chart workflows and broker-order safeguards.
-- No AWS deployment, secrets, credentials or runtime configuration changes in this PR.
+- No AWS deployment, secrets, credentials or runtime configuration changes were part of PRs #219, #220 or #222.
 - MrChartist source/assets are not copied; its licence remains a separate commercial-use gate.
 
 ## Verification
 
-- CI on commit `b59f76f`: frontend production build, frontend regression checks, backend regression tests and repository secret scan passed.
-- The latest documentation/UI-copy updates require fresh PR checks.
-- No production/runtime smoke test is claimed.
+- PR #219, #220 and #222 are merged to `main` (merge SHAs above).
+- CI passed for the reviewed PR commits before merge. PR #223 later passed both Financial OS CI and Frontend production build before the Amplify cutover documentation/code changes were merged.
+- User-provided screenshots dated 19 November 2026 show the Amplify-hosted application rendering Markets, Chart Flow and Advanced Chart views. They are UI evidence, not a substitute for a live backend/provider contract test or a formal production smoke-test record.
+- The current source route and frontend integration are repository evidence; live provider completeness and EC2/Nginx state remain separate verification items.

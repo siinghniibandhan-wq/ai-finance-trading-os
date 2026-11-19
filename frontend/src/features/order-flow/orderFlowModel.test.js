@@ -245,3 +245,20 @@ test("filters malformed OHLC observations before calculating historical returns"
   assert.deepEqual(series.map(row => row.timestamp), [1, 4]);
   assert.equal(series[1].volume, null);
 });
+
+
+test("keeps five-year chart candle spacing readable in a horizontally scrollable viewport", () => {
+  const rows = Array.from({ length: 1250 }, (_, index) => ({
+    timestamp: index + 1,
+    open: 100 + index / 100,
+    high: 102 + index / 100,
+    low: 99 + index / 100,
+    close: 101 + index / 100,
+    volume: 1000,
+  }));
+  const chartWidth = Math.max(720, 48 + (rows.length - 1) * 6);
+  const geometry = buildHistoricalCandleGeometry(rows, chartWidth);
+  assert.equal(geometry.length, rows.length);
+  assert.ok(geometry.every(candle => candle.bodyWidth <= 4));
+  assert.ok(geometry.every((candle, index) => index === 0 || candle.x - geometry[index - 1].x >= 5.99));
+});

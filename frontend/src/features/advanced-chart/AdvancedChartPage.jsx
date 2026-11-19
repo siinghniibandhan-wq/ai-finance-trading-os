@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AreaSeries, BarSeries, CandlestickSeries, HistogramSeries, LineSeries, createChart } from "lightweight-charts";
 import { loadChartHistory, loadLatestQuote, searchChartInstruments } from "./api";
-import MarketFlowBoard from "./MarketFlowBoard";
 import MarketMoversScanner from "./MarketMoversScanner";
 import { calculateBollingerBands, calculateEMA, calculateHeikinAshi, calculateMACD, calculateRSI, calculateSMA, calculateVWAP, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles, normalizeQuotePrice } from "./model";
 import "./advanced-chart.css";
@@ -24,8 +23,8 @@ const money = (value) => {
     : "—";
 };
 
-export default function AdvancedChartPage() {
-  const [activeView, setActiveView] = useState("flow");
+export default function AdvancedChartPage({ initialInstrument = null }) {
+  const [activeView, setActiveView] = useState("chart");
   const [query, setQuery] = useState("");
   const [exchangeFilter, setExchangeFilter] = useState("ALL");
   const [results, setResults] = useState([]);
@@ -93,6 +92,10 @@ export default function AdvancedChartPage() {
       setSearching(false);
     }
   };
+
+  useEffect(() => {
+    if (initialInstrument?.symbol && ["NSE", "BSE"].includes(String(initialInstrument.exchange).toUpperCase())) selectInstrument(initialInstrument);
+  }, [initialInstrument]);
 
   const selectInstrument = (item) => {
     if (!item?.symbol || !["NSE", "BSE"].includes(String(item.exchange).toUpperCase())) return;
@@ -457,14 +460,11 @@ export default function AdvancedChartPage() {
       </header>
 
       <nav className="advanced-chart-view-tabs" aria-label="Advanced Chart views">
-        <button type="button" className={activeView === "flow" ? "is-active" : ""} aria-pressed={activeView === "flow"} onClick={() => setActiveView("flow")}>Market Flow</button>
         <button type="button" className={activeView === "losers" ? "is-active" : ""} aria-pressed={activeView === "losers"} onClick={() => setActiveView("losers")}>Loser Scanner</button>
         <button type="button" className={activeView === "gainers" ? "is-active" : ""} aria-pressed={activeView === "gainers"} onClick={() => setActiveView("gainers")}>Gainer Scanner</button>
         <button type="button" className={activeView === "chart" ? "is-active" : ""} aria-pressed={activeView === "chart"} onClick={() => setActiveView("chart")}>Advanced Chart</button>
       </nav>
-      {activeView === "flow" ? (
-        <MarketFlowBoard onSelectInstrument={(item) => { selectInstrument(item); setActiveView("chart"); }} />
-      ) : activeView === "losers" || activeView === "gainers" ? (
+      {activeView === "losers" || activeView === "gainers" ? (
         <MarketMoversScanner type={activeView} onSelectInstrument={(item) => { selectInstrument(item); setActiveView("chart"); }} />
       ) : (
         <>

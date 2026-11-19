@@ -13,6 +13,7 @@ import LoanManagement from "./LoanManagement";
 import { API_BASE_URL, apiFetch, getCurrentUserId, getCurrentUser, clearSession, friendlyErrorMessage, describeError } from "./api";
 import { mergeMarketOverview } from "./marketOverviewState.js";
 import AdvancedChartPage from "./features/advanced-chart/AdvancedChartPage.jsx";
+import OrderFlowPage from "./features/order-flow/OrderFlowPage.jsx";
 
 import {
   LayoutDashboard,
@@ -156,6 +157,7 @@ const navigation = [
     section: "Markets",
     items: [
       { name: "Markets", icon: TrendingUp },
+      { name: "Order Flow", icon: TrendingUp },
       { name: "Advanced Chart", icon: BarChart3 }
     ]
   },
@@ -274,7 +276,7 @@ export default function App() {
   const validPages = new Set([
     "Dashboard", "Wealth Manager", "Accounts", "Account Profile", "Transactions", "Ledger", "Chart of Accounts",
     "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio",
-    "Holdings", "Investment Transactions", "Markets", "Advanced Chart", "Goals",
+    "Holdings", "Investment Transactions", "Markets", "Order Flow", "Advanced Chart", "Goals",
     "AI Assistant", "Tax", "Settings", "Finance Diary", "Admin Panel"
   ]);
   const getPageFromLocation = () => {
@@ -283,6 +285,7 @@ export default function App() {
     return page && validPages.has(page) ? page : "Wealth Manager";
   };
   const [activePage, setActivePage] = useState(getPageFromLocation);
+  const [selectedMarketInstrument, setSelectedMarketInstrument] = useState(null);
   const [profileInitialSection, setProfileInitialSection] = useState("Basic Profile");
   const [selectedTheme, setSelectedTheme] = useState(readFinosTheme);
 
@@ -614,8 +617,10 @@ export default function App() {
    <InvestmentTransactions />
 ) : activePage === "Markets" ? (
    <MarketsPage />
+) : activePage === "Order Flow" ? (
+    <OrderFlowPage onSelectInstrument={(item) => { setSelectedMarketInstrument(item); handleNavigation("Advanced Chart"); }} />
 ) : activePage === "Advanced Chart" ? (
-    <AdvancedChartPage />
+    <AdvancedChartPage initialInstrument={selectedMarketInstrument} />
  ) : activePage === "Tax" ? (
    <TaxPage />
 ) : activePage === "Goals" ? (

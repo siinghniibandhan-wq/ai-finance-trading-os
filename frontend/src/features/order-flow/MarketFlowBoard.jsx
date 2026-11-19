@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { useMarketOverview } from "../../marketOverviewStore.js";
 import { buildDistributionDots, buildMarketFlowBoard, normalizeOrderFlow } from "./orderFlowModel.js";
+import MarketFlowPriceChart from "./MarketFlowPriceChart.jsx";
 import "./market-flow-board.css";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
@@ -146,6 +147,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         <button type="button" onClick={() => onSelectInstrument?.(selected)}>Open full chart</button></div>
         : <p>Select a flow path or tile. Only provider-returned fields are shown.</p>}
     </section>
+    <MarketFlowPriceChart instrument={selected} />
     <footer className="mfb-footer"><span>Source: {payload?.data_sources?.primary || "m.Stock via Financial OS Gateway"}</span>
       <span>Snapshot assembled: {retrievedAt ? new Date(retrievedAt).toLocaleString("en-IN") : "—"}</span>
       <span>Read-only · REST only · no synthetic market values</span></footer>

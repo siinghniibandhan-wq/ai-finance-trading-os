@@ -237,7 +237,8 @@ function VolumeParticipation({ rows, label = "MARKET" }) {
   ];
   return <section className="mfb-volume">
     <div className="mfb-volume-head"><div><small>VOLUME PARTICIPATION / {label}</small><b>Reported volume by direction</b></div>
-      <span>{summary.volumeReported} instruments with volume</span></div>
+      <span>{summary.positiveVolumeReported} with positive volume · {summary.zeroVolumeReported} reported zero</span></div>
+    {summary.volumeReported > 0 && summary.positiveVolumeReported === 0 && <p className="mfb-volume-warning" role="status">The provider returned zero volume for every mover in this snapshot. Volume participation cannot be meaningfully ranked from these values.</p>}
     <div className="mfb-volume-bars">
       {items.map(item => <div className="mfb-volume-row" key={item.key}>
         <span>{item.label}</span><i><b className={item.key} style={{ width: item.volume / max * 100 + "%" }}/></i>
@@ -365,6 +366,10 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
     item?.percent_change !== null && item?.percent_change !== undefined &&
     Number.isFinite(Number(item.percent_change))
   ).length;
+  const providerErrors = Array.isArray(payload?.errors) ? payload.errors : [];
+  const sectorIndexErrors = providerErrors.filter(item => item?.source === "m.Stock sector index quote");
+  const coreProviderErrors = providerErrors.filter(item => item?.source !== "m.Stock sector index quote");
+  const sectorOnlyPartial = providerErrors.length > 0 && coreProviderErrors.length === 0;
   const sectorFlowRows = useMemo(() => buildSectorFlowRows(sectorOptions, sectorIndices), [sectorOptions, sectorIndices]);
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
   const sectorSampleSummary = useMemo(() => summarizeSectorMoverSample(sectorRows), [sectorRows]);
@@ -437,13 +442,13 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   return <main className="market-flow-board">
     <header className="mfb-header"><div><small>FINANCIAL OS / MARKETS / CHART FLOW</small><h1>Chart Flow</h1>
       <p>Whole-market discovery from real provider-returned cash-equity movers and supported indices.</p></div>
-      <div><span className={error ? "mfb-status error" : loading ? "mfb-status" : "mfb-status live"}>{error ? "SOURCE ERROR" : loading ? "CONNECTING" : payload?.status === "partial" ? "PARTIAL DATA" : "REST SNAPSHOT"}</span>
+      <div><span className={error ? "mfb-status error" : loading ? "mfb-status" : "mfb-status live"}>{error ? "SOURCE ERROR" : loading ? "CONNECTING" : sectorOnlyPartial ? "SECTOR DATA PARTIAL" : payload?.status === "partial" ? "PARTIAL DATA" : "REST SNAPSHOT"}</span>
         <button type="button" onClick={() => refresh(true)} disabled={loading || refreshing}>{refreshing ? "Refreshing…" : "Refresh"}</button></div>
     </header>
     <section className="mfb-index-rail">{indices.map(index => <div key={index.exchange + ":" + index.name}>
       <small>{index.name}</small><strong>{fmt(index.last_price)}</strong><span>{index.exchange}</span></div>)}
       {!indices.length && <p>No index snapshots returned by the provider.</p>}</section>
-    {error && <p className="mfb-alert" role="alert">{error}. Last successful data is retained; no demo feed is substituted.</p>}{payload?.status === "partial" && <p className="mfb-alert" role="status">Some provider requests failed. The board contains only the successful real responses; missing instruments are not filled with estimates.</p>}
+    {error && <p className="mfb-alert" role="alert">{error}. Last successful data is retained; no demo feed is substituted.</p>}{coreProviderErrors.length > 0 && <p className="mfb-alert" role="status">Some market or benchmark requests failed. Available provider responses are retained; missing instruments are not estimated.</p>}
     {!loading && !rows.length && !error && <p className="mfb-alert">No valid provider movers were returned. No simulated instruments are displayed.</p>}
     <Distribution rows={rows} counts={buildMarketFlowBoard(rows).counts} breadthAvailable={payload?.capabilities?.full_advance_decline_breadth === true} retrievedAt={retrievedAt ? new Date(retrievedAt).toLocaleTimeString("en-IN") : null}/>
     <VolumeParticipation rows={rows}/>
@@ -464,6 +469,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
           <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Explore sector constituents</b>
               <span className="mfb-sector-coverage" role="status">{sectorIndexPerformanceCount} of {sectorOptions.length} sector index performance values available from REST</span></div>
             <p>Sector index change is calculated from provider LTP and OHLC previous close where both are available. Select a sector to open its actual ranked stock movers.</p>
+            {sectorIndexErrors.length > 0 && <p className="mfb-alert" role="status">{sectorIndexPerformanceCount} of {sectorOptions.length} sector index performance values are available. Unavailable: {sectorIndexErrors.map(item => item.name || item.sector).filter(Boolean).join(", ") || sectorIndexErrors.length + " sector index quote(s)"}. Main market movers remain separate from this sector-index coverage.</p>}
             <SectorFlowDiagram sectors={sectorFlowRows} selectedKey={selectedSectorKey}
               loading={sectorLoading} onSelect={loadSector}/>
             {!sectorIndices.length && <p className="mfb-sector-disclaimer">Sector index quotes are not available from the current provider response. Sector stock movers remain available on selection.</p>}

@@ -18,7 +18,13 @@ router = APIRouter(prefix="/api/options-hub", tags=["Options Hub"])
 _ALLOWED_EXCHANGES = {"NSE", "BSE"}
 
 
-def _gateway_get(path: str, params: dict[str, str], label: str) -> dict:
+def _gateway_get(
+    path: str,
+    params: dict[str, str],
+    label: str,
+    *,
+    allow_partial: bool = False,
+) -> dict:
     if not MSTOCK_GATEWAY_URL or not MSTOCK_GATEWAY_SECRET:
         raise HTTPException(
             status_code=503,
@@ -68,7 +74,9 @@ def _gateway_get(path: str, params: dict[str, str], label: str) -> dict:
             status_code=502,
             detail=f"The market gateway returned an invalid {label.lower()} response.",
         )
-    if payload.get("status") != "success":
+
+    accepted_statuses = {"success", "partial"} if allow_partial else {"success"}
+    if payload.get("status") not in accepted_statuses:
         message = str(payload.get("message") or f"{label} data is unavailable.")[:240]
         raise HTTPException(status_code=502, detail=message)
     return payload
@@ -120,6 +128,9 @@ def get_options_chain(
     if not cleaned_underlying or not cleaned_expiry:
         raise HTTPException(status_code=400, detail="underlying and expiry are required.")
 
+    # The gateway deliberately reports "partial" when at least one LTP batch
+    # succeeds but one or more contracts lack quotes. Preserve the valid
+    # contracts/LTPs instead of converting the whole chain into HTTP 502.
     payload = _gateway_get(
         "options/chain",
         {
@@ -128,19 +139,20 @@ def get_options_chain(
             "expiry": cleaned_expiry,
         },
         "Options chain",
+        allow_partial=True,
     )
     contracts = payload.get("contracts")
     if not isinstance(contracts, list):
         raise HTTPException(status_code=502, detail="Options chain response has no contracts list.")
 
     return {
-        "status": "success",
+        "status": payload.get("status", "success"),
         "exchange": cleaned_exchange,
         "exchange_segment": payload.get("exchange_segment"),
         "underlying": cleaned_underlying,
         "expiry": cleaned_expiry,
         "contracts": contracts,
-        "quote_count": payload.get("quote_count", len(contracts)),
+        "quote_count": payload.get("contract_count", payload.get("quote_count", len(contracts))),
         "quote_coverage": payload.get("quote_coverage", 0),
         "open_interest_available": payload.get("open_interest_available") is True,
         "volume_available": payload.get("volume_available") is True,

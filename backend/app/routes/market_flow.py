@@ -1,6 +1,7 @@
 """Provider-backed, read-only cash-equity market-flow snapshot for Chart Flow."""
 
 import time
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
@@ -69,6 +70,155 @@ def fetch_all_cash_movers():
     return movers, errors
 
 
+# Provider-documented NSE sector universes for the Type A Top Gainers/Losers API.
+# These codes are SecurityIdCode values, not invented sector classifications.
+SECTOR_UNIVERSES = (
+    {"key": "auto", "name": "Automobile", "security_id_code": 9, "index_symbol": "NIFTY AUTO"},
+    {"key": "private-bank", "name": "Private Banks", "security_id_code": 10, "index_symbol": "NIFTY PVT BANK"},
+    {"key": "fmcg", "name": "FMCG", "security_id_code": 20, "index_symbol": "NIFTY FMCG"},
+    {"key": "it", "name": "Information Technology", "security_id_code": 21, "index_symbol": "NIFTY IT"},
+    {"key": "media", "name": "Media", "security_id_code": 22, "index_symbol": "NIFTY MEDIA"},
+    {"key": "metal", "name": "Metals", "security_id_code": 23, "index_symbol": "NIFTY METAL"},
+    {"key": "pharma", "name": "Pharma", "security_id_code": 24, "index_symbol": "NIFTY PHARMA"},
+    {"key": "psu-bank", "name": "PSU Banks", "security_id_code": 25, "index_symbol": "NIFTY PSU BANK"},
+    {"key": "realty", "name": "Realty", "security_id_code": 26, "index_symbol": "NIFTY REALTY"},
+    {"key": "energy", "name": "Energy", "security_id_code": 33, "index_symbol": "NIFTY ENERGY"},
+    {"key": "infrastructure", "name": "Infrastructure", "security_id_code": 34, "index_symbol": "NIFTY INFRA"},
+    {"key": "mnc", "name": "MNC", "security_id_code": 35, "index_symbol": "NIFTY MNC"},
+    {"key": "services", "name": "Services", "security_id_code": 37, "index_symbol": "NIFTY SERV SECTOR"},
+    {"key": "consumer-durables", "name": "Consumer Durables", "security_id_code": 59, "index_symbol": "NIFTY CONSUMER DURABLES"},
+    {"key": "financial-services", "name": "Financial Services", "security_id_code": 60, "index_symbol": "NIFTY FINANCIAL SERVICES"},
+    {"key": "oil-gas", "name": "Oil & Gas", "security_id_code": 61, "index_symbol": "NIFTY OIL AND GAS"},
+    {"key": "healthcare", "name": "Healthcare", "security_id_code": 62, "index_symbol": "NIFTY HEALTHCARE"},
+)
+_SECTOR_BY_KEY = {item["key"]: item for item in SECTOR_UNIVERSES}
+_sector_cache = {}
+_sector_cache_lock = threading.Lock()
+SECTOR_CACHE_TTL_SECONDS = 45
+
+
+def _fetch_sector_movers_uncached(sector):
+    """Fetch only the provider-ranked gainers and losers for one selected sector."""
+    movers = {"gainers": [], "losers": []}
+    errors = []
+
+    for position, (mover_type, type_flag) in enumerate((("gainers", "G"), ("losers", "L"))):
+        if position:
+            # m.Stock documents a one-request-per-second data API rate limit.
+            time.sleep(1.05)
+        try:
+            response = fetch_movers(
+                exchange=1,
+                security_id_code=sector["security_id_code"],
+                segment=1,
+                type_flag=type_flag,
+            )
+            for raw in extract_type_a_mover_rows(response):
+                if not isinstance(raw, dict):
+                    continue
+                item = normalize_mover(raw)
+                if str(item.get("exchange") or "NSE").upper() != "NSE":
+                    continue
+                if not item.get("symbol"):
+                    continue
+                item["exchange"] = "NSE"
+                item["sector"] = sector["name"]
+                movers[mover_type].append(item)
+        except Exception as exc:
+            errors.append({
+                "source": "m.Stock",
+                "sector": sector["key"],
+                "type": mover_type,
+                "message": str(exc),
+            })
+
+    if errors and not movers["gainers"] and not movers["losers"]:
+        raise HTTPException(
+            status_code=502,
+            detail={"message": "Unable to retrieve sector movers.", "errors": errors},
+        )
+
+    return {
+        "status": "partial" if errors else "success",
+        "sector": {
+            "key": sector["key"],
+            "name": sector["name"],
+            "security_id_code": sector["security_id_code"],
+            "index_symbol": sector["index_symbol"],
+        },
+        "scope": {
+            "exchange": "NSE",
+            "universe": "Provider-ranked gainers and losers for the selected NSE sector index",
+            "note": "These are the provider's top movers within the selected sector, not every sector constituent.",
+        },
+        "movers": movers,
+        "counts": {
+            "gainers": len(movers["gainers"]),
+            "losers": len(movers["losers"]),
+            "total_returned": len(movers["gainers"]) + len(movers["losers"]),
+        },
+        "capabilities": {
+            "sector_gainer_loser_lists": True,
+            "full_sector_constituent_breadth": False,
+            "sector_index_quote": False,
+        },
+        "limitations": [
+            "The provider response contains ranked movers, not the complete sector constituent universe.",
+            "Sector index price performance is not included in this endpoint response.",
+        ],
+        "data_sources": {
+            "primary": "m.Stock Type A Top Gainers and Losers API",
+            "security_id_code": sector["security_id_code"],
+        },
+        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "errors": errors,
+        "read_only": True,
+        "database_write": False,
+    }
+
+
+@router.get("/sectors")
+def get_market_flow_sectors():
+    """List the sector universes explicitly documented by m.Stock Type A."""
+    return {
+        "status": "success",
+        "sectors": [
+            {
+                "key": item["key"],
+                "name": item["name"],
+                "security_id_code": item["security_id_code"],
+                "index_symbol": item["index_symbol"],
+            }
+            for item in SECTOR_UNIVERSES
+        ],
+        "source": "m.Stock Type A Top Gainers/Losers SecurityIdCode table",
+        "read_only": True,
+    }
+
+
+@router.get("/sectors/{sector_key}")
+def get_sector_movers(sector_key: str):
+    sector = _SECTOR_BY_KEY.get(str(sector_key or "").strip().lower())
+    if sector is None:
+        raise HTTPException(status_code=404, detail="Unsupported Chart Flow sector.")
+
+    now = time.monotonic()
+    cached = _sector_cache.get(sector["key"])
+    if cached and now - cached["loaded_at"] < SECTOR_CACHE_TTL_SECONDS:
+        return cached["payload"]
+
+    # Serialize cache misses so concurrent selections do not duplicate provider
+    # calls and breach m.Stock's documented request-rate limit.
+    with _sector_cache_lock:
+        now = time.monotonic()
+        cached = _sector_cache.get(sector["key"])
+        if cached and now - cached["loaded_at"] < SECTOR_CACHE_TTL_SECONDS:
+            return cached["payload"]
+        payload = _fetch_sector_movers_uncached(sector)
+        _sector_cache[sector["key"]] = {"loaded_at": time.monotonic(), "payload": payload}
+        return payload
+
+
 @router.get("/")
 def get_market_flow_snapshot():
     movers, errors = fetch_all_cash_movers()
@@ -113,6 +263,10 @@ def get_market_flow_snapshot():
             "note": "The provider returns top gainers and losers, not every unchanged listing.",
         },
         "indices": indices,
+        "sector_universes": [
+            {key: item[key] for key in ("key", "name", "security_id_code", "index_symbol")}
+            for item in SECTOR_UNIVERSES
+        ],
         "market_movers": movers,
         "market_summary": {
             "gainers": len(gainers),

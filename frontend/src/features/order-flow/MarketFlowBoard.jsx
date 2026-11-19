@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { loadMarketFlowSnapshot } from "../advanced-chart/api.js";
-import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow } from "./orderFlowModel.js";
+import { loadChartHistory, loadMarketFlowSnapshot } from "../advanced-chart/api.js";
+import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
@@ -84,6 +84,46 @@ function Side({ title, side, rows, selectedKey, onSelect }) {
   </section>;
 }
 
+
+function HistoricalFlowPanel({ series, loading, error, symbol }) {
+  if (loading) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p>Loading verified historical candles…</p></section>;
+  if (error) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p className="mfb-alert">{error}</p></section>;
+  if (!series.length) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p>No historical OHLCV observations returned for {symbol}. No chart is fabricated.</p></section>;
+
+  const values = series.map(row => row.relativeChange);
+  const min = Math.min(0, ...values);
+  const max = Math.max(0, ...values);
+  const range = Math.max(0.01, max - min);
+  const points = series.map((row, index) => {
+    const x = 24 + (series.length === 1 ? 0 : index / (series.length - 1) * 672);
+    const y = 112 - ((row.relativeChange - min) / range) * 88;
+    return `${x},${y}`;
+  }).join(" ");
+  const latest = series[series.length - 1];
+  const volumes = series.map(row => row.volume).filter(value => value !== null);
+  const maxVolume = Math.max(1, ...volumes);
+  return <section className="mfb-history">
+    <div className="mfb-history-head"><div><small>05 / HISTORICAL PRICE FLOW</small><b>{symbol} · daily candles</b></div>
+      <strong className={latest.relativeChange >= 0 ? "up" : "down"}>{pct(latest.relativeChange)} since first candle</strong></div>
+    <svg viewBox="0 0 720 172" role="img" aria-label={`Historical relative price movement and actual volume for ${symbol}`}>
+      <line x1="24" x2="696" y1="112" y2="112" className="mfb-history-axis"/>
+      <polyline points={points} className="mfb-history-line" fill="none"/>
+      {series.map((row, index) => {
+        const x = 24 + (series.length === 1 ? 0 : index / (series.length - 1) * 672);
+        const height = row.volume === null ? 0 : row.volume / maxVolume * 30;
+        return <g key={String(row.timestamp) + index}>
+          <rect x={x - 2} y={158 - height} width="4" height={height} className="mfb-history-volume"/>
+          <title>{new Date(Number(row.timestamp) * (Number(row.timestamp) < 100000000000 ? 1000 : 1)).toLocaleDateString("en-IN")} · ₹{fmt(row.close)} · {row.volume === null ? "Volume unavailable" : "Volume " + fmt(row.volume, 0)}</title>
+        </g>;
+      })}
+      <text x="24" y="12" className="mfb-history-label">{pct(min)}</text>
+      <text x="696" y="12" textAnchor="end" className="mfb-history-label">{pct(max)}</text>
+      <text x="24" y="170" className="mfb-history-label">VOLUME</text>
+    </svg>
+    <div className="mfb-history-foot"><span>{series.length} actual candles</span><span>Close-based relative change · volume shown only when supplied</span></div>
+  </section>;
+}
+
 export default function MarketFlowBoard({ onSelectInstrument }) {
   const [payload, setPayload] = useState(null);
   const [retrievedAt, setRetrievedAt] = useState(null);
@@ -100,6 +140,10 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const [sectorPayload, setSectorPayload] = useState(null);
   const [sectorLoading, setSectorLoading] = useState(false);
   const [sectorError, setSectorError] = useState("");
+  const [historySeries, setHistorySeries] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const historyRequest = useRef(0);
   const sectorRequest = useRef(0);
   const busy = useRef(false);
   const mounted = useRef(true);
@@ -146,6 +190,31 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
   const selected = rows.find(row => keyOf(row) === selectedKey)
     || sectorRows.find(row => keyOf(row) === selectedKey) || null;
+
+  useEffect(() => {
+    if (!selected) { setHistorySeries([]); return undefined; }
+    const requestId = ++historyRequest.current;
+    setHistoryLoading(true);
+    setHistoryError("");
+    setHistorySeries([]);
+    const to = new Date();
+    const from = new Date(to);
+    from.setDate(from.getDate() - 45);
+    const formatDate = date => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+    loadChartHistory({ symbol: selected.symbol, exchange: selected.exchange, interval: "day", from: formatDate(from), to: formatDate(to) })
+      .then(result => {
+        if (mounted.current && requestId === historyRequest.current) {
+          setHistorySeries(buildHistoricalFlowSeries(result?.data));
+        }
+      })
+      .catch(requestError => {
+        if (mounted.current && requestId === historyRequest.current) setHistoryError(requestError?.message || "Historical chart request failed.");
+      })
+      .finally(() => {
+        if (mounted.current && requestId === historyRequest.current) setHistoryLoading(false);
+      });
+    return () => { historyRequest.current += 1; };
+  }, [selected?.symbol, selected?.exchange]);
 
   const loadSector = useCallback(async (sectorKey) => {
     const requestId = ++sectorRequest.current;
@@ -231,6 +300,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         <button type="button" onClick={() => onSelectInstrument?.(selected)}>Open full chart</button></div>
         : <p>Select a flow path or tile. Only provider-returned fields are shown.</p>}
     </section>
+    {selected && <HistoricalFlowPanel series={historySeries} loading={historyLoading} error={historyError} symbol={selected.symbol}/>}
     <footer className="mfb-footer"><span>Source: {payload?.data_sources?.primary || "m.Stock via Financial OS Gateway"}</span>
       <span>Snapshot assembled: {retrievedAt ? new Date(retrievedAt).toLocaleString("en-IN") : "—"}</span>
       <span>Read-only · REST only · no synthetic market values</span></footer>

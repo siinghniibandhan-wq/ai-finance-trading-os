@@ -141,3 +141,20 @@
 @media(max-width:700px){.mfb-constituent-flow-wrap{overflow-x:auto;padding:8px 5px}.mfb-constituent-flow{min-width:700px}}
 
 .mfb-sector-flow-row[aria-disabled="true"]{cursor:wait;opacity:.68}
+
+
+/* Daily OHLC candlesticks and selectable non-intraday history windows */
+.mfb-history-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 0;border-block:1px solid var(--line)}
+.mfb-history-toolbar>span{font-size:8px;letter-spacing:.12em;color:var(--muted);font-weight:800}
+.mfb-history-toolbar>div{display:flex;gap:5px;flex-wrap:wrap}
+.market-flow-board .mfb-history-toolbar button{padding:5px 10px;font-size:9px;background:transparent;border-color:var(--line);color:var(--muted)}
+.market-flow-board .mfb-history-toolbar button.selected,.market-flow-board .mfb-history-toolbar button[aria-pressed="true"]{background:#233d4b;border-color:#86a7b8;color:var(--text)}
+.mfb-history-grid{stroke:var(--line);stroke-dasharray:2 5;opacity:.7}
+.mfb-candle-wick{stroke-width:1.2}
+.mfb-candle.bullish .mfb-candle-wick{stroke:var(--green)}
+.mfb-candle.bearish .mfb-candle-wick{stroke:var(--red)}
+.mfb-candle-body{stroke-width:.7}
+.mfb-candle.bullish .mfb-candle-body{fill:var(--green);stroke:var(--green)}
+.mfb-candle.bearish .mfb-candle-body{fill:var(--red);stroke:var(--red)}
+.mfb-candle-volume{fill:var(--flat);opacity:.48}
+@media(max-width:650px){.mfb-history-toolbar{align-items:flex-start;flex-direction:column}.mfb-history-toolbar>div{width:100%}.market-flow-board .mfb-history-toolbar button{flex:1;padding-inline:6px}}

@@ -163,6 +163,8 @@ test("summarizes actual volume only for returned movers with volume values", () 
     bearishCount: 1,
     unchangedCount: 1,
     volumeReported: 3,
+    positiveVolumeReported: 3,
+    zeroVolumeReported: 0,
   });
 });
 
@@ -261,4 +263,19 @@ test("keeps five-year chart candle spacing readable in a horizontally scrollable
   assert.equal(geometry.length, rows.length);
   assert.ok(geometry.every(candle => candle.bodyWidth <= 4));
   assert.ok(geometry.every((candle, index) => index === 0 || candle.x - geometry[index - 1].x >= 5.99));
+});
+
+
+test("distinguishes provider-reported zero volume from positive traded volume", () => {
+  const summary = summarizeMoverVolume([
+    { direction: "bullish", volume: 0 },
+    { direction: "bearish", volume: "0" },
+    { direction: "bullish", volume: 25 },
+    { direction: "unchanged", volume: null },
+  ]);
+  assert.equal(summary.volumeReported, 3);
+  assert.equal(summary.positiveVolumeReported, 1);
+  assert.equal(summary.zeroVolumeReported, 2);
+  assert.equal(summary.bullishVolume, 25);
+  assert.equal(summary.bearishVolume, 0);
 });

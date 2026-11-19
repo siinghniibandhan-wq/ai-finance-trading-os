@@ -204,7 +204,7 @@ function SectorConstituentDiagram({ sectorName, board, selectedKey, focusedKey, 
               onSelect(row);
             }
           }}>
-          <line x1="188" y1={centerY} x2="224" y2={centerY} className="mfb-constituent-branch"/>
+          <line x1="188" y1={y} x2="224" y2={y} className="mfb-constituent-branch"/>
           <path d={`M 224 ${centerY} C 310 ${centerY}, 344 ${y}, 420 ${y}`} className="mfb-constituent-path"/>
           <rect x="420" y={y - 13} width="550" height="26" rx="5" className="mfb-constituent-node-bg"/>
           <text x="436" y={y + 4} className="mfb-constituent-symbol">{row.symbol}</text>

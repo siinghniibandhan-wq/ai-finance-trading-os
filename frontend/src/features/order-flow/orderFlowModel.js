@@ -65,11 +65,14 @@ export function filterOrderFlow(rows, filters = {}) {
 /** Build a relative-price and volume series from existing market-chart OHLCV rows. */
 export function buildHistoricalFlowSeries(candles) {
   const valid = (Array.isArray(candles) ? candles : []).map(row => {
+    const open = num(row?.open);
+    const high = num(row?.high);
+    const low = num(row?.low);
     const close = num(row?.close);
     const volume = num(row?.volume);
     const timestamp = row?.timestamp;
     if (close === null || close <= 0 || timestamp === null || timestamp === undefined) return null;
-    return { timestamp, close, volume: volume !== null && volume >= 0 ? volume : null };
+    return { timestamp, open, high, low, close, volume: volume !== null && volume >= 0 ? volume : null };
   }).filter(Boolean);
   const base = valid[0]?.close;
   if (!base || base <= 0) return [];

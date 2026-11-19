@@ -18,3 +18,16 @@
 .market-flow-board .mfb-filterbar button{min-height:34px;font-size:9px}
 .mfb-filterbar>span{margin-left:auto;padding:0 0 9px;color:var(--muted);font-size:9px}
 @media(max-width:650px){.mfb-filterbar{align-items:stretch}.mfb-filterbar label,.mfb-filterbar input{width:100%}.mfb-filterbar>span{margin-left:0;padding:4px 0}}
+
+.mfb-history{padding:16px 18px;background:var(--panel);border:1px solid var(--line);margin-top:12px}
+.mfb-history-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.mfb-history-head>div{display:flex;flex-direction:column;gap:4px}
+.mfb-history-head small{font-size:9px;color:var(--muted);letter-spacing:.12em}
+.mfb-history-head b{font-size:13px;color:var(--text)}
+.mfb-history-head>strong{font-size:12px;font-variant-numeric:tabular-nums}
+.mfb-history svg{width:100%;height:auto;overflow:visible}
+.mfb-history-axis{stroke:var(--line);stroke-dasharray:3 4}
+.mfb-history-line{stroke:#65c9a6;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.mfb-history-volume{fill:#527d9b;opacity:.65}
+.mfb-history-label{fill:var(--muted);font-size:9px}
+.mfb-history-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:9px;margin-top:6px}

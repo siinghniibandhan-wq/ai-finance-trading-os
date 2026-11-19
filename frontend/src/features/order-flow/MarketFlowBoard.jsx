@@ -249,7 +249,13 @@ function VolumeParticipation({ rows, label = "MARKET" }) {
 }
 
 function HistoricalFlowPanel({ series, loading, error, symbol, range, onRangeChange }) {
-  const geometry = useMemo(() => buildHistoricalCandleGeometry(series), [series]);
+  const chartScrollRef = useRef(null);
+  const chartWidth = Math.max(720, 48 + Math.max(0, series.length - 1) * 6);
+  const geometry = useMemo(() => buildHistoricalCandleGeometry(series, chartWidth), [series, chartWidth]);
+  useEffect(() => {
+    const viewport = chartScrollRef.current;
+    if (viewport) viewport.scrollLeft = viewport.scrollWidth;
+  }, [symbol, range, series.length]);
   if (loading) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p>Loading verified daily candles…</p></section>;
   if (error) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p className="mfb-alert">{error}</p></section>;
   if (!series.length) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p>No historical OHLCV observations returned for {symbol}. No chart is fabricated.</p></section>;
@@ -267,9 +273,10 @@ function HistoricalFlowPanel({ series, loading, error, symbol, range, onRangeCha
       )}</div>
     </div>
     <div className="mfb-history-ohlc"><span>O ₹{latest.open === null ? "—" : fmt(latest.open)}</span><span>H ₹{latest.high === null ? "—" : fmt(latest.high)}</span><span>L ₹{latest.low === null ? "—" : fmt(latest.low)}</span><span>C ₹{fmt(latest.close)}</span><span>V {latest.volume === null ? "—" : fmt(latest.volume, 0)}</span></div>
-    <svg viewBox="0 0 720 196" role="img" aria-label={`Daily OHLC candlestick and volume chart for ${symbol}`}>
-      <line x1="24" x2="696" y1="130" y2="130" className="mfb-history-axis"/>
-      <line x1="24" x2="696" y1="18" y2="18" className="mfb-history-grid"/>
+    <div className="mfb-history-chart-scroll" ref={chartScrollRef} tabIndex="0" role="region" aria-label={`Scrollable daily chart for ${symbol}`}>
+    <svg viewBox={`0 0 ${chartWidth} 196`} style={{ width: chartWidth + "px", maxWidth: "none" }} role="img" aria-label={`Daily OHLC candlestick and volume chart for ${symbol}`}>
+      <line x1="24" x2={chartWidth - 24} y1="130" y2="130" className="mfb-history-axis"/>
+      <line x1="24" x2={chartWidth - 24} y1="18" y2="18" className="mfb-history-grid"/>
       {geometry.map((candle, index) => <g key={String(candle.timestamp) + index} className={`mfb-candle ${candle.direction}`}>
         <line x1={candle.x} x2={candle.x} y1={candle.highY} y2={candle.lowY} className="mfb-candle-wick"/>
         <rect x={candle.x - candle.bodyWidth / 2} y={candle.bodyTop} width={candle.bodyWidth} height={candle.bodyHeight} rx=".5" className="mfb-candle-body"/>
@@ -277,9 +284,10 @@ function HistoricalFlowPanel({ series, loading, error, symbol, range, onRangeCha
         <title>{(Number.isFinite(Number(candle.timestamp)) ? new Date(Number(candle.timestamp) * (Number(candle.timestamp) < 100000000000 ? 1000 : 1)) : new Date(candle.timestamp)).toLocaleDateString("en-IN")} · O {fmt(candle.open)} H {fmt(candle.high)} L {fmt(candle.low)} C {fmt(candle.close)} · {candle.volume === null ? "Volume unavailable" : "Volume " + fmt(candle.volume, 0)}</title>
       </g>)}
       <text x="24" y="12" className="mfb-history-label">₹{fmt(Math.max(...series.map(row => row.high ?? row.close)))}</text>
-      <text x="696" y="12" textAnchor="end" className="mfb-history-label">₹{fmt(Math.min(...series.map(row => row.low ?? row.close)))}</text>
+      <text x={chartWidth - 24} y="12" textAnchor="end" className="mfb-history-label">₹{fmt(Math.min(...series.map(row => row.low ?? row.close)))}</text>
       <text x="24" y="195" className="mfb-history-label">VOLUME</text>
     </svg>
+    </div>
     <div className="mfb-history-foot"><span>{geometry.length} actual daily candles</span><span>OHLC and volume from existing Market Charts REST API · no intraday data</span></div>
   </section>;
 }

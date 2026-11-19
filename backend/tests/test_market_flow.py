@@ -76,3 +76,191 @@ def test_chart_flow_returns_502_when_every_source_fails(monkeypatch):
 
     assert exc.value.status_code == 502
     assert "Unable to retrieve Chart Flow" in exc.value.detail["message"]
+
+
+def test_chart_flow_sector_movers_uses_mstock_sector_universe(monkeypatch):
+    calls = []
+    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(market_flow, "_sector_cache", {})
+
+    def fake_fetch(**kwargs):
+        calls.append(kwargs)
+        flag = kwargs["type_flag"]
+        return {
+            "status": True,
+            "data": [{
+                "exchange": "NSE",
+                "symbol": "INFY" if flag == "G" else "WIPRO",
+                "symbol_name": "Infosys" if flag == "G" else "Wipro",
+                "ltp": 1500,
+                "per_change": 2 if flag == "G" else -1,
+                "volume": 1000,
+            }],
+        }
+
+    monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
+    monkeypatch.setattr(market_flow, "fetch_index", lambda index: {
+        "name": index["name"], "exchange": index["exchange"], "symbol": index["symbol"],
+        "last_price": 25000, "previous_close": 24900,
+        "change": 100, "percent_change": (100 / 24900) * 100,
+        "status": "success",
+    })
+
+    result = market_flow.get_market_flow_snapshot("it")
+
+    assert [call["security_id_code"] for call in calls] == [21, 21]
+    assert [call["type_flag"] for call in calls] == ["G", "L"]
+    assert result["status"] == "success"
+    assert result["sector"]["key"] == "it"
+    assert result["movers"]["gainers"][0]["symbol"] == "INFY"
+    assert result["movers"]["losers"][0]["symbol"] == "WIPRO"
+    assert result["movers"]["gainers"][0]["sector"] == "Information Technology"
+    assert result["sector_index"]["last_price"] == 25000
+    assert result["capabilities"]["sector_index_quote"] is True
+    assert result["capabilities"]["sector_index_performance"] is True
+
+
+def test_chart_flow_sector_movers_marks_partial_provider_results(monkeypatch):
+    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(market_flow, "_sector_cache", {})
+    calls = {"count": 0}
+
+    def fake_fetch(**kwargs):
+        calls["count"] += 1
+        if kwargs["type_flag"] == "L":
+            raise RuntimeError("sector losers unavailable")
+        return {"status": True, "data": [{
+            "exchange": "NSE", "symbol": "INFY", "ltp": 1500,
+            "per_change": 2, "volume": 1000,
+        }]}
+
+    monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
+    monkeypatch.setattr(market_flow, "fetch_index", lambda _index: (_ for _ in ()).throw(RuntimeError("index quote unavailable")))
+
+    result = market_flow.get_market_flow_snapshot("it")
+
+    assert result["status"] == "partial"
+    assert len(result["movers"]["gainers"]) == 1
+    assert result["movers"]["losers"] == []
+    assert result["errors"][0]["type"] == "losers"
+
+
+def test_chart_flow_rejects_unknown_sector_key():
+    with pytest.raises(HTTPException) as exc:
+        market_flow.get_market_flow_snapshot("not-a-sector")
+
+    assert exc.value.status_code == 404
+
+
+def test_chart_flow_uses_one_shared_route_for_market_and_sector_queries():
+    import inspect
+
+    parameters = inspect.signature(market_flow.get_market_flow_snapshot).parameters
+    assert "sector" in parameters
+    assert "include_sector_indices" in parameters
+    assert len([
+        route for route in market_flow.router.routes
+        if getattr(route, "endpoint", None) is market_flow.get_market_flow_snapshot
+    ]) == 1
+
+
+def test_chart_flow_sector_cache_reuses_recent_provider_snapshot(monkeypatch):
+    monkeypatch.setattr(market_flow, "_sector_cache", {})
+    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
+    calls = []
+
+    def fake_fetch(**kwargs):
+        calls.append(kwargs)
+        return {"status": True, "data": [{
+            "exchange": "NSE", "symbol": "INFY", "ltp": 1500,
+            "per_change": 1, "volume": 100,
+        }]}
+
+    monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
+    monkeypatch.setattr(market_flow, "fetch_index", lambda index: {
+        "name": index["name"], "exchange": index["exchange"], "symbol": index["symbol"],
+        "last_price": 25000, "status": "success",
+    })
+
+    first = market_flow.get_market_flow_snapshot("it")
+    second = market_flow.get_market_flow_snapshot("it")
+
+    assert first == second
+    assert len(calls) == 2
+
+
+def test_chart_flow_can_load_all_sector_index_quotes_from_shared_snapshot(monkeypatch):
+    monkeypatch.setattr(market_flow, "fetch_all_cash_movers", lambda: (
+        {"gainers": [], "losers": []}, []
+    ))
+    monkeypatch.setattr(market_flow, "fetch_index", lambda index: {
+        "name": index["name"],
+        "exchange": index["exchange"],
+        "symbol": index["symbol"],
+        "last_price": 1000,
+        "previous_close": 990,
+        "change": 10,
+        "percent_change": 1.01,
+        "status": "success",
+    })
+
+    result = market_flow.get_market_flow_snapshot(include_sector_indices=True)
+
+    assert len(result["sector_indices"]) == len(market_flow.SECTOR_UNIVERSES)
+    assert result["capabilities"]["sector_index_quotes"] is True
+    assert result["capabilities"]["sector_index_performance"] is True
+    assert result["sector_indices"][0]["percent_change"] == 1.01
+    assert result["sector_indices"][0]["key"] in {
+        item["key"] for item in market_flow.SECTOR_UNIVERSES
+    }
+
+
+def test_chart_flow_caches_complete_sector_index_scan(monkeypatch):
+    monkeypatch.setattr(market_flow, "_sector_index_cache", {
+        "loaded_at": 0.0, "results": [], "errors": [],
+    })
+    calls = {"count": 0}
+
+    def fake_fetch(index):
+        calls["count"] += 1
+        return {
+            "name": index["name"], "exchange": index["exchange"], "symbol": index["symbol"],
+            "last_price": 1000, "previous_close": 990, "change": 10,
+            "percent_change": 1.01, "status": "success",
+        }
+
+    monkeypatch.setattr(market_flow, "fetch_index", fake_fetch)
+    first, first_errors = market_flow.fetch_sector_index_snapshots()
+    second, second_errors = market_flow.fetch_sector_index_snapshots()
+
+    assert len(first) == len(market_flow.SECTOR_UNIVERSES)
+    assert first == second
+    assert first_errors == second_errors == []
+    assert calls["count"] == len(market_flow.SECTOR_UNIVERSES)
+
+
+def test_chart_flow_sector_universe_matches_mstock_documented_security_id_codes():
+    expected = {
+        "auto": 9,
+        "private-bank": 10,
+        "fmcg": 20,
+        "it": 21,
+        "media": 22,
+        "metal": 23,
+        "pharma": 24,
+        "psu-bank": 25,
+        "realty": 26,
+        "energy": 33,
+        "infrastructure": 34,
+        "mnc": 35,
+        "services": 37,
+        "consumer-durables": 59,
+        "financial-services": 60,
+        "oil-gas": 61,
+        "healthcare": 62,
+    }
+
+    actual = {item["key"]: item["security_id_code"] for item in market_flow.SECTOR_UNIVERSES}
+
+    assert actual == expected
+    assert len({item["index_symbol"] for item in market_flow.SECTOR_UNIVERSES}) == len(expected)

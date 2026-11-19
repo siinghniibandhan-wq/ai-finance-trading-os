@@ -158,7 +158,7 @@ const navigation = [
     section: "Markets",
     items: [
       { name: "Markets", icon: TrendingUp },
-      { name: "Order Flow", icon: TrendingUp },
+      { name: "Chart Flow", icon: TrendingUp },
       { name: "Advanced Chart", icon: BarChart3 },
       { name: "Options Hub", icon: PieChart }
     ]
@@ -278,7 +278,7 @@ export default function App() {
   const validPages = new Set([
     "Dashboard", "Wealth Manager", "Accounts", "Account Profile", "Transactions", "Ledger", "Chart of Accounts",
     "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio",
-    "Holdings", "Investment Transactions", "Markets", "Order Flow", "Advanced Chart", "Options Hub", "Goals",
+    "Holdings", "Investment Transactions", "Markets", "Chart Flow", "Order Flow", "Advanced Chart", "Options Hub", "Goals",
     "AI Assistant", "Tax", "Settings", "Finance Diary", "Admin Panel"
   ]);
   const getPageFromLocation = () => {
@@ -533,7 +533,7 @@ export default function App() {
                   <label htmlFor="global-page-search">Search Financial OS</label>
                   <input id="global-page-search" autoFocus value={headerSearch} onChange={(event) => setHeaderSearch(event.target.value)} placeholder="Search pages…" />
                   <div className="header-search-results">
-                    {["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"]
+                    {["Dashboard", "Wealth Manager", "Accounts", "Transactions", "Ledger", "Chart of Accounts", "Loans & Liabilities", "Budget", "Categories", "Bills", "Portfolio", "Holdings", "Investment Transactions", "Markets", "Chart Flow", "Goals", "AI Assistant", "Tax", "Settings", "Finance Diary", "Account Profile"]
                       .filter((page) => page.toLowerCase().includes(headerSearch.trim().toLowerCase()))
                       .slice(0, 8)
                       .map((page) => <button type="button" key={page} onClick={() => { setHeaderPanel(""); setHeaderSearch(""); handleNavigation(page); }}>{page}</button>)}
@@ -619,7 +619,7 @@ export default function App() {
    <InvestmentTransactions />
 ) : activePage === "Markets" ? (
    <MarketsPage />
-) : activePage === "Order Flow" ? (
+) : activePage === "Order Flow" || activePage === "Chart Flow" ? (
     <OrderFlowPage onSelectInstrument={(item) => { setSelectedMarketInstrument(item); handleNavigation("Advanced Chart"); }} />
 ) : activePage === "Advanced Chart" ? (
     <AdvancedChartPage initialInstrument={selectedMarketInstrument} />

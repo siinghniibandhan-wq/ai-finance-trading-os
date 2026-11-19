@@ -1,6 +1,7 @@
 """Provider-backed, read-only cash-equity market-flow snapshot for Chart Flow."""
 
 import time
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
@@ -23,21 +24,33 @@ CASH_EXCHANGES = (
 )
 
 
+# One shared limiter for Chart Flow mover requests. m.Stock documents one
+# data-API request per second; it must also cover concurrent market/sector calls.
+_mstock_mover_lock = threading.Lock()
+_last_mstock_mover_request_at = 0.0
+MSTOCK_MOVER_MIN_INTERVAL_SECONDS = 1.05
+
+
+def _fetch_mstock_movers(**kwargs):
+    global _last_mstock_mover_request_at
+    with _mstock_mover_lock:
+        now = time.monotonic()
+        wait = MSTOCK_MOVER_MIN_INTERVAL_SECONDS - (now - _last_mstock_mover_request_at)
+        if wait > 0:
+            time.sleep(wait)
+        _last_mstock_mover_request_at = time.monotonic()
+        return fetch_movers(**kwargs)
+
+
 def fetch_all_cash_movers():
     """Fetch the provider's ALL-universe gainer and loser lists for both exchanges."""
     movers = {"gainers": [], "losers": []}
     errors = []
     seen = {"gainers": set(), "losers": set()}
-    request_count = 0
-
     for exchange in CASH_EXCHANGES:
         for mover_type, type_flag in (("gainers", "G"), ("losers", "L")):
-            # m.Stock documents a 1-request/second data-API limit.
-            if request_count:
-                time.sleep(1.05)
-            request_count += 1
             try:
-                response = fetch_movers(
+                response = _fetch_mstock_movers(
                     exchange=exchange["exchange"],
                     security_id_code=0,
                     segment=exchange["segment"],
@@ -69,8 +82,214 @@ def fetch_all_cash_movers():
     return movers, errors
 
 
+# Provider-documented NSE sector universes for the Type A Top Gainers/Losers API.
+# These codes are SecurityIdCode values, not invented sector classifications.
+SECTOR_UNIVERSES = (
+    {"key": "auto", "name": "Automobile", "security_id_code": 9, "index_symbol": "NIFTY AUTO"},
+    {"key": "private-bank", "name": "Private Banks", "security_id_code": 10, "index_symbol": "NIFTY PVT BANK"},
+    {"key": "fmcg", "name": "FMCG", "security_id_code": 20, "index_symbol": "NIFTY FMCG"},
+    {"key": "it", "name": "Information Technology", "security_id_code": 21, "index_symbol": "NIFTY IT"},
+    {"key": "media", "name": "Media", "security_id_code": 22, "index_symbol": "NIFTY MEDIA"},
+    {"key": "metal", "name": "Metals", "security_id_code": 23, "index_symbol": "NIFTY METAL"},
+    {"key": "pharma", "name": "Pharma", "security_id_code": 24, "index_symbol": "NIFTY PHARMA"},
+    {"key": "psu-bank", "name": "PSU Banks", "security_id_code": 25, "index_symbol": "NIFTY PSU BANK"},
+    {"key": "realty", "name": "Realty", "security_id_code": 26, "index_symbol": "NIFTY REALTY"},
+    {"key": "energy", "name": "Energy", "security_id_code": 33, "index_symbol": "NIFTY ENERGY"},
+    {"key": "infrastructure", "name": "Infrastructure", "security_id_code": 34, "index_symbol": "NIFTY INFRA"},
+    {"key": "mnc", "name": "MNC", "security_id_code": 35, "index_symbol": "NIFTY MNC"},
+    {"key": "services", "name": "Services", "security_id_code": 37, "index_symbol": "NIFTY SERV SECTOR"},
+    {"key": "consumer-durables", "name": "Consumer Durables", "security_id_code": 59, "index_symbol": "NIFTY CONSUMER DURABLES"},
+    {"key": "financial-services", "name": "Financial Services", "security_id_code": 60, "index_symbol": "NIFTY FINANCIAL SERVICES"},
+    {"key": "oil-gas", "name": "Oil & Gas", "security_id_code": 61, "index_symbol": "NIFTY OIL AND GAS"},
+    {"key": "healthcare", "name": "Healthcare", "security_id_code": 62, "index_symbol": "NIFTY HEALTHCARE"},
+)
+_SECTOR_BY_KEY = {item["key"]: item for item in SECTOR_UNIVERSES}
+_sector_cache = {}
+_sector_cache_lock = threading.Lock()
+SECTOR_CACHE_TTL_SECONDS = 45
+
+
+def _fetch_sector_movers_uncached(sector):
+    """Fetch only the provider-ranked gainers and losers for one selected sector."""
+    movers = {"gainers": [], "losers": []}
+    errors = []
+
+    for mover_type, type_flag in (("gainers", "G"), ("losers", "L")):
+        try:
+            response = _fetch_mstock_movers(
+                exchange=1,
+                security_id_code=sector["security_id_code"],
+                segment=1,
+                type_flag=type_flag,
+            )
+            for raw in extract_type_a_mover_rows(response):
+                if not isinstance(raw, dict):
+                    continue
+                item = normalize_mover(raw)
+                if str(item.get("exchange") or "NSE").upper() != "NSE":
+                    continue
+                if not item.get("symbol"):
+                    continue
+                item["exchange"] = "NSE"
+                item["sector"] = sector["name"]
+                movers[mover_type].append(item)
+        except Exception as exc:
+            errors.append({
+                "source": "m.Stock",
+                "sector": sector["key"],
+                "type": mover_type,
+                "message": str(exc),
+            })
+
+    sector_index = None
+    try:
+        sector_index = fetch_index({
+            "name": sector["name"],
+            "exchange": "NSE",
+            "symbol": sector["index_symbol"],
+        })
+    except Exception as exc:
+        errors.append({
+            "source": "m.Stock index quote",
+            "sector": sector["key"],
+            "type": "sector_index",
+            "message": str(exc),
+        })
+
+    if errors and not movers["gainers"] and not movers["losers"]:
+        raise HTTPException(
+            status_code=502,
+            detail={"message": "Unable to retrieve sector movers.", "errors": errors},
+        )
+
+    return {
+        "status": "partial" if errors else "success",
+        "sector": {
+            "key": sector["key"],
+            "name": sector["name"],
+            "security_id_code": sector["security_id_code"],
+            "index_symbol": sector["index_symbol"],
+        },
+        "scope": {
+            "exchange": "NSE",
+            "universe": "Provider-ranked gainers and losers for the selected NSE sector index",
+            "note": "These are the provider's top movers within the selected sector, not every sector constituent.",
+        },
+        "movers": movers,
+        "sector_index": sector_index,
+        "counts": {
+            "gainers": len(movers["gainers"]),
+            "losers": len(movers["losers"]),
+            "total_returned": len(movers["gainers"]) + len(movers["losers"]),
+        },
+        "capabilities": {
+            "sector_gainer_loser_lists": True,
+            "full_sector_constituent_breadth": False,
+            "sector_index_quote": sector_index is not None,
+            "sector_index_performance": bool(sector_index and sector_index.get("percent_change") is not None),
+        },
+        "limitations": [
+            "The provider response contains ranked movers, not the complete sector constituent universe.",
+            "The existing index-quote contract supplies a current index price only; percentage performance is unavailable unless returned by the provider.",
+        ],
+        "data_sources": {
+            "primary": "m.Stock Type A Top Gainers and Losers API",
+            "security_id_code": sector["security_id_code"],
+        },
+        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "errors": errors,
+        "read_only": True,
+        "database_write": False,
+    }
+
+
+_sector_index_cache = {"loaded_at": 0.0, "results": [], "errors": []}
+_sector_index_cache_lock = threading.Lock()
+SECTOR_INDEX_CACHE_TTL_SECONDS = 60
+
+
+def fetch_sector_index_snapshots():
+    """Read cached OHLC-enriched index quotes for the supported NSE sectors."""
+    now = time.monotonic()
+    cached = _sector_index_cache
+    if cached["results"] and now - cached["loaded_at"] < SECTOR_INDEX_CACHE_TTL_SECONDS:
+        return list(cached["results"]), list(cached["errors"])
+
+    with _sector_index_cache_lock:
+        now = time.monotonic()
+        if _sector_index_cache["results"] and now - _sector_index_cache["loaded_at"] < SECTOR_INDEX_CACHE_TTL_SECONDS:
+            return list(_sector_index_cache["results"]), list(_sector_index_cache["errors"])
+
+        results = []
+        errors = []
+        with ThreadPoolExecutor(max_workers=4, thread_name_prefix="chart-flow-sector-index") as executor:
+            jobs = {
+                executor.submit(fetch_index, {
+                    "name": sector["name"],
+                    "exchange": "NSE",
+                    "symbol": sector["index_symbol"],
+                }): sector
+                for sector in SECTOR_UNIVERSES
+            }
+            for future in as_completed(jobs):
+                sector = jobs[future]
+                try:
+                    quote = future.result()
+                    results.append({
+                        **quote,
+                        "key": sector["key"],
+                        "index_symbol": sector["index_symbol"],
+                    })
+                except Exception as exc:
+                    errors.append({
+                        "source": "m.Stock sector index quote",
+                        "sector": sector["key"],
+                        "name": sector["name"],
+                        "message": str(exc),
+                    })
+
+        results.sort(key=lambda item: (
+            item.get("percent_change") is None,
+            -(item.get("percent_change") or 0),
+            item["name"],
+        ))
+        # A partial scan is not cached; the next visible refresh can retry missing indices.
+        if results and not errors:
+            _sector_index_cache.update({
+                "loaded_at": time.monotonic(),
+                "results": list(results),
+                "errors": [],
+            })
+        return results, errors
+
+
+def _get_cached_sector_movers(sector):
+    now = time.monotonic()
+    cached = _sector_cache.get(sector["key"])
+    if cached and now - cached["loaded_at"] < SECTOR_CACHE_TTL_SECONDS:
+        return cached["payload"]
+    # Serialize cache misses so concurrent selections do not duplicate provider
+    # calls and breach m.Stock's documented request-rate limit.
+    with _sector_cache_lock:
+        now = time.monotonic()
+        cached = _sector_cache.get(sector["key"])
+        if cached and now - cached["loaded_at"] < SECTOR_CACHE_TTL_SECONDS:
+            return cached["payload"]
+        payload = _fetch_sector_movers_uncached(sector)
+        # Cache only complete provider responses; partial failures should be retryable.
+        if payload.get("status") == "success":
+            _sector_cache[sector["key"]] = {"loaded_at": time.monotonic(), "payload": payload}
+        return payload
+
+
 @router.get("/")
-def get_market_flow_snapshot():
+def get_market_flow_snapshot(sector: str | None = None, include_sector_indices: bool = False):
+    if sector is not None:
+        sector_config = _SECTOR_BY_KEY.get(str(sector).strip().lower())
+        if sector_config is None:
+            raise HTTPException(status_code=404, detail="Unsupported Chart Flow sector.")
+        return _get_cached_sector_movers(sector_config)
+
     movers, errors = fetch_all_cash_movers()
 
     indices = []
@@ -93,6 +312,11 @@ def get_market_flow_snapshot():
         len(SUPPORTED_INDICES),
     ))
 
+    sector_indices = []
+    if include_sector_indices:
+        sector_indices, sector_index_errors = fetch_sector_index_snapshots()
+        errors.extend(sector_index_errors)
+
     gainers = movers["gainers"]
     losers = movers["losers"]
     if errors and not indices and not gainers and not losers:
@@ -113,6 +337,11 @@ def get_market_flow_snapshot():
             "note": "The provider returns top gainers and losers, not every unchanged listing.",
         },
         "indices": indices,
+        "sector_indices": sector_indices,
+        "sector_universes": [
+            {key: item[key] for key in ("key", "name", "security_id_code", "index_symbol")}
+            for item in SECTOR_UNIVERSES
+        ],
         "market_movers": movers,
         "market_summary": {
             "gainers": len(gainers),
@@ -124,6 +353,8 @@ def get_market_flow_snapshot():
             "all_exchange_mover_lists": True,
             "full_advance_decline_breadth": False,
             "sector_classification": False,
+            "sector_index_quotes": bool(sector_indices),
+            "sector_index_performance": any(item.get("percent_change") is not None for item in sector_indices),
             "delivery_statistics": False,
             "historical_market_flow": False,
         },

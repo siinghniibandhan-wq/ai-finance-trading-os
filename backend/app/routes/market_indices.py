@@ -72,15 +72,13 @@ def fetch_index(index):
 
     # Support the gateway's top-level or nested response format.
     price = result.get("last_price")
-
-    if price is None:
-        data = result.get("data", {})
-        if isinstance(data, dict):
-            quote = data.get(
-                f'{index["exchange"]}:{index["symbol"]}',
-                {},
-            )
-            if isinstance(quote, dict):
+    quote = {}
+    data = result.get("data", {})
+    if isinstance(data, dict):
+        candidate = data.get(f'{index["exchange"]}:{index["symbol"]}', {})
+        if isinstance(candidate, dict):
+            quote = candidate
+            if price is None:
                 price = quote.get("last_price")
 
     if result.get("status") not in (None, "success"):
@@ -96,11 +94,24 @@ def fetch_index(index):
     if not math.isfinite(numeric_price) or numeric_price <= 0:
         raise ValueError("Index price was not a valid positive finite number.")
 
+    raw_previous_close = (quote.get("ohlc") or {}).get("close") if isinstance(quote.get("ohlc"), dict) else None
+    try:
+        previous_close = float(raw_previous_close) if raw_previous_close not in (None, "") else None
+    except (TypeError, ValueError):
+        previous_close = None
+    if previous_close is not None and (not math.isfinite(previous_close) or previous_close <= 0):
+        previous_close = None
+    change = numeric_price - previous_close if previous_close is not None else None
+    percent_change = (change / previous_close * 100) if previous_close is not None else None
+
     return {
         "name": index["name"],
         "exchange": index["exchange"],
         "symbol": index["symbol"],
         "last_price": numeric_price,
+        "previous_close": previous_close,
+        "change": change,
+        "percent_change": percent_change,
         "status": "success",
     }
 

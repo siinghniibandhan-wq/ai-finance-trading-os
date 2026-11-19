@@ -13,7 +13,7 @@ export default function MarketMoversScanner({ type = "losers", onSelectInstrumen
   const { data: overview, loading, error, updatedAt: snapshotUpdatedAt, refresh } = useMarketOverview();
   const payload = overview ? {
     movers: Array.isArray(overview.market_movers?.[type]) ? overview.market_movers[type] : [],
-    source: overview.data_sources,
+    source: { provider: overview.data_sources?.primary || "m.Stock via Financial OS" },
   } : null;
   const updatedAt = snapshotUpdatedAt ? new Date(snapshotUpdatedAt) : null;
   const [query, setQuery] = useState("");

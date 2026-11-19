@@ -40,16 +40,23 @@ function FlowDiagram({ board, selectedKey, onSelect }) {
     ...bottom.map((row, i) => ({ row, y: center + 42 + i * gap, side: "down" })),
   ];
   return <div className="mfb-diagram-wrap">
-    <svg className="mfb-diagram" viewBox={"0 0 690 " + height} role="img" aria-label="Zero-centred market flow paths converging into bullish and bearish groups">
-      <text x="20" y="20" className="mfb-caption">PRICE CHANGE FROM ZERO</text>
+    <svg className="mfb-diagram" viewBox={"0 0 690 " + height} role="img" aria-label="Market price flow fanning from the market origin through a directional gate into bullish and bearish groups">
+      <defs>
+        <marker id="mfb-arrow-up" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z" className="mfb-arrow-up"/></marker>
+        <marker id="mfb-arrow-down" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z" className="mfb-arrow-down"/></marker>
+      </defs>
+      <text x="20" y="20" className="mfb-caption">MARKET FLOW · PRICE CHANGE FROM ZERO</text>
       <line x1="20" x2="660" y1={center} y2={center} className="mfb-zero-line"/>
-      <text x="20" y={center - 10} className="mfb-zero-text">0%</text>
+      <circle cx="28" cy={center} r="6" className="mfb-flow-origin"/>
+      <text x="20" y={center - 14} className="mfb-zero-text">MARKET</text>
+      <text x="20" y={center + 16} className="mfb-zero-text">0%</text>
       {paths.map(({ row, y, side }) => {
         const selected = keyOf(row) === selectedKey;
         const strength = Math.min(1, Math.abs(row.changePercent) / board.maxAbs);
         return <g key={keyOf(row)} role="button" tabIndex="0" className={"mfb-path " + side + (selected ? " selected" : "")}
           onClick={() => onSelect(row)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(row); } }}>
-          <path d={"M 28 " + center + " C 170 " + center + ", 340 " + y + ", 570 " + y}
+          <path d={"M 34 " + center + " C 170 " + center + ", 340 " + y + ", 570 " + y}
+            markerEnd={side === "up" ? "url(#mfb-arrow-up)" : "url(#mfb-arrow-down)"}
             style={{ opacity: selected ? 1 : .25 + strength * .5, strokeWidth: selected ? 3.2 : 1.1 + strength * 1.8 }}/>
           <circle cx="570" cy={y} r={selected ? 5 : 3.2}/><title>{row.symbol + ": " + pct(row.changePercent)}</title>
         </g>;

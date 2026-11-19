@@ -45,7 +45,10 @@ export function normalizeMarketFlowCandles(rows) {
   const normalized = [];
   for (const row of rows) {
     if (!Array.isArray(row) || row.length < 5) continue;
-    const time = Number(row[0]);
+    const rawTime = row[0];
+    const numericTime = Number(rawTime);
+    const parsedTime = Number.isFinite(numericTime) ? numericTime : Date.parse(String(rawTime));
+    const time = Number.isFinite(parsedTime) ? Math.floor(parsedTime > 1e12 ? parsedTime / 1000 : parsedTime) : null;
     const open = num(row[1]);
     const high = num(row[2]);
     const low = num(row[3]);

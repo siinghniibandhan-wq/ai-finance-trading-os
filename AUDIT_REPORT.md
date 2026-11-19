@@ -3,7 +3,7 @@
 **Document role:** Primary project reference  
 **Repository:** `siinghniibandhan-wq/ai-finance-trading-os`  
 **Default branch:** `main`  
-**Last documentation review:** 13 November 2026  
+**Last documentation review:** 19 November 2026  
 **Status rule:** “Implemented in repository” does not automatically mean production-deployed, externally connected, or fully verified.
 
 ---
@@ -36,7 +36,7 @@ Financial OS API — FastAPI / Uvicorn
                instrument master and historical data)
 ```
 
-This is the repository-level logical flow. Actual DNS, TLS termination, reverse-proxy placement, frontend hosting, database hosting, backup configuration and production network rules must be confirmed against the live AWS/account configuration before they are described as deployed facts.
+This is the repository-level logical flow. Public frontend hosting is configured for AWS Amplify (`main`, app root `frontend/`); the browser API origin is `https://wealthmanager.duckdns.org`. The exact live Amplify deployment and EC2/Nginx static-site state still require runtime verification. Database hosting, backup configuration and production network rules must be confirmed against the live AWS/account configuration.
 
 ### 2.2 Frontend
 
@@ -74,12 +74,21 @@ The current backend exposes REST-based market capabilities through registered Fa
 
 The backend market overview currently reports market status as `unknown/not_connected`; do not describe exchange market-hours/status detection as complete without a verified source.
 
-**Market Flow / Order Flow / market-stream status — source review 18 November 2026:**
-- `backend/app/main.py` registers the REST market routers above; no Market Flow, Order Flow or market-stream router is registered.
-- The reviewed backend source has no Market Flow/Order Flow adapter and no consumer for `/market-stream/snapshot`.
-- The latest uploaded Gateway `mstock-gateway-app.py` contains no Market Flow, `/market-stream/*`, snapshot or stream implementation. Its WebSocket mention is limited to a legacy index-test heading.
-- Accordingly, the current documented market-data integration is REST-only. Historical WebSocket incident/deployment observations are not evidence of current code or runtime state.
-- This removal does not remove existing REST market APIs or broker-order safeguards.
+**Chart Flow implementation — current source review 19 November 2026:**
+- `backend/app/routes/market_flow.py` defines the read-only `GET /api/market-flow/` endpoint and is registered in `backend/app/main.py` behind the authenticated-user dependency.
+- The unfiltered snapshot requests m.Stock Type A cash-market gainer/loser lists for NSE and BSE (`SecurityIdCode=0`) and supported index snapshots. Optional sector-index snapshots are separately requested.
+- A `sector` query selects one of the provider-coded NSE sector universes and returns provider-ranked sector gainers/losers plus its sector-index quote. These rows are not the complete sector constituent universe.
+- Provider calls are rate-limited and sector responses are cached. Partial responses include errors; the endpoint is read-only and reports no database writes.
+- The payload explicitly marks full advance/decline breadth, full sector constituent breadth, delivery statistics and historical market flow as unavailable. Do not infer those metrics from top-mover lists.
+- Frontend Chart Flow displays the market distribution/zero-centred flow and sector/mover views from REST-returned data. The UI can show partial data when provider requests fail; this is not a complete exchange-wide breadth feed.
+- No WebSocket or continuous streaming transport is used for Chart Flow. Refreshes are bounded REST requests.
+
+**Order Flow / market-stream boundary — source review 19 November 2026:**
+- The application has a REST-backed Chart Flow market workspace through `market_flow.py`; do not describe Chart Flow itself as absent.
+- The current Financial OS frontend/backend Chart Flow path does not consume `/market-stream/snapshot` and does not use a WebSocket market-data feed.
+- The latest uploaded Gateway `mstock-gateway-app.py` reviewed in the earlier source audit contains no Market Flow, `/market-stream/*`, snapshot or stream implementation. Its WebSocket mention is limited to a legacy index-test heading. This is a source-file finding, not a live EC2 inspection.
+- Historical WebSocket incident/deployment observations remain audit history only and are not evidence of current code or runtime connectivity.
+- Existing REST market APIs and broker-order safeguards remain separate and must be preserved.
 
 
 ## 3. Existing feature inventory
@@ -147,7 +156,8 @@ The Market Flow, Order Flow and application-level market-stream integration are 
 
 
 ### Priority 1 — infrastructure and release assurance
-- Verify the actual frontend hosting target and custom-domain routing. Repository configuration and historical references mention more than one hosting platform; document the active production target only after checking its deployment configuration.
+- Verify the AWS Amplify production deployment record, connected `main` branch, app root `frontend/`, build settings, environment variables and rollback path. The repository now documents Amplify as the public frontend target; the live deployment for a specific commit remains unverified.
+- Inspect EC2/Nginx and any frontend deploy timer/runner before retiring static frontend serving. Preserve DuckDNS HTTPS/API routing, backend authentication and gateway connectivity.
 - Produce an AWS inventory from the live account: EC2 instances, regions, security groups, IAM roles, SSM/Secrets Manager usage, storage, database, backups, DNS, TLS and monitoring.
 - Confirm whether the PostgreSQL database is RDS or self-managed; do not assume either from the SQLAlchemy connection alone.
 - Confirm reverse proxy/TLS termination and whether any ALB belongs to this application. The `awselb/2.0` response observed for the m.Stock endpoint identifies the provider-side response path, not an application-owned load balancer.
@@ -199,9 +209,9 @@ The historical audit also identified unresolved design decisions: public market-
 
 The root `README.md` is the repository entry point and links to this report for product/feature status and to `SECURITY_OPERATIONS.md` for AWS and operational controls.
 
-The reviewed repository structure confirms a React/Vite frontend, FastAPI backend, SQLAlchemy persistence layer, market-data gateway integration, AI provider integrations, dated SQL files under `backend/migrations/`, additional standalone SQL files, and startup schema logic. The repository review did not identify a dedicated database migration runner, migration ledger/automation service, cron definition or systemd timer definition.
+The reviewed repository structure confirms a React/Vite frontend, FastAPI backend, SQLAlchemy persistence layer, m.Stock REST gateway integration, provider-backed Chart Flow REST route, AI provider integrations, dated SQL files under `backend/migrations/`, additional standalone SQL files, and startup schema logic. The repository review did not identify a dedicated database migration runner, migration ledger/automation service, cron definition or systemd timer definition.
 
-Do not describe a migration runner, automated schema deployment, scheduled database job or production deployment pipeline as implemented until its executable code/configuration and successful run evidence exist. The current CI workflow validates builds/tests/audits; the source-packaging workflow creates an archive. Neither applies database migrations nor deploys the application.
+Do not describe a migration runner, automated schema deployment, scheduled database job or production deployment pipeline as implemented until its executable code/configuration and successful run evidence exist. The current CI workflow validates builds/tests/audits; the source-packaging workflow creates an archive. The frontend build workflow uploads a CI artifact but no longer force-publishes to `frontend-dist`. These workflow runs do not themselves prove that Amplify deployed the commit or that EC2/Nginx frontend serving has been retired. None applies database migrations.
 
 ### Proposed implementation sequence
 

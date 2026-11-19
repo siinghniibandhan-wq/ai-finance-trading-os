@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadChartHistory, loadMarketFlowSnapshot } from "../advanced-chart/api.js";
-import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries } from "./orderFlowModel.js";
+import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries, summarizeSectorMoverSample } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
@@ -188,6 +188,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const indices = Array.isArray(payload?.indices) ? payload.indices : [];
   const sectorOptions = Array.isArray(payload?.sector_universes) ? payload.sector_universes : [];
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
+  const sectorSampleSummary = useMemo(() => summarizeSectorMoverSample(sectorRows), [sectorRows]);
   const selected = rows.find(row => keyOf(row) === selectedKey)
     || sectorRows.find(row => keyOf(row) === selectedKey) || null;
 
@@ -275,7 +276,8 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
             {sectorPayload && <>
               <div className="mfb-sector-result-head"><strong>{sectorPayload.sector?.name}</strong>
                 <span>{sectorPayload.counts?.total_returned || 0} provider-ranked movers</span>
-                <span>{sectorPayload.status === "partial" ? "Partial response" : "REST data"}</span></div>
+                <span>{sectorPayload.status === "partial" ? "Partial response" : "REST data"}</span>
+                <span>Sample median {sectorSampleSummary.medianChangePct === null ? "—" : pct(sectorSampleSummary.medianChangePct)}</span></div>
               {sectorPayload.sector_index && <div className="mfb-sector-index-quote"><small>{sectorPayload.sector_index.name} · CURRENT INDEX LEVEL</small><strong>{fmt(sectorPayload.sector_index.last_price)}</strong><span>Price only; percentage performance is not supplied by the current index quote contract.</span></div>}
               <Distribution eyebrow="SECTOR / PROVIDER-RANKED MOVERS" title={sectorPayload.sector?.name + " price distribution"} description="Actual sector-filtered gainers and losers returned by m.Stock. This is not the full sector constituent universe." rows={sectorRows} counts={buildMarketFlowBoard(sectorRows).counts} breadthAvailable={false} retrievedAt={sectorPayload.last_updated ? new Date(sectorPayload.last_updated).toLocaleTimeString("en-IN") : null}/>
               <div className="mfb-sector-movers">
@@ -285,7 +287,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
                   selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>
               </div>
               {sectorPayload.errors?.length > 0 && <p className="mfb-alert">One sector mover source did not respond. Available real results are retained.</p>}
-              <p className="mfb-sector-disclaimer">Provider-ranked sector movers only. This is not a complete sector constituent breadth or sector-index performance calculation.</p>
+              <p className="mfb-sector-disclaimer">Median and directional counts describe only the {sectorSampleSummary.count} returned top movers. They are not full-sector performance or constituent breadth.</p>
             </>}
             {!sectorOptions.length && <p>Sector universes were not returned by the backend.</p>}
           </section>

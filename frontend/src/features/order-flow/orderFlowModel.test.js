@@ -27,3 +27,18 @@ test("distribution dots retain provider changes and do not invent observations",
   assert.ok(dots.every(dot => Number.isFinite(dot.x) && Number.isFinite(dot.y)));
   assert.deepEqual(buildDistributionDots([]), []);
 });
+
+
+test("normalizes provider-ranked sector movers without inventing sector constituents", () => {
+  const { normalizeSectorMovers } = await import("./orderFlowModel.js");
+  const rows = normalizeSectorMovers({
+    sector: { key: "it", name: "Information Technology" },
+    movers: {
+      gainers: [{ symbol: "INFY", exchange: "NSE", ltp: 1500, percent_change: 2, volume: 1000 }],
+      losers: [{ symbol: "WIPRO", exchange: "NSE", ltp: 400, percent_change: -1, volume: 2000 }],
+    },
+  });
+  assert.deepEqual(rows.map(row => row.symbol), ["INFY", "WIPRO"]);
+  assert.ok(rows.every(row => row.sector === "Information Technology"));
+  assert.deepEqual(normalizeSectorMovers({ movers: { gainers: [], losers: [] } }), []);
+});

@@ -162,3 +162,5 @@
 .mfb-history-chart-scroll{width:100%;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:thin;outline:none}
 .mfb-history-chart-scroll:focus-visible{outline:1px solid var(--muted);outline-offset:3px}
 .mfb-history-chart-scroll svg{display:block;max-width:none}
+
+.mfb-sector-coverage{display:block;margin-top:5px;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.04em}

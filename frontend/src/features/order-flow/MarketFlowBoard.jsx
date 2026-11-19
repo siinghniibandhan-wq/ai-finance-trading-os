@@ -361,6 +361,10 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const indices = Array.isArray(payload?.indices) ? payload.indices : [];
   const sectorOptions = Array.isArray(payload?.sector_universes) ? payload.sector_universes : [];
   const sectorIndices = Array.isArray(payload?.sector_indices) ? payload.sector_indices : [];
+  const sectorIndexPerformanceCount = sectorIndices.filter(item =>
+    item?.percent_change !== null && item?.percent_change !== undefined &&
+    Number.isFinite(Number(item.percent_change))
+  ).length;
   const sectorFlowRows = useMemo(() => buildSectorFlowRows(sectorOptions, sectorIndices), [sectorOptions, sectorIndices]);
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
   const sectorSampleSummary = useMemo(() => summarizeSectorMoverSample(sectorRows), [sectorRows]);
@@ -457,7 +461,8 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         <span className="mfb-poll">REST refresh · 30 seconds while visible</span></div>
       <div className="mfb-board">
         <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
-          <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Explore sector constituents</b></div>
+          <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Explore sector constituents</b>
+              <span className="mfb-sector-coverage" role="status">{sectorIndexPerformanceCount} of {sectorOptions.length} sector index performance values available from REST</span></div>
             <p>Sector index change is calculated from provider LTP and OHLC previous close where both are available. Select a sector to open its actual ranked stock movers.</p>
             <SectorFlowDiagram sectors={sectorFlowRows} selectedKey={selectedSectorKey}
               loading={sectorLoading} onSelect={loadSector}/>

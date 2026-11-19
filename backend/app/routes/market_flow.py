@@ -187,10 +187,11 @@ def _fetch_sector_movers_uncached(sector):
             "full_sector_constituent_breadth": False,
             "sector_index_quote": sector_index is not None,
             "sector_index_performance": bool(sector_index and sector_index.get("percent_change") is not None),
+            "sector_index_previous_close": bool(sector_index and sector_index.get("previous_close") is not None),
         },
         "limitations": [
             "The provider response contains ranked movers, not the complete sector constituent universe.",
-            "The existing index-quote contract supplies a current index price only; percentage performance is unavailable unless returned by the provider.",
+            "Daily index performance is derived from the provider OHLC close when the gateway quote supplies it; missing OHLC remains unavailable.",
         ],
         "data_sources": {
             "primary": "m.Stock Type A Top Gainers and Losers API",
@@ -332,9 +333,10 @@ def get_market_flow_snapshot(sector: str | None = None, include_sector_indices: 
         "read_only": True,
         "scope": {
             "exchanges": ["NSE", "BSE"],
-            "universe": "ALL cash-market instruments supported by m.Stock's gainer/loser endpoint",
+            "universe": "Provider-ranked cash-market gainers and losers requested with SecurityIdCode=0 (ALL)",
             "security_id_code": 0,
-            "note": "The provider returns top gainers and losers, not every unchanged listing.",
+            "completeness": "provider_ranked_sample",
+            "note": "This is a ranked mover sample, not a complete exchange instrument list or advance/decline breadth dataset.",
         },
         "indices": indices,
         "sector_indices": sector_indices,
@@ -348,6 +350,8 @@ def get_market_flow_snapshot(sector: str | None = None, include_sector_indices: 
             "losers": len(losers),
             "unchanged": None,
             "total_returned": len(gainers) + len(losers),
+            "sample_only": True,
+            "breadth_complete": False,
         },
         "capabilities": {
             "all_exchange_mover_lists": True,

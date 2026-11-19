@@ -215,7 +215,9 @@ def _get_cached_sector_movers(sector):
         if cached and now - cached["loaded_at"] < SECTOR_CACHE_TTL_SECONDS:
             return cached["payload"]
         payload = _fetch_sector_movers_uncached(sector)
-        _sector_cache[sector["key"]] = {"loaded_at": time.monotonic(), "payload": payload}
+        # Cache only complete provider responses; partial failures should be retryable.
+        if payload.get("status") == "success":
+            _sector_cache[sector["key"]] = {"loaded_at": time.monotonic(), "payload": payload}
         return payload
 
 

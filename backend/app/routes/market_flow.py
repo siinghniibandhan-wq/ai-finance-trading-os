@@ -211,7 +211,7 @@ def _get_cached_sector_movers(sector):
 
 
 @router.get("/")
-def get_market_flow_snapshot(sector: str | None = Query(None, description="Optional m.Stock sector universe key")):
+def get_market_flow_snapshot(sector: str | None = None):
     if sector is not None:
         sector_config = _SECTOR_BY_KEY.get(str(sector).strip().lower())
         if sector_config is None:

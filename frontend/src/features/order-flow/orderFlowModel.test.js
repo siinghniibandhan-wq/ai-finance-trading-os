@@ -65,3 +65,18 @@ test("filters real Chart Flow rows by search, exchange and direction", () => {
     ["WIPRO"],
   );
 });
+
+
+test("builds historical stock flow only from valid provider OHLCV observations", () => {
+  const series = buildHistoricalFlowSeries([
+    { timestamp: 1, open: 10, high: 12, low: 9, close: 11, volume: 100 },
+    { timestamp: 2, open: 11, high: 13, low: 10, close: 12, volume: 200 },
+    { timestamp: 3, open: 12, high: 12, low: 8, close: 9, volume: null },
+    { timestamp: 4, open: 0, high: 0, low: 0, close: 0, volume: 500 },
+  ]);
+  assert.equal(series.length, 3);
+  assert.equal(series[0].relativeChange, 0);
+  assert.equal(series[1].relativeChange, 100 / 11);
+  assert.equal(series[2].relativeChange, -200 / 11);
+  assert.equal(series[2].volume, null);
+});

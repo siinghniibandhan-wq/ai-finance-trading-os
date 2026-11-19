@@ -48,12 +48,14 @@ SUPPORTED_INDICES = [
 # --------------------------------------------------
 
 def fetch_index(index):
-    query = urlencode({
-        "exchange": index["exchange"],
-        "symbol": index["symbol"],
-    })
-
-    url = f"{GATEWAY_URL}/index-quote?{query}"
+    # Use the gateway's standard /quote route rather than /index-quote.
+    # /quote enriches the LTP response with Type A OHLC when available, so
+    # previous_close and daily index performance can be derived from the
+    # provider's actual OHLC close. /index-quote only proxies LTP and therefore
+    # cannot support a daily percentage-change chart.
+    instrument = f'{index["exchange"]}:{index["symbol"]}'
+    query = urlencode({"symbol": instrument})
+    url = f"{GATEWAY_URL}/quote?{query}"
 
     request = Request(
         url,

@@ -127,6 +127,28 @@ def _quote_symbols_match(requested: str, returned: str) -> bool:
     # normalized by the gateway to its default exchange symbol.
     return not (requested_exchange and returned_exchange and requested_exchange != returned_exchange)
 
+def gateway_quote_symbol(symbol: str) -> str:
+    """Apply the legacy -EQ suffix only to NSE cash symbols.
+
+    BSE listings use exchange-specific Script Master series (for example
+    BSE:ACC-A). Leave BSE symbols untouched so the gateway can resolve a bare
+    BSE symbol against the actual Script Master instead of guessing -EQ.
+    """
+    normalized = normalize_symbol(symbol)
+    if ":" not in normalized:
+        return normalized
+
+    exchange, instrument = normalized.split(":", 1)
+    if (
+        exchange == "NSE"
+        and instrument
+        and not instrument.endswith(("-EQ", "-BE", "-BZ", "-SM", "-ST", "-A", "-B", "-T"))
+        and not any(char in instrument for char in "/^")
+    ):
+        return f"NSE:{instrument}-EQ"
+    return normalized
+
+
 def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
     """
     Fetch latest market price from the m.Stock gateway.
@@ -134,19 +156,7 @@ def _fetch_gateway_quote_details(symbol: str) -> tuple[Decimal, dict]:
 
     normalized_symbol = normalize_symbol(symbol)
 
-    # The m.Stock gateway expects exchange-qualified cash-equity symbols in
-    # the form NSE:RELIANCE-EQ (rather than NSE:RELIANCE). Preserve an existing
-    # suffix and do not modify unqualified symbols or non-equity instruments.
-    gateway_symbol = normalized_symbol
-    if ":" in normalized_symbol:
-        exchange, instrument = normalized_symbol.split(":", 1)
-        if (
-            exchange in {"NSE", "BSE"}
-            and instrument
-            and not instrument.endswith(("-EQ", "-BE", "-BZ", "-SM", "-ST", "-A", "-B", "-T"))
-            and not any(char in instrument for char in "/^")
-        ):
-            gateway_symbol = f"{exchange}:{instrument}-EQ"
+    gateway_symbol = gateway_quote_symbol(normalized_symbol)
 
     params = urlencode({
         "symbol": gateway_symbol,

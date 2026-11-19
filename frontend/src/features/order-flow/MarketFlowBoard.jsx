@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadMarketFlowSnapshot } from "../advanced-chart/api.js";
-import { buildDistributionDots, buildMarketFlowBoard, normalizeOrderFlow } from "./orderFlowModel.js";
+import { loadMarketFlowSectorMovers } from "./api.js";
+import { buildDistributionDots, buildMarketFlowBoard, normalizeOrderFlow, normalizeSectorMovers } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
@@ -91,6 +92,11 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [selectedKey, setSelectedKey] = useState("");
+  const [selectedSectorKey, setSelectedSectorKey] = useState("");
+  const [sectorPayload, setSectorPayload] = useState(null);
+  const [sectorLoading, setSectorLoading] = useState(false);
+  const [sectorError, setSectorError] = useState("");
+  const sectorRequest = useRef(0);
   const busy = useRef(false);
   const mounted = useRef(true);
   const hasPayload = useRef(false);
@@ -127,15 +133,27 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const rows = useMemo(() => normalizeOrderFlow(payload), [payload]);
   const board = useMemo(() => buildMarketFlowBoard(rows), [rows]);
   const indices = Array.isArray(payload?.indices) ? payload.indices : [];
-  const selected = rows.find(row => keyOf(row) === selectedKey) || null;
-  const sectors = useMemo(() => {
-    const groups = new Map();
-    rows.forEach(row => { if (row.sector) groups.set(row.sector, [...(groups.get(row.sector) || []), row.changePercent]); });
-    return [...groups.entries()].map(([name, values]) => ({
-      name, median: [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)],
-      up: values.filter(value => value > 0).length, flat: values.filter(value => value === 0).length, down: values.filter(value => value < 0).length,
-    })).sort((a, b) => b.median - a.median);
-  }, [rows]);
+  const sectorOptions = Array.isArray(payload?.sector_universes) ? payload.sector_universes : [];
+  const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
+  const selected = rows.find(row => keyOf(row) === selectedKey)
+    || sectorRows.find(row => keyOf(row) === selectedKey) || null;
+
+  const loadSector = useCallback(async (sectorKey) => {
+    const requestId = ++sectorRequest.current;
+    setSelectedSectorKey(sectorKey);
+    setSectorLoading(true);
+    setSectorError("");
+    try {
+      const next = await loadMarketFlowSectorMovers(sectorKey);
+      if (mounted.current && requestId === sectorRequest.current) setSectorPayload(next);
+    } catch (requestError) {
+      if (mounted.current && requestId === sectorRequest.current) {
+        setSectorError(requestError?.message || "Sector market data request failed.");
+      }
+    } finally {
+      if (mounted.current && requestId === sectorRequest.current) setSectorLoading(false);
+    }
+  }, []);
 
   return <main className="market-flow-board">
     <header className="mfb-header"><div><small>FINANCIAL OS / MARKETS / ORDER FLOW</small><h1>Chart Flow</h1>
@@ -155,11 +173,32 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         <span className="mfb-poll">REST refresh · 30 seconds while visible</span></div>
       <div className="mfb-board">
         <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>
-          <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Sector participation</b></div>
-            {sectors.length ? sectors.map(sector => <div className="mfb-sector" key={sector.name}>
-              <span>{sector.name}</span><strong className={sector.median >= 0 ? "up" : "down"}>{pct(sector.median)}</strong>
-              <i><b className="up" style={{ width: (sector.up / (sector.up + sector.flat + sector.down) * 100) + "%" }}/><b className="flat" style={{ width: (sector.flat / (sector.up + sector.flat + sector.down) * 100) + "%" }}/><b className="down" style={{ width: (sector.down / (sector.up + sector.flat + sector.down) * 100) + "%" }}/></i>
-            </div>) : <p>Sector classifications are not included in the current Market Overview REST response. Sector performance is withheld rather than guessed.</p>}
+          <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Explore sector constituents</b></div>
+            <p>Choose a provider-supported sector to load its actual ranked gainers and losers.</p>
+            <div className="mfb-sector-selector" role="group" aria-label="Select a sector">
+              {sectorOptions.map(sector => <button key={sector.key} type="button"
+                className={selectedSectorKey === sector.key ? "selected" : ""}
+                aria-pressed={selectedSectorKey === sector.key}
+                onClick={() => loadSector(sector.key)} disabled={sectorLoading && selectedSectorKey === sector.key}>
+                {sector.name}
+              </button>)}
+            </div>
+            {sectorLoading && <p role="status">Loading actual {sectorOptions.find(item => item.key === selectedSectorKey)?.name || "sector"} movers…</p>}
+            {sectorError && <p className="mfb-alert" role="alert">{sectorError}</p>}
+            {sectorPayload && <>
+              <div className="mfb-sector-result-head"><strong>{sectorPayload.sector?.name}</strong>
+                <span>{sectorPayload.counts?.total_returned || 0} provider-ranked movers</span>
+                <span>{sectorPayload.status === "partial" ? "Partial response" : "REST data"}</span></div>
+              <div className="mfb-sector-movers">
+                <Side title="Sector gainers" side="up" rows={sectorRows.filter(row => row.direction === "bullish")}
+                  selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>
+                <Side title="Sector losers" side="down" rows={sectorRows.filter(row => row.direction === "bearish")}
+                  selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>
+              </div>
+              {sectorPayload.errors?.length > 0 && <p className="mfb-alert">One sector mover source did not respond. Available real results are retained.</p>}
+              <p className="mfb-sector-disclaimer">Provider-ranked sector movers only. This is not a complete sector constituent breadth or sector-index performance calculation.</p>
+            </>}
+            {!sectorOptions.length && <p>Sector universes were not returned by the backend.</p>}
           </section>
         </div>
         <div className="mfb-sides"><Side title="Bullish" side="up" rows={board.bullish} selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>

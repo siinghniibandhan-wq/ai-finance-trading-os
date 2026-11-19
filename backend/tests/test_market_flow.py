@@ -183,3 +183,29 @@ def test_chart_flow_sector_cache_reuses_recent_provider_snapshot(monkeypatch):
 
     assert first == second
     assert len(calls) == 2
+
+
+def test_chart_flow_can_load_all_sector_index_quotes_from_shared_snapshot(monkeypatch):
+    monkeypatch.setattr(market_flow, "fetch_all_cash_movers", lambda: (
+        {"gainers": [], "losers": []}, []
+    ))
+    monkeypatch.setattr(market_flow, "fetch_index", lambda index: {
+        "name": index["name"],
+        "exchange": index["exchange"],
+        "symbol": index["symbol"],
+        "last_price": 1000,
+        "previous_close": 990,
+        "change": 10,
+        "percent_change": 1.01,
+        "status": "success",
+    })
+
+    result = market_flow.get_market_flow_snapshot(include_sector_indices=True)
+
+    assert len(result["sector_indices"]) == len(market_flow.SECTOR_UNIVERSES)
+    assert result["capabilities"]["sector_index_quotes"] is True
+    assert result["capabilities"]["sector_index_performance"] is True
+    assert result["sector_indices"][0]["percent_change"] == 1.01
+    assert result["sector_indices"][0]["key"] in {
+        item["key"] for item in market_flow.SECTOR_UNIVERSES
+    }

@@ -147,3 +147,39 @@ def test_chart_flow_rejects_unknown_sector_key():
         market_flow.get_market_flow_snapshot("not-a-sector")
 
     assert exc.value.status_code == 404
+
+
+def test_chart_flow_uses_one_shared_route_for_market_and_sector_queries():
+    routes = [
+        route for route in market_flow.router.routes
+        if getattr(route, "path", None) == "/"
+        and "GET" in getattr(route, "methods", set())
+    ]
+
+    assert len(routes) == 1
+    assert "sector" in {parameter.name for parameter in routes[0].dependant.query_params}
+
+
+def test_chart_flow_sector_cache_reuses_recent_provider_snapshot(monkeypatch):
+    monkeypatch.setattr(market_flow, "_sector_cache", {})
+    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
+    calls = []
+
+    def fake_fetch(**kwargs):
+        calls.append(kwargs)
+        return {"status": True, "data": [{
+            "exchange": "NSE", "symbol": "INFY", "ltp": 1500,
+            "per_change": 1, "volume": 100,
+        }]}
+
+    monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
+    monkeypatch.setattr(market_flow, "fetch_index", lambda index: {
+        "name": index["name"], "exchange": index["exchange"], "symbol": index["symbol"],
+        "last_price": 25000, "status": "success",
+    })
+
+    first = market_flow.get_market_flow_snapshot("it")
+    second = market_flow.get_market_flow_snapshot("it")
+
+    assert first == second
+    assert len(calls) == 2

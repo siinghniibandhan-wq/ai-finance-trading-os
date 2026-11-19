@@ -42,12 +42,12 @@ React application (frontend/src/App.jsx)
           -> authenticated apiFetch via options-hub/api.js
           -> GET /api/options-hub/master and /api/options-hub/chain
 
-FastAPI options_hub.py (private authenticated router)
-  -> m.Stock Gateway /options/master and /options/chain
-  -> gateway-owned Script Master parsing and batched REST contract quotes
-
 FastAPI backend (backend/app/main.py; private routers behind the existing
 authenticated-user dependency)
+  |
+  +-- options_hub.py
+  |     -> m.Stock Gateway /options/master and /options/chain
+  |     -> gateway-owned Script Master parsing and batched REST contract quotes
   |
   +-- market_flow.py
   |     +-- market_movers.py -> m.Stock Gateway /gainers-losers

@@ -154,6 +154,16 @@ sequenceDiagram
 - Chart Flow requests NSE and BSE cash-market movers using the provider's exchange/segment mapping.
 - Options Hub accepts both `NSE` and `BSE` for derivatives master and chain requests.
 - The 19 November discovery test returned 138,947 contracts across the four NSE/BSE futures/options groups listed above.
+
+Observed derivatives master-discovery counts — 19 November 2026:
+
+```mermaid
+xychart-beta
+    title "NSE / BSE derivatives contracts discovered"
+    x-axis ["NSE Fut", "NSE Opt", "BSE Fut", "BSE Opt"]
+    y-axis "Contracts" 0 --> 100000
+    bar [685, 92283, 661, 45318]
+```
 - LTP availability does not imply that volume, OI, Greeks or every option-chain field is available. The UI/API must label unsupported or missing fields honestly.
 
 **Chart Flow data limitations**

@@ -57,9 +57,10 @@ PR #222 merge: `6ac5571ecccf8f954a99342240409e3dfdfc986a`
 | Latest quote / LTP marker | Authenticated REST quote snapshot | Implemented |
 | Technical indicators | Deterministic derivations from loaded OHLCV | Implemented |
 | Type A option-chain master | Documented Type A REST route; documentation explicitly says “coming soon” | Published, runtime availability unverified |
-| Type A option-chain data | Documented Type A REST route and sample CE/PE contract response; not wired through current gateway/backend | Published, runtime availability unverified |
-| CE/PE option prices, OI and volume | Must be confirmed from actual chain and per-contract Type A REST quote responses | Not yet verified |
-| PCR, Max Pain and strike OI distribution | Requires complete, valid CE/PE OI for one expiry | Not yet implementable until live fields are verified |
+| Type A option-chain data | Financial OS authenticated REST adapter added for gateway `/options/chain`; depends on gateway route deployment and provider response | App wiring implemented; gateway/account runtime unverified |
+| CE/PE option prices and volume | Gateway options-enabled variant parses Script Master contracts and batches LTP quotes | Adapter implemented; live quote coverage unverified |
+| CE/PE open interest | Gateway passes through `open_interest` only when present in provider quote | Optional field; complete live coverage unverified |
+| PCR, Max Pain and strike OI distribution | Frontend model and strike chart implemented; calculations require complete CE/PE OI at every strike | Implemented with strict completeness gate; live data unverified |
 | Futures price + OI history | No verified historical Type A REST response contract in this application | Not yet verified |
 | Sector index performance | 17 configured sector symbols; backend uses the gateway `/quote` LTP + best-effort OHLC path and derives change from provider previous close | Implemented in source; live symbol coverage and account response unverified |
 | Sector ranked movers | Type A Top Gainers/Losers SecurityIdCode mappings for 17 sectors | Implemented; live request coverage unverified |
@@ -73,6 +74,8 @@ PR #222 merge: `6ac5571ecccf8f954a99342240409e3dfdfc986a`
 - Branch: `feature/complete-rest-market-analytics`, based on `main`.
 - Regression test added for the OHLC-enriched gateway `/quote` route; backend index retrieval changed from LTP-only `/index-quote` to `/quote?symbol={EXCHANGE}:{SYMBOL}`. This allows sector and benchmark percentage change to be calculated from actual provider OHLC close when returned.
 - The old architecture draft has been replaced with the current source architecture: Markets, Order Flow/Chart Flow, Advanced Chart and Options Hub; authenticated `apiFetch`; FastAPI private routes; gateway shared-secret boundary; REST-only transport; no intraday Chart Flow.
+- Added authenticated Financial OS REST routes `/api/options-hub/master` and `/api/options-hub/chain`, forwarding through the existing gateway shared-secret boundary to `/options/master` and `/options/chain`. Added an independently authored Options Hub UI with exchange/underlying/expiry selection, strike-wise CE/PE table, mirrored OI chart and PCR/Max Pain calculations gated on complete two-sided OI.
+- Added backend proxy tests and frontend options-model tests; CI now includes the Options Hub model test. The saved options-enabled gateway source contains the required upstream routes, but their presence on the active AWS gateway and actual m.Stock account response remain unverified. If the gateway does not expose these paths, the UI surfaces an unavailable state; it does not use mock data.
 - This branch has not yet been CI-verified, merged or deployed. No production endpoint result is claimed.
 
 ## Integrity and preservation constraints

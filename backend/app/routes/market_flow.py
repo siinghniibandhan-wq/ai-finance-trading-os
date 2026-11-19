@@ -202,42 +202,64 @@ def _fetch_sector_movers_uncached(sector):
     }
 
 
-def fetch_sector_index_snapshots():
-    """Read current OHLC-enriched index quotes for the supported NSE sectors."""
-    results = []
-    errors = []
-    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="chart-flow-sector-index") as executor:
-        jobs = {
-            executor.submit(fetch_index, {
-                "name": sector["name"],
-                "exchange": "NSE",
-                "symbol": sector["index_symbol"],
-            }): sector
-            for sector in SECTOR_UNIVERSES
-        }
-        for future in as_completed(jobs):
-            sector = jobs[future]
-            try:
-                quote = future.result()
-                results.append({
-                    **quote,
-                    "key": sector["key"],
-                    "index_symbol": sector["index_symbol"],
-                })
-            except Exception as exc:
-                errors.append({
-                    "source": "m.Stock sector index quote",
-                    "sector": sector["key"],
-                    "name": sector["name"],
-                    "message": str(exc),
-                })
+_sector_index_cache = {"loaded_at": 0.0, "results": [], "errors": []}
+_sector_index_cache_lock = threading.Lock()
+SECTOR_INDEX_CACHE_TTL_SECONDS = 60
 
-    results.sort(key=lambda item: (
-        item.get("percent_change") is None,
-        -(item.get("percent_change") or 0),
-        item["name"],
-    ))
-    return results, errors
+
+def fetch_sector_index_snapshots():
+    """Read cached OHLC-enriched index quotes for the supported NSE sectors."""
+    now = time.monotonic()
+    cached = _sector_index_cache
+    if cached["results"] and now - cached["loaded_at"] < SECTOR_INDEX_CACHE_TTL_SECONDS:
+        return list(cached["results"]), list(cached["errors"])
+
+    with _sector_index_cache_lock:
+        now = time.monotonic()
+        if _sector_index_cache["results"] and now - _sector_index_cache["loaded_at"] < SECTOR_INDEX_CACHE_TTL_SECONDS:
+            return list(_sector_index_cache["results"]), list(_sector_index_cache["errors"])
+
+        results = []
+        errors = []
+        with ThreadPoolExecutor(max_workers=4, thread_name_prefix="chart-flow-sector-index") as executor:
+            jobs = {
+                executor.submit(fetch_index, {
+                    "name": sector["name"],
+                    "exchange": "NSE",
+                    "symbol": sector["index_symbol"],
+                }): sector
+                for sector in SECTOR_UNIVERSES
+            }
+            for future in as_completed(jobs):
+                sector = jobs[future]
+                try:
+                    quote = future.result()
+                    results.append({
+                        **quote,
+                        "key": sector["key"],
+                        "index_symbol": sector["index_symbol"],
+                    })
+                except Exception as exc:
+                    errors.append({
+                        "source": "m.Stock sector index quote",
+                        "sector": sector["key"],
+                        "name": sector["name"],
+                        "message": str(exc),
+                    })
+
+        results.sort(key=lambda item: (
+            item.get("percent_change") is None,
+            -(item.get("percent_change") or 0),
+            item["name"],
+        ))
+        # A partial scan is not cached; the next visible refresh can retry missing indices.
+        if results and not errors:
+            _sector_index_cache.update({
+                "loaded_at": time.monotonic(),
+                "results": list(results),
+                "errors": [],
+            })
+        return results, errors
 
 
 def _get_cached_sector_movers(sector):

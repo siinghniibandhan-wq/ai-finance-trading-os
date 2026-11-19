@@ -232,3 +232,30 @@ These are proposed steps, not current implementation claims. Production migratio
 - `THEME_SYSTEM_REDESIGN.md`: theme system only.
 
 Maintain one canonical document per subject and link to it rather than creating duplicate topic files.
+
+
+---
+
+## Status addendum — 20 November 2026
+
+This addendum supersedes older status statements where they conflict with the current source review or the latest user-confirmed operational result.
+
+### BSE market and derivatives coverage
+
+- The backend Market Flow implementation requests cash-market gainers and losers for both NSE and BSE using the m.Stock Type A exchange/segment mapping.
+- The Options Hub REST adapter accepts both `NSE` and `BSE` for derivatives master and option-chain requests.
+- The 19 November 2026 gateway discovery test returned the following observed contract counts: NSE Futures **685**, NSE Options **92,283**, BSE Futures **661**, and BSE Options **45,318** (combined **138,947**). These are time-specific provider master results, not fixed totals or a guarantee of current market availability.
+- Futures/options quote requests returned LTP data in the recorded test session. Optional fields, including volume and open interest, remain dependent on provider response coverage. Missing fields must not be synthesized or presented as available.
+- **BSE integration issue: resolved** according to the latest user confirmation. Keep this as a resolved incident, not an open blocker; continue ordinary regression coverage for exchange-qualified symbols and BSE requests.
+
+### Authentication incident
+
+- **HTTP 401 `Authentication is required` after OTP sign-in: resolved** according to the latest user confirmation on 20 November 2026.
+- Preserve the existing OTP/login and token/session architecture. Provider authentication remains gateway-owned; do not add a second provider login, duplicate token store or parallel authentication mechanism as a workaround.
+- The incident is considered user-confirmed resolved. This statement is not a substitute for a CI result or a timestamped production smoke-test record. Include login, authenticated API access and session continuity in release smoke tests.
+
+### Current market transport boundary
+
+- Chart Flow, Advanced Chart and the current market analytics path remain REST-based with bounded refreshes.
+- Do not document WebSocket or continuous exchange-tick streaming as implemented in these workspaces.
+- Provider-ranked mover lists are not complete exchange breadth; partial provider responses and unavailable analytics must remain explicit.

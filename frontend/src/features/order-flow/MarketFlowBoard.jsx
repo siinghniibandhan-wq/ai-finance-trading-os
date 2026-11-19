@@ -125,7 +125,7 @@ function HistoricalFlowPanel({ series, loading, error, symbol }) {
         const height = row.volume === null ? 0 : row.volume / maxVolume * 30;
         return <g key={String(row.timestamp) + index}>
           <rect x={x - 2} y={158 - height} width="4" height={height} className="mfb-history-volume"/>
-          <title>{new Date(Number(row.timestamp) * (Number(row.timestamp) < 100000000000 ? 1000 : 1)).toLocaleDateString("en-IN")} · ₹{fmt(row.close)} · {row.volume === null ? "Volume unavailable" : "Volume " + fmt(row.volume, 0)}</title>
+          <title>{(Number.isFinite(Number(row.timestamp)) ? new Date(Number(row.timestamp) * (Number(row.timestamp) < 100000000000 ? 1000 : 1)) : new Date(row.timestamp)).toLocaleDateString("en-IN")} · ₹{fmt(row.close)} · {row.volume === null ? "Volume unavailable" : "Volume " + fmt(row.volume, 0)}</title>
         </g>;
       })}
       <text x="24" y="12" className="mfb-history-label">{pct(min)}</text>

@@ -100,7 +100,7 @@ def test_chart_flow_sector_movers_uses_mstock_sector_universe(monkeypatch):
 
     monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
 
-    result = market_flow.get_sector_movers("it")
+    result = market_flow.get_market_flow_snapshot("it")
 
     assert [call["security_id_code"] for call in calls] == [21, 21]
     assert [call["type_flag"] for call in calls] == ["G", "L"]

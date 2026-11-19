@@ -1,10 +1,14 @@
 import { useSyncExternalStore } from "react";
-import { loadMarketOverview } from "./features/advanced-chart/api.js";
 import { mergeMarketOverview } from "./marketOverviewState.js";
 
 const REFRESH_INTERVAL_MS = 30000;
 
-export function createMarketOverviewStore(fetchOverview = loadMarketOverview, intervalMs = REFRESH_INTERVAL_MS) {
+const defaultFetchOverview = async () => {
+  const { loadMarketOverview } = await import("./features/advanced-chart/api.js");
+  return loadMarketOverview();
+};
+
+export function createMarketOverviewStore(fetchOverview = defaultFetchOverview, intervalMs = REFRESH_INTERVAL_MS) {
   let snapshot = { data: null, loading: false, error: "", updatedAt: null };
   let inFlight = null;
   let timer = null;

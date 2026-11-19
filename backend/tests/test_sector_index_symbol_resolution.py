@@ -60,3 +60,34 @@ def test_other_sector_symbols_remain_unchanged():
     assert "quote_symbol" not in sectors["auto"]
     assert sectors["it"]["index_symbol"] == "NIFTY IT"
     assert "quote_symbol" not in sectors["it"]
+
+
+def test_sector_snapshot_passes_canonical_symbols_only_for_the_two_affected_indices(monkeypatch):
+    monkeypatch.setattr(market_flow, "_sector_index_cache", {
+        "loaded_at": 0.0, "results": [], "errors": [],
+    })
+    seen = []
+
+    def fake_fetch(index):
+        seen.append(dict(index))
+        return {
+            "name": index["name"],
+            "exchange": index["exchange"],
+            "symbol": index["symbol"],
+            "last_price": 1000,
+            "previous_close": 990,
+            "change": 10,
+            "percent_change": 100 / 99,
+            "status": "success",
+        }
+
+    monkeypatch.setattr(market_flow, "fetch_index", fake_fetch)
+    results, errors = market_flow.fetch_sector_index_snapshots()
+
+    assert errors == []
+    assert len(results) == len(market_flow.SECTOR_UNIVERSES)
+    by_symbol = {item["symbol"]: item for item in seen}
+    assert by_symbol["NIFTY CONSUMER DURABLES"]["quote_symbol"] == "NIFTYCONSRDURBL"
+    assert by_symbol["NIFTY FINANCIAL SERVICES"]["quote_symbol"] == "NIFTYFINSERVICE"
+    assert "quote_symbol" not in by_symbol["NIFTY AUTO"]
+    assert "quote_symbol" not in by_symbol["NIFTY IT"]

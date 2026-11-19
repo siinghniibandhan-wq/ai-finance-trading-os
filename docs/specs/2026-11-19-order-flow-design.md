@@ -123,3 +123,24 @@ This endpoint returns ranked gainers and losers within the selected provider uni
 - Do not represent these as completed until a verified provider REST source is integrated.
 
 **Release condition:** Chart Flow is accepted only when its connected market → sector → stock experience is working with genuine REST data, all supported visualisations and interactions pass tests, protected workspaces remain operational, and unsupported metrics are clearly identified rather than fabricated.
+
+## Connected sector and constituent flow implementation
+
+The sector area is a connected SVG flow rail rather than a standalone list of sector pills:
+
+- A market root branches into every configured provider sector index.
+- Each sector row is ranked only by the provider-returned index percentage change.
+- A missing index percentage is shown as unavailable; an index level is not converted into a performance value.
+- Selecting a sector calls the existing authenticated REST snapshot route with its sector key.
+- The selected sector index then branches into its provider-ranked gainers and losers.
+- Selecting a stock node updates the existing instrument detail and daily OHLCV history panel; the existing Advanced Chart handoff remains available.
+
+The market mover graph and the sector graph remain distinct data scopes. The market gainer/loser endpoint does not provide sector classification for every returned market mover, so the UI does not invent links between those instruments and sectors.
+
+## Provider documentation references
+
+- m.Stock Type A Top Gainers/Losers documents the SecurityIdCode sector universe values, including the 17 sector identifiers used here: https://tradingapi.mstock.com/docs/v1/typeA/gainers-losers/
+- m.Stock Type A Market Quote and Instrument documentation describes the REST OHLC, LTP and script-master interfaces: https://tradingapi.mstock.com/docs/v1/typeA/market-quote-and-instrument/
+- m.Stock API introduction documents the REST architecture and the one-request-per-second data API limit: https://tradingapi.mstock.com/docs/v1/Introduction/
+
+These public documents verify the mover API contract and sector-universe identifiers. They do not prove that every configured sector index symbol is accepted by the deployed authenticated Gateway. That final symbol/runtime verification must be performed against the live Gateway before release.

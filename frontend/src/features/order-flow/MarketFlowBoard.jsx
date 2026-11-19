@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadChartHistory, loadMarketFlowSnapshot } from "../advanced-chart/api.js";
-import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries, summarizeSectorMoverSample } from "./orderFlowModel.js";
+import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries, summarizeSectorMoverSample, rankSectorIndices } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
@@ -205,6 +205,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const sectorOptions = Array.isArray(payload?.sector_universes) ? payload.sector_universes : [];
   const sectorIndices = Array.isArray(payload?.sector_indices) ? payload.sector_indices : [];
   const sectorIndexByKey = useMemo(() => new Map(sectorIndices.map(item => [item.key, item])), [sectorIndices]);
+  const rankedSectorOptions = useMemo(() => rankSectorIndices(sectorOptions, sectorIndices), [sectorOptions, sectorIndices]);
   const sectorIndexMaxAbs = Math.max(0.1, ...sectorIndices.map(item => Math.abs(Number(item.percent_change) || 0)));
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
   const sectorSampleSummary = useMemo(() => summarizeSectorMoverSample(sectorRows), [sectorRows]);
@@ -301,7 +302,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
           <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Explore sector constituents</b></div>
             <p>Sector index performance uses provider OHLC previous-close data where available. Select a sector to open its actual ranked stock movers.</p>
             <div className="mfb-sector-selector" role="group" aria-label="Compare and select sectors">
-              {sectorOptions.map(sector => {
+              {rankedSectorOptions.map(sector => {
                 const quote = sectorIndexByKey.get(sector.key);
                 const change = quote?.percent_change !== null && quote?.percent_change !== undefined && Number.isFinite(Number(quote.percent_change)) ? Number(quote.percent_change) : null;
                 const barWidth = change === null ? 0 : Math.min(50, Math.abs(change) / sectorIndexMaxAbs * 50);

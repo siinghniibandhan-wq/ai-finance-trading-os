@@ -1,117 +1,123 @@
-# Financial OS Order Flow — Design Specification
+# Financial OS — Chart Flow Design Specification
 
 **Date:** 2026-11-19  
 **Repository:** `siinghniibandhan-wq/ai-finance-trading-os`  
-**Target branch:** `feature/market-analytics-rest-chart-suite`  
-**Phase:** 1 of the approved sequential programme (Order Flow → Options Hub → integration)
+**Implementation branch:** `feature/chart-flow-rest-completion`  
+**Status:** Incremental implementation; not release-ready.
 
 ## Goal
 
-Deliver a full, interactive Order Flow workspace inside the existing Markets section. It will provide market-wide directional discovery, instrument-level flow context, and futures analytics when verified provider data exists, while keeping Advanced Chart as the dedicated instrument price-analysis workspace.
+Complete the existing Chart Flow workspace as a distinct, modern, interconnected market-flow analysis experience. The primary visual reference is the interaction hierarchy in the Mr. Chartist repository; all Financial OS implementation code, visuals and assets must be independently authored.
 
-## Product structure
+Chart Flow is not a duplicate of Market and is not a replacement for Advanced Chart.
 
-The Markets section will expose four sibling workspaces:
-1. **Market** — preserve the existing Markets page and its current behaviour.
-2. **Order Flow** — market-wide discovery and directional/derivatives flow analysis.
-3. **Advanced Chart** — dedicated detailed price-chart workspace.
-4. **Options Hub** — a later sequential phase for option-chain and options strategy analysis.
+## Protected workspaces
 
-These are separate workspaces within the existing Markets area, not separate applications. Order Flow and Advanced Chart will share instrument identity and chart navigation, but their primary purposes remain distinct.
+1. **Market** — preserve existing page, APIs, state, refresh and workflows.
+2. **Chart Flow** — build the connected market-to-sector-to-stock visual analysis workspace.
+3. **Advanced Chart** — preserve detailed charting, indicators, OHLC and existing instrument handoff.
+4. **Options Hub** — separate workspace; leave its current implementation untouched. Option Chain and Open Interest may be considered independently later.
 
-## Order Flow scope
+Do not change authentication, broker order APIs, gateway secrets, trading workflows or live AWS configuration.
 
-### Included
+## Chart Flow experience
 
-- Market-wide bullish and bearish distribution using only provider-returned, validated instruments.
-- Directional ranking and drill-down to the selected instrument.
-- Index snapshots and sector/index views only for symbols and values supported by verified provider contracts.
-- Futures build-up classification (long build-up, short build-up, short covering, long unwinding) only when comparable futures price and open-interest observations for the same contract and time window are available.
-- Instrument-level context, with navigation into Advanced Chart.
-- Full responsive visual workspace: flow distribution visualisation, sector/index panels where supported, sortable/rankable instrument lists, instrument detail, clear source and freshness indicators.
-- REST refresh with bounded requests, request de-duplication, visibility-aware refresh, cancellation/cleanup, and explicit stale/partial/error states.
+The visual hierarchy should show how information moves through connected stages:
 
-### Explicitly excluded
+1. Market direction and provider-returned gainers/losers.
+2. Bullish/bearish price distribution and index context.
+3. Sector selection and sector-filtered mover distribution.
+4. Selected sector's strongest/weakest provider-ranked instruments.
+5. Selected stock's price, volume and historical OHLCV context.
+6. Explicit handoff to the existing Advanced Chart for full technical analysis.
 
-- WebSockets, raw sockets, EventSource, streaming workers, market-data subscriptions, or any continuous streaming transport.
-- Simulated/demo prices or fabricated candles, OI, breadth, sector constituents, PCR, or support/resistance.
-- Treating a bounded gainers/losers response as full-market breadth or capital/traded-value flow.
-- Inferring futures OI from equity volume or substituting spot values for futures contracts.
-- Replacing or refactoring the existing Market page or changing its established API, state, refresh, or workflow.
-- AWS deployment, gateway runtime configuration, credentials, secrets, or authentication changes.
-- Copying MrChartist source code, assets, branding, or other protected implementation. The references guide independently authored functionality and visual hierarchy only.
+Selecting a sector must update the sector distribution and its mover lists. Selecting an instrument must update instrument detail and its historical context. The design must be chart-led, readable, responsive and interactive, not a stack of generic data cards.
 
-## Existing repository context
+## REST-only integration and shared APIs
 
-- Frontend: React 18 + Vite under `frontend/`; main navigation and view selection are in `frontend/src/App.jsx`.
-- Existing Markets navigation entries are Market and Advanced Chart.
-- Advanced Chart implementation exists under `frontend/src/features/advanced-chart/`, using Lightweight Charts 5.0.8 and the shared authenticated `apiFetch` client.
-- Existing REST market endpoints include `/api/market-overview/`, `/api/market-movers/`, `/api/market-search/`, `/api/market-quote/`, and `/api/market-charts/`.
-- Existing market overview combines configured index snapshots and bounded gainers/losers responses. Its response is explicitly partial when one source fails.
-- Current frontend focused test commands include `npm run test:market`, `npm run test:advanced-chart`, and `npm run build` from `frontend/`.
-- Existing backend test suite uses pytest; focused market tests are under `backend/tests/test_market_*.py`.
+Architecture:
 
-## Provider capability boundary
+`Chart Flow UI → existing authenticated Financial OS FastAPI routes → existing m.Stock Gateway → m.Stock REST APIs`
 
-The current integrated m.Stock Type A REST contract supports quote/LTP, historical candles, script master, gainers/losers and index quote, subject to provider availability and runtime configuration. The integrated contract does not currently verify full-market breadth, sector constituents, futures OI history, or historical OI time series.
+- REST only. No WebSockets, Socket.IO, EventSource, streaming workers or continuous subscriptions.
+- Reuse the existing `/api/market-flow/` route. An optional `sector` query selects a provider sector; do not create separate sector-list or sector-detail routes.
+- The default `/api/market-flow/` response supplies the shared market snapshot and the sector-universe metadata.
+- A selected sector uses `/api/market-flow/?sector=<key>` and returns its actual provider-ranked movers and the existing sector index quote.
+- Reuse the existing authenticated `apiFetch` adapter in `frontend/src/features/advanced-chart/api.js`; do not create duplicate browser API clients.
+- Reuse the existing `/api/market-charts/` historical OHLCV route for selected-stock history. Do not create a duplicate historical endpoint.
+- Reuse existing index and quote services where their provider contracts are sufficient.
+- Keep provider credentials and response parsing server-side.
+- Respect m.Stock's documented data API rate limit of one request per second. Requests must be bounded, deduplicated where appropriate, and cached briefly when safe.
 
-Therefore:
-- Current supported data may drive market-mover directional distribution and supported index snapshots.
-- Sector views must show only verified supported index series; they must not imply sector constituent breadth without a verified constituent universe.
-- Futures build-up panels must expose an unavailable/provider-not-connected state until a verified REST source returns both futures price and OI for the same contract and observation window.
-- A future provider adapter may be added only after its REST endpoint, authentication model, instrument identifiers, timestamps, units/scaling, rate limits, and response schema have been verified. It must reuse existing Financial OS auth boundaries and must not expose provider secrets to the browser.
+## Verified m.Stock sector mover contract
 
-## Architecture
+m.Stock Type A Top Gainers/Losers supports the `SecurityIdCode` sector/index universe. The documented NSE values include:
 
-- Keep Order Flow isolated under `frontend/src/features/order-flow/` with focused page, components, styles, data adapter, pure model functions, and tests.
-- Register Order Flow in the existing Markets navigation/view routing with the smallest possible change to `frontend/src/App.jsx`.
-- Use the existing authenticated `apiFetch` client for browser requests. Reuse existing backend market routes and services where their contracts are sufficient.
-- Add backend aggregation/routes only where existing response contracts cannot safely express the required view; keep provider-specific parsing server-side and read-only.
-- Share instrument selection/navigation through explicit instrument identity (`symbol`, `exchange`, and provider instrument identity when available). Opening a selected instrument in Advanced Chart must use its existing supported navigation contract or a small explicit callback contract.
-- Keep Advanced Chart's detailed price plotting and indicator controls in its own workspace; Order Flow may show compact context charts only where they improve flow analysis.
+| Code | Provider universe |
+|---:|---|
+| 9 | NIFTY AUTO |
+| 10 | NIFTY PVT BANK |
+| 20 | NIFTY FMCG |
+| 21 | NIFTY IT |
+| 22 | NIFTY MEDIA |
+| 23 | NIFTY METAL |
+| 24 | NIFTY PHARMA |
+| 25 | NIFTY PSU BANK |
+| 26 | NIFTY REALTY |
+| 33 | NIFTY ENERGY |
+| 34 | NIFTY INFRA |
+| 35 | NIFTY MNC |
+| 37 | NIFTY SERV SECTOR |
+| 59 | NIFTY CONSUMER DURABLES |
+| 60 | NIFTY FINANCIAL SERVICES |
+| 61 | NIFTY OIL AND GAS |
+| 62 | NIFTY HEALTHCARE INDEX |
 
-## Data contract requirements
+This endpoint returns ranked gainers and losers within the selected provider universe. It does **not** return every sector constituent or establish full sector breadth. The current index-quote adapter returns a current index level; it must not be labelled as sector percentage performance unless the provider supplies a valid comparison value.
 
-Every Order Flow response used for analytics must identify:
-- data source/provider;
-- instrument identity and exchange/segment where applicable;
-- observation or exchange timestamp when supplied by provider;
-- server retrieval timestamp separately;
-- freshness/age and partial/error status;
-- explicit field availability.
+## Data and analytical boundaries
 
-Missing values remain null/unavailable. Retrieval time must never be presented as exchange time. Derived classifications must record the exact inputs and calculation rule and must not run when required inputs are missing or incomparable.
+- Use only provider-returned prices, percentage changes, volumes, index quotes and historical candles.
+- Current mover distributions describe the provider-returned rows, not all listed securities.
+- Full-market advance/decline breadth is unavailable from top-gainer/loser lists alone.
+- Full sector constituent breadth is unavailable from ranked mover lists alone.
+- Do not average a truncated gainer/loser sample and label it as sector performance.
+- Do not infer market-wide traded value or participation from a subset of mover volumes.
+- Historical stock performance may be calculated from returned daily OHLCV candles; identify the base observation and calculation clearly.
+- Missing fields remain unavailable. No synthetic, demo, simulated or fabricated market data.
+- Keep provider retrieval time separate from provider observation time.
+- Intraday analysis is not blocked by missing Option Chain or Open Interest. Its exact interval coverage must follow verified m.Stock REST availability and the separately confirmed Chart Flow time-range scope.
 
 ## Visual and interaction requirements
 
-- Dense, professional trading-workspace layout inspired by the reference products' information hierarchy, independently implemented.
-- Flow distribution is a true data visualisation, not decorative lines or static mock data.
-- User can filter supported exchange/segment or direction, sort available instruments, search within returned rows, select an instrument, and open it in Advanced Chart.
-- Loading, empty, stale, partial, provider unavailable, and request error states are visually distinct.
-- Desktop-first analytical density with responsive layouts for smaller screens; charts must resize with their containers and remain usable.
-- Keyboard-operable controls and accessible labels for primary interactions.
+- Interconnected directional flow diagram.
+- Market mover distribution around a zero reference.
+- Sector selector with actual sector-filtered mover distribution.
+- Sector index level where returned.
+- Gainer/loser lists within the selected sector.
+- Search, exchange and direction filters; sorting by supported fields.
+- Selected-stock detail with price change and actual volume.
+- Compact historical price/volume chart from existing daily OHLCV data.
+- Clear Advanced Chart handoff.
+- Keyboard-operable controls and accessible labels.
+- Distinct loading, empty, partial, stale and provider-error states.
+- Responsive analytical layout.
 
-## Error and refresh behaviour
+## Development and acceptance
 
-- REST requests are bounded and deduplicated; no overlapping refresh for the same view.
-- Refresh only while the workspace is visible; cancel or ignore stale responses after navigation/unmount.
-- A failed source must not erase successful independent source results.
-- Preserve last successful data only with a visible stale indicator and its original retrieval timestamp; never relabel it as current.
-- HTTP authentication failures use the existing shared session behaviour; no parallel auth mechanism is introduced.
-- No automatic fallback to simulated or cached demo data.
+1. Inspect actual Financial OS source and Mr. Chartist reference implementation before structural changes.
+2. Reuse existing routes, services, instrument identities and adapters before adding new code.
+3. Add new backend routes only when no existing route can express the required operation.
+4. Add tests before model/backend changes; test valid, missing, partial and failed provider responses.
+5. Run focused Chart Flow model tests, backend market-flow tests, full backend suite, full frontend tests, production build and workspace regression checks.
+6. Verify Market and Advanced Chart remain operational and Options Hub remains untouched.
+7. Keep live AWS Gateway unchanged until code review and all regression checks pass.
 
-## Testing and acceptance
+## Current known limitations
 
-1. Pure model tests cover provider-row normalization, unsupported/missing fields, direction grouping, sorting, freshness, partial sources, and futures classification eligibility.
-2. API contract tests cover valid, malformed, empty, partial, unavailable, and failed provider responses without live provider credentials.
-3. UI tests cover filters, search, selection, navigation to Advanced Chart, responsive states, and loading/empty/error/stale presentation.
-4. REST-only regression checks ensure no WebSocket, socket.io, EventSource, WebSocket constructor, streaming worker, or market-data subscription transport is introduced by this feature.
-5. Run focused frontend tests, backend market tests, full frontend production build, and the repository's relevant backend regression suite.
-6. Verify the existing Market page and Advanced Chart workflows remain available and unchanged in behaviour.
+- m.Stock ranked sector movers and current sector index quote are supported by documented provider identifiers and the existing Gateway contracts.
+- Complete sector constituent universe, full sector breadth and percentage sector-index performance are not established by the current integrated response contracts.
+- Full-market advance/decline breadth is not established by the current gainers/losers response.
+- Do not represent these as completed until a verified provider REST source is integrated.
 
-**Phase 1 exit condition:** Order Flow is a complete interactive market-discovery workspace using verified REST data, with real flow visualisation, supported index/sector context, honest provider-capability states, working instrument hand-off to Advanced Chart, responsive charts, and passing regression checks. Unsupported futures/OI capabilities are not represented as working until a verified REST provider contract is integrated.
-
-## Later sequential phases
-
-- **Phase 2 — Options Hub:** its own reviewed specification and implementation plan covering option-chain contracts, CE/PE OI, PCR, Max Pain, IV, Greeks, GEX, strategy payoff and backtesting. It must first verify a provider REST contract and authentication compatibility; no fabricated derivatives data.
-- **Phase 3 — Integration:** shared navigation/instrument context, common chart conventions, cross-workspace hand-off, and combined regression verification.
+**Release condition:** Chart Flow is accepted only when its connected market → sector → stock experience is working with genuine REST data, all supported visualisations and interactions pass tests, protected workspaces remain operational, and unsupported metrics are clearly identified rather than fabricated.

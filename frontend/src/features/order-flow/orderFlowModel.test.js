@@ -1,4 +1,4 @@
-import test from"node:test";import assert from"node:assert/strict";import{normalizeOrderFlow,summarizeOrderFlow,sortOrderFlow,buildChartFlowPoints,buildMarketFlowBoard,buildDistributionDots,normalizeSectorMovers,filterOrderFlow,buildHistoricalFlowSeries,summarizeSectorMoverSample,rankSectorIndices,summarizeMoverVolume}from"./orderFlowModel.js";
+import test from"node:test";import assert from"node:assert/strict";import{normalizeOrderFlow,summarizeOrderFlow,sortOrderFlow,buildChartFlowPoints,buildMarketFlowBoard,buildDistributionDots,normalizeSectorMovers,filterOrderFlow,buildHistoricalFlowSeries,summarizeSectorMoverSample,rankSectorIndices,summarizeMoverVolume,buildSectorFlowRows}from"./orderFlowModel.js";
 test("normalizes only provider supplied NSE/BSE movers",()=>{const rows=normalizeOrderFlow({market_movers:{gainers:[{symbol:"abc",exchange:"NSE",ltp:"10",percent_change:"2"},{symbol:"bad",exchange:"NFO",ltp:2,percent_change:1}],losers:[{symbol:"xyz",exchange:"BSE",ltp:4,percent_change:-1}]}});assert.deepEqual(rows.map(r=>r.symbol),["ABC","XYZ"]);assert.deepEqual(rows.map(r=>r.direction),["bullish","bearish"]);});
 test("summarizes and sorts only normalized provider rows",()=>{const rows=normalizeOrderFlow({market_movers:{gainers:[{symbol:"a",exchange:"NSE",ltp:10,percent_change:1}],losers:[{symbol:"b",exchange:"BSE",ltp:20,percent_change:-2}]}});assert.equal(summarizeOrderFlow(rows).total,2);assert.deepEqual(sortOrderFlow(rows,"changePercent","desc").map(r=>r.symbol),["A","B"]);});
 test("builds a zero-centred chart-flow series from provider price changes",()=>{const rows=[{symbol:"UP",changePercent:4,direction:"bullish"},{symbol:"DOWN",changePercent:-2,direction:"bearish"},{symbol:"FLAT",changePercent:0,direction:"unchanged"}];const points=buildChartFlowPoints(rows);assert.equal(points.length,3);assert.equal(points[0].normalizedMove,1);assert.equal(points.find(r=>r.symbol==="DOWN").normalizedMove,-0.5);assert.equal(points.find(r=>r.symbol==="FLAT").normalizedMove,0);});
@@ -164,4 +164,29 @@ test("summarizes actual volume only for returned movers with volume values", () 
     unchangedCount: 1,
     volumeReported: 3,
   });
+});
+
+
+test("builds a complete sector flow rail while keeping unavailable provider performance null", () => {
+  const rows = buildSectorFlowRows(
+    [
+      { key: "auto", name: "Automobile", index_symbol: "NIFTY AUTO" },
+      { key: "it", name: "Information Technology", index_symbol: "NIFTY IT" },
+      { key: "pharma", name: "Pharma", index_symbol: "NIFTY PHARMA" },
+    ],
+    [
+      { key: "auto", last_price: 25000, percent_change: -1.2 },
+      { key: "it", last_price: 42000, percent_change: 2.5 },
+      { key: "pharma", last_price: 18000, percent_change: null },
+    ],
+  );
+
+  assert.deepEqual(rows.map(row => row.key), ["it", "auto", "pharma"]);
+  assert.equal(rows[0].direction, "bullish");
+  assert.equal(rows[0].percentChange, 2.5);
+  assert.equal(rows[1].direction, "bearish");
+  assert.equal(rows[1].lastPrice, 25000);
+  assert.equal(rows[2].direction, null);
+  assert.equal(rows[2].percentChange, null);
+  assert.equal(rows[2].lastPrice, 18000);
 });

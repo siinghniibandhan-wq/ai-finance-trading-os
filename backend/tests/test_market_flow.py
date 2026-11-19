@@ -209,3 +209,27 @@ def test_chart_flow_can_load_all_sector_index_quotes_from_shared_snapshot(monkey
     assert result["sector_indices"][0]["key"] in {
         item["key"] for item in market_flow.SECTOR_UNIVERSES
     }
+
+
+def test_chart_flow_caches_complete_sector_index_scan(monkeypatch):
+    monkeypatch.setattr(market_flow, "_sector_index_cache", {
+        "loaded_at": 0.0, "results": [], "errors": [],
+    })
+    calls = {"count": 0}
+
+    def fake_fetch(index):
+        calls["count"] += 1
+        return {
+            "name": index["name"], "exchange": index["exchange"], "symbol": index["symbol"],
+            "last_price": 1000, "previous_close": 990, "change": 10,
+            "percent_change": 1.01, "status": "success",
+        }
+
+    monkeypatch.setattr(market_flow, "fetch_index", fake_fetch)
+    first, first_errors = market_flow.fetch_sector_index_snapshots()
+    second, second_errors = market_flow.fetch_sector_index_snapshots()
+
+    assert len(first) == len(market_flow.SECTOR_UNIVERSES)
+    assert first == second
+    assert first_errors == second_errors == []
+    assert calls["count"] == len(market_flow.SECTOR_UNIVERSES)

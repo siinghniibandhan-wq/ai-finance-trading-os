@@ -96,3 +96,15 @@ test("summarizes sector sample without calling it full-sector performance", () =
   assert.equal(summary.bullish, 2);
   assert.equal(summary.bearish, 1);
 });
+
+
+test("sorts symbols in both requested directions and leaves missing metrics last", () => {
+  const rows = [
+    { symbol: "TCS", volume: 10 },
+    { symbol: "INFY", volume: null },
+    { symbol: "WIPRO", volume: 5 },
+  ];
+  assert.deepEqual(sortOrderFlow(rows, "symbol", "asc").map(row => row.symbol), ["INFY", "TCS", "WIPRO"]);
+  assert.deepEqual(sortOrderFlow(rows, "symbol", "desc").map(row => row.symbol), ["WIPRO", "TCS", "INFY"]);
+  assert.deepEqual(sortOrderFlow(rows, "volume", "desc").map(row => row.symbol), ["TCS", "WIPRO", "INFY"]);
+});

@@ -61,3 +61,32 @@ def test_index_quote_leaves_change_unavailable_without_provider_previous_close(m
     assert result["previous_close"] is None
     assert result["change"] is None
     assert result["percent_change"] is None
+
+def test_sector_index_quote_uses_ohlc_enriched_gateway_quote_route(monkeypatch):
+    requested = {}
+
+    def fake_urlopen(request, timeout):
+        requested["url"] = request.full_url
+        requested["headers"] = dict(request.header_items())
+        requested["timeout"] = timeout
+        return FakeResponse({
+            "status": "success",
+            "symbol": "NSE:NIFTY IT",
+            "data": {
+                "NSE:NIFTY IT": {
+                    "last_price": "35000",
+                    "ohlc": {"open": "34800", "high": "35100", "low": "34750", "close": "34750"},
+                }
+            },
+        })
+
+    monkeypatch.setattr(market_indices, "urlopen", fake_urlopen)
+    result = market_indices.fetch_index({
+        "name": "NIFTY IT", "exchange": "NSE", "symbol": "NIFTY IT",
+    })
+
+    assert "/quote?" in requested["url"]
+    assert "symbol=NSE%3ANIFTY+IT" in requested["url"]
+    assert result["last_price"] == 35000
+    assert result["previous_close"] == 34750
+    assert result["percent_change"] == pytest.approx(250 / 34750 * 100)

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadMarketFlowSnapshot } from "../advanced-chart/api.js";
-import { loadMarketFlowSectorMovers } from "./api.js";
 import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
@@ -155,7 +154,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
     setSectorLoading(true);
     setSectorError("");
     try {
-      const next = await loadMarketFlowSectorMovers(sectorKey);
+      const next = await loadMarketFlowSnapshot(sectorKey);
       if (mounted.current && requestId === sectorRequest.current) setSectorPayload(next);
     } catch (requestError) {
       if (mounted.current && requestId === sectorRequest.current) {

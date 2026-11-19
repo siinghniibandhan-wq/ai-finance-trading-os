@@ -121,3 +121,16 @@ test("ranks sectors by provider OHLC percentage change and leaves unavailable ch
   );
   assert.deepEqual(ranked.map(row => row.key), ["it", "auto", "pharma"]);
 });
+
+
+test("applies selected sort to bullish and bearish market flow lists", () => {
+  const rows = [
+    { symbol: "A", changePercent: 3, volume: 100 },
+    { symbol: "B", changePercent: 2, volume: 500 },
+    { symbol: "C", changePercent: -1, volume: 900 },
+    { symbol: "D", changePercent: -2, volume: 200 },
+  ];
+  const board = buildMarketFlowBoard(rows, 12, "volume", "desc");
+  assert.deepEqual(board.bullish.map(row => row.symbol), ["B", "A"]);
+  assert.deepEqual(board.bearish.map(row => row.symbol), ["C", "D"]);
+});

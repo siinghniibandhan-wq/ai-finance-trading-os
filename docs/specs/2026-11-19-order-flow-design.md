@@ -126,10 +126,10 @@ This endpoint returns ranked gainers and losers within the selected provider uni
 
 ## Connected sector and constituent flow implementation
 
-The sector area is a connected SVG flow rail rather than a standalone list of sector pills:
+The sector area is a connected SVG flow rail rather than a standalone list of sector pills. Index LTP and previous close are provider fields; the displayed daily percentage change is calculated by the backend from those values:
 
 - A market root branches into every configured provider sector index.
-- Each sector row is ranked only by the provider-returned index percentage change.
+- Each sector row is ranked only by the backend-calculated index percentage change using provider LTP and OHLC previous close.
 - A missing index percentage is shown as unavailable; an index level is not converted into a performance value.
 - Selecting a sector calls the existing authenticated REST snapshot route with its sector key.
 - The selected sector index then branches into its provider-ranked gainers and losers.

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadMarketFlowSnapshot } from "../advanced-chart/api.js";
 import { loadMarketFlowSectorMovers } from "./api.js";
-import { buildDistributionDots, buildMarketFlowBoard, normalizeOrderFlow, normalizeSectorMovers } from "./orderFlowModel.js";
+import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
@@ -93,6 +93,11 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const [error, setError] = useState("");
   const [selectedKey, setSelectedKey] = useState("");
   const [selectedSectorKey, setSelectedSectorKey] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [exchangeFilter, setExchangeFilter] = useState("ALL");
+  const [directionFilter, setDirectionFilter] = useState("all");
+  const [sortKey, setSortKey] = useState("changePercent");
+  const [sortDirection, setSortDirection] = useState("desc");
   const [sectorPayload, setSectorPayload] = useState(null);
   const [sectorLoading, setSectorLoading] = useState(false);
   const [sectorError, setSectorError] = useState("");
@@ -131,7 +136,12 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   }, [refresh]);
 
   const rows = useMemo(() => normalizeOrderFlow(payload), [payload]);
-  const board = useMemo(() => buildMarketFlowBoard(rows), [rows]);
+  const filteredRows = useMemo(() => sortOrderFlow(
+    filterOrderFlow(rows, { query: searchQuery, exchange: exchangeFilter, direction: directionFilter }),
+    sortKey,
+    sortDirection,
+  ), [rows, searchQuery, exchangeFilter, directionFilter, sortKey, sortDirection]);
+  const board = useMemo(() => buildMarketFlowBoard(filteredRows), [filteredRows]);
   const indices = Array.isArray(payload?.indices) ? payload.indices : [];
   const sectorOptions = Array.isArray(payload?.sector_universes) ? payload.sector_universes : [];
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
@@ -167,7 +177,15 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
       {!indices.length && <p>No index snapshots returned by the provider.</p>}</section>
     {error && <p className="mfb-alert" role="alert">{error}. Last successful data is retained; no demo feed is substituted.</p>}{payload?.status === "partial" && <p className="mfb-alert" role="status">Some provider requests failed. The board contains only the successful real responses; missing instruments are not filled with estimates.</p>}
     {!loading && !rows.length && !error && <p className="mfb-alert">No valid provider movers were returned. No simulated instruments are displayed.</p>}
-    <Distribution rows={rows} counts={board.counts} breadthAvailable={payload?.capabilities?.full_advance_decline_breadth === true} retrievedAt={retrievedAt ? new Date(retrievedAt).toLocaleTimeString("en-IN") : null}/>
+    <Distribution rows={rows} counts={buildMarketFlowBoard(rows).counts} breadthAvailable={payload?.capabilities?.full_advance_decline_breadth === true} retrievedAt={retrievedAt ? new Date(retrievedAt).toLocaleTimeString("en-IN") : null}/>
+    <section className="mfb-filterbar" aria-label="Filter market movers">
+      <label>Search instruments<input type="search" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="Symbol or company"/></label>
+      <label>Exchange<select value={exchangeFilter} onChange={event => setExchangeFilter(event.target.value)}><option value="ALL">All exchanges</option><option value="NSE">NSE</option><option value="BSE">BSE</option></select></label>
+      <label>Direction<select value={directionFilter} onChange={event => setDirectionFilter(event.target.value)}><option value="all">All directions</option><option value="bullish">Bullish</option><option value="bearish">Bearish</option><option value="unchanged">Unchanged</option></select></label>
+      <label>Sort by<select value={sortKey} onChange={event => setSortKey(event.target.value)}><option value="changePercent">Price change</option><option value="volume">Volume</option><option value="price">Last price</option><option value="symbol">Symbol</option></select></label>
+      <button type="button" onClick={() => setSortDirection(value => value === "desc" ? "asc" : "desc")} aria-label="Toggle sort direction">{sortDirection === "desc" ? "Highest first ↓" : "Lowest first ↑"}</button>
+      <span>{filteredRows.length} of {rows.length} returned movers</span>
+    </section>
     <section className="mfb-section mfb-flow">
       <div className="mfb-section-head"><div><small>02 / MARKET FLOW</small><h2>Zero-centred market flow</h2>
         <p>Actual price changes fan through the central gate into bullish and bearish instruments. This is a current snapshot, not a reconstructed intraday history.</p></div>

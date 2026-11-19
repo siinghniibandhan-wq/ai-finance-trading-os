@@ -99,6 +99,10 @@ def test_chart_flow_sector_movers_uses_mstock_sector_universe(monkeypatch):
         }
 
     monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
+    monkeypatch.setattr(market_flow, "fetch_index", lambda index: {
+        "name": index["name"], "exchange": index["exchange"], "symbol": index["symbol"],
+        "last_price": 25000, "status": "success",
+    })
 
     result = market_flow.get_market_flow_snapshot("it")
 
@@ -109,6 +113,8 @@ def test_chart_flow_sector_movers_uses_mstock_sector_universe(monkeypatch):
     assert result["movers"]["gainers"][0]["symbol"] == "INFY"
     assert result["movers"]["losers"][0]["symbol"] == "WIPRO"
     assert result["movers"]["gainers"][0]["sector"] == "Information Technology"
+    assert result["sector_index"]["last_price"] == 25000
+    assert result["capabilities"]["sector_index_quote"] is True
 
 
 def test_chart_flow_sector_movers_marks_partial_provider_results(monkeypatch):
@@ -126,6 +132,7 @@ def test_chart_flow_sector_movers_marks_partial_provider_results(monkeypatch):
         }]}
 
     monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
+    monkeypatch.setattr(market_flow, "fetch_index", lambda _index: (_ for _ in ()).throw(RuntimeError("index quote unavailable")))
 
     result = market_flow.get_market_flow_snapshot("it")
 

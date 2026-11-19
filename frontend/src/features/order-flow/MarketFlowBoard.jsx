@@ -141,6 +141,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const loadSector = useCallback(async (sectorKey) => {
     const requestId = ++sectorRequest.current;
     setSelectedSectorKey(sectorKey);
+    setSectorPayload(null);
     setSectorLoading(true);
     setSectorError("");
     try {

@@ -1,4 +1,15 @@
-# Advanced Chart Integration — Architecture & Implementation Specification
+# Markets Analytics Integration — Architecture & Implementation Specification
+
+> **Approved navigation structure — 19 November 2026 (supersedes conflicting navigation references below):**
+>
+> The Markets section has exactly four main workspaces:
+> 1. **Market** — existing market overview; preserve its current behaviour.
+> 2. **Order Flow** — whole-market discovery. **Chart Flow is a view within this workspace**, not a separate main tab and not part of Advanced Chart.
+> 3. **Advanced Chart** — individual-instrument technical analysis and interactive OHLCV charting.
+> 4. **Options Hub** — options-chain and derivatives analysis as a separate workspace.
+>
+> Chart Flow must be implemented inside `frontend/src/features/order-flow/`. Do not add a Chart Flow navigation item under Advanced Chart or create a fifth Markets tab. Options Hub is the fourth Markets navigation item. All new market data access is REST-only; do not introduce WebSockets or streaming in this scope. Existing Market and Advanced Chart workflows remain unchanged.
+
 
 **Status:** Design draft for review  
 **Target repository:** `siinghniibandhan-wq/ai-finance-trading-os`  

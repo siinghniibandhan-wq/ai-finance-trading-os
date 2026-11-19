@@ -232,3 +232,16 @@ test("rejects impossible OHLC ranges from candle geometry", () => {
   assert.equal(geometry.length, 1);
   assert.equal(geometry[0].timestamp, 3);
 });
+
+
+test("filters malformed OHLC observations before calculating historical returns", () => {
+  const series = buildHistoricalFlowSeries([
+    { timestamp: 1, open: 10, high: 12, low: 9, close: 11, volume: 100 },
+    { timestamp: 2, open: 12, high: 11, low: 10, close: 11, volume: 100 },
+    { timestamp: 3, open: 10, high: 12, low: 11, close: 9, volume: 100 },
+    { timestamp: 4, open: 11, high: 13, low: 10, close: 12, volume: -1 },
+  ]);
+  assert.equal(series.length, 2);
+  assert.deepEqual(series.map(row => row.timestamp), [1, 4]);
+  assert.equal(series[1].volume, null);
+});

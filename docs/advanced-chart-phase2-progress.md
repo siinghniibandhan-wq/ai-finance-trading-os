@@ -1,6 +1,6 @@
 # Advanced Chart Phase 2 — REST-only implementation status
 
-Implementation status: merged to `main` through PRs #219, #220 and #222 (18–19 November 2026).  
+Baseline implementation: merged to `main` through PRs #219, #220 and #222 (18–19 November 2026). Current REST analytics completion work is on `feature/complete-rest-market-analytics`; it is not merged or production-deployed.  
 PR #219 merge: `aa1b8261d670d91622f9e59060634a619af45dfa`  
 PR #220 merge: `3911c70dddb643e0c2fa7d700d9bb444a4c2d156`  
 PR #222 merge: `6ac5571ecccf8f954a99342240409e3dfdfc986a`
@@ -26,10 +26,11 @@ PR #222 merge: `6ac5571ecccf8f954a99342240409e3dfdfc986a`
 ## Current integrated Chart Flow and market overview state (19 November 2026)
 
 - Chart Flow backend route: `backend/app/routes/market_flow.py`, registered in `backend/app/main.py` behind the authenticated-user dependency.
-- The market snapshot combines provider-ranked NSE/BSE cash-market gainers and losers with supported index snapshots. Optional sector index snapshots and sector-specific provider-ranked mover lists are supported.
+- The market snapshot combines provider-ranked NSE/BSE cash-market gainers and losers with supported index snapshots. The frontend requests sector index snapshots by default, and sector-specific provider-ranked mover lists are available on selection.
 - Sector requests return the provider's ranked movers for the selected sector and an index quote; they do not represent every constituent in that sector.
 - The route enforces pacing for m.Stock mover requests, caches eligible complete sector/index responses, returns partial status and provider errors when only part of the snapshot succeeds, and declares the operation read-only with no database writes.
-- Full exchange advance/decline breadth, full sector constituent breadth, delivery statistics and historical market-flow history are not supplied by this endpoint. UI counts must be described as provider-returned mover rows, not total listed-market breadth.
+- The backend currently configures 17 provider-documented NSE sector universes. Sector index quotes now use the gateway's `/quote?symbol={EXCHANGE}:{SYMBOL}` route, whose best-effort Type A OHLC enrichment supplies previous close when available; the backend derives daily index change only from that provider OHLC close. The former `/index-quote` route only proxied LTP and could not reliably provide previous-close performance. The source-level correction and regression test are on `feature/complete-rest-market-analytics`; live provider coverage remains unverified until an authenticated production smoke test.
+- Full exchange advance/decline breadth, full sector constituent breadth, delivery statistics and historical market-flow history are not supplied by the current endpoint. UI counts must be described as provider-returned mover rows, not total listed-market breadth.
 - PR #220 consolidated the Market overview feed and its REST refresh lifecycle. PR #222 added the REST sector explorer and safe provider integration. Both are merged to `main`.
 - Chart Flow remains REST-only and excludes intraday history reconstruction and continuous market streaming. Advanced Chart historical OHLCV and quote snapshots are a separate instrument-analysis workflow.
 
@@ -60,11 +61,19 @@ PR #222 merge: `6ac5571ecccf8f954a99342240409e3dfdfc986a`
 | CE/PE option prices, OI and volume | Must be confirmed from actual chain and per-contract Type A REST quote responses | Not yet verified |
 | PCR, Max Pain and strike OI distribution | Requires complete, valid CE/PE OI for one expiry | Not yet implementable until live fields are verified |
 | Futures price + OI history | No verified historical Type A REST response contract in this application | Not yet verified |
-| Sector index performance | Index quote capability exists, but no verified sector-index symbol universe / historical index-token contract has been validated end-to-end | Not implemented |
-| Sector constituents / sector breadth | No verified constituent mapping or full-universe advances/declines REST feed | Not available from current integration |
+| Sector index performance | 17 configured sector symbols; backend uses the gateway `/quote` LTP + best-effort OHLC path and derives change from provider previous close | Implemented in source; live symbol coverage and account response unverified |
+| Sector ranked movers | Type A Top Gainers/Losers SecurityIdCode mappings for 17 sectors | Implemented; live request coverage unverified |
+| Full sector constituents / sector breadth | No complete constituent membership and full-universe advances/declines REST feed | Not available from current integration |
 | Full-market breadth | Bounded top-movers endpoint is not a full market universe | Not available from current integration |
 | Historical OI time series | No verified historical OI REST response contract in this application | Not yet verified |
 | Continuous live ticks | Excluded by the REST-only product requirement | Not in scope |
+
+## Current completion branch notes (19 November 2026)
+
+- Branch: `feature/complete-rest-market-analytics`, based on `main`.
+- Regression test added for the OHLC-enriched gateway `/quote` route; backend index retrieval changed from LTP-only `/index-quote` to `/quote?symbol={EXCHANGE}:{SYMBOL}`. This allows sector and benchmark percentage change to be calculated from actual provider OHLC close when returned.
+- The old architecture draft has been replaced with the current source architecture: Markets, Order Flow/Chart Flow, Advanced Chart and Options Hub; authenticated `apiFetch`; FastAPI private routes; gateway shared-secret boundary; REST-only transport; no intraday Chart Flow.
+- This branch has not yet been CI-verified, merged or deployed. No production endpoint result is claimed.
 
 ## Integrity and preservation constraints
 

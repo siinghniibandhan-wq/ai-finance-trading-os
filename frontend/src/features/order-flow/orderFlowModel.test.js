@@ -1,4 +1,4 @@
-import test from"node:test";import assert from"node:assert/strict";import{normalizeOrderFlow,summarizeOrderFlow,sortOrderFlow,buildChartFlowPoints,buildMarketFlowBoard,buildDistributionDots,normalizeSectorMovers,filterOrderFlow,buildHistoricalFlowSeries,summarizeSectorMoverSample,rankSectorIndices,summarizeMoverVolume,buildSectorFlowRows}from"./orderFlowModel.js";
+import test from"node:test";import assert from"node:assert/strict";import{normalizeOrderFlow,summarizeOrderFlow,sortOrderFlow,buildChartFlowPoints,buildMarketFlowBoard,buildDistributionDots,normalizeSectorMovers,filterOrderFlow,buildHistoricalFlowSeries,summarizeSectorMoverSample,rankSectorIndices,summarizeMoverVolume,buildSectorFlowRows,buildHistoricalCandleGeometry}from"./orderFlowModel.js";
 test("normalizes only provider supplied NSE/BSE movers",()=>{const rows=normalizeOrderFlow({market_movers:{gainers:[{symbol:"abc",exchange:"NSE",ltp:"10",percent_change:"2"},{symbol:"bad",exchange:"NFO",ltp:2,percent_change:1}],losers:[{symbol:"xyz",exchange:"BSE",ltp:4,percent_change:-1}]}});assert.deepEqual(rows.map(r=>r.symbol),["ABC","XYZ"]);assert.deepEqual(rows.map(r=>r.direction),["bullish","bearish"]);});
 test("summarizes and sorts only normalized provider rows",()=>{const rows=normalizeOrderFlow({market_movers:{gainers:[{symbol:"a",exchange:"NSE",ltp:10,percent_change:1}],losers:[{symbol:"b",exchange:"BSE",ltp:20,percent_change:-2}]}});assert.equal(summarizeOrderFlow(rows).total,2);assert.deepEqual(sortOrderFlow(rows,"changePercent","desc").map(r=>r.symbol),["A","B"]);});
 test("builds a zero-centred chart-flow series from provider price changes",()=>{const rows=[{symbol:"UP",changePercent:4,direction:"bullish"},{symbol:"DOWN",changePercent:-2,direction:"bearish"},{symbol:"FLAT",changePercent:0,direction:"unchanged"}];const points=buildChartFlowPoints(rows);assert.equal(points.length,3);assert.equal(points[0].normalizedMove,1);assert.equal(points.find(r=>r.symbol==="DOWN").normalizedMove,-0.5);assert.equal(points.find(r=>r.symbol==="FLAT").normalizedMove,0);});
@@ -189,4 +189,20 @@ test("builds a complete sector flow rail while keeping unavailable provider perf
   assert.equal(rows[2].direction, null);
   assert.equal(rows[2].percentChange, null);
   assert.equal(rows[2].lastPrice, 18000);
+});
+
+
+test("builds candle geometry from actual OHLC values and preserves missing volume", () => {
+  const geometry = buildHistoricalCandleGeometry([
+    { timestamp: 1, open: 10, high: 13, low: 9, close: 12, volume: 100 },
+    { timestamp: 2, open: 12, high: 14, low: 11, close: 11, volume: null },
+  ]);
+  assert.equal(geometry.length, 2);
+  assert.equal(geometry[0].direction, "bullish");
+  assert.equal(geometry[1].direction, "bearish");
+  assert.equal(geometry[0].volumeHeight, 36);
+  assert.equal(geometry[1].volumeHeight, 0);
+  assert.ok(geometry.every(item => item.highY <= item.lowY));
+  assert.ok(geometry.every(item => item.bodyHeight >= 1));
+  assert.equal(buildHistoricalCandleGeometry([]).length, 0);
 });

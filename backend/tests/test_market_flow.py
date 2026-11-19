@@ -237,3 +237,30 @@ def test_chart_flow_caches_complete_sector_index_scan(monkeypatch):
     assert first == second
     assert first_errors == second_errors == []
     assert calls["count"] == len(market_flow.SECTOR_UNIVERSES)
+
+
+def test_chart_flow_sector_universe_matches_mstock_documented_security_id_codes():
+    expected = {
+        "auto": 9,
+        "private-bank": 10,
+        "fmcg": 20,
+        "it": 21,
+        "media": 22,
+        "metal": 23,
+        "pharma": 24,
+        "psu-bank": 25,
+        "realty": 26,
+        "energy": 33,
+        "infrastructure": 34,
+        "mnc": 35,
+        "services": 37,
+        "consumer-durables": 59,
+        "financial-services": 60,
+        "oil-gas": 61,
+        "healthcare": 62,
+    }
+
+    actual = {item["key"]: item["security_id_code"] for item in market_flow.SECTOR_UNIVERSES}
+
+    assert actual == expected
+    assert len({item["index_symbol"] for item in market_flow.SECTOR_UNIVERSES}) == len(expected)

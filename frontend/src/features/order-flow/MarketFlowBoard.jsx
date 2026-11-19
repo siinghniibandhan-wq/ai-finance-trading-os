@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadChartHistory, loadMarketFlowSnapshot } from "../advanced-chart/api.js";
-import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries, summarizeSectorMoverSample, rankSectorIndices } from "./orderFlowModel.js";
+import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries, summarizeSectorMoverSample, rankSectorIndices, summarizeMoverVolume } from "./orderFlowModel.js";
 import "./market-flow-board.css";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
@@ -95,6 +95,28 @@ function Side({ title, side, rows, selectedKey, focusedKey, onSelect, onHover })
   </section>;
 }
 
+
+
+function VolumeParticipation({ rows, label = "MARKET" }) {
+  const summary = useMemo(() => summarizeMoverVolume(rows), [rows]);
+  const max = Math.max(1, summary.bullishVolume, summary.bearishVolume, summary.unchangedVolume);
+  const items = [
+    { key: "bullish", label: "Bullish", volume: summary.bullishVolume, count: summary.bullishCount },
+    { key: "bearish", label: "Bearish", volume: summary.bearishVolume, count: summary.bearishCount },
+    { key: "flat", label: "Unchanged", volume: summary.unchangedVolume, count: summary.unchangedCount },
+  ];
+  return <section className="mfb-volume">
+    <div className="mfb-volume-head"><div><small>VOLUME PARTICIPATION / {label}</small><b>Reported volume by direction</b></div>
+      <span>{summary.volumeReported} instruments with volume</span></div>
+    <div className="mfb-volume-bars">
+      {items.map(item => <div className="mfb-volume-row" key={item.key}>
+        <span>{item.label}</span><i><b className={item.key} style={{ width: item.volume / max * 100 + "%" }}/></i>
+        <strong>{fmt(item.volume, 0)}</strong><small>{item.count} stocks</small>
+      </div>)}
+    </div>
+    <p>Aggregated from returned movers only. This is not total exchange turnover or full-market participation.</p>
+  </section>;
+}
 
 function HistoricalFlowPanel({ series, loading, error, symbol }) {
   if (loading) return <section className="mfb-history"><small>05 / HISTORICAL PRICE FLOW</small><p>Loading verified historical candles…</p></section>;
@@ -285,6 +307,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
     {error && <p className="mfb-alert" role="alert">{error}. Last successful data is retained; no demo feed is substituted.</p>}{payload?.status === "partial" && <p className="mfb-alert" role="status">Some provider requests failed. The board contains only the successful real responses; missing instruments are not filled with estimates.</p>}
     {!loading && !rows.length && !error && <p className="mfb-alert">No valid provider movers were returned. No simulated instruments are displayed.</p>}
     <Distribution rows={rows} counts={buildMarketFlowBoard(rows).counts} breadthAvailable={payload?.capabilities?.full_advance_decline_breadth === true} retrievedAt={retrievedAt ? new Date(retrievedAt).toLocaleTimeString("en-IN") : null}/>
+    <VolumeParticipation rows={rows}/>
     <section className="mfb-filterbar" aria-label="Filter market movers">
       <label>Search instruments<input type="search" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="Symbol or company"/></label>
       <label>Exchange<select value={exchangeFilter} onChange={event => setExchangeFilter(event.target.value)}><option value="ALL">All exchanges</option><option value="NSE">NSE</option><option value="BSE">BSE</option></select></label>
@@ -328,7 +351,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
               {sectorPayload.sector_index && <div className="mfb-sector-index-quote"><small>{sectorPayload.sector_index.name} · INDEX LEVEL</small><strong>{fmt(sectorPayload.sector_index.last_price)}</strong>
                 {sectorPayload.sector_index.percent_change !== null && sectorPayload.sector_index.percent_change !== undefined && Number.isFinite(Number(sectorPayload.sector_index.percent_change)) && <b className={Number(sectorPayload.sector_index.percent_change) >= 0 ? "up" : "down"}>{pct(Number(sectorPayload.sector_index.percent_change))}</b>}
                 <span>{sectorPayload.sector_index.previous_close ? "Previous close " + fmt(sectorPayload.sector_index.previous_close) : "Daily change unavailable from provider OHLC."}</span></div>}
-              <Distribution eyebrow="SECTOR / PROVIDER-RANKED MOVERS" title={sectorPayload.sector?.name + " price distribution"} description="Actual sector-filtered gainers and losers returned by m.Stock. This is not the full sector constituent universe." rows={sectorRows} counts={buildMarketFlowBoard(sectorRows).counts} breadthAvailable={false} retrievedAt={sectorPayload.last_updated ? new Date(sectorPayload.last_updated).toLocaleTimeString("en-IN") : null}/>
+              <Distribution eyebrow="SECTOR / PROVIDER-RANKED MOVERS" title={sectorPayload.sector?.name + " price distribution"} description="Actual sector-filtered gainers and losers returned by m.Stock. This is not the full sector constituent universe." rows={sectorRows} counts={buildMarketFlowBoard(sectorRows).counts} breadthAvailable={false} retrievedAt={sectorPayload.last_updated ? new Date(sectorPayload.last_updated).toLocaleTimeString("en-IN") : null}/><VolumeParticipation rows={sectorRows} label="SECTOR SAMPLE"/>
               <div className="mfb-sector-movers">
                 <Side title="Sector gainers" side="up" rows={sectorRows.filter(row => row.direction === "bullish")}
                   selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>

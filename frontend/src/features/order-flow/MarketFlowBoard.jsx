@@ -1,7 +1,6 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { useMarketOverview } from "../../marketOverviewStore.js";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { loadMarketFlowSnapshot } from "../advanced-chart/api.js";
 import { buildDistributionDots, buildMarketFlowBoard, normalizeOrderFlow } from "./orderFlowModel.js";
-import MarketFlowPriceChart from "./MarketFlowPriceChart.jsx";
 import "./market-flow-board.css";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
@@ -86,15 +85,43 @@ function Side({ title, side, rows, selectedKey, onSelect }) {
 }
 
 export default function MarketFlowBoard({ onSelectInstrument }) {
-  // Market and Order Flow subscribe to the same app-wide snapshot and refresh lifecycle.
-  const { data: payload, loading, error, refresh } = useMarketOverview();
+  const [payload, setPayload] = useState(null);
+  const [retrievedAt, setRetrievedAt] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedKey, setSelectedKey] = useState(null);
-  const retrievedAt = payload?.last_updated || null;
-  const refreshManually = useCallback(async () => {
-    setRefreshing(true);
-    try { await refresh(); } catch { /* The shared store retains the last successful snapshot. */ }
-    finally { setRefreshing(false); }
+  const [error, setError] = useState("");
+  const [selectedKey, setSelectedKey] = useState("");
+  const busy = useRef(false);
+  const mounted = useRef(true);
+  const hasPayload = useRef(false);
+
+  const refresh = useCallback(async (manual = false) => {
+    if (busy.current || document.visibilityState !== "visible") return;
+    busy.current = true;
+    if (manual) setRefreshing(true);
+    else if (!hasPayload.current) setLoading(true);
+    try {
+      const next = await loadMarketFlowSnapshot();
+      if (!mounted.current) return;
+      setPayload(next);
+      hasPayload.current = true;
+      setRetrievedAt(next?.last_updated || new Date().toISOString());
+      setError("");
+    } catch (requestError) {
+      if (mounted.current) setError(requestError?.message || "Market data request failed.");
+    } finally {
+      busy.current = false;
+      if (mounted.current) { setLoading(false); setRefreshing(false); }
+    }
+  }, []);
+
+  useEffect(() => {
+    mounted.current = true;
+    refresh();
+    const poll = () => { if (document.visibilityState === "visible") refresh(); };
+    const timer = window.setInterval(poll, 30000);
+    document.addEventListener("visibilitychange", poll);
+    return () => { mounted.current = false; window.clearInterval(timer); document.removeEventListener("visibilitychange", poll); };
   }, [refresh]);
 
   const rows = useMemo(() => normalizeOrderFlow(payload), [payload]);
@@ -112,9 +139,9 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
 
   return <main className="market-flow-board">
     <header className="mfb-header"><div><small>FINANCIAL OS / MARKETS / ORDER FLOW</small><h1>Chart Flow</h1>
-      <p>Market-mover discovery from real provider-returned cash-equity movers and supported indices.</p></div>
+      <p>Whole-market discovery from real provider-returned cash-equity movers and supported indices.</p></div>
       <div><span className={error ? "mfb-status error" : loading ? "mfb-status" : "mfb-status live"}>{error ? "SOURCE ERROR" : loading ? "CONNECTING" : payload?.status === "partial" ? "PARTIAL DATA" : "REST SNAPSHOT"}</span>
-        <button type="button" onClick={refreshManually} disabled={loading || refreshing}>{refreshing ? "Refreshing…" : "Refresh"}</button></div>
+        <button type="button" onClick={() => refresh(true)} disabled={loading || refreshing}>{refreshing ? "Refreshing…" : "Refresh"}</button></div>
     </header>
     <section className="mfb-index-rail">{indices.map(index => <div key={index.exchange + ":" + index.name}>
       <small>{index.name}</small><strong>{fmt(index.last_price)}</strong><span>{index.exchange}</span></div>)}
@@ -125,7 +152,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
     <section className="mfb-section mfb-flow">
       <div className="mfb-section-head"><div><small>02 / MARKET FLOW</small><h2>Zero-centred market flow</h2>
         <p>Actual price changes fan through the central gate into bullish and bearish instruments. This is a current snapshot, not a reconstructed intraday history.</p></div>
-        <span className="mfb-poll">Shared Market feed · 30-second refresh</span></div>
+        <span className="mfb-poll">REST refresh · 30 seconds while visible</span></div>
       <div className="mfb-board">
         <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} onSelect={row => setSelectedKey(keyOf(row))}/>
           <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Sector participation</b></div>
@@ -147,7 +174,6 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         <button type="button" onClick={() => onSelectInstrument?.(selected)}>Open full chart</button></div>
         : <p>Select a flow path or tile. Only provider-returned fields are shown.</p>}
     </section>
-    <MarketFlowPriceChart instrument={selected} />
     <footer className="mfb-footer"><span>Source: {payload?.data_sources?.primary || "m.Stock via Financial OS Gateway"}</span>
       <span>Snapshot assembled: {retrievedAt ? new Date(retrievedAt).toLocaleString("en-IN") : "—"}</span>
       <span>Read-only · REST only · no synthetic market values</span></footer>

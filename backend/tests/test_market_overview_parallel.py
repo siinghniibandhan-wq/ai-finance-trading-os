@@ -1,16 +1,7 @@
 from threading import Lock
 from time import sleep
 
-import pytest
-
 from app.routes import market_overview
-
-
-@pytest.fixture(autouse=True)
-def reset_market_overview_snapshot_cache(monkeypatch):
-    """Keep provider snapshot state isolated between independent route tests."""
-    monkeypatch.setattr(market_overview, "_snapshot_cache", None)
-    monkeypatch.setattr(market_overview, "_snapshot_cache_at", 0.0)
 
 
 def test_market_overview_fetches_sources_concurrently(monkeypatch):

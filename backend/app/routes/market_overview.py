@@ -1,18 +1,13 @@
 """
-Financial OS — Market Overview Engine v1.5
+Financial OS — Market Overview Engine v1.4
 
 Purpose:
 - Combine existing market indices and market movers.
 - Reuse existing provider functions and m.Stock gateway.
-- Share one short-lived snapshot between Market and Market Flow consumers.
 - Return partial results when one data source fails.
 - Read-only: no database writes.
 """
 
-import copy
-import os
-import threading
-import time
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -36,27 +31,6 @@ DEFAULT_EXCHANGE = 1
 DEFAULT_SECURITY_ID_CODE = 13
 DEFAULT_SEGMENT = 1
 DEFAULT_MOVER_LIMIT = 100
-DEFAULT_SNAPSHOT_TTL_SECONDS = 30
-
-# Both /api/market-overview/ and the Market Flow adapter call this module.
-# A process-local cache plus lock coalesces concurrent requests so they share
-# one provider snapshot instead of fetching the same indices/movers twice.
-_snapshot_cache = None
-_snapshot_cache_at = 0.0
-_snapshot_cache_lock = threading.Lock()
-
-
-def _snapshot_ttl_seconds():
-    try:
-        return max(
-            0,
-            float(os.getenv(
-                "MARKET_OVERVIEW_CACHE_TTL_SECONDS",
-                str(DEFAULT_SNAPSHOT_TTL_SECONDS),
-            )),
-        )
-    except (TypeError, ValueError):
-        return DEFAULT_SNAPSHOT_TTL_SECONDS
 
 
 def fetch_overview_movers(mover_type: str):
@@ -81,7 +55,8 @@ def fetch_overview_movers(mover_type: str):
     ]
 
 
-def _build_market_overview_snapshot():
+@router.get("/")
+def get_market_overview():
     # Independent provider requests run concurrently; a failed movers request
     # must not block or erase successful index/other-mover results.
     index_results = {}
@@ -142,7 +117,7 @@ def _build_market_overview_snapshot():
     return {
         "status": response_status,
         "engine": "Market Overview Engine",
-        "version": "1.5",
+        "version": "1.4",
         "read_only": True,
         "market_status": {
             "status": "unknown",
@@ -178,26 +153,3 @@ def _build_market_overview_snapshot():
         "database_write": False,
         "next_module": "Market Workspace Integration",
     }
-
-
-def get_market_overview():
-    """Return the shared Market snapshot, refreshing it at most once per TTL."""
-    global _snapshot_cache, _snapshot_cache_at
-
-    ttl = _snapshot_ttl_seconds()
-    now = time.monotonic()
-    if _snapshot_cache is not None and now - _snapshot_cache_at < ttl:
-        return copy.deepcopy(_snapshot_cache)
-
-    # Keep the lock through retrieval: simultaneous Market and Flow requests
-    # wait for the same refresh rather than launching duplicate provider calls.
-    with _snapshot_cache_lock:
-        now = time.monotonic()
-        if _snapshot_cache is not None and now - _snapshot_cache_at < ttl:
-            return copy.deepcopy(_snapshot_cache)
-
-        snapshot = _build_market_overview_snapshot()
-        if snapshot.get("status") != "error":
-            _snapshot_cache = snapshot
-            _snapshot_cache_at = time.monotonic()
-        return copy.deepcopy(snapshot)

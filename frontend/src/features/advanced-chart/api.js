@@ -59,9 +59,10 @@ export async function loadMarketOverview() {
 }
 
 
-export async function loadMarketFlowSnapshot() {
-  const response = await apiFetch(`${API_BASE_URL}/api/market-flow/`, {
+export async function loadMarketFlowSnapshot(sectorKey = null) {
+  const params = sectorKey ? `?sector=${encodeURIComponent(sectorKey)}` : "";
+  const response = await apiFetch(`${API_BASE_URL}/api/market-flow/${params}`, {
     cache: "no-store",
   });
-  return readResponse(response, "Chart Flow market snapshot");
+  return readResponse(response, sectorKey ? "Chart Flow sector movers" : "Chart Flow market snapshot");
 }

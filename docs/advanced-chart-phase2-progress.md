@@ -115,30 +115,28 @@ The user executed authenticated, read-only tests against the running EC2 m.Stock
 
 These are production observations for the tested requests, not proof that every symbol, exchange or market-data field works.
 
-### Active issue register
+### Active issue register — implementation update
 
-**AC-01 — BSE cash-equity latest quote fails**
+**AC-01 — BSE cash-equity latest quote**
 
-- Advanced Chart screenshot: BSE HDFC Bank historical chart request appears active, but the latest quote reports gateway HTTP 502.
-- Market screenshot: selected BSE RELIANCE historical price chart renders, but Latest Traded Price and quote details are unavailable.
-- Current backend/app/services/market_price.py appends -EQ to ordinary NSE and BSE qualified symbols. This is a leading suspect for BSE symbol/series mismatch, but the root cause is not confirmed until the exact BSE Script Master symbol is compared with the gateway request/response.
-- Fix: preserve and use the actual BSE tradingsymbol/series from instrument master end-to-end; keep NSE behaviour unchanged; add NSE/BSE mapping regression tests.
-- Status: Open.
+- Backend quote-symbol construction now applies the legacy `-EQ` suffix to NSE cash symbols only. BSE symbols are passed without an invented suffix so the gateway can resolve the exact BSE tradingsymbol/series from the Type A Script Master.
+- Regression coverage added for NSE suffix compatibility, bare BSE symbols, exact BSE series, legacy BSE `-EQ` aliases, non-cash instruments and unqualified legacy symbols.
+- The updated gateway source resolves BSE symbols against Script Master, preserves an exact BSE series (for example `ACC-A`), maps a legacy synthetic `-EQ` only when there is exactly one match, and rejects missing or ambiguous series instead of guessing.
+- Status: source correction prepared; production gateway deployment and live BSE quote verification remain pending. No AWS service was changed.
 
-**AC-02 — Options chain Volume and Open Interest are missing**
+**AC-02 — Options chain Volume and Open Interest**
 
-- Options Hub screenshot confirms CE/PE strike rows and LTP values are displayed. Volume and OI are unavailable.
-- Production chain responses returned LTP coverage, but the tested responses did not provide Volume or OI.
-- Current gateway code only maps volume and open_interest if those fields are present in the LTP quote response; a separate full-quote enrichment path is not implemented.
-- Fix: verify the supported m.Stock REST contract and account entitlement, retrieve fields through a documented rate-safe endpoint where available, and normalise the actual response. Keep unsupported values null.
-- Status: Open.
+- Kept the existing REST adapter and its null/availability behavior. No WebSocket, socket worker, subscription, or simulated market data has been added.
+- m.Stock Type A documentation labels Option Chain APIs “Coming Soon”; the master is also marked “coming soon”. Its example CE/PE rows do not define the compact row's third value as Volume or OI. The documented Type A LTP/OHLC REST quote responses do not establish these fields either.
+- Per the project instruction, this provider-blocked capability is left as-is. Volume and OI remain unavailable unless m.Stock publishes/enables a supported REST response that explicitly supplies them. No unrelated endpoint or undocumented field is being guessed.
+- Status: intentionally unchanged; provider documentation blocker.
 
-**AC-03 — OI analytics are withheld because OI is missing**
+**AC-03 — PCR, Max Pain and strike OI distribution**
 
-- Put/Call OI, PCR, Max Pain and strike-wise OI distribution are unavailable.
-- frontend/src/features/options-hub/optionsModel.js deliberately requires complete CE and PE OI at every displayed strike. This is a protective completeness rule, not a proven calculation bug.
-- Fix: retain the rule; verify calculations with genuine OI after AC-02 is resolved.
-- Status: Blocked by AC-02; no separate frontend defect established.
+- Existing frontend calculations remain unchanged. They require both CE and PE contracts and non-null OI at every displayed strike before calculating PCR, Max Pain or OI bars.
+- Existing Options Hub model tests cover complete-chain calculations and the incomplete/missing-OI safety gate. Those tests use fixtures and prove calculation behavior only; they do not prove live provider OI coverage.
+- Because AC-02 remains provider-blocked, live PCR, Max Pain and OI distribution remain unavailable. The UI must continue withholding these analytics rather than displaying misleading values.
+- Status: calculation logic retained; production analytics remain blocked by AC-02.
 
 ### Work order
 

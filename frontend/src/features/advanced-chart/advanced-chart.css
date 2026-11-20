@@ -327,23 +327,3 @@
 .advanced-chart-indicator-title{margin:0 0 6px;color:var(--finos-muted,#9ca3af);font-size:9px;font-weight:800;letter-spacing:.1em}
 .advanced-chart-indicator-canvas{width:100%;height:190px;min-height:190px}
 .advanced-chart-type-control select,.advanced-chart-control select{max-width:180px}
-
-/* Additive selected-instrument corporate-actions panel. */
-.advanced-chart-corporate{margin:12px 0;padding:14px;border:1px solid var(--finos-border,#30343d);border-radius:10px;background:var(--t-card-bg,var(--finos-surface,#171923))}
-.advanced-chart-corporate-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.advanced-chart-corporate-heading span{color:var(--finos-muted,#9ca3af);font-size:9px;font-weight:800;letter-spacing:.1em}
-.advanced-chart-corporate-heading h2{margin:4px 0 0;font-size:15px}
-.advanced-chart-corporate-heading>strong{font-size:11px;color:var(--finos-muted,#9ca3af)}
-.advanced-chart-corporate>p{color:var(--finos-muted,#9ca3af);font-size:11px;line-height:1.5}
-.advanced-chart-corporate-list{display:grid;gap:8px}
-.advanced-chart-corporate-list article{padding:10px;border:1px solid var(--finos-border,#30343d);border-radius:8px}
-.advanced-chart-corporate-event{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
-.advanced-chart-corporate-event strong{font-size:12px}
-.advanced-chart-corporate-event span{padding:3px 6px;border-radius:4px;background:rgba(128,128,128,.12);color:var(--finos-muted,#9ca3af);font-size:9px;text-transform:uppercase}
-.advanced-chart-corporate-event b{color:var(--finos-accent,#9b83ff);font-size:11px}
-.advanced-chart-corporate-list dl{display:flex;gap:8px 22px;flex-wrap:wrap;margin:9px 0 0}
-.advanced-chart-corporate-list dl div{display:grid;gap:3px}
-.advanced-chart-corporate-list dt{color:var(--finos-muted,#9ca3af);font-size:9px}
-.advanced-chart-corporate-list dd{margin:0;font-size:10px;font-variant-numeric:tabular-nums}
-.advanced-chart-corporate-source{display:inline-block;margin-top:10px;color:var(--finos-muted,#9ca3af);font-size:10px;text-decoration:underline;text-underline-offset:2px}
-.advanced-chart-corporate-note{margin-bottom:0}

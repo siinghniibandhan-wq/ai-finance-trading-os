@@ -451,3 +451,28 @@
   .mfb-quality summary{flex-wrap:wrap}
   .mfb-quality summary em{margin-left:16px;text-align:left}
 }
+
+/* Additive institutional flow visual — isolated from existing Market Flow styles. */
+.mfb-institutional{border-top:1px solid var(--line);padding-top:20px}
+.mfb-institutional-meta{display:flex;gap:8px 18px;flex-wrap:wrap;padding:9px 0 13px;color:var(--muted);font-size:10px}
+.mfb-institutional-meta strong{color:var(--text)}
+.mfb-institutional-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mfb-institutional-row{min-width:0;padding:14px;border:1px solid var(--line);background:var(--surface)}
+.mfb-institutional-row-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.mfb-institutional-row-head h3{margin:0;color:var(--text);font-size:13px}
+.mfb-institutional-row-head>strong{font-size:12px;font-variant-numeric:tabular-nums}
+.mfb-institutional-bar-line{display:grid;grid-template-columns:34px minmax(50px,1fr) auto;align-items:center;gap:8px;margin:9px 0;font-size:10px;color:var(--muted)}
+.mfb-institutional-bar-line>b{color:var(--text);font-variant-numeric:tabular-nums}
+.mfb-institutional-track{height:7px;background:var(--line);overflow:hidden}
+.mfb-institutional-track i{display:block;height:100%;min-width:0}
+.mfb-institutional-track i.buy{background:var(--green)}
+.mfb-institutional-track i.sell{background:var(--red)}
+.mfb-institutional-net{display:grid;grid-template-columns:55px minmax(50px,1fr) auto;align-items:center;gap:8px;margin-top:14px;padding-top:10px;border-top:1px solid var(--line);font-size:10px;color:var(--muted)}
+.mfb-institutional-zero{height:7px;background:linear-gradient(90deg,var(--red) 0 50%,var(--green) 50% 100%);position:relative;overflow:hidden}
+.mfb-institutional-zero i{position:absolute;top:0;height:100%;max-width:50%}
+.mfb-institutional-zero i.positive{left:50%;background:var(--green)}
+.mfb-institutional-zero i.negative{right:50%;background:var(--red)}
+.mfb-institutional-net b{font-variant-numeric:tabular-nums}
+.mfb-institutional-foot{display:flex;gap:8px 18px;flex-wrap:wrap;padding-top:12px;color:var(--muted);font-size:9px}
+.mfb-institutional-foot a{color:var(--text);text-decoration:underline;text-underline-offset:2px}
+@media(max-width:700px){.mfb-institutional-grid{grid-template-columns:1fr}.mfb-institutional-row{padding:11px}}

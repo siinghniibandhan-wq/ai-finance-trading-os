@@ -402,3 +402,32 @@
 @media(min-width:2000px){.market-flow-board{max-width:1920px;font-size:15px}}
 /* Short landscape phones */
 @media(max-height:480px) and (orientation:landscape){.mfb-header h1{font-size:22px}.mfb-index-rail strong{font-size:16px}}
+
+/* Keep the complete connected diagram available on touch devices, including
+   mobile browsers requesting Desktop site. The diagram scrolls horizontally
+   instead of being replaced by the reduced compact representation. */
+@media(pointer:coarse){
+  .mfb-stream-grid{min-width:0}
+  .mfb-stream-scroll{
+    min-width:0;
+    max-width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+  }
+  .mfb-stream-wide{
+    display:block!important;
+    width:940px;
+    min-width:940px;
+  }
+  .mfb-stream-compact{display:none!important}
+  .mfb-stream-svg{
+    display:block;
+    width:940px;
+    max-width:none;
+    height:auto;
+    touch-action:pan-x pan-y pinch-zoom;
+  }
+}
+

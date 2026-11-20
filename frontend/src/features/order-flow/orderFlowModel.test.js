@@ -1,8 +1,6 @@
-import test from"node:test";import assert from"node:assert/strict";import{normalizeOrderFlow,summarizeOrderFlow,sortOrderFlow,buildChartFlowPoints,buildMarketFlowBoard,buildDistributionDots,normalizeSectorMovers,filterOrderFlow,buildHistoricalFlowSeries,summarizeSectorMoverSample,rankSectorIndices,summarizeMoverVolume,buildSectorFlowRows,buildHistoricalCandleGeometry}from"./orderFlowModel.js";
+import test from"node:test";import assert from"node:assert/strict";import{normalizeOrderFlow,sortOrderFlow,buildMarketFlowBoard,buildDistributionDots,normalizeSectorMovers,filterOrderFlow,buildHistoricalFlowSeries,summarizeSectorMoverSample,summarizeMoverVolume,buildSectorFlowRows,buildHistoricalCandleGeometry}from"./orderFlowModel.js";
 test("normalizes only provider supplied NSE/BSE movers",()=>{const rows=normalizeOrderFlow({market_movers:{gainers:[{symbol:"abc",exchange:"NSE",ltp:"10",percent_change:"2"},{symbol:"bad",exchange:"NFO",ltp:2,percent_change:1}],losers:[{symbol:"xyz",exchange:"BSE",ltp:4,percent_change:-1}]}});assert.deepEqual(rows.map(r=>r.symbol),["ABC","XYZ"]);assert.deepEqual(rows.map(r=>r.direction),["bullish","bearish"]);});
-test("summarizes and sorts only normalized provider rows",()=>{const rows=normalizeOrderFlow({market_movers:{gainers:[{symbol:"a",exchange:"NSE",ltp:10,percent_change:1}],losers:[{symbol:"b",exchange:"BSE",ltp:20,percent_change:-2}]}});assert.equal(summarizeOrderFlow(rows).total,2);assert.deepEqual(sortOrderFlow(rows,"changePercent","desc").map(r=>r.symbol),["A","B"]);});
-test("builds a zero-centred chart-flow series from provider price changes",()=>{const rows=[{symbol:"UP",changePercent:4,direction:"bullish"},{symbol:"DOWN",changePercent:-2,direction:"bearish"},{symbol:"FLAT",changePercent:0,direction:"unchanged"}];const points=buildChartFlowPoints(rows);assert.equal(points.length,3);assert.equal(points[0].normalizedMove,1);assert.equal(points.find(r=>r.symbol==="DOWN").normalizedMove,-0.5);assert.equal(points.find(r=>r.symbol==="FLAT").normalizedMove,0);});
-test("limits chart-flow points and does not invent rows for empty input",()=>{const rows=Array.from({length:5},(_,i)=>({symbol:String(i),changePercent:i,direction:"bullish"}));assert.equal(buildChartFlowPoints(rows,3).length,3);assert.deepEqual(buildChartFlowPoints(null),[]);});
+test("summarizes and sorts only normalized provider rows",()=>{const rows=normalizeOrderFlow({market_movers:{gainers:[{symbol:"a",exchange:"NSE",ltp:10,percent_change:1}],losers:[{symbol:"b",exchange:"BSE",ltp:20,percent_change:-2}]}});assert.deepEqual(sortOrderFlow(rows,"changePercent","desc").map(r=>r.symbol),["A","B"]);});
 
 
 test("builds bullish, bearish and unchanged lanes only from returned instruments", () => {
@@ -107,19 +105,6 @@ test("sorts symbols in both requested directions and leaves missing metrics last
   assert.deepEqual(sortOrderFlow(rows, "symbol", "asc").map(row => row.symbol), ["INFY", "TCS", "WIPRO"]);
   assert.deepEqual(sortOrderFlow(rows, "symbol", "desc").map(row => row.symbol), ["WIPRO", "TCS", "INFY"]);
   assert.deepEqual(sortOrderFlow(rows, "volume", "desc").map(row => row.symbol), ["TCS", "WIPRO", "INFY"]);
-});
-
-
-test("ranks sectors by provider OHLC percentage change and leaves unavailable changes last", () => {
-  const ranked = rankSectorIndices(
-    [{ key: "auto", name: "Auto" }, { key: "it", name: "IT" }, { key: "pharma", name: "Pharma" }],
-    [
-      { key: "auto", percent_change: -1.2 },
-      { key: "it", percent_change: 2.5 },
-      { key: "pharma", percent_change: null },
-    ],
-  );
-  assert.deepEqual(ranked.map(row => row.key), ["it", "auto", "pharma"]);
 });
 
 
@@ -278,4 +263,12 @@ test("distinguishes provider-reported zero volume from positive traded volume", 
   assert.equal(summary.zeroVolumeReported, 2);
   assert.equal(summary.bullishVolume, 25);
   assert.equal(summary.bearishVolume, 0);
+});
+
+test("drops impossible price changes of -100% or worse", () => {
+  const rows = normalizeOrderFlow({ market_movers: { gainers: [], losers: [
+    { symbol: "BOND1", exchange: "BSE", ltp: 99786, percent_change: -232 },
+    { symbol: "OK", exchange: "NSE", ltp: 100, percent_change: -5 },
+  ] } });
+  assert.deepEqual(rows.map(row => row.symbol), ["OK"]);
 });

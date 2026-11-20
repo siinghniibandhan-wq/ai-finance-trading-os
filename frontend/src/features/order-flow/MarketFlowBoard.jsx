@@ -30,64 +30,6 @@ function Distribution({ rows, counts, retrievedAt, breadthAvailable, eyebrow = "
   </section>;
 }
 
-function FlowDiagram({ board, selectedKey, focusedKey, onSelect, onHover }) {
-  const top = board.visibleBullish;
-  const bottom = board.visibleBearish;
-  const flat = board.unchanged.slice(0, 8);
-  const gap = 30;
-  const rows = Math.max(top.length, bottom.length, 3);
-  const height = Math.max(410, rows * gap * 2 + 110);
-  const center = height / 2;
-  const paths = [
-    ...top.map((row, i) => ({ row, y: center - 42 - i * gap, side: "up" })),
-    ...bottom.map((row, i) => ({ row, y: center + 42 + i * gap, side: "down" })),
-  ];
-  return <div className="mfb-diagram-wrap">
-    <svg className="mfb-diagram" viewBox={"0 0 690 " + height} role="img" aria-label="Market price flow fanning from the market origin through a directional gate into bullish and bearish groups">
-      <defs>
-        <marker id="mfb-arrow-up" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z" className="mfb-arrow-up"/></marker>
-        <marker id="mfb-arrow-down" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 Z" className="mfb-arrow-down"/></marker>
-      </defs>
-      <text x="20" y="20" className="mfb-caption">MARKET FLOW · PRICE CHANGE FROM ZERO</text>
-      <line x1="20" x2="660" y1={center} y2={center} className="mfb-zero-line"/>
-      <circle cx="28" cy={center} r="6" className="mfb-flow-origin"/>
-      <text x="20" y={center - 14} className="mfb-zero-text">MARKET</text>
-      <text x="20" y={center + 16} className="mfb-zero-text">0%</text>
-      {paths.map(({ row, y, side }) => {
-        const selected = keyOf(row) === selectedKey || keyOf(row) === focusedKey;
-        const strength = Math.min(1, Math.abs(row.changePercent) / board.maxAbs);
-        return <g key={keyOf(row)} role="button" tabIndex="0"
-          aria-label={`${row.name}, ${row.symbol}, ${pct(row.changePercent)}, ${row.exchange}. Select instrument`}
-          aria-pressed={keyOf(row) === selectedKey}
-          className={"mfb-path " + side + (selected ? " selected" : "")}
-          onMouseEnter={() => onHover(keyOf(row))} onMouseLeave={() => onHover(null)}
-          onFocus={() => onHover(keyOf(row))} onBlur={() => onHover(null)}
-          onClick={() => onSelect(row)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(row); } }}>
-          <path d={"M 34 " + center + " C 170 " + center + ", 340 " + y + ", 570 " + y}
-            markerEnd={side === "up" ? "url(#mfb-arrow-up)" : "url(#mfb-arrow-down)"}
-            style={{ opacity: selected ? 1 : .25 + strength * .5, strokeWidth: selected ? 3.2 : 1.1 + strength * 1.8 }}/>
-          <circle cx="570" cy={y} r={selected ? 5 : 3.2}/><title>{row.symbol + ": " + pct(row.changePercent)}</title>
-        </g>;
-      })}
-      <rect x="570" y="34" width="22" height={Math.max(40, center - 58)} rx="9" className="mfb-gate-up"/>
-      <path d={"M 570 " + (center - 32) + " L 594 " + (center - 9) + " L 594 " + (center + 9) + " L 570 " + (center + 32) + " Z"} className="mfb-gate-flat"/>
-      <rect x="570" y={center + 58} width="22" height={Math.max(40, center - 94)} rx="9" className="mfb-gate-down"/>
-      <text x="604" y="48" className="mfb-gate-label up">BULLISH</text>
-      <text x="604" y={center + 4} className="mfb-gate-label flat">FLAT</text>
-      <text x="604" y={height - 28} className="mfb-gate-label down">BEARISH</text>
-      {flat.map((row, i) => <g key={keyOf(row)} role="button" tabIndex="0"
-        aria-label={`${row.name}, ${row.symbol}, unchanged, ${row.exchange}. Select instrument`}
-        aria-pressed={keyOf(row) === selectedKey}
-        className={"mfb-flat-point" + (keyOf(row) === selectedKey ? " selected" : "")}
-        onMouseEnter={() => onHover(keyOf(row))} onMouseLeave={() => onHover(null)}
-        onFocus={() => onHover(keyOf(row))} onBlur={() => onHover(null)}
-        onClick={() => onSelect(row)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(row); } }}>
-        <circle cx={580 + (i % 3) * 7} cy={center + (Math.floor(i / 3) - 1) * 8} r="3"/><title>{row.symbol + ": unchanged"}</title></g>)}
-    </svg>
-    <div className="mfb-diagram-foot"><span>Movers start at the zero reference</span><span>Path positions use actual provider percentage changes</span></div>
-  </div>;
-}
-
 function Side({ title, side, rows, selectedKey, focusedKey, onSelect, onHover }) {
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? rows : rows.slice(0, 8);
@@ -108,128 +50,6 @@ function Side({ title, side, rows, selectedKey, focusedKey, onSelect, onHover })
 
 
 
-/**
- * Connected sector-index flow. The branch is sourced from the provider's
- * sector universe; each diverging bar uses only the provider's index
- * percentage change. A missing percentage remains an explicit gap.
- */
-function SectorFlowDiagram({ sectors, selectedKey, loading, onSelect }) {
-  const rowHeight = 34;
-  const top = 44;
-  const height = Math.max(130, top + sectors.length * rowHeight + 24);
-  const centerY = top + Math.max(0, sectors.length - 1) * rowHeight / 2;
-  const centerX = 720;
-  const maxAbs = Math.max(0.1, ...sectors.map(row => row.percentChange === null ? 0 : Math.abs(row.percentChange)));
-  const halfWidth = 166;
-
-  if (!sectors.length) {
-    return <div className="mfb-sector-flow-empty" role="status">Sector universe is unavailable from the current REST response.</div>;
-  }
-
-  return <div className="mfb-sector-flow-wrap">
-    <div className="mfb-sector-flow-legend">
-      <span><i className="up"/> Calculated index change (LTP vs previous close)</span>
-      <span><i className="down"/> Negative performance</span>
-      <span>Unavailable values are not plotted</span>
-    </div>
-    <svg className="mfb-sector-flow" viewBox={`0 0 1000 ${height}`} role="group" aria-label="Provider sector indices connected to the market flow, ranked by calculated percentage change">
-      <line x1="116" y1={centerY} x2="190" y2={centerY} className="mfb-sector-root"/>
-      <line x1="190" y1={top} x2="190" y2={top + (sectors.length - 1) * rowHeight} className="mfb-sector-spine"/>
-      <circle cx="116" cy={centerY} r="7" className="mfb-sector-origin"/>
-      <text x="18" y={centerY - 5} className="mfb-sector-root-label">MARKET</text>
-      <text x="18" y={centerY + 10} className="mfb-sector-root-sub">SECTOR FLOW</text>
-      <line x1={centerX} x2={centerX} y1={top - 18} y2={top + sectors.length * rowHeight - 12} className="mfb-sector-zero"/>
-      <text x={centerX} y={top - 24} textAnchor="middle" className="mfb-sector-axis-label">0%</text>
-      {sectors.map((sector, index) => {
-        const y = top + index * rowHeight;
-        const selected = sector.key === selectedKey;
-        const value = sector.percentChange;
-        const barWidth = value === null ? 0 : Math.abs(value) / maxAbs * halfWidth;
-        const barX = value === null ? centerX : value >= 0 ? centerX : centerX - barWidth;
-        return <g key={sector.key} role="button" tabIndex="0" aria-disabled={loading} aria-pressed={selected}
-          aria-label={`${sector.name}, ${value === null ? "index performance unavailable" : pct(value)}, ${sector.lastPrice === null ? "index level unavailable" : "index level " + fmt(sector.lastPrice)}. Select sector`}
-          className={`mfb-sector-flow-row${selected ? " selected" : ""}`}
-          onClick={() => { if (!loading) onSelect(sector.key); }}
-          onKeyDown={event => {
-            if (!loading && (event.key === "Enter" || event.key === " ")) {
-              event.preventDefault();
-              onSelect(sector.key);
-            }
-          }}>
-          <line x1="190" y1={y} x2="222" y2={y} className="mfb-sector-branch"/>
-          <rect x="222" y={y - 14} width="758" height="28" rx="5" className="mfb-sector-row-bg"/>
-          <text x="238" y={y - 1} className="mfb-sector-name">{sector.name}</text>
-          <text x="238" y={y + 11} className="mfb-sector-symbol">{sector.indexSymbol || "Index symbol unavailable"}{sector.lastPrice === null ? "" : ` · ${fmt(sector.lastPrice)}`}</text>
-          {value !== null && <rect x={barX} y={y - 5} width={barWidth} height="10" rx="3" className={value > 0 ? "mfb-sector-bar-up" : value < 0 ? "mfb-sector-bar-down" : "mfb-sector-bar-flat"}/>}
-          <text x="930" y={y + 4} textAnchor="end" className={`mfb-sector-value ${value === null ? "unavailable" : value > 0 ? "up" : value < 0 ? "down" : "flat"}`}>{value === null ? "—" : pct(value)}</text>
-        </g>;
-      })}
-      <text x={centerX - halfWidth} y={height - 4} textAnchor="start" className="mfb-sector-axis-label">WEAKER</text>
-      <text x={centerX + halfWidth} y={height - 4} textAnchor="end" className="mfb-sector-axis-label">STRONGER</text>
-    </svg>
-    <div className="mfb-sector-flow-foot">{loading ? "Loading selected sector constituents…" : "Select a sector branch to reveal its provider-ranked stock movers."}</div>
-  </div>;
-}
-
-
-/** Sector node fans into the provider-ranked gainers and losers for that sector. */
-function SectorConstituentDiagram({ sectorName, board, selectedKey, focusedKey, onSelect, onHover }) {
-  const bullish = board.visibleBullish;
-  const bearish = board.visibleBearish;
-  const topStart = 48;
-  const topHeight = Math.max(120, bullish.length * 32);
-  const centerY = topStart + topHeight + 46;
-  const bottomStart = centerY + 48;
-  const bottomHeight = Math.max(120, bearish.length * 32);
-  const height = bottomStart + bottomHeight + 32;
-  const branches = [
-    ...bullish.map((row, index) => ({ row, side: "up", y: topStart + index * 32 })),
-    ...bearish.map((row, index) => ({ row, side: "down", y: bottomStart + index * 32 })),
-  ];
-
-  return <div className="mfb-constituent-flow-wrap">
-    <div className="mfb-constituent-flow-head">
-      <span>SELECTED SECTOR</span><strong>{sectorName}</strong>
-      <small>Provider-ranked gainers and losers · {bullish.length + bearish.length} returned instruments</small>
-    </div>
-    {branches.length ? <svg className="mfb-constituent-flow" viewBox={`0 0 1000 ${height}`} role="group" aria-label={`${sectorName} sector index connected to its provider-ranked stock gainers and losers`}>
-      <line x1="154" y1={centerY} x2="224" y2={centerY} className="mfb-constituent-root-line"/>
-      <circle cx="154" cy={centerY} r="7" className="mfb-constituent-root"/>
-      <text x="18" y={centerY - 5} className="mfb-constituent-root-label">SECTOR</text>
-      <text x="18" y={centerY + 11} className="mfb-constituent-root-sub">INDEX NODE</text>
-      <line x1="188" y1={topStart} x2="188" y2={bottomStart + Math.max(0, bearish.length - 1) * 32} className="mfb-constituent-spine"/>
-      <text x="430" y={topStart - 18} className="mfb-constituent-group up">GAINERS</text>
-      <text x="430" y={bottomStart - 18} className="mfb-constituent-group down">LOSERS</text>
-      {branches.map(({ row, side, y }) => {
-        const selected = keyOf(row) === selectedKey || keyOf(row) === focusedKey;
-        return <g key={keyOf(row)} role="button" tabIndex="0"
-          aria-label={`${row.name}, ${row.symbol}, ${pct(row.changePercent)}, price ${fmt(row.price)}, volume ${row.volume === null ? "unavailable" : fmt(row.volume, 0)}. Select stock`}
-          aria-pressed={keyOf(row) === selectedKey}
-          className={`mfb-constituent-node ${side}${selected ? " selected" : ""}`}
-          onMouseEnter={() => onHover(keyOf(row))} onMouseLeave={() => onHover(null)}
-          onFocus={() => onHover(keyOf(row))} onBlur={() => onHover(null)}
-          onClick={() => onSelect(row)}
-          onKeyDown={event => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              onSelect(row);
-            }
-          }}>
-          <line x1="188" y1={y} x2="224" y2={y} className="mfb-constituent-branch"/>
-          <path d={`M 224 ${centerY} C 310 ${centerY}, 344 ${y}, 420 ${y}`} className="mfb-constituent-path"/>
-          <rect x="420" y={y - 13} width="550" height="26" rx="5" className="mfb-constituent-node-bg"/>
-          <text x="436" y={y + 4} className="mfb-constituent-symbol">{row.symbol}</text>
-          <text x="560" y={y + 4} className="mfb-constituent-price">₹{fmt(row.price)}</text>
-          <text x="690" y={y + 4} className="mfb-constituent-volume">{row.volume === null ? "Volume —" : "Vol " + fmt(row.volume, 0)}</text>
-          <text x="948" y={y + 4} textAnchor="end" className="mfb-constituent-change">{pct(row.changePercent)}</text>
-        </g>;
-      })}
-    </svg> : <p className="mfb-empty">No sector stock movers were returned by the provider.</p>}
-    <div className="mfb-constituent-flow-foot">Select a stock node to connect its quote, volume and historical OHLCV chart below.</div>
-  </div>;
-}
-
-
 function VolumeParticipation({ rows, label = "MARKET" }) {
   const summary = useMemo(() => summarizeMoverVolume(rows), [rows]);
   const max = Math.max(1, summary.bullishVolume, summary.bearishVolume, summary.unchangedVolume);
@@ -238,10 +58,12 @@ function VolumeParticipation({ rows, label = "MARKET" }) {
     { key: "bearish", label: "Bearish", volume: summary.bearishVolume, count: summary.bearishCount },
     { key: "flat", label: "Unchanged", volume: summary.unchangedVolume, count: summary.unchangedCount },
   ];
+  if (summary.positiveVolumeReported === 0) {
+    return <p className="mfb-volume-warning" role="status">Volume is not reported by the provider for this {label.toLowerCase()} snapshot, so volume participation is hidden.</p>;
+  }
   return <section className="mfb-volume">
     <div className="mfb-volume-head"><div><small>VOLUME PARTICIPATION / {label}</small><b>Reported volume by direction</b></div>
       <span>{summary.positiveVolumeReported} with positive volume · {summary.zeroVolumeReported} reported zero</span></div>
-    {summary.volumeReported > 0 && summary.positiveVolumeReported === 0 && <p className="mfb-volume-warning" role="status">The provider returned zero volume for every mover in this snapshot. Volume participation cannot be meaningfully ranked from these values.</p>}
     <div className="mfb-volume-bars">
       {items.map(item => <div className="mfb-volume-row" key={item.key}>
         <span>{item.label}</span><i><b className={item.key} style={{ width: item.volume / max * 100 + "%" }}/></i>
@@ -454,7 +276,7 @@ function StreamFlow({ rows, board, sectorFlowRows, selectedSectorKey, sectorLoad
           </div>
         </div>
       </div>
-      <aside className="mfb-stream-detail" aria-live="polite"><small>05 / SELECTED INSTRUMENT</small>
+      <aside className="mfb-stream-detail" aria-live="polite"><small>SELECTED INSTRUMENT</small>
         {sectorError && <p className="mfb-alert" role="alert">{sectorError}</p>}
         {selected ? <>
           <h3>{selected.name}</h3><span className="mfb-stream-sub">{selected.symbol} · {selected.exchange}</span>
@@ -649,34 +471,23 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
       onRangeChange={setHistoryRange} onSelectSector={loadSector} onSelectStock={row => setSelectedKey(keyOf(row))}
       onOpenChart={() => onSelectInstrument?.(selected)} retrievedAt={retrievedAt ? new Date(retrievedAt).toLocaleTimeString("en-IN") : null}/>
     <section className="mfb-section mfb-flow">
-      <div className="mfb-section-head"><div><small>03 / MOVER FLOW (DETAIL)</small><h2>Zero-centred market flow</h2>
-        <p>Actual price changes fan through the central gate into bullish and bearish instruments. This is a current snapshot, not a reconstructed intraday history.</p></div>
-        <span className="mfb-poll">REST refresh · 30 seconds while visible</span></div>
+      <div className="mfb-section-head"><div><small>03 / SECTOR DETAIL</small><h2>Selected sector detail</h2>
+        <p>Details for the sector chosen in the stream above, followed by every returned mover. This is a current snapshot, not a reconstructed intraday history.</p></div></div>
       <div className="mfb-board">
-        <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
-          <section className="mfb-sectors"><div><small>04 / SECTOR EXPLORER (DETAIL)</small><b>Explore sector constituents</b>
-              <span className="mfb-sector-coverage" role="status">{sectorIndexPerformanceCount} of {sectorOptions.length} sector index performance values available from REST</span></div>
-            <p>Sector index change is calculated from provider LTP and OHLC previous close where both are available. Select a sector to open its actual ranked stock movers.</p>
-            {sectorIndexErrors.length > 0 && <p className="mfb-alert" role="status">{sectorIndexPerformanceCount} of {sectorOptions.length} sector index performance values are available. Unavailable: {sectorIndexErrors.map(item => item.name || item.sector).filter(Boolean).join(", ") || sectorIndexErrors.length + " sector index quote(s)"}. Main market movers remain separate from this sector-index coverage.</p>}
-            <SectorFlowDiagram sectors={sectorFlowRows} selectedKey={selectedSectorKey}
-              loading={sectorLoading} onSelect={loadSector}/>
+        <div className="mfb-visual">
+          <section className="mfb-sectors">
+            <span className="mfb-sector-coverage" role="status">{sectorIndexPerformanceCount} of {sectorOptions.length} sector index values available{sectorIndexErrors.length > 0 ? " · Unavailable: " + sectorIndexErrors.map(item => item.name || item.sector).filter(Boolean).join(", ") : ""}</span>
             {!sectorIndices.length && <p className="mfb-sector-disclaimer">Sector index quotes are not available from the current provider response. Sector stock movers remain available on selection.</p>}
             {sectorLoading && <p role="status">Loading actual {sectorOptions.find(item => item.key === selectedSectorKey)?.name || "sector"} movers…</p>}
             {sectorError && <p className="mfb-alert" role="alert">{sectorError}</p>}
+            {!sectorPayload && !sectorLoading && !sectorError && <p>Select a sector in the stream above to see its detail.</p>}
             {sectorPayload && <>
-              <div className="mfb-sector-result-head"><strong>{sectorPayload.sector?.name}</strong>
-                <span>{sectorPayload.counts?.total_returned || 0} provider-ranked movers</span>
-                <span>{sectorPayload.status === "partial" ? "Partial response" : "REST data"}</span>
-                <span>Sample median {sectorSampleSummary.medianChangePct === null ? "—" : pct(sectorSampleSummary.medianChangePct)}</span></div>
               {sectorPayload.sector_index && <div className="mfb-sector-index-quote"><small>{sectorPayload.sector_index.name} · INDEX LEVEL</small><strong>{fmt(sectorPayload.sector_index.last_price)}</strong>
                 {sectorPayload.sector_index.percent_change !== null && sectorPayload.sector_index.percent_change !== undefined && Number.isFinite(Number(sectorPayload.sector_index.percent_change)) && <b className={Number(sectorPayload.sector_index.percent_change) >= 0 ? "up" : "down"}>{pct(Number(sectorPayload.sector_index.percent_change))}</b>}
                 <span>{sectorPayload.sector_index.previous_close ? "Previous close " + fmt(sectorPayload.sector_index.previous_close) : "Daily change unavailable from provider OHLC."}</span></div>}
-              <Distribution eyebrow="SECTOR / PROVIDER-RANKED MOVERS" title={sectorPayload.sector?.name + " price distribution"} description="Actual sector-filtered gainers and losers returned by m.Stock. This is not the full sector constituent universe." rows={sectorRows} counts={buildMarketFlowBoard(sectorRows).counts} breadthAvailable={false} retrievedAt={sectorPayload.last_updated ? new Date(sectorPayload.last_updated).toLocaleTimeString("en-IN") : null}/><VolumeParticipation rows={sectorRows} label="SECTOR SAMPLE"/>
-              <SectorConstituentDiagram sectorName={sectorPayload.sector?.name || "Selected sector"}
-                board={sectorBoard} selectedKey={selectedKey} focusedKey={focusedKey}
-                onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
+              <Distribution eyebrow="SECTOR / PROVIDER-RANKED MOVERS" title={sectorPayload.sector?.name + " price distribution"} description="Median and directional counts describe only the returned top movers, not full-sector performance or constituent breadth." rows={sectorRows} counts={buildMarketFlowBoard(sectorRows).counts} breadthAvailable={false} retrievedAt={sectorPayload.last_updated ? new Date(sectorPayload.last_updated).toLocaleTimeString("en-IN") : null}/>
+              <VolumeParticipation rows={sectorRows} label="SECTOR SAMPLE"/>
               {sectorPayload.errors?.length > 0 && <p className="mfb-alert">One sector mover source did not respond. Available real results are retained.</p>}
-              <p className="mfb-sector-disclaimer">Median and directional counts describe only the {sectorSampleSummary.count} returned top movers. They are not full-sector performance or constituent breadth.</p>
             </>}
             {!sectorOptions.length && <p>Sector universes were not returned by the backend.</p>}
           </section>

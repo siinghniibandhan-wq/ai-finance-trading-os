@@ -139,6 +139,45 @@ def normalize_mover(item: dict) -> dict:
     }
 
 
+def _to_number(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number == number and abs(number) != float("inf") else None
+
+
+def mover_rejection_reason(item: dict, require_volume: bool = False):
+    """
+    Return why a normalized provider row is not trustworthy, or None if it is fine.
+
+    Guards against rows such as illiquid BSE debt instruments reporting +995%
+    or -232% with zero volume. Nothing is repaired or invented: bad rows are
+    dropped so the UI never presents them as real market movement.
+    """
+    ltp = _to_number(item.get("ltp"))
+    pct = _to_number(item.get("percent_change"))
+    if ltp is None or ltp <= 0:
+        return "invalid_price"
+    if pct is None:
+        return "missing_percent_change"
+    if pct <= -100:
+        return "impossible_percent_change"  # a price cannot fall by 100% or more
+    change = _to_number(item.get("change"))
+    if change is not None:
+        previous_close = ltp - change
+        if previous_close <= 0:
+            return "inconsistent_change"
+        expected = change / previous_close * 100
+        if abs(expected - pct) > max(0.25, abs(expected) * 0.02):
+            return "percent_change_mismatch"
+    if require_volume:
+        volume = _to_number(item.get("volume"))
+        if volume is not None and volume <= 0 and pct != 0:
+            return "price_move_without_volume"
+    return None
+
+
 @router.get("/")
 def get_market_movers(
     type: str = Query("gainers", description="gainers or losers"),

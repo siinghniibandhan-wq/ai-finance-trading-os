@@ -1,9 +1,6 @@
 const num=v=>{if(v===null||v===undefined||v==="")return null;const n=Number(v);return Number.isFinite(n)?n:null;};
-export function normalizeOrderFlow(payload){const out=[];const source=payload?.market_movers||{};for(const key of ["gainers","losers"]){for(const row of Array.isArray(source[key])?source[key]:[]){const symbol=String(row?.symbol||"").trim().toUpperCase(),exchange=String(row?.exchange||"").trim().toUpperCase(),price=num(row?.ltp),changePercent=num(row?.percent_change);if(!symbol||!["NSE","BSE"].includes(exchange)||price===null||price<=0||changePercent===null)continue;out.push({symbol,exchange,name:String(row?.name||symbol),price,changePercent,volume:num(row?.volume),sector:typeof row?.sector==="string"&&row.sector.trim()?row.sector.trim():null,direction:changePercent>0?"bullish":changePercent<0?"bearish":"unchanged"});}}const unique=new Map();out.forEach(r=>unique.set(r.exchange+":"+r.symbol,r));return [...unique.values()];}
-export function summarizeOrderFlow(rows){const safe=Array.isArray(rows)?rows:[],bullish=safe.filter(r=>r.direction==="bullish").length,bearish=safe.filter(r=>r.direction==="bearish").length,unchanged=safe.filter(r=>r.direction==="unchanged").length,total=safe.length;return{bullish,bearish,unchanged,total,bullishShare:total?bullish/total:null,bearishShare:total?bearish/total:null};}
+export function normalizeOrderFlow(payload){const out=[];const source=payload?.market_movers||{};for(const key of ["gainers","losers"]){for(const row of Array.isArray(source[key])?source[key]:[]){const symbol=String(row?.symbol||"").trim().toUpperCase(),exchange=String(row?.exchange||"").trim().toUpperCase(),price=num(row?.ltp),changePercent=num(row?.percent_change);if(!symbol||!["NSE","BSE"].includes(exchange)||price===null||price<=0||changePercent===null||changePercent<=-100)continue;out.push({symbol,exchange,name:String(row?.name||symbol),price,changePercent,volume:num(row?.volume),sector:typeof row?.sector==="string"&&row.sector.trim()?row.sector.trim():null,direction:changePercent>0?"bullish":changePercent<0?"bearish":"unchanged"});}}const unique=new Map();out.forEach(r=>unique.set(r.exchange+":"+r.symbol,r));return [...unique.values()];}
 export function sortOrderFlow(rows,key="changePercent",direction="desc"){const sign=direction==="asc"?1:-1;return[...(rows||[])].sort((a,b)=>{if(key==="symbol")return String(a.symbol||"").localeCompare(String(b.symbol||""))*sign;const x=num(a[key]),y=num(b[key]);if(x===null&&y===null)return String(a.symbol||"").localeCompare(String(b.symbol||""));if(x===null)return 1;if(y===null)return-1;return(x-y)*sign;});}
-export function buildChartFlowPoints(rows,limit=36){const safe=(Array.isArray(rows)?rows:[]).filter(r=>Number.isFinite(num(r.changePercent)));const ranked=[...safe].sort((a,b)=>Math.abs(b.changePercent)-Math.abs(a.changePercent)||a.symbol.localeCompare(b.symbol)).slice(0,Math.max(0,limit));const maxAbs=Math.max(0.1,...ranked.map(r=>Math.abs(r.changePercent)));return ranked.map((r,index)=>({...r,normalizedMove:r.changePercent/maxAbs,rank:index}));}
-
 
 /** Organise the latest validated provider snapshot; this is not a full-exchange breadth estimate. */
 export function buildMarketFlowBoard(rows, perSide = 12, sortKey = "changePercent", sortDirection = "desc") {
@@ -109,22 +106,6 @@ export function summarizeSectorMoverSample(rows) {
     bearish: changes.filter(value => value < 0).length,
     unchanged: changes.filter(value => value === 0).length,
   };
-}
-
-
-/** Rank sector labels by the percentage change calculated from provider LTP and previous-close OHLC. */
-export function rankSectorIndices(sectors, quotes) {
-  const byKey = new Map((Array.isArray(quotes) ? quotes : []).map(item => [item.key, item]));
-  return [...(Array.isArray(sectors) ? sectors : [])].sort((a, b) => {
-    const av = byKey.get(a.key)?.percent_change;
-    const bv = byKey.get(b.key)?.percent_change;
-    const aValue = av === null || av === undefined || !Number.isFinite(Number(av)) ? null : Number(av);
-    const bValue = bv === null || bv === undefined || !Number.isFinite(Number(bv)) ? null : Number(bv);
-    if (aValue === null && bValue === null) return 0;
-    if (aValue === null) return 1;
-    if (bValue === null) return -1;
-    return bValue - aValue;
-  });
 }
 
 

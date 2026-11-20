@@ -17,6 +17,9 @@ function Distribution({ rows, counts, retrievedAt, breadthAvailable, eyebrow = "
         <p>{description}</p></div>
       <div className="mfb-counts"><b className="up">{counts.bullish} bullish</b><b className="down">{counts.bearish} bearish</b><b className="flat">{breadthAvailable ? counts.unchanged : "—"} flat</b></div>
     </div>
+    {counts.total > 0 && <div className="mfb-breadth" role="img" aria-label={counts.bullish + " bullish and " + counts.bearish + " bearish of " + counts.total + " returned movers"}>
+      <i className="up" style={{ width: counts.bullish / counts.total * 100 + "%" }}/><i className="down" style={{ width: counts.bearish / counts.total * 100 + "%" }}/>
+    </div>}
     <svg viewBox="0 0 1000 84" role="img" aria-label="Provider-returned percentage changes distributed around zero">
       <line x1="40" x2="960" y1="42" y2="42" className="mfb-axis"/>
       <line x1="500" x2="500" y1="8" y2="70" className="mfb-zero"/>
@@ -293,6 +296,182 @@ function HistoricalFlowPanel({ series, loading, error, symbol, range, onRangeCha
   </section>;
 }
 
+
+const compact = value => Number.isFinite(Number(value))
+  ? new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(Number(value)) : "—";
+const clip = (text, max) => { const value = String(text || ""); return value.length > max ? value.slice(0, max - 1) + "…" : value; };
+const press = action => ({
+  role: "button", tabIndex: 0, onClick: action,
+  onKeyDown: event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); action(); } },
+});
+
+function Stream({ d, width = 6, tone = "flat" }) {
+  return <g className={"ms-stream " + tone}>
+    <path className="ms-glow" d={d} strokeWidth={width} filter="url(#mfb-bl)"/>
+    <path className="ms-wide" d={d} strokeWidth={width}/>
+    <path className="ms-core" d={d}/>
+  </g>;
+}
+
+/** One connected stream: market -> direction -> sectors -> sector stocks -> selected stock.
+ *  Presentation only: every figure comes from props already derived from the REST snapshot. */
+function StreamFlow({ rows, board, sectorFlowRows, selectedSectorKey, sectorLoading, sectorError, sectorPayload, sectorBoard,
+  sectorSampleSummary, selected, selectedKey, relativeToSectorSample, historySeries, historyLoading, historyError,
+  historyRange, onRangeChange, onSelectSector, onSelectStock, onOpenChart, retrievedAt }) {
+  const [showAllSectors, setShowAllSectors] = useState(false);
+  const volume = useMemo(() => summarizeMoverVolume(rows), [rows]);
+  const sectors = Array.isArray(sectorFlowRows) ? sectorFlowRows : [];
+  const rowY = index => 36 + index * 34;
+  const maxAbs = Math.max(0.1, ...sectors.map(item => Math.abs(item.percentChange ?? 0)));
+  const ups = sectors.map((item, index) => ({ item, index })).filter(entry => entry.item.direction === "bullish");
+  const downs = sectors.map((item, index) => ({ item, index })).filter(entry => entry.item.direction === "bearish");
+  const middle = list => list.length ? list.reduce((sum, entry) => sum + rowY(entry.index) + 14, 0) / list.length : null;
+  const bullY = middle(ups) ?? 150, bearY = middle(downs) ?? 460, originY = (bullY + bearY) / 2;
+  const height = Math.max(710, sectors.length * 34 + 70);
+  const totalVolume = volume.bullishVolume + volume.bearishVolume;
+  const bullWidth = totalVolume > 0 ? 8 + volume.bullishVolume / totalVolume * 36 : 20;
+  const bearWidth = totalVolume > 0 ? 8 + volume.bearishVolume / totalVolume * 36 : 20;
+  const selectedIndex = sectors.findIndex(item => item.key === selectedSectorKey);
+  const sectorY = selectedIndex >= 0 ? rowY(selectedIndex) + 14 : null;
+  const gainers = sectorPayload ? sectorBoard.visibleBullish.slice(0, 5) : [];
+  const losers = sectorPayload ? sectorBoard.visibleBearish.slice(0, 4) : [];
+  const indexQuote = sectorPayload?.sector_index;
+  const indexChange = indexQuote && indexQuote.percent_change !== null && indexQuote.percent_change !== undefined
+    && Number.isFinite(Number(indexQuote.percent_change)) ? Number(indexQuote.percent_change) : null;
+  const volumeText = reported => reported > 0 ? "Vol " + compact(reported) : "Vol —";
+  const bullShare = totalVolume > 0 ? volume.bullishVolume / totalVolume * 100 : null;
+  const bearShare = totalVolume > 0 ? volume.bearishVolume / totalVolume * 100 : null;
+  const compactSectors = sectors.map((item, index) => ({ item, index })).filter(entry => showAllSectors || entry.index < 8 || entry.item.key === selectedSectorKey);
+  const stockTile = (row, up) => {
+    const isSel = keyOf(row) === selectedKey;
+    return <button type="button" key={keyOf(row)} className={"mfb-sc-stock " + (up ? "up" : "down") + (isSel ? " sel" : "")} aria-pressed={isSel} onClick={() => onSelectStock(row)}>
+      <b>{row.symbol}</b><strong>{pct(row.changePercent)}</strong>
+      <small>₹{fmt(row.price)} · {row.volume === null ? "Vol —" : "Vol " + compact(row.volume)}</small></button>;
+  };
+
+  return <section className="mfb-section mfb-stream" aria-label="Connected market stream">
+    <div className="mfb-section-head"><div><small>02 / CONNECTED MARKET STREAM</small><h2>Market → direction → sector → stock</h2>
+      <p>One flow built only from the current REST snapshot. Stream thickness at the direction gates reflects provider-reported volume of the returned movers.</p></div>
+      <span className="mfb-poll">REST refresh · 30 seconds while visible</span></div>
+    <div className="mfb-stream-grid">
+      <div className="mfb-stream-scroll">
+        <div className="mfb-stream-wide">
+        <svg className="mfb-stream-svg" viewBox={"0 0 940 " + height} role="group" aria-label="Connected market stream diagram">
+          <defs><filter id="mfb-bl" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="7"/></filter></defs>
+          {[[20, "1 · MARKET"], [150, "2 · DIRECTION"], [330, "3 · SECTORS (" + sectors.length + ")"], [690, "4 · SECTOR STOCKS"]].map(([x, label]) =>
+            <text key={label} x={x} y="16" className="ms-m ms-cap">{label}</text>)}
+          <Stream d={"M78 " + originY + " C112 " + originY + " 118 " + bullY + " 150 " + bullY} width={bullWidth} tone="up"/>
+          <Stream d={"M78 " + originY + " C112 " + originY + " 118 " + bearY + " 150 " + bearY} width={bearWidth} tone="down"/>
+          {sectors.map((item, index) => {
+            if (item.direction !== "bullish" && item.direction !== "bearish") return null;
+            const up = item.direction === "bullish", gate = up ? bullY : bearY, cy = rowY(index) + 14;
+            return <Stream key={"s-" + item.key} d={"M280 " + gate + " C305 " + gate + " 305 " + cy + " 330 " + cy}
+              width={2 + Math.abs(item.percentChange) / maxAbs * 8} tone={up ? "up" : "down"}/>;
+          })}
+          <circle cx="48" cy={originY} r="28" className="ms-origin"/>
+          <text x="48" y={originY + 4} textAnchor="middle" className="ms-t ms-b">ZERO</text>
+          <text x="20" y={originY + 50} className="ms-t ms-b">MARKET</text>
+          <text x="20" y={originY + 67} className="ms-m ms-sm">{board.counts.total} movers</text>
+          <text x="20" y={originY + 82} className="ms-m ms-sm">{retrievedAt || "—"}</text>
+          {[["up", "BULLISH", bullY, board.counts.bullish, volume.bullishVolume], ["down", "BEARISH", bearY, board.counts.bearish, volume.bearishVolume]].map(([tone, label, y, count, vol]) =>
+            <g key={label}><rect x="150" y={y - 40} width="130" height="80" rx="14" className={"ms-gate " + tone}/>
+              <text x="164" y={y - 16} className={"ms-b ms-sm " + (tone === "up" ? "ms-g" : "ms-r")}>{label}</text>
+              <text x="164" y={y + 5} className="ms-t ms-b">{count} movers</text>
+              <text x="164" y={y + 24} className="ms-m ms-sm">{volumeText(vol)}</text></g>)}
+          {sectors.map((item, index) => {
+            const y0 = rowY(index), isSel = item.key === selectedSectorKey, up = item.direction === "bullish", down = item.direction === "bearish";
+            const barWidth = item.percentChange === null ? 0 : Math.abs(item.percentChange) / maxAbs * 50;
+            return <g key={item.key} className={"ms-hit" + (isSel ? " sel" : "")} {...press(() => onSelectSector(item.key))}
+              aria-label={item.name + " " + (item.percentChange === null ? "change unavailable" : pct(item.percentChange))} aria-pressed={isSel}>
+              <rect x="330" y={y0} width="290" height="28" rx="8" className={"ms-node" + (isSel ? " sel" : "")}/>
+              <text x="342" y={y0 + 19} className="ms-m ms-sm">{index + 1}</text>
+              <text x="358" y={y0 + 19} className="ms-t ms-b">{clip(item.name, 20)}</text>
+              <line x1="560" x2="560" y1={y0 + 5} y2={y0 + 23} className="ms-axis"/>
+              {barWidth > 0 && <rect x={up ? 560 : 560 - barWidth} y={y0 + 9} width={barWidth} height="10" rx="3" className={up ? "ms-bar-up" : "ms-bar-down"}/>}
+              <text x="612" y={y0 + 19} textAnchor="end" className={"ms-b ms-sm " + (up ? "ms-g" : down ? "ms-r" : "ms-m")}>{item.percentChange === null ? "—" : pct(item.percentChange)}</text></g>;
+          })}
+          {!sectors.length && <text x="340" y="60" className="ms-m">Sector universes were not returned by the backend.</text>}
+          {sectorY !== null && sectorPayload && <>
+            <Stream d={"M620 " + sectorY + " C655 " + sectorY + " 655 82 690 82"} width={12} tone="sel"/>
+            {gainers.map((row, index) => <Stream key={"g-" + keyOf(row)} d={"M620 " + sectorY + " C655 " + sectorY + " 655 " + (192 + index * 56) + " 690 " + (192 + index * 56)} width={5} tone="up"/>)}
+            {losers.map((row, index) => <Stream key={"l-" + keyOf(row)} d={"M620 " + sectorY + " C655 " + sectorY + " 655 " + (498 + index * 56) + " 690 " + (498 + index * 56)} width={5} tone="down"/>)}</>}
+          {sectorPayload ? <g>
+            <rect x="690" y="30" width="200" height="104" rx="14" className="ms-node sel"/>
+            <text x="704" y="52" className="ms-t ms-b">{clip(sectorPayload.sector?.name, 22)}</text>
+            <text x="704" y="72" className="ms-m ms-sm">Index {indexQuote ? fmt(indexQuote.last_price) : "—"}</text>
+            <text x="704" y="90" className={"ms-b ms-sm " + (indexChange === null ? "ms-m" : indexChange >= 0 ? "ms-g" : "ms-r")}>{indexChange === null ? "Daily change unavailable" : pct(indexChange)}</text>
+            <text x="704" y="108" className="ms-m ms-sm">{sectorPayload.counts?.total_returned || 0} provider-ranked movers</text>
+            <text x="704" y="124" className="ms-m ms-sm">Sample median {sectorSampleSummary.medianChangePct === null ? "—" : pct(sectorSampleSummary.medianChangePct)}</text></g>
+            : <g><rect x="690" y="30" width="200" height="104" rx="14" className="ms-empty"/>
+              <text x="704" y="76" className="ms-m ms-sm">{sectorLoading ? "Loading sector movers…" : "Select a sector to open its stocks"}</text></g>}
+          {sectorPayload && <>
+            <text x="690" y="170" className="ms-g ms-b ms-cap">GAINERS</text><text x="690" y="476" className="ms-r ms-b ms-cap">LOSERS</text>
+            {[...gainers.map((row, index) => ({ row, y: 168 + index * 56 })), ...losers.map((row, index) => ({ row, y: 474 + index * 56 }))].map(({ row, y }) => {
+              const isSel = keyOf(row) === selectedKey, up = row.changePercent > 0;
+              return <g key={keyOf(row)} className={"ms-hit" + (isSel ? " sel" : "")} {...press(() => onSelectStock(row))} aria-label={row.symbol + " " + pct(row.changePercent)} aria-pressed={isSel}>
+                <rect x="690" y={y} width="200" height="48" rx="10" className={"ms-node" + (isSel ? " sel" : "")}/>
+                <text x="704" y={y + 20} className="ms-t ms-b">{clip(row.symbol, 14)}</text>
+                <text x="878" y={y + 20} textAnchor="end" className={"ms-b " + (up ? "ms-g" : "ms-r")}>{pct(row.changePercent)}</text>
+                <text x="704" y={y + 38} className="ms-m ms-sm">₹{fmt(row.price)} · {row.volume === null ? "Vol —" : "Vol " + compact(row.volume)}</text></g>;
+            })}
+            {!gainers.length && !losers.length && <text x="690" y="170" className="ms-m ms-sm">No ranked movers returned for this sector.</text>}</>}
+          {selected && sectorPayload && [...gainers.map((row, index) => ({ row, y: 168 + index * 56 })), ...losers.map((row, index) => ({ row, y: 474 + index * 56 }))]
+            .filter(({ row }) => keyOf(row) === selectedKey).map(({ row, y }) =>
+              <Stream key={"sel-" + keyOf(row)} d={"M890 " + (y + 24) + " L936 " + (y + 24)} width={6} tone="sel"/>)}
+        </svg>
+        </div>
+        <div className="mfb-stream-compact" role="group" aria-label="Connected market stream, compact view">
+          <div className="mfb-sc-origin"><small>1 · MARKET</small><strong>{board.counts.total} movers</strong><span>{retrievedAt || "—"}</span></div>
+          <i className="mfb-sc-link" aria-hidden="true"/>
+          <div className="mfb-sc-gates">
+            {[["up", "BULLISH", board.counts.bullish, volume.bullishVolume, bullShare], ["down", "BEARISH", board.counts.bearish, volume.bearishVolume, bearShare]].map(([tone, label, count, vol, share]) =>
+              <div key={label} className={"mfb-sc-gate " + tone}><small>2 · {label}</small><strong>{count} movers</strong><span>{volumeText(vol)}</span>
+                {share !== null && <em><i style={{ width: share + "%" }}/></em>}</div>)}
+          </div>
+          <i className="mfb-sc-link" aria-hidden="true"/>
+          <div className="mfb-sc-sectors"><small>3 · SECTORS ({sectors.length})</small>
+            {compactSectors.map(({ item, index }) => {
+              const isSel = item.key === selectedSectorKey, up = item.direction === "bullish", down = item.direction === "bearish";
+              const widthPct = item.percentChange === null ? 0 : Math.abs(item.percentChange) / maxAbs * 50;
+              return <button type="button" key={item.key} className={"mfb-sc-sector-row" + (isSel ? " sel" : "")} aria-pressed={isSel} onClick={() => onSelectSector(item.key)}>
+                <span className="rank">{index + 1}</span><span className="nm">{item.name}</span>
+                <span className="bar" aria-hidden="true">{widthPct > 0 && <i className={up ? "up" : "down"} style={up ? { left: "50%", width: widthPct + "%" } : { right: "50%", width: widthPct + "%" }}/>}</span>
+                <strong className={up ? "up" : down ? "down" : "flat"}>{item.percentChange === null ? "—" : pct(item.percentChange)}</strong></button>;
+            })}
+            {sectors.length > 8 && <button type="button" className="mfb-sc-more" onClick={() => setShowAllSectors(value => !value)}>{showAllSectors ? "Show fewer sectors" : "Show all " + sectors.length + " sectors"}</button>}
+            {!sectors.length && <p>Sector universes were not returned by the backend.</p>}
+          </div>
+          <i className="mfb-sc-link" aria-hidden="true"/>
+          <div className="mfb-sc-sector"><small>4 · SECTOR STOCKS</small>
+            {sectorPayload ? <>
+              <div className="mfb-sc-head"><strong>{sectorPayload.sector?.name}</strong>
+                <span>Index {indexQuote ? fmt(indexQuote.last_price) : "—"}{indexChange !== null && <b className={indexChange >= 0 ? "up" : "down"}> {pct(indexChange)}</b>}</span>
+                <span>{sectorPayload.counts?.total_returned || 0} provider-ranked movers · median {sectorSampleSummary.medianChangePct === null ? "—" : pct(sectorSampleSummary.medianChangePct)}</span></div>
+              {gainers.length > 0 && <><h4 className="up">Gainers</h4><div className="mfb-sc-grid">{gainers.map(row => stockTile(row, true))}</div></>}
+              {losers.length > 0 && <><h4 className="down">Losers</h4><div className="mfb-sc-grid">{losers.map(row => stockTile(row, false))}</div></>}
+              {!gainers.length && !losers.length && <p>No ranked movers returned for this sector.</p>}
+            </> : <p>{sectorLoading ? "Loading sector movers…" : "Tap a sector to open its stocks."}</p>}
+          </div>
+        </div>
+      </div>
+      <aside className="mfb-stream-detail" aria-live="polite"><small>05 / SELECTED INSTRUMENT</small>
+        {sectorError && <p className="mfb-alert" role="alert">{sectorError}</p>}
+        {selected ? <>
+          <h3>{selected.name}</h3><span className="mfb-stream-sub">{selected.symbol} · {selected.exchange}</span>
+          <div className="mfb-stream-stats">
+            <div><small>LAST PRICE</small><strong>₹{fmt(selected.price)}</strong></div>
+            <div><small>PRICE CHANGE</small><strong className={selected.direction}>{pct(selected.changePercent)}</strong></div>
+            <div><small>VOLUME</small><strong>{selected.volume === null ? "Not supplied" : fmt(selected.volume, 0)}</strong></div>
+            {relativeToSectorSample !== null && <div><small>VS SECTOR SAMPLE</small><strong className={relativeToSectorSample >= 0 ? "up" : "down"}>{pct(relativeToSectorSample)}</strong></div>}
+          </div>
+          <button type="button" className="mfb-stream-open" onClick={onOpenChart}>Open full chart</button>
+          <HistoricalFlowPanel series={historySeries} loading={historyLoading} error={historyError} symbol={selected.symbol} range={historyRange} onRangeChange={onRangeChange}/>
+        </> : <p>Click a sector, then a stock in the stream. Only provider-returned fields are shown.</p>}
+      </aside>
+    </div>
+  </section>;
+}
+
 export default function MarketFlowBoard({ onSelectInstrument }) {
   const [payload, setPayload] = useState(null);
   const [retrievedAt, setRetrievedAt] = useState(null);
@@ -442,16 +621,19 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   return <main className="market-flow-board">
     <header className="mfb-header"><div><small>FINANCIAL OS / MARKETS / CHART FLOW</small><h1>Chart Flow</h1>
       <p>Whole-market discovery from real provider-returned cash-equity movers and supported indices.</p></div>
-      <div><span className={error ? "mfb-status error" : loading ? "mfb-status" : "mfb-status live"}>{error ? "SOURCE ERROR" : loading ? "CONNECTING" : sectorOnlyPartial ? "SECTOR DATA PARTIAL" : payload?.status === "partial" ? "PARTIAL DATA" : "REST SNAPSHOT"}</span>
+      <div><span className={error ? "mfb-status error" : loading ? "mfb-status" : "mfb-status live"}><i className="mfb-pulse" aria-hidden="true"/>{error ? "SOURCE ERROR" : loading ? "CONNECTING" : sectorOnlyPartial ? "SECTOR DATA PARTIAL" : payload?.status === "partial" ? "PARTIAL DATA" : "REST SNAPSHOT"}</span>
         <button type="button" onClick={() => refresh(true)} disabled={loading || refreshing}>{refreshing ? "Refreshing…" : "Refresh"}</button></div>
     </header>
     <section className="mfb-index-rail">{indices.map(index => <div key={index.exchange + ":" + index.name}>
-      <small>{index.name}</small><strong>{fmt(index.last_price)}</strong><span>{index.exchange}</span></div>)}
+      <small>{index.name}</small><strong>{fmt(index.last_price)}</strong>
+      <span>{index.exchange}{index.percent_change !== null && index.percent_change !== undefined && Number.isFinite(Number(index.percent_change)) && <b className={Number(index.percent_change) >= 0 ? "up" : "down"}>{pct(Number(index.percent_change))}</b>}</span></div>)}
       {!indices.length && <p>No index snapshots returned by the provider.</p>}</section>
     {error && <p className="mfb-alert" role="alert">{error}. Last successful data is retained; no demo feed is substituted.</p>}{coreProviderErrors.length > 0 && <p className="mfb-alert" role="status">Some market or benchmark requests failed. Available provider responses are retained; missing instruments are not estimated.</p>}
     {!loading && !rows.length && !error && <p className="mfb-alert">No valid provider movers were returned. No simulated instruments are displayed.</p>}
+    <div className="mfb-overview">
     <Distribution rows={rows} counts={buildMarketFlowBoard(rows).counts} breadthAvailable={payload?.capabilities?.full_advance_decline_breadth === true} retrievedAt={retrievedAt ? new Date(retrievedAt).toLocaleTimeString("en-IN") : null}/>
     <VolumeParticipation rows={rows}/>
+    </div>
     <section className="mfb-filterbar" aria-label="Filter market movers">
       <label>Search instruments<input type="search" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="Symbol or company"/></label>
       <label>Exchange<select value={exchangeFilter} onChange={event => setExchangeFilter(event.target.value)}><option value="ALL">All exchanges</option><option value="NSE">NSE</option><option value="BSE">BSE</option></select></label>
@@ -460,13 +642,19 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
       <button type="button" onClick={() => setSortDirection(value => value === "desc" ? "asc" : "desc")} aria-label="Toggle sort direction">{sortDirection === "desc" ? "Highest first ↓" : "Lowest first ↑"}</button>
       <span>{filteredRows.length} of {rows.length} returned movers</span>
     </section>
+    <StreamFlow rows={filteredRows} board={board} sectorFlowRows={sectorFlowRows} selectedSectorKey={selectedSectorKey}
+      sectorLoading={sectorLoading} sectorError={sectorError} sectorPayload={sectorPayload} sectorBoard={sectorBoard}
+      sectorSampleSummary={sectorSampleSummary} selected={selected} selectedKey={selectedKey} relativeToSectorSample={relativeToSectorSample}
+      historySeries={historySeries} historyLoading={historyLoading} historyError={historyError} historyRange={historyRange}
+      onRangeChange={setHistoryRange} onSelectSector={loadSector} onSelectStock={row => setSelectedKey(keyOf(row))}
+      onOpenChart={() => onSelectInstrument?.(selected)} retrievedAt={retrievedAt ? new Date(retrievedAt).toLocaleTimeString("en-IN") : null}/>
     <section className="mfb-section mfb-flow">
-      <div className="mfb-section-head"><div><small>02 / MARKET FLOW</small><h2>Zero-centred market flow</h2>
+      <div className="mfb-section-head"><div><small>03 / MOVER FLOW (DETAIL)</small><h2>Zero-centred market flow</h2>
         <p>Actual price changes fan through the central gate into bullish and bearish instruments. This is a current snapshot, not a reconstructed intraday history.</p></div>
         <span className="mfb-poll">REST refresh · 30 seconds while visible</span></div>
       <div className="mfb-board">
         <div className="mfb-visual"><FlowDiagram board={board} selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/>
-          <section className="mfb-sectors"><div><small>03 / SECTOR FLOW</small><b>Explore sector constituents</b>
+          <section className="mfb-sectors"><div><small>04 / SECTOR EXPLORER (DETAIL)</small><b>Explore sector constituents</b>
               <span className="mfb-sector-coverage" role="status">{sectorIndexPerformanceCount} of {sectorOptions.length} sector index performance values available from REST</span></div>
             <p>Sector index change is calculated from provider LTP and OHLC previous close where both are available. Select a sector to open its actual ranked stock movers.</p>
             {sectorIndexErrors.length > 0 && <p className="mfb-alert" role="status">{sectorIndexPerformanceCount} of {sectorOptions.length} sector index performance values are available. Unavailable: {sectorIndexErrors.map(item => item.name || item.sector).filter(Boolean).join(", ") || sectorIndexErrors.length + " sector index quote(s)"}. Main market movers remain separate from this sector-index coverage.</p>}
@@ -497,16 +685,6 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
           <Side title="Bearish" side="down" rows={board.bearish} selectedKey={selectedKey} focusedKey={focusedKey} onSelect={row => setSelectedKey(keyOf(row))} onHover={onHoverInstrument}/></div>
       </div>
     </section>
-    <section className="mfb-detail"><div><small>04 / INSTRUMENT DETAIL</small><h2>{selected ? selected.name : "Select an instrument"}</h2>
-      {selected && <span>{selected.symbol} · {selected.exchange}</span>}</div>
-      {selected ? <div className="mfb-detail-values"><div><small>LAST PRICE</small><strong>₹{fmt(selected.price)}</strong></div>
-        <div><small>PRICE CHANGE</small><strong className={selected.direction}>{pct(selected.changePercent)}</strong></div>
-        <div><small>VOLUME</small><strong>{selected.volume === null ? "Not supplied" : fmt(selected.volume, 0)}</strong></div>
-        {relativeToSectorSample !== null && <div><small>VS RETURNED SECTOR SAMPLE</small><strong className={relativeToSectorSample >= 0 ? "up" : "down"}>{pct(relativeToSectorSample)}</strong></div>}
-        <button type="button" onClick={() => onSelectInstrument?.(selected)}>Open full chart</button></div>
-        : <p>Select a flow path or tile. Only provider-returned fields are shown.</p>}
-    </section>
-    {selected && <HistoricalFlowPanel series={historySeries} loading={historyLoading} error={historyError} symbol={selected.symbol} range={historyRange} onRangeChange={setHistoryRange}/>}
     <footer className="mfb-footer"><span>Source: {payload?.data_sources?.primary || "m.Stock via Financial OS Gateway"}</span>
       <span>Snapshot assembled: {retrievedAt ? new Date(retrievedAt).toLocaleString("en-IN") : "—"}</span>
       <span>Read-only · REST only · no synthetic market values</span></footer>

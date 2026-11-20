@@ -11,6 +11,7 @@ from app.routes.market_indices import SUPPORTED_INDICES, fetch_index
 from app.routes.market_movers import (
     extract_type_a_mover_rows,
     fetch_movers,
+    mover_rejection_reason,
     normalize_mover,
 )
 
@@ -46,6 +47,7 @@ def fetch_all_cash_movers():
     """Fetch the provider's ALL-universe gainer and loser lists for both exchanges."""
     movers = {"gainers": [], "losers": []}
     errors = []
+    rejected = {}
     seen = {"gainers": set(), "losers": set()}
     for exchange in CASH_EXCHANGES:
         for mover_type, type_flag in (("gainers", "G"), ("losers", "L")):
@@ -66,6 +68,10 @@ def fetch_all_cash_movers():
                     if item_exchange not in {"NSE", "BSE"} or not symbol:
                         continue
                     item["exchange"] = item_exchange
+                    reason = mover_rejection_reason(item, require_volume=True)
+                    if reason:
+                        rejected[reason] = rejected.get(reason, 0) + 1
+                        continue
                     key = item_exchange + ":" + symbol
                     if key in seen[mover_type]:
                         continue
@@ -79,7 +85,7 @@ def fetch_all_cash_movers():
                     "message": str(exc),
                 })
 
-    return movers, errors
+    return movers, errors, rejected
 
 
 # Provider-documented NSE sector universes for the Type A Top Gainers/Losers API.
@@ -113,6 +119,7 @@ def _fetch_sector_movers_uncached(sector):
     """Fetch only the provider-ranked gainers and losers for one selected sector."""
     movers = {"gainers": [], "losers": []}
     errors = []
+    rejected = {}
 
     for mover_type, type_flag in (("gainers", "G"), ("losers", "L")):
         try:
@@ -129,6 +136,10 @@ def _fetch_sector_movers_uncached(sector):
                 if str(item.get("exchange") or "NSE").upper() != "NSE":
                     continue
                 if not item.get("symbol"):
+                    continue
+                reason = mover_rejection_reason(item)
+                if reason:
+                    rejected[reason] = rejected.get(reason, 0) + 1
                     continue
                 item["exchange"] = "NSE"
                 item["sector"] = sector["name"]
@@ -177,6 +188,7 @@ def _fetch_sector_movers_uncached(sector):
             "note": "These are the provider's top movers within the selected sector, not every sector constituent.",
         },
         "movers": movers,
+        "data_quality": {"rejected_rows": rejected},
         "sector_index": sector_index,
         "counts": {
             "gainers": len(movers["gainers"]),
@@ -293,7 +305,7 @@ def get_market_flow_snapshot(sector: str | None = None, include_sector_indices: 
             raise HTTPException(status_code=404, detail="Unsupported Chart Flow sector.")
         return _get_cached_sector_movers(sector_config)
 
-    movers, errors = fetch_all_cash_movers()
+    movers, errors, rejected_movers = fetch_all_cash_movers()
 
     indices = []
     with ThreadPoolExecutor(max_workers=4, thread_name_prefix="market-flow-index") as executor:
@@ -347,6 +359,10 @@ def get_market_flow_snapshot(sector: str | None = None, include_sector_indices: 
             for item in SECTOR_UNIVERSES
         ],
         "market_movers": movers,
+        "data_quality": {
+            "rejected_rows": rejected_movers,
+            "note": "Rows with impossible, inconsistent or volume-less price moves (e.g. illiquid BSE debt instruments) are dropped, never repaired.",
+        },
         "market_summary": {
             "gainers": len(gainers),
             "losers": len(losers),

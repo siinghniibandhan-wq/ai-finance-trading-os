@@ -195,7 +195,7 @@ def test_chart_flow_sector_cache_reuses_recent_provider_snapshot(monkeypatch):
 
 def test_chart_flow_can_load_all_sector_index_quotes_from_shared_snapshot(monkeypatch):
     monkeypatch.setattr(market_flow, "fetch_all_cash_movers", lambda: (
-        {"gainers": [], "losers": []}, []
+        {"gainers": [], "losers": []}, [], {}
     ))
     monkeypatch.setattr(market_flow, "fetch_index", lambda index: {
         "name": index["name"],
@@ -268,3 +268,39 @@ def test_chart_flow_sector_universe_matches_mstock_documented_security_id_codes(
 
     assert actual == expected
     assert len({item["index_symbol"] for item in market_flow.SECTOR_UNIVERSES}) == len(expected)
+
+
+def test_mover_rejection_reason_drops_impossible_and_inconsistent_rows():
+    from app.routes.market_movers import mover_rejection_reason as check
+
+    good = {"ltp": 732.2, "change": 42.7, "percent_change": 6.19, "volume": 6227379}
+    assert check(good, require_volume=True) is None
+    # BSE debt-like rows seen in production: huge moves, impossible drops, zero volume
+    assert check({"ltp": 99786, "percent_change": -232, "volume": 0}) == "impossible_percent_change"
+    assert check({"ltp": 15360, "change": -10, "percent_change": -200.0, "volume": 0}) == "impossible_percent_change"
+    assert check({"ltp": 100, "change": 2, "percent_change": 995, "volume": 5}) == "percent_change_mismatch"
+    assert check({"ltp": 99786, "percent_change": 995, "volume": 0}, require_volume=True) == "price_move_without_volume"
+    assert check({"ltp": 0, "percent_change": 1}) == "invalid_price"
+    assert check({"ltp": 10, "percent_change": None}) == "missing_percent_change"
+    # sector lists may legitimately omit volume
+    assert check({"ltp": 429.6, "percent_change": -2.0, "volume": 0}) is None
+
+
+def test_chart_flow_all_universe_filters_bad_rows_and_reports_counts(monkeypatch):
+    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
+
+    def fake_fetch(**kwargs):
+        return {"status": True, "data": [
+            {"exchange": "BSE", "symbol": "11MGFL27", "ltp": 99786, "per_change": 995, "volume": 0},
+            {"exchange": "BSE", "symbol": "DRA", "ltp": 16.35, "per_change": -139, "volume": 0},
+            {"exchange": "NSE", "symbol": "INFY", "ltp": 1500, "per_change": 2.0, "change": 29.41, "volume": 1000},
+        ]}
+
+    monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
+    movers, errors, rejected = market_flow.fetch_all_cash_movers()
+
+    assert errors == []
+    symbols = {row["symbol"] for row in movers["gainers"] + movers["losers"]}
+    assert symbols == {"INFY"}
+    assert rejected["price_move_without_volume"] >= 1
+    assert rejected["impossible_percent_change"] >= 1

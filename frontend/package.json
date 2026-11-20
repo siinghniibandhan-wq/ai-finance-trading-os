@@ -13,7 +13,8 @@
     "test:market": "node --test src/marketOverviewState.test.js",
     "test:advanced-chart": "node --test src/features/advanced-chart/model.test.js src/features/advanced-chart/marketScannerModel.test.js",
     "test:order-flow": "node --test src/features/order-flow/orderFlowModel.test.js",
-    "test:options-hub": "node --test src/features/options-hub/optionsModel.test.js"
+    "test:options-hub": "node --test src/features/options-hub/optionsModel.test.js",
+    "test:corporate-actions": "node --test src/features/market-intelligence/CorporateActionsPanel.test.js"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

@@ -76,8 +76,3 @@ export async function loadInstitutionalFlow() {
   return readResponse(response, "Institutional flow");
 }
 
-export async function loadCorporateActions({ symbol, exchange }) {
-  const params = new URLSearchParams({ symbol, exchange });
-  const response = await apiFetch(`${API_BASE_URL}/api/corporate-actions/?${params}`, { cache: "no-store" });
-  return readResponse(response, "Corporate actions");
-}

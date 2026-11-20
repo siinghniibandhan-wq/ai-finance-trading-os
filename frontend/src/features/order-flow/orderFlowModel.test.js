@@ -272,3 +272,12 @@ test("drops impossible price changes of -100% or worse", () => {
   ] } });
   assert.deepEqual(rows.map(row => row.symbol), ["OK"]);
 });
+
+test("marks rows whose provider percent disagrees with price change as unverified", () => {
+  const rows = normalizeOrderFlow({ market_movers: { gainers: [
+    { symbol: "A", exchange: "NSE", ltp: 100, percent_change: 2, percent_verified: true },
+    { symbol: "B", exchange: "NSE", ltp: 100, percent_change: -17, percent_verified: false },
+    { symbol: "C", exchange: "NSE", ltp: 100, percent_change: 1 },
+  ], losers: [] } });
+  assert.deepEqual(rows.map(row => row.percentVerified), [true, false, true]);
+});

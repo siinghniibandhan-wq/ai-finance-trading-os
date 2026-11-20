@@ -270,20 +270,31 @@ def test_chart_flow_sector_universe_matches_mstock_documented_security_id_codes(
     assert len({item["index_symbol"] for item in market_flow.SECTOR_UNIVERSES}) == len(expected)
 
 
-def test_mover_rejection_reason_drops_impossible_and_inconsistent_rows():
+def test_mover_rejection_reason_drops_only_impossible_rows():
     from app.routes.market_movers import mover_rejection_reason as check
 
-    good = {"ltp": 732.2, "change": 42.7, "percent_change": 6.19, "volume": 6227379}
-    assert check(good, require_volume=True) is None
-    # BSE debt-like rows seen in production: huge moves, impossible drops, zero volume
-    assert check({"ltp": 99786, "percent_change": -232, "volume": 0}) == "impossible_percent_change"
-    assert check({"ltp": 15360, "change": -10, "percent_change": -200.0, "volume": 0}) == "impossible_percent_change"
-    assert check({"ltp": 100, "change": 2, "percent_change": 995, "volume": 5}) == "percent_change_mismatch"
-    assert check({"ltp": 99786, "percent_change": 995, "volume": 0}, require_volume=True) == "price_move_without_volume"
+    assert check({"ltp": 732.2, "change": 42.7, "percent_change": 6.19}) is None
+    assert check({"ltp": 99786, "percent_change": -232}) == "impossible_percent_change"
+    assert check({"ltp": 99786, "percent_change": 995}) == "implausible_percent_gain"
     assert check({"ltp": 0, "percent_change": 1}) == "invalid_price"
     assert check({"ltp": 10, "percent_change": None}) == "missing_percent_change"
-    # sector lists may legitimately omit volume
-    assert check({"ltp": 429.6, "percent_change": -2.0, "volume": 0}) is None
+    # a percent that disagrees with the price change is kept, not rejected
+    assert check({"ltp": 100, "change": 2, "percent_change": -17}) is None
+
+
+def test_percent_verified_flags_disagreeing_rows():
+    from app.routes.market_movers import mover_percent_verified as verify
+
+    assert verify({"ltp": 732.2, "change": 42.7, "percent_change": 6.19}) is True
+    assert verify({"ltp": 100, "change": 1, "percent_change": -17}) is False
+    assert verify({"ltp": 100, "percent_change": 2}) is None
+
+
+def test_zero_or_missing_volume_never_hides_a_real_mover():
+    from app.routes.market_movers import mover_rejection_reason as check
+
+    assert check({"ltp": 429.6, "change": -9.0, "percent_change": -2.05, "volume": 0}) is None
+    assert check({"ltp": 429.6, "percent_change": -2.0}) is None
 
 
 def test_chart_flow_all_universe_filters_bad_rows_and_reports_counts(monkeypatch):
@@ -293,7 +304,7 @@ def test_chart_flow_all_universe_filters_bad_rows_and_reports_counts(monkeypatch
         return {"status": True, "data": [
             {"exchange": "BSE", "symbol": "11MGFL27", "ltp": 99786, "per_change": 995, "volume": 0},
             {"exchange": "BSE", "symbol": "DRA", "ltp": 16.35, "per_change": -139, "volume": 0},
-            {"exchange": "NSE", "symbol": "INFY", "ltp": 1500, "per_change": 2.0, "change": 29.41, "volume": 1000},
+            {"exchange": "NSE", "symbol": "INFY", "ltp": 1500, "per_change": 2.0, "change": 29.41, "volume": 0},
         ]}
 
     monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
@@ -301,6 +312,31 @@ def test_chart_flow_all_universe_filters_bad_rows_and_reports_counts(monkeypatch
 
     assert errors == []
     symbols = {row["symbol"] for row in movers["gainers"] + movers["losers"]}
-    assert symbols == {"INFY"}
-    assert rejected["price_move_without_volume"] >= 1
+    assert symbols == {"INFY"}  # real mover kept even with volume 0
+    assert rejected["implausible_percent_gain"] >= 1
     assert rejected["impossible_percent_change"] >= 1
+    assert movers["gainers"][0]["percent_verified"] is True
+
+
+def test_sector_rows_with_disagreeing_percent_are_kept_and_flagged(monkeypatch):
+    monkeypatch.setattr(market_flow.time, "sleep", lambda _seconds: None)
+    market_flow._sector_cache.clear()
+
+    def fake_fetch(**kwargs):
+        return {"status": True, "data": [
+            {"exchange": "NSE", "symbol": "ODD", "ltp": 100, "change": 1, "per_change": -17},
+            {"exchange": "NSE", "symbol": "GOOD", "ltp": 100, "change": 2, "per_change": 2.04},
+            {"exchange": "NSE", "symbol": "BOND", "ltp": 99786, "change": 5, "per_change": 250},
+        ]}
+
+    monkeypatch.setattr(market_flow, "fetch_movers", fake_fetch)
+    monkeypatch.setattr(market_flow, "fetch_index", lambda index: {"name": index["name"], "last_price": 1})
+    result = market_flow.get_market_flow_snapshot("metal")
+
+    quality = result["data_quality"]
+    assert quality["provider_rows_received"] == 6
+    assert quality["rejected_rows"] == {"implausible_percent_gain": 2}
+    rows = {row["symbol"]: row for row in result["movers"]["gainers"]}
+    assert rows["ODD"]["percent_verified"] is False
+    assert rows["GOOD"]["percent_verified"] is True
+    assert "BOND" not in rows

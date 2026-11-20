@@ -147,13 +147,18 @@ def _to_number(value):
     return number if number == number and abs(number) != float("inf") else None
 
 
-def mover_rejection_reason(item: dict, require_volume: bool = False):
-    """
-    Return why a normalized provider row is not trustworthy, or None if it is fine.
+# A cash-equity move at or beyond this gain is treated as implausible. Seen in
+# production: illiquid BSE debt instruments reporting +195% .. +995%.
+MAX_PLAUSIBLE_GAIN_PERCENT = 100
 
-    Guards against rows such as illiquid BSE debt instruments reporting +995%
-    or -232% with zero volume. Nothing is repaired or invented: bad rows are
-    dropped so the UI never presents them as real market movement.
+
+def mover_rejection_reason(item: dict):
+    """
+    Return why a row cannot be a real price move, or None if it may be shown.
+
+    Only impossible rows are removed. Volume is NOT used (the provider reports
+    volume 0 for most rows) and a percent that disagrees with the price change
+    is NOT a rejection: see mover_percent_verified(). Nothing is invented.
     """
     ltp = _to_number(item.get("ltp"))
     pct = _to_number(item.get("percent_change"))
@@ -163,19 +168,26 @@ def mover_rejection_reason(item: dict, require_volume: bool = False):
         return "missing_percent_change"
     if pct <= -100:
         return "impossible_percent_change"  # a price cannot fall by 100% or more
-    change = _to_number(item.get("change"))
-    if change is not None:
-        previous_close = ltp - change
-        if previous_close <= 0:
-            return "inconsistent_change"
-        expected = change / previous_close * 100
-        if abs(expected - pct) > max(0.25, abs(expected) * 0.02):
-            return "percent_change_mismatch"
-    if require_volume:
-        volume = _to_number(item.get("volume"))
-        if volume is not None and volume <= 0 and pct != 0:
-            return "price_move_without_volume"
+    if pct >= MAX_PLAUSIBLE_GAIN_PERCENT:
+        return "implausible_percent_gain"
     return None
+
+
+def mover_percent_verified(item: dict):
+    """
+    True when the provider percent matches its own price change and LTP,
+    False when they disagree, None when there is no change to compare with.
+    """
+    ltp = _to_number(item.get("ltp"))
+    pct = _to_number(item.get("percent_change"))
+    change = _to_number(item.get("change"))
+    if ltp is None or pct is None or change is None:
+        return None
+    previous_close = ltp - change
+    if previous_close <= 0:
+        return False
+    expected = change / previous_close * 100
+    return abs(expected - pct) <= max(0.25, abs(expected) * 0.02)
 
 
 @router.get("/")

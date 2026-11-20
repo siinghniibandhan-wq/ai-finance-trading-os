@@ -41,6 +41,9 @@ jobs:
       - name: Test Options Hub chain analytics
         working-directory: frontend
         run: npm run test:options-hub
+      - name: Test Market corporate actions placement and Advanced Chart isolation
+        working-directory: frontend
+        run: npm run test:corporate-actions
       - name: Build frontend
         working-directory: frontend
         run: npm run build

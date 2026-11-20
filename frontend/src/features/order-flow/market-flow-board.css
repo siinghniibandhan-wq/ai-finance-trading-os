@@ -431,3 +431,23 @@
   }
 }
 
+
+/* ---- Layout polish: notes, data-quality disclosure, sector detail, mover lists ---- */
+.mfb-note,.mfb-volume-warning{margin:0;padding:0 2px;border:0;background:none;color:var(--muted);font-size:12px;line-height:1.55}
+.mfb-quality{border:1px solid var(--line);background:var(--panel);border-radius:var(--radius-sm);font-size:12px;overflow:hidden}
+.mfb-quality summary{display:flex;align-items:center;gap:8px;min-height:40px;padding:10px 14px;cursor:pointer;list-style:none;font-weight:700;color:var(--text)}
+.mfb-quality summary::-webkit-details-marker{display:none}
+.mfb-quality summary em{margin-left:auto;font-style:normal;font-weight:500;font-size:11px;color:var(--muted);text-align:right}
+.mfb-quality-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--th-warn)}
+.mfb-quality[open] summary{border-bottom:1px solid var(--line)}
+.mfb-quality ul{margin:0;padding:10px 14px 12px 32px;display:flex;flex-direction:column;gap:8px;color:var(--muted);line-height:1.5}
+.mfb-section-head .mfb-sector-coverage{flex:none;margin:0;white-space:nowrap}
+.mfb-sector-body{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.mfb-sector-body.mfb-sectors>*{margin:0}
+.mfb-lists .mfb-sides{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+@media(max-width:650px){
+  .mfb-lists .mfb-sides{grid-template-columns:1fr}
+  .mfb-section-head .mfb-sector-coverage{white-space:normal}
+  .mfb-quality summary{flex-wrap:wrap}
+  .mfb-quality summary em{margin-left:16px;text-align:left}
+}

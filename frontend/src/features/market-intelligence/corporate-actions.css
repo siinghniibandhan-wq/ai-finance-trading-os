@@ -1,0 +1,18 @@
+.market-corporate-actions{display:grid;gap:12px;padding:4px 0;min-width:0}
+.market-corporate-actions-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.market-corporate-eyebrow{margin:0 0 4px;color:var(--finos-muted,#9ca3af);font-size:9px;font-weight:800;letter-spacing:.1em}
+.market-corporate-actions-heading h4{margin:0;font-size:15px}
+.market-corporate-actions-heading>strong{color:var(--finos-muted,#9ca3af);font-size:11px}
+.market-corporate-actions>p{margin:0;color:var(--finos-muted,#9ca3af);font-size:11px;line-height:1.55}
+.market-corporate-actions-list{display:grid;gap:8px}
+.market-corporate-actions-list article{padding:11px;border:1px solid var(--finos-border,rgba(128,128,128,.22));border-radius:10px;background:var(--t-card-bg,rgba(128,128,128,.035))}
+.market-corporate-event{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.market-corporate-event strong{font-size:12px}
+.market-corporate-event span{padding:3px 6px;border-radius:4px;background:rgba(128,128,128,.12);color:var(--finos-muted,#9ca3af);font-size:9px;text-transform:uppercase}
+.market-corporate-event b{color:var(--finos-accent,#9b83ff);font-size:11px}
+.market-corporate-actions-list dl{display:flex;gap:8px 22px;flex-wrap:wrap;margin:9px 0 0}
+.market-corporate-actions-list dl div{display:grid;gap:3px}
+.market-corporate-actions-list dt{color:var(--finos-muted,#9ca3af);font-size:9px}
+.market-corporate-actions-list dd{margin:0;font-size:10px;font-variant-numeric:tabular-nums}
+.market-corporate-source{color:var(--finos-muted,#9ca3af);font-size:10px;text-decoration:underline;text-underline-offset:2px}
+.market-corporate-note{font-size:10px!important}

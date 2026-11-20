@@ -68,3 +68,16 @@ export async function loadMarketFlowSnapshot(sectorKey = null, includeSectorIndi
   });
   return readResponse(response, sectorKey ? "Chart Flow sector movers" : "Chart Flow market snapshot");
 }
+
+
+// Additive REST integrations: isolated from the existing market/quote requests.
+export async function loadInstitutionalFlow() {
+  const response = await apiFetch(`${API_BASE_URL}/api/institutional-flow/`, { cache: "no-store" });
+  return readResponse(response, "Institutional flow");
+}
+
+export async function loadCorporateActions({ symbol, exchange }) {
+  const params = new URLSearchParams({ symbol, exchange });
+  const response = await apiFetch(`${API_BASE_URL}/api/corporate-actions/?${params}`, { cache: "no-store" });
+  return readResponse(response, "Corporate actions");
+}

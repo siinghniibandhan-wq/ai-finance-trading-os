@@ -11,6 +11,7 @@ from app.routes.market_indices import SUPPORTED_INDICES, fetch_index
 from app.routes.market_movers import (
     extract_type_a_mover_rows,
     fetch_movers,
+    mover_percent_verified,
     mover_rejection_reason,
     normalize_mover,
 )
@@ -68,10 +69,11 @@ def fetch_all_cash_movers():
                     if item_exchange not in {"NSE", "BSE"} or not symbol:
                         continue
                     item["exchange"] = item_exchange
-                    reason = mover_rejection_reason(item, require_volume=True)
+                    reason = mover_rejection_reason(item)
                     if reason:
                         rejected[reason] = rejected.get(reason, 0) + 1
                         continue
+                    item["percent_verified"] = mover_percent_verified(item)
                     key = item_exchange + ":" + symbol
                     if key in seen[mover_type]:
                         continue
@@ -120,6 +122,8 @@ def _fetch_sector_movers_uncached(sector):
     movers = {"gainers": [], "losers": []}
     errors = []
     rejected = {}
+    samples = []
+    received = 0
 
     for mover_type, type_flag in (("gainers", "G"), ("losers", "L")):
         try:
@@ -132,15 +136,25 @@ def _fetch_sector_movers_uncached(sector):
             for raw in extract_type_a_mover_rows(response):
                 if not isinstance(raw, dict):
                     continue
+                received += 1
                 item = normalize_mover(raw)
                 if str(item.get("exchange") or "NSE").upper() != "NSE":
+                    rejected["non_nse_exchange"] = rejected.get("non_nse_exchange", 0) + 1
                     continue
                 if not item.get("symbol"):
+                    rejected["missing_symbol"] = rejected.get("missing_symbol", 0) + 1
                     continue
                 reason = mover_rejection_reason(item)
                 if reason:
                     rejected[reason] = rejected.get(reason, 0) + 1
+                    if len(samples) < 5:
+                        samples.append({
+                            "symbol": item.get("symbol"), "ltp": item.get("ltp"),
+                            "change": item.get("change"), "percent_change": item.get("percent_change"),
+                            "reason": reason,
+                        })
                     continue
+                item["percent_verified"] = mover_percent_verified(item)
                 item["exchange"] = "NSE"
                 item["sector"] = sector["name"]
                 movers[mover_type].append(item)
@@ -188,7 +202,7 @@ def _fetch_sector_movers_uncached(sector):
             "note": "These are the provider's top movers within the selected sector, not every sector constituent.",
         },
         "movers": movers,
-        "data_quality": {"rejected_rows": rejected},
+        "data_quality": {"provider_rows_received": received, "rejected_rows": rejected, "rejected_samples": samples},
         "sector_index": sector_index,
         "counts": {
             "gainers": len(movers["gainers"]),

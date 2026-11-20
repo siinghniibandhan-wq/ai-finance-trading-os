@@ -7,6 +7,11 @@ const fmt = (value, digits = 2) => Number.isFinite(Number(value))
   ? new Intl.NumberFormat("en-IN", { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Number(value))
   : "—";
 const pct = value => (value > 0 ? "+" : "") + fmt(value) + "%";
+const rejectionSummary = rejected => {
+  const entries = Object.entries(rejected || {}).filter(([, count]) => Number(count) > 0);
+  const total = entries.reduce((sum, [, count]) => sum + Number(count), 0);
+  return total ? total + " provider rows rejected as invalid (" + entries.map(([reason, count]) => reason.replace(/_/g, " ") + " ×" + count).join(", ") + ")" : "";
+};
 const keyOf = row => row.exchange + ":" + row.symbol;
 
 function Distribution({ rows, counts, retrievedAt, breadthAvailable, eyebrow = "01 / MARKET DISTRIBUTION", title = "Where the market is moving", description = "Every dot is an actual NSE/BSE mover returned by m.Stock. Counts describe this returned set, not full-exchange breadth." }) {
@@ -160,6 +165,13 @@ function StreamFlow({ rows, board, sectorFlowRows, selectedSectorKey, sectorLoad
   const indexQuote = sectorPayload?.sector_index;
   const indexChange = indexQuote && indexQuote.percent_change !== null && indexQuote.percent_change !== undefined
     && Number.isFinite(Number(indexQuote.percent_change)) ? Number(indexQuote.percent_change) : null;
+  const rejectedSector = rejectionSummary(sectorPayload?.data_quality?.rejected_rows);
+  const received = sectorPayload?.data_quality?.provider_rows_received;
+  const sampleText = (sectorPayload?.data_quality?.rejected_samples || []).slice(0, 3)
+    .map(row => row.symbol + " ltp " + row.ltp + " chg " + (row.change ?? "—") + " pct " + (row.percent_change ?? "—")).join(" · ");
+  const noMoversText = rejectedSector ? "No usable movers: " + rejectedSector + (sampleText ? ". Examples: " + sampleText : "") + "."
+    : received === 0 ? "m.Stock returned no gainers or losers for this sector right now."
+      : "No ranked movers returned for this sector.";
   const volumeText = reported => reported > 0 ? "Vol " + compact(reported) : "Vol —";
   const bullShare = totalVolume > 0 ? volume.bullishVolume / totalVolume * 100 : null;
   const bearShare = totalVolume > 0 ? volume.bearishVolume / totalVolume * 100 : null;
@@ -227,7 +239,7 @@ function StreamFlow({ rows, board, sectorFlowRows, selectedSectorKey, sectorLoad
             : <g><rect x="690" y="30" width="200" height="104" rx="14" className="ms-empty"/>
               <text x="704" y="76" className="ms-m ms-sm">{sectorLoading ? "Loading sector movers…" : "Select a sector to open its stocks"}</text></g>}
           {sectorPayload && <>
-            <text x="690" y="170" className="ms-g ms-b ms-cap">GAINERS</text><text x="690" y="476" className="ms-r ms-b ms-cap">LOSERS</text>
+            {gainers.length > 0 && <text x="690" y="170" className="ms-g ms-b ms-cap">GAINERS</text>}{losers.length > 0 && <text x="690" y="476" className="ms-r ms-b ms-cap">LOSERS</text>}
             {[...gainers.map((row, index) => ({ row, y: 168 + index * 56 })), ...losers.map((row, index) => ({ row, y: 474 + index * 56 }))].map(({ row, y }) => {
               const isSel = keyOf(row) === selectedKey, up = row.changePercent > 0;
               return <g key={keyOf(row)} className={"ms-hit" + (isSel ? " sel" : "")} {...press(() => onSelectStock(row))} aria-label={row.symbol + " " + pct(row.changePercent)} aria-pressed={isSel}>
@@ -236,7 +248,7 @@ function StreamFlow({ rows, board, sectorFlowRows, selectedSectorKey, sectorLoad
                 <text x="878" y={y + 20} textAnchor="end" className={"ms-b " + (up ? "ms-g" : "ms-r")}>{pct(row.changePercent)}</text>
                 <text x="704" y={y + 38} className="ms-m ms-sm">₹{fmt(row.price)} · {row.volume === null ? "Vol —" : "Vol " + compact(row.volume)}</text></g>;
             })}
-            {!gainers.length && !losers.length && <text x="690" y="170" className="ms-m ms-sm">No ranked movers returned for this sector.</text>}</>}
+            {!gainers.length && !losers.length && <text x="690" y="170" className="ms-m ms-sm">{noMoversText}</text>}</>}
           {selected && sectorPayload && [...gainers.map((row, index) => ({ row, y: 168 + index * 56 })), ...losers.map((row, index) => ({ row, y: 474 + index * 56 }))]
             .filter(({ row }) => keyOf(row) === selectedKey).map(({ row, y }) =>
               <Stream key={"sel-" + keyOf(row)} d={"M890 " + (y + 24) + " L936 " + (y + 24)} width={6} tone="sel"/>)}
@@ -271,7 +283,7 @@ function StreamFlow({ rows, board, sectorFlowRows, selectedSectorKey, sectorLoad
                 <span>{sectorPayload.counts?.total_returned || 0} provider-ranked movers · median {sectorSampleSummary.medianChangePct === null ? "—" : pct(sectorSampleSummary.medianChangePct)}</span></div>
               {gainers.length > 0 && <><h4 className="up">Gainers</h4><div className="mfb-sc-grid">{gainers.map(row => stockTile(row, true))}</div></>}
               {losers.length > 0 && <><h4 className="down">Losers</h4><div className="mfb-sc-grid">{losers.map(row => stockTile(row, false))}</div></>}
-              {!gainers.length && !losers.length && <p>No ranked movers returned for this sector.</p>}
+              {!gainers.length && !losers.length && <p>{noMoversText}</p>}
             </> : <p>{sectorLoading ? "Loading sector movers…" : "Tap a sector to open its stocks."}</p>}
           </div>
         </div>
@@ -375,6 +387,10 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
   const sectorRows = useMemo(() => normalizeSectorMovers(sectorPayload), [sectorPayload]);
   const sectorSampleSummary = useMemo(() => summarizeSectorMoverSample(sectorRows), [sectorRows]);
   const sectorBoard = useMemo(() => buildMarketFlowBoard(sectorRows, 8), [sectorRows]);
+  const sectorIndexRaw = sectorPayload?.sector_index?.percent_change;
+  const sectorIndexChange = sectorIndexRaw !== null && sectorIndexRaw !== undefined && Number.isFinite(Number(sectorIndexRaw)) ? Number(sectorIndexRaw) : null;
+  const sectorIndexDisagrees = sectorIndexChange !== null && sectorSampleSummary.medianChangePct !== null
+    && Math.abs(sectorSampleSummary.medianChangePct - sectorIndexChange) > 5;
   const selected = rows.find(row => keyOf(row) === selectedKey)
     || sectorRows.find(row => keyOf(row) === selectedKey) || null;
   const selectedSectorMover = selected && sectorRows.find(row => keyOf(row) === keyOf(selected));
@@ -464,6 +480,8 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
       <button type="button" onClick={() => setSortDirection(value => value === "desc" ? "asc" : "desc")} aria-label="Toggle sort direction">{sortDirection === "desc" ? "Highest first ↓" : "Lowest first ↑"}</button>
       <span>{filteredRows.length} of {rows.length} returned movers</span>
     </section>
+    {rejectionSummary(payload?.data_quality?.rejected_rows) && <p className="mfb-alert" role="status">{rejectionSummary(payload.data_quality.rejected_rows)}. They are hidden, never repaired.</p>}
+    {rows.some(row => !row.percentVerified) && <p className="mfb-alert" role="status">{rows.filter(row => !row.percentVerified).length} of {rows.length} movers have a provider percentage that does not match their own price change. They are shown as reported and should be treated as unverified.</p>}
     <StreamFlow rows={filteredRows} board={board} sectorFlowRows={sectorFlowRows} selectedSectorKey={selectedSectorKey}
       sectorLoading={sectorLoading} sectorError={sectorError} sectorPayload={sectorPayload} sectorBoard={sectorBoard}
       sectorSampleSummary={sectorSampleSummary} selected={selected} selectedKey={selectedKey} relativeToSectorSample={relativeToSectorSample}
@@ -482,6 +500,8 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
             {sectorError && <p className="mfb-alert" role="alert">{sectorError}</p>}
             {!sectorPayload && !sectorLoading && !sectorError && <p>Select a sector in the stream above to see its detail.</p>}
             {sectorPayload && <>
+              {sectorRows.some(row => !row.percentVerified) && <p className="mfb-alert" role="status">{sectorRows.filter(row => !row.percentVerified).length} of {sectorRows.length} sector movers have a provider percentage that does not match their own price change. Shown as reported; treat as unverified.</p>}
+              {sectorIndexDisagrees && <p className="mfb-alert" role="status">Sample median {pct(sectorSampleSummary.medianChangePct)} is far from the sector index {pct(sectorIndexChange)}. The provider mover percentages may be unreliable for this sector.</p>}
               {sectorPayload.sector_index && <div className="mfb-sector-index-quote"><small>{sectorPayload.sector_index.name} · INDEX LEVEL</small><strong>{fmt(sectorPayload.sector_index.last_price)}</strong>
                 {sectorPayload.sector_index.percent_change !== null && sectorPayload.sector_index.percent_change !== undefined && Number.isFinite(Number(sectorPayload.sector_index.percent_change)) && <b className={Number(sectorPayload.sector_index.percent_change) >= 0 ? "up" : "down"}>{pct(Number(sectorPayload.sector_index.percent_change))}</b>}
                 <span>{sectorPayload.sector_index.previous_close ? "Previous close " + fmt(sectorPayload.sector_index.previous_close) : "Daily change unavailable from provider OHLC."}</span></div>}

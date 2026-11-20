@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AreaSeries, BarSeries, CandlestickSeries, HistogramSeries, LineSeries, createChart } from "lightweight-charts";
 import { loadChartHistory, loadLatestQuote, searchChartInstruments } from "./api";
 import MarketMoversScanner from "./MarketMoversScanner";
-import CorporateActionsPanel from "./CorporateActionsPanel";
 import { calculateBollingerBands, calculateEMA, calculateHeikinAshi, calculateMACD, calculateRSI, calculateSMA, calculateVWAP, formatChartTime, getChartDimensions, getDefaultChartRange, normalizeCandles, normalizeQuotePrice } from "./model";
 import "./advanced-chart.css";
 
@@ -524,7 +523,6 @@ export default function AdvancedChartPage({ initialInstrument = null }) {
         <div><span>GATEWAY CACHE AGE</span><strong>{gatewayCacheAge}</strong></div>
         <div><span>QUOTE MODE</span><strong>{quote ? "10s snapshot polling" : "Not connected"}</strong></div>
       </section>
-      <CorporateActionsPanel instrument={instrument} />
       {quoteError && <div className="advanced-chart-warning" role="status">{quoteError}{quote ? " · Showing the last successful quote." : ""}</div>}
 
       <section className="advanced-chart-panel">

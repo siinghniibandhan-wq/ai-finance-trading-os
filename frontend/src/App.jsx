@@ -15,6 +15,7 @@ import { mergeMarketOverview } from "./marketOverviewState.js";
 import AdvancedChartPage from "./features/advanced-chart/AdvancedChartPage.jsx";
 import OrderFlowPage from "./features/order-flow/OrderFlowPage.jsx";
 import OptionsHubPage from "./features/options-hub/OptionsHubPage.jsx";
+import CorporateActionsPanel from "./features/market-intelligence/CorporateActionsPanel.jsx";
 
 import {
   LayoutDashboard,
@@ -3046,7 +3047,7 @@ function MarketsPage() {
           {tabButton("fundamental", "Fundamental Analysis")}
           {tabButton("technical", "Technical Analysis")}
           {tabButton("company", "Company Details")}
-          {tabButton("dividends", "Dividends & Actions")}
+          {tabButton("dividends", "Corporate Actions")}
           {tabButton("news", "News")}
         </div>
         <div id="instrument-research-tabpanel" role="tabpanel" className="instrument-research-tabpanel" tabIndex={0}>
@@ -3150,11 +3151,7 @@ function MarketsPage() {
             </div>
             <p style={{ ...muted, marginBottom: 0, marginTop: "10px" }}>Only fields supplied by the instrument search response are shown. Additional company profile details require a verified company-data source.</p>
           </>}
-          {researchTab === "dividends" && <>
-            <h4 style={{ margin: "0 0 6px" }}>Dividends & Corporate Actions</h4>
-            <p style={muted}>Dividend history, splits, bonuses and ex-dates are not provided by the currently connected market endpoints.</p>
-            <div style={{ ...card }}><strong>Corporate actions data source required</strong><p style={{ ...muted, marginBottom: 0, marginTop: "6px" }}>This section is ready for verified dividend and corporate-action records once a suitable provider is connected.</p></div>
-          </>}
+          {researchTab === "dividends" && <CorporateActionsPanel instrument={selectedInstrument} />}
           {researchTab === "news" && <>
             <h4 style={{ margin: "0 0 6px" }}>{selectedInstrument.symbol} News</h4>
             <p style={muted}>Company-specific news has not been connected to the current market API.</p>

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { loadChartHistory, loadMarketFlowSnapshot } from "../advanced-chart/api.js";
 import { buildDistributionDots, buildMarketFlowBoard, filterOrderFlow, normalizeOrderFlow, normalizeSectorMovers, sortOrderFlow, buildHistoricalFlowSeries, summarizeSectorMoverSample, buildSectorFlowRows, summarizeMoverVolume, buildHistoricalCandleGeometry } from "./orderFlowModel.js";
 import "./market-flow-board.css";
+import InstitutionalFlowSection from "./InstitutionalFlowSection";
 
 const fmt = (value, digits = 2) => Number.isFinite(Number(value))
   ? new Intl.NumberFormat("en-IN", { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(Number(value))
@@ -527,6 +528,7 @@ export default function MarketFlowBoard({ onSelectInstrument }) {
         {!sectorOptions.length && <p className="mfb-note">Sector universes were not returned by the backend.</p>}
       </div>
     </section>
+    <InstitutionalFlowSection />
     <section className="mfb-section mfb-lists">
       <div className="mfb-section-head"><div><small>04 / ALL RETURNED MOVERS</small><h2>Bullish and bearish movers</h2>
         <p>Every market-wide mover returned by the provider that passed validation. Use the filters above to narrow this list.</p></div></div>

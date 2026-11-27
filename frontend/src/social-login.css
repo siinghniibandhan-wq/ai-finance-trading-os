@@ -1,0 +1,20 @@
+/* Google / GitHub sign-in buttons on the login page. Uses the shared theme colours. */
+.auth-social { margin-top: 18px; }
+.auth-social-divider {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--finos-muted, var(--th-muted)); font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+}
+.auth-social-divider::before, .auth-social-divider::after {
+  content: ""; flex: 1; height: 1px; background: var(--finos-border, var(--th-border));
+}
+.auth-social-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 14px; }
+.auth-social-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  min-height: 44px; padding: 10px 12px; cursor: pointer; font: inherit; font-weight: 650;
+  border: 1px solid var(--finos-border, var(--th-border));
+  border-radius: var(--t-radius-sm, 10px);
+  color: var(--finos-text, var(--th-text));
+  background: var(--t-inner-bg, var(--th-card));
+}
+.auth-social-button:hover { border-color: var(--finos-accent, var(--th-accent)); }
+.auth-social-button:focus-visible { outline: 2px solid var(--finos-accent, var(--th-accent)); outline-offset: 2px; }

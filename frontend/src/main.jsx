@@ -6,6 +6,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import LandingPage from "./LandingPage";
 import AuthPage from "./AuthPage";
+import SocialCallback from "./SocialCallback";
 import ImportantNotice from "./ImportantNotice";
 import { shouldRenderImportantNotice } from "./importantNoticeSchedule";
 import { API_BASE_URL, apiFetch, clearSession, getAccessToken } from "./api";
@@ -162,6 +163,7 @@ function RootRouter() {
   if (path === "/app" || path.startsWith("/app/")) return <ProtectedApp />;
   if (path === "/login") return <AuthPage initialMode="login" />;
   if (path === "/register") return <AuthPage initialMode="register" />;
+  if (path === "/auth/callback") return <SocialCallback />;
   return <LandingPage />;
 }
 

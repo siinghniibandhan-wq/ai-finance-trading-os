@@ -24,6 +24,7 @@ from app import models
 
 from app.routes import (
     auth,
+    social_auth,
     profile,
     ai_assistant,
     broker_orders,
@@ -360,7 +361,7 @@ _RATE_LIMIT_MAX_KEYS = 50000
 _rate_limit_buckets: dict[str, deque[float]] = defaultdict(deque)
 _rate_limit_lock = threading.Lock()
 _RATE_LIMIT_POLICIES = {"/api/auth/login": (10, 60), "/api/auth/register": (5, 3600)}
-_RATE_LIMIT_PREFIX_POLICIES = (("/api/ai/", (20, 600)), ("/api/broker-orders", (10, 60)))
+_RATE_LIMIT_PREFIX_POLICIES = (("/api/ai/", (20, 600)), ("/api/broker-orders", (10, 60)), ("/api/auth/social/", (60, 600)))
 
 
 def _rate_limit_client_ip(request: Request) -> str:
@@ -488,6 +489,7 @@ def _include_private_router(router):
     app.include_router(router, dependencies=[Depends(auth.get_current_user)])
 
 app.include_router(auth.router)
+app.include_router(social_auth.router)  # public: Google / GitHub sign-in redirects
 _include_private_router(profile.router)
 _include_private_router(ai_assistant.router)
 _include_private_router(broker_orders.router)

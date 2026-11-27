@@ -838,3 +838,20 @@ class AdminAuditLog(Base):
     target_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
+# ============================================================
+# SOCIAL LOGIN IDENTITIES (Google, GitHub, ...)
+# Links a provider account to an existing Financial OS user.
+# Additive table: no existing table or column is changed.
+# ============================================================
+class SocialIdentity(Base):
+    __tablename__ = "social_identities"
+    __table_args__ = (UniqueConstraint("provider", "provider_user_id", name="uq_social_identity_provider_user"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider: Mapped[str] = mapped_column(String(20), nullable=False)
+    provider_user_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

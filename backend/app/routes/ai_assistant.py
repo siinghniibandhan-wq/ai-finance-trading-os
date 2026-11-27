@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app.models import User
-from app.routes.auth import _check_login_rate_limit, get_current_admin
+from app.routes.auth import _check_login_rate_limit, get_current_user
 from app.services.ai_providers import ProviderError, generate, list_models, provider_status
 
 router = APIRouter(prefix="/api/ai", tags=["AI Assistant"])
@@ -19,7 +19,7 @@ class ChatRequest(BaseModel):
 
 
 @router.get("/status")
-def ai_status(current_user: User = Depends(get_current_admin)):
+def ai_status(current_user: User = Depends(get_current_user)):
     providers = provider_status()
     return {
         "module": "AI Assistant",
@@ -29,13 +29,13 @@ def ai_status(current_user: User = Depends(get_current_admin)):
 
 
 @router.get("/providers")
-def list_ai_providers(current_user: User = Depends(get_current_admin)):
+def list_ai_providers(current_user: User = Depends(get_current_user)):
     """Provider availability and model defaults for the AI module settings UI."""
     return {"providers": provider_status()}
 
 
 @router.post("/chat")
-def ai_chat(request: ChatRequest, current_user: User = Depends(get_current_admin)):
+def ai_chat(request: ChatRequest, current_user: User = Depends(get_current_user)):
     # Each call costs money on the AI provider key: 30 messages per 10 minutes per user.
     _check_login_rate_limit(f"ai-chat:{current_user.id}", max_attempts=30, window=600)
     try:
@@ -59,7 +59,7 @@ def ai_chat(request: ChatRequest, current_user: User = Depends(get_current_admin
 def ai_models(
     provider: str = Query(..., max_length=40),
     free_only: bool = Query(True),
-    current_user: User = Depends(get_current_admin),
+    current_user: User = Depends(get_current_user),
 ):
     _check_login_rate_limit(f"ai-models:{current_user.id}", max_attempts=30, window=600)
     try:
